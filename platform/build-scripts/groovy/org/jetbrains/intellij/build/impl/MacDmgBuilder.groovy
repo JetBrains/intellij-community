@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
@@ -49,7 +50,7 @@ final class MacDmgBuilder {
     new ProductInfoValidator(context).validateInDirectory(productJson, "Resources/", installationDirectories, installationArchives)
 
     String targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
-    Path sitFile = artifactDir.resolve(targetName + ".sit")
+    Path sitFile = (customizer.publishArchive ? artifactDir : context.paths.tempDir).resolve(targetName + ".sit")
 
     BuildHelper buildHelper = BuildHelper.getInstance(context)
     buildHelper.prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, macAdditionalDirPath, zipRoot)
@@ -77,12 +78,9 @@ final class MacDmgBuilder {
         void accept(Path file) {
           context.notifyArtifactWasBuilt(file)
         }
-      }
+      },
+      customizer.publishArchive
     )
-
-    if (customizer.publishArchive) {
-      context.notifyArtifactBuilt(sitFile)
-    }
   }
 
   private static void buildLocally(Path sitFile,
@@ -113,6 +111,7 @@ final class MacDmgBuilder {
     })
   }
 
+  @SuppressWarnings('SpellCheckingInspection')
   private static void bundleJBRAndSignSitLocally(Path targetFile,
                                                  Path jreArchivePath,
                                                  MacDistributionCustomizer customizer,
@@ -123,14 +122,11 @@ final class MacDmgBuilder {
     if (jreArchivePath != null) {
       Files.copy(jreArchivePath, tempDir.resolve(jreArchivePath.fileName))
     }
-    //noinspection SpellCheckingInspection
     Path signAppFile = tempDir.resolve("signapp.sh")
-    //noinspection SpellCheckingInspection
     Files.copy(context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/signapp.sh"), signAppFile,
                StandardCopyOption.COPY_ATTRIBUTES)
-    //noinspection SpellCheckingInspection
     Files.setPosixFilePermissions(signAppFile, PosixFilePermissions.fromString("rwxrwxrwx"))
-    List<String> args = [
+    BuildHelper.runProcess(context, List.of(
       "./signapp.sh",
       targetFile.fileName.toString(),
       context.fullBuildNumber,
@@ -140,8 +136,8 @@ final class MacDmgBuilder {
       (jreArchivePath == null ? "no-jdk" : '"' + jreArchivePath.fileName.toString() + '"'),
       "no",
       customizer.bundleIdentifier,
-    ]
-    BuildHelper.runProcess(context, args, tempDir)
+      ), tempDir)
+    NioFiles.deleteRecursively(tempDir.resolve(targetFile.fileName.toString() + ".exploded"))
     Path artifactDir = Path.of(context.paths.artifacts)
     Files.move(tempDir.resolve(targetFile.fileName), artifactDir.resolve(targetFile.fileName), StandardCopyOption.REPLACE_EXISTING)
   }
@@ -150,10 +146,9 @@ final class MacDmgBuilder {
   private static void buildDmgLocally(Path sitFile, String targetFileName, MacDistributionCustomizer customizer, BuildContext context) {
     Path tempDir = context.paths.tempDir.resolve("mac.dist.dmg")
     Files.createDirectories(tempDir)
-    String dmgImagePath = (context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath
     Path dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
+    Files.copy(Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath), dmgImageCopy)
     AntBuilder ant = context.ant
-    ant.copy(file: dmgImagePath, tofile: dmgImageCopy.toString())
     ant.copy(file: sitFile.toString(), todir: tempDir)
     ant.copy(todir: tempDir) {
       ant.fileset(dir: "${context.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {

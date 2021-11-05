@@ -133,11 +133,13 @@ else
   log "Stapling disabled"
 fi
 
-log "Zipping $BUILD_NAME to $INPUT_FILE ..."
-(
-  cd "$EXPLODED"
-  ditto -c -k --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
-  log "Finished zipping"
-)
-rm -rf "$EXPLODED"
+if [ "$COMPRESS_INPUT" != "false" ]; then
+  log "Zipping $BUILD_NAME to $INPUT_FILE ..."
+  (
+    cd "$EXPLODED"
+    ditto -c -k --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
+    log "Finished zipping"
+  )
+fi
+
 log "Done"

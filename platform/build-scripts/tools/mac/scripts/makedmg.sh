@@ -1,6 +1,5 @@
 #!/bin/bash
-# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-# make sure only one dmg is built at a given moment
+# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #immediately exit script with an error if a command fails
 set -euo pipefail
@@ -17,31 +16,36 @@ function log() {
   echo "$(date '+[%H:%M:%S]') $*"
 }
 
-test -d "$EXPLODED" && find "$EXPLODED" -maxdepth 1 -exec chmod -R u+wx '{}' \;
-rm -rf "$EXPLODED"
-rm -f "$RESULT_DMG"
-rm -f "$TEMP_DMG"
+if [ "$REUSE_EXPLODED" != "true" ]; then
+  test -d "$EXPLODED" && find "$EXPLODED" -maxdepth 1 -exec chmod -R u+wx '{}' \;
+  rm -rf "$EXPLODED"
+  rm -f "$RESULT_DMG"
+  rm -f "$TEMP_DMG"
 
-mkdir "$EXPLODED"
-log "Unzipping ${SOURCE_SIT} to ${EXPLODED}..."
-ditto -x -k "$SOURCE_SIT" "${EXPLODED}/"
+  mkdir "$EXPLODED"
+  log "Unzipping ${SOURCE_SIT} to ${EXPLODED}..."
+  ditto -x -k "$SOURCE_SIT" "${EXPLODED}/"
 
-rm "$SOURCE_SIT"
+  rm "$SOURCE_SIT"
+fi
+
 BUILD_NAME=$(ls "$EXPLODED")
 log "BUILD_NAME is $BUILD_NAME"
 VOLNAME="${BUILD_NAME%.app}"
 log "VOLNAME is $VOLNAME"
 
-chmod a+x "${EXPLODED}/$BUILD_NAME/Contents"/MacOS/*
-chmod a+x "${EXPLODED}/$BUILD_NAME/Contents"/bin/*.sh
-chmod a+x "${EXPLODED}/$BUILD_NAME/Contents"/bin/fs*
+if [ "$REUSE_EXPLODED" != "true" ]; then
+  chmod a+x "${EXPLODED}/$BUILD_NAME/Contents"/MacOS/*
+  chmod a+x "${EXPLODED}/$BUILD_NAME/Contents"/bin/*.sh
+  chmod a+x "${EXPLODED}/$BUILD_NAME/Contents"/bin/fs*
+fi
 
 mkdir "${EXPLODED}/.background"
 mv "${BG_PIC}" "${EXPLODED}/.background"
 ln -s /Applications "${EXPLODED}/Applications"
 # allocate space for .DS_Store
 # it's ok to have relatively big (10 MB) empty file, those space would be compressed in resulted dmg
-# otherwise 'no space left on device' errors may occure on attempt to generate relatively small .DS_Store (12 KB)
+# otherwise 'no space left on device' errors may occur on attempt to generate relatively small .DS_Store (12 KB)
 dd if=/dev/zero of="${EXPLODED}/DSStorePlaceHolder" bs=1024 count=10240
 stat "${EXPLODED}/DSStorePlaceHolder"
 

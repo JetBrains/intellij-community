@@ -166,14 +166,15 @@ final class BuildHelper {
                                                          string, string,
                                                          bool, string,
                                                          path, path,
-                                                         path, path, path, Consumer.class))
+                                                         path, path, path, Consumer.class,
+                                                         bool))
 
     buildMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.MacKt"),
                                     "buildMacZip",
                                     MethodType.methodType(aVoid,
                                                           path, string,
                                                           byte[].class,
-                                                          path, path, list))
+                                                          path, path, list, int.class))
 
     prepareMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.SignKt"),
                                 "prepareMacZip",
