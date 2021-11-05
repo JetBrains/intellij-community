@@ -18,10 +18,13 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.refactoring.formatPsiClass
+import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
     override fun processCompanionObjectInternalReferences(
@@ -29,7 +32,8 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         referenceProcessor: Processor<PsiReference>
     ): Boolean {
         // TODO: implement this
-        return false
+        val klass = companionObject.getStrictParentOfType<KtClass>() ?: return true
+        return !klass.anyDescendantOfType<KtElement> { false }
     }
 
     override fun isDataClassComponentFunction(element: KtParameter): Boolean {
