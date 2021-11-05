@@ -87,6 +87,7 @@ class InspectionRunner {
   }
 
   @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                     boolean addRedundantSuppressions,
                                                      @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback,
                                                      @NotNull Consumer<? super InspectionContext> afterInsideProcessedCallback,
                                                      @NotNull Consumer<? super InspectionContext> afterOutsideProcessedCallback) {
@@ -132,7 +133,7 @@ class InspectionRunner {
         // do not save stats for batch process, there could be too many files
         InspectionProfilerDataHolder.getInstance(myPsiFile.getProject()).saveStats(myPsiFile, init, System.nanoTime() - start);
       }
-      if (myIsOnTheFly) {
+      if (myIsOnTheFly && addRedundantSuppressions) {
         addRedundantSuppressions(init, toolWrappers, redundantContexts);
       }
     });
@@ -196,8 +197,6 @@ class InspectionRunner {
       InspectListener publisher = project.getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
       for (InspectionContext context : contexts) {
         LocalInspectionToolWrapper toolWrapper = context.tool;
-        // do not report UnfairLocalInspectionTools because they often don't have proper displayName etc. which are required here
-        if (toolWrapper.isUnfair()) continue;
         InspectionProblemHolder holder = context.holder;
         long durationMs = TimeUnit.NANOSECONDS.toMillis(holder.finishTimeStamp - holder.initTimeStamp);
         int problemCount = context.holder.getResultCount();
@@ -258,9 +257,9 @@ class InspectionRunner {
     }
     LocalInspectionTool localTool = ((RedundantSuppressInspectionBase)toolWrapper.getTool()).createLocalTool(redundantSuppressionDetector, mySuppressedElements, activeTools);
     List<LocalInspectionToolWrapper> wrappers = Collections.singletonList(new LocalInspectionToolWrapper(localTool));
-    InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, false, myProgress, false,
+    InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, true, myProgress, false,
                                                    myInspectionProfileWrapper, mySuppressedElements);
-    result.addAll(runner.inspect(wrappers, empty(), emptyCallback(), emptyCallback()));
+    result.addAll(runner.inspect(wrappers, false, empty(), emptyCallback(), emptyCallback()));
   }
 
   @NotNull
@@ -410,7 +409,7 @@ class InspectionRunner {
              InspectionRunner injectedRunner =
                new InspectionRunner(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), false, myIsOnTheFly, myProgress,
                                     myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
-             outInjectedContexts.addAll(injectedRunner.inspect(wrappers, cc, emptyCallback(), emptyCallback()));
+             outInjectedContexts.addAll(injectedRunner.inspect(wrappers, true, cc, emptyCallback(), emptyCallback()));
            }
            return true;
          })) {

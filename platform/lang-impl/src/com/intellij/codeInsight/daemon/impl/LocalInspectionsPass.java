@@ -116,33 +116,29 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(getFile())) {
       return;
     }
-    List<? extends InspectionRunner.InspectionContext> contexts = inspect(getInspectionTools(myProfileWrapper), true, progress);
-    ProgressManager.checkCanceled();
-
-    myInfos = createHighlightsFromContexts(contexts);
-  }
-
-  @NotNull
-  private List<? extends InspectionRunner.InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                                     boolean isOnTheFly,
-                                                                     @NotNull ProgressIndicator progress) {
-    if (toolWrappers.isEmpty()) return Collections.emptyList();
+    @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
+    if (toolWrappers.isEmpty()) {
+      return;
+    }
     Consumer<InspectionRunner.InspectionContext> afterInsideProcessedCallback = context -> {
       InspectionRunner.InspectionProblemHolder holder = context.holder;
       holder.applyIncrementally = false; // do not apply incrementally outside visible range
       advanceProgress(1);
     };
     Consumer<InspectionRunner.InspectionContext> afterOutsideProcessedCallback = __ -> advanceProgress(1);
-
     BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> applyIncrementallyCallback = (descriptor, wrapper) -> {
       addDescriptorIncrementally(descriptor, wrapper, progress);
       return true;
     };
     InspectionRunner runner =
-      new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, isOnTheFly, progress, myIgnoreSuppressed,
+      new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true, progress, myIgnoreSuppressed,
                            myProfileWrapper, mySuppressedElements);
-    return runner.inspect(toolWrappers, applyIncrementallyCallback,
-                          afterInsideProcessedCallback, afterOutsideProcessedCallback);
+    List<? extends InspectionRunner.InspectionContext> contexts = runner.inspect(toolWrappers, true, applyIncrementallyCallback,
+                                                                                 afterInsideProcessedCallback,
+                                                                                 afterOutsideProcessedCallback);
+    ProgressManager.checkCanceled();
+
+    myInfos = createHighlightsFromContexts(contexts);
   }
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes(){
