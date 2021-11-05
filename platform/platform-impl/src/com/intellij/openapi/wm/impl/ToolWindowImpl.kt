@@ -453,6 +453,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     if (EventLog.LOG_TOOL_WINDOW_ID != id) {
       if (oldIcon !== newIcon &&
           newIcon !is LayeredIcon &&
+          !ExperimentalUI.isNewUI() &&
           (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
         LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
       }
