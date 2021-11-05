@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.idea.fir.completion.wheigher
 
+import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletionWeigherTest
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.test.disableKotlinOfficialCodeStyle
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 
 abstract class AbstractHighLevelWeigherTest : AbstractBasicCompletionWeigherTest() {
@@ -14,5 +19,12 @@ abstract class AbstractHighLevelWeigherTest : AbstractBasicCompletionWeigherTest
         IgnoreTests.runTestIfEnabledByFileDirective(testDataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
             test()
         }
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { project.invalidateCaches() },
+            ThrowableRunnable { super.tearDown() },
+        )
     }
 }
