@@ -128,9 +128,9 @@ public final class UIUtil {
     rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
 
     // Use standard properties starting jdk 17
-    if (Runtime.version().feature() >= 17) {
-      rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
-    }
+    //if (Runtime.version().feature() >= 17) {
+      //rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
+    //}
 
     AbstractBorder customDecorationBorder = new AbstractBorder() {
       @Override
