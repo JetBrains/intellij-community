@@ -790,8 +790,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     northPanel.add(toolbarComponent, gc.next());
 
     ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo();
-    scopeChooserCombo.initialize(project, false, false, actionHandler.getSelectedScope().getDisplayName())
-      .onSuccess((__) -> {
+    scopeChooserCombo.initialize(project, false, false, actionHandler.getSelectedScope().getDisplayName(), null)
+      .onSuccess(__ -> {
         var scopeComboBox = scopeChooserCombo.getComboBox();
         scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
         scopeComboBox.addItemListener(event -> {
