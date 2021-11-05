@@ -98,7 +98,7 @@ internal class PackageVersionNormalizer(
 
     suspend fun parse(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> {
         @Suppress("UNCHECKED_CAST") // Unfortunately, MRUMap doesn't have type parameters
-        val cachedValue = versionsCache.getOrNull(version)
+        val cachedValue = versionsCache.get(version)
 
         if (cachedValue != null) return cachedValue
 
