@@ -118,6 +118,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public boolean containsKey(@Nullable Object key) {
+    if (myMap.isEmpty()) {
+      return false;
+    }
     HardKey<K> hardKey = createHardKey(key);
     try {
       return myMap.containsKey(hardKey);
@@ -179,6 +182,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public V get(@Nullable Object key) {
+    if (myMap.isEmpty()) return null;
     HardKey<K> hardKey = createHardKey(key);
     try {
       return myMap.get(hardKey);
