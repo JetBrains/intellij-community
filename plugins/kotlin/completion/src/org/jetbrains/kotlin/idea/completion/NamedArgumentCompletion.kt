@@ -8,13 +8,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.PsiUtil
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.core.ArgumentPositionData
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -27,10 +24,11 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
+import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 object NamedArgumentCompletion {
@@ -127,7 +125,10 @@ fun KtValueArgument.canBeUsedWithoutNameInCall(
     val isVararg = parameter?.isVararg == true
 
     if (noOtherNamedArguments) {
-        if (isVararg && parameter != resolvedCall.resultingDescriptor.valueParameters.lastOrNull()) return false
+        val parameters = resolvedCall.resultingDescriptor.valueParameters
+        if (isVararg && parameter != parameters.lastOrNull()) return false
+        val firstParameter = parameters.firstOrNull()
+        if (firstParameter?.hasDefaultValue() == true && resolvedCall.valueArguments[firstParameter] is DefaultValueArgument) return false
         return isVararg || isNamed() || placedOnItsOwnPositionInCall(resolvedCall)
     }
 

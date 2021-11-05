@@ -14287,6 +14287,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeAllArgumentNames/defaultArguments3.kt");
         }
 
+        @TestMetadata("defaultArguments4.kt")
+        public void testDefaultArguments4() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/defaultArguments4.kt");
+        }
+
         @TestMetadata("noNamedArguments.kt")
         public void testNoNamedArguments() throws Exception {
             runTest("testData/intentions/removeAllArgumentNames/noNamedArguments.kt");
