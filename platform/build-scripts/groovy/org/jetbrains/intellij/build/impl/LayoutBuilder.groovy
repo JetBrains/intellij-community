@@ -1,21 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.PathUtilRt
+import com.intellij.util.io.URLUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.tools.ant.AntClassLoader
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
-import org.jetbrains.jps.model.artifact.JpsArtifact
-import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement
-import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement
-import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
-import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement
-import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement
 import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsLibraryRoot
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
@@ -23,6 +18,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
 /**
  * Use this class to pack output of modules and libraries into JARs and lay out them by directories. It delegates the actual work to
  * {@link jetbrains.antlayout.tasks.LayoutTask}.
@@ -32,15 +28,12 @@ final class LayoutBuilder {
   public static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
 
   private final AntBuilder ant
-  private final boolean compressJars
-  private final Map<String, List<Path>> moduleOutputPatches = new HashMap<>()
   private final CompilationContext context
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  LayoutBuilder(CompilationContext context, boolean compressJars) {
+  LayoutBuilder(CompilationContext context) {
     ant = context.ant
     this.context = context
-    this.compressJars = compressJars
 
     def contextLoaderRef = "GANT_CONTEXT_CLASS_LOADER"
     if (!ant.project.hasReference(contextLoaderRef)) {
@@ -54,15 +47,26 @@ final class LayoutBuilder {
   }
 
   /**
-   * Contents of {@code pathToDirectoryWithPatchedFiles} will be used to patch the module output. Set 'preserveDuplicates' to {@code true}
-   * when calling {@link LayoutSpec#jar}.
+   * JARs is always uncompressed
    */
-  void patchModuleOutput(String moduleName, Path pathToDirectoryWithPatchedFiles) {
-    List<Path> list = moduleOutputPatches.computeIfAbsent(moduleName, { new ArrayList<>() })
-    if (list.contains(pathToDirectoryWithPatchedFiles)) {
-      throw new IllegalStateException("Patched directory $pathToDirectoryWithPatchedFiles is already added for module $moduleName")
+  @SuppressWarnings("unused")
+  @Deprecated
+  LayoutBuilder(CompilationContext context, boolean compressJars) {
+    this(context)
+  }
+
+  static String getLibraryName(JpsLibrary lib) {
+    String name = lib.name
+    if (!name.startsWith("#")) {
+      return name
     }
-    list.add(pathToDirectoryWithPatchedFiles)
+
+    List<JpsLibraryRoot> roots = lib.getRoots(JpsOrderRootType.COMPILED)
+    if (roots.size() != 1) {
+      List<String> urls = roots.collect { it.url }
+      throw new IllegalStateException("Non-single entry module library $name: $urls")
+    }
+    return PathUtilRt.getFileName(Strings.trimEnd(roots.get(0).url, URLUtil.JAR_SEPARATOR))
   }
 
   /**
@@ -79,7 +83,7 @@ final class LayoutBuilder {
   }
 
   LayoutSpec createLayoutSpec(ProjectStructureMapping mapping, boolean copyFiles) {
-    new LayoutSpec(mapping, copyFiles, context, ant, compressJars, moduleOutputPatches)
+    return new LayoutSpec(mapping, copyFiles, context, ant)
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -96,23 +100,17 @@ final class LayoutBuilder {
     final ProjectStructureMapping projectStructureMapping
     final Deque<String> currentPath = new ArrayDeque<>()
     final boolean copyFiles
-    final boolean compressJars
     private final AntBuilder ant
     private final CompilationContext context
-    final Map<String, List<Path>> moduleOutputPatches
 
     private LayoutSpec(ProjectStructureMapping projectStructureMapping,
                        boolean copyFiles,
                        CompilationContext context,
-                       AntBuilder ant,
-                       boolean compressJars,
-                       Map<String, List<Path>> moduleOutputPatches) {
+                       AntBuilder ant) {
       this.copyFiles = copyFiles
       this.ant = ant
-      this.compressJars = compressJars
       this.projectStructureMapping = projectStructureMapping
       this.context = context
-      this.moduleOutputPatches = moduleOutputPatches
     }
 
     /**
@@ -125,7 +123,7 @@ final class LayoutBuilder {
       if (directory.isEmpty()) {
         currentPath.addLast(relativePath)
         if (copyFiles) {
-          ant.jar(name: relativePath, compress: compressJars, duplicate: preserveDuplicates ? "preserve" : "fail",
+          ant.jar(name: relativePath, compress: false, duplicate: preserveDuplicates ? "preserve" : "fail",
                   filesetmanifest: mergeManifests ? "merge" : "skip", body)
         }
         else {
@@ -196,7 +194,7 @@ final class LayoutBuilder {
      */
     @CompileStatic(TypeCheckingMode.SKIP)
     void module(String moduleName, Closure body = {}) {
-      projectStructureMapping.addEntry(new ModuleOutputEntry(getCurrentPathString(), moduleName, 0))
+      projectStructureMapping.addEntry(new ModuleOutputEntry(Path.of(getCurrentPathString()), moduleName, 0))
       if (copyFiles) {
         ant.module(name: moduleName, body)
       }
@@ -208,7 +206,7 @@ final class LayoutBuilder {
      */
     @CompileStatic(TypeCheckingMode.SKIP)
     void moduleTests(String moduleName, Closure body = {}) {
-      projectStructureMapping.addEntry(new ModuleTestOutputEntry(getCurrentPathString(), moduleName))
+      projectStructureMapping.addEntry(new ModuleTestOutputEntry(Path.of(getCurrentPathString()), moduleName))
       if (copyFiles) {
         ant.moduleTests(name: moduleName, body)
       }
@@ -230,28 +228,6 @@ final class LayoutBuilder {
         throw new IllegalArgumentException("Cannot find library $libraryName in the project")
       }
       jpsLibrary(library, removeVersionFromJarName)
-    }
-
-    /**
-     * Include output of a project artifact {@code artifactName} to the current place in the layout
-     */
-    @CompileStatic(TypeCheckingMode.SKIP)
-    void artifact(String artifactName) {
-      def artifact = JpsArtifactService.instance.getArtifacts(context.project).find {it.name == artifactName}
-      if (artifact == null) {
-        throw new IllegalArgumentException("Cannot find artifact $artifactName in the project")
-      }
-
-      if (copyFiles) {
-        if (artifact.outputFilePath != artifact.outputPath) {
-          ant.fileset(file: artifact.outputFilePath)
-        }
-        else {
-          ant.fileset(dir: artifact.outputPath)
-        }
-      }
-      addArtifactMapping(artifact)
-      context.messages.debug(" include artifact '$artifactName'")
     }
 
     /**
@@ -305,51 +281,19 @@ final class LayoutBuilder {
       context.findRequiredModule(name)
     }
 
-    static String getLibraryName(JpsLibrary lib) {
-      def name = lib.name
-      if (name.startsWith("#")) {
-        if (lib.getRoots(JpsOrderRootType.COMPILED).size() != 1) {
-          def urls = lib.getRoots(JpsOrderRootType.COMPILED).collect { it.url }
-          throw new IllegalStateException("Non-single entry module library $name: $urls")
-        }
-        File file = lib.getFiles(JpsOrderRootType.COMPILED)[0]
-        return file.name
-      }
-      return name
-    }
-
     void addLibraryMapping(JpsLibrary library, String outputFileName, Path libraryFile) {
       def parentReference = library.createReference().parentReference
       if (parentReference instanceof JpsModuleReference) {
-        projectStructureMapping.addEntry(new ModuleLibraryFileEntry(getOutputFilePath(outputFileName),
+        projectStructureMapping.addEntry(new ModuleLibraryFileEntry(Path.of(getOutputFilePath(outputFileName)),
                                                                     ((JpsModuleReference)parentReference).moduleName, libraryFile, 0))
       }
       else {
-        projectStructureMapping.addEntry(new ProjectLibraryEntry(getOutputFilePath(outputFileName), library.name, libraryFile, 0))
+        projectStructureMapping.addEntry(new ProjectLibraryEntry(Path.of(getOutputFilePath(outputFileName)), library.name, libraryFile, 0))
       }
     }
 
     String getOutputFilePath(String outputFileName) {
       return currentPath.isEmpty() ? outputFileName : getCurrentPathString() + "/" + outputFileName
-    }
-
-    private void addArtifactMapping(@NotNull JpsArtifact artifact) {
-      JpsCompositePackagingElement rootElement = artifact.getRootElement()
-      String artifactFilePath = getCurrentPathString()
-      if (rootElement instanceof JpsArchivePackagingElement) {
-        artifactFilePath += "/" + rootElement + ".archiveName"
-      }
-      rootElement.children.each {
-        if (it instanceof JpsProductionModuleOutputPackagingElement) {
-          projectStructureMapping.addEntry(new ModuleOutputEntry(artifactFilePath, it.moduleReference.moduleName, 0))
-        }
-        else if (it instanceof JpsTestModuleOutputPackagingElement) {
-          projectStructureMapping.addEntry(new ModuleTestOutputEntry(artifactFilePath, it.moduleReference.moduleName))
-        }
-        else if (it instanceof JpsLibraryFilesPackagingElement) {
-          addLibraryMapping(it.libraryReference.resolve(), artifactFilePath, null)
-        }
-      }
     }
   }
 }

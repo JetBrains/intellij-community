@@ -42,7 +42,9 @@ interface RunToolbarData {
   val id: String
   var configuration: RunnerAndConfigurationSettings?
   val environment: ExecutionEnvironment?
-  val waitingForProcess: MutableSet<String>
+  val waitingForAProcesses: WaitingForAProcesses
+
+  fun clear()
 }
 
 internal fun RunContentDescriptor.environment(): ExecutionEnvironment? {
@@ -75,8 +77,8 @@ internal fun AnActionEvent.isActiveProcess(): Boolean {
   return this.environment() != null
 }
 
-internal fun AnActionEvent.addWaitingForAProcess(executorId: String) {
-  runToolbarData()?.waitingForProcess?.add(executorId)
+internal fun RunToolbarData.startWaitingForAProcess(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
+  RunToolbarSlotManager.getInstance(project).startWaitingForAProcess(this, settings, executorId)
 }
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {
@@ -85,6 +87,7 @@ internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSetting
 
 internal fun DataContext.setConfiguration(value: RunnerAndConfigurationSettings?) {
   val runToolbarData = runToolbarData()
+  runToolbarData?.clear()
   runToolbarData?.configuration = value
 }
 

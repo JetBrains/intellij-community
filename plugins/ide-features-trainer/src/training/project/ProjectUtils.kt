@@ -7,7 +7,7 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.setTrusted
+import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
@@ -150,10 +150,10 @@ object ProjectUtils {
                                           langSupport: LangSupport,
                                           openProjectTask: OpenProjectTask,
                                           postInitCallback: (learnProject: Project) -> Unit) {
-    val copied = copyLearningProjectFiles(contentRoot, langSupport)
-    if (!copied) return
-    createVersionFile(contentRoot)
-    openOrImportLearningProject(contentRoot, openProjectTask, langSupport) {
+    val actualContentRoot = copyLearningProjectFiles(contentRoot, langSupport)
+    if (actualContentRoot == null) return
+    createVersionFile(actualContentRoot)
+    openOrImportLearningProject(actualContentRoot, openProjectTask, langSupport) {
       updateLearningModificationTimestamp(it)
       postInitCallback(it)
     }
@@ -189,17 +189,21 @@ object ProjectUtils {
           GeneralSettings.getInstance().confirmOpenNewProject = confirmOpenNewProject
         }
       }
-      project.setTrusted(true)
       postInitCallback(project)
     }
   }
 
-  private fun copyLearningProjectFiles(newContentDirectory: Path, langSupport: LangSupport): Boolean {
+  /**
+   * Returns [newContentDirectory] if learning project files successfully copied on the first try,
+   *         path to the directory chosen by user if learning project files successfully copied on the second try,
+   *         null if user closed the directory chooser.
+   */
+  private fun copyLearningProjectFiles(newContentDirectory: Path, langSupport: LangSupport): Path? {
     var targetDirectory = newContentDirectory
     if (!langSupport.copyLearningProjectFiles(targetDirectory.toFile())) {
       targetDirectory = invokeAndWaitIfNeeded {
         chooseParentDirectoryForLearningProject(langSupport)
-      } ?: return false
+      } ?: return null
       if (!langSupport.copyLearningProjectFiles(targetDirectory.toFile())) {
         invokeLater {
           Messages.showInfoMessage(LearnBundle.message("learn.project.initializing.cannot.create.message"),
@@ -208,9 +212,10 @@ object ProjectUtils {
         error("Cannot create learning demo project. See LOG files for details.")
       }
     }
-    val path = langSupport.getLearningProjectPath(targetDirectory).toAbsolutePath().toString()
-    LangManager.getInstance().setLearningProjectPath(langSupport, path)
-    return true
+    val path = langSupport.getLearningProjectPath(targetDirectory)
+    LangManager.getInstance().setLearningProjectPath(langSupport, path.toAbsolutePath().toString())
+    TrustedPaths.getInstance().setProjectPathTrusted(path, true)
+    return targetDirectory
   }
 
   fun learningProjectUrl(langSupport: LangSupport) =

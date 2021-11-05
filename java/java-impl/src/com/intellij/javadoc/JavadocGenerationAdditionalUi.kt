@@ -118,7 +118,7 @@ class JavadocGenerationAdditionalUi {
       }
       row(JavaBundle.message("javadoc.generate.heap.size")) {
         myHeapSizeField = intTextField(IntRange(0, Int.MAX_VALUE), 128)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .gap(RightGap.SMALL)
           .component
         @Suppress("DialogTitleCapitalization")
         label(JavaBundle.message("megabytes.unit"))

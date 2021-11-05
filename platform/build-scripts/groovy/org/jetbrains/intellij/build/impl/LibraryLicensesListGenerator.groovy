@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.google.gson.GsonBuilder
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.core.JsonGenerator
 import groovy.text.SimpleTemplateEngine
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.BuildMessages
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Span
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.LibraryLicense
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -16,42 +19,35 @@ import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.Function
 
 @CompileStatic
 final class LibraryLicensesListGenerator {
-  private final BuildMessages messages
-  private Map<LibraryLicense, String> licensesInModules
+  private final List<LibraryLicense> libraryLicenses
 
-  private LibraryLicensesListGenerator(BuildMessages messages,
-                                       Map<LibraryLicense, String> licensesInModules) {
-    this.messages = messages
-    this.licensesInModules = licensesInModules
+  private LibraryLicensesListGenerator(List<LibraryLicense> libraryLicenses) {
+    this.libraryLicenses = libraryLicenses
   }
 
-  static LibraryLicensesListGenerator create(BuildMessages messages,
-                                             JpsProject project,
+  static LibraryLicensesListGenerator create(JpsProject project,
                                              List<LibraryLicense> licensesList,
                                              Set<String> usedModulesNames) {
-    Map<LibraryLicense, String> licences = generateLicenses(messages, project, licensesList, usedModulesNames)
+    List<LibraryLicense> licences = generateLicenses(project, licensesList, usedModulesNames)
     if (licences.isEmpty()) {
-      messages.error("Empty licenses table for ${licensesList.size()} licenses and ${usedModulesNames.size()} used modules names")
+      throw new IllegalStateException("Empty licenses table for ${licensesList.size()} licenses and ${usedModulesNames.size()} used modules names")
     }
-    return new LibraryLicensesListGenerator(messages, licences)
+    return new LibraryLicensesListGenerator(licences)
   }
 
-  private static Map<LibraryLicense, String> generateLicenses(BuildMessages messages,
-                                                              JpsProject project,
-                                                              List<LibraryLicense> licensesList,
-                                                              Set<String> usedModulesNames) {
-    Map<LibraryLicense, String> licenses = [:]
-    messages.debug("Generating licenses table")
-    messages.debug("Used modules: $usedModulesNames")
+  private static List<LibraryLicense> generateLicenses(JpsProject project,
+                                                       List<LibraryLicense> licensesList,
+                                                       Set<String> usedModulesNames) {
+    Span.current().setAttribute(AttributeKey.stringArrayKey("modules"), List.copyOf(usedModulesNames))
     Set<JpsModule> usedModules = project.modules.findAll { usedModulesNames.contains(it.name) } as Set<JpsModule>
-    Map<String, String> usedLibraries = [:]
-    usedModules.each { JpsModule module ->
+    Map<String, String> usedLibraries = new HashMap<>()
+    for (JpsModule module in usedModules) {
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each { item ->
-        def libraryName = getLibraryName(item)
-        usedLibraries[libraryName] = module.name
+        usedLibraries.put(getLibraryName(item), module.name)
       }
     }
     Map<String, String> libraryVersions = (project.libraryCollection.libraries + project.modules.collectMany {it.libraryCollection.libraries})
@@ -59,23 +55,33 @@ final class LibraryLicensesListGenerator {
       .findAll { it != null}
       .collectEntries { [it.name, it.properties.data.version] }
 
+    List<LibraryLicense> licenses = new ArrayList<>()
+
     licensesList.findAll { it.license != LibraryLicense.JETBRAINS_OWN }.each { LibraryLicense lib ->
       if (lib.libraryName != null && lib.version == null && libraryVersions.containsKey(lib.libraryName)) {
         lib = new LibraryLicense(lib.name, lib.url, libraryVersions[lib.libraryName], lib.libraryName, lib.additionalLibraryNames,
                                  lib.attachedTo, lib.transitiveDependency, lib.license, lib.licenseUrl)
       }
       if (usedModulesNames.contains(lib.attachedTo)) {
-        licenses[lib] = lib.attachedTo
+        // lib.attachedTo
+        licenses.add(lib)
       }
       else {
-        lib.libraryNames.each {
-          String module = usedLibraries[it]
+        for (String name in lib.libraryNames) {
+          String module = usedLibraries.get(name)
           if (module != null) {
-            licenses[lib] = module
+            licenses.add(lib)
           }
         }
       }
     }
+
+    licenses.sort(Comparator.comparing(new Function<LibraryLicense, String>() {
+      @Override
+      String apply(LibraryLicense library) {
+        return library.presentableName
+      }
+    }))
     return licenses
   }
 
@@ -89,8 +95,6 @@ final class LibraryLicensesListGenerator {
   }
 
   void generateHtml(Path file) {
-    messages.debug("Used libraries:")
-
     String line = '''
   <tr valign="top">
     <td class="firstColumn">
@@ -104,24 +108,6 @@ final class LibraryLicensesListGenerator {
       '''.trim()
     SimpleTemplateEngine engine = new SimpleTemplateEngine()
 
-    List<String> lines = new ArrayList<>()
-    for (entry in licensesInModules.entrySet()) {
-      LibraryLicense lib = entry.key
-      String moduleName = entry.value
-
-      String libKey = (lib.presentableName + "_" + lib.version ?: "").replace(" ", "_")
-      // id here is needed because of a bug IDEA-188262
-      String name = lib.url != null ? "<a id=\"${libKey}_lib_url\" class=\"name\" href=\"$lib.url\">$lib.presentableName</a>" :
-                    "<span class=\"name\">$lib.presentableName</span>"
-      String license = lib.libraryLicenseUrl != null ?
-                       "<a id=\"${libKey}_license_url\" class=\"licence\" href=\"$lib.libraryLicenseUrl\">$lib.license</a>" :
-                       "<span class=\"licence\">$lib.license</span>"
-
-      messages.debug(" $lib.presentableName (in module $moduleName)")
-      lines.add(engine.createTemplate(line).make(["name": name, "libVersion": lib.version ?: "", "license": license]).toString())
-    }
-
-    lines.sort(true, String.CASE_INSENSITIVE_ORDER)
     StringBuilder out = new StringBuilder()
     out.append('''
 <style>
@@ -167,33 +153,55 @@ final class LibraryLicensesListGenerator {
 '''.trim())
     out.append("\n<table>")
     out.append("\n<tr><th class=\"firstColumn\">Software</th><th class=\"secondColumn\">License</th></tr>")
-    for (it in lines) {
-      out.append('\n')
-      out.append(it)
+
+    for (LibraryLicense lib in libraryLicenses) {
+      String libKey = (lib.presentableName + "_" + lib.version ?: "").replace(" ", "_")
+      // id here is needed because of a bug IDEA-188262
+      String name = lib.url != null ? "<a id=\"${libKey}_lib_url\" class=\"name\" href=\"$lib.url\">$lib.presentableName</a>" :
+                    "<span class=\"name\">$lib.presentableName</span>"
+      String license = lib.libraryLicenseUrl != null ?
+                       "<a id=\"${libKey}_license_url\" class=\"licence\" href=\"$lib.libraryLicenseUrl\">$lib.license</a>" :
+                       "<span class=\"licence\">$lib.license</span>"
+      out.append('\n' as char)
+      engine.createTemplate(line).make(["name": name, "libVersion": lib.version ?: "", "license": license]).writeTo(new Writer() {
+        @Override
+        void write(@NotNull char[] chars, int off, int len) throws IOException {
+          out.append(chars, off, len)
+        }
+
+        @Override
+        void flush() throws IOException {
+        }
+
+        @Override
+        void close() throws IOException {
+        }
+      })
     }
+
     out.append("\n</table>")
     Files.createDirectories(file.getParent())
     Files.writeString(file, out)
   }
 
   void generateJson(Path file) {
-    List<LibraryLicenseData> entries = []
-
-    licensesInModules.keySet().sort( {it.presentableName} ).each {
-      entries.add(
-        new LibraryLicenseData(
-          name: it.presentableName,
-          url: it.url,
-          version: it.version,
-          license: it.license,
-          licenseUrl: it.libraryLicenseUrl
-        )
-      )
-    }
-
     Files.createDirectories(file.getParent())
-    Files.newBufferedWriter(file).withCloseable {
-      new GsonBuilder().setPrettyPrinting().create().toJson(entries, it)
+    Files.newOutputStream(file).withCloseable { out ->
+      JsonGenerator writer = new JsonFactory().createGenerator(out).useDefaultPrettyPrinter()
+      writer.writeStartArray()
+      for (LibraryLicense entry : libraryLicenses) {
+        writer.writeStartObject()
+
+        writer.writeStringField("name", entry.presentableName)
+        writer.writeStringField("url", entry.url)
+        writer.writeStringField("version", entry.version)
+        writer.writeStringField("license", entry.license)
+        writer.writeStringField("licenseUrl", entry.libraryLicenseUrl)
+
+        writer.writeEndObject()
+      }
+      writer.writeEndArray()
+      writer.close()
     }
   }
 }

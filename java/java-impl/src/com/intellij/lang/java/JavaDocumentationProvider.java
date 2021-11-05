@@ -536,6 +536,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       }
     }
     else if (commentOwner instanceof PsiClass) {
+      if (((PsiClass)commentOwner).isRecord()) {
+        for (PsiRecordComponent component : ((PsiClass)commentOwner).getRecordComponents()) {
+          builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, commentOwner.getContainingFile(), commenter));
+          builder.append(component.getName());
+          builder.append(LINE_SEPARATOR);
+        }
+      }
       final PsiTypeParameterList typeParameterList = ((PsiClass)commentOwner).getTypeParameterList();
       if (typeParameterList != null) {
         createTypeParamsListComment(builder, commenter, typeParameterList);

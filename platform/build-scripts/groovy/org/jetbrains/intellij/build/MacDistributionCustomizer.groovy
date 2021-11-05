@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 
-import java.nio.file.Paths
+import java.nio.file.Path
 
 @CompileStatic
 abstract class MacDistributionCustomizer {
@@ -88,12 +88,8 @@ abstract class MacDistributionCustomizer {
    * Relative paths to files in macOS distribution which should be signed
    */
   List<String> getBinariesToSign(BuildContext context, JvmArchitecture arch) {
-    List<String> binaries = []
-    def binary = RepairUtilityBuilder.binaryFor(context, OsFamily.MACOS, arch)
-    if (binary != null) {
-      binaries += binary.relativeTargetPath
-    }
-    return binaries
+    RepairUtilityBuilder.Binary binary = RepairUtilityBuilder.binaryFor(context, OsFamily.MACOS, arch)
+    return binary == null ? Collections.<String>emptyList() : List.of(binary.relativeTargetPath)
   }
 
   /**
@@ -121,7 +117,9 @@ abstract class MacDistributionCustomizer {
    * @param applicationInfo application info that can be used to check for EAP and building version
    * @return map propertyName-&gt;propertyValue
    */
-  Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
+  Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) {
+    return Collections.emptyMap()
+  }
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries
@@ -142,7 +140,7 @@ abstract class MacDistributionCustomizer {
    * @param targetDirectory application bundle directory
    * @param arch distribution target architecture, not null
    */
-  void copyAdditionalFiles(BuildContext context, String targetDirectory, JvmArchitecture arch) {
-    RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, Paths.get(targetDirectory))
+  void copyAdditionalFiles(BuildContext context, Path targetDirectory, JvmArchitecture arch) {
+    RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, targetDirectory)
   }
 }

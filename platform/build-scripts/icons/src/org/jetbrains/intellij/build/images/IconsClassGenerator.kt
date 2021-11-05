@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 package org.jetbrains.intellij.build.images
 
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.ui.svg.SvgTranscoder
@@ -12,8 +12,8 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.diff.Diff
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.readXmlAsModel
 import net.jpountz.xxhash.XXHashFactory
-import org.jdom.JDOMException
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -23,13 +23,15 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.*
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
+import javax.xml.stream.XMLStreamException
 
-data class ModifiedClass(val module: JpsModule, val file: Path, val result: CharSequence)
+internal data class ModifiedClass(val module: JpsModule, val file: Path, val result: CharSequence)
 
 // legacy ordering
-private val NAME_COMPARATOR: Comparator<String> = compareBy { it.toLowerCase() + '.' }
+private val NAME_COMPARATOR: Comparator<String> = compareBy { it.lowercase(Locale.ENGLISH) + '.' }
 
 internal data class IconClassInfo(val customLoad: Boolean,
                                   val packageName: String,
@@ -264,8 +266,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       result.append('\n')
     }
 
-    // IconsGeneratedSourcesFilter depends on following comment, if you going to change the text
-    // please do corresponding changes in IconsGeneratedSourcesFilter as well
+    // IconsGeneratedSourcesFilter depends on following comment, if you are going to change the text
+    // please do correspond changes in IconsGeneratedSourcesFilter as well
     result.append("/**\n")
     result.append(" * NOTE THIS FILE IS AUTO-GENERATED\n")
     result.append(" * DO NOT EDIT IT BY HAND, run \"Generate icon classes\" configuration instead\n")
@@ -494,8 +496,15 @@ private fun generateIconFieldName(file: Path): CharSequence {
       return toCamelCaseJavaIdentifier(imageFileName, imageFileName.lastIndexOf('.'))
     }
     else -> {
-      return toJavaIdentifier(if ((imageFileName.length - 4) == 2) imageFileName.toUpperCase() else imageFileName.capitalize(),
-                              imageFileName.lastIndexOf('.'))
+      val id = if ((imageFileName.length - 4) == 2) {
+        imageFileName.uppercase(Locale.ENGLISH)
+      }
+      else {
+        imageFileName.replaceFirstChar {
+          if (it.isLowerCase()) it.titlecase(Locale.ENGLISH) else it.toString()
+        }
+      }
+      return toJavaIdentifier(id = id, endIndex = imageFileName.lastIndexOf('.'))
     }
   }
 }
@@ -562,7 +571,7 @@ private fun toJavaIdentifier(id: CharSequence, endIndex: Int): CharSequence {
         if (index == endIndex) {
           break
         }
-        sb.append(id[index].toUpperCase())
+        sb.append(id[index].uppercaseChar())
       }
       else {
         sb.append('_')
@@ -580,7 +589,7 @@ private fun toStreamingSnakeCaseJavaIdentifier(id: String, endIndex: Int): CharS
   while (index < endIndex) {
     val c = id[index]
     if (if (index == 0) Character.isJavaIdentifierStart(c) else Character.isJavaIdentifierPart(c)) {
-      sb.append(c.toUpperCase())
+      sb.append(c.uppercaseChar())
     }
     else {
       sb.append('_')
@@ -602,7 +611,7 @@ private fun toCamelCaseJavaIdentifier(id: String, endIndex: Int): CharSequence {
     }
     else if (if (index == 0) Character.isJavaIdentifierStart(c) else Character.isJavaIdentifierPart(c)) {
       if (upperCase) {
-        sb.append(c.toUpperCase())
+        sb.append(c.uppercaseChar())
         upperCase = false
       }
       else {
@@ -619,7 +628,9 @@ private fun toCamelCaseJavaIdentifier(id: String, endIndex: Int): CharSequence {
 }
 
 private fun capitalize(name: String): String {
-  return if (name.length == 2) name.toUpperCase() else name.capitalize()
+  return if (name.length == 2) name.uppercase(Locale.ENGLISH) else name.replaceFirstChar {
+    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+  }
 }
 
 private const val iconLoaderCode = "IconManager.getInstance()"
@@ -676,11 +687,12 @@ private fun getPluginPackageIfPossible(module: JpsModule): String? {
     }
 
     try {
-      return JDOMUtil.load(pluginXml).getAttributeValue("package") ?: "icons"
+      return readXmlAsModel(Files.newInputStream(pluginXml)).getAttributeValue("package") ?: "icons"
     }
     catch (ignore: NoSuchFileException) {
     }
-    catch (ignore: JDOMException) {
+    catch (ignore: XMLStreamException) {
+      // ignore invalid XML
     }
   }
   return null

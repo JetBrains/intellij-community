@@ -49,6 +49,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelFilterNot
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelFlatMap
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
@@ -555,7 +556,7 @@ private fun CoroutineScope.computeHeaderData(
     return result
 }
 
-private fun List<PackageModel.Installed>.filterByTargetModules(
+private suspend fun List<PackageModel.Installed>.filterByTargetModules(
     targetModules: TargetModules
 ) = when (targetModules) {
     is TargetModules.All -> this
@@ -590,7 +591,7 @@ private suspend fun computeSearchResultModels(
         val index = searchResults.packages.parallelMap { "${it.groupId}:${it.artifactId}" }
         searchResults.packages
             .parallelFilterNot { installedDependencies.any { installed -> installed.matchesCoordinates(it) } }
-            .parallelMapNotNull { PackageModel.fromSearchResult(it) }
+            .parallelMapNotNull { PackageModel.fromSearchResult(it, project.packageVersionNormalizer) }
             .parallelMap {
                 val uiState = searchResultsUiStateOverrides[it.identifier]
                 cache.getOrPut(UiPackageModelCacheKey(targetModules, uiState, onlyStable, it)) {

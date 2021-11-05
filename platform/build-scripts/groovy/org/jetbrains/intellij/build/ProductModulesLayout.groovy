@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 
 @CompileStatic
 class ProductModulesLayout {
@@ -83,7 +83,7 @@ class ProductModulesLayout {
   /**
    * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
    */
-  Consumer<PlatformLayout> platformLayoutCustomizer = {} as Consumer<PlatformLayout>
+  BiConsumer<PlatformLayout, BuildContext> platformLayoutCustomizer = { _, __ -> } as BiConsumer<PlatformLayout, BuildContext>
 
   /**
    * Names of the modules which classpath will be used to build searchable options index <br>
@@ -112,7 +112,7 @@ class ProductModulesLayout {
   /**
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
    */
-  List<String> compatiblePluginsToIgnore = []
+  List<String> compatiblePluginsToIgnore = new ArrayList<>()
 
   /**
    * Module names which should be excluded from this product.

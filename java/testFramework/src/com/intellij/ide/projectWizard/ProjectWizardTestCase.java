@@ -8,7 +8,6 @@ import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -83,8 +82,8 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
       });
       SelectTemplateSettings.getInstance().setLastTemplate(null, null);
-      UIUtil.dispatchAllInvocationEvents(); // let vfs update pass
-      LaterInvocator.dispatchPendingFlushes();
+      // let vfs update pass
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
     catch (Throwable e) {
       addSuppressedException(e);

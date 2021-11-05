@@ -29,7 +29,7 @@ internal interface FeaturesProviderTestCase {
    * By default, all other arguments passed to [SearchEverywhereElementFeaturesProvider.getElementFeatures]
    * are equal to 0, apart from the element. To change that and pass a different value for testing, use:
    *   - [AssertionSpecifier.withCurrentTime]
-   *   - [AssertionSpecifier.withQueryLength]
+   *   - [AssertionSpecifier.withQuery]
    *   - [AssertionSpecifier.withPriority]
    */
   class AssertionElementSelector(private val testCase: FeaturesProviderTestCase, private val feature: String?) {
@@ -38,7 +38,7 @@ internal interface FeaturesProviderTestCase {
     inner class AssertionSpecifier<E : Any>(private val element: E) {
       private var features: Map<String, Any> = emptyMap()
       private var currentTime = 0L
-      private var queryLength = 0
+      private var query = ""
       private var elementPriority = 0
       private val cache = testCase.provider.getDataToCache(testCase.testProject)
 
@@ -55,8 +55,8 @@ internal interface FeaturesProviderTestCase {
        * Specifies the query length start time that will be passed when obtaining the features,
        * see [SearchEverywhereElementFeaturesProvider.getElementFeatures]
        */
-      fun withQueryLength(length: Int): AssertionSpecifier<E> {
-        queryLength = length
+      fun withQuery(query: String): AssertionSpecifier<E> {
+        this.query = query
         return this
       }
 
@@ -81,8 +81,17 @@ internal interface FeaturesProviderTestCase {
        */
       fun changes(from: Any?, to: Any?) = ChangeOperation(from, to)
 
+      /**
+       * Checks whether feature exists or not
+       */
+      fun exists(expected: Boolean) {
+        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
+        val containsFeature = feature in features.keys
+        assertEquals(expected, containsFeature)
+      }
+
       private fun assert(expectedValue: Any?) {
-        features = testCase.provider.getElementFeatures(element, currentTime, queryLength, elementPriority, cache)
+        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
 
         if (features.isEmpty()) {
           val providerClass = testCase.provider::class.java.simpleName

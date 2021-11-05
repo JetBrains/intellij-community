@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
@@ -100,14 +99,14 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       }
     }
 
+    lateinit var openFirstDiffTaskId: TaskContext.TaskId
     task {
+      openFirstDiffTaskId = taskId
       highlightAnnotation(null, firstStateText, highlightRight = true)
     }
 
     val showDiffText = ActionsBundle.message("action.Diff.ShowDiff.text")
-    lateinit var openFirstDiffTaskId: TaskContext.TaskId
     task {
-      openFirstDiffTaskId = taskId
       text(GitLessonsBundle.message("git.annotate.feature.explanation", strong(annotateActionName), strong("Johnny Catsville")))
       text(GitLessonsBundle.message("git.annotate.click.annotation.tooltip"), LearningBalloonConfig(Balloon.Position.above, 0))
       highlightShowDiffMenuItem()
@@ -120,7 +119,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     task {
       text(GitLessonsBundle.message("git.annotate.choose.show.diff", strong(showDiffText)))
       trigger("com.intellij.openapi.vcs.actions.ShowDiffFromAnnotation")
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(openFirstDiffTaskId, delayMillis = defaultRestoreDelay)
       test { clickShowDiffAction() }
     }
 
@@ -234,20 +233,18 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     }
 
     task {
-      val showChangesAsTab = Registry.`is`("vcs.show.affected.files.as.tab")
       before {
-        if (!showChangesAsTab && backupRevisionsLocation == null) {
+        if (backupRevisionsLocation == null) {
           backupRevisionsLocation = adjustPopupPosition(ChangeListViewerDialog.DIMENSION_SERVICE_KEY)
         }
       }
-      val actionText = if (showChangesAsTab) action("HideActiveWindow") else LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)
-      text(GitLessonsBundle.message("git.annotate.close.changes", code(editedPropertyName), actionText))
+      text(GitLessonsBundle.message("git.annotate.close.changes", code(editedPropertyName), LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
       stateCheck {
         previous.ui?.isShowing != true
       }
       test(waitEditorToBeReady = false) {
         Thread.sleep(500)
-        if (showChangesAsTab) actions("HideActiveWindow") else invokeActionViaShortcut("ESCAPE")
+        invokeActionViaShortcut("ESCAPE")
       }
     }
 

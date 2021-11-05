@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.InvocationUtil;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,11 +73,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.application.impl.InvocationUtil.*;
-
 public final class IdeEventQueue extends EventQueue {
-  private static final Set<Class<? extends Runnable>> ourRunnablesWoWrite = Set.of(REPAINT_PROCESSING_CLASS);
-  private static final Set<Class<? extends Runnable>> ourRunnablesWithWrite = Set.of(FLUSH_NOW_CLASS);
   private static final boolean ourDefaultEventWithWrite = true;
 
   private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
@@ -427,7 +424,7 @@ public final class IdeEventQueue extends EventQueue {
       myCurrentEvent = e;
 
       AWTEvent finalE1 = e;
-      Runnable runnable = extractRunnable(e);
+      Runnable runnable = InvocationUtil.extractRunnable(e);
       Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
       Runnable processEventRunnable = () -> {
         ProgressManager progressManager;
@@ -458,7 +455,8 @@ public final class IdeEventQueue extends EventQueue {
               _dispatchEvent(myCurrentEvent);
             }
           });
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
           processException(t);
         }
         finally {
@@ -476,8 +474,7 @@ public final class IdeEventQueue extends EventQueue {
           if (finalE1 instanceof KeyEvent) {
             maybeReady();
           }
-          if (eventWatcher != null &&
-              runnableClass != FLUSH_NOW_CLASS) {
+          if (eventWatcher != null && runnable != null && !InvocationUtil.isFlushNow(runnable)) {
             eventWatcher.logTimeMillis(runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
                                        startedAt,
                                        runnableClass);
@@ -489,15 +486,9 @@ public final class IdeEventQueue extends EventQueue {
         }
       };
 
-      if (runnableClass != Runnable.class) {
-        if (ourRunnablesWoWrite.contains(runnableClass)) {
-          processEventRunnable.run();
-          return;
-        }
-        if (ourRunnablesWithWrite.contains(runnableClass)) {
-          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable);
-          return;
-        }
+      if (runnableClass == InvocationUtil.REPAINT_PROCESSING_CLASS) {
+        processEventRunnable.run();
+        return;
       }
 
       if (ourDefaultEventWithWrite) {

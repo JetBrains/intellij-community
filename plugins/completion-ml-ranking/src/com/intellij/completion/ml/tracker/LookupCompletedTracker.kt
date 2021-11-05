@@ -4,11 +4,11 @@ package com.intellij.completion.ml.tracker
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.common.PrefixMatchingType
-import com.intellij.completion.ml.util.idString
 import com.intellij.completion.ml.personalization.UserFactorDescriptions
 import com.intellij.completion.ml.personalization.UserFactorStorage
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.completion.ml.util.idString
+import com.intellij.textMatching.PrefixMatchingType
 
 /**
  * @author Vitaliy.Bibaev

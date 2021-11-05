@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.Pair
@@ -261,8 +261,12 @@ class PluginXmlPatcherTest {
     try {
       Files.writeString(tempFile, before)
 
-      val patcher = PluginXmlPatcher(MockBuildMessages(), "X-RELEASE-DATE-X", "X-RELEASE-VERSION-X", productName, isEap)
-      patcher.patchPluginXml(tempFile, "x-plugin-module-name", "x-plugin-version", Pair("new-since", "new-until"), toPublish, retainProductDescriptorForBundledPlugin)
+      val patcher = PluginXmlPatcher("X-RELEASE-DATE-X", "X-RELEASE-VERSION-X")
+      patcher.patchPluginXml(tempFile, "x-plugin-module-name", "x-plugin-version", Pair("new-since", "new-until"),
+                             toPublish,
+                             retainProductDescriptorForBundledPlugin,
+                             isEap,
+                             productName)
 
       Assert.assertEquals(after, Files.readString(tempFile))
     }

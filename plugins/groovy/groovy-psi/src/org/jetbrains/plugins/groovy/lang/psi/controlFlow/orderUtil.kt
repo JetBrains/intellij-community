@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("OrderUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow
@@ -30,7 +30,7 @@ fun postOrder(flow: Array<Instruction>, reachable: Boolean): IntArray {
     val undiscovered = iterator.firstOrNull { !visited[it.num()] }
     if (undiscovered != null) {
       visited[undiscovered.num()] = true          // discover successor
-      stack.push(undiscovered to undiscovered.allSuccessors().iterator())
+      stack.push(undiscovered to undiscovered.allSuccessors().sortedByDescending { it.num() }.iterator())
     }
     else {
       stack.pop()

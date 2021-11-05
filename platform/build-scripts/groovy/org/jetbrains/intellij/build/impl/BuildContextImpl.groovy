@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.trace.SpanBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
@@ -28,11 +29,13 @@ import java.util.stream.Collectors
 
 @CompileStatic
 final class BuildContextImpl extends BuildContext {
+  final ApplicationInfoProperties applicationInfo
+
   private final JpsGlobal global
   private final CompilationContextImpl compilationContext
 
   // thread-safe - forkForParallelTask pass it to child context
-  private final ConcurrentLinkedQueue<Pair<Path, String>> distFiles
+  private final ConcurrentLinkedQueue<Map.Entry<Path, String>> distFiles
 
   @Override
   String getFullBuildNumber() {
@@ -52,6 +55,7 @@ final class BuildContextImpl extends BuildContext {
 
     def compilationContext = CompilationContextImpl.create(communityHome, projectHome,
                                                            createBuildOutputRootEvaluator(projectHome, productProperties), options)
+
     return new BuildContextImpl(compilationContext, productProperties,
                                 windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                 proprietaryBuildTools, new ConcurrentLinkedQueue<>())
@@ -62,7 +66,7 @@ final class BuildContextImpl extends BuildContext {
                            LinuxDistributionCustomizer linuxDistributionCustomizer,
                            MacDistributionCustomizer macDistributionCustomizer,
                            ProprietaryBuildTools proprietaryBuildTools,
-                           @NotNull ConcurrentLinkedQueue<Pair<Path, String>> distFiles) {
+                           @NotNull ConcurrentLinkedQueue<Map.Entry<Path, String>> distFiles) {
     this.compilationContext = compilationContext
     this.global = compilationContext.global
     this.productProperties = productProperties
@@ -76,10 +80,10 @@ final class BuildContextImpl extends BuildContext {
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
 
+    xBootClassPathJarNames = productProperties.xBootClassPathJarNames
     bootClassPathJarNames = List.of("util.jar", "bootstrap.jar")
     dependenciesProperties = new DependenciesProperties(this)
-    applicationInfo = new ApplicationInfoProperties(project, productProperties, messages)
-    applicationInfo = applicationInfo.patch(this)
+    applicationInfo = new ApplicationInfoProperties(project, productProperties, messages).patch(this)
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
@@ -89,16 +93,40 @@ final class BuildContextImpl extends BuildContext {
     }
 
     options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
-    messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
+    if (!options.buildStepsToSkip.isEmpty()) {
+      messages.info("Build steps to be skipped: ${String.join(", ", options.buildStepsToSkip)}")
+    }
+  }
+
+  private BuildContextImpl(@NotNull BuildContextImpl parent,
+                           @NotNull BuildMessages messages,
+                           @NotNull ConcurrentLinkedQueue<Map.Entry<Path, String>> distFiles) {
+    compilationContext = parent.compilationContext.cloneForContext(messages)
+    this.distFiles = distFiles
+    global = compilationContext.global
+    productProperties = parent.productProperties
+    proprietaryBuildTools = parent.proprietaryBuildTools
+    windowsDistributionCustomizer = parent.windowsDistributionCustomizer
+    linuxDistributionCustomizer = parent.linuxDistributionCustomizer
+    macDistributionCustomizer = parent.macDistributionCustomizer
+
+    bundledJreManager = new BundledJreManager(this)
+
+    buildNumber = parent.buildNumber
+
+    xBootClassPathJarNames = parent.xBootClassPathJarNames
+    bootClassPathJarNames = parent.bootClassPathJarNames
+    dependenciesProperties = parent.dependenciesProperties
+    applicationInfo = parent.applicationInfo
   }
 
   @Override
-  void addDistFile(@NotNull Pair<Path, String> file) {
+  void addDistFile(@NotNull Map.Entry<Path, String> file) {
     messages.debug("$file requested to be added to app resources")
     distFiles.add(file)
   }
 
-  @NotNull Collection<Pair<Path, String>> getDistFiles() {
+  @NotNull Collection<Map.Entry<Path, String>> getDistFiles() {
     return List.copyOf(distFiles)
   }
 
@@ -179,8 +207,8 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  String getModuleOutputPath(JpsModule module) {
-    return compilationContext.getModuleOutputPath(module)
+  Path getModuleOutputDir(JpsModule module) {
+    return compilationContext.getModuleOutputDir(module)
   }
 
   @Override
@@ -271,26 +299,35 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  boolean executeStep(SpanBuilder spanBuilder, String stepId, Runnable step) {
+    if (options.buildStepsToSkip.contains(stepId)) {
+      spanBuilder.startSpan().addEvent("skip").end()
+    }
+    else {
+      messages.block(spanBuilder, new Supplier<Void>() {
+        @Override
+        Void get() {
+          step.run()
+          return null
+        }
+      })
+    }
+    return true
+  }
+
+  @Override
   boolean shouldBuildDistributions() {
     options.targetOS.toLowerCase() != BuildOptions.OS_NONE
   }
 
   @Override
   boolean shouldBuildDistributionForOS(String os) {
-    shouldBuildDistributions() && options.targetOS.toLowerCase() in [BuildOptions.OS_ALL, os]
+    return shouldBuildDistributions() && options.targetOS.toLowerCase() in [BuildOptions.OS_ALL, os]
   }
 
   @Override
   BuildContext forkForParallelTask(String taskName) {
-    def ant = new AntBuilder(ant.project)
-    def messages = messages.forkForParallelTask(taskName)
-    def compilationContextCopy =
-      compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
-    def copy = new BuildContextImpl(compilationContextCopy, productProperties,
-                                    windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                    proprietaryBuildTools, distFiles)
-    copy.paths.artifacts = paths.artifacts
-    return copy
+    return new BuildContextImpl(this, messages.forkForParallelTask(taskName), distFiles)
   }
 
   @Override
@@ -301,14 +338,14 @@ final class BuildContextImpl extends BuildContext {
     /**
      * FIXME compiled classes are assumed to be already fetched in the FIXME from {@link org.jetbrains.intellij.build.impl.CompilationContextImpl#prepareForBuild}, please change them together
      */
-    def options = new BuildOptions()
+    BuildOptions options = new BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
-    def compilationContextCopy =
-      compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
-    def copy = new BuildContextImpl(compilationContextCopy, productProperties,
-                                    windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                    proprietaryBuildTools, new ConcurrentLinkedQueue<>())
-    copy.paths.artifacts = paths.artifacts
+    CompilationContextImpl compilationContextCopy = compilationContext
+      .createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
+    BuildContextImpl copy = new BuildContextImpl(compilationContextCopy, productProperties,
+                                                 windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                                 proprietaryBuildTools, new ConcurrentLinkedQueue<>())
+    copy.paths.artifacts = paths.artifacts + "/" + productProperties.productCode
     copy.compilationContext.prepareForBuild()
     return copy
   }

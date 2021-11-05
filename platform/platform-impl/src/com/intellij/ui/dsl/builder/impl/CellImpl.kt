@@ -23,7 +23,7 @@ import javax.swing.JLabel
 internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
-  val parent: RowImpl,
+  private val parent: RowImpl,
   val viewComponent: JComponent = component,
   visualPaddings: Gaps?) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
@@ -80,7 +80,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  fun enabledFromParent(parentEnabled: Boolean) {
+  override fun enabledFromParent(parentEnabled: Boolean) {
     doEnabled(parentEnabled && enabled)
   }
 
@@ -98,7 +98,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  fun visibleFromParent(parentVisible: Boolean) {
+  override fun visibleFromParent(parentVisible: Boolean) {
     doVisible(parentVisible && visible)
   }
 

@@ -48,5 +48,3 @@ internal class HashableVirtualFile(val delegate: VirtualFile) : VirtualFile() {
     override fun hashCode() = path.hashCode() * 17 / (fileSystem.hashCode() * 32) + 18
 }
 
-internal val VirtualFile.hashable
-    get() = HashableVirtualFile(this)

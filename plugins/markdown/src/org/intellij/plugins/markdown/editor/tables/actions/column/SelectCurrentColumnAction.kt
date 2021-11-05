@@ -17,13 +17,12 @@ internal abstract class SelectCurrentColumnAction(private val wholeColumn: Boole
           editor,
           columnIndex,
           withHeader = insideHeader || wholeColumn,
-          withSeparator = wholeColumn
+          withSeparator = wholeColumn,
+          withBorders = true
         )
       }
     }
   }
 
-  class SelectContentCells: SelectCurrentColumnAction(wholeColumn = false)
-
-  //class SelectWholeColumn: SelectCurrentColumnAction(wholeColumn = true)
+  class SelectContentCells: SelectCurrentColumnAction(wholeColumn = true)
 }

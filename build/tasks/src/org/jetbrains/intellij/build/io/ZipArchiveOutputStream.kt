@@ -9,9 +9,11 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
+import java.nio.channels.SeekableByteChannel
+import java.nio.channels.WritableByteChannel
 import java.util.zip.ZipEntry
 
-internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closeable {
+internal class ZipArchiveOutputStream(private val channel: WritableByteChannel, private val withOptimizedMetadataEnabled: Boolean) : Closeable {
   private var finished = false
   private var entryCount = 0
 
@@ -19,18 +21,20 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
   // 1 MB should be enough for end of central directory record
   private val buffer = ByteBuffer.allocateDirect(1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
 
-  private val tempArray = arrayOfNulls<ByteBuffer>(2)
-
   private val sizes = IntArrayList()
   private val names = ArrayList<ByteArray>()
   private val dataOffsets = IntArrayList()
+
+  private var channelPosition = 0L
+
+  private val fileChannel = channel as? FileChannel
 
   fun addDirEntry(name: ByteArray) {
     if (finished) {
       throw IOException("Stream has already been finished")
     }
 
-    val offset = channel.position()
+    val offset = channelPosition
     entryCount++
 
     buffer.clear()
@@ -69,17 +73,13 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
       throw IOException("Stream has already been finished")
     }
 
-    val offset = channel.position()
+    val offset = channelPosition
     val dataOffset = offset.toInt() + header.remaining()
     entryCount++
     assert(method != -1)
 
-    tempArray[0] = header
-    tempArray[1] = content
-    do {
-      channel.write(tempArray, 0, 2)
-    }
-    while (header.hasRemaining() || content.hasRemaining())
+    writeBuffer(header)
+    writeBuffer(content)
 
     writeCentralFileHeader(size, compressedSize, method, crc, name, offset, dataOffset = dataOffset)
   }
@@ -89,7 +89,7 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
       throw IOException("Stream has already been finished")
     }
 
-    val offset = channel.position()
+    val offset = channelPosition
     entryCount++
     assert(method != -1)
 
@@ -97,8 +97,44 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     writeCentralFileHeader(size, compressedSize, method, crc, name, offset, dataOffset = offset.toInt() + headerSize)
   }
 
+  fun writeEntryHeaderAt(name: ByteArray, header: ByteBuffer, position: Long, size: Int, compressedSize: Int, crc: Long, method: Int) {
+    if (finished) {
+      throw IOException("Stream has already been finished")
+    }
+
+      val dataOffset = position.toInt() + header.remaining()
+
+    if (fileChannel == null) {
+      val c = channel as SeekableByteChannel
+      c.position(position)
+      do {
+        c.write(header)
+      }
+      while (header.hasRemaining())
+      c.position(channelPosition)
+    }
+    else {
+      var currentPosition = position
+      do {
+        currentPosition += fileChannel.write(header, currentPosition)
+      }
+      while (header.hasRemaining())
+    }
+
+    entryCount++
+
+    assert(channelPosition == (dataOffset + compressedSize).toLong())
+    writeCentralFileHeader(size = size,
+                           compressedSize = compressedSize,
+                           method = method,
+                           crc = crc,
+                           name = name,
+                           offset = position,
+                           dataOffset = dataOffset)
+  }
+
   private fun writeCustomMetadata(): Int {
-    val optimizedMetadataOffset = channel.position().toInt()
+    val optimizedMetadataOffset = channelPosition.toInt()
     // write one by one to channel to avoid buffer overflow
     writeIntArray(sizes.toIntArray())
     writeIntArray(dataOffsets.toIntArray())
@@ -118,9 +154,9 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
       throw IOException("This archive has already been finished")
     }
 
-    val optimizedMetadataOffset = writeCustomMetadata()
+    val optimizedMetadataOffset = if (withOptimizedMetadataEnabled) writeCustomMetadata() else -1
 
-    val centralDirectoryOffset = channel.position()
+    val centralDirectoryOffset = channelPosition
     // write central directory file header
     metadataBuffer.flip()
     val centralDirectoryLength = metadataBuffer.limit()
@@ -142,11 +178,16 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     buffer.putInt((centralDirectoryOffset and 0xffffffffL).toInt())
 
     // comment length
-    buffer.putShort(1 + 4 + 4)
-    // version
-    buffer.put(1)
-    buffer.putInt(sizes.size)
-    buffer.putInt(optimizedMetadataOffset)
+    if (withOptimizedMetadataEnabled) {
+      buffer.putShort(1 + 4 + 4)
+      // version
+      buffer.put(1)
+      buffer.putInt(sizes.size)
+      buffer.putInt(optimizedMetadataOffset)
+    }
+    else {
+      buffer.putShort(0)
+    }
 
     buffer.flip()
     writeBuffer(buffer)
@@ -154,11 +195,32 @@ internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closea
     finished = true
   }
 
-  private fun writeBuffer(content: ByteBuffer) {
-    do {
-      channel.write(content)
+  internal fun getChannelPositionAndAdd(increment: Int): Long {
+    val p = channelPosition
+    channelPosition += increment.toLong()
+    if (fileChannel == null) {
+      (channel as SeekableByteChannel).position(channelPosition)
     }
-    while (content.hasRemaining())
+    return p
+  }
+
+  internal fun writeBuffer(content: ByteBuffer) {
+    if (fileChannel == null) {
+      val size = content.remaining()
+      do {
+        channel.write(content)
+      }
+      while (content.hasRemaining())
+      channelPosition += size
+    }
+    else {
+      var currentPosition = channelPosition
+      do {
+        currentPosition += fileChannel.write(content, currentPosition)
+      }
+      while (content.hasRemaining())
+      channelPosition = currentPosition
+    }
   }
 
   override fun close() {

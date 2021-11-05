@@ -8,6 +8,7 @@ import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
@@ -260,6 +261,34 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
 
     abstract fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration>
+  }
+
+  @TestOnly
+  fun startStage(stage: Stage, instant: Instant) {
+    synchronized(events) {
+      events.add(Event.StageEvent(stage, true, instant))
+    }
+  }
+
+  @TestOnly
+  fun stopStage(stage: Stage, instant: Instant) {
+    synchronized(events) {
+      events.add(Event.StageEvent(stage, false, instant))
+    }
+  }
+
+  @TestOnly
+  fun suspendStages(instant: Instant) {
+    synchronized(events) {
+      events.add(Event.SuspensionEvent(true, instant))
+    }
+  }
+
+  @TestOnly
+  fun stopSuspendingStages(instant: Instant) {
+    synchronized(events) {
+      events.add(Event.SuspensionEvent(false, instant))
+    }
   }
 
   data class StatsPerFileTypeImpl(

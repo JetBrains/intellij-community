@@ -36,7 +36,7 @@ internal class PackageIndexBuilder {
     list.sort()
     for (name in list) {
       // name in our ImmutableZipEntry doesn't have ending slash
-      zipCreator.addDirEntry(if (name.endsWith('/')) name else "$name/")
+      zipCreator.dir(name)
     }
   }
 
@@ -49,7 +49,7 @@ internal class PackageIndexBuilder {
       resourcePackageHashSet.add(0)
     }
 
-    zipCreator.writeUncompressedEntry(PACKAGE_INDEX_NAME,
+    zipCreator.uncompressedData(PACKAGE_INDEX_NAME,
                                       (2 * Int.SIZE_BYTES) + ((classPackageHashSet.size + resourcePackageHashSet.size) * Int.SIZE_BYTES)) {
       val classPackages = classPackageHashSet.toIntArray()
       val resourcePackages = resourcePackageHashSet.toIntArray()

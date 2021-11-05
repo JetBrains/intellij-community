@@ -57,6 +57,12 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
         children.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
       }
     }
+    PsiRecordHeader header = aClass.getRecordHeader();
+    if (header != null) {
+      for (PsiRecordComponent recordComponent : header.getRecordComponents()) {
+        children.add(new JavaRecordComponentTreeElement(recordComponent, false));
+      }
+    }
     return children;
   }
 

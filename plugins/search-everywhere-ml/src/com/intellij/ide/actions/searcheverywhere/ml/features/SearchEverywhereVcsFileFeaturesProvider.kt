@@ -8,6 +8,7 @@ class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesP
   companion object {
     private const val IS_IGNORED_DATA_KEY = "isIgnored"
     private const val IS_CHANGED_DATA_KEY = "isChanged"
+    private const val FILE_STATUS_DATA_KEY = "fileStatus"
   }
 
   override fun isElementSupported(element: Any): Boolean {
@@ -18,7 +19,11 @@ class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesP
     }
   }
 
-  override fun getElementFeatures(element: Any, currentTime: Long, queryLength: Int, elementPriority: Int, cache: Any?): Map<String, Any> {
+  override fun getElementFeatures(element: Any,
+                                  currentTime: Long,
+                                  searchQuery: String,
+                                  elementPriority: Int,
+                                  cache: Any?): Map<String, Any> {
     val item = when (element) {
       is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as? PsiFileSystemItem) ?: return emptyMap()
       is PsiFileSystemItem -> element
@@ -38,6 +43,7 @@ class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesP
     return hashMapOf(
       IS_CHANGED_DATA_KEY to changeListManager.isFileAffected(item.virtualFile),
       IS_IGNORED_DATA_KEY to changeListManager.isIgnoredFile(item.virtualFile),
+      FILE_STATUS_DATA_KEY to changeListManager.getStatus(item.virtualFile).id
     )
   }
 }

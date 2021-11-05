@@ -506,7 +506,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
           }
 
           @Override public void visitClass(@NotNull final RefClass refClass) {
-            if (!refClass.isAnonymous()) {
+            if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
               globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
                 ignoreElement(processor, refClass);
                 return false;

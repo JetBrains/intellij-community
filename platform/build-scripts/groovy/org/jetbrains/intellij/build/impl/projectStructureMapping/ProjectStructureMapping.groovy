@@ -1,16 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
-import com.google.gson.GsonBuilder
-import com.google.gson.TypeAdapter
-import com.google.gson.stream.JsonReader
-import com.google.gson.stream.JsonWriter
-import com.intellij.util.SystemProperties
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.core.JsonGenerator
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildPaths
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.function.Consumer
 
 /**
  * Provides mapping between files in the product distribution and modules and libraries in the project configuration. The generated JSON file
@@ -18,119 +19,124 @@ import java.nio.file.Path
  */
 @CompileStatic
 final class ProjectStructureMapping {
-  private final List<DistributionFileEntry> entries = new ArrayList<>()
+  private final Collection<DistributionFileEntry> entries
 
-  private static final Path MAVEN_REPO = Path.of(SystemProperties.getUserHome(), ".m2/repository")
+  private static final Path MAVEN_REPO = Path.of(System.getProperty("user.home"), ".m2/repository")
 
-  List<DistributionFileEntry> getEntries() {
-    return Collections.unmodifiableList(entries)
+  ProjectStructureMapping() {
+    entries = new ConcurrentLinkedQueue<>()
+  }
+
+  ProjectStructureMapping(@NotNull Collection<DistributionFileEntry> entries) {
+    this.entries = Collections.unmodifiableCollection(entries)
+  }
+
+  void processEntries(Consumer<DistributionFileEntry> consumer) {
+    entries.forEach(consumer)
   }
 
   void addEntry(DistributionFileEntry entry) {
     entries.add(entry)
   }
 
-  void mergeFrom(ProjectStructureMapping mapping, String relativePath) {
-    for (DistributionFileEntry entry : mapping.entries) {
-      String newPath = relativePath.isEmpty() ? (String)entry.path : "$relativePath/$entry.path"
-      entries.add(changePath(entry, newPath))
-    }
-  }
-
-  private static DistributionFileEntry changePath(DistributionFileEntry entry, String newPath) {
-    DistributionFileEntry copy = entry.clone()
-    copy.path = newPath
-    return copy
-  }
-
-  ProjectStructureMapping extractFromSubFolder(String folderPath) {
-    ProjectStructureMapping mapping = new ProjectStructureMapping()
-    entries.each {
-      if (it.path.startsWith(folderPath)) {
-        mapping.entries.add(changePath(it, it.path.substring(folderPath.length())))
-      }
-    }
-    return mapping
-  }
-
   Set<String> getIncludedModules() {
-    def result = new LinkedHashSet<String>()
+    Set<String> result = new LinkedHashSet<String>()
     entries.findAll { it instanceof ModuleOutputEntry }.collect(result) { ((ModuleOutputEntry)it).moduleName }
     return result
   }
 
-  void generateJsonFile(Path file, BuildPaths buildPaths) {
-    Files.createDirectories(file.parent)
-    Files.newBufferedWriter(file).withCloseable {
-      new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Path.class, new TypeAdapter<Path>() {
-        @Override
-        void write(JsonWriter out, Path value) throws IOException {
-          out.value(shortenPath(value, buildPaths))
-        }
+  void generateJsonFile(Path file, BuildPaths buildPaths, Path extraRoot = null) {
+    writeReport(entries, file, buildPaths, extraRoot)
+  }
 
-        @Override
-        Path read(JsonReader reader) throws IOException {
-          throw new UnsupportedOperationException()
+  @SuppressWarnings("ChangeToOperator")
+  static void writeReport(Collection<DistributionFileEntry> entries, Path file, BuildPaths buildPaths, Path extraRoot = null) {
+    Files.createDirectories(file.parent)
+
+    List<DistributionFileEntry> allEntries = new ArrayList<>(entries)
+
+    // sort - stable result
+    allEntries.sort({ DistributionFileEntry a , DistributionFileEntry b -> a.path.compareTo(b.path) })
+
+    Files.newOutputStream(file).withCloseable { out ->
+      JsonGenerator writer = new JsonFactory().createGenerator(out).useDefaultPrettyPrinter()
+      writer.writeStartArray()
+      for (DistributionFileEntry entry : allEntries) {
+        writer.writeStartObject()
+        writer.writeStringField("path", shortenPath(entry.path, buildPaths, extraRoot))
+        writer.writeStringField("type", entry.type)
+        if (entry instanceof ModuleLibraryFileEntry) {
+          writer.writeStringField("module", entry.moduleName)
+          writer.writeStringField("libraryFile", shortenPath(entry.libraryFile, buildPaths, extraRoot))
+          writer.writeNumberField("size", entry.size)
         }
-      }).create().toJson(entries, it)
+        else if (entry instanceof ModuleOutputEntry) {
+          writer.writeStringField("module", entry.moduleName)
+          writer.writeNumberField("size", entry.size)
+        }
+        else if (entry instanceof ModuleTestOutputEntry) {
+          writer.writeStringField("module", entry.moduleName)
+        }
+        else if (entry instanceof ProjectLibraryEntry) {
+          writer.writeStringField("library", entry.libraryName)
+          writer.writeStringField("libraryFile", shortenPath(entry.libraryFile, buildPaths, extraRoot))
+          writer.writeNumberField("size", entry.size)
+        }
+        writer.writeEndObject()
+      }
+      writer.writeEndArray()
     }
   }
 
-  static void buildJarContentReport(ProjectStructureMapping projectStructureMapping, Writer out, BuildPaths buildPaths) {
-    // jackson is not available in build scripts - use GSON
-    JsonWriter writer = new JsonWriter(out)
-    writer.setIndent("  ")
-
-    List<DistributionFileEntry> entries = projectStructureMapping.entries
-    Map<String, List<DistributionFileEntry>> fileToEntry = new HashMap<>()
+  static void buildJarContentReport(Collection<DistributionFileEntry> entries, OutputStream out, BuildPaths buildPaths) {
+    JsonGenerator writer = new JsonFactory().createGenerator(out).useDefaultPrettyPrinter()
+    Map<Path, List<DistributionFileEntry>> fileToEntry = new TreeMap<>()
     for (DistributionFileEntry entry : entries) {
       fileToEntry.computeIfAbsent(entry.path, { new ArrayList<DistributionFileEntry>() }).add(entry)
     }
 
-    List<String> files = fileToEntry.keySet().toList()
-    files.sort(null)
+    writer.writeStartArray()
+    for (Map.Entry<Path, List<DistributionFileEntry>> entrySet : fileToEntry.entrySet()) {
+      List<DistributionFileEntry> fileEntries = entrySet.value
+      Path file = entrySet.key
+      writer.writeStartObject()
+      writer.writeStringField("name", shortenPath(file, buildPaths, null))
 
-    writer.beginArray()
-    for (String file : files) {
-      List<DistributionFileEntry> fileEntries = fileToEntry.get(file)
-      writer.beginObject()
-      writer.name("name").value(file)
-
-      writer.name("children")
-      writer.beginArray()
+      writer.writeArrayFieldStart("children")
       writeProjectLibs(fileEntries, writer, buildPaths)
       for (DistributionFileEntry entry : fileEntries) {
         if (entry instanceof ProjectLibraryEntry) {
           continue
         }
 
-        writer.beginObject()
+        writer.writeStartObject()
 
         long fileSize
         if (entry instanceof ModuleOutputEntry) {
-          writer.name("name").value(entry.moduleName)
+          writer.writeStringField("name", entry.moduleName)
           fileSize = entry.size
         }
         else if (entry instanceof ModuleLibraryFileEntry) {
-          writer.name("name").value(shortenPath(entry.libraryFile, buildPaths))
-          writer.name("module").value(entry.moduleName)
+          writer.writeStringField("name", shortenPath(entry.libraryFile, buildPaths, null))
+          writer.writeStringField("module", entry.moduleName)
           fileSize = Files.size(entry.libraryFile)
         }
         else {
           throw new IllegalStateException("Unsupported entry: $entry")
         }
 
-        writer.name("value").value(fileSize)
-        writer.endObject()
+        writer.writeNumberField("value", fileSize)
+        writer.writeEndObject()
       }
-      writer.endArray()
+      writer.writeEndArray()
 
-      writer.endObject()
+      writer.writeEndObject()
     }
-    writer.endArray()
+    writer.writeEndArray()
+    writer.close()
   }
 
-  private static void writeProjectLibs(List<DistributionFileEntry> entries, JsonWriter writer, BuildPaths buildPaths) {
+  private static void writeProjectLibs(@NotNull List<DistributionFileEntry> entries, JsonGenerator writer, BuildPaths buildPaths) {
     // group by library
     Map<String, List<ProjectLibraryEntry>> map = new TreeMap<>()
     for (DistributionFileEntry entry : entries) {
@@ -140,35 +146,43 @@ final class ProjectStructureMapping {
     }
 
     for (Map.Entry<String, List<ProjectLibraryEntry>> entry : map.entrySet()) {
-      writer.beginObject()
+      writer.writeStartObject()
 
-      writer.name("name").value(entry.key)
+      writer.writeStringField("name", entry.key)
 
-      writer.name("children")
-      writer.beginArray()
+      writer.writeArrayFieldStart("children")
       for (ProjectLibraryEntry fileEntry : entry.value) {
-        writer.beginObject()
-        writer.name("name").value(shortenPath(fileEntry.libraryFile, buildPaths))
-        writer.name("value").value(fileEntry.fileSize as long)
-        writer.endObject()
+        writer.writeStartObject()
+        writer.writeStringField("name", shortenPath(fileEntry.libraryFile, buildPaths, null))
+        writer.writeNumberField("value", fileEntry.size as long)
+        writer.writeEndObject()
       }
-      writer.endArray()
+      writer.writeEndArray()
 
-      writer.endObject()
+      writer.writeEndObject()
     }
   }
 
-  private static String shortenPath(Path libraryFile, BuildPaths buildPaths) {
-    if (libraryFile.startsWith(MAVEN_REPO)) {
-      return "\$MAVEN_REPOSITORY\$" + File.separatorChar + MAVEN_REPO.relativize(libraryFile).toString()
+  private static String shortenPath(Path file, BuildPaths buildPaths, @Nullable Path extraRoot) {
+    if (file.startsWith(MAVEN_REPO)) {
+      return "\$MAVEN_REPOSITORY\$" + File.separatorChar + MAVEN_REPO.relativize(file).toString()
     }
 
     Path projectHome = buildPaths.projectHomeDir
-    if (libraryFile.startsWith(projectHome)) {
-      return "\$PROJECT_DIR\$" + File.separatorChar + projectHome.relativize(libraryFile).toString()
+    if (file.startsWith(projectHome)) {
+      return "\$PROJECT_DIR\$" + File.separatorChar + projectHome.relativize(file).toString()
     }
     else {
-      return libraryFile.toString()
+      Path buildOutputDir = buildPaths.buildOutputDir
+      if (file.startsWith(buildOutputDir)) {
+        return buildOutputDir.relativize(file)
+      }
+      else if (extraRoot != null && file.startsWith(extraRoot)) {
+        return extraRoot.relativize(file)
+      }
+      else {
+        return file.toString()
+      }
     }
   }
 }

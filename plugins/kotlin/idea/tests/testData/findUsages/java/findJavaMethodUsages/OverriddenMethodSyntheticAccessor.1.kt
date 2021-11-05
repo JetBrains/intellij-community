@@ -1,4 +1,13 @@
 fun AI.A.bar() {
-    getFoo() // Found
-    foo // Not found
+    getFoo()
+    foo
+}
+
+fun ba(k: K) {
+    k.getFoo()
+    k.foo
+}
+
+class K : AI {
+    override fun getFoo(): String = ""
 }

@@ -106,6 +106,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     manager.iterate(new RefJavaVisitor() {
       @Override
       public void visitMethod(@NotNull final RefMethod refMethod) {
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
         if (descriptionsProcessor.getDescriptions(refMethod) != null) { //suspicious method -> need to check external usages
           final GlobalJavaInspectionContext.UsagesProcessor usagesProcessor = new GlobalJavaInspectionContext.UsagesProcessor() {
             @Override

@@ -49,7 +49,7 @@ fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectDir: Path): Boolean {
   }
 }
 
-fun confirmOpeningUntrustedProject(projectFileOrDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
+private fun confirmOpeningUntrustedProject(projectFileOrDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
   projectFileOrDir,
   IdeBundle.message("untrusted.project.open.dialog.title"),
   IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
@@ -58,7 +58,7 @@ fun confirmOpeningUntrustedProject(projectFileOrDir: Path): OpenUntrustedProject
   IdeBundle.message("untrusted.project.open.dialog.cancel.button")
 )
 
-fun confirmOpeningUntrustedProject(
+private fun confirmOpeningUntrustedProject(
   projectFileOrDir: Path,
   @NlsContexts.DialogTitle title: String,
   @NlsContexts.DialogMessage message: String,
@@ -181,7 +181,8 @@ private fun isProjectImplicitlyTrusted(project: Project): Boolean =
   isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) }, project)
 
 @JvmOverloads
-fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
+@ApiStatus.Internal
+internal fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
   if (isTrustedCheckDisabled()) {
     return true
   }
@@ -200,21 +201,12 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
   class State : BaseState() {
     @get:Attribute
     var isTrusted by enum(ThreeState.UNSURE)
-
-    @get:Attribute
-    var hasCheckedIfOldProject by property(false)
   }
 
   var trustedState: ThreeState
     get() = if (isTrustedCheckDisabled()) ThreeState.YES else state.isTrusted
     set(value) {
       state.isTrusted = value
-    }
-
-  var hasCheckedIfOldProject: Boolean
-    get() = state.hasCheckedIfOldProject
-    set(value) {
-      state.hasCheckedIfOldProject = value
     }
 }
 

@@ -283,6 +283,7 @@ abstract class JdkInstallerBase {
         }
 
         runCatching { writeMarkerFile(request) }
+        JdkDownloaderLogger.logDownload(true)
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
@@ -291,6 +292,7 @@ abstract class JdkInstallerBase {
     }
     catch (t: Throwable) {
       //if we were cancelled in the middle or failed, let's clean up
+      JdkDownloaderLogger.logDownload(false)
       targetDir.delete()
       markerFile(targetDir)?.delete()
       throw t

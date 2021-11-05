@@ -10,16 +10,16 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.ui.LightweightHint
@@ -37,34 +37,39 @@ import java.lang.ref.WeakReference
 import javax.swing.SwingUtilities
 
 internal class HorizontalBarPresentation(private val editor: Editor, private val table: MarkdownTableImpl): BasePresentation() {
-  private val fontMetrics
-    get() = obtainFontMetrics(editor)
+  private data class BoundsState(
+    val width: Int,
+    val height: Int,
+    val barsModel: List<Rectangle>
+  )
 
   private var lastSelectedIndex: Int? = null
+  private var boundsState = emptyBoundsState
 
-  private fun obtainBarsModel(cached: Boolean = false): List<Rectangle> {
-    if (!table.isValid || editor.isDisposed) {
-      return emptyList()
-    }
-    return when {
-      cached -> CachedValuesManager.getCachedValue(table) {
-        CachedValueProvider.Result.create(buildBarsModel(), PsiModificationTracker.MODIFICATION_COUNT)
+  init {
+    invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
+      PsiDocumentManager.getInstance(table.project).performForCommittedDocument(editor.document) {
+        val calculated = calculateCurrentBoundsState()
+        boundsState = calculated
+        fireSizeChanged(Dimension(0, 0), Dimension(calculated.width, calculated.height))
       }
-      else -> buildBarsModel()
     }
   }
 
   private val barsModel
-    get() = obtainBarsModel()
+    get() = boundsState.barsModel
+
+  private val isInvalid
+    get() = !table.isValid || editor.isDisposed
 
   override val width
-    get() = calculateRowWidth()
+    get() = boundsState.width
 
   override val height
-    get() = barHeight
+    get() = boundsState.height
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
-    if (!table.isValid || editor.isDisposed) {
+    if (isInvalid) {
       return
     }
     GraphicsUtil.setupAntialiasing(graphics)
@@ -90,33 +95,22 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     updateSelectedIndexIfNeeded(null)
   }
 
-  // Needed for cached barsModel to work
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-    other as HorizontalBarPresentation
-    if (editor != other.editor) return false
-    if (table != other.table) return false
-    return true
+  private fun calculateCurrentBoundsState(): BoundsState {
+    if (isInvalid) {
+      return emptyBoundsState
+    }
+    val document = obtainCommittedDocument(table) ?: return emptyBoundsState
+    val fontsMetrics = obtainFontMetrics(editor)
+    val width = calculateRowWidth(fontsMetrics, document)
+    val barsModel = buildBarsModel(fontsMetrics, document)
+    return BoundsState(width, barHeight, barsModel)
   }
 
-  override fun hashCode(): Int {
-    var result = editor.hashCode()
-    result = 31 * result + table.hashCode()
-    return result
-  }
-
-  private fun obtainCommittedDocument(): Document? {
-    val file = table.containingFile
-    return file?.let { PsiDocumentManager.getInstance(table.project).getLastCommittedDocument(it) }
-  }
-
-  private fun calculateRowWidth(): Int {
-    if (!table.isValid || editor.isDisposed) {
+  private fun calculateRowWidth(fontMetrics: FontMetrics, document: Document): Int {
+    if (isInvalid) {
       return 0
     }
     val header = table.headerRow ?: return 0
-    val document = obtainCommittedDocument() ?: return 0
     return fontMetrics.stringWidth(document.getText(header.textRange))
   }
 
@@ -128,29 +122,29 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     }
   }
 
-  private fun buildBarsModel(): List<Rectangle> {
+  private fun buildBarsModel(fontMetrics: FontMetrics, document: Document): List<Rectangle> {
     val header = requireNotNull(table.headerRow)
-    val text = obtainCommittedDocument()?.text ?: return emptyList()
-    val positions = calculatePositions(header, text)
+    val positions = calculatePositions(header, document, fontMetrics)
     val sectors = buildSectors(positions)
     return sectors.map { (offset, width) -> Rectangle(offset - barHeight / 2, 0, width + barHeight, barHeight) }
   }
 
-  private fun calculatePositions(header: MarkdownTableRowImpl, text: CharSequence): List<Int> {
-    val separators = header.firstChild.siblings(forward = true).filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }.toList()
+  private fun calculatePositions(header: MarkdownTableRowImpl, document: Document, fontMetrics: FontMetrics): List<Int> {
     require(barHeight % 2 == 0) { "barHeight value should be even" }
-    val result = ArrayList<Int>(separators.size)
-    for ((index, separator) in separators.withIndex()) {
-      val offset = separator.startOffset
-      var position = editor.visualPositionToXY(editor.offsetToVisualPosition(offset)).x
-      val symbolWidth = fontMetrics.charWidth(text[offset])
-      position += when {
-        index == separators.lastIndex -> symbolWidth / 2
-        index != 0 -> symbolWidth / 2
-        // index == 0
-        else -> leftPadding + symbolWidth / 2
-      }
+    val separators = header.firstChild.siblings(forward = true, withSelf = true)
+      .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
+      .map { it.startOffset }
+    val separatorWidth = fontMetrics.charWidth('|')
+    val firstOffset = separators.firstOrNull() ?: return emptyList()
+    val result = ArrayList<Int>()
+    var position = editor.offsetToXY(firstOffset).x + separatorWidth / 2
+    var lastOffset = firstOffset
+    result.add(position)
+    for (offset in separators.drop(1)) {
+      val length = fontMetrics.stringWidth(document.getText(TextRange(lastOffset, offset)))
+      position += length
       result.add(position)
+      lastOffset = offset
     }
     return result
   }
@@ -175,9 +169,6 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     val rect = barsModel[columnIndex]
     val bottomPadding = 2
     position.translate(rect.x, -rect.y - barHeight * 2 - bottomPadding)
-    //// Center hint against the bar
-    //position.translate(rect.width / 2 - barHeight * 2, 0)
-    //position.translate(-(componentWidth / 2), 0)
     return position
   }
 
@@ -201,7 +192,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     val columnIndex = determineColumnIndex(translated) ?: return
     invokeLater {
       executeCommand {
-        table.selectColumn(editor, columnIndex, withHeader = true, withSeparator = false)
+        table.selectColumn(editor, columnIndex, withHeader = true, withSeparator = true, withBorders = true)
       }
     }
   }
@@ -256,6 +247,8 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     private val columnActionGroup
       get() = ActionManager.getInstance().getAction("Markdown.TableColumnActions") as ActionGroup
 
+    private val emptyBoundsState = BoundsState(0, 0, emptyList())
+
     // Should be even
     const val barHeight = TableInlayProperties.barSize
     const val leftPadding = VerticalBarPresentation.barWidth + TableInlayProperties.leftRightPadding * 2
@@ -263,6 +256,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     private fun wrapPresentation(factory: PresentationFactory, editor: Editor, presentation: InlayPresentation): InlayPresentation {
       return factory.inset(
         PresentationWithCustomCursor(editor, presentation),
+        left = leftPadding,
         top = TableInlayProperties.topDownPadding,
         down = TableInlayProperties.topDownPadding
       )
@@ -275,6 +269,11 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     private fun obtainFontMetrics(editor: Editor): FontMetrics {
       val font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
       return editor.contentComponent.getFontMetrics(font)
+    }
+
+    private fun obtainCommittedDocument(element: PsiElement): Document? {
+      val file = element.containingFile
+      return file?.let { PsiDocumentManager.getInstance(element.project).getLastCommittedDocument(it) }
     }
 
     private fun createDataProvider(table: MarkdownTableImpl, columnIndex: Int): DataProvider {

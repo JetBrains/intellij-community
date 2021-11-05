@@ -8,9 +8,13 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.ResourcesGenerator
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.BiConsumer
+import java.util.function.BiFunction
 import java.util.function.BiPredicate
-import java.util.function.Consumer
+import java.util.function.UnaryOperator
+
 /**
  * Describes layout of a plugin in the product distribution
  */
@@ -19,19 +23,21 @@ final class PluginLayout extends BaseLayout {
   final String mainModule
   String directoryName
   VersionEvaluator versionEvaluator = { pluginXmlFile, ideVersion, context -> ideVersion } as VersionEvaluator
-  Consumer<Path> pluginXmlPatcher = { } as Consumer<Path>
-  List<Pair<String, ResourcesGenerator>> moduleOutputPatches = []
+  UnaryOperator<String> pluginXmlPatcher = UnaryOperator.identity()
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
   final List<String> pathsToScramble = new ArrayList<>()
-  Collection<Pair<String /*plugin name*/, String /*relative path*/>> scrambleClasspathPlugins = []
-  BiPredicate<BuildContext, File> scrambleClasspathFilter = { context, file -> return true } as BiPredicate<BuildContext, File>
+  final Collection<Pair<String /*plugin name*/, String /*relative path*/>> scrambleClasspathPlugins = new ArrayList<>()
+  BiPredicate<BuildContext, Path> scrambleClasspathFilter = { context, file -> return true } as BiPredicate<BuildContext, Path>
   /**
    * See {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#zkmScriptStub}
    */
   String zkmScriptStub
   Boolean pluginCompatibilityExactVersion = false
   Boolean retainProductDescriptorForBundledPlugin = false
+
+  final List<Pair<BiFunction<Path, BuildContext, Path>, String>> resourceGenerators = new ArrayList<>()
+  final List<BiConsumer<ModuleOutputPatcher, BuildContext>> patchers = new ArrayList<>()
 
   private PluginLayout(@NotNull String mainModule) {
     this.mainModule = mainModule
@@ -79,7 +85,7 @@ final class PluginLayout extends BaseLayout {
   }
 
   static final class PluginLayoutSpec extends BaseLayoutSpec {
-    private final PluginLayout layout
+    final PluginLayout layout
     private String directoryName
     private String mainJarName
     private boolean mainJarNameSetExplicitly
@@ -144,16 +150,25 @@ final class PluginLayout extends BaseLayout {
      * @param outputPath target path relative to the plugin root directory
      */
     def withBin(String binPathRelativeToCommunity, String outputPath, boolean skipIfDoesntExist = false) {
-      withGeneratedResources(new ResourcesGenerator() {
+      withGeneratedResources(new BiConsumer<Path, BuildContext>() {
         @Override
-        File generateResources(BuildContext context) {
-          def file = context.paths.communityHomeDir.resolve(binPathRelativeToCommunity).toFile()
-          if (!skipIfDoesntExist && !file.exists()) {
-            throw new IllegalStateException("'$file' doesn't exist")
+        void accept(Path targetDir, BuildContext context) {
+          Path source = context.paths.communityHomeDir.resolve(binPathRelativeToCommunity).normalize()
+          if (Files.notExists(source)) {
+            if (skipIfDoesntExist) {
+              return
+            }
+            throw new IllegalStateException("'$source' doesn't exist")
           }
-          return file.exists() ? file : null
+
+          if (Files.isRegularFile(source)) {
+            BuildHelper.copyFileToDir(source, targetDir.resolve(outputPath))
+          }
+          else {
+            BuildHelper.getInstance(context).copyDir(source, targetDir.resolve(outputPath))
+          }
         }
-      }, outputPath)
+      })
     }
 
     /**
@@ -184,14 +199,26 @@ final class PluginLayout extends BaseLayout {
      * Copy output produced by {@code generator} to the directory specified by {@code relativeOutputPath} under the plugin directory.
      */
     void withGeneratedResources(ResourcesGenerator generator, String relativeOutputPath) {
-      layout.resourceGenerators << Pair.create(generator, relativeOutputPath)
+      layout.resourceGenerators.add(new Pair<>(new BiFunction<Path, BuildContext, Path>() {
+        @Override
+        Path apply(Path targetDir, BuildContext context) {
+          return generator.generateResources(context)?.toPath()
+        }
+      }, relativeOutputPath))
     }
 
-    /**
-     * Patches module output with content produced {@code generator}
-     */
-    void withModuleOutputPatches(String moduleName, ResourcesGenerator generator) {
-      layout.moduleOutputPatches.add(Pair.create(moduleName, generator))
+    void withPatch(BiConsumer<ModuleOutputPatcher, BuildContext> patcher) {
+      layout.patchers.add(patcher)
+    }
+
+    void withGeneratedResources(BiConsumer<Path, BuildContext> generator) {
+      layout.resourceGenerators.add(new Pair<>(new BiFunction<Path, BuildContext, Path>() {
+        @Override
+        Path apply(Path targetDir, BuildContext context) {
+          generator.accept(targetDir, context)
+          return null
+        }
+      }, ""))
     }
 
     /**
@@ -201,7 +228,7 @@ final class PluginLayout extends BaseLayout {
       layout.versionEvaluator = versionEvaluator
     }
 
-    void withPluginXmlPatcher(Consumer<Path> pluginXmlPatcher) {
+    void withPluginXmlPatcher(UnaryOperator<String> pluginXmlPatcher) {
       layout.pluginXmlPatcher = pluginXmlPatcher
     }
 
@@ -276,7 +303,7 @@ final class PluginLayout extends BaseLayout {
      * Allows control over classpath entries that will be used by the scrambler to resolve references from jars being scrambled.
      * By default all platform jars are added to the 'scramble classpath'
      */
-    void filterScrambleClasspath(BiPredicate<BuildContext, File> filter) {
+    void filterScrambleClasspath(BiPredicate<BuildContext, Path> filter) {
       layout.scrambleClasspathFilter = filter
     }
   }

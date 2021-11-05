@@ -285,7 +285,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  fun enabledFromParent(parentEnabled: Boolean) {
+  override fun enabledFromParent(parentEnabled: Boolean) {
     enabledFromParent(parentEnabled, _rows.indices)
   }
 
@@ -311,7 +311,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  fun visibleFromParent(parentVisible: Boolean) {
+  override fun visibleFromParent(parentVisible: Boolean) {
     visibleFromParent(parentVisible, _rows.indices)
   }
 

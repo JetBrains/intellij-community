@@ -14,7 +14,7 @@
           </option>
           <option name="pluginClasspaths">
             <array>
-              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-949/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-949.jar" />
+              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-955/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-955.jar" />
             </array>
           </option>
           <option name="errors">
@@ -37,6 +37,7 @@
     <orderEntry type="library" name="ngram-slp" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="caffeine" level="project" />

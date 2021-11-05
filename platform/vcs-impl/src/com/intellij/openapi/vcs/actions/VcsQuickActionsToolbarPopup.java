@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -72,7 +73,7 @@ public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements C
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       VcsBundle.message("action.Vcs.Toolbar.QuickListPopupAction.text"),
       group, dataContext, JBPopupFactory.ActionSelectionAid.NUMBERING, true, null, -1,
-      action -> true, ActionPlaces.RUN_TOOLBAR_POPUP);
+      action -> true, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE);
 
     showPopup(e, popup);
   }

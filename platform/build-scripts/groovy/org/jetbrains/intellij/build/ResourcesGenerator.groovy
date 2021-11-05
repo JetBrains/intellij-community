@@ -5,8 +5,9 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.Nullable
 
 /**
- * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#withGeneratedResources
+ * @deprecated Use {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#withGeneratedResources(java.util.function.BiConsumer)}
  */
+@Deprecated
 @CompileStatic
 interface ResourcesGenerator {
   /**

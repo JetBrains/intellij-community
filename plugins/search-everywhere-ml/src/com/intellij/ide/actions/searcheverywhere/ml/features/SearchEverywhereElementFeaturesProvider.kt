@@ -33,7 +33,7 @@ abstract class SearchEverywhereElementFeaturesProvider {
 
   abstract fun getElementFeatures(element: Any,
                                   currentTime: Long,
-                                  queryLength: Int,
+                                  searchQuery: String,
                                   elementPriority: Int,
                                   cache: Any?): Map<String, Any>
 

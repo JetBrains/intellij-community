@@ -49,7 +49,7 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
       override fun visitElement(element: PsiElement) {
         if (areChecksDisabled(element)) return
         val context = session.getUserData(key)!!
-        TextExtractor.findTextsAt(element, domains).forEach { LangDetector.updateContext(it, context) }
+        TextExtractor.findUniqueTextsAt(element, domains).forEach { LangDetector.updateContext(it, context) }
       }
     }
   }

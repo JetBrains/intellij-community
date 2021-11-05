@@ -6,6 +6,7 @@ import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindModelExtension;
 import com.intellij.find.findInProject.FindInProjectManager;
+import com.intellij.find.ngrams.TrigramTextSearchService;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,6 +64,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -399,7 +401,7 @@ final class FindInProjectTask {
   }
 
   private boolean canRelyOnSearchers() {
-    if (!Registry.is("find.use.indexing.searcher.extensions")) return false;
+    if (!TrigramTextSearchService.useIndexingSearchExtensions()) return false;
     return ContainerUtil.find(mySearchers, s -> s.isReliable()) != null;
   }
 
@@ -411,7 +413,7 @@ final class FindInProjectTask {
         resultFiles.add(file);
       }
     }
-    if (!Registry.is("find.use.indexing.searcher.extensions")) return resultFiles;
+    if (!TrigramTextSearchService.useIndexingSearchExtensions()) return resultFiles;
     for (FindInProjectSearchEngine.FindInProjectSearcher searcher : mySearchers) {
       Collection<VirtualFile> virtualFiles = searcher.searchForOccurrences();
       for (VirtualFile file : virtualFiles) {

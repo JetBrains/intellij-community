@@ -39,6 +39,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.content.*;
@@ -47,6 +49,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +90,9 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     myModelFilter = new ServiceModelFilter();
     loadGroups(CONTRIBUTOR_EP_NAME.getExtensionList());
     myProject.getMessageBus().connect(myModel).subscribe(ServiceEventListener.TOPIC, e -> {
-      myModel.handle(e).onSuccess(o -> eventHandled(e));
+      if (!skipEvent(e)) {
+        myModel.handle(e).onSuccess(o -> eventHandled(e));
+      }
     });
     initRoots();
     CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ServiceViewExtensionPointListener(), myProject);
@@ -768,6 +773,22 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       }
     }
     return null;
+  }
+
+  private boolean skipEvent(ServiceEvent e) {
+    if (e.type != ServiceEventListener.EventType.RESET ||
+        e.target != ServiceEventListener.POLLING_RESET_TARGET) return false;
+
+    String toolWindowId = getToolWindowId(e.contributorClass);
+    if (toolWindowId == null) return false;
+
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
+    if (!(toolWindow instanceof ToolWindowEx)) return false;
+
+    toolWindow.getContentManager(); // ensure decorator is initialized
+    InternalDecorator decorator = ((ToolWindowEx)toolWindow).getDecorator();
+    Boolean isShared = UIUtil.getClientProperty(decorator, InternalDecoratorImpl.SHARED_ACCESS_KEY);
+    return isShared == Boolean.TRUE;
   }
 
   private static boolean isMainView(@NotNull ServiceView serviceView) {

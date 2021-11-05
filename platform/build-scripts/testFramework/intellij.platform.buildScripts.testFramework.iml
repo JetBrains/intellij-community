@@ -10,5 +10,12 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" scope="TEST" name="opentelemetry" level="project" />
+    <orderEntry type="library" scope="TEST" name="opentelemetry-exporter-jaeger" level="project" />
+    <orderEntry type="library" scope="TEST" name="grpc-netty-shaded" level="project" />
+    <orderEntry type="library" scope="TEST" name="grpc-core" level="project" />
+    <orderEntry type="library" scope="TEST" name="grpc-protobuf" level="project" />
+    <orderEntry type="library" scope="TEST" name="grpc-stub" level="project" />
+    <orderEntry type="library" scope="TEST" name="jackson-jr-objects" level="project" />
   </component>
 </module>

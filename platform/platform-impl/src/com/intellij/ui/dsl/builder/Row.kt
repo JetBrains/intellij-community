@@ -116,6 +116,9 @@ interface Row {
    */
   fun cell()
 
+  /**
+   * Adds a reserved cell in layout which can be populated by content later
+   */
   fun placeholder(): Placeholder
 
   /**

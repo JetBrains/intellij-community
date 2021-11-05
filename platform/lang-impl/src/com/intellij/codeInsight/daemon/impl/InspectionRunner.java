@@ -195,10 +195,13 @@ class InspectionRunner {
       Project project = myPsiFile.getProject();
       InspectListener publisher = project.getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
       for (InspectionContext context : contexts) {
+        LocalInspectionToolWrapper toolWrapper = context.tool;
+        // do not report UnfairLocalInspectionTools because they often don't have proper displayName etc. which are required here
+        if (toolWrapper.isUnfair()) continue;
         InspectionProblemHolder holder = context.holder;
         long durationMs = TimeUnit.NANOSECONDS.toMillis(holder.finishTimeStamp - holder.initTimeStamp);
         int problemCount = context.holder.getResultCount();
-        publisher.inspectionFinished(durationMs, 0, problemCount, context.tool, InspectListener.InspectionKind.LOCAL, myPsiFile, project);
+        publisher.inspectionFinished(durationMs, 0, problemCount, toolWrapper, InspectListener.InspectionKind.LOCAL, myPsiFile, project);
       }
     }
   }
@@ -253,8 +256,7 @@ class InspectionRunner {
         activeTools.addAll(Arrays.asList(elementsMerger.getSuppressIds()));
       }
     }
-    LocalInspectionTool
-      localTool = ((RedundantSuppressInspectionBase)toolWrapper.getTool()).createLocalTool(redundantSuppressionDetector, mySuppressedElements, activeTools);
+    LocalInspectionTool localTool = ((RedundantSuppressInspectionBase)toolWrapper.getTool()).createLocalTool(redundantSuppressionDetector, mySuppressedElements, activeTools);
     List<LocalInspectionToolWrapper> wrappers = Collections.singletonList(new LocalInspectionToolWrapper(localTool));
     InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, false, myProgress, false,
                                                    myInspectionProfileWrapper, mySuppressedElements);

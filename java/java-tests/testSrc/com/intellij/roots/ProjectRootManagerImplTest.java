@@ -3,10 +3,10 @@ package com.intellij.roots;
 
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,9 +25,9 @@ public class ProjectRootManagerImplTest extends HeavyPlatformTestCase {
     ProjectRootManagerImpl impl = ProjectRootManagerImpl.getInstanceImpl(myProject);
     Element oldState = impl.getState();
     impl.loadState(new Element("empty"));
-    LaterInvocator.dispatchPendingFlushes();
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     impl.loadState(oldState);
-    LaterInvocator.dispatchPendingFlushes();
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
 
     assertThat(count).hasValueGreaterThanOrEqualTo(2);
   }

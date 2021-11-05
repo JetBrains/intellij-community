@@ -176,7 +176,9 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     if (implementor.startsWith("Amazon")) return Variant.Corretto;
     if (implementor.startsWith("Azul")) return Variant.Zulu;
     if (implementor.startsWith("BellSoft")) return Variant.Liberica;
+    if (implementor.startsWith("Eclipse")) return Variant.Temurin;
     if (implementor.startsWith("IBM")) return Variant.IBM;
+    if (implementor.startsWith("International Business")) return Variant.Semeru;
     if (implementor.startsWith("JetBrains")) return Variant.JBR;
     if (implementor.startsWith("Oracle")) return Variant.Oracle;
     if (implementor.startsWith("SAP")) return Variant.SapMachine;

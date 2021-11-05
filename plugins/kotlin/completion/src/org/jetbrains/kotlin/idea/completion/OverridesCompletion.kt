@@ -118,7 +118,7 @@ class OverridesCompletion(
                     context.document.replaceString(startOffset, tailOffset, dummyMemberText)
 
                     val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-                    psiDocumentManager.commitAllDocuments()
+                    psiDocumentManager.commitDocument(context.document)
 
                     val dummyMember = context.file.findElementAt(startOffset)!!.getStrictParentOfType<KtNamedDeclaration>()!!
 

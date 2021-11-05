@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
@@ -125,7 +126,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
         TimeoutUtil.sleep(100);
         // Dispatching rationale: a task might be submitted to write thread. Hence, we need to ensure flush queue
         // has finished processing pending events.
-        LaterInvocator.dispatchPendingFlushes();
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
         return null;
       });
     }
@@ -372,8 +373,8 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   private static void dispatchEverything() {
     if (EDT.isCurrentThreadEdt()) {
       ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-        LaterInvocator.dispatchPendingFlushes();
-        LaterInvocator.dispatchPendingFlushes();
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
         return null;
       });
     }

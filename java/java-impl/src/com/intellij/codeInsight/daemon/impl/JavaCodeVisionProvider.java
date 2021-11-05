@@ -55,8 +55,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
       @Override
       public boolean collect(@NotNull PsiElement element, @NotNull Editor editor, @NotNull InlayHintsSink sink) {
         if (!(element instanceof PsiMember) || element instanceof PsiTypeParameter) return true;
-        PsiElement prevSibling = element.getPrevSibling();
-        if (!(prevSibling instanceof PsiWhiteSpace && prevSibling.textContains('\n'))) return true;
+        if (!isFirstInLine(element)) return true;
         PsiMember member = (PsiMember)element;
         if (member.getName() == null) return true;
 
@@ -151,6 +150,13 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
           }
         }
         return true;
+      }
+
+      private boolean isFirstInLine(PsiElement element) {
+        PsiElement prevSibling = element.getPrevSibling();
+        return ((prevSibling instanceof PsiWhiteSpace &&
+                  (prevSibling.textContains('\n') || prevSibling.getTextRange().getStartOffset() == 0)) ||
+                 element.getTextRange().getStartOffset() == 0);
       }
     };
   }

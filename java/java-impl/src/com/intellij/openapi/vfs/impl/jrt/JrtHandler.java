@@ -50,7 +50,7 @@ public class JrtHandler extends ArchiveHandler {
     }
   }
 
-  private synchronized FileSystem getFileSystem() throws IOException {
+  protected synchronized FileSystem getFileSystem() throws IOException {
     FileSystem fs = SoftReference.dereference(myFileSystem);
     if (fs == null) {
       String path = getFile().getPath();

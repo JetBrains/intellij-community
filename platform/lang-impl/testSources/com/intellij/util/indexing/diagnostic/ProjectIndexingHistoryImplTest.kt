@@ -13,10 +13,12 @@ class ProjectIndexingHistoryImplTest {
   @Test
   fun `test observation missed the start of suspension (IDEA-281514)`() {
     val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
-    history.stopSuspendingStages()
-    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
-    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    val time = Instant.now()
+    history.stopSuspendingStages(time)
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(1))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(2))
     history.indexingFinished()
+
     assertTrue(history.times.indexingDuration > Duration.ZERO)
     assertEquals(history.times.suspendedDuration, Duration.ZERO)
     assertEquals(history.times.scanFilesDuration, Duration.ZERO)
@@ -26,10 +28,12 @@ class ProjectIndexingHistoryImplTest {
   @Test
   fun `test there may be actions after suspension`() {
     val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
-    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
-    history.suspendStages()
-    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    val time = Instant.now()
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time)
+    history.suspendStages(time.plusNanos(1))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(2))
     history.indexingFinished()
+
     assertTrue(history.times.indexingDuration > Duration.ZERO)
     assertEquals(history.times.suspendedDuration, Duration.ZERO)
     assertEquals(history.times.scanFilesDuration, Duration.ZERO)
@@ -39,11 +43,13 @@ class ProjectIndexingHistoryImplTest {
   @Test
   fun `test there may be actions after suspension 2`() {
     val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
-    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
-    history.suspendStages()
-    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
-    history.stopSuspendingStages()
+    val time = Instant.now()
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time)
+    history.suspendStages(time.plusNanos(1))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(2))
+    history.stopSuspendingStages(time.plusNanos(3))
     history.indexingFinished()
+
     assertTrue(history.times.indexingDuration > Duration.ZERO)
     assertTrue(history.times.suspendedDuration > Duration.ZERO)
     assertEquals(history.times.scanFilesDuration, Duration.ZERO)
@@ -53,11 +59,13 @@ class ProjectIndexingHistoryImplTest {
   @Test
   fun `test there may be actions after suspension 3`() {
     val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
-    history.suspendStages()
-    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
-    history.stopSuspendingStages()
-    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    val time = Instant.now()
+    history.suspendStages(time)
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(1))
+    history.stopSuspendingStages(time.plusNanos(2))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(3))
     history.indexingFinished()
+
     assertTrue(history.times.indexingDuration > Duration.ZERO)
     assertTrue(history.times.suspendedDuration > Duration.ZERO)
     assertEquals(history.times.scanFilesDuration, Duration.ZERO)
@@ -67,10 +75,12 @@ class ProjectIndexingHistoryImplTest {
   @Test
   fun `test there may be actions after suspension 4`() {
     val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
-    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
-    history.stopSuspendingStages()
-    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    val time = Instant.now()
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time)
+    history.stopSuspendingStages(time.plusNanos(1))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(2))
     history.indexingFinished()
+
     assertTrue(history.times.indexingDuration > Duration.ZERO)
     assertTrue(history.times.suspendedDuration > Duration.ZERO)
     assertEquals(history.times.scanFilesDuration, Duration.ZERO)
@@ -80,12 +90,14 @@ class ProjectIndexingHistoryImplTest {
   @Test
   fun `test there may be actions after suspension 5`() {
     val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
-    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
-    history.stopSuspendingStages()
-    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
-    history.suspendStages()
-    history.stopSuspendingStages()
+    val time = Instant.now()
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(1))
+    history.stopSuspendingStages(time.plusNanos(2))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(3))
+    history.suspendStages(time.plusNanos(4))
+    history.stopSuspendingStages(time.plusNanos(5))
     history.indexingFinished()
+
     assertTrue(history.times.indexingDuration > Duration.ZERO)
     assertTrue(history.times.suspendedDuration > Duration.ZERO)
     assertEquals(history.times.scanFilesDuration, Duration.ZERO)
@@ -95,68 +107,32 @@ class ProjectIndexingHistoryImplTest {
   @Test
   fun `test basic workflow`() {
     val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
-    val pushEstimations = runStageWithEstimations(history, ProjectIndexingHistoryImpl.Stage.PushProperties)
-    val scanEstimations = runStageWithEstimations(history, ProjectIndexingHistoryImpl.Stage.Scanning)
+    val instant = Instant.now()
+    history.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties, instant)
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties, instant.plusNanos(1))
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Scanning, instant.plusNanos(2))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning, instant.plusNanos(5))
     history.indexingFinished()
+
     assertEquals(history.times.indexingDuration, Duration.ZERO)
     assertEquals(history.times.suspendedDuration, Duration.ZERO)
-    assertEstimations(history, ProjectIndexingHistoryImpl.Stage.PushProperties, pushEstimations)
-    assertEstimations(history, ProjectIndexingHistoryImpl.Stage.Scanning, scanEstimations)
+    assertEquals(history.times.pushPropertiesDuration, Duration.ofNanos(1))
+    assertEquals(history.times.scanFilesDuration, Duration.ofNanos(3))
   }
 
   @Test
   fun `test stage with suspension inside`() {
     val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
-    lateinit var suspendEstimations: Pair<Duration, Duration>
-    val pushEstimations = runStageWithEstimations(history, ProjectIndexingHistoryImpl.Stage.PushProperties) {
-      suspendEstimations = suspendWithEstimations(history)
-    }
+    val instant = Instant.now()
+    history.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties, instant)
+    history.suspendStages(instant.plusNanos(1))
+    history.stopSuspendingStages(instant.plusNanos(4))
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties, instant.plusNanos(5))
     history.indexingFinished()
+
     assertEquals(history.times.indexingDuration, Duration.ZERO)
     assertEquals(history.times.scanFilesDuration, Duration.ZERO)
-    assertSuspensionEstimations(history, suspendEstimations)
-    assertEstimations(history, ProjectIndexingHistoryImpl.Stage.PushProperties,
-                      Pair(pushEstimations.first.minus(history.times.suspendedDuration),
-                           pushEstimations.second.minus(history.times.suspendedDuration)))
-  }
-
-  private fun runStageWithEstimations(history: ProjectIndexingHistoryImpl,
-                                      stage: ProjectIndexingHistoryImpl.Stage,
-                                      block: () -> Unit = {}): Pair<Duration, Duration> {
-    val first = Instant.now()
-    history.startStage(stage)
-    val second = Instant.now()
-    block.invoke()
-    val third = Instant.now()
-    history.stopStage(stage)
-    val fourth = Instant.now()
-    return Pair(Duration.between(second, third), Duration.between(first, fourth))
-  }
-
-  private fun suspendWithEstimations(history: ProjectIndexingHistoryImpl,
-                                     block: () -> Unit = {}): Pair<Duration, Duration> {
-    val first = Instant.now()
-    history.suspendStages()
-    val second = Instant.now()
-    block.invoke()
-    val third = Instant.now()
-    history.stopSuspendingStages()
-    val fourth = Instant.now()
-    return Pair(Duration.between(second, third), Duration.between(first, fourth))
-  }
-
-  private fun assertEstimations(history: ProjectIndexingHistoryImpl,
-                                stage: ProjectIndexingHistoryImpl.Stage,
-                                estimations: Pair<Duration, Duration>) {
-    val duration = stage.getProperty().get(history.times as ProjectIndexingHistoryImpl.IndexingTimesImpl)
-    assertTrue("Duration $duration, estimations $estimations", duration >= estimations.first)
-    assertTrue("Duration $duration, estimations $estimations", duration <= estimations.second)
-  }
-
-  private fun assertSuspensionEstimations(history: ProjectIndexingHistoryImpl,
-                                          estimations: Pair<Duration, Duration>) {
-    val duration = history.times.suspendedDuration
-    assertTrue("Duration $duration, estimations $estimations", duration >= estimations.first)
-    assertTrue("Duration $duration, estimations $estimations", duration <= estimations.second)
+    assertEquals(history.times.suspendedDuration, Duration.ofNanos(3))
+    assertEquals(history.times.pushPropertiesDuration, Duration.ofNanos(2))
   }
 }

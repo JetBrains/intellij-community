@@ -914,7 +914,7 @@ public final class LambdaUtil {
         PsiExpression function = replacer.apply(lambdaCopy);
         if (function == null) return false;
         JavaResolveResult resultCopy = copyCall.resolveMethodGenerics();
-        if (resultCopy.getElement() != oldTarget) return false;
+        if (!oldTarget.getManager().areElementsEquivalent(resultCopy.getElement(), oldTarget)) return false;
         String copyMessage = resultCopy instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resultCopy).getInferenceErrorMessage() : null;
         if (!Objects.equals(origErrorMessage, copyMessage)) return false;
         if (function instanceof PsiFunctionalExpression) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -22,7 +22,7 @@ final class CommunityStandaloneJpsBuilder {
   void processJpsLayout(String targetDir, String buildNumber, ProjectStructureMapping projectStructureMapping,
                         boolean copyFiles, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
     BuildContext context = buildContext
-    new LayoutBuilder(buildContext, false).process(targetDir, projectStructureMapping, copyFiles) {
+    new LayoutBuilder(buildContext).process(targetDir, projectStructureMapping, copyFiles) {
       zip(getZipName(buildNumber)) {
         jar("util.jar") {
           module("intellij.platform.util.rt")

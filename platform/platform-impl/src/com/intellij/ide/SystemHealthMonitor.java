@@ -49,7 +49,7 @@ import java.util.stream.Stream;
 
 final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
-  private static final String DISPLAY_ID = "System Health";
+  private static final String NOTIFICATION_GROUP_ID = "System Health";
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
@@ -129,7 +129,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
             catch (IOException x) {
               LOG.warn("cannot delete " + configFile, x);
               String content = IdeBundle.message("cannot.delete.jre.config", configFile, IoErrorText.message(x));
-              Notifications.Bus.notify(new Notification(DISPLAY_ID, "", content, NotificationType.ERROR));
+              new Notification(NOTIFICATION_GROUP_ID, content, NotificationType.ERROR).notify(null);
             }
           });
         }
@@ -223,7 +223,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       if (ignored) return;
     }
 
-    Notification notification = new MyNotification(IdeBundle.message(key, params));
+    Notification notification = new MyNotification(IdeBundle.message(key, params), NotificationType.WARNING, key);
     if (action != null) {
       notification.addAction(action);
     }
@@ -234,12 +234,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
     notification.setImportant(true);
 
     Notifications.Bus.notify(notification);
-  }
-
-  private static final class MyNotification extends Notification implements NotificationFullContent {
-    MyNotification(@NotNull @NlsContexts.NotificationContent String content) {
-      super(DISPLAY_ID, "", content, NotificationType.WARNING);
-    }
   }
 
   private static void startDiskSpaceMonitoring() {
@@ -253,7 +247,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
     AppExecutorUtil.getAppScheduledExecutorService().schedule(new Runnable() {
       private static final long LOW_DISK_SPACE_THRESHOLD = 50 * 1024 * 1024;
-      private static final long MAX_WRITE_SPEED_IN_BPS = 500 * 1024 * 1024;  // 500 MB/sec is near max SSD sequential write speed
+      private static final long MAX_WRITE_SPEED_IN_BPS = 500 * 1024 * 1024;  // 500 MB/s is (somewhat outdated) peak SSD write speed
 
       @Override
       public void run() {
@@ -301,8 +295,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
                   restart(delaySeconds);
                 }
                 else {
-                  NotificationGroupManager.getInstance().getNotificationGroup(DISPLAY_ID)
-                    .createNotification(message, file.getPath(), NotificationType.ERROR)
+                  new MyNotification(file.getPath(), NotificationType.ERROR, "low.disk")
+                    .setTitle(message)
                     .whenExpired(() -> {
                       reported.compareAndSet(true, false);
                       restart(delaySeconds);
@@ -325,6 +319,13 @@ final class SystemHealthMonitor extends PreloadingActivity {
         AppExecutorUtil.getAppScheduledExecutorService().schedule(this, delaySeconds, TimeUnit.SECONDS);
       }
     }, 1, TimeUnit.SECONDS);
+  }
+
+  private static final class MyNotification extends Notification implements NotificationFullContent {
+    private MyNotification(@NlsContexts.NotificationContent String content, NotificationType type, @Nullable String displayId) {
+      super(NOTIFICATION_GROUP_ID, content, type);
+      if (displayId != null) setDisplayId(displayId);
+    }
   }
 
   private interface LibC extends Library {

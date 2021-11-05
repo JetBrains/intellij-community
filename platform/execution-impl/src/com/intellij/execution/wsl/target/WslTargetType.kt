@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl.target
 
 import com.intellij.execution.target.*
+import com.intellij.execution.wsl.target.wizard.WslTargetCustomToolStep
 import com.intellij.execution.wsl.target.wizard.WslTargetIntrospectionStep
 import com.intellij.execution.wsl.target.wizard.WslTargetLanguageStep
 import com.intellij.execution.wsl.target.wizard.WslTargetWizardModel
@@ -41,7 +42,12 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
                                        configToConfigure: WslTargetEnvironmentConfiguration,
                                        runtimeType: LanguageRuntimeType<*>?): List<AbstractWizardStepEx> {
     val model = WslTargetWizardModel(project, configToConfigure, runtimeType, null)
-    return listOf(WslTargetIntrospectionStep(model), WslTargetLanguageStep(model))
+    val isCustomToolConfiguration = runtimeType is CustomToolLanguageRuntimeType
+    model.isCustomToolConfiguration = isCustomToolConfiguration
+    return listOf(
+      WslTargetIntrospectionStep(model),
+      if (isCustomToolConfiguration) WslTargetCustomToolStep(model) else WslTargetLanguageStep(model)
+    )
   }
 
   override fun createEnvironmentRequest(project: Project, config: WslTargetEnvironmentConfiguration): TargetEnvironmentRequest {

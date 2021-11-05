@@ -28,7 +28,7 @@ abstract class SearchEverywhereMlService {
   abstract fun onSessionStarted(project: Project?)
 
   abstract fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
-                               keysTyped: Int, backspacesTyped: Int, textLength: Int,
+                               keysTyped: Int, backspacesTyped: Int, searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
 
   abstract fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,

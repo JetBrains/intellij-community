@@ -55,10 +55,11 @@ public abstract class WslDistributionManager implements Disposable {
 
   /**
    * @return list of installed WSL distributions by parsing output of `wsl.exe -l`. Please call it
-   * on a pooled thread and outside of the read action as it runs a process under the hood.
+   * on a pooled thread and outside the read action as it runs a process under the hood.
    * @see #getInstalledDistributionsFuture
    */
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
+    if (!WSLUtil.isSystemCompatible()) return List.of();
     CachedDistributions cachedDistributions = myInstalledDistributions;
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return cachedDistributions.myInstalledDistributions;
@@ -76,6 +77,7 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   public @NotNull CompletableFuture<List<WSLDistribution>> getInstalledDistributionsFuture() {
+    if (!WSLUtil.isSystemCompatible()) return CompletableFuture.completedFuture(List.of());
     CachedDistributions cachedDistributions = myInstalledDistributions;
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return CompletableFuture.completedFuture(cachedDistributions.myInstalledDistributions);
@@ -120,6 +122,7 @@ public abstract class WslDistributionManager implements Disposable {
     if (releaseId > 0 && releaseId < 2004) {
       final WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
       if (wslTool == null || (!wslTool.isVerboseFlagAvailable && !wslTool.isQuietFlagAvailable)) {
+        //noinspection deprecation
         return WSLUtil.getAvailableDistributions();
       }
     }

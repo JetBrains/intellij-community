@@ -105,8 +105,10 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     cells.add(cell)
   }
 
-  override fun placeholder(): Placeholder {
-    TODO("Not yet implemented")
+  override fun placeholder(): PlaceholderImpl {
+    val result = PlaceholderImpl(this)
+    cells.add(result)
+    return result
   }
 
   override fun enabled(isEnabled: Boolean): RowImpl {
@@ -387,20 +389,14 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun doVisible(isVisible: Boolean) {
     for (cell in cells) {
-      when (cell) {
-        is CellImpl<*> -> cell.visibleFromParent(isVisible)
-        is PanelImpl -> cell.visibleFromParent(isVisible)
-      }
+      cell?.visibleFromParent(isVisible)
     }
     rowComment?.let { it.isVisible = isVisible }
   }
 
   private fun doEnabled(isEnabled: Boolean) {
-    cells.forEach {
-      when (it) {
-        is CellImpl<*> -> it.enabledFromParent(isEnabled)
-        is PanelImpl -> it.enabledFromParent(isEnabled)
-      }
+    for (cell in cells) {
+      cell?.enabledFromParent(isEnabled)
     }
     rowComment?.let { it.isEnabled = isEnabled }
   }

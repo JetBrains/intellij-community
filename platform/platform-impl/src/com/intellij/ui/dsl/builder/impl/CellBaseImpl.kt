@@ -22,6 +22,10 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   var rightGap: RightGap? = null
     private set
 
+  abstract fun visibleFromParent(parentVisible: Boolean)
+
+  abstract fun enabledFromParent(parentEnabled: Boolean)
+
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
     this.horizontalAlign = horizontalAlign
     return this

@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper
+import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.favoritesTreeView.FavoritesManager
 import com.intellij.internal.statistic.local.FileTypeUsageLocalSummary
@@ -13,9 +14,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.textMatching.PrefixMatchingUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.Time.*
 
 internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
@@ -30,7 +35,15 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     internal const val IS_SAME_MODULE_DATA_KEY = "isSameModule"
     internal const val PACKAGE_DISTANCE_DATA_KEY = "packageDistance"
     internal const val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = "packageDistanceNorm"
+    internal const val IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY = "isSameFileTypeAsOpenedFile"
+    internal const val IS_EXACT_MATCH_DATA_KEY = "isExactMatch"
 
+    internal const val IS_IN_SOURCE_DATA_KEY = "isInSource"
+    internal const val IS_IN_TEST_SOURCES_DATA_KEY = "isInTestSources"
+    internal const val IS_IN_LIBRARY_DATA_KEY = "isFromLibrary"
+    internal const val IS_EXCLUDED_DATA_KEY = "isInExcluded"
+
+    internal const val FILETYPE_MATCHES_QUERY_DATA_KEY = "fileTypeMatchesQuery"
     internal const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
     internal const val FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY = "fileTypeUsageRatioToMax"
     internal const val FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY = "fileTypeUsageRatioToMin"
@@ -81,7 +94,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
-                                  queryLength: Int,
+                                  searchQuery: String,
                                   elementPriority: Int,
                                   cache: Any?): Map<String, Any> {
     val item = when (element) {
@@ -91,18 +104,23 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }
 
     val fileTypeStats = cache as Cache
-    return getFeatures(item, currentTime, elementPriority, fileTypeStats)
+    return getFeatures(item, currentTime, searchQuery, elementPriority, fileTypeStats)
   }
 
   private fun getFeatures(item: PsiFileSystemItem,
                           currentTime: Long,
+                          searchQuery: String,
                           elementPriority: Int,
                           cache: Cache): Map<String, Any> {
     val data = hashMapOf<String, Any>(
       IS_FAVORITE_DATA_KEY to isFavorite(item),
       IS_DIRECTORY_DATA_KEY to item.isDirectory,
       PRIORITY_DATA_KEY to elementPriority,
+      IS_EXACT_MATCH_DATA_KEY to (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE),
     )
+
+    data.putAll(getNameMatchingFeatures(item, searchQuery))
+    data.putAll(getFileLocationStats(item))
 
     calculatePackageDistance(item, cache.openedFile)?.let {
       data[PACKAGE_DISTANCE_DATA_KEY] = it.first
@@ -118,8 +136,10 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
     data[IS_OPENED_DATA_KEY] = isOpened(item)
     data[FILETYPE_DATA_KEY] = item.virtualFile.fileType.name
+    data.putIfValueNotNull(FILETYPE_MATCHES_QUERY_DATA_KEY, matchesFileTypeInQuery(item, searchQuery))
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(item)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(item)
+    data.putIfValueNotNull(IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY, isSameFileTypeAsOpenedFile(item, cache.openedFile))
 
     data.putAll(getModificationTimeStats(item, currentTime))
     data.putAll(getFileTypeStats(item, currentTime, cache.fileTypeStats))
@@ -132,9 +152,42 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     return ReadAction.compute<Boolean, Nothing> { favoritesManager.getFavoriteListName(null, item.virtualFile) != null }
   }
 
+  private fun getNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Map<String, Any> {
+    fun changeToCamelCase(str: String): String {
+      val words = str.split('_')
+      val firstWord = words.first()
+      if (words.size == 1) {
+        return firstWord
+      } else {
+        return firstWord.plus(
+          words.subList(1, words.size)
+            .joinToString(separator = "") { s -> s.replaceFirstChar { it.uppercaseChar() } }
+        )
+      }
+    }
+
+    // Remove the directory and the extension if they are present
+    val filename = FileUtil.getNameWithoutExtension(PathUtil.getFileName(searchQuery))
+
+    val features = mutableMapOf<String, Any>()
+    PrefixMatchingUtil.calculateFeatures(item.virtualFile.nameWithoutExtension, filename, features)
+    return features.mapKeys { changeToCamelCase(it.key) }  // Change snake case to camel case for consistency with other feature names.
+      .mapValues { if (it.value is Double) roundDouble(it.value as Double) else it.value }
+  }
+
   private fun isOpened(item: PsiFileSystemItem): Boolean {
     val openedFiles = FileEditorManager.getInstance(item.project).openFiles
     return item.virtualFile in openedFiles
+  }
+
+  private fun matchesFileTypeInQuery(item: PsiFileSystemItem, searchQuery: String): Boolean? {
+    val fileExtension = item.virtualFile.extension
+    val extensionInQuery = searchQuery.substringAfterLast('.', missingDelimiterValue = "")
+    if (extensionInQuery.isEmpty() || fileExtension == null) {
+      return null
+    }
+
+    return extensionInQuery == fileExtension
   }
 
   private fun getRecentFilesIndex(item: PsiFileSystemItem): Int {
@@ -190,6 +243,11 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     )
   }
 
+  private fun isSameFileTypeAsOpenedFile(item: PsiFileSystemItem, openedFile: VirtualFile?): Boolean? {
+    val openedFileType = openedFile?.fileType ?: return null
+    return item.virtualFile.fileType == openedFileType
+  }
+
   private fun getPredictionScore(item: PsiFileSystemItem): Double {
     val historyManagerWrapper = FileHistoryManagerWrapper.getInstance(item.project)
     val probability = historyManagerWrapper.calcNextFileProbability(item.virtualFile)
@@ -241,10 +299,12 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }.run {
       fun splitPackage(s: String?) = if (s == null) {
         null
-      } else if (s.isBlank()) {
+      }
+      else if (s.isBlank()) {
         // In case the file is under a source root (src/testSrc/resource) and the package prefix is blank
         emptyList()
-      } else {
+      }
+      else {
         s.split('.')
       }
 
@@ -271,6 +331,22 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     return Pair(distance, normalizedDistance)
   }
 
+  private fun getFileLocationStats(file: PsiFileSystemItem): Map<String, Any> {
+    val project = file.project
+    val virtualFile = file.virtualFile
+
+    return ReadAction.compute<Map<String, Any>, Nothing> {
+      val fileIndex = ProjectFileIndex.getInstance(project)
+
+      return@compute mapOf(
+        IS_IN_SOURCE_DATA_KEY to fileIndex.isInSource(virtualFile),
+        IS_IN_TEST_SOURCES_DATA_KEY to fileIndex.isInTestSourceContent(virtualFile),
+        IS_IN_LIBRARY_DATA_KEY to fileIndex.isInLibrary(virtualFile),
+        IS_EXCLUDED_DATA_KEY to fileIndex.isExcluded(virtualFile),
+      )
+    }
+  }
+
   private fun getVirtualFileDirectory(file: VirtualFile, maxChecksUp: Int = 3): VirtualFile? {
     if (file.isDirectory) {
       return file
@@ -279,7 +355,8 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     if (maxChecksUp > 1) {
       val parent = file.parent ?: return null
       return getVirtualFileDirectory(parent, maxChecksUp - 1)
-    } else {
+    }
+    else {
       return null
     }
   }
