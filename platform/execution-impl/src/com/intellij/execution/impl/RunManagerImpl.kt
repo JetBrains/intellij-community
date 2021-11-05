@@ -862,8 +862,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     if (selectedConfiguration == null) {
       // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
       notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId ?: ""
-      selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
+      selectAnyConfiguration()
     }
+  }
+
+  private fun selectAnyConfiguration() {
+    selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
   }
 
   fun readContext(parentNode: Element) {
@@ -1265,7 +1269,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
 
     if (selectedConfigurationWasRemoved) {
-      selectedConfiguration = null
+      selectAnyConfiguration()
     }
 
     removed.forEach { eventPublisher.runConfigurationRemoved(it) }
