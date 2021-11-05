@@ -289,6 +289,7 @@ public final class LaterInvocator {
     LOG.assertTrue(isWriteThread());
 
     if (ourModalEntities.isEmpty()) return false;
+    if (project == null) return true;
 
     List<Dialog> modalEntitiesForProject = projectToModalEntities.get(project);
 
