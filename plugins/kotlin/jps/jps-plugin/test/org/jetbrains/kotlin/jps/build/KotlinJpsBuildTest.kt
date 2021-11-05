@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.util.ignored
 import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
@@ -477,14 +478,16 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
     }
 
     fun testCircularDependenciesDifferentPackages() {
+        if (ignored("KT-49575")) return
+
         initProject(JVM_MOCK_RUNTIME)
         val result = buildAllModules()
+
+        result.assertSuccessful()
 
         // Check that outputs are located properly
         assertFilesExistInOutput(findModule("module2"), "kt1/Kt1Kt.class")
         assertFilesExistInOutput(findModule("kotlinProject"), "kt2/Kt2Kt.class")
-
-        result.assertSuccessful()
 
         if (IncrementalCompilation.isEnabledForJvm()) {
             checkWhen(touch("src/kt2.kt"), null, packageClasses("kotlinProject", "src/kt2.kt", "kt2.Kt2Kt"))
