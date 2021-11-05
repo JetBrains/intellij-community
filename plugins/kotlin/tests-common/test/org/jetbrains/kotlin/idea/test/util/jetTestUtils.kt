@@ -55,3 +55,11 @@ val CodeInsightTestFixture.elementByOffset: PsiElement
 
 val File.slashedPath: String
     get() = KotlinTestUtils.toSlashEndingDirPath(absolutePath)
+
+/**
+ * This Util function is needed for manual test disabling via pattern:
+ * if (ignored("KT-xxx")) return
+ *
+ * We cannot just add return in the beginning of the test because we'll get warnings "unreachable code"
+ */
+fun ignored(@Suppress("UNUSED_PARAMETER") reason: String) = true
