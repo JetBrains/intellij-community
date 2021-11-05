@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -181,6 +182,57 @@ public final class BackgroundTaskUtil {
     return Pair.create(result, indicator);
   }
 
+  public static class BackgroundTask {
+    private final @NotNull Disposable parent;
+    private final @NotNull ProgressIndicator indicator;
+    private final @NotNull CompletableFuture<?> future;
+
+    public BackgroundTask(@NotNull Disposable parent,
+                          @NotNull ProgressIndicator indicator,
+                          @NotNull CompletableFuture<?> future) {
+      this.parent = parent;
+      this.indicator = indicator;
+      this.future = future;
+    }
+
+    public @NotNull Disposable getParent() {
+      return parent;
+    }
+
+    public @NotNull ProgressIndicator getIndicator() {
+      return indicator;
+    }
+
+    public @NotNull CompletableFuture<?> getFuture() {
+      return future;
+    }
+
+    public void cancel() {
+      indicator.cancel();
+    }
+
+    public void awaitCompletion() throws ExecutionException {
+      while(!future.isDone() && !Disposer.isDisposed(parent)) {
+        try {
+          if (future.get(1, TimeUnit.SECONDS) != null) {
+            break;
+          }
+        } catch (ExecutionException e) {
+          if (e.getCause() instanceof ControlFlowException) {
+            break;
+          }
+          throw e;
+        } catch (TimeoutException e) {
+          // another
+        } catch (Exception e) {
+          if (e.getCause() instanceof ControlFlowException) {
+            break;
+          }
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
 
   /**
    * An alternative to plain {@link Application#executeOnPooledThread(Runnable)} which wraps the task in a process with a
@@ -200,6 +252,20 @@ public final class BackgroundTaskUtil {
    */
   @CalledInAny
   public static @NotNull ProgressIndicator execute(@NotNull Executor executor, @NotNull Disposable parent, @NotNull Runnable runnable) {
+      return submitTask(executor, parent, runnable).indicator;
+  }
+
+  @CalledInAny
+  public static @NotNull BackgroundTask submitTask(@NotNull Disposable parent, @NotNull Runnable runnable) {
+    return submitTask(AppExecutorUtil.getAppExecutorService(), parent, runnable);
+  }
+
+  /**
+   * Does tha same as {@link BackgroundTaskUtil#execute(Executor, Disposable, Runnable)} method but allows
+   * to track execution {@link CompletableFuture}.
+   */
+  @CalledInAny
+  public static @NotNull BackgroundTask submitTask(@NotNull Executor executor, @NotNull Disposable parent, @NotNull Runnable runnable) {
     ProgressIndicator indicator = new EmptyProgressIndicator();
     indicator.start();
 
@@ -226,12 +292,11 @@ public final class BackgroundTaskUtil {
 
     if (!registerIfParentNotDisposed(parent, disposable)) {
       indicator.cancel();
-      return indicator;
+    } else {
+      future.whenComplete((o, e) -> Disposer.dispose(disposable));
     }
 
-    future.whenComplete((o, e) -> Disposer.dispose(disposable));
-
-    return indicator;
+    return new BackgroundTask(parent, indicator, future);
   }
 
   @CalledInAny
