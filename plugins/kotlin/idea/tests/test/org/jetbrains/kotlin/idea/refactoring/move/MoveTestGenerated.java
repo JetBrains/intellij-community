@@ -728,11 +728,6 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveFunctionToPackageUsedInJava/moveFunctionToPackageUsedInJava.test");
     }
 
-    @TestMetadata("kotlin/moveTopLevelDeclarations/moveFunctionToPackage/moveFunctionToPackage.test")
-    public void testKotlin_moveTopLevelDeclarations_moveFunctionToPackage_MoveFunctionToPackage() throws Exception {
-        runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveFunctionToPackage/moveFunctionToPackage.test");
-    }
-
     @TestMetadata("kotlin/moveTopLevelDeclarations/moveObjectToFile/moveObjectToFile.test")
     public void testKotlin_moveTopLevelDeclarations_moveObjectToFile_MoveObjectToFile() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveObjectToFile/moveObjectToFile.test");
