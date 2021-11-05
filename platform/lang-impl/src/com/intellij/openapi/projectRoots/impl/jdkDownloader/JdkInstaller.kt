@@ -34,8 +34,6 @@ import java.nio.file.Paths
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
-import java.util.function.Consumer
-import java.util.function.Predicate
 import kotlin.concurrent.withLock
 import kotlin.math.absoluteValue
 import kotlin.streams.toList
@@ -121,9 +119,7 @@ class JdkInstaller : JdkInstallerBase() {
   fun defaultInstallDir(wslDistribution: WSLDistribution?) : Path {
     wslDistribution?.let { dist ->
       dist.userHome?.let { home ->
-        dist.getWindowsPath("$home/.jdks")?.let {
-          return Paths.get(it)
-        }
+        return Paths.get(dist.getWindowsPath("$home/.jdks"))
       }
     }
 

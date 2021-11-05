@@ -9,17 +9,13 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,19 +25,17 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.nio.file.Files.isDirectory;
-import static java.util.Collections.emptySet;
-
 public class JavaHomeFinderBasic {
   @SuppressWarnings("NonConstantLogger") private final Logger log = Logger.getInstance(getClass());
   private final List<Supplier<Set<String>>> myFinders = new ArrayList<>();
+  private final JavaHomeFinder.SystemInfoProvider mySystemInfo;
 
-  JavaHomeFinderBasic(boolean forceEmbeddedJava, String... paths) {
-    this(true, forceEmbeddedJava, paths);
-  }
-
-  JavaHomeFinderBasic(boolean checkDefaults, boolean forceEmbeddedJava, String... paths) {
-    if (checkDefaults) {
+  public JavaHomeFinderBasic(boolean checkDefaultLocations,
+                             boolean forceEmbeddedJava,
+                             @NotNull JavaHomeFinder.SystemInfoProvider systemInfo,
+                             String... paths) {
+    mySystemInfo = systemInfo;
+    if (checkDefaultLocations) {
       myFinders.add(this::checkDefaultLocations);
     }
 
@@ -54,6 +48,10 @@ public class JavaHomeFinderBasic {
     if (!(this instanceof JavaHomeFinderWsl) && (forceEmbeddedJava || Registry.is("java.detector.include.embedded", false))) {
       myFinders.add(() -> scanAll(getJavaHome(), false));
     }
+  }
+
+  protected JavaHomeFinder.SystemInfoProvider getSystemInfo() {
+    return mySystemInfo;
   }
 
   private @NotNull Set<String> findInSpecifiedPaths(String[] paths) {
@@ -82,15 +80,15 @@ public class JavaHomeFinderBasic {
 
   private @NotNull Set<String> findInPATH() {
     try {
-      String pathVarString = getEnvironmentVariable("PATH");
+      String pathVarString = mySystemInfo.getEnvironmentVariable("PATH");
       if (pathVarString == null || pathVarString.isEmpty()) {
-        return emptySet();
+        return Collections.emptySet();
       }
 
       Set<Path> dirsToCheck = new HashSet<>();
-      for (String p : pathVarString.split(File.pathSeparator)) {
+      for (String p : pathVarString.split(mySystemInfo.getPathSeparator())) {
         Path dir = Paths.get(p);
-        if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", SystemInfoRt.isFileSystemCaseSensitive)) {
+        if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", mySystemInfo.isFileSystemCaseSensitive())) {
           continue;
         }
 
@@ -106,17 +104,13 @@ public class JavaHomeFinderBasic {
     }
     catch (Exception e) {
       log.warn("Failed to scan PATH for JDKs. " + e.getMessage(), e);
-      return emptySet();
+      return Collections.emptySet();
     }
-  }
-
-  protected @Nullable String getEnvironmentVariable(@NotNull String name) {
-    return EnvironmentUtil.getValue(name);
   }
 
   private @NotNull Set<String> checkDefaultLocations() {
     if (ApplicationManager.getApplication() == null) {
-      return emptySet();
+      return Collections.emptySet();
     }
 
     Set<Path> paths = new HashSet<>();
@@ -141,7 +135,7 @@ public class JavaHomeFinderBasic {
 
   protected @NotNull Set<String> scanAll(@Nullable Path file, boolean includeNestDirs) {
     if (file == null) {
-      return emptySet();
+      return Collections.emptySet();
     }
     return scanAll(Collections.singleton(file), includeNestDirs);
   }
@@ -161,19 +155,20 @@ public class JavaHomeFinderBasic {
     }
 
     if (!includeNestDirs) return;
-    File[] files = folder.toFile().listFiles();
-    if (files == null) return;
-
-    for (File candidate : files) {
-      for (File adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
-        scanFolder(adjusted.toPath(), false, result);
-      }
+    try (Stream<Path> files = Files.list(folder)) {
+      files.forEach(candidate -> {
+        for (Path adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
+          scanFolder(adjusted, false, result);
+        }
+      });
+    }
+    catch (IOException ignore) {
     }
   }
 
   @NotNull
-  protected List<File> listPossibleJdkHomesFromInstallRoot(@NotNull File file) {
-    return Collections.singletonList(file);
+  protected List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
+    return Collections.singletonList(path);
   }
 
   protected @NotNull List<Path> listPossibleJdkInstallRootsFromHomes(@NotNull Path file) {
@@ -182,7 +177,7 @@ public class JavaHomeFinderBasic {
 
   private static @Nullable Path getJavaHome() {
     Path javaHome = Path.of(SystemProperties.getJavaHome());
-    return isDirectory(javaHome) ? javaHome : null;
+    return Files.isDirectory(javaHome) ? javaHome : null;
   }
 
   /**
@@ -191,48 +186,48 @@ public class JavaHomeFinderBasic {
   private @NotNull Set<@NotNull String> findJavaInstalledBySdkMan() {
     try {
       Path candidatesDir = findSdkManCandidatesDir();
-      if (candidatesDir == null) return emptySet();
+      if (candidatesDir == null) return Collections.emptySet();
       Path javasDir = candidatesDir.resolve("java");
-      if (!isDirectory(javasDir)) return emptySet();
+      if (!Files.isDirectory(javasDir)) return Collections.emptySet();
       //noinspection UnnecessaryLocalVariable
       var homes = listJavaHomeDirsInstalledBySdkMan(javasDir);
       return homes;
     }
     catch (Exception e) {
       log.warn("Unexpected exception while looking for Sdkman directory: " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-      return emptySet();
+      return Collections.emptySet();
     }
   }
 
   private @NotNull Set<String> findJavaInstalledByGradle() {
     Path jdks = getPathInUserHome(".gradle/jdks");
-    return jdks != null && isDirectory(jdks) ? scanAll(jdks, true) : emptySet();
+    return jdks != null && Files.isDirectory(jdks) ? scanAll(jdks, true) : Collections.emptySet();
   }
 
   @Nullable
   private Path findSdkManCandidatesDir() {
     // first, try the special environment variable
-    String candidatesPath = getEnvironmentVariable("SDKMAN_CANDIDATES_DIR");
+    String candidatesPath = mySystemInfo.getEnvironmentVariable("SDKMAN_CANDIDATES_DIR");
     if (candidatesPath != null) {
       Path candidatesDir = Path.of(candidatesPath);
-      if (isDirectory(candidatesDir)) {
+      if (Files.isDirectory(candidatesDir)) {
         return candidatesDir;
       }
     }
 
     // then, try to use its 'primary' variable
-    String primaryPath = getEnvironmentVariable("SDKMAN_DIR");
+    String primaryPath = mySystemInfo.getEnvironmentVariable("SDKMAN_DIR");
     if (primaryPath != null) {
       Path candidatesDir = Path.of(primaryPath, "candidates");
-      if (isDirectory(candidatesDir)) {
+      if (Files.isDirectory(candidatesDir)) {
         return candidatesDir;
       }
     }
 
     // finally, try the usual location in UNIX
-    if (!SystemInfo.isWindows || this instanceof JavaHomeFinderWsl) {
+    if (!(this instanceof JavaHomeFinderWindows)) {
       Path candidates = getPathInUserHome(".sdkman/candidates");
-      if (candidates != null && isDirectory(candidates)) {
+      if (candidates != null && Files.isDirectory(candidates)) {
         return candidates;
       }
     }
@@ -242,17 +237,17 @@ public class JavaHomeFinderBasic {
   }
 
   protected @Nullable Path getPathInUserHome(@NotNull String relativePath) {
-    String homePath = System.getProperty("user.home");
-    return homePath != null ? Path.of(homePath, relativePath) : null;
+    Path userHome = mySystemInfo.getUserHome();
+    return userHome != null ? userHome.resolve(relativePath) : null;
   }
 
   private @NotNull Set<@NotNull String> listJavaHomeDirsInstalledBySdkMan(@NotNull Path javasDir) {
-    var mac = SystemInfo.isMac;
+    var mac = this instanceof JavaHomeFinderMac;
     var result = new HashSet<@NotNull String>();
 
     try (Stream<Path> stream = Files.list(javasDir)) {
-      List<Path> innerDirectories = stream.filter(d -> isDirectory(d)).collect(Collectors.toList());
-      for (Path innerDir: innerDirectories) {
+      List<Path> innerDirectories = stream.filter(d -> Files.isDirectory(d)).collect(Collectors.toList());
+      for (Path innerDir : innerDirectories) {
         var home = innerDir;
         var releaseFile = home.resolve("release");
         if (!safeExists(releaseFile)) continue;
@@ -290,12 +285,15 @@ public class JavaHomeFinderBasic {
       }
     }
     catch (IOException ioe) {
-      log.warn("I/O exception while listing Java home directories installed by Sdkman: "+ioe.getMessage(), ioe);
-      return emptySet();
+      log.warn("I/O exception while listing Java home directories installed by Sdkman: " + ioe.getMessage(), ioe);
+      return Collections.emptySet();
     }
     catch (Exception e) {
-      log.warn("Unexpected exception while listing Java home directories installed by Sdkman: " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-      return emptySet();
+      log.warn("Unexpected exception while listing Java home directories installed by Sdkman: " +
+               e.getClass().getSimpleName() +
+               ": " +
+               e.getMessage(), e);
+      return Collections.emptySet();
     }
 
     return result;
@@ -306,33 +304,29 @@ public class JavaHomeFinderBasic {
    * Finds Java home directories installed by asdf-java: https://github.com/halcyon/asdf-java
    */
   private @NotNull Set<String> findJavaInstalledByAsdfJava() {
-    File installsDir = findAsdfInstallsDir();
+    Path installsDir = findAsdfInstallsDir();
     if (installsDir == null) return Collections.emptySet();
-    File javasDir = new File(installsDir, "java");
-    return safeIsDirectory(javasDir) ? scanAll(javasDir.toPath(), true) : Collections.emptySet();
+    Path javasDir = installsDir.resolve("java");
+    return safeIsDirectory(javasDir) ? scanAll(javasDir, true) : Collections.emptySet();
   }
 
   @Nullable
-  private File findAsdfInstallsDir() {
+  private Path findAsdfInstallsDir() {
     // try to use environment variable for custom data directory
     // https://asdf-vm.com/#/core-configuration?id=environment-variables
-    String dataDir = EnvironmentUtil.getValue("ASDF_DATA_DIR");
+    String dataDir = mySystemInfo.getEnvironmentVariable("ASDF_DATA_DIR");
     if (dataDir != null) {
-      File primaryDir = new File(dataDir);
-      if (primaryDir.isDirectory()) {
-        File installsDir = primaryDir.toPath().resolve("installs").toFile();
+      Path primaryDir = Paths.get(dataDir);
+      if (safeIsDirectory(primaryDir)) {
+        Path installsDir = primaryDir.resolve("installs");
         if (safeIsDirectory(installsDir)) return installsDir;
       }
     }
 
     // finally, try the usual location in Unix or MacOS
-    if (!SystemInfo.isWindows) {
-      String homePath = System.getProperty("user.home");
-      if (homePath != null) {
-        File homeDir = new File(homePath);
-        File installsDir = homeDir.toPath().resolve(".asdf").resolve("installs").toFile();
-        if (safeIsDirectory(installsDir)) return installsDir;
-      }
+    if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
+      Path installsDir = getPathInUserHome("asdf/installs");
+      if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
     }
 
     // no chances
@@ -340,9 +334,9 @@ public class JavaHomeFinderBasic {
   }
 
 
-  private boolean safeIsDirectory(@NotNull File dir) {
+  private boolean safeIsDirectory(@NotNull Path dir) {
     try {
-      return dir.isDirectory();
+      return Files.isDirectory(dir);
     }
     catch (SecurityException se) {
       return false; // when a directory is not accessible we should ignore it
