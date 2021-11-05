@@ -8,15 +8,12 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
-import org.jetbrains.kotlin.idea.test.AstAccessControl
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.util.DescriptorValidator.ValidationVisitor.errorTypesForbidden
+import org.jetbrains.kotlin.idea.test.util.RecursiveDescriptorComparator
 import org.jetbrains.kotlin.load.java.descriptors.PossiblyExternalAnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.util.DescriptorValidator.ValidationVisitor.errorTypesForbidden
-import org.jetbrains.kotlin.idea.test.util.RecursiveDescriptorComparator
 import org.junit.Assert
 import java.io.File
 
@@ -45,7 +42,10 @@ abstract class AbstractResolveByStubTest : KotlinLightCodeInsightFixtureTestCase
 
     private fun performTest(path: String) {
         val file = file as KtFile
-        val module = file.findModuleDescriptor()
+
+        val module = withCustomCompilerOptions(file.text, project, module) {
+            file.findModuleDescriptor()
+        }
         val packageViewDescriptor = module.getPackage(FqName("test"))
         Assert.assertFalse(packageViewDescriptor.isEmpty())
 
