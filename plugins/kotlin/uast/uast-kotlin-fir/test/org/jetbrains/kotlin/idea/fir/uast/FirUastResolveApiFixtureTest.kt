@@ -5,8 +5,10 @@
 package org.jetbrains.kotlin.idea.fir.uast
 
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.KtAssert
 import org.jetbrains.uast.test.common.kotlin.UastResolveApiFixtureTestBase
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -15,6 +17,9 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastResolveApiFixtureTestBase {
     override val isFirUastPlugin: Boolean = true
+
+    override fun getProjectDescriptor(): LightProjectDescriptor =
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
     private val whitelist : Set<String> = setOf(
         // TODO: multiResolve, getArgumentForParameter
@@ -37,8 +42,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         "LocalResolve",
         // TODO: resolve annotation param to annotation ctor ??
         "ResolveCompiledAnnotation",
-        // TODO: need further investigation
-        "AssigningArrayElementType",
     )
 
     private fun isExpectedToFail(key: String): Boolean {
