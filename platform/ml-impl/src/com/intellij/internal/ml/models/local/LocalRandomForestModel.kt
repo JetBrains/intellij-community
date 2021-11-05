@@ -1,9 +1,8 @@
-package com.intellij.completion.ml.ranker.local.randomforest
+package com.intellij.internal.ml.models.local
 
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.completion.CompletionRankingModelBase
-import java.util.ArrayList
 
 private class Tree(val thresholds: List<Double>,
                    val values: List<Double>,
