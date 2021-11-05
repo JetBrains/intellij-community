@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.Task
 
 internal class CleanupEventLogAction(val recorderId: String, val actionText: String) : AnAction(actionText) {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
+    val project = e.project
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, actionText, false) {
       override fun run(indicator: ProgressIndicator) {

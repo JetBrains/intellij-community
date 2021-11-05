@@ -9,7 +9,8 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionEngine
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.Key
@@ -49,7 +51,6 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import kotlin.collections.HashMap
 
 class EventsTestSchemeGroupConfiguration(private val project: Project,
                                          productionGroups: EventGroupRemoteDescriptors,
@@ -312,6 +313,8 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
                                                customRules: String,
                                                customRulesFile: PsiFile?): List<ValidationInfo> {
       if (customRules.isBlank()) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
+      if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
+      if (project === ProjectManager.getInstance().defaultProject) return emptyList()
       val file = if (customRulesFile != null) {
         customRulesFile
       }
@@ -320,13 +323,14 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
         psiFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
         psiFile
       }
-      if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
       val map: Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> = InspectionEngine.inspectEx(
         Collections.singletonList(LocalInspectionToolWrapper(JsonSchemaComplianceInspection())),
-        file, file.textRange, file.getTextRange(), true, false, true, DaemonProgressIndicator(),
+        file, file.textRange, file.textRange, true, false, true, DaemonProgressIndicator(),
         PairProcessor.alwaysTrue())
 
-      return map.values.flatten().map { descriptor -> ValidationInfo("Line ${descriptor.lineNumber + 1}: ${descriptor.descriptionTemplate}") }
+      return map.values.flatten().map { descriptor ->
+        ValidationInfo("Line ${descriptor.lineNumber + 1}: ${descriptor.descriptionTemplate}")
+      }
     }
 
     private fun isValidJson(customRules: String): Boolean {
@@ -342,7 +346,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
 
   internal class ProductionRules(val regexps: Set<String>, val enums: Set<String>) {
     constructor(rules: EventGroupRemoteDescriptors.GroupRemoteRule?) : this(rules?.regexps?.keys ?: emptySet(),
-                                                                          rules?.enums?.keys ?: emptySet())
+                                                                            rules?.enums?.keys ?: emptySet())
   }
 
 }

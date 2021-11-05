@@ -18,6 +18,7 @@
     <action internal="true" id="ReportSettingsToFUS" class="com.intellij.internal.statistic.actions.ReportSettingsToFUSAction"/>
     <group internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.groups.OpenEventLogFileActionGroup"/>
     <group internal="true" id="CleanupEventLog" class="com.intellij.internal.statistic.groups.CleanupEventLogByIdActionGroup"/>
+    <group internal="true" id="UpdateEventsSchemeAction" class="com.intellij.internal.statistic.groups.UpdateEventsSchemeActionGroup"/>
     <action internal="true" id="GenerateEventsScheme" class="com.intellij.internal.statistic.actions.GenerateEventsScheme"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">

@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.ui.LayeredIcon
@@ -40,7 +41,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
                     ICON) {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
+    val project = e.project ?: ProjectManager.getInstance().defaultProject
     val testSchemeStorage = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)
     if (testSchemeStorage == null) {
       showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.cannot.find.test.scheme.storage"))
