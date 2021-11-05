@@ -175,12 +175,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
         return;
       }
 
-      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
       ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
       for (Map.Entry<C, IdeaPluginDescriptorImpl> entry : selection.entrySet()) {
         IdeaPluginDescriptorImpl descriptor = entry.getValue();
         List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor,
-                                                                                pluginIdMap,
                                                                                 applicationInfo);
 
         if (dependents.isEmpty() ||

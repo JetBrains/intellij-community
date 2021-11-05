@@ -85,11 +85,9 @@ class ClassLoaderConfigurator(
     checkPackagePrefixUniqueness(module)
 
     val isMain = module.moduleName == null
-    var dependencies = pluginSet.moduleToDirectDependencies.get(module) ?: EMPTY_DESCRIPTOR_ARRAY
-    if (dependencies.size > 1) {
-      dependencies = dependencies.clone()
-      sortDependenciesInPlace(dependencies)
-    }
+    val dependencies = pluginSet.moduleGraph.getDependencies(module).toTypedArray()
+    sortDependenciesInPlace(dependencies)
+
     if (isMain) {
       if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
         setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
@@ -428,6 +426,8 @@ private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: Ide
 }
 
 fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
+  if (dependencies.size <= 1) return
+
   fun getWeight(module: IdeaPluginDescriptorImpl) = if (module.moduleName == null) 1 else 0
 
   // java sort is stable, so, it is safe to not use topological comparator here

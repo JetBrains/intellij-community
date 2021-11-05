@@ -162,7 +162,7 @@ object DynamicPlugins {
       }
     }
 
-    var comparator = PluginSet.getTopologicalComparator(allPlugins)
+    var comparator = PluginSetBuilder.getTopologicalComparator(allPlugins)
     if (!load) {
       comparator = comparator.reversed()
     }

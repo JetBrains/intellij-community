@@ -1,33 +1,62 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+
 package com.intellij.ide.plugins
 
-import com.intellij.util.ArrayUtilRt
 import com.intellij.util.graph.DFSTBuilder
-import com.intellij.util.lang.Java11Shim
+import com.intellij.util.graph.Graph
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
-import java.util.function.ToIntFunction
 
-internal class CachingSemiGraph<Node> private constructor(
-  @JvmField val nodes: Collection<Node>,
-  @JvmField val moduleToDirectDependencies: Map<Node, List<Node>>,
-) : DFSTBuilder.DFSTBuilderAwareGraph<Node> {
-  private val outs = IdentityHashMap<Node, MutableList<Node>>()
+@ApiStatus.Internal
+interface ModuleGraph : Graph<IdeaPluginDescriptorImpl> {
 
-  init {
-    val edges = Collections.newSetFromMap<Map.Entry<Node, Node>>(HashMap())
-    for (node in nodes) {
-      for (inNode in (moduleToDirectDependencies.get(node) ?: continue)) {
-        if (edges.add(AbstractMap.SimpleImmutableEntry(inNode, node))) {
-          // not a duplicate edge
-          outs.computeIfAbsent(inNode) { ArrayList() }.add(node)
-        }
-      }
+  fun getDependencies(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl>
+
+  fun getDependents(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl>
+}
+
+@ApiStatus.Internal
+internal class ModuleGraphImpl private constructor(
+  val builder: DFSTBuilder<IdeaPluginDescriptorImpl>,
+  modules: Collection<IdeaPluginDescriptorImpl>,
+  directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+  directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+) : ModuleGraph {
+
+  internal val topologicalComparator: Comparator<IdeaPluginDescriptorImpl> = toCoreAwareComparator(builder.comparator())
+
+  private val modules = modules.sortedWith(topologicalComparator)
+  private val directDependencies = copySorted(directDependencies)
+  private val directDependents = copySorted(directDependents)
+
+  private fun copySorted(
+    from: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+  ): Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> {
+    val result = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(from.size)
+    from.mapValuesTo(result) {
+      it.value.sortedWith(topologicalComparator)
     }
+    return result
   }
 
+  override fun getNodes(): List<IdeaPluginDescriptorImpl> = Collections.unmodifiableList(modules)
+
+  override fun getDependencies(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl> {
+    return directDependencies.getOrEmpty(descriptor)
+  }
+
+  override fun getIn(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependencies(descriptor).iterator()
+
+  override fun getDependents(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl> {
+    return directDependents.getOrEmpty(descriptor)
+  }
+
+  override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependents(descriptor).iterator()
+
   companion object {
-    fun createModuleGraph(plugins: List<IdeaPluginDescriptorImpl>): CachingSemiGraph<IdeaPluginDescriptorImpl> {
+
+    internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraphImpl {
       val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
       val modules = ArrayList<IdeaPluginDescriptorImpl>(moduleMap.size)
       for (module in plugins) {
@@ -45,8 +74,8 @@ internal class CachingSemiGraph<Node> private constructor(
       }
 
       val hasAllModules = moduleMap.containsKey(PluginManagerCore.ALL_MODULES_MARKER.idString)
-      val result: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
-      val moduleToDirectDependencies = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(modules.size)
+      val result = Collections.newSetFromMap<IdeaPluginDescriptorImpl>(IdentityHashMap())
+      val directDependencies = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(modules.size)
       for (module in modules) {
         val implicitDep = if (hasAllModules) getImplicitDependency(module, moduleMap) else null
         if (implicitDep != null) {
@@ -69,15 +98,39 @@ internal class CachingSemiGraph<Node> private constructor(
         }
 
         if (!result.isEmpty()) {
-          moduleToDirectDependencies.put(module, Java11Shim.INSTANCE.copyOfCollection(result))
+          directDependencies.put(module, result.toList())
           result.clear()
         }
       }
-      return CachingSemiGraph(modules, moduleToDirectDependencies)
+
+      val directDependents = IdentityHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>(modules.size)
+      val edges = Collections.newSetFromMap<Map.Entry<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>(HashMap())
+      for (module in modules) {
+        for (inNode in directDependencies.getOrEmpty(module)) {
+          if (edges.add(AbstractMap.SimpleImmutableEntry(inNode, module))) {
+            // not a duplicate edge
+            directDependents.computeIfAbsent(inNode) { ArrayList() }.add(module)
+          }
+        }
+      }
+
+      val graph = object : Graph<IdeaPluginDescriptorImpl> {
+        override fun getNodes() = modules
+
+        override fun getIn(descriptor: IdeaPluginDescriptorImpl) = directDependencies.getOrEmpty(descriptor).iterator()
+
+        override fun getOut(descriptor: IdeaPluginDescriptorImpl) = directDependents.getOrEmpty(descriptor).iterator()
+      }
+
+      return ModuleGraphImpl(
+        builder = DFSTBuilder(graph, null, true),
+        modules = modules,
+        directDependencies = directDependencies,
+        directDependents = directDependents,
+      )
     }
 
-    fun getTopologicalComparator(builder: DFSTBuilder<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
-      val comparator = builder.comparator()
+    private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
       // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
       // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
       // don't use sortWith here - avoid loading kotlin stdlib
@@ -89,14 +142,9 @@ internal class CachingSemiGraph<Node> private constructor(
         }
       }
     }
-  }
 
-  fun getIn(node: Node): List<Node> = moduleToDirectDependencies.get(node) ?: Collections.emptyList()
-
-  override fun buildOuts(nodeIndex: ToIntFunction<in Node>, node: Node): IntArray {
-    val out = outs.get(node) ?: return ArrayUtilRt.EMPTY_INT_ARRAY
-    return IntArray(out.size) {
-      nodeIndex.applyAsInt(out.get(it))
+    private fun Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>.getOrEmpty(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl> {
+      return getOrDefault(descriptor, Collections.emptyList())
     }
   }
 }
