@@ -700,7 +700,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myState.getActiveTool() == myDiffTool) return;
 
-      DiffUsageTriggerCollector.trigger(e.getProject(), "toggle.diff.tool", myDiffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
+      DiffUsageTriggerCollector.logToggleDiffTool(e.getProject(), myDiffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
       moveToolOnTop(myDiffTool);
 
       updateRequest(true);
