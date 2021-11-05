@@ -57,6 +57,24 @@ public final class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvide
 
   @Override
   public @NotNull Icon scale(float scaleFactor) {
-    return myIcon instanceof ScalableIcon ? ((ScalableIcon)myIcon).scale(scaleFactor) : myIcon;
+    if (myIcon instanceof ScalableIcon) {
+      return new Icon() {
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+          ((ScalableIcon)myIcon).scale(scaleFactor).paintIcon(c, g, x, y);
+        }
+
+        @Override
+        public int getIconWidth() {
+          return ((ScalableIcon)myIcon).scale(scaleFactor).getIconWidth();
+        }
+
+        @Override
+        public int getIconHeight() {
+          return ((ScalableIcon)myIcon).scale(scaleFactor).getIconHeight();
+        }
+      };
+    }
+    return myIcon;
   }
 }
