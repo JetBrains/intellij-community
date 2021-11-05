@@ -32,8 +32,6 @@ import java.io.IOException
 
 /**
  * Action opens `Edit Events Test Scheme` dialog.
- *
- * If "Add custom validation rules" is disabled, all event id and event data values from the group will be allowed.
  */
 class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
   : DumbAwareAction(ActionsBundle.messagePointer("action.EditTestSchemeAction.text"),

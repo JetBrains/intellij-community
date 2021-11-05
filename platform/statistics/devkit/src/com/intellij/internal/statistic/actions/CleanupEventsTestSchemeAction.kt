@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
+import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil.isAnyTestModeEnabled
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil.isTestModeEnabled
@@ -24,7 +25,7 @@ class CleanupEventsTestSchemeAction(private val recorderId: String? = null)
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
 
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Removing Test Scheme", false) {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, StatisticsBundle.message("stats.removing.test.scheme"), false) {
       override fun run(indicator: ProgressIndicator) {
         if (recorderId == null) {
           ValidationTestRulesPersistedStorage.cleanupAll()

@@ -60,7 +60,6 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
 
   val panel: JPanel
   val groupIdTextField: TextFieldWithCompletion
-  private val log = logger<EventsTestSchemeGroupConfiguration>()
   private var currentGroup: GroupValidationTestRule = initialGroup
   private lateinit var allowAllEventsRadioButton: JBRadioButton
   private lateinit var customRulesRadioButton: JBRadioButton
@@ -124,7 +123,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
         validationRulesEditorComponent(growX)
       }
       row {
-        generateSchemeButton = button("Generate scheme") {
+        generateSchemeButton = button("Generate Scheme") {
           val scheme = eventsScheme[groupIdTextField.text]
           if (scheme != null) {
             WriteAction.run<Throwable> { validationRulesEditor.document.setText(scheme) }
@@ -196,7 +195,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       editor.highlighter = highlighter
     }
     catch (e: Throwable) {
-      log.warn(e)
+      LOG.warn(e)
     }
     return editor
   }
@@ -233,7 +232,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
           tempFile.delete()
         }
         catch (e: IncorrectOperationException) {
-          log.warn(e)
+          LOG.warn(e)
         }
       })
 
@@ -285,6 +284,8 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
   }
 
   companion object {
+    private val LOG = logger<EventsTestSchemeGroupConfiguration>()
+
     internal val FUS_TEST_SCHEME_COMMON_RULES_KEY = Key.create<ProductionRules>("statistics.test.scheme.validation.rules.file")
 
     fun validateTestSchemeGroup(project: Project,

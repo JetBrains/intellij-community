@@ -26,8 +26,6 @@ import java.io.IOException
 
 /**
  * Action adds group which are not yet registered on the server to a test groups scheme for testing.
- *
- * If "Add custom validation rules" is disabled, all event id and event data values from the group will be allowed.
  */
 class AddGroupToTestSchemeAction constructor(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
   : DumbAwareAction(ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.text"),

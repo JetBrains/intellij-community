@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.SimpleListCellRenderer
@@ -109,7 +110,7 @@ class EditEventsTestSchemePanel(private val project: Project,
   }
 
   override fun dispose() {
-    groupConfiguration.dispose()
+    Disposer.dispose(groupConfiguration)
   }
 
 }

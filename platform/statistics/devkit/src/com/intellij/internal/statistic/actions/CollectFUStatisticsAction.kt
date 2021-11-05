@@ -55,7 +55,7 @@ internal class CollectFUStatisticsAction : GotoActionBase() {
         Item(collector, groupId, className, ids.count(groupId) > 1)
       }
 
-    ContainerUtil.sort(items, Comparator.comparing<Item, String> { it.groupId })
+    ContainerUtil.sort(items, Comparator.comparing { it.groupId })
     val model = MyChooseByNameModel(project, items)
 
     val popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e))

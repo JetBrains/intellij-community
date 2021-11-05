@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.connection.*;
 import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter;
@@ -54,7 +55,7 @@ public class SendEventLogAction extends AnAction {
       return;
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Send Feature Usage Event Log", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, StatisticsBundle.message("stats.send.feature.usage.event.log"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final StatisticsResult result = send();
@@ -187,7 +188,7 @@ public class SendEventLogAction extends AnAction {
       };
 
       final NavigatablePsiElement psiElement = writeCommandAction(project)
-        .withName("Creating JSON for event log upload results")
+        .withName(StatisticsBundle.message("stats.creating.json.for.event.log.upload.results"))
         .withGlobalUndo().shouldRecordActionForActiveDocument(false)
         .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
         .compute(computable);
