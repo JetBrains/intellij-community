@@ -710,7 +710,7 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/expressions/uselessElvisForLambdaInNecessaryNestedParens.kt");
         }
 
-        @TestMetadata("uselessElvisForHighLevelQuickFixTestGenerated.Expressions.testUselessElvisForLambdaInNestedParensLambdaInNestedParens.kt")
+        @TestMetadata("uselessElvisForLambdaInNestedParens.kt")
         public void testUselessElvisForLambdaInNestedParens() throws Exception {
             runTest("../idea/tests/testData/quickfix/expressions/uselessElvisForLambdaInNestedParens.kt");
         }
@@ -1814,6 +1814,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("addElseBranchEnumStatement.kt")
         public void testAddElseBranchEnumStatement() throws Exception {
             runTest("../idea/tests/testData/quickfix/when/addElseBranchEnumStatement.kt");
+        }
+
+        @TestMetadata("addElseBranchSealed.kt")
+        public void testAddElseBranchSealed() throws Exception {
+            runTest("../idea/tests/testData/quickfix/when/addElseBranchSealed.kt");
         }
 
         @TestMetadata("addRemainingBranchesBlankLine.kt")
