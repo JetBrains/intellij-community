@@ -476,6 +476,7 @@ public final class SVGLoader {
       map.put("#9aa7b099", "#97acc6"); //noun gray 60% (same as 80%)
     }
     if (Arrays.asList("IntelliJ", "macOS Light", "Windows 10 Light").contains(name)) {
+      map.put("#767a8a", "#ffffff");
       map.put("#6e6e6e", "#afb1b3");
       map.put("#db5860", "#b75e73");
       //map.put("#f26522", "#b56a51"); //red
