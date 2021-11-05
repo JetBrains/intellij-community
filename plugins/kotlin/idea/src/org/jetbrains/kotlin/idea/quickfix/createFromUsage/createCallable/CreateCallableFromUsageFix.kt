@@ -137,7 +137,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                             .computeTypeCandidates(receiverTypeInfo)
                             .firstOrNull { candidate -> if (it.isAbstract) candidate.theType.isAbstract() else true }
                             ?.theType
-                            ?.let { if (callableInfo.isForCompanion) it.companionObjectTypeOrThis() else it }
+                            ?.let { if (receiverTypeInfo.staticContextRequired) it.companionObjectTypeOrThis() else it }
                     } else null
 
                     if (receiverType != null) {
@@ -186,16 +186,13 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
             if (callableInfos.any { it is PropertyInfo && it.possibleContainers.isEmpty() }) return false
             return !isExtension
         }
-        // TODO: Remove after companion object extensions are supported
-        if (isExtension && receiverInfo.staticContextRequired) return false
 
         val callableBuilder = CallableBuilderConfiguration(callableInfos, element, isExtension = isExtension).createBuilder()
         val receiverTypeCandidates = callableBuilder.computeTypeCandidates(receiverInfo)
         val propertyInfo = callableInfos.firstOrNull { it is PropertyInfo } as PropertyInfo?
         val isFunction = callableInfos.any { it.kind == CallableKind.FUNCTION }
-        val isCompanionReceiver = callableInfo.isCompanionReceiver()
         return receiverTypeCandidates.any {
-            val declaration = getDeclarationIfApplicable(element.project, it, isCompanionReceiver)
+            val declaration = getDeclarationIfApplicable(element.project, it, receiverInfo.staticContextRequired)
             val insertToJavaInterface = declaration is PsiClass && declaration.isInterface
             when {
                 !isExtension && propertyInfo != null && insertToJavaInterface && (!receiverInfo.staticContextRequired || propertyInfo.writable) ->
@@ -250,9 +247,6 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         if (declaration !is KtClassOrObject && declaration !is KtTypeParameter && declaration !is PsiClass) return null
         return if ((isExtension && !isCompanionReceiver) || declaration.canRefactor()) declaration else null
     }
-
-    private fun CallableInfo.isCompanionReceiver(): Boolean =
-        isForCompanion || (receiverTypeInfo as? TypeInfo.ByType)?.theType?.constructor?.declarationDescriptor?.isCompanionObject() == true
 
     private fun checkIsInitialized() {
         check(initialized) { "${javaClass.simpleName} is not initialized" }
@@ -310,14 +304,14 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                 it
         }
         if (receiverTypeCandidates.isNotEmpty()) {
-            val isCompanionReceiver = callableInfo.isCompanionReceiver()
+            val isCompanionReceiver = receiverTypeInfo.staticContextRequired
             val containers = receiverTypeCandidates
                 .mapNotNull { candidate -> getDeclarationIfApplicable(project, candidate, isCompanionReceiver)?.let { candidate to it } }
 
             chooseContainerElementIfNecessary(containers, editorForBuilder, popupTitle, false, { it.second }) {
                 runBuilder {
                     val receiverClass = it.second as? KtClass
-                    if (callableInfo.isForCompanion && receiverClass?.isWritable == true) {
+                    if (isCompanionReceiver && receiverClass?.isWritable == true) {
                         val hasCompanionObject = receiverClass.companionObjects.isNotEmpty()
                         val companionObject = receiverClass.getOrCreateCompanionObject()
                         if (!hasCompanionObject && this@CreateCallableFromUsageFixBase.isExtension) companionObject.body?.delete()
