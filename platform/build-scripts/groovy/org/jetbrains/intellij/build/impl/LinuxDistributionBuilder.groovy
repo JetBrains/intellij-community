@@ -117,9 +117,10 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     String vmOptionsFileName = baseName
 
     String bootClassPath = makePathsVar("BOOT_CLASS_PATH", buildContext.xBootClassPathJarNames)
-    String classPath = makePathsVar("CLASS_PATH", buildContext.bootClassPathJarNames)
+    String classPathVarName = "CLASSPATH"
+    String classPath = makePathsVar(classPathVarName, buildContext.bootClassPathJarNames)
     if (buildContext.productProperties.toolsJarRequired) {
-      classPath += "CLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\"\n"
+      classPath += "$classPathVarName=\"\$$classPathVarName:\$JDK/lib/tools.jar\"\n"
     }
 
     List<String> additionalJvmArgs = buildContext.additionalJvmArguments
