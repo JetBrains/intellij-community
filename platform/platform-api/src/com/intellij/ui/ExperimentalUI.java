@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.util.Arrays;
@@ -143,6 +144,8 @@ public final class ExperimentalUI {
     UIDefaults defaults = UIManager.getDefaults();
     if (value.asBoolean()) {
       setUIProperty("EditorTabs.underlineArc", 4, defaults);
+      setUIProperty("ToolWindow.Button.selectedBackground", new ColorUIResource(0x3573f0), defaults);
+      setUIProperty("ToolWindow.Button.selectedForeground", new ColorUIResource(0xffffff), defaults);
       EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
       Color tabsHover = ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
       setUIProperty("EditorTabs.hoverInactiveBackground", tabsHover, defaults);
