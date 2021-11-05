@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.intentions
 
+import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -16,7 +17,7 @@ internal class PackageSearchDependencyUpgradeQuickFix(
     private val identifier: PackageIdentifier,
     private val targetVersion: PackageVersion.Named,
     private val operations: List<PackageSearchOperation<*>>
-) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+) : LocalQuickFixAndIntentionActionOnPsiElement(element), HighPriorityAction {
 
     @Suppress("DialogTitleCapitalization")
     override fun getFamilyName() = PackageSearchBundle.message("packagesearch.quickfix.upgrade.family")
