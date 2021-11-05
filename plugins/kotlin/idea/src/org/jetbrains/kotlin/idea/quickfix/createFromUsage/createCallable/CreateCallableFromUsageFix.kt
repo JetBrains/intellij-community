@@ -15,8 +15,6 @@ import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.quickfix.KotlinCrossLanguageQuickFixAction
@@ -28,12 +26,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.isAbstract
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.classValueType
-import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import java.lang.ref.WeakReference
 
@@ -97,17 +90,6 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
 
     private var initialized: Boolean = false
 
-    private fun KotlinType.companionObjectTypeOrThis(): KotlinType {
-        val classDescriptor = constructor.declarationDescriptor ?: return this
-        if (classDescriptor.isCompanionObject()) return this
-        val classDeclaration = DescriptorToSourceUtils.getSourceFromDescriptor(classDescriptor) as? KtClass ?: return this
-        val copyClass = classDeclaration.copy() as KtClass
-        val companionObject = copyClass.getOrCreateCompanionObject()
-        val newContext = copyClass.analyzeAsReplacement(classDeclaration, classDeclaration.analyze(BodyResolveMode.PARTIAL))
-        val newClassDescriptor = newContext[BindingContext.DECLARATION_TO_DESCRIPTOR, companionObject] as? ClassDescriptor ?: return this
-        return newClassDescriptor.classValueType ?: this
-    }
-
     protected open val calculatedText: String by lazy(fun(): String {
         val element = element ?: return ""
         val callableInfos = notEmptyCallableInfos() ?: return ""
@@ -137,17 +119,21 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                             .computeTypeCandidates(receiverTypeInfo)
                             .firstOrNull { candidate -> if (it.isAbstract) candidate.theType.isAbstract() else true }
                             ?.theType
-                            ?.let { if (receiverTypeInfo.staticContextRequired) it.companionObjectTypeOrThis() else it }
                     } else null
 
+                    val isCompanionReceiver = receiverTypeInfo.staticContextRequired
+
                     if (receiverType != null) {
-                        if (isExtension) {
+                        if (isExtension && !isCompanionReceiver) {
                             val receiverTypeText = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(receiverType)
                             val isFunctionType = receiverType.constructor.declarationDescriptor is FunctionClassDescriptor
                             append(if (isFunctionType) "($receiverTypeText)" else receiverTypeText).append('.')
                         } else {
                             receiverType.constructor.declarationDescriptor?.let {
-                                append(IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderClassifierName(it)).append('.')
+                                val companionText = if (isCompanionReceiver) ".Companion" else ""
+                                val receiverText =
+                                    IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderClassifierName(it) + companionText
+                                append(receiverText).append('.')
                             }
                         }
                     }
