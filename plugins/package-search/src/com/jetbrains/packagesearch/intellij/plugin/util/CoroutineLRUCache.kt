@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.util
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
@@ -52,27 +53,25 @@ class CoroutineLRUCache<K : Any, V>(val maxSize: Int, initialValues: Map<K, V> =
 
             override fun serialize(encoder: Encoder, value: CoroutineLRUCache<K, V>) = encoder.encodeStructure(descriptor) {
                 encodeIntElement(descriptor, 0, value.maxSize)
-                encodeSerializableElement(descriptor, 1, mapSerializer, value.cachedElements())
+                encodeSerializableElement(descriptor, 1, mapSerializer, runBlocking { value.cachedElements() })
             }
         }
     }
 
     private val cache = LRUMap(maxSize).apply { putAll(initialValues) }
     private val syncMutex = Mutex()
-    private val mutexMap = mutableMapOf<K, Mutex>().withDefault { Mutex() }
-
-    fun cachedElements() = cache.map { (k, v) -> k as K to v as V }.toMap()
+    private val mutexMap = mutableMapOf<K, Mutex>()
 
     private suspend inline fun <R> withLock(key: K, action: () -> R): R {
-        val mutex = syncMutex.withLock { mutexMap.getValue(key).apply { lock() } }
+        val mutex = syncMutex.withLock { mutexMap.getOrPut(key) { Mutex() }.apply { lock() } }
         val result = action()
         mutex.unlock()
         return result
     }
 
-    suspend fun getOrNull(key: K): V? = withLock(key) { cache[key] as? V }
+    suspend fun get(key: K): V? = withLock(key) { cache[key] as? V }
 
-    suspend fun get(key: K): V = checkNotNull(getOrNull(key)) { "Key $key not available" }
+    suspend fun getValue(key: K): V = checkNotNull(get(key)) { "Key $key not available" }
 
     suspend fun put(key: K, value: V) {
         withLock(key) { cache.put(key, value) }
@@ -102,4 +101,8 @@ class CoroutineLRUCache<K : Any, V>(val maxSize: Int, initialValues: Map<K, V> =
             }
         }
     }
+
+    suspend fun cachedElements() =
+        syncMutex.withLock { cache.map { (k, v) -> k as K to v as V }.toMap() }
+
 }
