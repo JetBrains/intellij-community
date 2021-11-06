@@ -499,7 +499,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     id = bean.id,
     icon = findIconFromBean(bean, factory, pluginDescriptor),
     anchor = getToolWindowAnchor(factory, bean),
-    sideTool = bean.secondary || (@Suppress("DEPRECATION") bean.side),
+    sideTool = !ExperimentalUI.isNewUI() && (bean.secondary || (@Suppress("DEPRECATION") bean.side)),
     canCloseContent = bean.canCloseContents,
     canWorkInDumbMode = DumbService.isDumbAware(factory),
     shouldBeAvailable = factory.shouldBeAvailable(project),
@@ -571,7 +571,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val toolWindowPane = toolWindowPane ?: init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
     val anchor = getToolWindowAnchor(factory, bean)
     @Suppress("DEPRECATION")
-    val sideTool = bean.secondary || bean.side
+    val sideTool = !ExperimentalUI.isNewUI() && (bean.secondary || bean.side)
     val entry = doRegisterToolWindow(RegisterToolWindowTask(
       id = bean.id,
       icon = findIconFromBean(bean, factory, pluginDescriptor),

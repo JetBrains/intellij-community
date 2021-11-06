@@ -6,6 +6,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
@@ -84,7 +85,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override var sideWeight by property(0.5f) { max(0f, min(1f, it)) }
 
   @get:Attribute("side_tool")
-  override var isSplit by property(false)
+  override var isSplit by property(false) { !ExperimentalUI.isNewUI() && it }
 
   @get:Attribute("content_ui", converter = ContentUiTypeConverter::class)
   override var contentUiType: ToolWindowContentUiType by property(ToolWindowContentUiType.TABBED) { it == ToolWindowContentUiType.TABBED }
