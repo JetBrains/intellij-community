@@ -63,7 +63,7 @@ internal class PsiElementDocumentationTarget private constructor(
     if (urls == null || urls.isEmpty()) {
       return localDoc
     }
-    return fetchExternal(pointer.project, targetElement, provider, urls, pointer.anchor, localDoc)
+    return pointer.fetchExternal(targetElement, provider, urls, localDoc)
   }
 
   @RequiresReadLock
@@ -99,24 +99,22 @@ internal class PsiElementDocumentationTarget private constructor(
       }
       return PsiElementDocumentationTarget(target, source, this)
     }
+
+    fun fetchExternal(
+      targetElement: PsiElement,
+      provider: ExternalDocumentationProvider,
+      urls: List<String>,
+      localDoc: DocumentationResult?,
+    ): DocumentationResult = DocumentationResult.asyncDocumentation(Supplier {
+      LOG.debug("External documentation URLs: $urls")
+      for (url in urls) {
+        ProgressManager.checkCanceled()
+        val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
+                  ?: continue
+        LOG.debug("Fetched documentation from $url")
+        return@Supplier DocumentationResult.externalDocumentation(doc, anchor, url)
+      }
+      localDoc
+    })
   }
 }
-
-private fun fetchExternal(
-  project: Project,
-  targetElement: PsiElement,
-  provider: ExternalDocumentationProvider,
-  urls: List<String>,
-  anchor: String?,
-  localDoc: DocumentationResult?,
-): DocumentationResult = DocumentationResult.asyncDocumentation(Supplier {
-  LOG.debug("External documentation URLs: $urls")
-  for (url in urls) {
-    ProgressManager.checkCanceled()
-    val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
-              ?: continue
-    LOG.debug("Fetched documentation from $url")
-    return@Supplier DocumentationResult.externalDocumentation(doc, anchor, url)
-  }
-  localDoc
-})
