@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.lang.documentation.DocumentationImageResolver;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
@@ -15,19 +15,18 @@ import java.net.URL;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 final class DocumentationImageProvider extends Dictionary<URL, Image> {
 
   private final @NotNull Component myReferenceComponent;
-  private final @NotNull Supplier<? extends @Nullable PsiElement> myElementSupplier;
+  private final @NotNull DocumentationImageResolver myImageResolver;
 
   DocumentationImageProvider(
     @NotNull Component referenceComponent,
-    @NotNull Supplier<? extends @Nullable PsiElement> elementSupplier
+    @NotNull DocumentationImageResolver imageResolver
   ) {
     myReferenceComponent = referenceComponent;
-    myElementSupplier = elementSupplier;
+    myImageResolver = imageResolver;
   }
 
   @Override
@@ -41,11 +40,7 @@ final class DocumentationImageProvider extends Dictionary<URL, Image> {
   }
 
   private @Nullable Image getImage(@NotNull URL url) {
-    PsiElement element = myElementSupplier.get();
-    if (element == null) {
-      return null;
-    }
-    Image inMemory = DocumentationManager.getElementImage(element, url.toExternalForm());
+    Image inMemory = myImageResolver.resolveImage(url.toExternalForm());
     if (inMemory != null) {
       return inMemory;
     }
