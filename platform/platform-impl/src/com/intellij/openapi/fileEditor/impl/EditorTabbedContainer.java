@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
@@ -706,7 +707,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         TabLabel label = getSelectedLabel();
         if (label != null) {
           int h = label.getHeight();
-          Color color = myTabPainter.getTabTheme().getBorderColor();
+          Color color = JBColor.namedColor("EditorTabs.underTabsBorderColor", myTabPainter.getTabTheme().getBorderColor());
           g.setColor(color);
           LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h);
         }
