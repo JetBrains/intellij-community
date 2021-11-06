@@ -10,7 +10,6 @@ import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
@@ -71,9 +70,7 @@ fun prepareMacZip(macZip: Path,
             zipOutStream.dir(macAdditionalDir, prefix = "$zipRoot/")
           }
 
-          zipOutStream.putArchiveEntry(ZipArchiveEntry(productJsonZipPath))
-          zipOutStream.write(productJson)
-          zipOutStream.closeArchiveEntry()
+          zipOutStream.entry(productJsonZipPath, productJson)
         }
       }
     }

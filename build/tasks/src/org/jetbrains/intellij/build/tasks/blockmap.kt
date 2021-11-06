@@ -63,7 +63,7 @@ internal fun buildBlockMap(file: Path, json: JSON) {
 
   val fileParent = file.parent
   val fileName = file.fileName.toString()
-  writeNewZip(fileParent.resolve("$fileName.blockmap.zip"), compress = true) {
+  writeNewZip(fileParent.resolve("$fileName.blockmap.zip"), compress = true, hintIsSmall = true) {
     it.compressedData("blockmap.json", bytes)
   }
 

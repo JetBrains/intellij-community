@@ -4,9 +4,7 @@
 package org.jetbrains.intellij.build.tasks
 
 import io.opentelemetry.api.common.AttributeKey
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.io.writeNewFile
-import java.nio.file.Files
 import java.nio.file.Path
 
 fun buildMacZip(targetFile: Path,
@@ -14,6 +12,7 @@ fun buildMacZip(targetFile: Path,
                 productJson: ByteArray,
                 allDist: Path,
                 macDist: Path,
+                extraFiles: Collection<Map.Entry<Path, String>>,
                 executableFilePatterns: List<String>,
                 compressionLevel: Int) {
   tracer.spanBuilder("build zip archive for macOS")
@@ -35,16 +34,13 @@ fun buildMacZip(targetFile: Path,
       writeNewFile(targetFile) { targetFileChannel ->
         org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(targetFileChannel).use { zipOutStream ->
           zipOutStream.setLevel(compressionLevel)
-          zipOutStream.putArchiveEntry(ZipArchiveEntry("$zipRoot/Resources/product-info.json"))
-          zipOutStream.write(productJson)
-          zipOutStream.closeArchiveEntry()
+
+          zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson)
 
           val fileFilter: (Path, Path) -> Boolean = { sourceFile, relativeFile ->
             val path = relativeFile.toString()
             if (path.endsWith(".txt") && !path.contains('/')) {
-              zipOutStream.putArchiveEntry(ZipArchiveEntry("$zipRoot/Resources/$relativeFile"))
-              Files.copy(sourceFile, zipOutStream)
-              zipOutStream.closeArchiveEntry()
+              zipOutStream.entry("$zipRoot/Resources/$relativeFile", sourceFile)
               false
             }
             else {
@@ -54,6 +50,10 @@ fun buildMacZip(targetFile: Path,
 
           zipOutStream.dir(allDist, "$zipRoot/", fileFilter = fileFilter, entryCustomizer = entryCustomizer)
           zipOutStream.dir(macDist, "$zipRoot/", fileFilter = fileFilter, entryCustomizer = entryCustomizer)
+
+          for ((file, relativePath) in extraFiles) {
+            zipOutStream.entry("$zipRoot/$relativePath${if (relativePath.isEmpty()) "" else "/"}${file.fileName}", file)
+          }
         }
       }
     }

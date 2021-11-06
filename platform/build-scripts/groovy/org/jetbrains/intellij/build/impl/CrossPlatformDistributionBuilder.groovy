@@ -76,14 +76,6 @@ final class CrossPlatformDistributionBuilder {
         }
       }
 
-      if (!extraExecutables.isEmpty()) {
-        zipfileset(dir: context.paths.distAll, filemode: "775") {
-          extraExecutables.each {
-            include(name: it)
-          }
-        }
-      }
-
       fileset(file: "$context.paths.artifacts/dependencies.txt")
 
       fileset(dir: winDistPath) {

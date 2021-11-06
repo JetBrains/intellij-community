@@ -1,13 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.write
 import com.intellij.util.lang.ImmutableZipFile
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assumptions
 import org.assertj.core.configuration.ConfigurationProvider
 import org.jetbrains.intellij.build.tasks.DirSource
 import org.jetbrains.intellij.build.tasks.buildJar
+import org.jetbrains.intellij.build.tasks.dir
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
@@ -152,6 +156,25 @@ class ZipTest {
         assertThat(entry).isNotNull()
         assertThat(entry!!.isCompressed()).isFalse()
         assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
+      }
+    }
+  }
+
+  @Test
+  fun symlink() {
+    Assumptions.assumeThat(SystemInfoRt.isUnix)
+
+    val dir = tempDir.newPath("/dir")
+    Files.createDirectories(dir)
+
+    val targetFile = dir.resolve("target")
+    Files.writeString(targetFile, "target")
+    Files.createSymbolicLink(dir.resolve("link"), targetFile)
+
+    val zipFile = tempDir.newPath("file.zip")
+    writeNewFile(zipFile) { outFileChannel ->
+      ZipArchiveOutputStream(outFileChannel).use { out ->
+        out.dir(dir, "")
       }
     }
   }

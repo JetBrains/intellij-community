@@ -174,7 +174,9 @@ final class BuildHelper {
                                     MethodType.methodType(aVoid,
                                                           path, string,
                                                           byte[].class,
-                                                          path, path, list, int.class))
+                                                          path, path,
+                                                          Collection.class,
+                                                          list, int.class))
 
     prepareMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.SignKt"),
                                 "prepareMacZip",

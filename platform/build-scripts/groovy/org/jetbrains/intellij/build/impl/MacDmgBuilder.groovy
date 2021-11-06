@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
@@ -25,7 +24,7 @@ final class MacDmgBuilder {
                               MacDistributionCustomizer customizer,
                               MacHostProperties macHostProperties,
                               @Nullable Path macZip,
-                              Path macAdditionalDirPath,
+                              @Nullable Path additionalDir,
                               @Nullable Path jreArchivePath,
                               String suffix,
                               boolean notarize) {
@@ -41,8 +40,8 @@ final class MacDmgBuilder {
     List<Path> installationDirectories = new ArrayList<>()
     List<Pair<Path, String>> installationArchives = new ArrayList<>(2)
     installationArchives.add(new Pair<>(macZip, zipRoot))
-    if (macAdditionalDirPath != null) {
-      installationDirectories.add(macAdditionalDirPath)
+    if (additionalDir != null) {
+      installationDirectories.add(additionalDir)
     }
     if (jreArchivePath != null) {
       installationArchives.add(new Pair<>(jreArchivePath, ""))
@@ -53,7 +52,7 @@ final class MacDmgBuilder {
     Path sitFile = (customizer.publishArchive ? artifactDir : context.paths.tempDir).resolve(targetName + ".sit")
 
     BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, macAdditionalDirPath, zipRoot)
+    buildHelper.prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, additionalDir, zipRoot)
 
     boolean signMacArtifacts = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
     if (!signMacArtifacts && isMac()) {
@@ -142,35 +141,25 @@ final class MacDmgBuilder {
     Files.move(tempDir.resolve(targetFile.fileName), artifactDir.resolve(targetFile.fileName), StandardCopyOption.REPLACE_EXISTING)
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
+  @SuppressWarnings("SpellCheckingInspection")
   private static void buildDmgLocally(Path sitFile, String targetFileName, MacDistributionCustomizer customizer, BuildContext context) {
     Path tempDir = context.paths.tempDir.resolve("mac.dist.dmg")
     Files.createDirectories(tempDir)
     Path dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
     Files.copy(Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath), dmgImageCopy)
-    AntBuilder ant = context.ant
-    ant.copy(file: sitFile.toString(), todir: tempDir)
-    ant.copy(todir: tempDir) {
-      ant.fileset(dir: "${context.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
-        include(name: "makedmg.sh")
-        include(name: "create-dmg.sh")
-        include(name: "makedmg-locally.sh")
-      }
-    }
+    Files.copy(sitFile, tempDir.resolve(sitFile.fileName))
+    Path scriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
+    Files.copy(scriptDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"), StandardCopyOption.COPY_ATTRIBUTES)
+    Files.copy(scriptDir.resolve("create-dmg.sh"), tempDir.resolve("create-dmg.sh"), StandardCopyOption.COPY_ATTRIBUTES)
+    Files.copy(scriptDir.resolve("makedmg-locally.sh"), tempDir.resolve("makedmg-locally.sh"), StandardCopyOption.COPY_ATTRIBUTES)
     //noinspection SpellCheckingInspection
     Files.setPosixFilePermissions(tempDir.resolve("makedmg.sh"), PosixFilePermissions.fromString("rwxrwxrwx"))
 
     Path artifactDir = Path.of(context.paths.artifacts)
-    ant.exec(dir: tempDir, command: "sh ./makedmg-locally.sh ${targetFileName} ${context.fullBuildNumber}")
+    Files.createDirectories(artifactDir)
+    BuildHelper.runProcess(context, List.of("sh", "./makedmg-locally.sh", targetFileName, context.fullBuildNumber), tempDir)
     Path dmgFile = artifactDir.resolve("${targetFileName}.dmg")
-    ant.copy(tofile: dmgFile.toString()) {
-      ant.fileset(dir: tempDir) {
-        include(name: "**/${targetFileName}.dmg")
-      }
-    }
-    if (Files.notExists(dmgFile)) {
-      context.messages.error("Failed to build .dmg file")
-    }
+    Files.copy(tempDir.resolve(dmgFile.fileName), dmgFile)
     context.notifyArtifactBuilt(dmgFile)
   }
 

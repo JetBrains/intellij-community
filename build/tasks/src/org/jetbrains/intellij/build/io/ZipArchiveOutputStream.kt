@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.io
 
 import com.intellij.util.io.Murmur3_32Hash
 import it.unimi.dsi.fastutil.ints.IntArrayList
-import java.io.Closeable
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -13,11 +12,13 @@ import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.util.zip.ZipEntry
 
-internal class ZipArchiveOutputStream(private val channel: WritableByteChannel, private val withOptimizedMetadataEnabled: Boolean) : Closeable {
+internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
+                                      private val withOptimizedMetadataEnabled: Boolean,
+                                      hintIsSmall: Boolean) : AutoCloseable {
   private var finished = false
   private var entryCount = 0
 
-  private val metadataBuffer = ByteBuffer.allocateDirect(12 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
+  private val metadataBuffer = ByteBuffer.allocateDirect((if (hintIsSmall) 2 else 12) * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
   // 1 MB should be enough for end of central directory record
   private val buffer = ByteBuffer.allocateDirect(1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
 
@@ -224,10 +225,16 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel, 
   }
 
   override fun close() {
-    if (!finished) {
-      channel.use {
-        finish()
+    try {
+      if (!finished) {
+        channel.use {
+          finish()
+        }
       }
+    }
+    finally {
+      unmapBuffer(metadataBuffer)
+      unmapBuffer(buffer)
     }
   }
 
