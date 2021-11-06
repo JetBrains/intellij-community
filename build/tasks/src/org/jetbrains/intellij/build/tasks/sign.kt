@@ -16,9 +16,11 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.log4j.ConsoleAppender
 import org.apache.log4j.Level
+import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
 import org.jetbrains.intellij.build.io.NioFileDestination
 import org.jetbrains.intellij.build.io.NioFileSource
+import org.jetbrains.intellij.build.io.runAsync
 import org.jetbrains.intellij.build.io.writeNewFile
 import java.nio.file.Files
 import java.nio.file.Path
@@ -27,10 +29,10 @@ import java.nio.file.StandardOpenOption
 import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.zip.Deflater
-import kotlin.concurrent.thread
 
 private val random by lazy { SecureRandom() }
 
@@ -100,14 +102,13 @@ fun signMacApp(
   artifactBuilt: Consumer<Path>,
   publishAppArchive: Boolean,
 ) {
-  initLog
-
   executeTask(host, user, password, "intellij-builds/${fullBuildNumber}") { ssh, sftp, remoteDir ->
     tracer.spanBuilder("upload file")
       .setAttribute("file", appArchiveFile.toString())
       .setAttribute("remoteDir", remoteDir)
       .setAttribute("host", host)
-      .startSpan().use {
+      .startSpan()
+      .use {
         sftp.put(NioFileSource(appArchiveFile, filePermission = regularFileMode), "$remoteDir/${appArchiveFile.fileName}")
       }
 
@@ -116,7 +117,8 @@ fun signMacApp(
         .setAttribute("file", jreArchiveFile.toString())
         .setAttribute("remoteDir", remoteDir)
         .setAttribute("host", host)
-        .startSpan().use {
+        .startSpan()
+        .use {
           sftp.put(NioFileSource(jreArchiveFile, filePermission = regularFileMode), "$remoteDir/${jreArchiveFile.fileName}")
         }
     }
@@ -204,8 +206,6 @@ fun signMac(
   artifactDir: Path,
   artifactBuilt: Consumer<Path>
 ) {
-  initLog
-
   val failedToSign = mutableListOf<Path>()
   executeTask(host, user, password, remoteDirPrefix) { ssh, sftp, remoteDir ->
     val remoteSignScript = "$remoteDir/${signScript.fileName}"
@@ -259,13 +259,11 @@ private fun processFile(localFile: Path,
   ssh.startSession().use { session ->
     val command = session.exec(commandString)
     try {
-      val inputStreamReadThread = thread(name = "error-stream-reader-of-$taskLogClassifier-$fileName") {
-        command.inputStream.transferTo(System.out)
-      }
-      command.errorStream.use {
-        Files.copy(it, logFile, StandardCopyOption.REPLACE_EXISTING)
-      }
-      inputStreamReadThread.join(TimeUnit.HOURS.toMillis(3))
+      // use CompletableFuture because get will call ForkJoinPool.helpAsyncBlocker, so, other tasks in FJP will be executed while waiting
+      CompletableFuture.allOf(
+        runAsync { command.inputStream.transferTo(System.out) },
+        runAsync { Files.copy(command.errorStream, logFile, StandardCopyOption.REPLACE_EXISTING) }
+      ).get(3, TimeUnit.HOURS)
 
       command.join(1, TimeUnit.MINUTES)
     }
@@ -341,7 +339,7 @@ private fun downloadResult(remoteFile: String,
 
 private val initLog by lazy {
   System.setProperty("log4j.defaultInitOverride", "true")
-  val root: org.apache.log4j.Logger = org.apache.log4j.Logger.getRootLogger()
+  val root = Logger.getRootLogger()
   if (!root.allAppenders.hasMoreElements()) {
     root.level = Level.INFO
     root.addAppender(ConsoleAppender(PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)))
@@ -358,11 +356,11 @@ private inline fun executeTask(host: String,
                                password: String,
                                remoteDirPrefix: String,
                                task: (ssh: SSHClient, sftp: SFTPClient, remoteDir: String) -> Unit) {
+  initLog
   val config = DefaultConfig()
   config.keepAliveProvider = KeepAliveProvider.KEEP_ALIVE
 
-  val ssh = SSHClient(config)
-  ssh.use {
+  SSHClient(config).use { ssh ->
     ssh.addHostKeyVerifier(PromiscuousVerifier())
     ssh.connect(host)
     ssh.authPassword(user, password)

@@ -22,11 +22,8 @@ class ProcessTest {
 
   @After
   fun allErrorOutputReadersAreDone() {
-    val errorOutputReaders = Thread.getAllStackTraces().keys.filter {
-      it.name.startsWith(errorOutputReaderNamePrefix)
-    }
-    assert(errorOutputReaders.isEmpty()) {
-      errorOutputReaders.joinToString { it.name }
+    assert(areAllIoTasksCompleted()) {
+      "not all completed"
     }
   }
 
