@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
@@ -86,7 +87,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
   private fun createBookmark(element: PsiElement): FileBookmark? {
     if (element is PsiFileSystemItem) return element.virtualFile?.let { createBookmark(it) }
     if (element is PsiCompiledElement) return null
-    val file = element.containingFile.virtualFile ?: return null
+    val file = PsiUtilCore.getVirtualFile(element) ?: return null
     if (file is LightVirtualFile) return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
     return createBookmark(file, document.getLineNumber(element.textOffset))
