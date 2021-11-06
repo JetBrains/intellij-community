@@ -13,6 +13,7 @@ import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.AlertIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +76,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
   private Color myDefaultForeground;
   private TextAttributes editorAttributes;
   private SimpleTextAttributes myDefaultAttributes;
-  private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert);
+  private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6));
 
   private boolean myEnabled = true;
   private Color myTabColor;
