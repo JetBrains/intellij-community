@@ -251,7 +251,7 @@ final class DistributionJARsBuilder {
       buildPlatformTask,
       createBuildBundledPluginTask(pluginLayouts, buildPlatformTask, context),
       createBuildOsSpecificBundledPluginsTask(pluginLayouts, isUpdateFromSources, buildPlatformTask, context),
-      createBuildNonBundledPluginsTask(!isUpdateFromSources, context),
+      createBuildNonBundledPluginsTask(!isUpdateFromSources, buildPlatformTask, context),
       ).findAll { it != null })
       .collectMany {
         Object result = it.rawResult
@@ -678,7 +678,9 @@ final class DistributionJARsBuilder {
 
   // compressPluginArchive also means that blockmap for plugin archive will be built
   @Nullable
-  ForkJoinTask<?> createBuildNonBundledPluginsTask(boolean compressPluginArchive, BuildContext context) {
+  ForkJoinTask<?> createBuildNonBundledPluginsTask(boolean compressPluginArchive,
+                                                   @Nullable ForkJoinTask<?> buildPlatformLibTask,
+                                                   @NotNull BuildContext context) {
     if (pluginsToPublish.isEmpty()) {
       return null
     }
@@ -707,7 +709,7 @@ final class DistributionJARsBuilder {
         List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
         Predicate<PluginLayout> autoPublishPluginChecker = loadPluginAutoPublishList(context)
 
-        buildPlugins(moduleOutputPatcher, pluginsToPublish, stageDir, context, buildKeymapPluginsTask, new BiConsumer<PluginLayout, Path>() {
+        buildPlugins(moduleOutputPatcher, pluginsToPublish, stageDir, context, buildPlatformLibTask, new BiConsumer<PluginLayout, Path>() {
           @Override
           void accept(PluginLayout plugin, Path pluginDir) {
             Path targetDirectory = autoPublishPluginChecker.test(plugin) ? autoUploadingDir : nonBundledPluginsArtifacts

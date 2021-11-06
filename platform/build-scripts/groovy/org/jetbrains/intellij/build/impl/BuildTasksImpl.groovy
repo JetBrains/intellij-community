@@ -449,7 +449,7 @@ idea.fatal.error.notification=disabled
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"$BuildOptions.OS_NONE\"")
           DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish())
-          distributionJARsBuilder.createBuildNonBundledPluginsTask(true, context)?.fork()?.join()
+          distributionJARsBuilder.createBuildNonBundledPluginsTask(true, null, context)?.fork()?.join()
         }
         return null
       }
@@ -551,7 +551,7 @@ idea.fatal.error.notification=disabled
     Set<PluginLayout> pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
     DistributionJARsBuilder distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
     DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
-    distributionJARsBuilder.createBuildNonBundledPluginsTask(true, buildContext)?.fork()?.join()
+    distributionJARsBuilder.createBuildNonBundledPluginsTask(true, null, buildContext)?.fork()?.join()
   }
 
   @Override
