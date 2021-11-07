@@ -112,6 +112,11 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   @Override
+  public boolean contains(Object o) {
+    return !isEmpty() && super.contains(o);
+  }
+
+  @Override
   public void clear() {
     processQueue();
     myList.clear();
