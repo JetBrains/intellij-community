@@ -2127,18 +2127,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "j0",
-    "name": "intellij.performanceTesting/java",
-    "n": "i.performanceTesting/java",
-    "package": "com.jetbrains.performancePlugin.java",
-    "sourceModule": "intellij.performanceTesting",
-    "descriptor": "plugins/performanceTesting/resources/intellij.performanceTesting.java.xml",
-    "parent": "cT41",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "HP1",
     "name": "intellij.performanceTesting/profilers",
     "n": "i.performanceTesting/profilers",
