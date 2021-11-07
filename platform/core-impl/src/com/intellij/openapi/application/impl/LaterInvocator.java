@@ -41,8 +41,8 @@ public final class LaterInvocator {
 
   // Per-project modal entities
   private static final Map<Project, List<Dialog>> projectToModalEntities = ContainerUtil.createWeakMap();
-  private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap();
-  private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
+  private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap(); // accessed in EDT only
+  private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);// guarded by ourModalityStack
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
   private static final FlushQueue ourEdtQueue = new FlushQueue();
@@ -60,7 +60,7 @@ public final class LaterInvocator {
     return ourWindowModalities.computeIfAbsent(window, __ -> {
       synchronized (ourModalityStack) {
         for (ModalityStateEx state : ourModalityStack) {
-          if (state.getModalEntities().contains(window)) {
+          if (state.contains(window)) {
             return state;
           }
         }
@@ -148,9 +148,9 @@ public final class LaterInvocator {
   public static void enterModal(@NotNull Object modalEntity) {
     ModalityStateEx state = getCurrentModalityState().appendEntity(modalEntity);
     if (isModalDialog(modalEntity)) {
-      List<Object> currentEntities = state.getModalEntities();
+      ModalityStateEx current = state;
       state = modalityStateForWindow((Window)modalEntity);
-      state.forceModalEntities(currentEntities);
+      state.forceModalEntities(current);
     }
     enterModal(modalEntity, state);
   }
@@ -207,7 +207,7 @@ public final class LaterInvocator {
   }
 
   public static void leaveModal(Project project, @NotNull Dialog dialog) {
-    LOG.assertTrue(isWriteThread(), "leaveModal() should be invoked in write thread");
+    LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in write thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + dialog.getName() + " ; for project: " + project.getName());
@@ -285,14 +285,13 @@ public final class LaterInvocator {
     }
   }
 
-  public static boolean isInModalContextForProject(final Project project) {
-    LOG.assertTrue(isWriteThread());
+  public static boolean isInModalContextForProject(@Nullable Project project) {
+    LOG.assertTrue(isDispatchThread());
 
     if (ourModalEntities.isEmpty()) return false;
     if (project == null) return true;
 
     List<Dialog> modalEntitiesForProject = projectToModalEntities.get(project);
-
     return modalEntitiesForProject == null || modalEntitiesForProject.isEmpty();
   }
 

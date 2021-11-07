@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -18,15 +19,12 @@ import java.util.*;
 
 final class FlushQueue {
   private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
-  private static final boolean DEBUG = LOG.isDebugEnabled();
-  private final Object LOCK = new Object();
+  private final Object LOCK = ObjectUtils.sentinel("FlushQueue");
 
   private final List<RunnableInfo> mySkippedItems = new ArrayList<>(); //protected by LOCK
 
   private final Deque<RunnableInfo> myQueue = new ArrayDeque<>(); //protected by LOCK
   private volatile boolean myMayHaveItems;
-
-  private RunnableInfo myLastInfo;
 
   FlushQueue() {
   }
@@ -36,6 +34,7 @@ final class FlushQueue {
   }
 
   private void flushNow() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LaterInvocator.FLUSHER_SCHEDULED.set(false);
     myMayHaveItems = false;
 
@@ -82,7 +81,9 @@ final class FlushQueue {
 
   @Override
   public String toString() {
-    return "LaterInvocator.FlushQueue" + (myLastInfo == null ? "" : " lastInfo=" + myLastInfo);
+    synchronized (LOCK) {
+      return "LaterInvocator.FlushQueue size=" + myQueue.size() + "; FLUSH_SCHEDULED=" + LaterInvocator.FLUSHER_SCHEDULED;
+    }
   }
 
   @Nullable
@@ -115,7 +116,6 @@ final class FlushQueue {
   private boolean runNextEvent() {
     long startedAt = System.currentTimeMillis();
     final RunnableInfo lastInfo = getNextEvent(true);
-    myLastInfo = lastInfo;
 
     if (lastInfo != null) {
       EventWatcher watcher = EventWatcher.getInstanceOrNull();
@@ -138,7 +138,6 @@ final class FlushQueue {
         LOG.error(t);
       }
       finally {
-        if (!DEBUG) myLastInfo = null;
         if (watcher != null) {
           watcher.runnableFinished(runnable, System.currentTimeMillis());
         }

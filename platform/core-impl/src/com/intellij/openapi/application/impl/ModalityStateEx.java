@@ -23,7 +23,8 @@ public final class ModalityStateEx extends ModalityState {
     myModalEntities.addAll(modalEntities);
   }
 
-  @NotNull List<Object> getModalEntities() {
+  @NotNull
+  private List<Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
@@ -40,16 +41,17 @@ public final class ModalityStateEx extends ModalityState {
     return new ModalityStateEx(list);
   }
 
-  void forceModalEntities(List<Object> entities) {
+  void forceModalEntities(@NotNull ModalityStateEx other) {
+    List<Object> otherEntities = other.getModalEntities();
     myModalEntities.clear();
-    myModalEntities.addAll(entities);
+    myModalEntities.addAll(otherEntities);
   }
 
   @Override
   public boolean dominates(@NotNull ModalityState anotherState){
-    if (anotherState == ModalityState.any()) return false;
+    if (anotherState == this || anotherState == ModalityState.any()) return false;
     if (myModalEntities.isEmpty()) return false;
-
+    
     List<Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
     for (Object entity : getModalEntities()) {
       if (!otherEntities.contains(entity) && !ourTransparentEntities.contains(entity)) return true; // I have entity which is absent in anotherState
@@ -69,13 +71,14 @@ public final class ModalityStateEx extends ModalityState {
   }
 
   void markTransparent() {
-    Object element = ContainerUtil.getLastItem(getModalEntities(), null);
-    if (element != null) {
-      ourTransparentEntities.add(element);
-    }
+    ContainerUtil.addIfNotNull(ourTransparentEntities, ContainerUtil.getLastItem(getModalEntities()));
   }
 
   static void unmarkTransparent(@NotNull Object modalEntity) {
     ourTransparentEntities.remove(modalEntity);
+  }
+
+  boolean contains(@NotNull Object modalEntity) {
+    return getModalEntities().contains(modalEntity);
   }
 }
