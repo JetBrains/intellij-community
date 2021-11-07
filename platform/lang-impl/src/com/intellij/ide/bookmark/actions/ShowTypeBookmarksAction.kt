@@ -14,10 +14,8 @@ import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.NAVIGATABLE
-import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
@@ -55,11 +53,8 @@ internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
       visibleRowCount = bookmarks.size
       selectionModel.selectionMode = SINGLE_TREE_SELECTION
     }
-    bookmarks.forEach { (type, bookmark) ->
-      LightEditActionFactory
-        .create { if (bookmark.canNavigate()) bookmark.navigate(true) }
-        .registerCustomShortcutSet(CustomShortcutSet.fromString(type.mnemonic.toString()), tree, root)
-    }
+    bookmarks.forEach { tree.registerBookmarkTypeAction(root, it.first) }
+    tree.registerEditSourceAction(root)
 
     EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)
