@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.InvocationUtil;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
@@ -1520,18 +1519,6 @@ public final class IdeEventQueue extends EventQueue {
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
     return event instanceof KeyEvent;
-  }
-
-  @Override
-  public AWTEvent peekEvent() {
-    AWTEvent event = super.peekEvent();
-    if (event != null) {
-      return event;
-    }
-    if (isTestMode() && LaterInvocator.ensureFlushRequested()) {
-      return super.peekEvent();
-    }
-    return null;
   }
 
   private Boolean myTestMode;

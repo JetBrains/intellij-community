@@ -27,8 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 @ApiStatus.Internal
 public final class LaterInvocator {
@@ -101,7 +99,6 @@ public final class LaterInvocator {
     }
     FlushQueue.RunnableInfo runnableInfo = new FlushQueue.RunnableInfo(runnable, modalityState, expired, callback);
     ourEdtQueue.push(runnableInfo);
-    requestFlush();
   }
 
   static void invokeAndWait(@NotNull ModalityState modalityState, @NotNull final Runnable runnable) {
@@ -307,29 +304,6 @@ public final class LaterInvocator {
     return ApplicationManager.getApplication().isWriteThread();
   }
 
-  static void requestFlush() {
-    SUBMITTED_COUNT.incrementAndGet();
-    while (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
-      long submittedCount = SUBMITTED_COUNT.get();
-
-      FlushQueue queue = ourEdtQueue;
-      if (queue.mayHaveItems()) {
-        queue.scheduleFlush();
-        return;
-      }
-
-      FLUSHER_SCHEDULED.set(false);
-
-      // If a requestFlush was called by somebody else (because queues were modified) but we have not really scheduled anything
-      // then we've missed `mayHaveItems` `true` value because of race.
-      // Another run of `requestFlush` will get the correct `mayHaveItems` because
-      // `mayHaveItems` is mutated strictly before SUBMITTED_COUNT which we've observe below
-      if (submittedCount == SUBMITTED_COUNT.get()) {
-        break;
-      }
-    }
-  }
-
   static boolean isFlushNow(@NotNull Runnable runnable) {
     return ourEdtQueue.isFlushNow(runnable);
   }
@@ -337,25 +311,6 @@ public final class LaterInvocator {
     LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
     LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
   }
-
-  /**
-   * There might be some requests in the queue, but {@link FlushQueue#FLUSH_NOW} might not be scheduled yet. In these circumstances
-   * {@link EventQueue#peekEvent()} default implementation would return null, and {@link com.intellij.util.ui.UIUtil#dispatchAllInvocationEvents()} would
-   * stop processing events too early and lead to spurious test failures.
-   *
-   * @see com.intellij.ide.IdeEventQueue#peekEvent()
-   */
-  public static boolean ensureFlushRequested() {
-    if (ourEdtQueue.getNextEvent(false) != null) {
-      ourEdtQueue.scheduleFlush();
-      return true;
-    }
-    return false;
-  }
-
-  static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
-
-  private static final AtomicLong SUBMITTED_COUNT = new AtomicLong(0);
 
   @TestOnly
   @NotNull
@@ -365,12 +320,10 @@ public final class LaterInvocator {
 
   private static void reincludeSkippedItemsAndRequestFlush() {
     ourEdtQueue.reincludeSkippedItems();
-    requestFlush();
   }
 
   public static void purgeExpiredItems() {
     ourEdtQueue.purgeExpiredItems();
-    requestFlush();
   }
 
   /**
