@@ -32,11 +32,18 @@ abstract class ToolwindowToolbar : JPanel() {
 
   abstract fun reset()
 
-  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow) {
+  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow, addToBeginning: Boolean = false) {
     if (toolWindow !is ToolWindowImpl) return
 
     if (toolWindow.orderOnLargeStripe == -1) {
-      toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
+      if (addToBeginning) {
+        toolWindow.orderOnLargeStripe = 0
+        panel.components
+          .filterIsInstance(SquareStripeButton::class.java)
+          .forEach { it.button.toolWindow.orderOnLargeStripe++ }
+      } else {
+        toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
+      }
     }
 
     //temporary add new button
