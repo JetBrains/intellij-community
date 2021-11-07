@@ -6,8 +6,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.HashSetQueue
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 
+@TestOnly
 class TestingBackgroundExecutor internal constructor(
     private val manager: CompositeScriptConfigurationManager
 ) : BackgroundExecutor {

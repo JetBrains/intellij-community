@@ -27,7 +27,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   }
 
-  protected abstract @Nullable V create(K key);
+  protected abstract V create(K key);
 
   @Override
   public V get(Object key) {
@@ -81,7 +81,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public @NotNull Set<K> keySet() {
-    return new CollectionWrapper.Set<>(myMap.keySet());
+    return new CollectionWrapper.CollectionWrapperSet<>(myMap.keySet());
   }
 
   public boolean removeValue(Object value) {
@@ -124,7 +124,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public @NotNull Set<Entry<K, V>> entrySet() {
-    return new CollectionWrapper.Set<Entry<K, V>>(myMap.entrySet()) {
+    return new CollectionWrapper.CollectionWrapperSet<Entry<K, V>>(myMap.entrySet()) {
       @Override
       public Object wrap(Object val) {
         //noinspection unchecked
@@ -246,8 +246,8 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
       return nullize(val);
     }
 
-    private static class Set<K> extends CollectionWrapper<K> implements java.util.Set<K> {
-      Set(Collection<K> delegate) {
+    private static class CollectionWrapperSet<K> extends CollectionWrapper<K> implements Set<K> {
+      CollectionWrapperSet(@NotNull Collection<K> delegate) {
         super(delegate);
       }
     }
