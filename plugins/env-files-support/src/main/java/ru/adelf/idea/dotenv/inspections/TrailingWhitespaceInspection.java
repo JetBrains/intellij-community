@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +16,7 @@ import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 import ru.adelf.idea.dotenv.psi.DotEnvValue;
+import ru.adelf.idea.dotenv.psi.impl.DotEnvValueImpl;
 
 public class TrailingWhitespaceInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
@@ -47,6 +50,15 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
                 );
             }
         });
+
+        PsiTreeUtil.findChildrenOfType(file, PsiWhiteSpaceImpl.class).forEach(whiteSpace -> {
+           if (whiteSpace.getText().matches("\\s*[ \\t]\\n\\s*")) {
+               problemsHolder.registerProblem(whiteSpace,
+                       "Line has trailing whitespace.",
+                       new TrailingWhitespaceInspection.RemoveTrailingWhitespaceQuickFix()
+               );
+           }
+        });
         
         return problemsHolder;
     }
@@ -63,10 +75,15 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
             try {
                 PsiElement psiElement = descriptor.getPsiElement();
 
-                PsiElement newPsiElement = DotEnvFactory.createFromText(project, DotEnvTypes.VALUE, 
-                        "DUMMMY_KEY="+psiElement.getText().stripTrailing());
-
-                psiElement.replace(newPsiElement);
+                if (psiElement instanceof DotEnvValueImpl) {
+                    PsiElement newPsiElement = DotEnvFactory.createFromText(project, DotEnvTypes.VALUE,
+                            "DUMMY_KEY=" + psiElement.getText().stripTrailing());
+                    psiElement.replace(newPsiElement);
+                } else if (psiElement instanceof PsiWhiteSpaceImpl) {
+                    PsiElement newPsiElement = DotEnvFactory.createFromText(project, ElementType.WHITE_SPACE,
+                            "DUMMY_KEY='VALUE'" + psiElement.getText().replaceAll("[ \\t]*\\n", "\n"));
+                    psiElement.replace(newPsiElement);
+                }
             } catch (IncorrectOperationException e) {
                 Logger.getInstance(IncorrectDelimiterInspection.class).error(e);
             }

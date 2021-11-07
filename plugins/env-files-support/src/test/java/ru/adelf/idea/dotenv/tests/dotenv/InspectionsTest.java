@@ -61,7 +61,7 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
 
     @Test
     public void testTrailingWhitespaceInspection() {
-        doInspectionTest(new TrailingWhitespaceInspection(), Arrays.asList(" ", " "));
+        doInspectionTest(new TrailingWhitespaceInspection(), Arrays.asList(" ", "    ", "  \n", "   \n\n"));
     }
     
     @Test
