@@ -188,7 +188,8 @@ final class FlushQueue {
     @NotNull private final ModalityState modalityState;
     @NotNull private final Condition<?> expired;
     @Nullable private final ActionCallback callback;
-    @Nullable private final ClientId clientId;
+    @NotNull
+    private final String clientId;
 
     @Async.Schedule
     RunnableInfo(@NotNull Runnable runnable,
@@ -199,7 +200,7 @@ final class FlushQueue {
       this.modalityState = modalityState;
       this.expired = expired;
       this.callback = callback;
-      this.clientId = ClientId.getCurrent();
+      this.clientId = ClientId.getCurrentValue();
     }
 
     void markDone() {
