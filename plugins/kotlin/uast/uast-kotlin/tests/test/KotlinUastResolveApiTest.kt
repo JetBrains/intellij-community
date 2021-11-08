@@ -371,11 +371,11 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
         val uFile = myFixture.file.toUElement()!!
 
         TestCase.assertEquals(
-            "PsiType:List<?>",
+            "PsiType:List<?>[]",
             uFile.findElementByTextFromPsi<UExpression>("arr[0]").getExpressionType().toString()
         )
         TestCase.assertEquals(
-            "PsiType:List<?>",
+            "PsiType:List<List<?>>",
             uFile.findElementByTextFromPsi<UExpression>("lst[0]").getExpressionType().toString()
         )
     }
