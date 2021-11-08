@@ -8,20 +8,32 @@ interface CompilerArgumentsMapperDetachable : CompilerArgumentsCacheMapper {
     fun detachCacheAware(): CompilerArgumentsCacheAware
 }
 
-class CompilerArgumentsMapperDetachableImpl(private val masterCacheMapper: CompilerArgumentsCacheMapper) :
+class CompilerArgumentsMapperDetachableImpl(private val masterCacheMapper: AbstractCompilerArgumentsCacheMapper) :
     AbstractCompilerArgumentsCacheMapper(),
     CompilerArgumentsMapperDetachable {
+
+    override val offset: Int = masterCacheMapper.cacheByValueMap.keys.toIntArray().sortedArray().lastOrNull()?.plus(1) ?: 0
 
     override val cacheOriginIdentifier: Long
         get() = masterCacheMapper.cacheOriginIdentifier
 
-    override fun cacheArgument(arg: String): Int =
-        if (masterCacheMapper.checkCached(arg))
-            masterCacheMapper.cacheArgument(arg)
-        else masterCacheMapper.cacheArgument(arg).also {
-            cacheByValueMap[it] = arg
-            valueByCacheMap[arg] = it
+    override fun cacheArgument(arg: String): Int {
+        return if (masterCacheMapper.checkCached(arg)) masterCacheMapper.cacheArgument(arg)
+        else super.cacheArgument(arg)
+    }
+
+    override fun detachCacheAware(): CompilerArgumentsCacheAware {
+        val uniqueKeys = cacheByValueMap.keys - masterCacheMapper.distributeCacheIds().toSet()
+        uniqueKeys.forEach {
+            val key = it
+            val value = cacheByValueMap.getValue(it)
+            masterCacheMapper.cacheByValueMap[key] = value
+            masterCacheMapper.valueByCacheMap[value] = key
         }
 
-    override fun detachCacheAware(): CompilerArgumentsCacheAware = CompilerArgumentsCacheAwareImpl(this)
+        return CompilerArgumentsCacheAwareImpl(
+            cacheOriginIdentifier,
+            HashMap(uniqueKeys.associateWith { cacheByValueMap.getValue(it) })
+        )
+    }
 }
