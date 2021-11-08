@@ -11,10 +11,10 @@ import org.jetbrains.annotations.ApiStatus
 interface ExternalSystemProjectRefreshListener {
 
   @JvmDefault
-  fun beforeProjectRefresh() {}
+  fun onProjectReloadStart() {}
 
   @JvmDefault
-  fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {}
+  fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {}
 
   @JvmDefault
   fun onSettingsFilesListChange() {}

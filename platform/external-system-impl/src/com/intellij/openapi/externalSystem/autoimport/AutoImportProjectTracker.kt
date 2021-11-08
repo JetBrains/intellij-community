@@ -64,13 +64,13 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     object : ExternalSystemProjectRefreshListener {
       val id = "ProjectTracker: ${projectData.projectAware.projectId.debugName}"
 
-      override fun beforeProjectRefresh() {
+      override fun onProjectReloadStart() {
         projectReloadOperation.startTask(id)
         projectData.status.markSynchronized(currentTime())
         projectData.isActivated = true
       }
 
-      override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
+      override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
         if (status != SUCCESS) projectData.status.markBroken(currentTime())
         projectReloadOperation.finishTask(id)
       }
