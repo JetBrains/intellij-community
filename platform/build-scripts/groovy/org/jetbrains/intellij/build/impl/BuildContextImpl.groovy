@@ -413,6 +413,8 @@ final class BuildContextImpl extends BuildContext {
         '--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED',
         '--add-opens=java.desktop/sun.font=ALL-UNNAMED',
         '--add-opens=java.desktop/sun.java2d=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED',
         '--add-opens=java.desktop/sun.swing=ALL-UNNAMED',
         '--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED',
         '--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED',
