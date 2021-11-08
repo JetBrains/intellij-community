@@ -13,6 +13,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -29,6 +31,7 @@ import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Graphics
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 import javax.swing.BorderFactory
@@ -193,8 +196,20 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
       return
     }
 
-    project.service<NewToolbarRootPaneManager>().doLayout(panel)
-    project.service<StatusBarWidgetsManager>().updateAllWidgets()
+    if(ToolbarSettings.Instance.isEnabled) {
+      project.service<NewToolbarRootPaneManager>().doLayout(panel)
+      project.service<StatusBarWidgetsManager>().updateAllWidgets()
+
+      val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? CenterToolbarGroup?
+                  ?: return
+      val toolBar = Objects.requireNonNull(group)?.let {
+        ActionManagerEx.getInstanceEx()
+          .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, it as ActionGroup, true)
+      }
+      toolBar?.targetComponent = null
+      toolBar?.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
+      panel.add(toolBar as JComponent, BorderLayout.CENTER)
+    }
   }
 
   fun repaint() {
