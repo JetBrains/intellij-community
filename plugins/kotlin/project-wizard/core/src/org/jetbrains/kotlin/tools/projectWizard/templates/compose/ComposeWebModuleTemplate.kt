@@ -37,7 +37,6 @@ object ComposeWebModuleTemplate : Template() {
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
         +RepositoryIR(DefaultRepository.GOOGLE)
         +GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE)
-
         +GradleImportIR("org.jetbrains.compose.compose")
     }
 
