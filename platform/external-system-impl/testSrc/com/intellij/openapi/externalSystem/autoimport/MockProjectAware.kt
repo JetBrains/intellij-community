@@ -66,6 +66,8 @@ class MockProjectAware(
     })
   }
 
+  fun notifySettingsFilesListChanged() = background { eventDispatcher.multicaster.onSettingsFilesListChange() }
+
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     when (refreshCollisionPassType.get()!!) {
       DUPLICATE -> {
@@ -155,6 +157,7 @@ class MockProjectAware(
       fun create(listener: ExternalSystemProjectListener) = object : Listener {
         override fun onProjectReloadStart() = listener.onProjectReloadStart()
         override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) = listener.onProjectReloadFinish(status)
+        override fun onSettingsFilesListChange() = listener.onSettingsFilesListChange()
       }
     }
   }
