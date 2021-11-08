@@ -201,7 +201,7 @@ public class InjectedLanguageUtilBase {
   @Nullable
   public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
     PsiElement injected = InjectedLanguageManager.getInstance(host.getProject()).findInjectedElementAt(host, offset);
-    return injected == null ? null : injected.getContainingFile();
+    return injected == null ? null : PsiUtilCore.getTemplateLanguageFile(injected.getContainingFile());
   }
 
   /**
