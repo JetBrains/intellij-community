@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * Base class for concurrent (soft/weak) key:K -> strong value:V map
- * Null keys are NOT allowed
+ * Null keys are allowed
  * Null values are NOT allowed
  */
 abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, HashingStrategy<K> {
@@ -37,8 +37,23 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   abstract @NotNull KeyReference<K> createKeyReference(@NotNull K key, @NotNull HashingStrategy<? super K> hashingStrategy);
 
+  private static final HardKey<?> NULL_KEY = new HardKey<Object>() {
+    @Override
+    public Object get() {
+      return null;
+    }
+
+    @Override
+    void setKey(Object key, int hash) {
+    }
+  };
+
   @NotNull
-  private KeyReference<K> createKeyReference(@NotNull K key) {
+  private KeyReference<K> createKeyReference(@Nullable K key) {
+    if (key == null) {
+      //noinspection unchecked
+      return (KeyReference<K>)NULL_KEY;
+    }
     return createKeyReference(key, myHashingStrategy);
   }
 
@@ -102,7 +117,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @Override
-  public boolean containsKey(@NotNull Object key) {
+  public boolean containsKey(@Nullable Object key) {
     if (myMap.isEmpty()) {
       return false;
     }
@@ -152,7 +167,11 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   private static final ThreadLocal<HardKey<?>> HARD_KEY = ThreadLocal.withInitial(() -> new HardKey<>());
 
   @NotNull
-  private HardKey<K> createHardKey(@NotNull Object o) {
+  private HardKey<K> createHardKey(@Nullable Object o) {
+    if (o == null) {
+      //noinspection unchecked
+      return (HardKey<K>)NULL_KEY;
+    }
     //noinspection unchecked
     K key = (K)o;
     //noinspection unchecked
@@ -162,7 +181,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @Override
-  public V get(@NotNull Object key) {
+  public V get(@Nullable Object key) {
     if (myMap.isEmpty()) return null;
     HardKey<K> hardKey = createHardKey(key);
     try {
@@ -174,7 +193,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @Override
-  public V put(@NotNull K key, @NotNull V value) {
+  public V put(@Nullable K key, @NotNull V value) {
     KeyReference<K> weakKey = createKeyReference(key);
     V prev = myMap.put(weakKey, value);
     processQueue();
@@ -182,7 +201,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @Override
-  public V remove(@NotNull Object key) {
+  public V remove(@Nullable Object key) {
     HardKey<?> hardKey = createHardKey(key);
     try {
       return myMap.remove(hardKey);
@@ -257,7 +276,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
             Map.Entry<KeyReference<K>, V> ent = hashIterator.next();
             KeyReference<K> wk = ent.getKey();
             K k = null;
-            if (wk != null && (k = wk.get()) == null) {
+            if (wk != null && (k = wk.get()) == null && wk != NULL_KEY) {
               /* Weak key has been cleared by GC */
               continue;
             }
@@ -345,14 +364,14 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @Override
-  public V putIfAbsent(@NotNull K key, @NotNull V value) {
+  public V putIfAbsent(@Nullable final K key, @NotNull V value) {
     V prev = myMap.putIfAbsent(createKeyReference(key), value);
     processQueue();
     return prev;
   }
 
   @Override
-  public boolean remove(@NotNull Object key, @NotNull Object value) {
+  public boolean remove(@Nullable final Object key, @NotNull Object value) {
     //noinspection unchecked
     boolean removed = myMap.remove(createKeyReference((K)key), value);
     processQueue();
@@ -360,14 +379,14 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @Override
-  public boolean replace(@NotNull K key, @NotNull final V oldValue, @NotNull final V newValue) {
+  public boolean replace(@Nullable final K key, @NotNull final V oldValue, @NotNull final V newValue) {
     boolean replaced = myMap.replace(createKeyReference(key), oldValue, newValue);
     processQueue();
     return replaced;
   }
 
   @Override
-  public V replace(@NotNull K key, @NotNull final V value) {
+  public V replace(@Nullable final K key, @NotNull final V value) {
     V replaced = myMap.replace(createKeyReference(key), value);
     processQueue();
     return replaced;

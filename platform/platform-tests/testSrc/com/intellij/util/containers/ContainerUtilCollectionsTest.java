@@ -321,75 +321,39 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
   @Test
-  public void testConcurrentSoftMapMustNotAcceptNullKeyOrValue() {
+  public void testConcurrentSoftNullKey() {
     Map<String, String> map = ContainerUtil.createConcurrentSoftMap();
 
-    assertNullKeysMustNotWork(map);
-    assertNullValuesMustNotWork(map);
+    tryToInsertNullKeys(map);
   }
   @Test
-  public void testConcurrentWeakMapMustNotAcceptNullKeyOrValue() {
+  public void testConcurrentWeakNullKey() {
     Map<String, String> map = ContainerUtil.createConcurrentWeakMap();
 
-    assertNullKeysMustNotWork(map);
-    assertNullValuesMustNotWork(map);
+    tryToInsertNullKeys(map);
   }
 
-  @Test
-  public void testConcurrentWeakKeySoftValueMapMustNotAcceptNullKeyOrValue() {
+  @Test(expected = IllegalArgumentException.class)
+  public void testConcurrentWeakSoftNullKey() {
     Map<String, String> map = CollectionFactory.createConcurrentWeakKeySoftValueMap(1, 1, 1, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
-    assertNullKeysMustNotWork(map);
-    assertNullValuesMustNotWork(map);
+    tryToInsertNullKeys(map);
   }
 
-  @Test
-  public void testConcurrentWeakKeyWeakValueMustNotAcceptNullKeyOrValue() {
+  @Test(expected = IllegalArgumentException.class)
+  public void testConcurrentWeakWeakNullKey() {
     Map<String, String> map = ContainerUtil.createConcurrentWeakKeyWeakValueMap(IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
-    assertNullKeysMustNotWork(map);
-    assertNullValuesMustNotWork(map);
+    tryToInsertNullKeys(map);
   }
 
-  @Test
-  public void testWeakMapMustNotAcceptNullKey() {
-    assertNullKeysMustNotWork(ContainerUtil.createWeakMap());
-  }
-  @Test
-  public void testSoftMapMustNotAcceptNullKey() {
-    assertNullKeysMustNotWork(ContainerUtil.createSoftMap());
-  }
-  @Test
-  public void testWeakKeySoftValueMapMustNotAcceptNullKey() {
-    assertNullKeysMustNotWork(ContainerUtil.createWeakKeySoftValueMap());
-  }
-  @Test
-  public void testWeakKeyWeakValueMapMustNotAcceptNullKey() {
-    assertNullKeysMustNotWork(ContainerUtil.createWeakKeyWeakValueMap());
-  }
-  @Test
-  public void testSoftKeySoftValueMapMustNotAcceptNullKey() {
-    assertNullKeysMustNotWork(ContainerUtil.createSoftKeySoftValueMap());
-  }
-  @Test
-  public void testSoftValueMapMustNotAcceptNullKey() {
-    assertNullKeysMustNotWork(ContainerUtil.createSoftValueMap());
-  }
-  @Test
-  public void testWeakValueMapMustNotAcceptNullKey() {
-    assertNullKeysMustNotWork(ContainerUtil.createWeakValueMap());
-  }
-
-  private static void assertNullKeysMustNotWork(Map<String, ? super String> map) {
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> map.put(null, "ab"));
-    assertEquals(0, map.size());
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> map.get(null));
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> map.remove(null));
+  private static void tryToInsertNullKeys(Map<String, String> map) {
+    map.put(null, "ab");
+    assertEquals(1, map.size());
+    assertEquals("ab", map.get(null));
+    String removed = map.remove(null);
+    assertEquals("ab", removed);
     assertTrue(map.isEmpty());
-  }
-  private static void assertNullValuesMustNotWork(Map<? super String, String> map) {
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> map.put("ab", null));
-    assertEquals(0, map.size());
   }
 
   @Test(timeout = TIMEOUT)

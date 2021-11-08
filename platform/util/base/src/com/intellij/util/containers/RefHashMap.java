@@ -172,7 +172,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public boolean containsKey(@NotNull Object key) {
+  public boolean containsKey(Object key) {
+    if (key == null) return false;
     // optimization:
     myHardKeyInstance.set((K)key);
     try {
@@ -189,7 +190,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public V get(@NotNull Object key) {
+  public V get(Object key) {
+    if (key == null) return null;
     //noinspection unchecked
     myHardKeyInstance.set((K)key);
     try {
