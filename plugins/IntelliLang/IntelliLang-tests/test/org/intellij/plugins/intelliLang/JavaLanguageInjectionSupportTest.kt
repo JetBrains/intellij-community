@@ -55,8 +55,33 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
     |      }
     |    """.trimMargin())
 
+    assertNotNull(myFixture.getAvailableIntention("Uninject language or reference"))
     UnInjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile)
 
+    assertInjectedLangAtCaret(null)
+  }
+
+  fun testTemplateLanguageInjection() {
+    myFixture.configureByText("Foo.java", """
+      class Foo {
+          void bar() {
+              baz("Text with **Mark<caret>down**");
+          }
+
+          void baz(String str){}
+      }
+    """)
+    assertNotNull(myFixture.getAvailableIntention("Inject language or reference"))
+    InjectLanguageAction.invokeImpl(project,
+                                    myFixture.editor,
+                                    myFixture.file,
+                                    Injectable.fromLanguage(Language.findLanguageByID("Markdown"))
+    )
+
+    assertInjectedLangAtCaret("XML")
+
+    assertNotNull(myFixture.getAvailableIntention("Uninject language or reference"))
+    UnInjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile)
     assertInjectedLangAtCaret(null)
   }
 
