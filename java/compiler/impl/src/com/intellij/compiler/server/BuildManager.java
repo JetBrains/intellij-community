@@ -107,7 +107,8 @@ import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -983,17 +984,15 @@ public final class BuildManager implements Disposable {
                 final StringBuilder msg = new StringBuilder();
                 msg.append(JavaCompilerBundle.message("abnormal.build.process.termination")).append(": ");
                 if (errorsOnLaunch != null && errorsOnLaunch.length() > 0) {
-                  if (StringUtil.contains(errorsOnLaunch, "io.netty.channel.ConnectTimeoutException") && wslDistribution != null) {
-                    msg.append(JavaCompilerBundle.message("wsl.network.connection.failure"));
+                  msg.append("\n").append(errorsOnLaunch);
+                  if (StringUtil.contains(errorsOnLaunch, "java.lang.NoSuchMethodError")) {
+                    msg.append(
+                      "\nThe error may be caused by JARs in Java Extensions directory which conflicts with libraries used by the external build process.")
+                      .append(
+                        "\nTry adding -Djava.ext.dirs=\"\" argument to 'Build process VM options' in File | Settings | Build, Execution, Deployment | Compiler to fix the problem.");
                   }
-                  else {
-                    msg.append("\n").append(errorsOnLaunch);
-                    if (StringUtil.contains(errorsOnLaunch, "java.lang.NoSuchMethodError")) {
-                      msg.append(
-                        "\nThe error may be caused by JARs in Java Extensions directory which conflicts with libraries used by the external build process.")
-                        .append(
-                          "\nTry adding -Djava.ext.dirs=\"\" argument to 'Build process VM options' in File | Settings | Build, Execution, Deployment | Compiler to fix the problem.");
-                    }
+                  else if (StringUtil.contains(errorsOnLaunch, "io.netty.channel.ConnectTimeoutException") && wslDistribution != null) {
+                    msg.append(JavaCompilerBundle.message("wsl.network.connection.failure"));
                   }
                 }
                 else {
