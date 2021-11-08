@@ -18,14 +18,14 @@ UComment -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = kotlin) -> null: kotlin
 UComment -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Margherita) -> null: Margherita
-UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> FirLightInterfaceClassSymbol:/** Ingredient of [Pizza] */
+UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> KtUltraLightClass:/** Ingredient of [Pizza] */
     interface Ingredient: Ingredient
 UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> CLASS: Boolean
 UComment -> USimpleNameReferenceExpression (identifier = Pizza) -> null: Pizza
 UComment -> USimpleNameReferenceExpression (identifier = Pizza) -> null: Pizza
 UComment -> USimpleNameReferenceExpression (identifier = P) -> null: P
 UComment -> USimpleNameReferenceExpression (identifier = self) -> null: self
-UTypeReferenceExpression (name = Pizza.Builder<P>) -> USimpleNameReferenceExpression (identifier = Pizza) -> FirLightInterfaceClassSymbol:/**
+UTypeReferenceExpression (name = Pizza.Builder<P>) -> USimpleNameReferenceExpression (identifier = Pizza) -> KtUltraLightClass:/**
  * Common Pizza Interface
  *
  * @see Margherita
@@ -72,7 +72,7 @@ interface Pizza {
         protected abstract fun self(): P
     }
 }: Pizza
-UTypeReferenceExpression (name = Pizza.Builder<P>) -> USimpleNameReferenceExpression (identifier = Builder) -> FirLightClassForSymbol:/**
+UTypeReferenceExpression (name = Pizza.Builder<P>) -> USimpleNameReferenceExpression (identifier = Builder) -> KtUltraLightClass:/**
      * Abstract [Pizza] builder
      *
      * @param P well-known hack to solve abstract builder chain problem, see [self]
@@ -89,9 +89,9 @@ UTypeReferenceExpression (name = Pizza.Builder<P>) -> USimpleNameReferenceExpres
         abstract fun build(): Pizza
         protected abstract fun self(): P
     }: Builder
-UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifier = P) -> FirLightTypeParameter:P: P
+UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifier = P) -> Light PSI class: P: P
 UTypeReferenceExpression (name = java.util.Set<Pizza.Ingredient>) -> USimpleNameReferenceExpression (identifier = MutableSet) -> CLASS: MutableSet
-UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Pizza) -> FirLightInterfaceClassSymbol:/**
+UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Pizza) -> KtUltraLightClass:/**
  * Common Pizza Interface
  *
  * @see Margherita
@@ -138,13 +138,13 @@ interface Pizza {
         protected abstract fun self(): P
     }
 }: Pizza
-UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> FirLightInterfaceClassSymbol:/** Ingredient of [Pizza] */
+UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> KtUltraLightClass:/** Ingredient of [Pizza] */
     interface Ingredient: Ingredient
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = mutableSetOf) -> FUN: mutableSetOf
 UComment -> USimpleNameReferenceExpression (identifier = ingredient) -> null: ingredient
 UComment -> USimpleNameReferenceExpression (identifier = ingredients) -> null: ingredients
 UComment -> USimpleNameReferenceExpression (identifier = P) -> null: P
-UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Pizza) -> FirLightInterfaceClassSymbol:/**
+UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Pizza) -> KtUltraLightClass:/**
  * Common Pizza Interface
  *
  * @see Margherita
@@ -191,10 +191,10 @@ interface Pizza {
         protected abstract fun self(): P
     }
 }: Pizza
-UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> FirLightInterfaceClassSymbol:/** Ingredient of [Pizza] */
+UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> KtUltraLightClass:/** Ingredient of [Pizza] */
     interface Ingredient: Ingredient
-UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifier = P) -> FirLightTypeParameter:P: P
-UTypeReferenceExpression (name = Pizza) -> USimpleNameReferenceExpression (identifier = Pizza) -> FirLightInterfaceClassSymbol:/**
+UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifier = P) -> Light PSI class: P: P
+UTypeReferenceExpression (name = Pizza) -> USimpleNameReferenceExpression (identifier = Pizza) -> KtUltraLightClass:/**
  * Common Pizza Interface
  *
  * @see Margherita
@@ -241,12 +241,12 @@ interface Pizza {
         protected abstract fun self(): P
     }
 }: Pizza
-UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifier = P) -> FirLightTypeParameter:P: P
+UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifier = P) -> Light PSI class: P: P
 UComment -> USimpleNameReferenceExpression (identifier = Pizza) -> null: Pizza
 UComment -> USimpleNameReferenceExpression (identifier = size) -> null: size
 UComment -> USimpleNameReferenceExpression (identifier = Margherita) -> null: Margherita
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = Pizza) -> USimpleNameReferenceExpression (identifier = Pizza) -> FirLightInterfaceClassSymbol:/**
+UTypeReferenceExpression (name = Pizza) -> USimpleNameReferenceExpression (identifier = Pizza) -> KtUltraLightClass:/**
  * Common Pizza Interface
  *
  * @see Margherita
@@ -306,7 +306,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Pi
 UComment -> USimpleNameReferenceExpression (identifier = ingredient) -> null: ingredient
 UComment -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Pizza) -> null: Pizza
-UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Pizza) -> FirLightInterfaceClassSymbol:/**
+UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Pizza) -> KtUltraLightClass:/**
  * Common Pizza Interface
  *
  * @see Margherita
@@ -353,6 +353,6 @@ interface Pizza {
         protected abstract fun self(): P
     }
 }: Pizza
-UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> FirLightInterfaceClassSymbol:/** Ingredient of [Pizza] */
+UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> KtUltraLightClass:/** Ingredient of [Pizza] */
     interface Ingredient: Ingredient
 UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> CLASS: Boolean

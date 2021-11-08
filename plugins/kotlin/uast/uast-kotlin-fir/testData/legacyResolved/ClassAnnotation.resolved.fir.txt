@@ -1,6 +1,6 @@
 UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = Test) -> null: null
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation(val text: String): MyAnnotation
-UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation(val text: String): MyAnnotation
-UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation(val text: String): MyAnnotation
-UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation(val text: String): MyAnnotation
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> KtUltraLightClass:annotation class MyAnnotation(val text: String): MyAnnotation
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> KtUltraLightClass:annotation class MyAnnotation(val text: String): MyAnnotation
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> KtUltraLightClass:annotation class MyAnnotation(val text: String): MyAnnotation
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> KtUltraLightClass:annotation class MyAnnotation(val text: String): MyAnnotation

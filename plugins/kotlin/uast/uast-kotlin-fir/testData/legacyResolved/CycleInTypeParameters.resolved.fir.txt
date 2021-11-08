@@ -1,4 +1,0 @@
-UTypeReferenceExpression (name = Device<D>) -> USimpleNameReferenceExpression (identifier = Device) -> FirLightClassForSymbol:class Device<D: Device<D>>: Device
-UTypeReferenceExpression (name = D) -> USimpleNameReferenceExpression (identifier = D) -> FirLightTypeParameter:D: D
-UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as?) -> null: null
-UTypeReferenceExpression (name = Device<?>) -> USimpleNameReferenceExpression (identifier = Device) -> FirLightClassForSymbol:class Device<D: Device<D>>: Device

@@ -1,10 +1,10 @@
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:foo) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:foo: foo
     UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:foo) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:foo: foo
     UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
     UIfExpression -> UQualifiedReferenceExpression -> null: null
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:bar) -> USimpleNameReferenceExpression (identifier = bar) -> FirLightSimpleMethodForSymbol:bar: bar
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:bar) -> USimpleNameReferenceExpression (identifier = bar) -> KtUltraLightMethodForSourceDeclaration:bar: bar
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
