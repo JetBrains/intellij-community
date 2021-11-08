@@ -72,7 +72,7 @@ final class CompilationContextImpl implements CompilationContext {
     projectHome = toCanonicalPath(projectHome)
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
     kotlinBinaries.setUpCompilerIfRequired(gradle, ant)
-    def model = loadProject(projectHome, messages)
+    def model = loadProject(projectHome, kotlinBinaries, messages)
     def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, messages, oldToNewModuleName,
@@ -205,9 +205,12 @@ final class CompilationContextImpl implements CompilationContext {
     return new CompilationContextImpl(new AntBuilder(ant.project), messages, this)
   }
 
-  private static JpsModel loadProject(String projectHome, BuildMessages messages) {
+  private static JpsModel loadProject(String projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
+    if (kotlinBinaries.isCompilerRequired()) {
+      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.compilerHome/kotlinc")
+    }
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
