@@ -23,6 +23,7 @@ import com.intellij.util.io.write
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.ui.scale.TestScaleHelper
 import com.intellij.ui.scale.paint.ImageComparator
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
@@ -51,7 +52,7 @@ open class RequireHeadlessMode : ExternalResource() {
       // on TC headless is not enabled
     }
     else {
-      System.setProperty("java.awt.headless", "true")
+      UIUtil.setHeadlessProperty(true)
       if (!GraphicsEnvironment.isHeadless()) {
         throw RuntimeException("must be headless")
       }

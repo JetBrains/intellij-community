@@ -3636,4 +3636,11 @@ public final class UIUtil {
     if (s.length() < 2) s = "0" + s;
     return s;
   }
+
+  public static void setHeadlessProperty(boolean isHeadless) {
+    System.setProperty("java.awt.headless", Boolean.toString(isHeadless));
+    // reset field value to let java.awt.GraphicsEnvironment.getHeadlessProperty re-read updated property
+    assert ReflectionUtil.setField(GraphicsEnvironment.class, null, Boolean.class, "headless", null);
+    assert GraphicsEnvironment.isHeadless() == isHeadless;
+  }
 }
