@@ -1,6 +1,6 @@
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:class A(param: String): A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A(param: String): A
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = AA) -> TYPEALIAS: AA
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:A) -> USimpleNameReferenceExpression (identifier = AA) -> FirLightConstructorForSymbol:A: A
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightConstructorForSymbol:A: A
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:A) -> USimpleNameReferenceExpression (identifier = AAA) -> FirLightConstructorForSymbol:A: A
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = AA) -> KtUltraLightMethodForSourceDeclaration:A: A
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightMethodForSourceDeclaration:A: A
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = AAA) -> KtUltraLightMethodForSourceDeclaration:A: A
