@@ -13,7 +13,7 @@ import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
 /**
- * Empty label parameter for [Panel.row] method
+ * Empty label parameter for [Panel.row] method in case label is omitted.
  */
 val EMPTY_LABEL = String()
 
@@ -22,8 +22,16 @@ interface Panel : CellBase<Panel> {
 
   override fun visible(isVisible: Boolean): Panel
 
+  /**
+   * Binds panel visibility to provided [predicate]
+   */
+  fun visibleIf(predicate: ComponentPredicate): Panel
+
   override fun enabled(isEnabled: Boolean): Panel
 
+  /**
+   * Binds panel enabled state to provided [predicate]
+   */
   fun enabledIf(predicate: ComponentPredicate): Panel
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Panel

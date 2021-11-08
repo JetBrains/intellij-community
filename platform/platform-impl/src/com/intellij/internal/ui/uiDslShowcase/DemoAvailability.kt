@@ -7,7 +7,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 
-@Demo(title = "Availability",
+@Demo(title = "Enabled/Visible",
   description = "Visibility and enabled state of panels, rows and cells can be bound to another components and applied automatically")
 fun demoAvailability(): DialogPanel {
   return panel {

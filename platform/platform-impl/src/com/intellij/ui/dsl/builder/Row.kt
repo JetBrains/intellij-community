@@ -109,6 +109,10 @@ interface Row {
                  maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
+  /**
+   * Adds [component] wrapped by [viewComponent] (usually scroll pane). Use it only for custom specific components,
+   * all standard components like label, button, checkbox etc are covered by [Row] factory methods
+   */
   fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
 
   /**
@@ -122,35 +126,41 @@ interface Row {
   fun placeholder(): Placeholder
 
   /**
-   * Sets visibility of the row including comment [Row.comment] and all children recursively.
+   * Sets visibility of the row including comment [Row.rowComment] and all children recursively.
    * The row is invisible while there is an invisible parent
    */
   fun visible(isVisible: Boolean): Row
 
+  /**
+   * Binds row visibility to provided [predicate]
+   */
   fun visibleIf(predicate: ComponentPredicate): Row
 
   /**
-   * Sets enabled state of the row including comment [Row.comment] and all children recursively.
+   * Sets enabled state of the row including comment [Row.rowComment] and all children recursively.
    * The row is disabled while there is a disabled parent
    */
   fun enabled(isEnabled: Boolean): Row
 
+  /**
+   * Binds row enabled state to provided [predicate]
+   */
   fun enabledIf(predicate: ComponentPredicate): Row
 
   /**
-   * Adds gap before current row. It is visible together with the row.
+   * Adds additional gap above current row. It is visible together with the row.
    * Only greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
    */
   fun topGap(topGap: TopGap): Row
 
   /**
-   * Adds gap after current row. It is visible together with the row.
+   * Adds additional gap below current row. It is visible together with the row.
    * Only greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
    */
   fun bottomGap(bottomGap: BottomGap): Row
 
   /**
-   * Creates subpanel inside cell of the row
+   * Creates sub-panel inside the cell of the row. The panel contains own rows and cells
    */
   fun panel(init: Panel.() -> Unit): Panel
 

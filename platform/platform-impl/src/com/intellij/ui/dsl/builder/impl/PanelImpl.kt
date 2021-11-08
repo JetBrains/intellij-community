@@ -170,13 +170,9 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun group(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
                      init: Panel.() -> Unit): Panel {
     lateinit var result: Panel
-    val separator = createSeparator(title)
     val row = row {
       result = panel {
-        row {
-          cell(separator)
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
+        separator(title)
       }
     }
 
@@ -308,6 +304,12 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     if (parent == null || parent.isVisible()) {
       doVisible(visible, _rows.indices)
     }
+    return this
+  }
+
+  override fun visibleIf(predicate: ComponentPredicate): Panel {
+    visible(predicate())
+    predicate.addListener { visible(it) }
     return this
   }
 
