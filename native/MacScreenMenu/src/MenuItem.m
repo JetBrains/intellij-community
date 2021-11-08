@@ -244,6 +244,11 @@ NSUInteger JavaModifiersToNsKeyModifiers(jint javaModifiers, BOOL isExtMods)
 }
 
 - (void) dealloc {
+    if ([nsMenuItem.view isKindOfClass:CustomMenuItemView.class]) {
+        ((CustomMenuItemView *)nsMenuItem.view)->owner = nil;
+    }
+    nsMenuItem.view = nil;
+
     [nsMenuItem setAction:NULL];
     [nsMenuItem setTarget:nil];
     [nsMenuItem release];
@@ -301,12 +306,12 @@ JNIEXPORT jlong JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeDispose
 (JNIEnv *env, jobject peer, jlong menuItemObj)
 {
-    JNI_COCOA_ENTER();
     MenuItem *item = (MenuItem *)menuItemObj;
     (*env)->DeleteGlobalRef(env, item->javaPeer);
     item->javaPeer = NULL;
-    [item release];
-    JNI_COCOA_EXIT();
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [item release];
+    });
 }
 
 static unichar AWTKeyToMacShortcut(jint awtKey, BOOL doShift) {

@@ -177,8 +177,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         if (!isEnterKeyStroke(firstKeyStroke)) {
           setAccelerator(firstKeyStroke);
           if (myScreenMenuItemPeer != null) myScreenMenuItemPeer.setLabel(getText(), firstKeyStroke);
-          if (false && KeymapUtil.isSimplifiedMacShortcuts()) {
-            // TODO: fix simplifiedMacShortcuts (broken navigation with keys)
+          if (KeymapUtil.isSimplifiedMacShortcuts()) {
             final String shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts);
             putClientProperty("accelerator.text", shortcutText);
             if (myScreenMenuItemPeer != null) myScreenMenuItemPeer.setAcceleratorText(shortcutText);
