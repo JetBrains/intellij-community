@@ -959,6 +959,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySelectionModel.reinitSettings();
     ourCaretBlinkingCommand.setBlinkCaret(mySettings.isBlinkCaret());
     ourCaretBlinkingCommand.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
+    ourCaretBlinkingCommand.start();
+
     myView.reinitSettings();
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
@@ -1467,6 +1469,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void setCaretActive() {
     synchronized (ourCaretBlinkingCommand) {
       ourCaretBlinkingCommand.myEditor = this;
+      ourCaretBlinkingCommand.start();
     }
   }
 
@@ -2772,13 +2775,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (mySchedulerHandle != null) {
         mySchedulerHandle.cancel(false);
       }
-      mySchedulerHandle = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this, mySleepTime, mySleepTime,
-                                                                                                   TimeUnit.MILLISECONDS);
+      if (myEditor != null) {
+        mySchedulerHandle = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this, mySleepTime, mySleepTime,
+                                                                                                     TimeUnit.MILLISECONDS);
+      }
     }
 
     private void setBlinkPeriod(int blinkPeriod) {
       mySleepTime = Math.max(blinkPeriod, 10);
-      start();
     }
 
     private void setBlinkCaret(boolean value) {
@@ -2787,8 +2791,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void run() {
-      if (myEditor != null) {
-        CaretCursor activeCursor = myEditor.myCaretCursor;
+      EditorImpl editor = myEditor;
+      if (editor != null) {
+        CaretCursor activeCursor = editor.myCaretCursor;
 
         long time = System.currentTimeMillis();
         time -= activeCursor.myStartTime;
@@ -2924,7 +2929,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private CaretRectangle[] myLocations;
     private boolean myEnabled;
 
-    @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
     private boolean myIsShown;
     private long myStartTime;
 
@@ -2949,6 +2953,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         ourCaretBlinkingCommand.setBlinkCaret(blink);
         ourCaretBlinkingCommand.setBlinkPeriod(blinkPeriod);
         myIsShown = true;
+        ourCaretBlinkingCommand.start();
       }
     }
 
