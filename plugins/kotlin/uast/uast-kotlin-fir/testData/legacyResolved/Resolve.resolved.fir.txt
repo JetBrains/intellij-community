@@ -1,0 +1,91 @@
+UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+    fun foo() {}
+    inline fun inlineFoo() {
+
+    }
+}: A
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+    fun foo() {}
+    inline fun inlineFoo() {
+
+    }
+}: A
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = inlineFoo) -> LightMethodBuilder:inlineFoo: inlineFoo
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+    fun foo() {}
+    inline fun inlineFoo() {
+
+    }
+}: A
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = forEach) -> FUN: forEach
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = it) -> FUNCTION_LITERAL: <anonymous>
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = joinToString) -> FUN: joinToString
+    UBlockExpression -> UQualifiedReferenceExpression -> PROPERTY: size
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = size) -> PROPERTY: size
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = indices) -> null: null
+    UTypeReferenceExpression (name = java.util.Date) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UTypeReferenceExpression (name = java.util.Date) -> USimpleNameReferenceExpression (identifier = util) -> PsiPackage:java.util: util
+    UTypeReferenceExpression (name = java.util.Date) -> USimpleNameReferenceExpression (identifier = Date) -> PsiClass:Date: Date
+    ULocalVariable (name = date) -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util: util
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = util) -> PsiPackage:java.util: util
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to PsiMethod:Date) -> USimpleNameReferenceExpression (identifier = Date) -> PsiMethod:Date: Date
+    UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> PsiMethod:getTime: getTime
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = date) -> LightVariableBuilder:date: date
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = time) -> PsiMethod:getTime: getTime
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> PsiMethod:getTime: getTime
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = last) -> FUN: last
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PROPERTY: entries
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = mutableMapOf) -> FUN: mutableMapOf
+    UBinaryExpression (operator = <other>) -> USimpleNameReferenceExpression (identifier = to) -> FUN: to
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = entries) -> PROPERTY: entries
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = first) -> FUN: first
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = setValue) -> FUN: setValue
+    UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> FUN: rangeTo
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = intRange) -> LightVariableBuilder:intRange: intRange
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = contains) -> FUN: contains
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
+    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = IntRange) -> PRIMARY_CONSTRUCTOR: IntRange
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+    fun foo() {}
+    inline fun inlineFoo() {
+
+    }
+}: A
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = t) -> Fir Light Parameter t: t
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo
+UTypeReferenceExpression (name = java.util.List<? extends A>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+    fun foo() {}
+    inline fun inlineFoo() {
+
+    }
+}: A
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = listT) -> Fir Light Parameter listT: listT
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isEmpty) -> FUN: isEmpty
+    UForEachExpression -> USimpleNameReferenceExpression (identifier = listT) -> Fir Light Parameter listT: listT
+        UBlockExpression -> UQualifiedReferenceExpression -> null: null
+        UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo

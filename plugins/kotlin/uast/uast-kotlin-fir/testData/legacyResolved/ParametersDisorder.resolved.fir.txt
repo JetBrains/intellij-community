@@ -1,0 +1,70 @@
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> CLASS: Float
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> CLASS: Float
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to FirLightSimpleMethodForSymbol:global) -> USimpleNameReferenceExpression (identifier = global) -> FirLightSimpleMethodForSymbol:global: global
+    null -> USimpleNameReferenceExpression (identifier = b) -> Fir Light Parameter b: b
+    null -> USimpleNameReferenceExpression (identifier = a) -> Fir Light Parameter a: a
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:withDefault) -> USimpleNameReferenceExpression (identifier = withDefault) -> FirLightSimpleMethodForSymbol:withDefault: withDefault
+    null -> USimpleNameReferenceExpression (identifier = d) -> Fir Light Parameter d: d
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to FirLightSimpleMethodForSymbol:withReceiver) -> USimpleNameReferenceExpression (identifier = withReceiver) -> FirLightSimpleMethodForSymbol:withReceiver: withReceiver
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Math) -> PsiClass:Math: Math
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:atan2) -> USimpleNameReferenceExpression (identifier = atan2) -> PsiMethod:atan2: atan2
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = unresolvedMethod) -> null: null
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:String: String
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4))(resolves to PsiMethod:format) -> USimpleNameReferenceExpression (identifier = format) -> PsiMethod:format: format
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:String: String
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:format) -> USimpleNameReferenceExpression (identifier = format) -> PsiMethod:format: format
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = arrayOf) -> FUN: arrayOf
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:String: String
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to PsiMethod:format) -> USimpleNameReferenceExpression (identifier = format) -> PsiMethod:format: format
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = arrayOf) -> FUN: arrayOf
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = arrayOf) -> FUN: arrayOf
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:String: String
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:format) -> USimpleNameReferenceExpression (identifier = format) -> PsiMethod:format: format
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:format) -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = chunked) -> FUN: chunked
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toTypedArray) -> FUN: toTypedArray
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = with) -> FUN: with
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:class A {
+
+    fun String.with2Receivers(a: Int, b: Float) {}
+
+}: A
+        UBlockExpression -> UQualifiedReferenceExpression -> null: null
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to FirLightSimpleMethodForSymbol:with2Receivers) -> USimpleNameReferenceExpression (identifier = with2Receivers) -> FirLightSimpleMethodForSymbol:with2Receivers: with2Receivers
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> CLASS: Float
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+    UBlockExpression -> UObjectLiteralExpression -> FirLightConstructorForSymbol:Parent:
+    UTypeReferenceExpression (name = Parent) -> USimpleNameReferenceExpression (identifier = Parent) -> FirLightClassForSymbol:open class Parent(a: String, b: Int): Parent
+    null -> USimpleNameReferenceExpression (identifier = b) -> Fir Light Parameter b: b
+    null -> USimpleNameReferenceExpression (identifier = a) -> Fir Light Parameter a: a

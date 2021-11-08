@@ -1,0 +1,6 @@
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:getFoo: getFoo
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:getFoo: getFoo
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = bar) -> KtUltraLightMethodForSourceDeclaration:getBar: getBar
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = bar) -> KtUltraLightMethodForSourceDeclaration:getBar: getBar
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = baz) -> KtUltraLightMethodForSourceDeclaration:getBaz: getBaz
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = baz) -> KtUltraLightMethodForSourceDeclaration:getBaz: getBaz

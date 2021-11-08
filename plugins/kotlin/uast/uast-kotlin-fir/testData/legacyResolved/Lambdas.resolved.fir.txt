@@ -1,0 +1,21 @@
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiClass:Stream: Stream
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util.stream: stream
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util: util
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = util) -> PsiPackage:java.util: util
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = stream) -> PsiPackage:java.util.stream: stream
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Stream) -> PsiClass:Stream: Stream
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Stream) -> PsiClass:Stream: Stream
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:empty) -> USimpleNameReferenceExpression (identifier = empty) -> PsiMethod:empty: empty
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:filter) -> USimpleNameReferenceExpression (identifier = filter) -> PsiMethod:filter: filter
+        UReturnExpression -> UQualifiedReferenceExpression -> null: null
+        UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> FUNCTION_LITERAL: <anonymous>
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isEmpty) -> FUN: isEmpty
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = selectItemFunction) -> Fir Light Parameter selectItemFunction: selectItemFunction
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = Local) -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = baz) -> LightVariableBuilder:baz: baz
+    UWhileExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> null:

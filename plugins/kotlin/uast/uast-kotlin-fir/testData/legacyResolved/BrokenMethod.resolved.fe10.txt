@@ -1,0 +1,7 @@
+UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpression (identifier = Array) -> null: null
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> PsiClass:CharSequence: CharSequence
+    UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
+    UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:Used) -> USimpleNameReferenceExpression (identifier = Used) -> KtUltraLightMethodForSourceDeclaration:Used: Used
+    UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> KtUltraLightMethodForSourceDeclaration:doStuff1: doStuff1

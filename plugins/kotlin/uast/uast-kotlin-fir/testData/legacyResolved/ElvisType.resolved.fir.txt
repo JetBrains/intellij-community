@@ -1,0 +1,5 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:bar) -> USimpleNameReferenceExpression (identifier = bar) -> FirLightSimpleMethodForSymbol:bar: bar
+ULocalVariable (name = var63c495f9) -> USimpleNameReferenceExpression (identifier = text) -> Fir Light Parameter text: text
+UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any

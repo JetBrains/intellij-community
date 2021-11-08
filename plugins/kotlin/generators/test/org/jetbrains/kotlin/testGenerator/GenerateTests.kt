@@ -1567,6 +1567,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("")
         }
 
+        testClass<AbstractFirLegacyUastResolveEverythingTest> {
+            model("")
+        }
+
         testClass<AbstractFirLegacyUastTypesTest> {
             model("")
         }
@@ -1592,6 +1596,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFE1LegacyUastIdentifiersTest> {
+            model("")
+        }
+
+        testClass<AbstractFE1LegacyUastResolveEverythingTest> {
             model("")
         }
 

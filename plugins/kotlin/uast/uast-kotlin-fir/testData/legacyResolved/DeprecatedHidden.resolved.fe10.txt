@@ -1,0 +1,9 @@
+null -> UQualifiedReferenceExpression -> PsiPackage:test.pkg: pkg
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = test) -> PsiPackage:test: test
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = pkg) -> PsiPackage:test.pkg: pkg
+UTypeReferenceExpression (name = kotlin.Deprecated) -> USimpleNameReferenceExpression (identifier = Deprecated) -> PsiClass:Deprecated: Deprecated
+null -> USimpleNameReferenceExpression (identifier = level) -> PsiMethod:level: level
+UNamedExpression (name = level) -> UQualifiedReferenceExpression -> PsiField:HIDDEN: HIDDEN
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = DeprecationLevel) -> PsiClass:DeprecationLevel: DeprecationLevel
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = HIDDEN) -> PsiField:HIDDEN: HIDDEN
+null -> USimpleNameReferenceExpression (identifier = message) -> PsiMethod:message: message

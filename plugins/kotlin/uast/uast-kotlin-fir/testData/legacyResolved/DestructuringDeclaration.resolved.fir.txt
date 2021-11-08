@@ -1,0 +1,8 @@
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
+    UBinaryExpression (operator = <other>) -> USimpleNameReferenceExpression (identifier = to) -> FUN: to
+    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = data) -> Fir Light Parameter data: data
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
+    UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = Pair) -> CLASS: Pair
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String

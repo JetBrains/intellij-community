@@ -1,0 +1,6 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:listOf) -> USimpleNameReferenceExpression (identifier = listOf) -> PsiMethod:listOf: listOf
+    USwitchExpression -> USimpleNameReferenceExpression (identifier = string) -> Light Parameter: string
+        ULocalVariable (name = var837f2350) -> USimpleNameReferenceExpression (identifier = arr) -> LightVariableBuilder:arr: arr
+        UReturnExpression -> USimpleNameReferenceExpression (identifier = bindingContext) -> LightVariableBuilder:bindingContext: bindingContext
