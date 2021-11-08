@@ -58,7 +58,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     }
 
   private fun createProjectReloadListener(projectData: ProjectData) =
-    object : ExternalSystemProjectRefreshListener {
+    object : ExternalSystemProjectListener {
       val id = "ProjectTracker: ${projectData.projectAware.projectId.debugName}"
 
       override fun onProjectReloadStart() {
