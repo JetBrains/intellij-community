@@ -31,7 +31,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
 
   protected open val extensionRootAttr = EXTENSION_ROOT_ATTR
 
-  private val unloadedExtensionsKey = Key.create<List<Element>>(this::class.java.canonicalName)
+  private val unloadedExtensionsKey = Key.create<List<Element>>(this::class.java.canonicalName + ".run.extension.elements")
 
   fun readExternal(configuration: U, parentNode: Element) {
     val children = parentNode.getChildren(extensionRootAttr)
