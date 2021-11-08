@@ -198,8 +198,6 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
         if (importList != null) {
           RefModule refModule = refFile.getModule();
           if (refModule != null) {
-            PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getPsiElement());
-            if (javaModule == null) return;
             Set<String> packageNames = getImportedPackages(refModule, refFile);
             if (packageNames != DONT_COLLECT_PACKAGES) {
               for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
