@@ -190,7 +190,7 @@ public final class UIUtil {
     if (property instanceof Integer) {
       return (int)property;
     }
-    return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 29;
+    return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : SystemInfo.isMacOSBigSur ? 29 : 24;
   }
 
   private static String getWindowTitle(Window window) {
