@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator
 
 import com.intellij.execution.process.mediator.client.MediatedProcess
@@ -30,8 +30,9 @@ open class ProcessMediatorTest {
     }
   })
 
-  private lateinit var connection: ProcessMediatorConnection
-  private val client: ProcessMediatorClient get() = connection.client
+  private var connection: ProcessMediatorConnection? = null
+  private val client: ProcessMediatorClient
+    get() = connection!!.client
 
   protected open fun createProcessMediatorConnection(coroutineScope: CoroutineScope, testInfo: TestInfo): ProcessMediatorConnection {
     val bindName = testInfo.testMethod.orElse(null)?.name ?: testInfo.displayName
@@ -51,7 +52,7 @@ open class ProcessMediatorTest {
       delay(TIMEOUT_MS)
       deferred.completeExceptionally(TimeoutException("tearDown() timed out"))
     }
-    connection.close()
+    (connection ?: return).close()
     watchdogJob.cancel()
     runBlocking {
       deferred.complete(Unit)

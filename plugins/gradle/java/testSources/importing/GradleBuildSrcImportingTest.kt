@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -12,6 +12,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
+import java.util.function.Consumer
 
 class GradleBuildSrcImportingTest : GradleImportingTestCase() {
 
@@ -40,9 +41,9 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     assertModules("project",
                   "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test")
     val moduleLibDeps = getModuleLibDeps("project.buildSrc.test", "Gradle: junit:junit:4.12")
-    assertThat(moduleLibDeps).hasSize(1).allSatisfy {
+    assertThat(moduleLibDeps).hasSize(1).allSatisfy(Consumer {
       assertThat(it.libraryLevel).isEqualTo("project")
-    }
+    })
   }
 
   @Test
