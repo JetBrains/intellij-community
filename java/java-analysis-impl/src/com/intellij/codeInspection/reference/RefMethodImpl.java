@@ -535,6 +535,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (!getSuperMethods().isEmpty()) {
       for (final RefMethod refMethod : getSuperMethods()) {
         RefMethodImpl refSuper = (RefMethodImpl)refMethod;
+        refSuper.waitForInitialized();
         refSuper.updateReturnValueTemplate(expression);
       }
     }
