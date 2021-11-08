@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -46,6 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
   private static final Logger LOG = Logger.getInstance(TerminalExecutionConsole.class);
+  private static final String CLEAR_SCREEN = "\u001b[2J";
 
   private final JBTerminalWidget myTerminalWidget;
   private final Project myProject;
@@ -56,6 +59,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private boolean myEnterKeyDefaultCodeEnabled = true;
   private boolean myConvertLfToCrlfForNonPtyProcess = false;
+  private final AtomicBoolean myFirstOutput = new AtomicBoolean(false);
 
   public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
     this(project, processHandler, getProvider());
@@ -104,6 +108,21 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       myDataStream.append(encodeColor(foregroundColor));
     }
 
+    if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT && myFirstOutput.compareAndSet(false, true) && text.startsWith(CLEAR_SCREEN)) {
+      // Windows ConPTY generates the 'clear screen' escape sequence (ESC[2J) before the process output.
+      // It pushes the already printed command line into the scrollback buffer which is not displayed by default.
+      // In such cases, let's scroll up to display the printed command line.
+      BoundedRangeModel verticalScrollModel = myTerminalWidget.getTerminalPanel().getVerticalScrollModel();
+      verticalScrollModel.addChangeListener(new javax.swing.event.ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          verticalScrollModel.removeChangeListener(this);
+          UiNotifyConnector.doWhenFirstShown(myTerminalWidget.getTerminalPanel(), () -> {
+            myTerminalWidget.getTerminalPanel().scrollToShowAllOutput();
+          });
+        }
+      });
+    }
     myDataStream.append(text);
 
     if (foregroundColor != null) {
@@ -343,7 +362,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
 
     @Override
-    protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
+    protected TerminalStarter createTerminalStarter(@NotNull JediTerminal terminal, @NotNull TtyConnector connector) {
       return new TerminalStarter(terminal, connector, myDataStream, myTerminalWidget.getTypeAheadManager()) {
         @Override
         public byte[] getCode(int key, int modifiers) {
@@ -397,21 +416,13 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      BoundedRangeModel model = getBoundedRangeModel();
-      e.getPresentation().setEnabled(model != null && model.getValue() != 0);
+      BoundedRangeModel verticalScrollModel = myTerminalWidget.getTerminalPanel().getVerticalScrollModel();
+      e.getPresentation().setEnabled(verticalScrollModel.getValue() != 0);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      BoundedRangeModel model = getBoundedRangeModel();
-      if (model != null) {
-        model.setValue(0);
-      }
-    }
-
-    @Nullable
-    private BoundedRangeModel getBoundedRangeModel() {
-      return myTerminalWidget != null ? myTerminalWidget.getTerminalPanel().getBoundedRangeModel() : null;
+      myTerminalWidget.getTerminalPanel().getVerticalScrollModel().setValue(0);
     }
   }
 }
