@@ -109,8 +109,11 @@ final class EdtExecutorServiceImpl extends EdtExecutorService {
     return ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   }
 
+  // future which is loud about exceptions during its execution
   private static final class FlippantFuture<T> extends FutureTask<T> {
-    private FlippantFuture(Callable<T> callable) {super(callable);}
+    private FlippantFuture(@NotNull Callable<T> callable) {
+      super(callable);
+    }
 
     @Override
     public void run() {
