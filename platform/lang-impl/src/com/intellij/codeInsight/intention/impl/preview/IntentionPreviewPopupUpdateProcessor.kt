@@ -92,7 +92,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   private fun adjustPosition(originalPopup: JBPopup?) {
-    if (originalPopup != null) {
+    if (originalPopup != null && originalPopup.content.isShowing) {
       PositionAdjuster(originalPopup.content).adjust(popup, RIGHT, LEFT)
     }
   }
