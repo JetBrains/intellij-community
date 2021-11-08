@@ -33,7 +33,9 @@ object EditorConfigParserUtil : GeneratedParserUtilBase() {
   fun isOptionWithRawValueKeyAhead(builder: PsiBuilder, level: Int) =
     nextTokenIs(builder, EditorConfigElementTypes.IDENTIFIER) && builder.tokenText in specialKeys
 
-  private val specialKeys = listOf("file_header_template")
+  private val specialKeys = listOf("file_header_template",
+                                   "ij_formatter_off_tag",
+                                   "ij_formatter_on_tag")
 
   /**
    * Tests whether a new line has just been skipped
