@@ -123,7 +123,7 @@ private fun buildMessageFrom(
         append(' ')
     }
 
-    if (isNotEmpty()) append("— ")
+    if (isNotEmpty()) append("- ")
 
     append(messageProvider())
 }

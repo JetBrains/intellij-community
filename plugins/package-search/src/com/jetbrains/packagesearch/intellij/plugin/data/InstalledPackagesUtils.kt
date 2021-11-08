@@ -17,6 +17,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -35,9 +36,9 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.decodeStructure
 import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.json.Json
+import org.apache.commons.codec.binary.Hex
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.Base64
 import kotlin.io.path.absolutePathString
 
 internal suspend fun installedPackages(
@@ -86,14 +87,18 @@ internal suspend fun installedPackages(
     }.filterNotNull().sortedBy { it.sortKey }
 }
 
-internal suspend fun fetchProjectDependencies(modules: List<ProjectModule>, cacheDirectory: Path): Map<ProjectModule, List<UnifiedDependency>> =
+internal suspend fun fetchProjectDependencies(
+    modules: List<ProjectModule>,
+    cacheDirectory: Path,
+    json: Json
+): Map<ProjectModule, List<UnifiedDependency>> =
     coroutineScope {
-        modules.associateWith { module -> async { module.installedDependencies(cacheDirectory) } }
+        modules.associateWith { module -> async { module.installedDependencies(cacheDirectory, json) } }
             .mapValues { (_, value) -> value.await() }
     }
 
 @Suppress("BlockingMethodInNonBlockingContext")
-internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path): List<UnifiedDependency> = coroutineScope {
+internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, json: Json): List<UnifiedDependency> = coroutineScope {
     val fileHashCode = buildFile.hashCode()
 
     val cacheFile = Paths.get(cacheDirectory.absolutePathString(), "$fileHashCode.json").toFile()
@@ -102,16 +107,17 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path): 
         cacheFile.createNewFile()
     }
 
-    val sha256Deferred = async(Dispatchers.IO) {
-        Base64.getEncoder().encodeToString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
+    val sha256Deferred: Deferred<String> = async(Dispatchers.IO) {
+        Hex.encodeHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
     }
 
     val cache = withContext(Dispatchers.IO) {
-        runCatching { Json.decodeFromString<InstalledDependenciesCache>(cacheFile.readText()) }
+        runCatching { json.decodeFromString<InstalledDependenciesCache>(cacheFile.readText()) }
             .getOrNull()
     }
+
     val sha256 = sha256Deferred.await()
-    if (cache?.sha256 == sha256 && cache?.fileHashCode == fileHashCode) {
+    if (cache?.sha256 == sha256 && cache.fileHashCode == fileHashCode) {
         return@coroutineScope cache.dependencies
     }
 
@@ -124,7 +130,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path): 
 
     nativeModule.project.lifecycleScope.launch {
         cacheFile.writeText(
-            text = Json.encodeToString(
+            text = json.encodeToString(
                 value = InstalledDependenciesCache(
                     fileHashCode = fileHashCode,
                     sha256 = sha256,

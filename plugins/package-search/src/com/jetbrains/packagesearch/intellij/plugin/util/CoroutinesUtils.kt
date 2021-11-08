@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -149,25 +148,30 @@ internal fun <T> Flow<T>.throttle(timeMillis: Long, debounce: Boolean = true) = 
                 send(it)
                 last = System.currentTimeMillis()
             }
-            else -> {
-                if (debounce) {
-                    refireJob = launch {
-                        delay(max(timeMillis - elapsedTime, 0))
-                        send(it)
-                    }
-                }
+            debounce -> refireJob = launch {
+                delay(max(timeMillis - elapsedTime, 0))
+                send(it)
             }
         }
     }
 }
 
 internal fun <T, R> Flow<T>.modifiedBy(modifierFlow: Flow<R>, transform: suspend (T, R) -> T): Flow<T> = channelFlow {
-    val syncMutex = Mutex()
-    val state = onEach {
-        syncMutex.withLock { send(it) }
-    }.stateIn(this)
-    modifierFlow.collect {
-        syncMutex.withLock { send(transform(state.value, it)) }
+    var value: T? = null
+    val mutex = Mutex()
+
+    onEach {
+        mutex.withLock {
+            value = it
+            send(it)
+        }
+    }.launchIn(this)
+
+    modifierFlow.collect { r ->
+        mutex.withLock {
+            value = value?.let { t -> transform(t, r) }
+                ?.also { send(it) }
+        }
     }
 }
 

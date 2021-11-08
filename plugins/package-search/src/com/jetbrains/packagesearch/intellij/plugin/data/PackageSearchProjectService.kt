@@ -31,29 +31,35 @@ import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.Json
 import java.nio.file.Files
 import java.util.concurrent.Executors
 import kotlin.time.Duration
@@ -74,6 +80,10 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     private val operationExecutedChannel = Channel<List<ProjectModule>>()
 
+    private val json = Json {
+        prettyPrint = true
+    }
+
     private val cacheDirectory = project.getProjectDataPath("pkgs/installedDependencies")
         .also { if (!it.exists()) Files.createDirectories(it) }
 
@@ -92,7 +102,11 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
     private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { isProjectTrusted ->
         if (isProjectTrusted) project.nativeModulesChangesFlow else flowOf(emptyList())
     }
-        .replayOnSignals(retryFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow, timer(Duration.minutes(15)))
+        .replayOnSignals(
+            retryFromErrorChannel.receiveAsFlow().throttle(Duration.seconds(10), true),
+            project.moduleChangesSignalFlow,
+            timer(Duration.minutes(15))
+        )
         .mapLatestTimedWithLoading("projectModulesSharedFlow", projectModulesLoadingFlow) { modules ->
             val moduleTransformations = project.moduleTransformers.map { transformer ->
                 async { readAction { transformer.transformModules(project, modules) } }
@@ -111,7 +125,6 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             fallbackValue = emptyList(),
             retryChannel = retryFromErrorChannel
         )
-        .flowOn(Dispatchers.Default)
         .shareIn(this, SharingStarted.Eagerly)
 
     val projectModulesStateFlow = projectModulesSharedFlow
@@ -144,9 +157,10 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     val projectModulesChangesFlow = projectModulesSharedFlow
         .flatMapLatest { modules ->
-            project.filesChangedEventFlow.throttle(Duration.seconds(5))
+            project.filesChangedEventFlow.batchAtIntervals(Duration.seconds(3)) { it.flatMap { it } }
                 .map { changedFilesEvents ->
-                    modules.filter { it.buildFile in changedFilesEvents.mapNotNull { it.file } }
+                    val changedBuildFiles = changedFilesEvents.mapNotNull { it.file }
+                    modules.filter { it.buildFile in changedBuildFiles }
                 }
         }
         .filter { it.isNotEmpty() }
@@ -170,8 +184,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             .catchAndLog(
                 context = "${this::class.qualifiedName}#allInstalledKnownRepositoriesFlow",
                 message = "Error while evaluating installed repositories",
-                fallbackValue = KnownRepositories.All.EMPTY,
-                retryChannel = retryFromErrorChannel
+                fallbackValue = KnownRepositories.All.EMPTY
             )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
@@ -181,16 +194,13 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     val dependenciesByModuleStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
-            fetchProjectDependencies(it, cacheDirectory)
+            fetchProjectDependencies(it, cacheDirectory, json)
         }
-        .modifiedBy(
-            merge(projectModulesChangesFlow, operationExecutedChannel.consumeAsFlow())
-                .throttle(Duration.seconds(5))
-        ) { installed, changedModules ->
+        .modifiedBy(projectModulesChangesFlow) { installed, changedModules ->
             val (result, time) = installedPackagesDifferenceLoadingFlow.whileLoading {
-                installed.toMutableMap().also { map ->
-                    changedModules.parallelForEach { map[it] = it.installedDependencies(cacheDirectory) }
-                }
+                val map = installed.toMutableMap()
+                changedModules.parallelForEach { map[it] = it.installedDependencies(cacheDirectory, json) }
+                map
             }
             logTrace("installedPackagesStep1LoadingFlow") {
                 "Took ${time} to elaborate diffs for ${changedModules.size} module" + if (changedModules.size > 1) "s" else ""
@@ -251,5 +261,29 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
         operationExecutedChannel.trySend(successes)
+    }
+}
+
+internal inline fun <reified T, K> Flow<T>.batchAtIntervals(
+    duration: Duration,
+    crossinline transform: suspend (Array<T>) -> K
+) = channelFlow {
+    val mutex = Mutex()
+    val buffer = mutableListOf<T>()
+    var job: Job? = null
+    collect {
+        if (job == null || job?.isCompleted == true) {
+            job = launch {
+                delay(duration)
+                val data = mutex.withLock {
+                    val d = transform(buffer.toTypedArray())
+                    buffer.clear()
+                    d
+                }
+                send(data)
+            }
+        }
+
+        mutex.withLock { buffer.add(it) }
     }
 }
