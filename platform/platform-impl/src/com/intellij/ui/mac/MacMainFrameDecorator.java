@@ -150,7 +150,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             }
             apple_global_domain.release();
             appleActionOnDoubleClick.release();
-            res.release();
+            if(res != null) {
+              res.release();
+            }
           }
           super.mouseClicked(e);
         }
