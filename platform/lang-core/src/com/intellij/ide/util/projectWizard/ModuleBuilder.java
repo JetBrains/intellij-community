@@ -51,7 +51,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   public static final int PYTHON_WEIGHT = 1500;
   public static final int RUST_WEIGHT = 1400;
   public static final int PHP_WEIGHT = 1300;
-  public static final int RUBY_WEIGHT = 1020;
+  public static final int RUBY_WEIGHT = 1200;
   public static final int GO_WEIGHT = 1100;
   public static final int IJ_PLUGIN_WEIGHT = 1000;
 
