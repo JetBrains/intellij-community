@@ -44,6 +44,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Copy = load("actions/copy.svg", 5880572782139886783L, 2);
     /** 16x16 */ public static final @NotNull Icon DeleteTag = load("actions/deleteTag.svg", 3856194407687204233L, 2);
     /** 16x16 */ public static final @NotNull Icon DeleteTagHover = load("actions/deleteTagHover.svg", -137680398225735526L, 2);
+    /** 16x16 */ public static final @NotNull Icon DependencyAnalyzer = load("actions/dependencyAnalyzer.svg", 7278074901222412018L, 2);
     /** 16x16 */ public static final @NotNull Icon DiagramDiff = load("actions/diagramDiff.svg", -9055105415171527444L, 2);
     /** 16x16 */ public static final @NotNull Icon Diff = load("actions/diff.svg", 1316947822971106328L, 2);
     /** 16x17 */ public static final @NotNull Icon DiffWithClipboard = load("actions/diffWithClipboard.svg", 1381092480195746024L, 2);
@@ -845,7 +846,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TabPin = load("nodes/tabPin.svg", -8793940827139014762L, 0);
     /** 16x16 */ public static final @NotNull Icon Tag = load("nodes/tag.svg", 5038430764463416373L, 0);
     /** 16x16 */ public static final @NotNull Icon Target = load("nodes/target.svg", -8244754026045641436L, 0);
-    /** 16x16 */ public static final @NotNull Icon Template = load("nodes/template.svg", -1976825269023153039L, 0);
+    /** 16x16 */ public static final @NotNull Icon Template = load("nodes/template.svg", -6619910186185350799L, 0);
     /** 16x16 */ public static final @NotNull Icon Test = load("nodes/test.svg", 7408102464483734600L, 0);
     /** 16x16 */ public static final @NotNull Icon TestGroup = load("nodes/testGroup.svg", -5932419956093628155L, 0);
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("nodes/testIgnored.svg", -8342046680974698856L, 0);
@@ -862,7 +863,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon WarningMark = load("nodes/warningMark.svg", 4627665105315340846L, 2);
     /** 16x16 */ public static final @NotNull Icon WebFolder = load("nodes/webFolder.svg", 2222154280104242723L, 0);
     /** 16x16 */ public static final @NotNull Icon Weblistener = load("nodes/weblistener.svg", -7166837522849889039L, 0);
-    /** 16x16 */ public static final @NotNull Icon Word = load("nodes/word.svg", -7178496411419873562L, 0);
+    /** 16x16 */ public static final @NotNull Icon Word = load("nodes/word.svg", -3528636325865459503L, 0);
     /** 16x16 */ public static final @NotNull Icon WriteAccess = load("nodes/write-access.svg", 5767645715036234832L, 0);
   }
 
