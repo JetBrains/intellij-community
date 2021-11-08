@@ -56,11 +56,11 @@ public final class UITheme {
   private String id;
   private String editorScheme;
   private Map<String, Object> ui;
-  private Map<String, Object> icons;
+  private @Nullable Map<String, Object> icons;
   private IconPathPatcher patcher;
   private Map<String, Object> background;
   private Map<String, Object> emptyFrameBackground;
-  private Map<String, Object> colors;
+  private @Nullable Map<String, Object> colors;
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
   private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
