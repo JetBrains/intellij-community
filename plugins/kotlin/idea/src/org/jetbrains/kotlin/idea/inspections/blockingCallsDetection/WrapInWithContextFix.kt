@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.IO_DISPATCHER_FQN
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.WITH_CONTEXT_FQN
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal class WrapInWithContextFix : LocalQuickFix {
@@ -19,12 +21,13 @@ internal class WrapInWithContextFix : LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val callExpression = descriptor.psiElement.parentOfType<KtCallExpression>() ?: return
+        val effectiveExpressionToWrap: KtElement = callExpression.parentOfType<KtDotQualifiedExpression>() ?: callExpression
         val ktPsiFactory = KtPsiFactory(project)
-        val wrappedBlockingCall = callExpression.replaced(
+        val wrappedBlockingCall = effectiveExpressionToWrap.replaced(
             ktPsiFactory.createExpression(
                 """
                     |$WITH_CONTEXT_FQN($IO_DISPATCHER_FQN) {
-                    |   ${callExpression.text}
+                    |   ${effectiveExpressionToWrap.text}
                     |}
                 """.trimMargin()
             )
