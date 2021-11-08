@@ -19,8 +19,7 @@ import java.util.*
 import kotlin.streams.toList
 
 @Serializable
-data class ProjectCreationFeedbackSystemInfoData(
-  val createdProjectTypeName: String,
+data class CommonFeedbackSystemInfoData(
   val osVersion: String,
   private val memorySize: Long, // in megabytes
   val coresNumber: Int,
@@ -32,9 +31,8 @@ data class ProjectCreationFeedbackSystemInfoData(
   private val nonBundledPlugins: List<String>
 ) {
   companion object {
-    fun createProjectCreationFeedbackSystemInfoData(createdProjectTypeName: String): ProjectCreationFeedbackSystemInfoData {
-      return ProjectCreationFeedbackSystemInfoData(
-        createdProjectTypeName,
+    fun getCurrentData(): CommonFeedbackSystemInfoData {
+      return CommonFeedbackSystemInfoData(
         getOsVersion(),
         getMemorySize(),
         getCoresNumber(),

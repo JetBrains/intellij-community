@@ -4,7 +4,6 @@ package com.intellij.feedback.dialog
 import com.intellij.feedback.DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
 import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.feedback.createFeedbackAgreementComponent
-import com.intellij.feedback.dialog.ProjectCreationFeedbackSystemInfoData.Companion.createProjectCreationFeedbackSystemInfoData
 import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
 import com.intellij.feedback.submitGeneralFeedback
 import com.intellij.ide.feedback.RatingComponent
@@ -26,6 +25,7 @@ import com.intellij.util.BooleanFunction
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import java.awt.event.ActionEvent
@@ -172,7 +172,7 @@ class ProjectCreationFeedbackDialog(
         }
       }
       put("overall_exp", textAreaOverallFeedbackProperty.get())
-      put("system_info", jsonConverter.encodeToJsonElement(systemInfoData))
+      put("system_info", jsonConverter.encodeToJsonElement(systemInfoData.commonSystemInfo))
     }
     return jsonConverter.encodeToString(collectedData)
   }
@@ -314,7 +314,7 @@ class ProjectCreationFeedbackDialog(
 
       row {
         cell(createFeedbackAgreementComponent(project) {
-          ProjectCreationFeedbackSystemInfo(project, systemInfoData).show()
+          showProjectCreationFeedbackSystemInfoDialog(project, systemInfoData)
         })
       }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.MEDIUM)
     }.also { dialog ->
@@ -349,4 +349,27 @@ class ProjectCreationFeedbackDialog(
       }
     }
   }
+}
+
+@Serializable
+private data class ProjectCreationFeedbackSystemInfoData(
+  val createdProjectTypeName: String,
+  val commonSystemInfo: CommonFeedbackSystemInfoData
+)
+
+private fun showProjectCreationFeedbackSystemInfoDialog(project: Project?,
+                                                        systemInfoData: ProjectCreationFeedbackSystemInfoData
+) = showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
+  row {
+    cell {
+      label(FeedbackBundle.message("dialog.created.project.system.info.panel.project.type"))
+    }
+    cell {
+      label(systemInfoData.createdProjectTypeName) //NON-NLS
+    }
+  }
+}
+
+private fun createProjectCreationFeedbackSystemInfoData(createdProjectTypeName: String): ProjectCreationFeedbackSystemInfoData {
+  return ProjectCreationFeedbackSystemInfoData(createdProjectTypeName, CommonFeedbackSystemInfoData.getCurrentData())
 }
