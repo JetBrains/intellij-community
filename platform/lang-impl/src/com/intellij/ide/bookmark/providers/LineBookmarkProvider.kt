@@ -90,7 +90,10 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     val file = PsiUtilCore.getVirtualFile(element) ?: return null
     if (file is LightVirtualFile) return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-    return createBookmark(file, document.getLineNumber(element.textOffset))
+    return when (val offset = element.textOffset) {
+      in 0..document.textLength -> createBookmark(file, document.getLineNumber(offset))
+      else -> null
+    }
   }
 
   private val MouseEvent.isUnexpected
