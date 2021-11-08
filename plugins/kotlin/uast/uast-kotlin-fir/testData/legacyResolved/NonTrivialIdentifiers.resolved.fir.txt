@@ -1,0 +1,54 @@
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> FirLightSimpleMethodForSymbol:invoke:
+    UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> FirLightClassForSymbol:class A {
+
+    operator fun invoke(){
+        this()
+    }
+
+    operator fun invoke(f: ()-> Unit){
+
+    }
+
+}: A
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:class A {
+
+    operator fun invoke(){
+        this()
+    }
+
+    operator fun invoke(f: ()-> Unit){
+
+    }
+
+}: A
+    UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> FirLightSimpleMethodForSymbol:invoke:
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = a) -> Fir Light Parameter a: a
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:class A {
+
+    operator fun invoke(){
+        this()
+    }
+
+    operator fun invoke(f: ()-> Unit){
+
+    }
+
+}: A
+    UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) -> FirLightSimpleMethodForSymbol:invoke:
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = a) -> Fir Light Parameter a: a
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:invoke) -> USimpleNameReferenceExpression (identifier = p) -> LightVariableBuilder:p: p
+            UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> FirLightSimpleMethodForSymbol:invoke:
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:class A {
+
+    operator fun invoke(){
+        this()
+    }
+
+    operator fun invoke(f: ()-> Unit){
+
+    }
+
+}: A

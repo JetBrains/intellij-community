@@ -1,0 +1,8 @@
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation: MyAnnotation
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation: MyAnnotation
+UTypeReferenceExpression (name = MyAnnotation2) -> USimpleNameReferenceExpression (identifier = MyAnnotation2) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation2: MyAnnotation2
+UTypeReferenceExpression (name = MyAnnotation3) -> USimpleNameReferenceExpression (identifier = MyAnnotation3) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation3: MyAnnotation3
+UTypeReferenceExpression (name = MyAnnotation4) -> USimpleNameReferenceExpression (identifier = MyAnnotation4) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation4: MyAnnotation4
+UTypeReferenceExpression (name = MyAnnotation5) -> USimpleNameReferenceExpression (identifier = MyAnnotation5) -> FirLightAnnotationClassSymbol:annotation class MyAnnotation5: MyAnnotation5
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int

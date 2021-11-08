@@ -1,0 +1,5 @@
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
+USwitchExpression -> USimpleNameReferenceExpression (identifier = bar) -> Fir Light Parameter bar: bar
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UYieldExpression -> USimpleNameReferenceExpression (identifier = bar) -> Fir Light Parameter bar: bar
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String

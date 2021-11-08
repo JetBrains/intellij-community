@@ -1,0 +1,14 @@
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:body) -> USimpleNameReferenceExpression (identifier = body) -> KtUltraLightMethodForSourceDeclaration:body: body
+    UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> PsiClass:Throwable: Throwable
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:catcher) -> USimpleNameReferenceExpression (identifier = catcher) -> KtUltraLightMethodForSourceDeclaration:catcher: catcher
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:finalizer) -> USimpleNameReferenceExpression (identifier = finalizer) -> KtUltraLightMethodForSourceDeclaration:finalizer: finalizer
+UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = SuppressWarnings) -> PsiClass:SuppressWarnings: SuppressWarnings
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:body) -> USimpleNameReferenceExpression (identifier = body) -> KtUltraLightMethodForSourceDeclaration:body: body
+    UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+    UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = SuppressWarnings) -> PsiClass:SuppressWarnings: SuppressWarnings
+    UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> PsiClass:Throwable: Throwable
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:catcher) -> USimpleNameReferenceExpression (identifier = catcher) -> KtUltraLightMethodForSourceDeclaration:catcher: catcher
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:finalizer) -> USimpleNameReferenceExpression (identifier = finalizer) -> KtUltraLightMethodForSourceDeclaration:finalizer: finalizer

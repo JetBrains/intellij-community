@@ -1,0 +1,15 @@
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = case4) -> FirLightAccessorMethodForSymbol:getCase4: getCase4
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = case4) -> FirLightAccessorMethodForSymbol:getCase4: getCase4
+UPolyadicExpression (operator = +) -> UQualifiedReferenceExpression -> null: null
+UPolyadicExpression (operator = +) -> UQualifiedReferenceExpression -> null: null
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = case4) -> FirLightAccessorMethodForSymbol:getCase4: getCase4
+UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = case4) -> FirLightAccessorMethodForSymbol:getCase4: getCase4
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = repeat) -> FUN: repeat
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UReturnExpression -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+UReturnExpression -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = baz) -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = baz) -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:simpleForTemplate) -> USimpleNameReferenceExpression (identifier = simpleForTemplate) -> FirLightSimpleMethodForSymbol:simpleForTemplate: simpleForTemplate
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:simpleForTemplate) -> USimpleNameReferenceExpression (identifier = simpleForTemplate) -> FirLightSimpleMethodForSymbol:simpleForTemplate: simpleForTemplate

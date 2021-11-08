@@ -1,0 +1,3 @@
+UTypeReferenceExpression (name = Foo) -> USimpleNameReferenceExpression (identifier = Foo) -> KtUltraLightClass:interface Foo {
+    fun bar() = "Hello!"
+}: Foo
