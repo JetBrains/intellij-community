@@ -1,0 +1,27 @@
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = process) -> Light Parameter: process
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UArrayAccessExpression -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> LightMethodBuilder:functionWithReceiver: functionWithReceiver
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> LightMethodBuilder:name with spaces: name with spaces
+UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PsiClass:Suppress: Suppress
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t
+UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PsiClass:Suppress: Suppress
+UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = Unresolved) -> null: null
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t

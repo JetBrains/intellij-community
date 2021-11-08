@@ -1,0 +1,20 @@
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> FirLightInterfaceClassSymbol:interface Base {
+    fun print()
+}: Base
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = print) -> FUN: print
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = x) -> Fir Light Parameter x: x
+UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> FirLightInterfaceClassSymbol:interface Base {
+    fun print()
+}: Base
+UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> FirLightInterfaceClassSymbol:interface Base {
+    fun print()
+}: Base
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:createBase) -> USimpleNameReferenceExpression (identifier = createBase) -> FirLightSimpleMethodForSymbol:createBase: createBase
+UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> CLASS: CharSequence
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> FirLightInterfaceClassSymbol:interface Base {
+    fun print()
+}: Base
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:BaseImpl) -> USimpleNameReferenceExpression (identifier = BaseImpl) -> FirLightConstructorForSymbol:BaseImpl: BaseImpl
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:BaseImpl) -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i

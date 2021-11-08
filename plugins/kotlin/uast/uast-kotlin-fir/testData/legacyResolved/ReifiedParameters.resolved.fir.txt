@@ -1,0 +1,27 @@
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = process) -> Light Parameter: process
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = T[]) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UArrayAccessExpression -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> TYPE_REFERENCE: null
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> TYPE_REFERENCE: null
+UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t
+UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
+UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = Unresolved) -> null: null
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t

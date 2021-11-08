@@ -1,0 +1,6 @@
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> Light Parameter: a
+UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> null: null
+UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = b) -> Light Parameter: b
+UReturnExpression -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit

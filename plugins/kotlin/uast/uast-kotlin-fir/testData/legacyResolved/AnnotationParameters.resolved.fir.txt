@@ -1,0 +1,27 @@
+UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> CLASS: Long
+UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> CLASS: Long
+UTypeReferenceExpression (name = int[]) -> USimpleNameReferenceExpression (identifier = IntArray) -> CLASS: IntArray
+UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpression (identifier = Array) -> CLASS: Array
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = RequiresPermission) -> USimpleNameReferenceExpression (identifier = RequiresPermission) -> FirLightAnnotationClassSymbol:annotation class RequiresPermission(val anyOf: IntArray): RequiresPermission
+null -> USimpleNameReferenceExpression (identifier = anyOf) -> FirLightAccessorMethodForSymbol:anyOf: anyOf
+UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = intArrayOf) -> null: null
+UTypeReferenceExpression (name = IntRange) -> USimpleNameReferenceExpression (identifier = IntRange) -> FirLightAnnotationClassSymbol:annotation class IntRange(val from: Long, val to: Long): IntRange
+null -> USimpleNameReferenceExpression (identifier = from) -> FirLightAccessorMethodForSymbol:from: from
+null -> USimpleNameReferenceExpression (identifier = to) -> FirLightAccessorMethodForSymbol:to: to
+UTypeReferenceExpression (name = WithDefaultValue) -> USimpleNameReferenceExpression (identifier = WithDefaultValue) -> FirLightAnnotationClassSymbol:annotation class WithDefaultValue(val value: Int = 42): WithDefaultValue
+UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression (identifier = SuppressLint) -> FirLightAnnotationClassSymbol:annotation class SuppressLint(vararg val value: String): SuppressLint
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = IntRange) -> USimpleNameReferenceExpression (identifier = IntRange) -> FirLightAnnotationClassSymbol:annotation class IntRange(val from: Long, val to: Long): IntRange
+UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression (identifier = SuppressLint) -> FirLightAnnotationClassSymbol:annotation class SuppressLint(vararg val value: String): SuppressLint
+UReturnExpression -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
+UTypeReferenceExpression (name = RequiresPermission) -> USimpleNameReferenceExpression (identifier = RequiresPermission) -> FirLightAnnotationClassSymbol:annotation class RequiresPermission(val anyOf: IntArray): RequiresPermission
+null -> USimpleNameReferenceExpression (identifier = anyOf) -> FirLightAccessorMethodForSymbol:anyOf: anyOf
+UNamedExpression (name = anyOf) -> UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) -> null:
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = RequiresStrPermission) -> USimpleNameReferenceExpression (identifier = RequiresStrPermission) -> FirLightAnnotationClassSymbol:annotation class RequiresStrPermission(val strs: Array<String>): RequiresStrPermission
+null -> USimpleNameReferenceExpression (identifier = strs) -> FirLightAccessorMethodForSymbol:strs: strs
+UNamedExpression (name = strs) -> UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) -> null:
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int

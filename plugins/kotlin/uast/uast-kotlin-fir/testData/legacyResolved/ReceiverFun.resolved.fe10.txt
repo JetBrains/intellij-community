@@ -1,0 +1,10 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = MyReceiverAnnotation) -> USimpleNameReferenceExpression (identifier = MyReceiverAnnotation) -> KtUltraLightClass:annotation class MyReceiverAnnotation(val name: String = ""): MyReceiverAnnotation
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UReturnExpression -> UQualifiedReferenceExpression -> PsiMethod:length: length
+UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> KtUltraLightMethodForSourceDeclaration:foo: foo
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = length) -> PsiMethod:length: length
+UTypeReferenceExpression (name = MyReceiverAnnotation) -> USimpleNameReferenceExpression (identifier = MyReceiverAnnotation) -> KtUltraLightClass:annotation class MyReceiverAnnotation(val name: String = ""): MyReceiverAnnotation
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = kotlin.text.Regex) -> USimpleNameReferenceExpression (identifier = Regex) -> PsiClass:Regex: Regex
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:toRegex) -> USimpleNameReferenceExpression (identifier = toRegex) -> PsiMethod:toRegex: toRegex
