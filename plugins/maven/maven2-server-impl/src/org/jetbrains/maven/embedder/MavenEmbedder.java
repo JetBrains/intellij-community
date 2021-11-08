@@ -508,9 +508,9 @@ public final class MavenEmbedder {
       configurator.configureComponents(container);
     }
 
-    File mavenHome = embedderSettings.getMavenHome();
-    if (mavenHome != null) {
-      System.setProperty(PROP_MAVEN_HOME, mavenHome.getPath());
+    String mavenHomePath = embedderSettings.getMavenHomePath();
+    if (mavenHomePath != null) {
+      System.setProperty(PROP_MAVEN_HOME, mavenHomePath);
     }
 
     Settings nativeSettings = buildSettings(container, embedderSettings);
@@ -525,9 +525,9 @@ public final class MavenEmbedder {
   }
 
   public static Settings buildSettings(PlexusContainer container, MavenEmbedderSettings embedderSettings) {
-    File file = embedderSettings.getGlobalSettingsFile();
-    if (file != null) {
-      System.setProperty(MavenSettingsBuilder.ALT_GLOBAL_SETTINGS_XML_LOCATION, file.getPath());
+    String globalSettingsPath = embedderSettings.getGlobalSettingsPath();
+    if (globalSettingsPath != null) {
+      System.setProperty(MavenSettingsBuilder.ALT_GLOBAL_SETTINGS_XML_LOCATION, globalSettingsPath);
     }
 
     Settings settings = null;
@@ -535,7 +535,8 @@ public final class MavenEmbedder {
     try {
       MavenSettingsBuilder builder = (MavenSettingsBuilder)container.lookup(MavenSettingsBuilder.ROLE);
 
-      File userSettingsFile = embedderSettings.getUserSettingsFile();
+      String userSettingsPath = embedderSettings.getUserSettingPath();
+      File userSettingsFile = userSettingsPath == null ? null : new File(userSettingsPath);
       if (userSettingsFile != null && userSettingsFile.exists() && !userSettingsFile.isDirectory()) {
         settings = builder.buildSettings(userSettingsFile, false);
       }
@@ -558,8 +559,8 @@ public final class MavenEmbedder {
       settings = new Settings();
     }
 
-    if (embedderSettings.getLocalRepository() != null) {
-      settings.setLocalRepository(embedderSettings.getLocalRepository().getPath());
+    if (embedderSettings.getLocalRepositoryPath() != null) {
+      settings.setLocalRepository(embedderSettings.getLocalRepositoryPath());
     }
     if (settings.getLocalRepository() == null) {
       settings.setLocalRepository(System.getProperty("user.home") + "/.m2/repository");
