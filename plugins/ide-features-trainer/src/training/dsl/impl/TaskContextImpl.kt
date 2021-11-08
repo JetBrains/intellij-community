@@ -77,8 +77,10 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   override fun restoreState(restoreId: TaskId?, delayMillis: Int, checkByTimer: Int?, restoreRequired: TaskRuntimeContext.() -> Boolean) {
     val actualId = restoreId ?: TaskId(lessonExecutor.calculateRestoreIndex())
     addRestoreCheck(delayMillis, checkByTimer, restoreRequired) {
-      StatisticBase.logRestorePerformed(lessonExecutor.lesson, taskId.idx)
-      lessonExecutor.applyRestore(this, actualId)
+      if (restoreRequired(runtimeContext)) {
+        StatisticBase.logRestorePerformed(lessonExecutor.lesson, taskId.idx)
+        lessonExecutor.applyRestore(this, actualId)
+      }
     }
   }
 
