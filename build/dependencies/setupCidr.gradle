@@ -71,7 +71,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   objchelper: [
-    version: "e9b1fe3",
+    version: "f0d856",
     platforms: [
       "mac": [archs: ["x64"]],
       "linux": [archs: ["x64"]]
