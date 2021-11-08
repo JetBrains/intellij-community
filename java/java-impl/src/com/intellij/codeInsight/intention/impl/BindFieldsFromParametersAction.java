@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -123,7 +124,9 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   @NotNull
   private static Collection<SmartPsiElementPointer<PsiParameter>> getUnboundedParams(PsiMethod psiMethod) {
     Map<SmartPsiElementPointer<PsiParameter>, Boolean> params = psiMethod.getUserData(PARAMS);
-    if (params == null) psiMethod.putUserData(PARAMS, params = ContainerUtil.createConcurrentWeakMap());
+    if (params == null) {
+      params = ((UserDataHolderEx)psiMethod).putUserDataIfAbsent(PARAMS, ContainerUtil.createConcurrentWeakMap());
+    }
     Map<SmartPsiElementPointer<PsiParameter>, Boolean> finalParams = params;
     return new AbstractCollection<>() {
       @Override

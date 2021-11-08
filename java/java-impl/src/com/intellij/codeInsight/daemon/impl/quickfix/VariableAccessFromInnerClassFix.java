@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -122,7 +123,9 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @NotNull
   private Collection<PsiVariable> getVariablesToFix() {
     Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
-    if (vars == null) myContext.putUserData(VARS[myFixType], vars = ContainerUtil.createConcurrentWeakMap());
+    if (vars == null) {
+      vars = ((UserDataHolderEx)myContext).putUserDataIfAbsent(VARS[myFixType], ContainerUtil.createConcurrentWeakMap());
+    }
     final Map<PsiVariable, Boolean> finalVars = vars;
     return new AbstractCollection<>() {
       @Override
