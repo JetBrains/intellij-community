@@ -67,13 +67,13 @@ class ProjectAware(
         }
       }
       externalSystemTaskId.set(id)
-      delegate.beforeProjectRefresh()
+      delegate.onProjectReloadStart()
     }
 
     private fun afterProjectRefresh(id: ExternalSystemTaskId, status: ExternalSystemRefreshStatus) {
       if (id.type != RESOLVE_PROJECT) return
       if (!externalSystemTaskId.compareAndSet(id, null)) return
-      delegate.afterProjectRefresh(status)
+      delegate.onProjectReloadFinish(status)
     }
 
     override fun onSuccess(id: ExternalSystemTaskId) {
