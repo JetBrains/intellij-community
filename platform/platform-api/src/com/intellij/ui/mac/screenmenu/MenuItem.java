@@ -109,9 +109,8 @@ public class MenuItem implements Disposable {
   // Can be invoked from any thread.
   private native long nativeCreate(boolean isSeparator);
 
-  // Dealloc native peer.
-  // Can be invoked from any thread.
-  private native void nativeDispose(long nativePeer);
+  // Dealloc native peer (performs on AppKit).
+  native void nativeDispose(long nativePeer);
 
   // If item was created but wasn't added into any parent menu then all setters can be invoked from any thread.
   private native void nativeSetLabel(long nativePeer, String label, char keyChar, int keyCode, int modifiers);

@@ -76,7 +76,7 @@ public class Menu extends MenuItem {
   public void dispose() {
     disposeChildren(0);
     if (nativePeer != 0) {
-      nativeDisposeMenu(nativePeer);
+      nativeDispose(nativePeer);
       nativePeer = 0;
     }
   }
@@ -153,13 +153,9 @@ public class Menu extends MenuItem {
   //
 
   // Creates native peer (wrapper for NSMenu with corresponding NSMenuItem).
-  // User must dealloc it via nativeDisposeMenu after usage.
+  // User must dealloc it via nativeDispose after usage.
   // Can be invoked from any thread.
   private native long nativeCreateMenu();
-
-  // Dealloc native peer.
-  // Can be invoked from any thread.
-  private native long nativeDisposeMenu(long nativePeer);
 
   // If menu was created but wasn't added into any parent menu then all setters can be invoked from any thread.
   private native void nativeSetTitle(long menuPtr, String title);
