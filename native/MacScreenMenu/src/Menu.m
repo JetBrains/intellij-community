@@ -1,4 +1,5 @@
 #import "Menu.h"
+#import "CustomMenuItemView.h"
 
 static jclass sjc_Menu = NULL;
 #define GET_MENU_CLASS() GET_CLASS(sjc_Menu, "com/intellij/ui/mac/screenmenu/Menu");
@@ -28,8 +29,7 @@ static jclass sjc_Menu = NULL;
 
 // NSMenuDelegate
 
-- (void)menuWillOpen:(NSMenu *)menu
-{
+- (void)menuWillOpen:(NSMenu *)menu {
     if (javaPeer == nil)
         return;
 
@@ -43,8 +43,7 @@ static jclass sjc_Menu = NULL;
 
 }
 
-- (void)menuDidClose:(NSMenu *)menu
-{
+- (void)menuDidClose:(NSMenu *)menu {
     if (javaPeer == nil)
         return;
 
@@ -55,6 +54,15 @@ static jclass sjc_Menu = NULL;
     (*env)->CallVoidMethod(env, javaPeer, jm_Menu_invokeMenuClosing);
     CHECK_EXCEPTION(env);
     JNI_COCOA_EXIT();
+}
+
+- (void)menu:(NSMenu *)menu willHighlightItem:(NSMenuItem *)item {
+
+    for (NSMenuItem * child in menu.itemArray) {
+        if (child != nil && [child.view isKindOfClass:CustomMenuItemView.class]) {
+            [(CustomMenuItemView *)child.view setSelected:(child == item)];
+        }
+    }
 }
 
 - (void)setTitle:(NSString *)title {
@@ -103,24 +111,6 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeCreateMenu
     return (jlong)menu;
     JNI_COCOA_EXIT();
 }
-
-/*
- * Class:     com_intellij_ui_mac_screenmenu_Menu
- * Method:    nativeDisposeMenu
- * Signature: (J)V
- */
-JNIEXPORT jlong JNICALL
-Java_com_intellij_ui_mac_screenmenu_Menu_nativeDisposeMenu
-        (JNIEnv *env, jobject peer, jlong menuObj)
-{
-    JNI_COCOA_ENTER();
-    Menu *menu = (Menu *)menuObj;
-    (*env)->DeleteGlobalRef(env, menu->javaPeer);
-    menu->javaPeer = NULL;
-    [menu release];
-    JNI_COCOA_EXIT();
-}
-
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_Menu

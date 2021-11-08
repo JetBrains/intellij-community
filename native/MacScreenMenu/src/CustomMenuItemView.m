@@ -80,33 +80,52 @@ static NSColor * customBg = nil;
     [super dealloc];
 }
 
-- (void)mouseEntered:(NSEvent*)event {
-    if (owner->nsMenuItem.enabled && !isSelected) {
+- (void)setSelected:(BOOL)selected {
+    if (isSelected == selected) return;
+    if (owner == nil || owner->nsMenuItem == nil) return;
+    if (isSelected) {
+        isSelected = NO;
+    } else if (owner->nsMenuItem.enabled) {
         isSelected = YES;
-        [self setNeedsDisplay:YES];
     }
+
+    [self setNeedsDisplay:YES];
+}
+
+- (void)mouseEntered:(NSEvent*)event {
+    [self setSelected:YES];
 }
 
 - (void)mouseExited:(NSEvent *)event {
-    if (isSelected) {
-        isSelected = NO;
-        [self setNeedsDisplay:YES];
-    }
+    [self setSelected:NO];
 }
 
 - (void)mouseUp:(NSEvent*)event {
-    if (!(owner->nsMenuItem.enabled))
-        return;
+    if (owner == nil || owner->nsMenuItem == nil) return;
+    if (!(owner->nsMenuItem.enabled)) return;
+
+    [self setSelected:!isSelected];
 
     fireTimes = 0;
-    isSelected = !isSelected;
-    [self setNeedsDisplay:YES];
-
     NSTimer *timer = [NSTimer timerWithTimeInterval:0.05 target:self selector:@selector(animateDismiss:) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop] addTimer:timer forMode:NSEventTrackingRunLoopMode];
 }
 
+- (void)keyDown:(NSEvent *)event {
+    [[self nextResponder] keyDown:event];
+    if ((event.keyCode == 36)  ||
+        (event.keyCode == 76)  ||
+        [[event characters] isEqualToString:@" "]
+    )
+        [self sendAction];
+}
+
+- (BOOL)acceptsFirstResponder {
+    return YES;
+}
+
 -(void)updateTrackingAreas {
+    if (owner == nil || owner->nsMenuItem == nil) return;
     [super updateTrackingAreas];
     if(trackingArea != nil) {
         [self removeTrackingArea:trackingArea];
@@ -134,6 +153,7 @@ static NSColor * customBg = nil;
 }
 
 - (void)sendAction {
+    if (owner == nil || owner->nsMenuItem == nil) return;
     NSMenuItem * mi = owner->nsMenuItem;
     [NSApp sendAction:[mi action] to:[mi target] from:mi];
 
@@ -146,6 +166,7 @@ static NSColor * customBg = nil;
 //#define VISUAL_DEBUG_CUSTOM_ITEM_VIEW
 
 - (void) drawRect:(NSRect)dirtyRect {
+    if (owner == nil || owner->nsMenuItem == nil) return;
     NSRect rectBounds = [self bounds];
     NSString * text = owner->nsMenuItem.title;
 
@@ -237,6 +258,7 @@ static NSColor * customBg = nil;
 }
 
 - (void)recalcSizes {
+    if (owner == nil || owner->nsMenuItem == nil) return;
     NSString * text = owner->nsMenuItem.title;
     NSImage * image = owner->nsMenuItem.image;
 
