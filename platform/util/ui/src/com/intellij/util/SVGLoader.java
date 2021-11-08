@@ -17,6 +17,7 @@ import com.intellij.ui.svg.SvgDocumentFactoryKt;
 import com.intellij.ui.svg.SvgPrebuiltCacheManager;
 import com.intellij.ui.svg.SvgTranscoder;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import org.apache.batik.transcoder.TranscoderException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -476,7 +477,9 @@ public final class SVGLoader {
       map.put("#9aa7b099", "#97acc6"); //noun gray 60% (same as 80%)
     }
     if (Arrays.asList("IntelliJ", "macOS Light", "Windows 10 Light").contains(name)) {
-      map.put("#767a8a", "#ffffff");
+      if (ColorUtil.isDark(JBUI.CurrentTheme.Tree.Selection.background(true))) {
+        map.put("#767a8a", "#ffffff");
+      }
       map.put("#6e6e6e", "#afb1b3");
       map.put("#db5860", "#b75e73");
       //map.put("#f26522", "#b56a51"); //red
