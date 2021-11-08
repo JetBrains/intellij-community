@@ -43,18 +43,6 @@ class Test {
     }
   }
 
-  void testParenthesizedPattern(String s) {
-    if (s instanceof (<error descr="Pattern type 'String' is the same as expression type">String</error> s1)) {
-      System.out.println(s1);
-    }
-  }
-
-  void testDeepParenthesizedPattern(String s) {
-    if (s instanceof ( ((( ((  <error descr="Pattern type 'String' is the same as expression type">String</error> s1)) ))     ) )) {
-      System.out.println(s1);
-    }
-  }
-
   void testInstanceofInForeach(List<Object> list) {
     for (Object obj : list) {
       if (obj instanceof String st) {
