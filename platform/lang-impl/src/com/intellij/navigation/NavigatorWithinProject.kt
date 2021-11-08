@@ -12,21 +12,19 @@ import com.intellij.ide.impl.getProjectOriginUrl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.JBProtocolCommand
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.util.StatusBarProgress
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -145,17 +143,19 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
     // multiple references are encoded and decoded properly
     val fqn = parameters[JBProtocolCommand.FRAGMENT_PARAM_NAME]?.let { "$reference#$it" } ?: reference
     runNavigateTask(reference) {
-
       val dataContext = SimpleDataContext.getProjectContext(project)
-      SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext))
-        .search(fqn, ProgressManager.getInstance().progressIndicator ?: StatusBarProgress())
+      val searcher = invokeAndWaitIfNeeded { SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)) }
+      Disposer.register(project, searcher)
+
+      searcher.search(fqn, EmptyProgressIndicator())
         .filterIsInstance<PsiElement>()
         .forEach {
-          ApplicationManager.getApplication().invokeLater {
+          invokeLater {
             PsiNavigateUtil.navigate(it)
             makeSelectionsVisible()
           }
         }
+      Disposer.dispose(searcher)
     }
   }
 
