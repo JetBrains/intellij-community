@@ -63,7 +63,7 @@ public final class LoaderFactory implements Disposable {
     myModule2ClassLoader.clear();
   }
 
-  @NotNull public ClassLoader getLoader(final VirtualFile formFile) {
+  @NotNull public ClassLoader getLoader(@NotNull VirtualFile formFile) {
     final Module module = ModuleUtilCore.findModuleForFile(formFile, myProject);
     if (module == null) {
       return getClass().getClassLoader();
@@ -72,7 +72,7 @@ public final class LoaderFactory implements Disposable {
     return getLoader(module);
   }
 
-  public ClassLoader getLoader(final Module module) {
+  public ClassLoader getLoader(@NotNull Module module) {
     final ClassLoader cachedLoader = myModule2ClassLoader.get(module);
     if (cachedLoader != null) {
       return cachedLoader;

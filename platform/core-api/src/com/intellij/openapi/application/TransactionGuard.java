@@ -88,7 +88,7 @@ public abstract class TransactionGuard {
    * @param state modality to check
    * @return {@code true} if a given modality is write-safe, {@code false} otherwise
    */
-  public abstract boolean isWriteSafeModality(ModalityState state);
+  public abstract boolean isWriteSafeModality(@NotNull ModalityState state);
 
   /**
    * @deprecated Replace with {@link Application#invokeLater} and take care that the default or explicitly passed modality state is write-safe.

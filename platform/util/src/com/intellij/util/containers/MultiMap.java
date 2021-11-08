@@ -44,7 +44,7 @@ public class MultiMap<K, V> implements Serializable {
     putAllValues(toCopy);
   }
 
-  public @NotNull MultiMap<K, V> copy() {
+  public @NotNull MultiMap<@NotNull K, V> copy() {
     return new MultiMap<>(this);
   }
 
@@ -60,7 +60,7 @@ public class MultiMap<K, V> implements Serializable {
     return Collections.emptyList();
   }
 
-  public final void putAllValues(@NotNull MultiMap<? extends K, ? extends V> from) {
+  public final void putAllValues(@NotNull MultiMap<? extends @NotNull K, ? extends V> from) {
     for (Map.Entry<? extends K, ? extends Collection<? extends V>> entry : from.entrySet()) {
       putValues(entry.getKey(), entry.getValue());
     }
@@ -342,7 +342,7 @@ public class MultiMap<K, V> implements Serializable {
     };
   }
 
-  public static @NotNull <K, V> MultiMap<K, V> createWeakKey() {
+  public static @NotNull <K, V> MultiMap<@NotNull K, V> createWeakKey() {
     return new MultiMap<>(ContainerUtil.createWeakMap());
   }
 

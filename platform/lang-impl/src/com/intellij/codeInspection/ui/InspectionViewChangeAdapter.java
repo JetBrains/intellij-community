@@ -88,7 +88,7 @@ final class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     PsiFile file = event.getFile();
     if (file != null) {
       VirtualFile vFile = file.getVirtualFile();
-      if (!myUnPresentEditedFiles.contains(vFile)) {
+      if (vFile != null && !myUnPresentEditedFiles.contains(vFile)) {
         synchronized (myFilesToProcess) {
           myFilesToProcess.add(vFile);
         }

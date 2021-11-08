@@ -127,7 +127,7 @@ public final class JsonSchemaCatalogManager {
     return ContainerUtil.emptyList();
   }
 
-  public void registerCatalogUpdateCallback(Runnable callback) {
+  public void registerCatalogUpdateCallback(@NotNull Runnable callback) {
     if (myCatalog instanceof HttpVirtualFile) {
       RemoteFileInfo info = ((HttpVirtualFile)myCatalog).getFileInfo();
       if (info != null) {
@@ -143,7 +143,7 @@ public final class JsonSchemaCatalogManager {
     }
   }
 
-  public void unregisterCatalogUpdateCallback(Runnable callback) {
+  public void unregisterCatalogUpdateCallback(@NotNull Runnable callback) {
     if (!myDownloadingAdapters.containsKey(callback)) return;
 
     if (myCatalog instanceof HttpVirtualFile) {

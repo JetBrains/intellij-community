@@ -24,7 +24,7 @@ public final class ModalityStateEx extends ModalityState {
   }
 
   @NotNull
-  private List<Object> getModalEntities() {
+  private List<@NotNull Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
@@ -34,7 +34,7 @@ public final class ModalityStateEx extends ModalityState {
   }
 
   @NotNull ModalityStateEx appendEntity(@NotNull Object anEntity){
-    List<Object> modalEntities = getModalEntities();
+    List<@NotNull Object> modalEntities = getModalEntities();
     List<Object> list = new ArrayList<>(modalEntities.size() + 1);
     list.addAll(modalEntities);
     list.add(anEntity);
@@ -42,7 +42,7 @@ public final class ModalityStateEx extends ModalityState {
   }
 
   void forceModalEntities(@NotNull ModalityStateEx other) {
-    List<Object> otherEntities = other.getModalEntities();
+    List<@NotNull Object> otherEntities = other.getModalEntities();
     myModalEntities.clear();
     myModalEntities.addAll(otherEntities);
   }
@@ -52,7 +52,7 @@ public final class ModalityStateEx extends ModalityState {
     if (anotherState == this || anotherState == ModalityState.any()) return false;
     if (myModalEntities.isEmpty()) return false;
     
-    List<Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
+    List<@NotNull Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
     for (Object entity : getModalEntities()) {
       if (!otherEntities.contains(entity) && !ourTransparentEntities.contains(entity)) return true; // I have entity which is absent in anotherState
     }

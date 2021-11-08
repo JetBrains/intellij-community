@@ -32,7 +32,6 @@ import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -437,12 +436,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   }
 
   @Override
-  public void registerRemoteUpdateCallback(Runnable callback) {
+  public void registerRemoteUpdateCallback(@NotNull Runnable callback) {
     myCatalogManager.registerCatalogUpdateCallback(callback);
   }
 
   @Override
-  public void unregisterRemoteUpdateCallback(Runnable callback) {
+  public void unregisterRemoteUpdateCallback(@NotNull Runnable callback) {
     myCatalogManager.unregisterCatalogUpdateCallback(callback);
   }
 
