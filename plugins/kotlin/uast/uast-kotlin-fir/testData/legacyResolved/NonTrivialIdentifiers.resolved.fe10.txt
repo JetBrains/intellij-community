@@ -1,0 +1,54 @@
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> KtUltraLightMethodForSourceDeclaration:invoke:
+    UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> KtUltraLightClass:class A {
+
+    operator fun invoke(){
+        this()
+    }
+
+    operator fun invoke(f: ()-> Unit){
+
+    }
+
+}: A
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A {
+
+    operator fun invoke(){
+        this()
+    }
+
+    operator fun invoke(f: ()-> Unit){
+
+    }
+
+}: A
+    UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> KtUltraLightMethodForSourceDeclaration:invoke:
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = a) -> Light Parameter: a
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A {
+
+    operator fun invoke(){
+        this()
+    }
+
+    operator fun invoke(f: ()-> Unit){
+
+    }
+
+}: A
+    UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) -> KtUltraLightMethodForSourceDeclaration:invoke:
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = a) -> Light Parameter: a
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:invoke) -> USimpleNameReferenceExpression (identifier = p) -> LightVariableBuilder:p: p
+            UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> KtUltraLightMethodForSourceDeclaration:invoke:
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A {
+
+    operator fun invoke(){
+        this()
+    }
+
+    operator fun invoke(f: ()-> Unit){
+
+    }
+
+}: A

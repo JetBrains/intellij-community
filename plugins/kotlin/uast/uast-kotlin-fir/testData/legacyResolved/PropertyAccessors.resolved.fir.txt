@@ -1,0 +1,17 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UReturnExpression -> UQualifiedReferenceExpression -> null: null
+UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> FirLightClassForSymbol:class PropertyTest {
+    var stringRepresentation: String
+        get() = this.toString()
+        set(value) {
+            setDataFromString(value)
+        }
+
+    fun setDataFromString(data: String) {
+
+    }
+}: PropertyTest
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:setDataFromString) -> USimpleNameReferenceExpression (identifier = setDataFromString) -> FirLightSimpleMethodForSymbol:setDataFromString: setDataFromString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:setDataFromString) -> USimpleNameReferenceExpression (identifier = value) -> Fir Light Parameter value: value
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String

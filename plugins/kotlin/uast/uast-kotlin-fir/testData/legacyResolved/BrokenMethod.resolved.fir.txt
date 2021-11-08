@@ -1,0 +1,7 @@
+UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpression (identifier = Array) -> CLASS: Array
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> CLASS: CharSequence
+    UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
+    UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:Used) -> USimpleNameReferenceExpression (identifier = Used) -> FirLightConstructorForSymbol:Used: Used
+    UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> TYPE_REFERENCE: null

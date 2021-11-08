@@ -1,0 +1,18 @@
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:TODO) -> USimpleNameReferenceExpression (identifier = TODO) -> PsiMethod:TODO: TODO
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> PsiMethod:Object:
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:TODO) -> USimpleNameReferenceExpression (identifier = TODO) -> PsiMethod:TODO: TODO
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:TODO) -> USimpleNameReferenceExpression (identifier = TODO) -> PsiMethod:TODO: TODO
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:TODO) -> USimpleNameReferenceExpression (identifier = TODO) -> PsiMethod:TODO: TODO
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:funPlainCall) -> USimpleNameReferenceExpression (identifier = funPlainCall) -> KtUltraLightMethodForSourceDeclaration:funPlainCall: funPlainCall
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:funNamedArgumentsCall) -> USimpleNameReferenceExpression (identifier = funNamedArgumentsCall) -> KtUltraLightMethodForSourceDeclaration:funNamedArgumentsCall: funNamedArgumentsCall
+    null -> USimpleNameReferenceExpression (identifier = a) -> Light Parameter: a

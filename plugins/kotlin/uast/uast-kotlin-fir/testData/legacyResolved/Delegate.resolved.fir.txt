@@ -1,0 +1,8 @@
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = lazy) -> FUN: lazy
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to FirLightConstructorForSymbol:MyColor) -> USimpleNameReferenceExpression (identifier = MyColor) -> FirLightConstructorForSymbol:MyColor: MyColor
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = lazy) -> FUN: lazy
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to FirLightConstructorForSymbol:MyColor) -> USimpleNameReferenceExpression (identifier = MyColor) -> FirLightConstructorForSymbol:MyColor: MyColor
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to FirLightConstructorForSymbol:MyColor) -> USimpleNameReferenceExpression (identifier = MyColor) -> FirLightConstructorForSymbol:MyColor: MyColor

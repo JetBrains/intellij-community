@@ -1,0 +1,4 @@
+UTypeReferenceExpression (name = Device<D>) -> USimpleNameReferenceExpression (identifier = Device) -> KtUltraLightClass:class Device<D: Device<D>>: Device
+UTypeReferenceExpression (name = D) -> USimpleNameReferenceExpression (identifier = D) -> Light PSI class: D: D
+UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as?) -> null: null
+UTypeReferenceExpression (name = Device<?>) -> USimpleNameReferenceExpression (identifier = Device) -> KtUltraLightClass:class Device<D: Device<D>>: Device

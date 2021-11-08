@@ -1,0 +1,9 @@
+UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> KtUltraLightClass:annotation class TestAnnotation: TestAnnotation
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> KtUltraLightClass:annotation class TestAnnotation: TestAnnotation
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> KtUltraLightClass:annotation class TestAnnotation: TestAnnotation
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = field) -> KtUltraLightMethodForSourceDeclaration:setProp3: setProp3
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = value) -> Light Parameter: value
