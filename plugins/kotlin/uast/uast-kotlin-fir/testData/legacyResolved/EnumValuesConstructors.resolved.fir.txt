@@ -1,0 +1,5 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = Style) -> USimpleNameReferenceExpression (identifier = Style) -> FirLightConstructorForSymbol:Style: Style
+UTypeReferenceExpression (name = Style) -> USimpleNameReferenceExpression (identifier = Style) -> FirLightConstructorForSymbol:Style: Style
+UTypeReferenceExpression (name = Style) -> USimpleNameReferenceExpression (identifier = Style) -> FirLightConstructorForSymbol:Style: Style
+UTypeReferenceExpression (name = Style) -> USimpleNameReferenceExpression (identifier = Style) -> FirLightConstructorForSymbol:Style: Style

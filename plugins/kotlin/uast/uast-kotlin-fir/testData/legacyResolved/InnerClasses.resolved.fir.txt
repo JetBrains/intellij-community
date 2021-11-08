@@ -1,0 +1,6 @@
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> Fir Light Parameter a: a
+UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
+UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = b) -> Fir Light Parameter b: b
+UReturnExpression -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit

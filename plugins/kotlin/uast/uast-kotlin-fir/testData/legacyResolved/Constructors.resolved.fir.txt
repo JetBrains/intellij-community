@@ -1,0 +1,62 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> FirLightConstructorForSymbol:A:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:A) -> UQualifiedReferenceExpression -> null: null
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> FirLightConstructorForSymbol:AWithInit:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:AWithInit) -> UQualifiedReferenceExpression -> null: null
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> FirLightConstructorForSymbol:AWith2Init:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:AWith2Init) -> UQualifiedReferenceExpression -> null: null
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null:
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> FirLightAccessorMethodForSymbol:setA: setA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getA: getA
+    UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null:
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> FirLightAccessorMethodForSymbol:setA: setA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getA: getA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = s) -> Fir Light Parameter s: s
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null:
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> FirLightAccessorMethodForSymbol:setA: setA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getA: getA
+    UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null:
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> FirLightAccessorMethodForSymbol:setA: setA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getA: getA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = s) -> Fir Light Parameter s: s
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    ULocalVariable (name = local) -> USimpleNameReferenceExpression (identifier = s) -> Fir Light Parameter s: s
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = local) -> LightVariableBuilder:local: local
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> KtLightField:a: a
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getA: getA
+    UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString

@@ -1,0 +1,6 @@
+UField (name = x) -> UCallableReferenceExpression (name = bar) -> KtUltraLightMethodForSourceDeclaration:bar: bar
+UCallableReferenceExpression (name = bar) -> USimpleNameReferenceExpression (identifier = Foo) -> KtUltraLightClass:class Foo {
+    fun bar() {
+    }
+}: Foo
+UCallableReferenceExpression (name = bar) -> USimpleNameReferenceExpression (identifier = bar) -> KtUltraLightMethodForSourceDeclaration:bar: bar
