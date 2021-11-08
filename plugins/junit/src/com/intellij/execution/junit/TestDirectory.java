@@ -169,16 +169,18 @@ class TestDirectory extends TestPackage {
     }
   }
 
+  @NotNull
   @Override
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
     final PsiDirectory directory = getDirectory(data);
-    return ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
+    PsiPackage aPackage = ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
+    if (aPackage == null) throw CantRunException.packageNotFound(directory.getName());
+    return aPackage;
   }
 
   @Override
   protected @NotNull String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
-    PsiPackage aPackage = getPackage(data);
-    return aPackage != null ? aPackage.getQualifiedName() : "";
+    return getPackage(data).getQualifiedName();
   }
 
   private PsiDirectory getDirectory(JUnitConfiguration.Data data) throws CantRunException {
