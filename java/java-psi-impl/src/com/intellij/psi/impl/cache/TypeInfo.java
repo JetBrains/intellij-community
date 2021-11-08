@@ -259,7 +259,7 @@ public final class TypeInfo {
 
     String text = typeInfo.text;
     byte arrayCount = typeInfo.arrayCount;
-    int frequentIndex = ourFrequentTypeIndex.getInt(text);
+    int frequentIndex = getFrequentIndex(text);
     boolean hasTypeAnnotations = typeInfo.myTypeAnnotations != null && !typeInfo.myTypeAnnotations.isEmpty();
     int flags = (typeInfo.isEllipsis ? HAS_ELLIPSIS : 0) | (arrayCount != 0 ? HAS_ARRAY_COUNT : 0) |
                 (hasTypeAnnotations ? HAS_TYPE_ANNOTATIONS : 0) | frequentIndex;
