@@ -1,4 +1,6 @@
 import java.lang.invoke.*;
+import java.util.Arrays;
+import java.util.List;
 
 class Main {
   void foo() throws Exception {
@@ -46,6 +48,16 @@ class Main {
 
     l.findSpecial(A.class, <warning descr="Cannot resolve method 'baz'">"baz"</warning>, MethodType.methodType(String.class, double.class), A.class);
     l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, double.class)</warning>, <warning descr="Caller class 'A' must be a subclass of 'B'">A.class</warning>);
+  }
+
+  void differentMethodTypeOverloads() throws Exception {
+    MethodHandles.Lookup l = MethodHandles.lookup();
+
+    l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, double.class)</warning>, C.class);
+    l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, List.of(double.class))</warning>, C.class);
+    l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, Arrays.asList(double.class))</warning>, C.class);
+    l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, new Class<?>[]{double.class})</warning>, C.class);
+    l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, MethodType.methodType(void.class, new Class<?>[]{double.class}))</warning>, C.class);
   }
 }
 
