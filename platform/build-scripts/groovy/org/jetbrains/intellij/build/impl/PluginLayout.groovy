@@ -6,7 +6,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import org.jetbrains.intellij.build.ResourcesGenerator
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -21,6 +20,8 @@ import java.util.function.UnaryOperator
 @CompileStatic
 final class PluginLayout extends BaseLayout {
   final String mainModule
+  private String mainJarName
+
   String directoryName
   VersionEvaluator versionEvaluator = { pluginXmlFile, ideVersion, context -> ideVersion } as VersionEvaluator
   UnaryOperator<String> pluginXmlPatcher = UnaryOperator.identity()
@@ -41,6 +42,7 @@ final class PluginLayout extends BaseLayout {
 
   private PluginLayout(@NotNull String mainModule) {
     this.mainModule = mainModule
+    mainJarName = "${convertModuleNameToFileName(mainModule)}.jar"
   }
 
   /**
@@ -67,12 +69,14 @@ final class PluginLayout extends BaseLayout {
     body.delegate = spec
     body()
     layout.directoryName = spec.directoryName
-    spec.withModule(mainModuleName, spec.mainJarName)
+    if (!layout.getIncludedModuleNames().contains(mainModuleName)) {
+      layout.withModule(mainModuleName, layout.mainJarName)
+    }
     if (spec.mainJarNameSetExplicitly) {
-      layout.explicitlySetJarPaths.add(spec.mainJarName)
+      layout.explicitlySetJarPaths.add(layout.mainJarName)
     }
     else {
-      layout.explicitlySetJarPaths.remove(spec.mainJarName)
+      layout.explicitlySetJarPaths.remove(layout.mainJarName)
     }
     layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
     layout.bundlingRestrictions = spec.bundlingRestrictions
@@ -84,10 +88,21 @@ final class PluginLayout extends BaseLayout {
     return "Plugin '$mainModule'"
   }
 
+  @Override
+  void withModule(@NotNull String moduleName) {
+    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
+      // must be in a separate JAR
+      super.withModule(moduleName)
+    }
+    else {
+      withModuleImpl(moduleName, mainJarName)
+    }
+  }
+
+  @CompileStatic
   static final class PluginLayoutSpec extends BaseLayoutSpec {
     final PluginLayout layout
     private String directoryName
-    private String mainJarName
     private boolean mainJarNameSetExplicitly
     private boolean directoryNameSetExplicitly
     private PluginBundlingRestrictions bundlingRestrictions = new PluginBundlingRestrictions()
@@ -96,18 +111,6 @@ final class PluginLayout extends BaseLayout {
       super(layout)
       this.layout = layout
       directoryName = convertModuleNameToFileName(layout.mainModule)
-      mainJarName = "${convertModuleNameToFileName(layout.mainModule)}.jar"
-    }
-
-    @Override
-    void withModule(String moduleName) {
-      if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
-        // must be in a separate JAR
-        layout.withModule(moduleName)
-      }
-      else {
-        layout.withModule(moduleName, mainJarName)
-      }
     }
 
   /**
@@ -130,12 +133,12 @@ final class PluginLayout extends BaseLayout {
      * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
      */
     void setMainJarName(String mainJarName) {
-      this.mainJarName = mainJarName
+      layout.mainJarName = mainJarName
       mainJarNameSetExplicitly = true
     }
 
     String getMainJarName() {
-      return mainJarName
+      return layout.mainJarName
     }
 
     /**
@@ -198,7 +201,8 @@ final class PluginLayout extends BaseLayout {
     /**
      * Copy output produced by {@code generator} to the directory specified by {@code relativeOutputPath} under the plugin directory.
      */
-    void withGeneratedResources(ResourcesGenerator generator, String relativeOutputPath) {
+    @SuppressWarnings(["GrDeprecatedAPIUsage", "UnnecessaryQualifiedReference"])
+    void withGeneratedResources(org.jetbrains.intellij.build.ResourcesGenerator generator, String relativeOutputPath) {
       layout.resourceGenerators.add(new Pair<>(new BiFunction<Path, BuildContext, Path>() {
         @Override
         Path apply(Path targetDir, BuildContext context) {

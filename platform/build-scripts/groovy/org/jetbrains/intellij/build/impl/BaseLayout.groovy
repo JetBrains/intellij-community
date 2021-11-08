@@ -42,7 +42,7 @@ abstract class BaseLayout {
   }
 
   static String convertModuleNameToFileName(String moduleName) {
-    Strings.trimStart(moduleName, "intellij.").replace('.' as char, '-' as char)
+    return Strings.trimStart(moduleName, "intellij.").replace('.' as char, '-' as char)
   }
 
   final void withModule(String moduleName, String relativeJarPath) {
@@ -69,8 +69,11 @@ abstract class BaseLayout {
     }
   }
 
-  final void withModule(@NotNull String moduleName) {
-    String jarPath = convertModuleNameToFileName(moduleName) + ".jar"
+  void withModule(@NotNull String moduleName) {
+    withModuleImpl(moduleName, convertModuleNameToFileName(moduleName) + ".jar")
+  }
+
+  protected final void withModuleImpl(String moduleName, String jarPath) {
     checkAndAssociateModuleNameWithJarPath(moduleName, jarPath)
     moduleJars.putValue(jarPath, moduleName)
   }
