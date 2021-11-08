@@ -44,6 +44,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -749,6 +750,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                             @NotNull JavaPsiFacade psiFacade) {
     PsiClass testEngine = psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope);
     if (testEngine == null) return false;
+    Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, globalSearchScope);
+    if (!files.isEmpty() && ReferencesSearch.search(testEngine, GlobalSearchScope.filesScope(project, files)).anyMatch(ref -> isCustomEngineProvided(testEngine, ref))) {
+      return true;
+    }
     GlobalSearchScope scope = GlobalSearchScope.getScopeRestrictedByFileTypes(globalSearchScope, SPIFileType.INSTANCE);
     return Stream.of(FilenameIndex.getFilesByName(project, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, scope))
                  .flatMap(f -> PsiTreeUtil.findChildrenOfType(f, SPIClassProviderReferenceElement.class).stream())
@@ -757,6 +762,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                  .map(e -> (PsiClass)e)
                  .filter(c -> isCustomJunit5TestEngineName(c.getQualifiedName()))
                  .anyMatch(c -> InheritanceUtil.isInheritorOrSelf(c, testEngine, true));
+  }
+
+  private static boolean isCustomEngineProvided(PsiClass testEngine, @NotNull PsiReference ref) {
+    PsiProvidesStatement providesStatement = PsiTreeUtil.getParentOfType(ref.getElement(), PsiProvidesStatement.class);
+    if (providesStatement != null) {
+      PsiJavaCodeReferenceElement interfaceReference = providesStatement.getInterfaceReference();
+      PsiReferenceList implementationList = providesStatement.getImplementationList();
+      return interfaceReference != null && interfaceReference.isReferenceTo(testEngine) &&
+             implementationList != null && implementationList.getReferenceElements().length > 0;
+    }
+    return false;
   }
 
   private static boolean isCustomJunit5TestEngineName(@Nullable String engineImplClassName) {
