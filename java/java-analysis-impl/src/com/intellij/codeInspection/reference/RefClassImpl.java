@@ -389,7 +389,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized RefMethod getDefaultConstructor() {
-    LOG.assertTrue(isInitialized());
     return myDefaultConstructor;
   }
 
