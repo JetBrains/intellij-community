@@ -9,7 +9,7 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ExecutionUiService
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.ExtendableSettingsEditor
 import com.intellij.openapi.options.ExtensionSettingsEditor
@@ -104,7 +104,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     val id = getAttributeValue(idAttrName)
     if (id == null) {
       val xml = XMLOutputter().outputString(this)
-      LOG.error("Cannot find extension id in extension element: $xml")
+      logger<RunConfigurationExtensionsManager<*, *>>().error("Cannot find extension id in extension element: $xml")
     }
     return id
   }
