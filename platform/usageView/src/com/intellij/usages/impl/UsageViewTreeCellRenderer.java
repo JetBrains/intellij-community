@@ -59,6 +59,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       Node node = (Node)value;
       if (!node.isValid()) {
         append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
+        return;
       }
       if (myPresentation.isShowReadOnlyStatusAsRed() && node.isReadOnly()) {
         showAsReadOnly = true;
