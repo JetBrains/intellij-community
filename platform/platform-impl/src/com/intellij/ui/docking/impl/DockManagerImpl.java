@@ -73,6 +73,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   public static final Key<Boolean> SHOW_NORTH_PANEL = Key.create("SHOW_NORTH_PANEL");
 
   public static final Key<String> WINDOW_DIMENSION_KEY = Key.create("WINDOW_DIMENSION_KEY");
+  public static final Key<Boolean> REOPEN_WINDOW = Key.create("REOPEN_WINDOW");
 
   public DockManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -380,7 +381,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   public void createNewDockContainerFor(@NotNull DockableContent<?> content, @NotNull RelativePoint point) {
     DockContainer container = getFactory(content.getDockContainerType()).createContainer(content);
 
-    DockWindow window = createWindowFor(getWindowDimensionKey(content), null, container);
+    Boolean canReopenWindow = content.getPresentation().getClientProperty(REOPEN_WINDOW);
+    boolean reopenWindow = canReopenWindow == null || canReopenWindow;
+    DockWindow window = createWindowFor(getWindowDimensionKey(content), null, container, reopenWindow);
     boolean isNorthPanelAvailable = (content instanceof EditorTabbedContainer.DockableEditor)
                                     ? ((EditorTabbedContainer.DockableEditor)content).isNorthPanelAvailable()
                                     : isNorthPanelVisible(UISettings.getInstance());
@@ -412,7 +415,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
                                                                                      @NotNull FileEditorManagerImpl fileEditorManager) {
     DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
 
-    DockWindow window = createWindowFor(getWindowDimensionKey(file), null, container);
+    DockWindow window = createWindowFor(getWindowDimensionKey(file), null, container, REOPEN_WINDOW.get(file, true));
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       window.show(true);
     }
@@ -444,9 +447,13 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     return WINDOW_DIMENSION_KEY.get(file);
   }
 
-  private @NotNull DockWindow createWindowFor(@Nullable String dimensionKey, @Nullable String id, @NotNull DockContainer container) {
+  private @NotNull DockWindow createWindowFor(@Nullable String dimensionKey,
+                                              @Nullable String id,
+                                              @NotNull DockContainer container,
+                                              boolean canReopenWindow) {
     String windowId = id != null ? id : Integer.toString(myWindowIdCounter++);
-    DockWindow window = new DockWindow(dimensionKey, windowId, myProject, container, container instanceof DockContainer.Dialog);
+    DockWindow window =
+      new DockWindow(dimensionKey, windowId, myProject, container, container instanceof DockContainer.Dialog, canReopenWindow);
     containerToWindow.put(container, window);
     return window;
   }
@@ -470,6 +477,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   private final class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
     private final String myId;
     private boolean myNorthPanelAvailable;
+    private final boolean mySupportReopen;
     private final DockContainer myContainer;
 
     private final VerticalBox myNorthPanel = new VerticalBox();
@@ -478,12 +486,20 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final NonOpaquePanel myUiContainer;
     private final JPanel myCenterPanel = new JPanel(new BorderLayout(0, 2));
     private final JPanel myDockContentUiContainer;
-    private DockWindow(@Nullable String dimensionKey, @Nullable String id, @NotNull Project project, @NotNull DockContainer container, boolean isDialog) {
+
+    private DockWindow(@Nullable String dimensionKey,
+                       @Nullable String id,
+                       @NotNull Project project,
+                       @NotNull DockContainer container,
+                       boolean isDialog,
+                       boolean supportReopen) {
       super(project, dimensionKey != null ? dimensionKey : "dock-window-" + id, isDialog);
 
       myId = id;
       myContainer = container;
       setProject(project);
+
+      mySupportReopen = supportReopen;
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !(container instanceof DockContainer.Dialog)) {
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
@@ -644,7 +660,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     Element root = new Element("state");
     for (DockContainer each : getAllContainers()) {
       DockWindow eachWindow = containerToWindow.get(each);
-      if (eachWindow != null && each instanceof DockContainer.Persistent) {
+      if (eachWindow != null && eachWindow.mySupportReopen && each instanceof DockContainer.Persistent) {
         DockContainer.Persistent eachContainer = (DockContainer.Persistent)each;
         Element eachWindowElement = new Element("window");
         String id = eachWindow.myId;
@@ -696,7 +712,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       DockContainer container = ((DockContainerFactory.Persistent)factory).loadContainerFrom(eachContent);
       String withNorthPanelStr = windowElement.getAttributeValue("withNorthPanel", Boolean.toString(true));
       boolean withNorthPanel = Boolean.valueOf(withNorthPanelStr);
-      DockWindow window = createWindowFor(null, windowElement.getAttributeValue("id"), container);
+      DockWindow window = createWindowFor(null, windowElement.getAttributeValue("id"), container, true);
       if (withNorthPanel) {
         window.setupNorthPanel();
       }
