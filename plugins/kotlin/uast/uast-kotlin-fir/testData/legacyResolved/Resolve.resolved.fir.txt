@@ -1,13 +1,13 @@
 UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:open class A {
     fun foo() {}
     inline fun inlineFoo() {
 
     }
 }: A
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:foo) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:foo: foo
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:open class A {
     fun foo() {}
     inline fun inlineFoo() {
 
@@ -16,7 +16,7 @@ UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = inlineFoo) -> LightMethodBuilder:inlineFoo: inlineFoo
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:open class A {
     fun foo() {}
     inline fun inlineFoo() {
 
@@ -64,28 +64,28 @@ UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = IntRange) -> PRIMARY_CONSTRUCTOR: IntRange
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:open class A {
     fun foo() {}
     inline fun inlineFoo() {
 
     }
 }: A
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = t) -> Fir Light Parameter t: t
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:foo) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:foo: foo
 UTypeReferenceExpression (name = java.util.List<? extends A>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A {
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:open class A {
     fun foo() {}
     inline fun inlineFoo() {
 
     }
 }: A
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = listT) -> Fir Light Parameter listT: listT
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = listT) -> Light Parameter: listT
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isEmpty) -> FUN: isEmpty
-    UForEachExpression -> USimpleNameReferenceExpression (identifier = listT) -> Fir Light Parameter listT: listT
+    UForEachExpression -> USimpleNameReferenceExpression (identifier = listT) -> Light Parameter: listT
         UBlockExpression -> UQualifiedReferenceExpression -> null: null
         UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:foo) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:foo: foo

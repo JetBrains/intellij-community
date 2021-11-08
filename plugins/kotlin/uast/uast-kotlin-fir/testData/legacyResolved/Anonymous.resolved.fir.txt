@@ -12,7 +12,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = In
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable) -> LightVariableBuilder:runnable: runnable
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:run) -> USimpleNameReferenceExpression (identifier = run) -> FirLightSimpleMethodForSymbol:run: run
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:run) -> USimpleNameReferenceExpression (identifier = run) -> KtUltraLightMethodForSourceDeclaration:run: run
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
     UBlockExpression -> UQualifiedReferenceExpression -> null: null

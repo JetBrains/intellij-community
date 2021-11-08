@@ -28,13 +28,13 @@ UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpr
 UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
 UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightAccessorMethodForSymbol:setFoo: setFoo
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getFoo: getFoo
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:setFoo: setFoo
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> KtUltraLightMethodForSourceDeclaration:getFoo: getFoo
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:runRunnable) -> USimpleNameReferenceExpression (identifier = runRunnable) -> FirLightSimpleMethodForSymbol:runRunnable: runRunnable
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:runRunnable) -> USimpleNameReferenceExpression (identifier = runRunnable) -> KtUltraLightMethodForSourceDeclaration:runRunnable: runRunnable
 UField (name = baz) -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
@@ -49,9 +49,9 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolve
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to PsiMethod:Thread) -> USimpleNameReferenceExpression (identifier = Thread) -> PsiMethod:Thread: Thread
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:ambiguousSamAcceptor) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> FirLightSimpleMethodForSymbol:ambiguousSamAcceptor: ambiguousSamAcceptor
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:ambiguousSamAcceptor) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> KtUltraLightMethodForSourceDeclaration:ambiguousSamAcceptor: ambiguousSamAcceptor
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Supplier) -> PsiClass:Supplier: Supplier
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:ambiguousSamAcceptor) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> FirLightSimpleMethodForSymbol:ambiguousSamAcceptor: ambiguousSamAcceptor
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:ambiguousSamAcceptor) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> KtUltraLightMethodForSourceDeclaration:ambiguousSamAcceptor: ambiguousSamAcceptor
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Callable) -> PsiClass:Callable: Callable
 UTypeReferenceExpression (name = java.util.function.Supplier<java.lang.String>) -> USimpleNameReferenceExpression (identifier = Supplier) -> PsiClass:Supplier: Supplier
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String

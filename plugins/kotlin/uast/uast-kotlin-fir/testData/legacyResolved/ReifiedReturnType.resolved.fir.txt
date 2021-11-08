@@ -73,18 +73,18 @@ UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpres
 UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> TYPE_PARAMETER: B
 UReturnExpression -> USimpleNameReferenceExpression (identifier = t) -> Light Parameter: t
 UTypeReferenceExpression (name = java.util.List<? extends T>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
-UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> FirLightTypeParameter:B: B
-UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> FirLightTypeParameter:B: B
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> Light PSI class: B: B
+UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> Light PSI class: B: B
 null -> USimpleNameReferenceExpression (identifier = T) -> null: null
 UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> CLASS: CharSequence
 null -> USimpleNameReferenceExpression (identifier = T) -> null: null
 UTypeReferenceExpression (name = java.lang.Comparable<? super T>) -> USimpleNameReferenceExpression (identifier = Comparable) -> CLASS: Comparable
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
 null -> USimpleNameReferenceExpression (identifier = B) -> null: null
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
-    UReturnExpression -> USimpleNameReferenceExpression (identifier = threshold2) -> Fir Light Parameter threshold2: threshold2
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+    UReturnExpression -> USimpleNameReferenceExpression (identifier = threshold2) -> Light Parameter: threshold2
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
 UTypeReferenceExpression (name = Z) -> USimpleNameReferenceExpression (identifier = Z) -> TYPE_PARAMETER: Z
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
