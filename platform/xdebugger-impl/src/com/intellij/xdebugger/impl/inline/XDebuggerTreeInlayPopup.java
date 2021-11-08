@@ -422,6 +422,7 @@ public class XDebuggerTreeInlayPopup<D> {
           }
         }
       });
+      actionPanel.setVisible(presentation.isEnabled());
 
       return actionPanel;
     }
@@ -450,7 +451,6 @@ public class XDebuggerTreeInlayPopup<D> {
                      @Nullable DataProvider contextComponent) {
       //noinspection ConstantConditions
       super(presentation.getText(), action);
-      setEnabled(presentation.isEnabled());
       setDataProvider(contextComponent);
       setFont(UIUtil.getToolTipFont());
     }
