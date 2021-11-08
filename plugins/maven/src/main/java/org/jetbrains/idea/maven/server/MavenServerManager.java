@@ -537,14 +537,19 @@ public final class MavenServerManager implements Disposable {
     File mavenHome = settings.getEffectiveMavenHome();
     if (mavenHome != null) {
       String remotePath = transformer.toRemotePath(mavenHome.getAbsolutePath());
-      mavenHome = remotePath == null ? null : new File(remotePath);
+      result.setMavenHomePath(remotePath);
     }
-    result.setMavenHome(mavenHome);
-    result.setUserSettingsFile(
-      transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveUserSettingsIoFile() : null);
-    result.setGlobalSettingsFile(
-      transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveGlobalSettingsIoFile() : null);
-    result.setLocalRepository(transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveLocalRepository() : null);
+
+
+    String userSettingsPath = MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig()).getAbsolutePath();
+    result.setUserSettingsPath(transformer.toRemotePath(userSettingsPath));
+
+    String globalSettingsPath = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig()).getAbsolutePath();
+    result.setGlobalSettingsPath(transformer.toRemotePath(globalSettingsPath));
+
+    String localRepository = settings.getEffectiveLocalRepository().getAbsolutePath();
+
+    result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
     result.setSnapshotUpdatePolicy(
       settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
