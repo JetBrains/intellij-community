@@ -25,6 +25,9 @@
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
+    <orderEntry type="module" module-name="intellij.platform.feedback" />
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
   </component>
 </module>
