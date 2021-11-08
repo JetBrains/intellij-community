@@ -31,8 +31,12 @@ public interface RemoteCredentials {
 
   boolean isStorePassphrase();
 
-  default boolean isUseOpenSSHConfig() {
-    return true;
+  default boolean shouldUseOpenSshConfig() {
+    return getAuthType() == AuthType.OPEN_SSH || isOpenSshConfigUsageForced();
+  }
+
+  default boolean isOpenSshConfigUsageForced() {
+    return false;
   }
 
   @ApiStatus.Experimental
