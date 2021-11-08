@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 /**
  * @author ven
@@ -27,9 +28,9 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
   public LanguageLevelCombo(@Nls String defaultItem) {
     myDefaultItem = defaultItem;
     insertItemAt(myDefaultItem, 0);
-    for (LanguageLevel level : LanguageLevel.values()) {
-      addItem(level);
-    }
+    Arrays.stream(LanguageLevel.values())
+      .sorted((l1, l2) -> l2.toJavaVersion().feature - l1.toJavaVersion().feature)
+      .forEach(level -> addItem(level));
 
     setRenderer(new ColoredListCellRenderer<>() {
       @Override
