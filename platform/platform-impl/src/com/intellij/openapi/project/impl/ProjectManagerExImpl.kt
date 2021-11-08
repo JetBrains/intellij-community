@@ -24,10 +24,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.getProjectDataPathRoot
+import com.intellij.openapi.project.*
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
@@ -47,6 +44,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.event.InvocationEvent
 import java.io.IOException
 import java.nio.file.*
@@ -494,23 +492,24 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
 }
 
 // allow `invokeAndWait` inside startup activities
+@TestOnly
 internal fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager: StartupManagerImpl) {
+  ApplicationManager.getApplication().assertIsDispatchThread()
   val eventQueue = IdeEventQueue.getInstance()
+  if (startupManager.postStartupActivityPassed()) {
+    ApplicationManager.getApplication().invokeLater {}
+  }
+  else {
+    // make sure eventQueue.nextEvent will unblock
+    startupManager.registerPostStartupActivity(DumbAwareRunnable { ApplicationManager.getApplication().invokeLater{ } })
+  }
   while (true) {
-    // getNextEvent() will block until an event has been posted by another thread, so,
-    // peekEvent() is used to check that there is already some event in the queue
-    if (eventQueue.peekEvent() == null) {
-      if (startupManager.postStartupActivityPassed()) {
-        break
-      }
-      else {
-        continue
-      }
-    }
-
     val event = eventQueue.nextEvent
     if (event is InvocationEvent) {
       eventQueue.dispatchEvent(event)
+    }
+    if (startupManager.postStartupActivityPassed() && eventQueue.peekEvent() == null) {
+      break
     }
   }
 }
