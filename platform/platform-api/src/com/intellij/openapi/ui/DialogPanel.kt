@@ -54,7 +54,7 @@ class DialogPanel : JBPanel<DialogPanel> {
   fun registerValidators(parentDisposable: Disposable, componentValidityChangedCallback: ((Map<JComponent, ValidationInfo>) -> Unit)? = null) {
     this.parentDisposable = parentDisposable
     this.componentValidityChangedCallback = componentValidityChangedCallback
-    registerIntegratedPanels(integratedPanels)
+    registerValidatorsForIntegratedPanels(integratedPanels)
 
     for ((component, callback) in componentValidateCallbacks) {
       val validator = ComponentValidator(parentDisposable).withValidator(Supplier {
@@ -112,7 +112,7 @@ class DialogPanel : JBPanel<DialogPanel> {
     if (comp is DialogPanel && comp.getClientProperty(INTEGRATED_PANEL_PROPERTY) != null) {
       val disposable = Disposer.newDisposable()
       integratedPanels[comp] = disposable
-      registerIntegratedPanels(mapOf(comp to disposable))
+      registerValidatorsForIntegratedPanels(mapOf(comp to disposable))
     }
   }
 
@@ -129,7 +129,7 @@ class DialogPanel : JBPanel<DialogPanel> {
     super.removeAll()
   }
 
-  private fun registerIntegratedPanels(panels: Map<DialogPanel, Disposable>) {
+  private fun registerValidatorsForIntegratedPanels(panels: Map<DialogPanel, Disposable>) {
     parentDisposable?.let {
       for ((panel, disposable) in panels) {
         Disposer.register(it, disposable)
