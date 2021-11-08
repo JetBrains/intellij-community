@@ -355,26 +355,35 @@ public abstract class GitImplBase implements Git {
 
     Project project = handler.project();
     if (project != null && !project.isDefault()) {
-      GitVcsConsoleWriter vcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
-
       String workingDir = stringifyWorkingDir(project.getBasePath(), handler.getWorkingDirectory());
-      vcsConsoleWriter.showCommandLine(String.format("[%s] %s", workingDir, handler.printableCommandLine()));
+      GitVcsConsoleWriter.getInstance(project).showCommandLine(String.format("[%s] %s", workingDir, handler.printableCommandLine()));
 
-      handler.addLineListener(new GitLineHandlerListener() {
-        private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+      handler.addLineListener(new GitCommandOutputLogger(project, handler));
+    }
+  }
 
-        @Override
-        public void onLineAvailable(String line, Key outputType) {
-          if (StringUtil.isEmptyOrSpaces(line)) return;
-          if (outputType == ProcessOutputTypes.SYSTEM) return;
-          if (outputType == ProcessOutputTypes.STDOUT && handler.isStdoutSuppressed()) return;
-          if (outputType == ProcessOutputTypes.STDERR && handler.isStderrSuppressed()) return;
+  private static class GitCommandOutputLogger implements GitLineHandlerListener {
+    private final @NotNull GitLineHandler myHandler;
 
-          List<Pair<String, Key>> lineChunks = new ArrayList<>();
-          myAnsiEscapeDecoder.escapeText(line, outputType, (text, key) -> lineChunks.add(Pair.create(text, key)));
-          vcsConsoleWriter.showMessage(lineChunks);
-        }
-      });
+    private final GitVcsConsoleWriter myVcsConsoleWriter;
+    private final AnsiEscapeDecoder myAnsiEscapeDecoder;
+
+    GitCommandOutputLogger(@NotNull Project project, @NotNull GitLineHandler handler) {
+      myHandler = handler;
+      myVcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
+      myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+    }
+
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      if (StringUtil.isEmptyOrSpaces(line)) return;
+      if (outputType == ProcessOutputTypes.SYSTEM) return;
+      if (outputType == ProcessOutputTypes.STDOUT && myHandler.isStdoutSuppressed()) return;
+      if (outputType == ProcessOutputTypes.STDERR && myHandler.isStderrSuppressed()) return;
+
+      List<Pair<String, Key>> lineChunks = new ArrayList<>();
+      myAnsiEscapeDecoder.escapeText(line, outputType, (text, key) -> lineChunks.add(Pair.create(text, key)));
+      myVcsConsoleWriter.showMessage(lineChunks);
     }
   }
 
