@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.html
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Base64
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
@@ -46,7 +47,7 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val indentBefore = node.getTextInNode(text).commonPrefixWith(" ".repeat(10)).length
 
-    visitor.consumeHtml("<pre ${HtmlGenerator.getSrcPosAttribute(node)}>")
+    visitor.consumeHtml("<pre class=\"code-fence\" ${HtmlGenerator.getSrcPosAttribute(node)}>")
 
     var state = 0
 
@@ -77,9 +78,11 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
       }
     }
 
+    val rawContentResult = codeFenceRawContent.toString()
+    addCopyButton(visitor, rawContentResult)
     if (state == 1) {
       visitor.consumeHtml(
-        pluginGeneratedHtml(language, codeFenceContent.toString(), codeFenceRawContent.toString(), node)
+        pluginGeneratedHtml(language, codeFenceContent.toString(), rawContentResult, node)
       )
     }
 
@@ -90,6 +93,17 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
       visitor.consumeHtml("\n")
     }
     visitor.consumeHtml("</code></pre>")
+  }
+
+  private fun addCopyButton(visitor: HtmlGenerator.HtmlGeneratingVisitor, content: String) {
+    val encodedContent = Base64.encode(content.toByteArray())
+    // language=HTML
+    val html = """
+    <div class="code-fence-highlighter-copy-button" data-fence-content="$encodedContent">
+        <img class="code-fence-highlighter-copy-button-icon">
+    </div>
+    """.trimIndent()
+    visitor.consumeHtml(html)
   }
 
   private fun codeFenceRawText(text: String, node: ASTNode): CharSequence =

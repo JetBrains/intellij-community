@@ -307,6 +307,7 @@ Includes the following features:</p>
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceCopyButtonBrowserExtension$Provider"/>
 
     <!--suppress PluginXmlValidity -->
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider"/>
