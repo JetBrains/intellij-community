@@ -1,6 +1,0 @@
-UField (name = x) -> UCallableReferenceExpression (name = bar) -> FirLightSimpleMethodForSymbol:bar: bar
-UCallableReferenceExpression (name = bar) -> USimpleNameReferenceExpression (identifier = Foo) -> FirLightClassForSymbol:class Foo {
-    fun bar() {
-    }
-}: Foo
-UCallableReferenceExpression (name = bar) -> USimpleNameReferenceExpression (identifier = bar) -> FirLightSimpleMethodForSymbol:bar: bar

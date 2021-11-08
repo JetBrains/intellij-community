@@ -1,6 +1,6 @@
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
-    USwitchExpression -> USimpleNameReferenceExpression (identifier = string) -> Fir Light Parameter string: string
+    USwitchExpression -> USimpleNameReferenceExpression (identifier = string) -> Light Parameter: string
         ULocalVariable (name = var837f2350) -> USimpleNameReferenceExpression (identifier = arr) -> LightVariableBuilder:arr: arr
         UReturnExpression -> USimpleNameReferenceExpression (identifier = bindingContext) -> LightVariableBuilder:bindingContext: bindingContext

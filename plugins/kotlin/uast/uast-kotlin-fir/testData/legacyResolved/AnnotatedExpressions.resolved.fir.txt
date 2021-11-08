@@ -1,5 +1,5 @@
 UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:foo) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:foo: foo
     UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
     UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
     UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
@@ -21,9 +21,9 @@ USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
 UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Fir Light Parameter str: str
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Light Parameter: str
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isBlank) -> FUN: isBlank
 UBinaryExpression (operator = !=) -> UQualifiedReferenceExpression -> null: null
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Fir Light Parameter str: str
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Light Parameter: str
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isNotEmpty) -> FUN: isNotEmpty
 UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> null: null
