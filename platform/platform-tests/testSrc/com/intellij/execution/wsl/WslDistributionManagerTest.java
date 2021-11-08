@@ -35,6 +35,11 @@ public final class WslDistributionManagerTest {
         public @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions() {
           return ContainerUtil.map(loadInstalledDistributionMsIds(), s -> new WslDistributionAndVersion(s, 2));
         }
+
+        @Override
+        protected boolean isAvailable() {
+          return true;
+        }
       }, myTestFixtureRule.getFixture().getTestRootDisposable());
     WslDistributionManager distributionManager = WslDistributionManager.getInstance();
     WSLDistribution lowerCaseUbuntu = distributionManager.getOrCreateDistributionByMsId(lowerCaseUbuntuName);
