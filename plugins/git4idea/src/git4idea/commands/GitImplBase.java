@@ -376,14 +376,21 @@ public abstract class GitImplBase implements Git {
 
     @Override
     public void onLineAvailable(String line, Key outputType) {
-      if (StringUtil.isEmptyOrSpaces(line)) return;
-      if (outputType == ProcessOutputTypes.SYSTEM) return;
-      if (outputType == ProcessOutputTypes.STDOUT && myHandler.isStdoutSuppressed()) return;
-      if (outputType == ProcessOutputTypes.STDERR && myHandler.isStderrSuppressed()) return;
+      try {
+        if (StringUtil.isEmptyOrSpaces(line)) return;
+        if (outputType == ProcessOutputTypes.SYSTEM) return;
+        if (outputType == ProcessOutputTypes.STDOUT && myHandler.isStdoutSuppressed()) return;
+        if (outputType == ProcessOutputTypes.STDERR && myHandler.isStderrSuppressed()) return;
 
-      List<Pair<String, Key>> lineChunks = new ArrayList<>();
-      myAnsiEscapeDecoder.escapeText(line, outputType, (text, key) -> lineChunks.add(Pair.create(text, key)));
-      myVcsConsoleWriter.showMessage(lineChunks);
+        List<Pair<String, Key>> lineChunks = new ArrayList<>();
+        myAnsiEscapeDecoder.escapeText(line, outputType, (text, key) -> lineChunks.add(Pair.create(text, key)));
+        myVcsConsoleWriter.showMessage(lineChunks);
+      }
+      catch (ProcessCanceledException ignore) {
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Logging error for " + myHandler, e);
+      }
     }
   }
 
