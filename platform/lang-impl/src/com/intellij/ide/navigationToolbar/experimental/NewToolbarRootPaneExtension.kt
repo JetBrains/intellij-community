@@ -7,10 +7,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -23,6 +21,7 @@ import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Graphics
+import java.util.*
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -115,7 +114,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
   }
 
   override fun getComponent(): JComponent = myPanel
-
+  
   override fun uiSettingsChanged(settings: UISettings) {
     logger.info("Show old main toolbar: ${settings.showMainToolbar}; show old navigation bar: ${settings.showNavigationBar}")
 
@@ -140,10 +139,18 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
   }
 
   /**
-   * This method is empty because all repaint logic in the new toolbar
-   * is based on the ui settings changes
+   * Here goes only the logic that updates the central panel when it gets customized from the UI
    */
   override fun revalidate() {
+    val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as CenterToolbarGroup?
+    val toolBar = Objects.requireNonNull(group)?.let {
+      ActionManagerEx.getInstanceEx()
+        .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, it as ActionGroup, true)
+    }
+    toolBar?.targetComponent = null
+    toolBar?.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
+    myPanel.add(toolBar as JComponent, BorderLayout.CENTER)
+
   }
 
 }
