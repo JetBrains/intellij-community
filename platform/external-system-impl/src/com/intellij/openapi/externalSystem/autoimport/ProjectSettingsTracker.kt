@@ -149,12 +149,12 @@ class ProjectSettingsTracker(
   private inner class ProjectRefreshListener : ExternalSystemProjectRefreshListener {
     private lateinit var settingsFilesCRC: Map<String, Long>
 
-    override fun beforeProjectRefresh() {
+    override fun onProjectReloadStart() {
       applyChangesOperation.startTask()
       settingsFilesCRC = settingsFilesStatus.get().newCRC
     }
 
-    override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
+    override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
       val operationStamp = currentTime()
       submitSettingsFilesRefresh { settingsPaths ->
         submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->

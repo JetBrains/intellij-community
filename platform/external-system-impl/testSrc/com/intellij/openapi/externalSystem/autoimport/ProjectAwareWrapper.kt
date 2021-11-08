@@ -16,11 +16,11 @@ class ProjectAwareWrapper(val delegate: ExternalSystemProjectAware,
 
   init {
     delegate.subscribe(object : ExternalSystemProjectRefreshListener {
-      override fun beforeProjectRefresh() {
+      override fun onProjectReloadStart() {
         beforeRefreshCounter.incrementAndGet()
       }
 
-      override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
+      override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
         afterRefreshCounter.incrementAndGet()
       }
     }, parentDisposable)

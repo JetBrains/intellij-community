@@ -87,12 +87,12 @@ class MockProjectAware(
   private fun doRefreshProject(context: ExternalSystemProjectReloadContext) {
     background {
       val refreshStatus = refreshStatus.get()
-      eventDispatcher.multicaster.beforeProjectRefresh()
+      eventDispatcher.multicaster.onProjectReloadStart()
       refresh.task {
         refreshCounter.incrementAndGet()
         eventDispatcher.multicaster.insideProjectRefresh(context)
       }
-      eventDispatcher.multicaster.afterProjectRefresh(refreshStatus)
+      eventDispatcher.multicaster.onProjectReloadFinish(refreshStatus)
     }
   }
 
@@ -116,7 +116,7 @@ class MockProjectAware(
 
   fun beforeRefresh(action: () -> Unit, parentDisposable: Disposable) {
     eventDispatcher.addListener(object : Listener {
-      override fun beforeProjectRefresh() = action()
+      override fun onProjectReloadStart() = action()
     }, parentDisposable)
   }
 
@@ -144,7 +144,7 @@ class MockProjectAware(
 
   fun afterRefresh(action: (ExternalSystemRefreshStatus) -> Unit, parentDisposable: Disposable) {
     eventDispatcher.addListener(object : Listener {
-      override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) = action(status)
+      override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) = action(status)
     }, parentDisposable)
   }
 
@@ -153,8 +153,8 @@ class MockProjectAware(
 
     companion object {
       fun create(listener: ExternalSystemProjectRefreshListener) = object : Listener {
-        override fun beforeProjectRefresh() = listener.beforeProjectRefresh()
-        override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) = listener.afterProjectRefresh(status)
+        override fun onProjectReloadStart() = listener.onProjectReloadStart()
+        override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) = listener.onProjectReloadFinish(status)
       }
     }
   }
