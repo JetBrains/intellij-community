@@ -17,7 +17,6 @@ import java.nio.file.Path
 import java.time.LocalDate
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiConsumer
-import java.util.function.Consumer
 import java.util.function.Supplier
 import java.util.zip.Deflater
 
@@ -204,25 +203,16 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                               .setAttribute("arch", arch.name()), BuildOptions.MAC_SIGN_STEP, new Runnable() {
           @Override
           void run() {
-            String remoteDirPrefix = "intellij-builds/" + archStr + "-" + context.fullBuildNumber
-            MacHostProperties hostProperties = context.proprietaryBuildTools.macHostProperties
-            //noinspection SpellCheckingInspection
-            BuildHelper.getInstance(context).signMac.invokeWithArguments(
-              hostProperties.host,
-              hostProperties.userName,
-              hostProperties.password,
-              hostProperties.codesignString,
-              remoteDirPrefix,
-              context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/signbin.sh"),
-              binariesToSign.collect { additional.resolve(it) },
-              Path.of(context.paths.artifacts),
-              new Consumer<Path>() {
-                @Override
-                void accept(Path file) {
-                  context.notifyArtifactWasBuilt(file)
-                }
-              }
-            )
+            binariesToSign.each { relativePath ->
+              context.messages.progress("Signing $relativePath")
+              def fullPath = additional.resolve(relativePath)
+              Map<String, String> options = [
+                "mac_codesign_options": "runtime",
+                "mac_codesign_force"  : "true",
+                "mac_codesign_deep"   : "true",
+              ]
+              context.signFile(fullPath.toString(), options)
+            }
           }
         })
       }
