@@ -297,7 +297,7 @@ final class CommunityLibraryLicenses {
                        url: "https://freemarker.apache.org", licenseUrl: "https://freemarker.apache.org/docs/app_license.html").apache(),
     new LibraryLicense(name: "Gant", libraryName: "gant-groovy",
                        url: "https://github.com/codehaus/gant", licenseUrl: "https://github.com/codehaus/gant/blob/master/LICENCE.txt").apache(),
-    new LibraryLicense(name: "gauge-java", libraryName: "com.thoughtworks.gauge:gauge-java:0.7.3",
+    new LibraryLicense(name: "gauge-java", libraryName: "com.thoughtworks.gauge:gauge-java",
                        licenseUrl: "https://raw.githubusercontent.com/getgauge/gauge-java/master/LICENSE.txt").apache(),
     new LibraryLicense(name: "Gherkin", libraryName: "gherkin",
                        licenseUrl: "https://github.com/cucumber/cucumber/blob/master/gherkin/LICENSE",
