@@ -1081,6 +1081,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/anonymousFunAsParamDefaultValue.kt");
         }
 
+        @TestMetadata("breakpointOnWhen.kt")
+        public void testBreakpointOnWhen() throws Exception {
+            runTest("testData/stepping/custom/breakpointOnWhen.kt");
+        }
+
         @TestMetadata("constantConditions.kt")
         public void testConstantConditions() throws Exception {
             runTest("testData/stepping/custom/constantConditions.kt");
