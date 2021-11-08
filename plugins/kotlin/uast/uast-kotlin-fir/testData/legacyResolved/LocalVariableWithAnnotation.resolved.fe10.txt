@@ -1,1 +1,0 @@
-UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> KtUltraLightClass:annotation class TestAnnotation: TestAnnotation

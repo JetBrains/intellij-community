@@ -1,18 +1,18 @@
 UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> CLASS: Throwable
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to FirLightSimpleMethodForSymbol:crashMe) -> USimpleNameReferenceExpression (identifier = crashMe) -> FirLightSimpleMethodForSymbol:crashMe: crashMe
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to FirLightSimpleMethodForSymbol:crashMe) -> UQualifiedReferenceExpression -> null: null
-    UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = Callback) -> FirLightInterfaceClassSymbol:interface Callback {
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to KtUltraLightMethodForSourceDeclaration:crashMe) -> USimpleNameReferenceExpression (identifier = crashMe) -> KtUltraLightMethodForSourceDeclaration:crashMe: crashMe
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to KtUltraLightMethodForSourceDeclaration:crashMe) -> UQualifiedReferenceExpression -> null: null
+    UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = Callback) -> KtUltraLightClass:interface Callback {
     fun onError(throwable: Throwable)
 }: Callback
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> null: null
         UReturnExpression -> UObjectLiteralExpression -> null:
-        UTypeReferenceExpression (name = Callback) -> USimpleNameReferenceExpression (identifier = Callback) -> FirLightInterfaceClassSymbol:interface Callback {
+        UTypeReferenceExpression (name = Callback) -> USimpleNameReferenceExpression (identifier = Callback) -> KtUltraLightClass:interface Callback {
     fun onError(throwable: Throwable)
 }: Callback
         UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> CLASS: Throwable
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to PsiMethod:UnsupportedOperationException) -> USimpleNameReferenceExpression (identifier = UnsupportedOperationException) -> PsiMethod:UnsupportedOperationException: UnsupportedOperationException
 UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
 UTypeReferenceExpression (name = java.lang.Class<T>) -> USimpleNameReferenceExpression (identifier = Class) -> PsiClass:Class: Class
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to PsiMethod:UnsupportedOperationException) -> USimpleNameReferenceExpression (identifier = UnsupportedOperationException) -> PsiMethod:UnsupportedOperationException: UnsupportedOperationException

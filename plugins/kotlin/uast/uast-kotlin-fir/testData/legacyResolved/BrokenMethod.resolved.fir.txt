@@ -3,5 +3,5 @@ UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpres
     UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> CLASS: CharSequence
     UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
     UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:Used) -> USimpleNameReferenceExpression (identifier = Used) -> FirLightConstructorForSymbol:Used: Used
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:Used) -> USimpleNameReferenceExpression (identifier = Used) -> KtUltraLightMethodForSourceDeclaration:Used: Used
     UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> TYPE_REFERENCE: null

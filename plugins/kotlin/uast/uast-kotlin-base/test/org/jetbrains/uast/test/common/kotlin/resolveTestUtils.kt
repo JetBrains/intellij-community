@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 
-fun UFile.resolvableWithTargets() = object : IndentedPrintingVisitor(KtBlockExpression::class) {
+fun UFile.resolvableWithTargets(
+    renderLightElementDifferently: (PsiElement?) -> String = { it.toString() },
+) = object : IndentedPrintingVisitor(KtBlockExpression::class) {
     override fun render(element: PsiElement) =
         UastFacade.convertToAlternatives<UExpression>(element, arrayOf(UReferenceExpression::class.java, UCallExpression::class.java))
             .filter {
@@ -26,12 +28,12 @@ fun UFile.resolvableWithTargets() = object : IndentedPrintingVisitor(KtBlockExpr
                     val parent = ref.uastParent
                     append(parent?.asLogString())
                     if (parent is UCallExpression) {
-                        append("(resolves to ${parent.resolve()})")
+                        append("(resolves to ${renderLightElementDifferently(parent.resolve())})")
                     }
                     append(" -> ")
                     append(ref.asLogString())
                     append(" -> ")
-                    append(ref.cast<UResolvable>().resolve())
+                    append(renderLightElementDifferently(ref.cast<UResolvable>().resolve()))
                     append(": ")
                     append(
                         when (ref) {

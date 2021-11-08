@@ -1,6 +1,0 @@
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightAccessorMethodForSymbol:getFoo: getFoo
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightAccessorMethodForSymbol:getFoo: getFoo
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = bar) -> FirLightAccessorMethodForSymbol:getBar: getBar
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = bar) -> FirLightAccessorMethodForSymbol:getBar: getBar
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = baz) -> FirLightAccessorMethodForSymbol:getBaz: getBaz
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = baz) -> FirLightAccessorMethodForSymbol:getBaz: getBaz
