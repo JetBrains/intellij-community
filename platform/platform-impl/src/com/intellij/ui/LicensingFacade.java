@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.PermanentInstallationID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,4 +108,19 @@ public final class LicensingFacade {
     return result != null? result.get(productCode) : null;
   }
 
+  private static final Gson ourGson = new GsonBuilder().setDateFormat("yyyyMMdd").create();
+
+  public String toJson() {
+    return ourGson.toJson(this);
+  }
+
+  @Nullable
+  public static LicensingFacade fromJson(String json) {
+    try {
+      return ourGson.fromJson(json, LicensingFacade.class);
+    }
+    catch (Throwable e) {
+      return null;
+    }
+  }
 }
