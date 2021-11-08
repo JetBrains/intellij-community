@@ -1,0 +1,5 @@
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
+USwitchExpression -> USimpleNameReferenceExpression (identifier = bar) -> Light Parameter: bar
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UYieldExpression -> USimpleNameReferenceExpression (identifier = bar) -> Light Parameter: bar
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String

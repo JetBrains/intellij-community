@@ -1,0 +1,27 @@
+UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
+UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
+UTypeReferenceExpression (name = int[]) -> USimpleNameReferenceExpression (identifier = IntArray) -> null: null
+UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpression (identifier = Array) -> null: null
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = RequiresPermission) -> USimpleNameReferenceExpression (identifier = RequiresPermission) -> KtUltraLightClass:annotation class RequiresPermission(val anyOf: IntArray): RequiresPermission
+null -> USimpleNameReferenceExpression (identifier = anyOf) -> KtUltraLightMethodForSourceDeclaration:anyOf: anyOf
+UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = intArrayOf) -> null: null
+UTypeReferenceExpression (name = IntRange) -> USimpleNameReferenceExpression (identifier = IntRange) -> KtUltraLightClass:annotation class IntRange(val from: Long, val to: Long): IntRange
+null -> USimpleNameReferenceExpression (identifier = from) -> KtUltraLightMethodForSourceDeclaration:from: from
+null -> USimpleNameReferenceExpression (identifier = to) -> KtUltraLightMethodForSourceDeclaration:to: to
+UTypeReferenceExpression (name = WithDefaultValue) -> USimpleNameReferenceExpression (identifier = WithDefaultValue) -> KtUltraLightClass:annotation class WithDefaultValue(val value: Int = 42): WithDefaultValue
+UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression (identifier = SuppressLint) -> KtUltraLightClass:annotation class SuppressLint(vararg val value: String): SuppressLint
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = IntRange) -> USimpleNameReferenceExpression (identifier = IntRange) -> KtUltraLightClass:annotation class IntRange(val from: Long, val to: Long): IntRange
+UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression (identifier = SuppressLint) -> KtUltraLightClass:annotation class SuppressLint(vararg val value: String): SuppressLint
+UReturnExpression -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
+UTypeReferenceExpression (name = RequiresPermission) -> USimpleNameReferenceExpression (identifier = RequiresPermission) -> KtUltraLightClass:annotation class RequiresPermission(val anyOf: IntArray): RequiresPermission
+null -> USimpleNameReferenceExpression (identifier = anyOf) -> KtUltraLightMethodForSourceDeclaration:anyOf: anyOf
+UNamedExpression (name = anyOf) -> UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) -> null:
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = RequiresStrPermission) -> USimpleNameReferenceExpression (identifier = RequiresStrPermission) -> KtUltraLightClass:annotation class RequiresStrPermission(val strs: Array<String>): RequiresStrPermission
+null -> USimpleNameReferenceExpression (identifier = strs) -> KtUltraLightMethodForSourceDeclaration:strs: strs
+UNamedExpression (name = strs) -> UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) -> null:
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer

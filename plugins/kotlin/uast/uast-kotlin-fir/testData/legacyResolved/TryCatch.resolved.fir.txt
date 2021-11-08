@@ -1,0 +1,14 @@
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:body) -> USimpleNameReferenceExpression (identifier = body) -> FirLightSimpleMethodForSymbol:body: body
+    UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> CLASS: Throwable
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:catcher) -> USimpleNameReferenceExpression (identifier = catcher) -> FirLightSimpleMethodForSymbol:catcher: catcher
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:finalizer) -> USimpleNameReferenceExpression (identifier = finalizer) -> FirLightSimpleMethodForSymbol:finalizer: finalizer
+UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = SuppressWarnings) -> PsiClass:SuppressWarnings: SuppressWarnings
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:body) -> USimpleNameReferenceExpression (identifier = body) -> FirLightSimpleMethodForSymbol:body: body
+    UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+    UTypeReferenceExpression (name = java.lang.SuppressWarnings) -> USimpleNameReferenceExpression (identifier = SuppressWarnings) -> PsiClass:SuppressWarnings: SuppressWarnings
+    UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> CLASS: Throwable
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:catcher) -> USimpleNameReferenceExpression (identifier = catcher) -> FirLightSimpleMethodForSymbol:catcher: catcher
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:finalizer) -> USimpleNameReferenceExpression (identifier = finalizer) -> FirLightSimpleMethodForSymbol:finalizer: finalizer

@@ -1,0 +1,4 @@
+UReturnExpression -> USimpleNameReferenceExpression (identifier = field) -> KtUltraLightMethodForSourceDeclaration:getWithSetter: getWithSetter
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = field) -> KtUltraLightMethodForSourceDeclaration:setWithSetter: setWithSetter
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = p) -> Light Parameter: p

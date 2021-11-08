@@ -1,0 +1,38 @@
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithType) -> LightVariableBuilder:varWithType: varWithType
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithoutType) -> LightVariableBuilder:varWithoutType: varWithoutType
+    UReturnExpression -> USimpleNameReferenceExpression (identifier = result) -> LightVariableBuilder:result: result
+UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+    ULocalVariable (name = a) -> USimpleNameReferenceExpression (identifier = arg) -> Fir Light Parameter arg: arg
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+    ULocalVariable (name = var708e23eb) -> USimpleNameReferenceExpression (identifier = arg) -> Fir Light Parameter arg: arg
+    UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
+    UTypeReferenceExpression (name = java.util.List<? extends T>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = at) -> LightVariableBuilder:at: at
+    UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    ULocalVariable (name = tsl) -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = tl) -> LightVariableBuilder:tl: tl
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = map) -> FUN: map
+        UReturnExpression -> UQualifiedReferenceExpression -> null: null
+        UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> FUNCTION_LITERAL: <anonymous>
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+    UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+    UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = ListOfLists) -> TYPEALIAS: ListOfLists
+    UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends T>>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+    UTypeReferenceExpression (name = java.util.List<? extends T>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> FirLightTypeParameter:T: T
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:parameterizedFoo) -> USimpleNameReferenceExpression (identifier = parameterizedFoo) -> FirLightSimpleMethodForSymbol:parameterizedFoo: parameterizedFoo
+    UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = emptyList) -> FUN: emptyList

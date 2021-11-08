@@ -1,0 +1,8 @@
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
+    UBinaryExpression (operator = <other>) -> USimpleNameReferenceExpression (identifier = to) -> PsiMethod:to: to
+    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PsiClass:Suppress: Suppress
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = data) -> Light Parameter: data
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
+    UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = Pair) -> PsiClass:Pair: Pair
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String

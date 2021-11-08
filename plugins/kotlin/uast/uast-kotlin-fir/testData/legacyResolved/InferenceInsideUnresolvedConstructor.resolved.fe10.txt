@@ -1,0 +1,6 @@
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Unresolved) -> null: null
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:id) -> USimpleNameReferenceExpression (identifier = id) -> KtUltraLightMethodForSourceDeclaration:id: id
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UReturnExpression -> USimpleNameReferenceExpression (identifier = x) -> Light Parameter: x

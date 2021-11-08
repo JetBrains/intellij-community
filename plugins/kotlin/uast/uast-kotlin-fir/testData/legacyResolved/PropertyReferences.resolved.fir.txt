@@ -1,0 +1,58 @@
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getMutableProp: getMutableProp
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = init) -> Fir Light Parameter init: init
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+    ULocalVariable (name = result) -> USimpleNameReferenceExpression (identifier = privateProp) -> KtLightField:privateProp: privateProp
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = privateProp) -> KtLightField:privateProp: privateProp
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> KtLightField:privateProp: privateProp
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = x) -> Fir Light Parameter x: x
+    UReturnExpression -> USimpleNameReferenceExpression (identifier = privateProp) -> KtLightField:privateProp: privateProp
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightConstructorForSymbol:A: A
+    UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> FUN: unaryMinus
+    UPrefixExpression (operator = -) -> UQualifiedReferenceExpression -> FirLightAccessorMethodForSymbol:getMutableProp: getMutableProp
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:getMutableProp: getMutableProp
+    UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getMutableProp: getMutableProp
+    UBinaryExpression (operator = +=) -> UQualifiedReferenceExpression -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = +=) -> FirLightAccessorMethodForSymbol:getMutableProp: getMutableProp
+    UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UPrefixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = ++) -> FUN: inc
+    UPrefixExpression (operator = ++) -> UQualifiedReferenceExpression -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UPostfixExpression (operator = --) -> UQualifiedReferenceExpression -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = --) -> FUN: dec
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:class A(init: Int) {
+    private var privateProp = 0 // accesses should be field accesses
+    var mutableProp: Int
+    init {
+        mutableProp = init
+    }
+
+    fun add(x: Int): Int {
+        val result = privateProp
+        privateProp = x
+        return privateProp
+    }
+}: A
+    UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> FUN: unaryMinus
+    UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:getMutableProp: getMutableProp
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getMutableProp: getMutableProp
+    UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = +=) -> FirLightAccessorMethodForSymbol:getMutableProp: getMutableProp
+    UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UPrefixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = ++) -> FUN: inc
+    UPrefixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = mutableProp) -> FirLightAccessorMethodForSymbol:setMutableProp: setMutableProp
+    UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = --) -> FUN: dec

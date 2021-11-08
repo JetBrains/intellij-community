@@ -1,0 +1,4 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = Style) -> USimpleNameReferenceExpression (identifier = Style) -> KtUltraLightMethodForSourceDeclaration:Style: Style
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String

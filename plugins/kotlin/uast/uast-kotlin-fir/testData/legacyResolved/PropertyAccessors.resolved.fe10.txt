@@ -1,0 +1,17 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UReturnExpression -> UQualifiedReferenceExpression -> PsiMethod:toString: toString
+UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> KtUltraLightClass:class PropertyTest {
+    var stringRepresentation: String
+        get() = this.toString()
+        set(value) {
+            setDataFromString(value)
+        }
+
+    fun setDataFromString(data: String) {
+
+    }
+}: PropertyTest
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> PsiMethod:toString: toString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:setDataFromString) -> USimpleNameReferenceExpression (identifier = setDataFromString) -> KtUltraLightMethodForSourceDeclaration:setDataFromString: setDataFromString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:setDataFromString) -> USimpleNameReferenceExpression (identifier = value) -> Light Parameter: value
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String

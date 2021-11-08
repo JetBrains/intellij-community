@@ -1,0 +1,79 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> FirLightConstructorForSymbol:A:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:A) -> UQualifiedReferenceExpression -> null: null
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> CLASS: Long
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A(val str: String) {
+
+    constructor(i: Int) : this(i.toString())
+
+    open fun foo(a: Long) {}
+
+}: A
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:A) -> USimpleNameReferenceExpression (identifier = param) -> Fir Light Parameter param: param
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A(val str: String) {
+
+    constructor(i: Int) : this(i.toString())
+
+    open fun foo(a: Long) {}
+
+}: A
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> FirLightConstructorForSymbol:A:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:A) -> USimpleNameReferenceExpression (identifier = p) -> Fir Light Parameter p: p
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> FirLightConstructorForSymbol:A:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to FirLightConstructorForSymbol:A) -> USimpleNameReferenceExpression (identifier = i) -> Fir Light Parameter i: i
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> CLASS: Long
+    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    USuperExpression (label = null) -> USimpleNameReferenceExpression (identifier = super) -> FirLightClassForSymbol:open class A(val str: String) {
+
+    constructor(i: Int) : this(i.toString())
+
+    open fun foo(a: Long) {}
+
+}: A
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightSimpleMethodForSymbol:foo: foo
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:foo) -> USimpleNameReferenceExpression (identifier = a) -> Fir Light Parameter a: a
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A(val str: String) {
+
+    constructor(i: Int) : this(i.toString())
+
+    open fun foo(a: Long) {}
+
+}: A
+UField (name = anon) -> UObjectLiteralExpression -> FirLightConstructorForSymbol:A:
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A(val str: String) {
+
+    constructor(i: Int) : this(i.toString())
+
+    open fun foo(a: Long) {}
+
+}: A
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:cons) -> USimpleNameReferenceExpression (identifier = cons) -> FirLightSimpleMethodForSymbol:cons: cons
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:cons) -> UObjectLiteralExpression -> FirLightConstructorForSymbol:A:
+    UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A(val str: String) {
+
+    constructor(i: Int) : this(i.toString())
+
+    open fun foo(a: Long) {}
+
+}: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A(val str: String) {
+
+    constructor(i: Int) : this(i.toString())
+
+    open fun foo(a: Long) {}
+
+}: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:open class A(val str: String) {
+
+    constructor(i: Int) : this(i.toString())
+
+    open fun foo(a: Long) {}
+
+}: A

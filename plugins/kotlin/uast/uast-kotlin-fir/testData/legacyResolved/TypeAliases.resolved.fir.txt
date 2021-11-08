@@ -1,0 +1,5 @@
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:class A: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:class A: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> FirLightClassForSymbol:class A: A
+UTypeReferenceExpression (name = kotlin.jvm.functions.Function2<? super A,? super A,? extends A>) -> USimpleNameReferenceExpression (identifier = F) -> TYPEALIAS: F
+UTypeReferenceExpression (name = kotlin.jvm.functions.Function2<? super A,? super A,? extends A>) -> USimpleNameReferenceExpression (identifier = F) -> TYPEALIAS: F

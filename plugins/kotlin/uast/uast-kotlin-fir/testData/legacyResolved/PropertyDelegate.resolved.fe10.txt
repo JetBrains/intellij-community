@@ -1,0 +1,5 @@
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:lazy) -> USimpleNameReferenceExpression (identifier = lazy) -> PsiMethod:lazy: lazy
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:lazy) -> USimpleNameReferenceExpression (identifier = lazy) -> PsiMethod:lazy: lazy
+UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PsiClass:Suppress: Suppress
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:lazy) -> USimpleNameReferenceExpression (identifier = lazy) -> PsiMethod:lazy: lazy
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> null: null

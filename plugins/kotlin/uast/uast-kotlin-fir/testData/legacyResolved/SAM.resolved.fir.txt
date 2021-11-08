@@ -1,0 +1,63 @@
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiClass:Thread: Thread
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> PsiClass:Thread: Thread
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiClass:Runnable: Runnable
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiClass:Callable: Callable
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util.concurrent: concurrent
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util: util
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = util) -> PsiPackage:java.util: util
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = concurrent) -> PsiPackage:java.util.concurrent: concurrent
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Callable) -> PsiClass:Callable: Callable
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiClass:Supplier: Supplier
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util.function: function
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util: util
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = util) -> PsiPackage:java.util: util
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = function) -> PsiPackage:java.util.function: function
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Supplier) -> PsiClass:Supplier: Supplier
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = foo) -> FirLightAccessorMethodForSymbol:setFoo: setFoo
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> FirLightAccessorMethodForSymbol:getFoo: getFoo
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
+    UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+    UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+    UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:runRunnable) -> USimpleNameReferenceExpression (identifier = runRunnable) -> FirLightSimpleMethodForSymbol:runRunnable: runRunnable
+UField (name = baz) -> UQualifiedReferenceExpression -> null: null
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = r) -> null: null
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to PsiMethod:Thread) -> USimpleNameReferenceExpression (identifier = Thread) -> PsiMethod:Thread: Thread
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to PsiMethod:Thread) -> USimpleNameReferenceExpression (identifier = Thread) -> PsiMethod:Thread: Thread
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:ambiguousSamAcceptor) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> FirLightSimpleMethodForSymbol:ambiguousSamAcceptor: ambiguousSamAcceptor
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Supplier) -> PsiClass:Supplier: Supplier
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to FirLightSimpleMethodForSymbol:ambiguousSamAcceptor) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> FirLightSimpleMethodForSymbol:ambiguousSamAcceptor: ambiguousSamAcceptor
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Callable) -> PsiClass:Callable: Callable
+UTypeReferenceExpression (name = java.util.function.Supplier<java.lang.String>) -> USimpleNameReferenceExpression (identifier = Supplier) -> PsiClass:Supplier: Supplier
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
+UTypeReferenceExpression (name = java.util.concurrent.Callable<java.lang.String>) -> USimpleNameReferenceExpression (identifier = Callable) -> PsiClass:Callable: Callable
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
