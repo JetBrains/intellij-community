@@ -9,7 +9,7 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolve
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> UQualifiedReferenceExpression -> null: null
 UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = String) -> OBJECT_DECLARATION: Companion
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> null: null
-UTypeReferenceExpression (name = test.pkg.Context) -> USimpleNameReferenceExpression (identifier = Context) -> FirLightClassForSymbol:class Context {
+UTypeReferenceExpression (name = test.pkg.Context) -> USimpleNameReferenceExpression (identifier = Context) -> KtUltraLightClass:class Context {
     inline fun <reified T> ownSystemService1() = getSystemService(T::class.java)
     inline fun ownSystemService2() = getSystemService(String::class.java)
 }: Context
@@ -17,7 +17,7 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolve
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> UQualifiedReferenceExpression -> null: null
 UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = T) -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> null: null
-UTypeReferenceExpression (name = test.pkg.Context) -> USimpleNameReferenceExpression (identifier = Context) -> FirLightClassForSymbol:class Context {
+UTypeReferenceExpression (name = test.pkg.Context) -> USimpleNameReferenceExpression (identifier = Context) -> KtUltraLightClass:class Context {
     inline fun <reified T> ownSystemService1() = getSystemService(T::class.java)
     inline fun ownSystemService2() = getSystemService(String::class.java)
 }: Context

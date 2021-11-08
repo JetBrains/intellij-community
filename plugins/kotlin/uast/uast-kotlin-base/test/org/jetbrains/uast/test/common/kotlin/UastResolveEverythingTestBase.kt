@@ -4,6 +4,8 @@
  */
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
@@ -23,13 +25,40 @@ interface UastResolveEverythingTestBase : UastPluginSelection, UastFileCompariso
     fun check(filePath: String, file: UFile) {
         val resolvedFile = getPluginResolvedFile(filePath)
 
-        KotlinTestUtils.assertEqualsToFile(resolvedFile, file.resolvableWithTargets())
+        KotlinTestUtils.assertEqualsToFile(resolvedFile, file.resolvableWithTargets(::renderLightElementDifferently))
 
         cleanUpIdenticalFile(
             resolvedFile,
             getResolvedFile(filePath, "$counterpartSuffix$TXT"),
             getIdenticalResolvedFile(filePath),
             kind = "resolved"
+        )
+    }
+
+    fun renderLightElementDifferently(element: PsiElement?): String {
+        var str = element.toString()
+        if (!isFirUastPlugin || element !is KtLightElement<*, *>) return str
+        // NB: all declarations in FIR LC are internal, so type checking won't work.
+        TAG.forEach { (firLC, uLC) -> str = str.replace(firLC, uLC) }
+        REGEX.forEach { (firRegex, uLC) -> str = firRegex.replace(str, uLC) }
+        return str
+    }
+
+    companion object {
+        private val TAG: Map<String, String> = mapOf(
+            "FirLightAnnotationClassSymbol" to "KtUltraLightClass",
+            "FirLightClassForSymbol" to "KtUltraLightClass",
+            "FirLightInterfaceClassSymbol" to "KtUltraLightClass",
+
+            "FirLightSimpleMethodForSymbol" to "KtUltraLightMethodForSourceDeclaration",
+            "FirLightAccessorMethodForSymbol" to "KtUltraLightMethodForSourceDeclaration",
+            "FirLightConstructorForSymbol" to "KtUltraLightMethodForSourceDeclaration",
+
+            "FirLightTypeParameter:" to "Light PSI class: ",
+        )
+
+        private val REGEX: Map<Regex, String> = mapOf(
+            Regex("Fir Light Parameter .+$") to "Light Parameter",
         )
     }
 }

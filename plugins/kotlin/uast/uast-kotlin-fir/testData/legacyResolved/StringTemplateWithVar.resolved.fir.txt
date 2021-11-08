@@ -1,2 +1,0 @@
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = bar) -> FirLightAccessorMethodForSymbol:getBar: getBar
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = bar) -> FirLightAccessorMethodForSymbol:getBar: getBar

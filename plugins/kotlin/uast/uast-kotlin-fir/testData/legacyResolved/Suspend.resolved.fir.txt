@@ -2,13 +2,13 @@ null -> UQualifiedReferenceExpression -> PsiPackage:test.pkg: pkg
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = test) -> PsiPackage:test: test
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = pkg) -> PsiPackage:test.pkg: pkg
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:suspendPrivate) -> USimpleNameReferenceExpression (identifier = suspendPrivate) -> FirLightSimpleMethodForSymbol:suspendPrivate: suspendPrivate
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:suspendPrivate) -> USimpleNameReferenceExpression (identifier = suspendPrivate) -> KtUltraLightMethodForSourceDeclaration:suspendPrivate: suspendPrivate
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:inner) -> USimpleNameReferenceExpression (identifier = inner) -> FirLightSimpleMethodForSymbol:inner: inner
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:inner) -> USimpleNameReferenceExpression (identifier = inner) -> KtUltraLightMethodForSourceDeclaration:inner: inner
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
 UReturnExpression -> UQualifiedReferenceExpression -> null: null
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = Context) -> FirLightClassForSymbol:class Context {
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = Context) -> KtUltraLightClass:class Context {
     suspend fun inner(): Int = suspendPrivate()
     private suspend fun suspendPrivate(): Int = inner()
 }: Context
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to FirLightSimpleMethodForSymbol:inner) -> USimpleNameReferenceExpression (identifier = inner) -> FirLightSimpleMethodForSymbol:inner: inner
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:inner) -> USimpleNameReferenceExpression (identifier = inner) -> KtUltraLightMethodForSourceDeclaration:inner: inner
