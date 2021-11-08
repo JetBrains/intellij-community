@@ -38,7 +38,7 @@ public final class LaterInvocator {
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
 
   // Per-project modal entities
-  private static final Map<Project, List<Dialog>> projectToModalEntities = ContainerUtil.createWeakMap();
+  private static final Map<Project, List<Dialog>> projectToModalEntities = ContainerUtil.createWeakMap(); // accessed in EDT only
   private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap(); // accessed in EDT only
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);// guarded by ourModalityStack
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
@@ -183,12 +183,10 @@ public final class LaterInvocator {
 
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true, dialog);
 
-    List<Dialog> modalEntitiesList = projectToModalEntities.getOrDefault(project, ContainerUtil.createLockFreeCopyOnWriteList());
-    projectToModalEntities.put(project, modalEntitiesList);
+    List<Dialog> modalEntitiesList = projectToModalEntities.computeIfAbsent(project, __->ContainerUtil.createLockFreeCopyOnWriteList());
     modalEntitiesList.add(dialog);
 
-    Stack<ModalityState> modalEntitiesStack = projectToModalEntitiesStack.getOrDefault(project, new Stack<>(ModalityState.NON_MODAL));
-    projectToModalEntitiesStack.put(project, modalEntitiesStack);
+    Stack<ModalityState> modalEntitiesStack = projectToModalEntitiesStack.computeIfAbsent(project, __->new Stack<>(ModalityState.NON_MODAL));
     modalEntitiesStack.push(new ModalityStateEx(ourModalEntities));
   }
 
@@ -199,6 +197,7 @@ public final class LaterInvocator {
    */
   @ApiStatus.Internal
   public static void markTransparent(@NotNull ModalityState state) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ((ModalityStateEx)state).markTransparent();
     reincludeSkippedItemsAndRequestFlush();
   }
@@ -262,6 +261,7 @@ public final class LaterInvocator {
 
   @TestOnly
   public static void leaveAllModals() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     while (!ourModalEntities.isEmpty()) {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
@@ -319,6 +319,7 @@ public final class LaterInvocator {
   }
 
   private static void reincludeSkippedItemsAndRequestFlush() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ourEdtQueue.reincludeSkippedItems();
   }
 
