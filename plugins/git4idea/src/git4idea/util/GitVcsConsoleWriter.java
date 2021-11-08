@@ -112,7 +112,7 @@ public final class GitVcsConsoleWriter {
   }
 
   private void showMessage(@Nullable VcsConsoleLine line) {
-    if (line == null) return;
+    if (myProject.isDisposed()) return;
     ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(line);
   }
 }
