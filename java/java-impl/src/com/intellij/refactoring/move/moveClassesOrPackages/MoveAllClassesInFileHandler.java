@@ -22,9 +22,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+/**
+ * Provides helpers to handle psi classes containing in the same psi file.
+ * Depending on implementation e.g. for Java or Drools different types of psi classes are considered.
+ */
 public abstract class MoveAllClassesInFileHandler {
   public static final ExtensionPointName<MoveAllClassesInFileHandler> EP_NAME =
     new ExtensionPointName<>("com.intellij.refactoring.moveAllClassesInFileHandler");
 
-  public abstract void processMoveAllClassesInFile(@NotNull Map<PsiClass, Boolean> allClasses, PsiClass psiClass, PsiElement... elementsToMove);
+  /**
+   * Helps to find psi classes containing in the same psi file with <code>psiClass</code> and put them as keys
+   * into <code>allClasses</code>.
+   * If all the found classes are going to be moved i.e. all of them contain in <code>elementsToMove</code>,
+   * then <code>true</code> value will be set for each entry in <code>allClasses</code>.
+   * If at least one is not going to be moved, code>false</code> value will be set then.
+   *
+   * <p> The method should be called under read action.
+   */
+  public abstract void processMoveAllClassesInFile(@NotNull Map<PsiClass, Boolean> allClasses, @NotNull PsiClass psiClass,
+                                                   PsiElement... elementsToMove);
 }
+

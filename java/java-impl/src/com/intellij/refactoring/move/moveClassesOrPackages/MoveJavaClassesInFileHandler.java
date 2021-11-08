@@ -12,7 +12,7 @@ import java.util.Map;
 public class MoveJavaClassesInFileHandler extends MoveAllClassesInFileHandler {
 
   @Override
-  public void processMoveAllClassesInFile(@NotNull Map<PsiClass, Boolean> allClasses, PsiClass psiClass, PsiElement... elementsToMove) {
+  public void processMoveAllClassesInFile(@NotNull Map<PsiClass, Boolean> allClasses, @NotNull PsiClass psiClass, PsiElement... elementsToMove) {
     if (psiClass instanceof LightClass) return;
     final PsiClassOwner containingFile = (PsiClassOwner)psiClass.getContainingFile();
     final PsiClass[] classes = containingFile.getClasses();
