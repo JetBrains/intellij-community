@@ -52,7 +52,6 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 public class RefManagerImpl extends RefManager {
@@ -526,8 +525,6 @@ public class RefManagerImpl extends RefManager {
 
   private class ProjectIterator extends PsiElementVisitor {
 
-    private final AtomicLong lastClearedTimeStamp = new AtomicLong();
-
     @Override
     public void visitElement(@NotNull PsiElement element) {
       ProgressManager.checkCanceled();
@@ -619,11 +616,7 @@ public class RefManagerImpl extends RefManager {
           }
         }
       }
-      long timeStamp = System.currentTimeMillis();
-      long last = lastClearedTimeStamp.get();
-      if (timeStamp - last >= 500 && lastClearedTimeStamp.compareAndSet(last, timeStamp)) {
-        myPsiManager.dropResolveCaches();
-      }
+      myPsiManager.dropResolveCaches();
     }
   }
 
