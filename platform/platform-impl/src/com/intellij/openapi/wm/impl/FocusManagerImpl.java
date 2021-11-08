@@ -201,8 +201,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
       IdeFrame frame = getLastFocusedFrame();
       if (frame != null) {
         LOG.assertTrue(frame instanceof Window);
+        result = myLastFocusedAtDeactivation.get(frame);
       }
-      result = myLastFocusedAtDeactivation.get(frame);
     }
     else if (myRunContext != null) {
       result = myRunContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
