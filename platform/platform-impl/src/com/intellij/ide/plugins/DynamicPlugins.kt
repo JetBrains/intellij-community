@@ -162,7 +162,15 @@ object DynamicPlugins {
       }
     }
 
-    var comparator = PluginSetBuilder.getTopologicalComparator(allPlugins)
+    // todo make internal:
+    //  1) ModuleGraphBase;
+    //  2) SortedModuleGraph;
+    //  3) SortedModuleGraph.topologicalComparator;
+    //  4) PluginSetBuilder.sortedModuleGraph.
+    var comparator = PluginSetBuilder(allPlugins)
+      .moduleGraph
+      .topologicalComparator
+
     if (!load) {
       comparator = comparator.reversed()
     }

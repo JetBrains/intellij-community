@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("ReplaceGetOrSet", "ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
@@ -18,25 +19,19 @@ import java.util.function.Supplier
 @ApiStatus.Internal
 class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
 
-  companion object {
-
-    fun getTopologicalComparator(allPlugins: List<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
-      return ModuleGraphImpl.createModuleGraph(allPlugins).topologicalComparator
-    }
-  }
-
-  @get:JvmName("getModuleGraph")
-  internal val moduleGraph = ModuleGraphImpl.createModuleGraph(unsortedPlugins)
+  private val _moduleGraph = ModuleGraphBase.createModuleGraph(unsortedPlugins)
+  private val builder = _moduleGraph.builder()
+  val moduleGraph: SortedModuleGraph = _moduleGraph.sorted(builder)
 
   private val enabledPluginIds = HashMap<PluginId, IdeaPluginDescriptorImpl>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<String, IdeaPluginDescriptorImpl>(unsortedPlugins.size * 2)
 
   fun checkPluginCycles(errors: MutableList<Supplier<String>>) {
-    if (moduleGraph.builder.isAcyclic) {
+    if (builder.isAcyclic) {
       return
     }
 
-    for (component in moduleGraph.builder.components) {
+    for (component in builder.components) {
       if (component.size < 2) {
         continue
       }
@@ -160,7 +155,7 @@ class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
     val enabledPlugins = java11Shim.copyOfCollection(sortedPlugins.filterTo(ArrayList(sortedPlugins.size)) { it.isEnabled })
 
     return PluginSet(
-      moduleGraphImpl = moduleGraph,
+      moduleGraph = moduleGraph,
       allPlugins = allPlugins,
       enabledPlugins = enabledPlugins,
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),

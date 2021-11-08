@@ -11,52 +11,44 @@ import java.util.*
 @ApiStatus.Internal
 interface ModuleGraph : Graph<IdeaPluginDescriptorImpl> {
 
-  fun getDependencies(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl>
+  fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl>
 
-  fun getDependents(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl>
+  fun getDependents(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl>
 }
 
 @ApiStatus.Internal
-internal class ModuleGraphImpl private constructor(
-  val builder: DFSTBuilder<IdeaPluginDescriptorImpl>,
-  modules: Collection<IdeaPluginDescriptorImpl>,
-  directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-  directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+open class ModuleGraphBase protected constructor(
+  private val modules: Collection<IdeaPluginDescriptorImpl>,
+  private val directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+  private val directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
 ) : ModuleGraph {
 
-  internal val topologicalComparator: Comparator<IdeaPluginDescriptorImpl> = toCoreAwareComparator(builder.comparator())
+  override fun getNodes(): Collection<IdeaPluginDescriptorImpl> = Collections.unmodifiableCollection(modules)
 
-  private val modules = modules.sortedWith(topologicalComparator)
-  private val directDependencies = copySorted(directDependencies)
-  private val directDependents = copySorted(directDependents)
-
-  private fun copySorted(
-    from: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-  ): Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> {
-    val result = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(from.size)
-    from.mapValuesTo(result) {
-      it.value.sortedWith(topologicalComparator)
-    }
-    return result
-  }
-
-  override fun getNodes(): List<IdeaPluginDescriptorImpl> = Collections.unmodifiableList(modules)
-
-  override fun getDependencies(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl> {
+  override fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
     return directDependencies.getOrEmpty(descriptor)
   }
 
   override fun getIn(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependencies(descriptor).iterator()
 
-  override fun getDependents(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl> {
+  override fun getDependents(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
     return directDependents.getOrEmpty(descriptor)
   }
 
   override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependents(descriptor).iterator()
 
+  fun builder() = DFSTBuilder(this, null, true)
+
+  fun sorted(builder: DFSTBuilder<IdeaPluginDescriptorImpl> = builder()) = SortedModuleGraph(
+    topologicalComparator = toCoreAwareComparator(builder.comparator()),
+    modules = modules,
+    directDependencies = directDependencies,
+    directDependents = directDependents,
+  )
+
   companion object {
 
-    internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraphImpl {
+    internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraphBase {
       val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
       val modules = ArrayList<IdeaPluginDescriptorImpl>(moduleMap.size)
       for (module in plugins) {
@@ -114,20 +106,11 @@ internal class ModuleGraphImpl private constructor(
         }
       }
 
-      val graph = object : Graph<IdeaPluginDescriptorImpl> {
-        override fun getNodes() = modules
-
-        override fun getIn(descriptor: IdeaPluginDescriptorImpl) = directDependencies.getOrEmpty(descriptor).iterator()
-
-        override fun getOut(descriptor: IdeaPluginDescriptorImpl) = directDependents.getOrEmpty(descriptor).iterator()
-      }
-
-      return ModuleGraphImpl(
-        builder = DFSTBuilder(graph, null, true),
-        modules = modules,
-        directDependencies = directDependencies,
-        directDependents = directDependents,
-      )
+      return object : ModuleGraphBase(
+        modules,
+        directDependencies,
+        directDependents,
+      ) {}
     }
 
     private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
@@ -143,8 +126,34 @@ internal class ModuleGraphImpl private constructor(
       }
     }
 
-    private fun Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>.getOrEmpty(descriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl> {
+    private fun Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>.getOrEmpty(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
       return getOrDefault(descriptor, Collections.emptyList())
+    }
+  }
+}
+
+@ApiStatus.Internal
+class SortedModuleGraph(
+  val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>,
+  modules: Collection<IdeaPluginDescriptorImpl>,
+  directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+  directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+) : ModuleGraphBase(
+  modules = modules.sortedWith(topologicalComparator),
+  directDependencies = directDependencies.copySorted(topologicalComparator),
+  directDependents = directDependents.copySorted(topologicalComparator)
+) {
+
+  companion object {
+
+    private fun Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>.copySorted(
+      comparator: Comparator<IdeaPluginDescriptorImpl>,
+    ): Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> {
+      val result = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(size)
+      mapValuesTo(result) {
+        it.value.sortedWith(comparator)
+      }
+      return result
     }
   }
 }
@@ -171,7 +180,6 @@ private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
   // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
   return idMap.get(PluginManagerCore.JAVA_MODULE_ID.idString)
 }
-
 
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
                                                  idMap: Map<String, IdeaPluginDescriptorImpl>,

@@ -9,16 +9,13 @@ import org.jetbrains.annotations.TestOnly
 // if otherwise not specified, `module` in terms of v2 plugin model
 @ApiStatus.Internal
 class PluginSet internal constructor(
-  @JvmField internal val moduleGraphImpl: ModuleGraphImpl,
+  val moduleGraph: ModuleGraph,
   @JvmField val allPlugins: List<IdeaPluginDescriptorImpl>,
   @JvmField val enabledPlugins: List<IdeaPluginDescriptorImpl>,
   private val enabledModuleMap: Map<String, IdeaPluginDescriptorImpl>,
   private val enabledPluginAndV1ModuleMap: Map<PluginId, IdeaPluginDescriptorImpl>,
   private val enabledModules: List<IdeaPluginDescriptorImpl>,
 ) {
-
-  val moduleGraph: ModuleGraph
-    get() = moduleGraphImpl
 
   fun getRawListOfEnabledModules() = enabledModules
 
