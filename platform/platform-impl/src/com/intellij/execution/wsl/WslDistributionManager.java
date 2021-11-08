@@ -59,7 +59,7 @@ public abstract class WslDistributionManager implements Disposable {
    * @see #getInstalledDistributionsFuture
    */
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
-    if (!WSLUtil.isSystemCompatible()) return List.of();
+    if (!isAvailable()) return List.of();
     CachedDistributions cachedDistributions = myInstalledDistributions;
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return cachedDistributions.myInstalledDistributions;
@@ -77,12 +77,16 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   public @NotNull CompletableFuture<List<WSLDistribution>> getInstalledDistributionsFuture() {
-    if (!WSLUtil.isSystemCompatible()) return CompletableFuture.completedFuture(List.of());
+    if (!isAvailable()) return CompletableFuture.completedFuture(List.of());
     CachedDistributions cachedDistributions = myInstalledDistributions;
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return CompletableFuture.completedFuture(cachedDistributions.myInstalledDistributions);
     }
     return CompletableFuture.supplyAsync(this::getInstalledDistributions, AppExecutorUtil.getAppExecutorService());
+  }
+
+  protected boolean isAvailable() {
+    return WSLUtil.isSystemCompatible();
   }
 
   /**
