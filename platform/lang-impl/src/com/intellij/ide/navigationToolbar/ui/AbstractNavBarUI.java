@@ -89,8 +89,9 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       int offset = rect.x;
       if (!item.isFirstElement()) {
         NavBarItem.CHEVRON_ICON.paintIcon(item, g, offset, rect.y + (rect.height - NavBarItem.CHEVRON_ICON.getIconHeight()) / 2);
-        offset += NavBarItem.CHEVRON_ICON.getIconWidth();
-        rect.width -= NavBarItem.CHEVRON_ICON.getIconWidth();
+        int delta = NavBarItem.CHEVRON_ICON.getIconWidth() + JBUI.CurrentTheme.StatusBar.Breadcrumbs.CHEVRON_INSET.get();
+        offset += delta;
+        rect.width -= delta;
       }
 
       paintHighlight(g, navbar, item, new Rectangle(offset, rect.y, rect.width, rect.height));
