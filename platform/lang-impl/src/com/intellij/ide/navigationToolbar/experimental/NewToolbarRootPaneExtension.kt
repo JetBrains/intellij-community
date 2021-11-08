@@ -49,7 +49,7 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
 
   private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(project)
   private val runWidgetListener = RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
-    onChange()
+    NewToolbarRootPaneExtension.getInstance(project)?.revalidate()
   }
 
   init {
@@ -58,7 +58,7 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
     project.messageBus
       .connect(this)
       .subscribe(NewToolbarPaneListener.TOPIC, NewToolbarPaneListener {
-        onChange()
+        NewToolbarRootPaneExtension.getInstance(project)?.revalidate()
       })
 
     runWidgetAvailabilityManager.addListener(runWidgetListener)
@@ -93,18 +93,6 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
         component.add(toolbar as JComponent, layoutConstrains)
       }
     }
-
-    project.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
-  }
-
-  private fun onChange() {
-    val rootPaneExtension = IdeRootPaneNorthExtension.EP_NAME
-                              .getExtensionsIfPointIsRegistered(project)
-                              .find { it is NewToolbarRootPaneExtension }
-                            ?: return
-
-    doLayout(rootPaneExtension.component)
-    rootPaneExtension.revalidate()
   }
 }
 
@@ -115,9 +103,15 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     private const val NEW_TOOLBAR_KEY = "NEW_TOOLBAR_KEY"
 
     private val logger = logger<NewToolbarRootPaneExtension>()
+
+    fun getInstance(project: Project): IdeRootPaneNorthExtension? {
+      return EP_NAME.getExtensionsIfPointIsRegistered(project)
+        .find { it is NewToolbarRootPaneExtension }
+    }
   }
 
   private val panel: JPanel = object : JPanel(NewToolbarBorderLayout()) {
+
     init {
       isOpaque = true
       border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))
@@ -130,7 +124,10 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
 
   override fun getKey() = NEW_TOOLBAR_KEY
 
-  override fun getComponent(): JComponent = panel
+  override fun getComponent(): JComponent {
+    revalidate()
+    return panel
+  }
 
   override fun uiSettingsChanged(settings: UISettings) {
     logger.info("Show old main toolbar: ${settings.showMainToolbar}; show old navigation bar: ${settings.showNavigationBar}")
@@ -139,14 +136,19 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     panel.isEnabled = toolbarSettings.isEnabled
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
 
-    project.service<NewToolbarRootPaneManager>().doLayout(panel)
-    revalidate()
+    panel.revalidate()
+    panel.repaint()
   }
 
   override fun copy() = NewToolbarRootPaneExtension(project)
 
   override fun revalidate() {
-    panel.revalidate()
-    panel.repaint()
+    if (project.isDisposed) {
+      logger.warn("Project '$project' disposal has already been initiated.")
+      return
+    }
+
+    project.service<NewToolbarRootPaneManager>().doLayout(panel)
+    project.service<StatusBarWidgetsManager>().updateAllWidgets()
   }
 }
