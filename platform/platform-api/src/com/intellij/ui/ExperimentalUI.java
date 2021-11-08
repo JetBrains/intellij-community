@@ -104,6 +104,7 @@ public final class ExperimentalUI {
 
   private static IconPathPatcher createPathPatcher() {
     HashMap<String, String> paths = new HashMap<>();
+    paths.put("general/chevron-right.svg", "/expui/general/chevronRight.svg");
     paths.put("nodes/class.svg", "/expui/nodes/class.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
     paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
