@@ -27,8 +27,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 public class TextComponentEmptyText extends StatusText {
-  public static final String STATUS_VISIBLE_FUNCTION = "StatusVisibleFunction";
-
   private final JTextComponent myOwner;
   private String myStatusTriggerText = "";
 

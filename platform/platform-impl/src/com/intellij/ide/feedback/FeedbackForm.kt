@@ -20,7 +20,6 @@ import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.panel
@@ -139,8 +138,8 @@ class FeedbackForm(
               ApplicationBundle.message("feedback.form.evaluation.details.emptyText")
             else
               ApplicationBundle.message("feedback.form.details.emptyText")
-            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                              BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
+            putClientProperty(JBTextArea.STATUS_VISIBLE_FUNCTION,
+              BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
             addKeyListener(object : KeyAdapter() {
               override fun keyPressed(e: KeyEvent) {
                 if (e.keyCode == KeyEvent.VK_TAB) {
