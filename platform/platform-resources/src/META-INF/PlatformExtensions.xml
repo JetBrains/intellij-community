@@ -1039,7 +1039,7 @@
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>
 
-    <experimentalFeature id="new.project.wizard" percentOfUsers="0">
+    <experimentalFeature id="new.project.wizard" percentOfUsers="100">
       <description>New project wizard</description>
     </experimentalFeature>
 
