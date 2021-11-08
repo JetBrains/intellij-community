@@ -1,3 +1,4 @@
+// IGNORE_FIR
 // PROBLEM: none
 
 abstract class A {
