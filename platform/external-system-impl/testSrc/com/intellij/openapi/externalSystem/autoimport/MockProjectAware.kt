@@ -51,7 +51,7 @@ class MockProjectAware(
     _settingsFiles.add(path)
   }
 
-  override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
+  override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
     eventDispatcher.addListener(Listener.create(listener), parentDisposable)
     subscribeCounter.incrementAndGet()
     Disposer.register(parentDisposable, Disposable { unsubscribeCounter.incrementAndGet() })
@@ -148,11 +148,11 @@ class MockProjectAware(
     }, parentDisposable)
   }
 
-  interface Listener : ExternalSystemProjectRefreshListener, EventListener {
+  interface Listener : ExternalSystemProjectListener, EventListener {
     fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) {}
 
     companion object {
-      fun create(listener: ExternalSystemProjectRefreshListener) = object : Listener {
+      fun create(listener: ExternalSystemProjectListener) = object : Listener {
         override fun onProjectReloadStart() = listener.onProjectReloadStart()
         override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) = listener.onProjectReloadFinish(status)
       }

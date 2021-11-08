@@ -127,7 +127,7 @@ class ProjectSettingsTracker(
   fun afterApplyChanges(listener: () -> Unit) = applyChangesOperation.afterOperation(listener)
 
   init {
-    projectAware.subscribe(ProjectRefreshListener(), parentDisposable)
+    projectAware.subscribe(ProjectListener(), parentDisposable)
     whenNewFilesCreated(settingsAsyncSupplier::invalidate, parentDisposable)
     subscribeOnDocumentsAndVirtualFilesChanges(settingsAsyncSupplier, ProjectSettingsListener(), parentDisposable)
   }
@@ -146,7 +146,7 @@ class ProjectSettingsTracker(
     fun hasChanges() = updated.isNotEmpty() || created.isNotEmpty() || deleted.isNotEmpty()
   }
 
-  private inner class ProjectRefreshListener : ExternalSystemProjectRefreshListener {
+  private inner class ProjectListener : ExternalSystemProjectListener {
     private lateinit var settingsFilesCRC: Map<String, Long>
 
     override fun onProjectReloadStart() {
