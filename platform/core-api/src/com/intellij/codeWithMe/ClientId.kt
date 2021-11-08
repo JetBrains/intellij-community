@@ -64,7 +64,7 @@ data class ClientId(val value: String) {
     @JvmStatic
     val isCurrentlyUnderLocalId: Boolean
       get() {
-        val clientIdValue = ClientIdService.tryGetInstance()?.clientIdValue
+        val clientIdValue = getCachedService()?.clientIdValue
         return clientIdValue == null || clientIdValue == localId.value
       }
 
@@ -82,7 +82,7 @@ data class ClientId(val value: String) {
     @ApiStatus.Internal
     // optimization method for avoiding allocating ClientId in the hot path
     fun getCurrentValue(): String {
-      val service = ClientIdService.tryGetInstance()
+      val service = getCachedService()
       return if (service == null) localId.value else service.clientIdValue ?: localId.value
     }
 
@@ -91,7 +91,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     val currentOrNull: ClientId?
-      get() = ClientIdService.tryGetInstance()?.clientIdValue?.let(::ClientId)
+      get() = getCachedService()?.clientIdValue?.let(::ClientId)
 
     /**
      * Overrides the ID that is considered to be local to this process. Can be only invoked once.
@@ -134,7 +134,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     val ClientId?.isValid: Boolean
-      get() = ClientIdService.tryGetInstance()?.isValid(this) ?: true
+      get() = getCachedService()?.isValid(this) ?: true
 
     /**
      * Returns a disposable object associated with the given ID.
@@ -142,7 +142,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     fun ClientId?.toDisposable(): Disposable {
-      return ClientIdService.tryGetInstance()?.toDisposable(this) ?: Disposer.newDisposable()
+      return getCachedService()?.toDisposable(this) ?: Disposer.newDisposable()
     }
 
     /**
@@ -188,7 +188,7 @@ data class ClientId(val value: String) {
 
     class ClientIdAccessToken(val oldClientIdValue: String?) : AccessToken() {
       override fun finish() {
-        ClientIdService.tryGetInstance()?.clientIdValue = oldClientIdValue
+        getCachedService()?.clientIdValue = oldClientIdValue
       }
     }
     @JvmStatic
@@ -198,7 +198,7 @@ data class ClientId(val value: String) {
     }
     @JvmStatic
     fun withClientId(clientIdValue: String): AccessToken {
-      val service = ClientIdService.tryGetInstance()
+      val service = getCachedService()
       val oldClientIdValue: String?
       oldClientIdValue = service?.clientIdValue
       if (service == null || clientIdValue == oldClientIdValue) return AccessToken.EMPTY_ACCESS_TOKEN
@@ -210,6 +210,17 @@ data class ClientId(val value: String) {
 
       service.clientIdValue = newClientIdValue
       return ClientIdAccessToken(oldClientIdValue)
+    }
+
+    private var service:ClientIdService? = null
+    private fun getCachedService(): ClientIdService? {
+      var cached = service
+      if (cached != null) return cached
+      cached = ClientIdService.tryGetInstance()
+      if (cached != null) {
+        service = cached
+      }
+      return cached
     }
 
     @JvmStatic
