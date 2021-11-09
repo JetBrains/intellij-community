@@ -69,6 +69,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_BREADCRUMBS = true;
     public boolean ENABLE_RENDERED_DOC = false;
     public boolean SHOW_INTENTION_PREVIEW = false;
+    public boolean USE_EDITOR_FONT_IN_INLAYS = false;
 
     public boolean SMART_HOME = true;
 
@@ -742,5 +743,13 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setCaretStopOptions(@NotNull CaretStopOptions options) {
     myOsSpecificState.CARET_STOP_OPTIONS = options;
+  }
+
+  public boolean isUseEditorFontInInlays() {
+    return myOptions.USE_EDITOR_FONT_IN_INLAYS;
+  }
+
+  public void setUseEditorFontInInlays(boolean value) {
+    myOptions.USE_EDITOR_FONT_IN_INLAYS = value;
   }
 }

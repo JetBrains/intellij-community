@@ -3,8 +3,10 @@ package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
@@ -34,18 +36,26 @@ class InlayTextMetricsStorage(val editor: EditorImpl) {
   @RequiresEdt
   fun getFontMetrics(small: Boolean): InlayTextMetrics {
     var metrics: InlayTextMetrics?
+
+    val familyName = if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
+      EditorColorsManager.getInstance().globalScheme.editorFontName
+    } else {
+      UIUtil.getLabelFont().family
+    }
+    val fontType = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).fontType
+
     if (small) {
       metrics = smallTextMetrics
       val fontSize = smallTextSize
-      if (metrics == null || !metrics.isActual(smallTextSize)) {
-        metrics = InlayTextMetrics.create(editor, fontSize)
+      if (metrics == null || !metrics.isActual(smallTextSize, familyName)) {
+        metrics = InlayTextMetrics.create(editor, fontSize, fontType)
         smallTextMetrics = metrics
       }
     } else {
       metrics = normalTextMetrics
       val fontSize = normalTextSize
-      if (metrics == null || !metrics.isActual(normalTextSize)) {
-        metrics = InlayTextMetrics.create(editor, fontSize)
+      if (metrics == null || !metrics.isActual(normalTextSize, familyName)) {
+        metrics = InlayTextMetrics.create(editor, fontSize, fontType)
         normalTextMetrics = metrics
       }
     }
@@ -57,18 +67,24 @@ class InlayTextMetrics(
   private val editor: EditorImpl,
   val fontHeight: Int,
   val fontBaseline: Int,
-  private val fontMetrics: FontMetrics
+  private val fontMetrics: FontMetrics,
+  val fontType: Int
 ) {
   companion object {
-    fun create(editor: EditorImpl, size: Int) : InlayTextMetrics {
-      val editorFont = EditorUtil.getEditorFont()
-      val font = editorFont.deriveFont(size.toFloat())
+    fun create(editor: EditorImpl, size: Int, fontType: Int) : InlayTextMetrics {
+      val font = if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
+        val editorFont = EditorUtil.getEditorFont()
+        editorFont.deriveFont(fontType, size.toFloat())
+      } else {
+        val familyName = UIUtil.getLabelFont().family
+        UIUtil.getFontWithFallback(familyName, fontType, size)
+      }
       val context = getCurrentContext(editor)
       val metrics = FontInfo.getFontMetrics(font, context)
       // We assume this will be a better approximation to a real line height for a given font
       val fontHeight = ceil(font.createGlyphVector(context, "Albpq@").visualBounds.height).toInt()
       val fontBaseline = ceil(font.createGlyphVector(context, "Alb").visualBounds.height).toInt()
-      return InlayTextMetrics(editor, fontHeight, fontBaseline, metrics)
+      return InlayTextMetrics(editor, fontHeight, fontBaseline, metrics, fontType)
     }
 
     private fun getCurrentContext(editor: Editor): FontRenderContext {
@@ -88,9 +104,9 @@ class InlayTextMetrics(
   val descent: Int
     get() = editor.descent
 
-  fun isActual(size: Int) : Boolean {
+  fun isActual(size: Int, familyName: String) : Boolean {
     if (size != font.size) return false
-    if (font.family != EditorColorsManager.getInstance().globalScheme.editorFontName) return false
+    if (font.family != familyName) return false
     return getCurrentContext(editor).equals(fontMetrics.fontRenderContext)
   }
 
