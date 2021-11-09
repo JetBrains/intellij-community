@@ -53,19 +53,15 @@ class KotlinGradleProjectData : AbstractExternalEntityData(GradleConstants.SYSTE
 }
 
 @IntellijInternalApi
-val DataNode<GradleSourceSetData>.kotlinGradleSourceSetDataOrFail: KotlinGradleSourceSetData
-    get() = kotlinGradleSourceSetDataOrNull ?: error("Failed to determine KotlinGradleSourceSetData for $this")
+val DataNode<KotlinGradleProjectData>.kotlinGradleSourceSetDataNodes: Collection<DataNode<KotlinGradleSourceSetData>>
+    get() = ExternalSystemApiUtil.findAll(this, KotlinGradleSourceSetData.KEY)
 
-internal val DataNode<GradleSourceSetData>.kotlinGradleSourceSetDataOrNull: KotlinGradleSourceSetData?
-    get() = ExternalSystemApiUtil.getChildren(this, KotlinGradleSourceSetData.KEY).singleOrNull()?.data
-
-class KotlinGradleSourceSetData @PropertyMapping("externalName") constructor(externalName: String) :
-    AbstractNamedData(GradleConstants.SYSTEM_ID, externalName), ImplementedModulesAware {
-
-    val sourceSetName: String
-        get() = externalName.substringAfterLast(":")
+class KotlinGradleSourceSetData @PropertyMapping("sourceSetName") constructor(val sourceSetName: String?) :
+    AbstractExternalEntityData(GradleConstants.SYSTEM_ID), ImplementedModulesAware {
 
     lateinit var cachedArgsInfo: CachedExtractedArgsInfo
+
+    var isProcessed: Boolean = false
 
     @Suppress("DEPRECATION")
     @Deprecated("Use cachedArgsInfo instead", level = DeprecationLevel.ERROR)
