@@ -1178,7 +1178,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
   @Test
   public void testUsingMirrors() throws Exception {
     setRepositoryPath(myDir.getPath() + "/repo");
-    String mirrorPath = FileUtil.toSystemIndependentName(myDir.getPath() + "/mirror");
+    String mirrorPath = myPathTransformer.toRemotePath(FileUtil.toSystemIndependentName(myDir.getPath() + "/mirror"));
 
     updateSettingsXmlFully("<settings>" +
                            "  <mirrors>" +

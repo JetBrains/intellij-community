@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenServerConnector;
 import org.jetbrains.idea.maven.server.MavenServerConnectorImpl;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.awt.*;
@@ -62,6 +63,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   private MavenProgressIndicator myProgressIndicator;
   private MavenEmbeddersManager myEmbeddersManager;
   private WSLDistribution myWSLDistribution;
+  protected RemotePathTransformerFactory.Transformer myPathTransformer;
 
   private File ourTempDir;
 
@@ -82,6 +84,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     setUpFixtures();
     myProject = myTestFixture.getProject();
+    myPathTransformer = RemotePathTransformerFactory.createForProject(myProject);
     setupWsl();
     ensureTempDirCreated();
 

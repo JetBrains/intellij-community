@@ -439,7 +439,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     Promise<?> promise = myProjectsManager.waitForImportCompletion();
     PlatformTestUtil.waitForPromise(promise);
 
-    
 
     if (failOnReadingError) {
       for (MavenProject each : myProjectsTree.getProjects()) {
