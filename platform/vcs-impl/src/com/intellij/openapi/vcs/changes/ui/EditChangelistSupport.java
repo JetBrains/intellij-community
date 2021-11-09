@@ -11,14 +11,32 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * @author Dmitry Avdeev
+ * Allows customizing create / edit change list UI.
+ * And also used for customizing commit message component.
  */
 public interface EditChangelistSupport {
 
   ExtensionPointName<EditChangelistSupport> EP_NAME = ExtensionPointName.create("com.intellij.editChangelistSupport");
 
+  /**
+   * Customizes change list name and comment components.
+   * E.g. could be used to install completion to these components.
+   * <p>
+   * Also customizes commit message component. In this case {@code name} and {@code comment} are equal.
+   *
+   * @param name    change list name component or commit message component
+   * @param comment change list comment component or commit message component
+   */
   void installSearch(@NotNull EditorTextField name, @NotNull EditorTextField comment);
 
+  /**
+   * Allows adding custom components to create / edit change list UI.
+   * And reacting to successful change list creation or edition.
+   *
+   * @param bottomPanel panel to add custom components
+   * @param initial     change list being edited or {@code null} if new change list is created
+   * @return callback to call after change list is successfully created or edited
+   */
   @Nullable Consumer<@NotNull LocalChangeList> addControls(@NotNull JPanel bottomPanel, @Nullable LocalChangeList initial);
 
   /**

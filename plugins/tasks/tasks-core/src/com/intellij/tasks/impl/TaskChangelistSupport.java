@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Dmitry Avdeev
- */
 public final class TaskChangelistSupport implements EditChangelistSupport {
   private final Project myProject;
   private final TaskManagerImpl myTaskManager;
