@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCall
+import org.jetbrains.kotlin.analysis.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -54,7 +55,7 @@ internal fun KtAnalysisSession.toPsiClass(
 
 internal fun KtAnalysisSession.toPsiMethod(ktCall: KtCall): PsiMethod? {
     if (ktCall.isErrorCall) return null
-    val psi = ktCall.targetFunction.candidates.singleOrNull()?.psi ?: return null
+    val psi = ktCall.targetFunction.getSingleCandidateSymbolOrNull()?.psi ?: return null
     try {
         return psi.getRepresentativeLightMethod()
     } catch (e: IllegalStateException) {
