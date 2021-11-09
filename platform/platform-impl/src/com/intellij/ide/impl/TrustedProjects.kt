@@ -149,7 +149,7 @@ fun Project.setTrusted(value: Boolean) {
     trustedPaths.setProjectPathTrusted(path, value)
 
     if (value && oldValue != ThreeState.YES) {
-      ApplicationManager.getApplication().messageBus.syncPublisher(TrustChangeNotifier.TOPIC).projectTrusted(this)
+      ApplicationManager.getApplication().messageBus.syncPublisher(TrustChangeListener.TOPIC).onProjectTrusted(this)
     }
   }
 }
@@ -210,14 +210,20 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
     }
 }
 
+/**
+ * Listens to the change of the project trusted state, i.e. when a non-trusted project becomes trusted (the vice versa is not possible).
+ */
 @ApiStatus.Experimental
-fun interface TrustChangeNotifier {
-  fun projectTrusted(project: Project)
+fun interface TrustChangeListener {
+  /**
+   * Executed when the project becomes trusted.
+   */
+  fun onProjectTrusted(project: Project)
 
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic.create("Trusted project status", TrustChangeNotifier::class.java)
+    val TOPIC = Topic.create("Trusted project status", TrustChangeListener::class.java)
   }
 }
 
