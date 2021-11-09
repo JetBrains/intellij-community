@@ -77,10 +77,14 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
 
   @Override
   public boolean hasConfiguredAnnotationRoot(@NotNull PsiModifierListOwner owner) {
-   final List<OrderEntry> entries = 
+    VirtualFile file = PsiUtilCore.getVirtualFile(owner);
+    if (file == null) {
+      return false;
+    }
+    final List<OrderEntry> entries = 
      ProjectRootManager.getInstance(owner.getProject())
        .getFileIndex()
-       .getOrderEntriesForFile(Objects.requireNonNull(PsiUtilCore.getVirtualFile(owner)));
+       .getOrderEntriesForFile(file);
 
     return entries.stream().anyMatch(entry -> entry instanceof LibraryOrSdkOrderEntry &&
                                               ContainerUtil.filter(AnnotationOrderRootType.getFiles(entry), VirtualFile::isInLocalFileSystem).size() == 1);
