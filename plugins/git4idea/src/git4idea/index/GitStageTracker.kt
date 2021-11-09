@@ -141,7 +141,7 @@ open class GitStageTracker(val project: Project) : Disposable {
 
     if (pathsToDirty.isNotEmpty()) {
       LOG.debug("Mark dirty on index VFiles save: ", pathsToDirty)
-      VcsDirtyScopeManager.getInstance(project).filePathsDirty(pathsToDirty, emptyList())
+      dirtyScopeManager.filePathsDirty(pathsToDirty, emptyList())
     }
   }
 
