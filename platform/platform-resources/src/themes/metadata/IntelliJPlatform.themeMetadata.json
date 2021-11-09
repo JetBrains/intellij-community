@@ -541,6 +541,18 @@
       "description": "Color of the text in notification balloon"
     },
     {
+      "key": "Notification.linkForeground",
+      "description": "Color of link actions in the notification."
+    },
+    {
+      "key": "Notification.arc",
+      "description": "Corners radius"
+    },
+    {
+      "key": "Notification.insets",
+      "description": "Top/Left/Bottom/Right insets of the notification"
+    },
+    {
       "key": "Notification.MoreButton.background",
       "description": "The \"# more\" area in a notification. Appears when there are several notifications of the same type"
     },
