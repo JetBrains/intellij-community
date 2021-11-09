@@ -82,6 +82,23 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
     assertEquals("[\"123]", text);
   }
 
+  public void testBindFieldsFromParameters() {
+    configureFromFileText("Test.java",
+                          "public class Test {\n" +
+                          "    Test(int <caret>a, String b) {\n" +
+                          "\n" +
+                          "    }\n" +
+                          "}\n");
+    IntentionAction action = findActionWithText("Bind constructor parameters to fields");
+    assertNotNull(action);
+    String text = getPreviewText(action);
+    assertEquals("public class Test {\n" +
+                 "    private final int a;private final String b;Test(int a, String b) {\n" +
+                 "\n" +
+                 "    this.a = a;this.b = b;}\n" +
+                 "}\n", text);
+  }
+
   @Override
   protected void setupEditorForInjectedLanguage() {
     // we want to stay at host editor
