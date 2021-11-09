@@ -143,13 +143,10 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
    */
   override fun revalidate() {
     if (ToolbarSettings.Instance.isEnabled && ToolbarSettings.Instance.isVisible) {
-      val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as CenterToolbarGroup?
-      val toolBar = Objects.requireNonNull(group)?.let {
-        ActionManagerEx.getInstanceEx()
-          .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, it as ActionGroup, true)
-      }
-      toolBar?.targetComponent = null
-      toolBar?.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
+      val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? CenterToolbarGroup ?: return
+      val toolBar = ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
+      toolBar.targetComponent = null
+      toolBar.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
       myPanel.add(toolBar as JComponent, BorderLayout.CENTER)
     }
   }
