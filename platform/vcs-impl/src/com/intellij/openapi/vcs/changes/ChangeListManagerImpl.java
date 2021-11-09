@@ -1441,10 +1441,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @TestOnly
   public boolean ensureUpToDate() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      updateImmediately();
-      return true;
-    }
     waitUntilRefreshed();
     return true;
   }
