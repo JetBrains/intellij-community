@@ -148,39 +148,6 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/incremental/multiModule/jvm")
-    public static class Jvm extends AbstractIncrementalJvmJpsTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("circular")
-        public void testCircular() throws Exception {
-            runTest("testData/incremental/multiModule/jvm/circular/");
-        }
-
-        @TestMetadata("circularDependencyClasses")
-        public void testCircularDependencyClasses() throws Exception {
-            runTest("testData/incremental/multiModule/jvm/circularDependencyClasses/");
-        }
-
-        @TestMetadata("circularDependencySamePackageUnchanged")
-        public void testCircularDependencySamePackageUnchanged() throws Exception {
-            runTest("testData/incremental/multiModule/jvm/circularDependencySamePackageUnchanged/");
-        }
-
-        @TestMetadata("circularDependencyTopLevelFunctions")
-        public void testCircularDependencyTopLevelFunctions() throws Exception {
-            runTest("testData/incremental/multiModule/jvm/circularDependencyTopLevelFunctions/");
-        }
-
-        @TestMetadata("circularDependencyWithAccessToInternal")
-        public void testCircularDependencyWithAccessToInternal() throws Exception {
-            runTest("testData/incremental/multiModule/jvm/circularDependencyWithAccessToInternal/");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/incremental/multiModule/multiplatform/custom")
     public static class Custom extends AbstractIncrementalJvmJpsTest {
         private void runTest(String testDataFilePath) throws Exception {
