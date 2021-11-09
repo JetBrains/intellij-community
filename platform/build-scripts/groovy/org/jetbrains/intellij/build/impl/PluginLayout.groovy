@@ -9,10 +9,7 @@ import org.jetbrains.intellij.build.PluginBundlingRestrictions
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.BiConsumer
-import java.util.function.BiFunction
-import java.util.function.BiPredicate
-import java.util.function.UnaryOperator
+import java.util.function.*
 
 /**
  * Describes layout of a plugin in the product distribution
@@ -60,14 +57,23 @@ final class PluginLayout extends BaseLayout {
    * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
    */
   static PluginLayout plugin(@NotNull String mainModuleName, @DelegatesTo(PluginLayoutSpec) Closure body = {}) {
+    plugin(mainModuleName, new Consumer<PluginLayoutSpec>() {
+      @Override
+      void accept(PluginLayoutSpec spec) {
+        body.delegate = spec
+        body()
+      }
+    })
+  }
+
+  static PluginLayout plugin(@NotNull String mainModuleName, @NotNull Consumer<PluginLayoutSpec> body) {
     if (mainModuleName.isEmpty()) {
       throw new IllegalArgumentException("mainModuleName must be not empty")
     }
 
     PluginLayout layout = new PluginLayout(mainModuleName)
     PluginLayoutSpec spec = new PluginLayoutSpec(layout)
-    body.delegate = spec
-    body()
+    body.accept(spec)
     layout.directoryName = spec.directoryName
     if (!layout.getIncludedModuleNames().contains(mainModuleName)) {
       layout.withModule(mainModuleName, layout.mainJarName)
@@ -97,6 +103,16 @@ final class PluginLayout extends BaseLayout {
     else {
       withModuleImpl(moduleName, mainJarName)
     }
+  }
+
+  void withGeneratedResources(BiConsumer<Path, BuildContext> generator) {
+    resourceGenerators.add(new Pair<>(new BiFunction<Path, BuildContext, Path>() {
+      @Override
+      Path apply(Path targetDir, BuildContext context) {
+        generator.accept(targetDir, context)
+        return null
+      }
+    }, ""))
   }
 
   @CompileStatic
@@ -216,13 +232,7 @@ final class PluginLayout extends BaseLayout {
     }
 
     void withGeneratedResources(BiConsumer<Path, BuildContext> generator) {
-      layout.resourceGenerators.add(new Pair<>(new BiFunction<Path, BuildContext, Path>() {
-        @Override
-        Path apply(Path targetDir, BuildContext context) {
-          generator.accept(targetDir, context)
-          return null
-        }
-      }, ""))
+      layout.withGeneratedResources(generator)
     }
 
     /**
