@@ -1,32 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency.Data.Artifact
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency.Data.Module
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.InspectionResult
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.InspectionResult.*
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
 
 class DummyDependenciesContributor(private val project: Project) : DependenciesContributor {
-  override fun getProjectName(projectId: ExternalSystemProjectId): String {
-    return PathUtil.getFileName(projectId.externalProjectPath)
+  override fun getExternalProjectName(externalProjectPath: String): String {
+    return PathUtil.getFileName(externalProjectPath)
   }
 
-  override fun getProjectIds() = listOf(
-    ExternalSystemProjectId(ProjectSystemId("DUMMY"), project.basePath!! + "/parent1"),
-    ExternalSystemProjectId(ProjectSystemId("DUMMY"), project.basePath!! + "/parent2"),
-    ExternalSystemProjectId(ProjectSystemId("DUMMY"), project.basePath!! + "/module")
+  override fun getExternalProjectPaths() = listOf(
+    project.basePath!! + "/parent1",
+    project.basePath!! + "/parent2",
+    project.basePath!! + "/module"
   )
 
-  override fun getRoot(projectId: ExternalSystemProjectId): Dependency {
-    return Dependency(Module(PathUtil.getFileName(projectId.externalProjectPath)), null)
+  override fun getRoot(externalProjectPath: String): Dependency {
+    return Dependency(Module(PathUtil.getFileName(externalProjectPath)), null)
   }
 
-  override fun getDependencies(projectId: ExternalSystemProjectId, dependency: Dependency): List<Dependency> {
+  override fun getDependencies(externalProjectPath: String, dependency: Dependency): List<Dependency> {
     return when (dependency.data.id) {
       "parent1" -> listOf(
         Dependency(Artifact("org.hamcrest", "hamcrest", "2.2"), dependency),
@@ -71,15 +69,15 @@ class DummyDependenciesContributor(private val project: Project) : DependenciesC
     }
   }
 
-  override fun getVariances(projectId: ExternalSystemProjectId, dependency: Dependency): List<Dependency> {
+  override fun getVariances(externalProjectPath: String, dependency: Dependency): List<Dependency> {
     val result = ArrayList<Dependency>()
     val queue = ArrayDeque<List<Dependency.Data>>()
-    for (variance in getVariances(projectId, dependency.data)) {
+    for (variance in getVariances(externalProjectPath, dependency.data)) {
       queue.addLast(listOf(variance))
     }
     while (queue.isNotEmpty()) {
       val path = queue.removeFirst()
-      val usages = getUsages(projectId, path.last())
+      val usages = getUsages(externalProjectPath, path.last())
       for (usage in usages) {
         queue.add(path + usage)
       }
@@ -94,8 +92,8 @@ class DummyDependenciesContributor(private val project: Project) : DependenciesC
     return result
   }
 
-  private fun getVariances(projectId: ExternalSystemProjectId, dependency: Dependency.Data): List<Dependency.Data> {
-    if (getProjectName(projectId) == "module") {
+  private fun getVariances(projectId: String, dependency: Dependency.Data): List<Dependency.Data> {
+    if (getExternalProjectName(projectId) == "module") {
       when (dependency.id) {
         "org.hamcrest:hamcrest:2.2", "org.hamcrest:hamcrest:1.3" ->
           return listOf(
@@ -112,13 +110,13 @@ class DummyDependenciesContributor(private val project: Project) : DependenciesC
     return listOf(dependency)
   }
 
-  private fun getUsages(projectId: ExternalSystemProjectId, dependency: Dependency.Data): List<Dependency.Data> {
+  private fun getUsages(projectId: String, dependency: Dependency.Data): List<Dependency.Data> {
     return when (dependency.id) {
-      "parent1" -> when (getProjectName(projectId)) {
+      "parent1" -> when (getExternalProjectName(projectId)) {
         "module" -> listOf(Module("module"))
         else -> emptyList()
       }
-      "parent2" -> when (getProjectName(projectId)) {
+      "parent2" -> when (getExternalProjectName(projectId)) {
         "module" -> listOf(Module("module"))
         else -> emptyList()
       }
@@ -166,11 +164,11 @@ class DummyDependenciesContributor(private val project: Project) : DependenciesC
     }
   }
 
-  override fun getDependencyScopes(projectId: ExternalSystemProjectId): List<String> {
+  override fun getDependencyScopes(externalProjectPath: String): List<String> {
     return listOf("compile", "runtime", "provided", "test", "system", "import")
   }
 
-  override fun getDependencyScope(projectId: ExternalSystemProjectId, dependency: Dependency): String {
+  override fun getDependencyScope(externalProjectPath: String, dependency: Dependency): String {
     return when (dependency.data.id) {
       "org.hamcrest:hamcrest-core:1.3" -> "compile"
       "org.hamcrest:hamcrest:2.2" -> "compile"
@@ -185,7 +183,7 @@ class DummyDependenciesContributor(private val project: Project) : DependenciesC
     }
   }
 
-  override fun getInspectionResult(projectId: ExternalSystemProjectId, dependency: Dependency): List<InspectionResult> {
+  override fun getInspectionResult(externalProjectPath: String, dependency: Dependency): List<InspectionResult> {
     when (dependency.data.id) {
       "org.hamcrest:hamcrest-core:1.3" ->
         if (matchesUsagePathPrefix(dependency.usage, "parent2", "module")) {

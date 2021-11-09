@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.UIComponentVirtualFile
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,23 +15,23 @@ import javax.swing.JComponent
 abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
   abstract fun getSystemId(e: AnActionEvent): ProjectSystemId?
 
-  abstract fun getProjectId(e: AnActionEvent): ExternalSystemProjectId?
+  abstract fun getExternalProjectPath(e: AnActionEvent): String?
 
   abstract fun getDependency(e: AnActionEvent): DependenciesContributor.Dependency?
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val systemId = getSystemId(e) ?: return
-    val projectId = getProjectId(e)
+    val externalProjectPath = getExternalProjectPath(e)
     val dependency = getDependency(e)
     val contributor = DependencyAnalyzerExtension.findContributor(project, systemId) ?: return
     val dependencyAnalyzerView = DependencyAnalyzerViewImpl(contributor)
-    if (projectId != null) {
+    if (externalProjectPath != null) {
       if (dependency != null) {
-        dependencyAnalyzerView.setSelectedDependency(projectId, dependency)
+        dependencyAnalyzerView.setSelectedDependency(externalProjectPath, dependency)
       }
       else {
-        dependencyAnalyzerView.setSelectedProjectId(projectId)
+        dependencyAnalyzerView.setSelectedExternalProject(externalProjectPath)
       }
     }
     val editorTabName = ExternalSystemBundle.message("external.system.dependency.analyzer.editor.tab.name")
