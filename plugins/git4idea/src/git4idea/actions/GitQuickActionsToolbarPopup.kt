@@ -55,11 +55,11 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
       AllIcons.Vcs.BranchNode
     }
     else {
-      presentation.icon.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+      templatePresentation.icon.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
     }
 
     presentation.text = if (noRepo) {
-      presentation.text + " "
+      templatePresentation.text + " "
     }
     else {
       ""
