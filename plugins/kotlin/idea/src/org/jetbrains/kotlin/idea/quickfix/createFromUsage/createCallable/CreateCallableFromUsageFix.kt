@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.isAbstract
+import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.classValueType
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
@@ -121,16 +122,16 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                             ?.theType
                     } else null
 
-                    val isCompanionReceiver = receiverTypeInfo.staticContextRequired
+                    val staticContextRequired = receiverTypeInfo.staticContextRequired
 
                     if (receiverType != null) {
-                        if (isExtension && !isCompanionReceiver) {
+                        if (isExtension && !staticContextRequired) {
                             val receiverTypeText = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(receiverType)
                             val isFunctionType = receiverType.constructor.declarationDescriptor is FunctionClassDescriptor
                             append(if (isFunctionType) "($receiverTypeText)" else receiverTypeText).append('.')
                         } else {
                             receiverType.constructor.declarationDescriptor?.let {
-                                val companionText = if (isCompanionReceiver) ".Companion" else ""
+                                val companionText = if (staticContextRequired && it !is JavaClassDescriptor) ".Companion" else ""
                                 val receiverText =
                                     IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderClassifierName(it) + companionText
                                 append(receiverText).append('.')
@@ -227,11 +228,12 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         return DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)
     }
 
-    private fun getDeclarationIfApplicable(project: Project, candidate: TypeCandidate, isCompanionReceiver: Boolean): PsiElement? {
+    private fun getDeclarationIfApplicable(project: Project, candidate: TypeCandidate, staticContextRequired: Boolean): PsiElement? {
         val descriptor = candidate.theType.constructor.declarationDescriptor ?: return null
+        if (isExtension && staticContextRequired && descriptor is JavaClassDescriptor) return null
         val declaration = getDeclaration(descriptor, project) ?: return null
         if (declaration !is KtClassOrObject && declaration !is KtTypeParameter && declaration !is PsiClass) return null
-        return if ((isExtension && !isCompanionReceiver) || declaration.canRefactor()) declaration else null
+        return if ((isExtension && !staticContextRequired) || declaration.canRefactor()) declaration else null
     }
 
     private fun checkIsInitialized() {
@@ -290,14 +292,14 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                 it
         }
         if (receiverTypeCandidates.isNotEmpty()) {
-            val isCompanionReceiver = receiverTypeInfo.staticContextRequired
+            val staticContextRequired = receiverTypeInfo.staticContextRequired
             val containers = receiverTypeCandidates
-                .mapNotNull { candidate -> getDeclarationIfApplicable(project, candidate, isCompanionReceiver)?.let { candidate to it } }
+                .mapNotNull { candidate -> getDeclarationIfApplicable(project, candidate, staticContextRequired)?.let { candidate to it } }
 
             chooseContainerElementIfNecessary(containers, editorForBuilder, popupTitle, false, { it.second }) {
                 runBuilder {
                     val receiverClass = it.second as? KtClass
-                    if (isCompanionReceiver && receiverClass?.isWritable == true) {
+                    if (staticContextRequired && receiverClass?.isWritable == true) {
                         val hasCompanionObject = receiverClass.companionObjects.isNotEmpty()
                         val companionObject = receiverClass.getOrCreateCompanionObject()
                         if (!hasCompanionObject && this@CreateCallableFromUsageFixBase.isExtension) companionObject.body?.delete()
