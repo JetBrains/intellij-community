@@ -62,24 +62,29 @@ class ComposeMppModuleTemplate : Template() {
         else -> module
     }
 
-    override fun Writer.runArbitratyTask(module: ModuleIR): TaskResult<Unit> = inContextOfModuleConfigurator(module.originalModule) {
-        val javaPackage = module.originalModule.javaPackage(pomIR())
-        val mpp = mppSources(javaPackage) {
-            mppFile("platform.kt") {
-                function("getPlatformName(): String") {
-                    actualFor(ModuleSubType.jvm, actualBody = """return "Desktop" """)
-                    actualFor(ModuleSubType.android, actualBody = """return "Android" """)
-                    default("""return "Platform" """)
+    override fun Writer.runArbitratyTask(module: ModuleIR): TaskResult<Unit> {
+        val webSubmodule = module.originalModule.subModules.filter({ it.template is ComposeWebModuleTemplate }).firstOrNull()
+        if (webSubmodule != null) return UNIT_SUCCESS //disabling platform.kt creation for web module
+
+        return inContextOfModuleConfigurator(module.originalModule) {
+            val javaPackage = module.originalModule.javaPackage(pomIR())
+            val mpp = mppSources(javaPackage) {
+                mppFile("platform.kt") {
+                    function("getPlatformName(): String") {
+                        actualFor(ModuleSubType.jvm, actualBody = """return "Desktop" """)
+                        actualFor(ModuleSubType.android, actualBody = """return "Android" """)
+                        default("""return "Platform" """)
+                    }
+                }
+                filesFor(ModuleSubType.common) {
+                    file(FileTemplateDescriptor("composeMpp/App.kt.vm", relativePath = null), "App.kt", SourcesetType.main)
+                }
+                filesFor(ModuleSubType.jvm) {
+                    file(FileTemplateDescriptor("composeMpp/DesktopApp.kt.vm", relativePath = null), "DesktopApp.kt", SourcesetType.main)
                 }
             }
-            filesFor(ModuleSubType.common) {
-                file(FileTemplateDescriptor("composeMpp/App.kt.vm", relativePath = null), "App.kt", SourcesetType.main)
-            }
-            filesFor(ModuleSubType.jvm) {
-                file(FileTemplateDescriptor("composeMpp/DesktopApp.kt.vm", relativePath = null), "DesktopApp.kt", SourcesetType.main)
-            }
+            applyMppStructure(mpp, module.originalModule, module.path)
         }
-        applyMppStructure(mpp, module.originalModule, module.path)
     }
 
     object DEPENDENCIES {
