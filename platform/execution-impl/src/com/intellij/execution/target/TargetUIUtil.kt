@@ -7,8 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.JBInsets
 import java.util.function.Supplier
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 fun textFieldWithBrowseTargetButton(row: Row,
                                     targetType: BrowsableTargetEnvironmentType,
@@ -27,4 +31,14 @@ fun textFieldWithBrowseTargetButton(row: Row,
   return row.component(textFieldWithBrowseButton).withBinding(TextFieldWithBrowseButton::getText,
                                                               TextFieldWithBrowseButton::setText,
                                                               property)
+}
+
+/**
+ * Workarounds cropping the focus highlighting frame around UI components (e.g. around text fields and combo boxes) when Kotlin UI DSL
+ * [panel] is placed inside arbitrary [JPanel].
+ *
+ * @receiver the panel where Kotlin UI DSL elements are placed
+ */
+fun <T : JComponent> T.fixHighlightingOfUiDslComponents(): T = apply {
+  border = IdeBorderFactory.createEmptyBorder(JBInsets(2, 0, 2, 2))
 }
