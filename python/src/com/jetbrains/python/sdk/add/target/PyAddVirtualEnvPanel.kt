@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.fixHighlightingOfUiDslComponents
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -119,6 +120,10 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
           ?.also { projectSync -> projectSync.extendDialogPanelWithOptionalFields(this) }
       }
     }
+
+    // workarounds the issue with cropping the focus highlighting
+    panel.fixHighlightingOfUiDslComponents()
+
     add(panel, BorderLayout.NORTH)
 
     if (targetEnvironmentConfiguration.isLocal()) {

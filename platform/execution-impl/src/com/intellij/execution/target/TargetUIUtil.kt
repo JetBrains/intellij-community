@@ -40,5 +40,5 @@ fun textFieldWithBrowseTargetButton(row: Row,
  * @receiver the panel where Kotlin UI DSL elements are placed
  */
 fun <T : JComponent> T.fixHighlightingOfUiDslComponents(): T = apply {
-  border = IdeBorderFactory.createEmptyBorder(JBInsets(2, 0, 2, 2))
+  border = IdeBorderFactory.createEmptyBorder(JBInsets(4, 0, 3, 3))
 }
