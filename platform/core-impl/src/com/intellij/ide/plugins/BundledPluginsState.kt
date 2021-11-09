@@ -14,65 +14,43 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.readLines
+import kotlin.io.path.writeText
 
 @ApiStatus.Internal
 class BundledPluginsState {
   init {
     if (shouldSave()) {
-      val bundledIds = mutableListOf<IdeaPluginDescriptor>()
-      val plugins = PluginManagerCore.getLoadedPlugins()
-      for (plugin in plugins) {
-        if (plugin.isBundled) {
-          bundledIds.add(plugin)
-        }
-      }
-      setBundledPlugins(bundledIds)
+      val bundledIds = PluginManagerCore.getLoadedPlugins().filter { it.isBundled }
+      saveBundledPluginsOrLog(bundledIds)
     }
   }
 
   companion object {
     const val BUNDLED_PLUGINS_FILENAME: @NonNls String = "bundled_plugins.txt"
-    const val SAVED_VERSION_KEY: @NonNls String = "bundled.plugins.list.saved.version"
+    private const val SAVED_VERSION_KEY: @NonNls String = "bundled.plugins.list.saved.version"
     private val logger = Logger.getInstance(this::class.java)
 
-    fun getBundledIdsForOtherIde(configDir: Path): List<PluginWithCategory>? {
-      return loadBundledPlugins(configDir)
-    }
-
+    @JvmStatic
     fun shouldSave(): Boolean {
-      val currentVersion = PropertiesComponent.getInstance().getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) } ?: return true
-      return PluginManagerCore.isRunningFromSources() || currentVersion < ApplicationInfo.getInstance().build
+      val savedVersion = PropertiesComponent.getInstance().getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) } ?: return true
+      return PluginManagerCore.isRunningFromSources() || savedVersion < ApplicationInfo.getInstance().build
     }
 
-    fun setBundledPlugins(plugins: List<IdeaPluginDescriptor>): Boolean {
-      return trySaveBundledPlugins(PathManager.getConfigDir().resolve(BUNDLED_PLUGINS_FILENAME), plugins)
-    }
-
-    private fun trySaveBundledPlugins(file: Path,
-                                      plugins: List<IdeaPluginDescriptor>): Boolean {
-      return try {
+    @JvmStatic
+    fun saveBundledPluginsOrLog(plugins: List<IdeaPluginDescriptor>) {
+      val file = PathManager.getConfigDir().resolve(BUNDLED_PLUGINS_FILENAME)
+      try {
         saveBundledPlugins(file, plugins)
         PropertiesComponent.getInstance().setValue(SAVED_VERSION_KEY, ApplicationInfo.getInstance().build.asString())
-        true
       }
       catch (e: IOException) {
         logger.warn("Unable to save bundled plugins list", e)
-        false
       }
     }
 
-    private fun saveBundledPlugins(file: Path,
-                                   plugins: List<IdeaPluginDescriptor>) {
-      NioFiles.createDirectories(file.parent)
-      Files.newBufferedWriter(file).use { writer ->
-        for (id in plugins) {
-          writer.write("${id.pluginId.idString} | ${id.category}")
-          writer.write('\n'.code)
-        }
-      }
-    }
-
-    private fun loadBundledPlugins(configDir: Path): List<PluginWithCategory>? {
+    @JvmStatic
+    fun getBundledPlugins(configDir: Path): List<PluginWithCategory>? {
       val file = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
       if (!file.exists()) {
         return null
@@ -82,19 +60,16 @@ class BundledPluginsState {
       }
       val bundledPlugins = mutableListOf<PluginWithCategory>()
       try {
-        Files.newBufferedReader(file).use { reader ->
-          var line: String?
-          while (reader.readLine().also { line = it } != null) {
-            val splitResult = line!!.split("|")
-            if (splitResult.size != 2) {
-              logger.warn("Incompatible format for bundled plugins list: $file")
-              return null
-            }
-            var (id, category) = splitResult
-            id = id.trim()
-            category = category.trim()
-            bundledPlugins.add(PluginWithCategory(PluginId.getId(id), if (category == "null") null else category))
+        file.readLines().map {
+          val splitResult = it.split("|")
+          if (splitResult.size != 2) {
+            logger.warn("Incompatible format for bundled plugins list: $file")
+            return null
           }
+          var (id, category) = splitResult
+          id = id.trim()
+          category = category.trim()
+          bundledPlugins.add(PluginWithCategory(PluginId.getId(id), if (category == "null") null else category))
         }
       }
       catch (e: IOException) {
@@ -104,6 +79,12 @@ class BundledPluginsState {
         return null
       }
       return bundledPlugins
+    }
+
+    private fun saveBundledPlugins(file: Path,
+                                   plugins: List<IdeaPluginDescriptor>) {
+      NioFiles.createDirectories(file.parent)
+      file.writeText(plugins.joinToString("") { "${it.pluginId.idString} | ${it.category}\n" })
     }
   }
 
