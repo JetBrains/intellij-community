@@ -17,7 +17,6 @@ import com.intellij.ui.svg.SvgDocumentFactoryKt;
 import com.intellij.ui.svg.SvgPrebuiltCacheManager;
 import com.intellij.ui.svg.SvgTranscoder;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
 import org.apache.batik.transcoder.TranscoderException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +35,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 @ApiStatus.Internal
@@ -46,6 +43,7 @@ public final class SVGLoader {
   private static final boolean USE_CACHE = Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"));
 
   private static SvgElementColorPatcherProvider ourColorPatcher;
+  private static SvgElementColorPatcherProvider ourSelectionColorPatcher;
   private static SvgElementColorPatcherProvider ourContextColorPatcher;
 
   private static volatile boolean ourIsColorRedefinitionContext = false;
@@ -341,7 +339,7 @@ public final class SVGLoader {
       }
     }
     if (isColorRedefinitionContext()) {
-      SvgElementColorPatcherProvider selectionPatcherProvider = getSelectionPatcherProvider();
+      SvgElementColorPatcherProvider selectionPatcherProvider = getColorPatcherProvider();
       if (selectionPatcherProvider != null) {
         SvgElementColorPatcher selectionPatcher = selectionPatcherProvider.forPath(url);
         if (selectionPatcher != null) {
@@ -355,14 +353,7 @@ public final class SVGLoader {
     ourContextColorPatcher = provider;
   }
 
-  private static SvgElementColorPatcherProvider getSelectionPatcherProvider() {
-    //todo[kb] move this code to a common place for LaFs and themes.
-    //HashMap<String, String> map = new HashMap<>();
-    //map.put("#f26522", "#e2987c");
-    //HashMap<String, Integer> alpha = new HashMap<>();
-    //alpha.put("#e2987c", 255);
-    //
-    //return newPatcher(null, map, alpha);
+  private static SvgElementColorPatcherProvider getColorPatcherProvider() {
     return ourContextColorPatcher;
   }
 
@@ -436,6 +427,11 @@ public final class SVGLoader {
     IconLoader.clearCache();
   }
 
+  public static void setSelectionColorPatcherProvider(@Nullable SvgElementColorPatcherProvider colorPatcher) {
+    ourSelectionColorPatcher = colorPatcher;
+    IconLoader.clearCache();
+  }
+
   public static void setColorRedefinitionContext(boolean isColorRedefinitionContext) {
     ourIsColorRedefinitionContext = isColorRedefinitionContext;
   }
@@ -448,66 +444,19 @@ public final class SVGLoader {
   }
 
   public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
-    try {
-      setContextColorPatcher(getDefaultSelectionPatcher());
-      setColorRedefinitionContext(true);
+    if (ourSelectionColorPatcher == null) {
       icon.paintIcon(c, g, x, y);
-    }
-    finally {
-      setContextColorPatcher(null);
-      setColorRedefinitionContext(false);
-    }
-  }
-
-  private static SvgElementColorPatcherProvider getDefaultSelectionPatcher() {
-    String name = UIManager.getLookAndFeel().getName();
-    Map<String, String> map = new HashMap<>();
-    if ("Darcula".equals(name)) {
-      map.put("#5e5e5e", "#5778ad");
-      map.put("#c75450", "#a95768");
-      map.put("#6e6e6e", "#afb1b3");
-      //map.put("#f26522", "#b76554"); //red
-      map.put("#f26522b3", "#bc6b43"); //red 70%
-      map.put("#f2652299", "#bc6b43"); //red 60% (same as 70%)
-      map.put("#62b54399", "#579b41"); //green 60%
-      map.put("#f98b9e99", "#ba7481"); //pink 60%
-      map.put("#f4af3d99", "#aa823f"); //yellow 60%
-      map.put("#b99bf899", "#977fca"); //purple 60%
-      map.put("#9aa7b0cc", "#97acc6"); //noun gray 80%
-      map.put("#9aa7b099", "#97acc6"); //noun gray 60% (same as 80%)
-    }
-    if (Arrays.asList("IntelliJ", "macOS Light", "Windows 10 Light").contains(name)) {
-      if (ColorUtil.isDark(JBUI.CurrentTheme.Tree.Selection.background(true))) {
-        map.put("#767a8a", "#ffffff");
+    } else {
+      try {
+        setContextColorPatcher(ourSelectionColorPatcher);
+        setColorRedefinitionContext(true);
+        icon.paintIcon(c, g, x, y);
       }
-      map.put("#6e6e6e", "#afb1b3");
-      map.put("#db5860", "#b75e73");
-      //map.put("#f26522", "#b56a51"); //red
-      map.put("#f26522b3", "#d38369"); //red 70%
-      map.put("#f2652299", "#d38369"); //red 60% (same as 70%)
-      map.put("#40b6e099", "#5eb6d4"); //blue 60%
-      map.put("#62b54399", "#7ebe65"); //green 60%
-      map.put("#f98b9e99", "#f1a4b2"); //pink 60%
-      map.put("#f4af3d99", "#ecc27d"); //yellow 60%
-      map.put("#b99bf899", "#b49ee2"); //purple 60%
-      map.put("#9aa7b0cc", "#aebdc6"); //noun gray 80%
-      map.put("#9aa7b099", "#aebdc6"); //noun gray 60% (same as 80%)
-      map.put("#40b6e0b3", "#5eb6d4"); //blue 70%
-      map.put("#62b543b3", "#7ebe65"); //green 70%
-      map.put("#f98b9eb3", "#f1a4b2"); //pink 70%
-      map.put("#f4af3db3", "#ecc27d"); //yellow 70%
-      map.put("#b99bf8b3", "#b49ee2"); //purple 70%
-    }
-
-    Map<String, Integer> alpha = new HashMap<>(map.size());
-    map.forEach((key, value) -> alpha.put(value, 255));
-
-    return map.isEmpty() ? null : new SvgElementColorPatcherProvider() {
-      @Override
-      public @Nullable SvgElementColorPatcher forPath(@Nullable String path) {
-        return newPatcher(null, map, alpha);
+      finally {
+        setContextColorPatcher(null);
+        setColorRedefinitionContext(false);
       }
-    };
+    }
   }
 
   public interface SvgElementColorPatcher {
