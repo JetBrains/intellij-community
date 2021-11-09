@@ -32,6 +32,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,11 +47,11 @@ public class SignatureSuggesterPreviewDialog extends DialogWrapper {
   private final PsiMethodCallExpression myNewCall;
   private final int myDuplicatesNumber;
 
-  public SignatureSuggesterPreviewDialog(PsiMethod oldMethod,
-                                  PsiMethod newMethod,
-                                  PsiMethodCallExpression oldMethodCall,
-                                  PsiMethodCallExpression newMethodCall,
-                                  int duplicatesNumber) {
+  public SignatureSuggesterPreviewDialog(@NotNull PsiMethod oldMethod,
+                                         @NotNull PsiMethod newMethod,
+                                         @NotNull PsiMethodCallExpression oldMethodCall,
+                                         @NotNull PsiMethodCallExpression newMethodCall,
+                                         int duplicatesNumber) {
     super(oldMethod.getProject());
     myOldMethod = oldMethod;
     myNewMethod = newMethod;
