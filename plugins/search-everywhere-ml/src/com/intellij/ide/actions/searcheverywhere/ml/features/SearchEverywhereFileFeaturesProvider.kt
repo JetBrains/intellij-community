@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.favoritesTreeView.FavoritesManager
 import com.intellij.internal.statistic.local.FileTypeUsageLocalSummary
 import com.intellij.internal.statistic.local.FileTypeUsageSummary
@@ -117,6 +118,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       IS_DIRECTORY_DATA_KEY to item.isDirectory,
       PRIORITY_DATA_KEY to elementPriority,
       IS_EXACT_MATCH_DATA_KEY to (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE),
+      SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY to searchQuery.length,
     )
 
     data.putAll(getNameMatchingFeatures(item, searchQuery))
