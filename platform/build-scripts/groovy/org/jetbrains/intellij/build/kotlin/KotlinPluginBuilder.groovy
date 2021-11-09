@@ -279,10 +279,13 @@ class KotlinPluginBuilder {
             if (kotlinVersion == null) {
               throw new IllegalStateException("Can't determine Kotlin compiler version")
             }
-            return "${major}-${kotlinVersion}-${kind}${minor}"
+            String version = "${major}-${kotlinVersion}-${kind}${minor}"
+            context.messages.info("version: $version [kotlin.plugin.kind: ${System.getProperty("kotlin.plugin.kind")}]")
+            return version
           } else {
             // Build number isn't recognized as IJ build number then it means build
             // number must be plain Kotlin plugin version which we can use directly
+            context.messages.info("buildNumber version: $buildNumber [kotlin.plugin.kind: ${System.getProperty("kotlin.plugin.kind")}]")
             return buildNumber
           }
         }
