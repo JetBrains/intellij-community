@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 
 internal object CallableWeigher {
     const val WEIGHER_ID = "kotlin.callableWeigher"
-    private var LookupElement.callableWeight by UserDataProperty(Key<CallableWeight>("KOTLIN_CALLABlE_WEIGHT"))
+    var LookupElement.callableWeight by UserDataProperty(Key<CallableWeight>("KOTLIN_CALLABlE_WEIGHT"))
+        private set
 
     fun KtAnalysisSession.addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KtSymbol, substitutor: KtSubstitutor) {
         if (symbol !is KtCallableSymbol) return
