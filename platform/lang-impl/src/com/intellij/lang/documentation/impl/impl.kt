@@ -8,7 +8,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runSuspendingAction
+import com.intellij.openapi.progress.runBlockingCancellable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 
@@ -56,7 +56,7 @@ internal fun resolveLink(target: DocumentationTarget, url: String): LinkResult? 
 
 @TestOnly
 fun computeDocumentation(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
-  return runSuspendingAction {
+  return runBlockingCancellable {
     withContext(Dispatchers.Default) {
       computeDocumentationAsync(targetPointer).await()
     }
