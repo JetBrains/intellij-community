@@ -34,6 +34,7 @@ import java.util.function.Supplier;
 public final class VcsLogContentProvider implements ChangesViewContentProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
   @NonNls public static final String TAB_NAME = "Log"; // used as tab id, not user-visible
+  @NonNls public static final String MAIN_LOG_ID = "MAIN";
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel<>(new BorderLayout());
@@ -89,7 +90,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
   private void addMainUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
-      myUi = logManager.createLogUi(VcsLogProjectTabsProperties.MAIN_LOG_ID, VcsLogManager.LogWindowKind.TOOL_WINDOW, false);
+      myUi = logManager.createLogUi(MAIN_LOG_ID, VcsLogManager.LogWindowKind.TOOL_WINDOW, false);
       VcsLogPanel panel = new VcsLogPanel(logManager, myUi);
       myContainer.add(panel, BorderLayout.CENTER);
       DataManager.registerDataProvider(myContainer, panel);

@@ -40,7 +40,7 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
-import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.MAIN_LOG_ID
+import com.intellij.vcs.log.impl.VcsLogContentProvider.MAIN_LOG_ID
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiImpl

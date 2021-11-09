@@ -18,7 +18,6 @@ import static com.intellij.util.containers.ContainerUtil.map2List;
 @Service(Service.Level.PROJECT)
 public final class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>,
                                                           VcsLogTabsProperties {
-  @NonNls public static final String MAIN_LOG_ID = "MAIN";
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
   @NotNull private final VcsLogApplicationSettings myAppSettings;
   @NotNull private State myState = new State();
