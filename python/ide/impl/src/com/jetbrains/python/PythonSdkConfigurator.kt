@@ -104,21 +104,43 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     LOGGER.debug("Looking for a virtual environment related to the project")
     guardIndicator(indicator) {
       val detectedAssociatedEnvironments = detectAssociatedEnvironments(module, existingSdks, context)
-      chooseEnvironmentToSuggest(module, detectedAssociatedEnvironments, project.isTrusted())
-    }?.let {
-      val detectedAssociatedEnv = it
 
-      LOGGER.debug { "Detected virtual environment related to the project: $detectedAssociatedEnv" }
-      val newSdk = detectedAssociatedEnv.setupAssociated(existingSdks, module.basePath) ?: return
-      LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
-
-      runInEdt {
-        SdkConfigurationUtil.addSdk(newSdk)
-        newSdk.associateWithModule(module, null)
-        setReadyToUseSdk(project, module, newSdk)
+      val envToSuggest = if (project.isTrusted()) {
+        detectedAssociatedEnvironments.firstOrNull()
+      }
+      else {
+        detectedAssociatedEnvironments.firstOrNull { !it.isLocatedInsideModule(module) }
       }
 
-      return
+      envToSuggest to detectedAssociatedEnvironments.filter { it.isLocatedInsideModule(module) }
+    }.let {
+      val innerEnvs = it.second
+      if (innerEnvs.isNotEmpty()) {
+        runInEdt { innerEnvs.forEach { module.excludeInnerVirtualEnv(it) } }
+      }
+
+      val detectedAssociatedEnv = it.first
+
+      if (detectedAssociatedEnv == null) {
+        if (innerEnvs.isNotEmpty()) {
+          // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
+          LOGGER.info("Inner virtual environment has not been configured since project is not trusted")
+          return
+        }
+      }
+      else {
+        LOGGER.debug { "Detected virtual environment related to the project: $detectedAssociatedEnv" }
+        val newSdk = detectedAssociatedEnv.setupAssociated(existingSdks, module.basePath) ?: return
+        LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
+
+        runInEdt {
+          SdkConfigurationUtil.addSdk(newSdk)
+          newSdk.associateWithModule(module, null)
+          setReadyToUseSdk(project, module, newSdk)
+        }
+
+        return
+      }
     }
 
     if (indicator.isCanceled) return

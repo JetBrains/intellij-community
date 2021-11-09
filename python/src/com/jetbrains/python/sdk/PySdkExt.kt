@@ -123,15 +123,6 @@ fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, contex
   return virtualEnvs + condaEnvs
 }
 
-fun chooseEnvironmentToSuggest(module: Module, environments: List<PyDetectedSdk>, trusted: Boolean): PyDetectedSdk? {
-  return if (trusted) {
-    environments.firstOrNull()
-  }
-  else {
-    environments.firstOrNull { !it.isLocatedInsideModule(module) }
-  }
-}
-
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
                             existingSdks: List<Sdk>,
                             baseSdk: Sdk?,
@@ -316,7 +307,7 @@ val Sdk.sdkFlavor: PythonSdkFlavor?
 val Sdk.remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase?
   get() = sdkAdditionalData as? PyRemoteSdkAdditionalDataBase
 
-private fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
+fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
   val baseDirPath = try {
     module?.baseDir?.toNioPath()
   } catch (e: UnsupportedOperationException) {
