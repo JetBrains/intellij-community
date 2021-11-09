@@ -7,7 +7,8 @@ import org.jetbrains.kotlin.idea.test.util.slashedPath
 
 class IncrementalConstantSearchTest : AbstractIncrementalJpsTest() {
     fun testJavaConstantChangedUsedInKotlin() {
-        doTest("jps/jps-plugin/tests/testData/incremental/custom/javaConstantChangedUsedInKotlin")
+      //KT-46506
+      //doTest("jps/jps-plugin/tests/testData/incremental/custom/javaConstantChangedUsedInKotlin")
     }
 
     fun testJavaConstantUnchangedUsedInKotlin() {
