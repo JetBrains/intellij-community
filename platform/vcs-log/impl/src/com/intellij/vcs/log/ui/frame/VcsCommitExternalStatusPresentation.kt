@@ -19,6 +19,9 @@ interface VcsCommitExternalStatusPresentation {
 
 
   interface Clickable : VcsCommitExternalStatusPresentation {
+
+    fun clickEnabled(e: MouseEvent): Boolean = true
+
     fun onClick(e: MouseEvent): Boolean
   }
 

@@ -170,11 +170,11 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
         val loaded = loadData(indicator)
         ApplicationManager.getApplication()
           .invokeLater({
-            progressIndicator = null
-            detailsPanel.forEachPanelIndexed { i: Int, panel: CommitDetailsPanel ->
-              setData(panel, loaded[i])
-            }
-          }, { indicator.isCanceled })
+                         progressIndicator = null
+                         detailsPanel.forEachPanelIndexed { i: Int, panel: CommitDetailsPanel ->
+                           setData(panel, loaded[i])
+                         }
+                       }, { indicator.isCanceled })
       }
     }
 
@@ -243,7 +243,7 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
 
     fun requestData(commits: List<CommitId>) {
       statuses = mutableMapOf()
-      if(commits.isEmpty()) {
+      if (commits.isEmpty()) {
         loaders?.forEach {
           it.requestData(emptyList()) {}
         }
@@ -299,7 +299,7 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
 
       fun requestData(commits: List<CommitId>, onChange: (Map<CommitId, VcsCommitExternalStatusPresentation?>) -> Unit) {
         loader.loadData(commits) {
-          val presentations = it.mapValues { (commit, status) -> provider.getPresentation(project, commit, status) }
+          val presentations = it.mapValues { (_, status) -> provider.getPresentation(project, status) }
           onChange(presentations)
         }
       }
