@@ -98,8 +98,6 @@ object InplaceExtractUtils {
         GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
       }
     }
-
-    withMaxWidth(250)
     withPosition(Balloon.Position.above)
 
     val balloonFuture = CompletableFuture<Balloon>()
@@ -190,7 +188,7 @@ object InplaceExtractUtils {
         logStatisticsOnShow(editor)
       }
     }
-    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, settingsPopup.panel,templateElement) {
+    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, settingsPopup.panel, templateElement) {
       logStatisticsOnHide(project, settingsPopup)
     }
   }
