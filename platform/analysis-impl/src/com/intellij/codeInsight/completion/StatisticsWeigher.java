@@ -19,12 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author peter
 */
 public final class StatisticsWeigher extends CompletionWeigher {
-  private static final Logger LOG = Logger.getInstance(LookupStatisticsWeigher.class);
+  private static final Logger LOG = Logger.getInstance(StatisticsWeigher.class);
   private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");
 
   @Override
@@ -37,15 +38,19 @@ public final class StatisticsWeigher extends CompletionWeigher {
     private final Map<LookupElement, StatisticsComparable> myWeights = new IdentityHashMap<>();
     private final Set<String> myStringsWithWeights = CollectionFactory.createSmallMemoryFootprintSet();
     private final Set<LookupElement> myNoStats = new ReferenceOpenHashSet<>();
+    private final List<Function<@NotNull LookupElement, @Nullable StatisticsInfo>> mySerializers;
 
     public LookupStatisticsWeigher(CompletionLocation location, Classifier<LookupElement> next) {
       super(next, "stats");
       myLocation = location;
+      mySerializers = myLocation == null ? List.of() :
+                      ContainerUtil.map(StatisticsManager.COLLECTOR.forKey(CompletionService.STATISTICS_KEY),
+                                        stat -> ((CompletionStatistician)stat).forLocation(myLocation));
     }
 
     @Override
     public void addElement(@NotNull LookupElement element, @NotNull ProcessingContext context) {
-      StatisticsInfo baseInfo = getBaseStatisticsInfo(element, myLocation);
+      StatisticsInfo baseInfo = getBaseStatisticsInfo(element);
       int weight = weigh(baseInfo);
       if (weight != 0) {
         myWeights.put(element, new StatisticsComparable(weight, baseInfo));
@@ -124,7 +129,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
     private StatisticsComparable getWeight(LookupElement t) {
       StatisticsComparable w = myWeights.get(t);
       if (w == null) {
-        StatisticsInfo info = getBaseStatisticsInfo(t, myLocation);
+        StatisticsInfo info = getBaseStatisticsInfo(t);
         myWeights.put(t, w = new StatisticsComparable(weigh(info), info));
       }
       return w;
@@ -140,7 +145,8 @@ public final class StatisticsWeigher extends CompletionWeigher {
 
     @NotNull
     @Override
-    public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull final ProcessingContext context) {
+    public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items,
+                                                               @NotNull final ProcessingContext context) {
       return ContainerUtil.map(items, lookupElement -> new Pair<>(lookupElement, getWeight(lookupElement)));
     }
 
@@ -149,6 +155,32 @@ public final class StatisticsWeigher extends CompletionWeigher {
       myWeights.remove(element);
       myNoStats.remove(element);
       super.removeElement(element, context);
+    }
+
+    @NotNull
+    private StatisticsInfo getBaseStatisticsInfo(LookupElement item) {
+      StatisticsInfo info = BASE_STATISTICS_INFO.get(item);
+      if (info == null) {
+        if (myLocation == null) {
+          return StatisticsInfo.EMPTY;
+        }
+        BASE_STATISTICS_INFO.set(item, info = calcBaseInfo(item));
+      }
+      return info;
+    }
+
+    @NotNull
+    private StatisticsInfo calcBaseInfo(LookupElement item) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && !myLocation.getCompletionParameters().isTestingMode()) {
+        LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+      }
+      for (var serializer : mySerializers) {
+        StatisticsInfo info = serializer.apply(item);
+        if (info != null) {
+          return info;
+        }
+      }
+      return StatisticsInfo.EMPTY;
     }
   }
 
