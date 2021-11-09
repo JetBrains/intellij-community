@@ -142,15 +142,16 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
    * Here goes only the logic that updates the central panel when it gets customized from the UI
    */
   override fun revalidate() {
-    val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as CenterToolbarGroup?
-    val toolBar = Objects.requireNonNull(group)?.let {
-      ActionManagerEx.getInstanceEx()
-        .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, it as ActionGroup, true)
+    if (ToolbarSettings.Instance.isEnabled && ToolbarSettings.Instance.isVisible) {
+      val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as CenterToolbarGroup?
+      val toolBar = Objects.requireNonNull(group)?.let {
+        ActionManagerEx.getInstanceEx()
+          .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, it as ActionGroup, true)
+      }
+      toolBar?.targetComponent = null
+      toolBar?.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
+      myPanel.add(toolBar as JComponent, BorderLayout.CENTER)
     }
-    toolBar?.targetComponent = null
-    toolBar?.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
-    myPanel.add(toolBar as JComponent, BorderLayout.CENTER)
-
   }
 
 }
