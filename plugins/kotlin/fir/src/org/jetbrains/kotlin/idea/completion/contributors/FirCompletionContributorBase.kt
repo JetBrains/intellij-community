@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -14,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
+import org.jetbrains.kotlin.idea.completion.LookupElementFactory
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
@@ -22,6 +25,8 @@ import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.priority
+import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher
+import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
@@ -110,7 +115,35 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         }
         priority?.let { lookup.priority = it }
         applyWeighers(context, lookup, symbol, substitutor)
-        sink.addElement(lookup)
+        sink.addElement(lookup.adaptToReceiver())
+    }
+
+    private fun LookupElement.adaptToReceiver(): LookupElement {
+        return when (callableWeight?.kind) {
+            // Make the text bold if it's immediate member of the receiver
+            CallableWeigher.CallableWeightKind.THIS_CLASS_MEMBER, CallableWeigher.CallableWeightKind.THIS_TYPE_EXTENSION ->
+                object : LookupElementDecorator<LookupElement>(this) {
+                    override fun renderElement(presentation: LookupElementPresentation) {
+                        super.renderElement(presentation)
+                        presentation.isItemTextBold = true
+                    }
+                }
+
+            // Make the text gray and insert type cast if the receiver type does not match.
+            CallableWeigher.CallableWeightKind.RECEIVER_CAST_REQUIRED -> object : LookupElementDecorator<LookupElement>(this) {
+                override fun renderElement(presentation: LookupElementPresentation) {
+                    super.renderElement(presentation)
+                    presentation.itemTextForeground = LookupElementFactory.CAST_REQUIRED_COLOR
+                    // gray all tail fragments too:
+                    val fragments = presentation.tailFragments
+                    presentation.clearTail()
+                    for (fragment in fragments) {
+                        presentation.appendTailText(fragment.text, true)
+                    }
+                }
+            }
+            else -> this
+        }
     }
 
     protected fun KtExpression.reference() = when (this) {
