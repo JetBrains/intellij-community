@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -85,7 +86,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
-    selectionBackground = UIUtil.getListSelectionBackground(true);
+    selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
   }
 
   private static boolean isSelected(JMenuItem item) {
