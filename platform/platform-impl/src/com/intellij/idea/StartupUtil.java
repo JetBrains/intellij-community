@@ -437,7 +437,8 @@ public final class StartupUtil {
 
         Activity activity = null;
         // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-        if (!Main.isHeadless()) {
+        boolean withUI = !Main.isHeadless();
+        if (withUI) {
           // IdeaLaF uses AllIcons - icon manager must be activated
           activity = StartUpMeasurer.startActivity("icon manager activation");
           try {
@@ -470,15 +471,18 @@ public final class StartupUtil {
         // to compute system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
         // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
         activity = activity.endAndStart("system font data initialization");
-        JBUIScale.getSystemFontData(() -> {
-          Activity subActivity = StartUpMeasurer.startActivity("base LaF defaults getting");
-          UIDefaults result = baseLaF.getDefaults();
-          subActivity.end();
-          return result;
-        });
 
-        activity = activity.endAndStart("scale initialization");
-        JBUIScale.scale(1f);
+        if (withUI) {
+          JBUIScale.getSystemFontData(() -> {
+            Activity subActivity = StartUpMeasurer.startActivity("base LaF defaults getting");
+            UIDefaults result = baseLaF.getDefaults();
+            subActivity.end();
+            return result;
+          });
+
+          activity = activity.endAndStart("scale initialization");
+          JBUIScale.scale(1f);
+        }
 
         activity = activity.endAndStart("LaF initialization");
         try {

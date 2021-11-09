@@ -57,6 +57,10 @@ public final class JBUIScale {
       return result;
     }
 
+    if (GraphicsEnvironment.isHeadless()) {
+      return systemFontData = Map.entry("Dialog", 12);
+    }
+
     // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font;
     if (SystemInfoRt.isMac) {
