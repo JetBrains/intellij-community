@@ -1,4 +1,4 @@
-// "Mark 's' as safe" "true"
+// "Mark 's' as requiring validation" "true"
 package org.checkerframework.checker.tainting.qual;
  
 class Simple {
