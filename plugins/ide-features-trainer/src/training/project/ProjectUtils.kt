@@ -12,10 +12,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
@@ -279,65 +276,63 @@ object ProjectUtils {
   }
 
   fun restoreProject(languageSupport: LangSupport, project: Project) {
-    val stamp = PropertiesComponent.getInstance(project).getValue(LEARNING_PROJECT_MODIFICATION)?.toLong() ?: 0
-    val needReplace = mutableListOf<Path>()
-    val validContent = mutableListOf<Path>()
-    val directories = mutableListOf<Path>()
-    val root = getProjectRoot(project)
-    val contentRootPath = languageSupport.getContentRootPath(root.toNioPath())
+    AppUIExecutor.onWriteThread().withDocumentsCommitted(project).submit {
+      val stamp = PropertiesComponent.getInstance(project).getValue(LEARNING_PROJECT_MODIFICATION)?.toLong() ?: 0
+      val needReplace = mutableListOf<Path>()
+      val validContent = mutableListOf<Path>()
+      val directories = mutableListOf<Path>()
+      val root = getProjectRoot(project)
+      val contentRootPath = languageSupport.getContentRootPath(root.toNioPath())
 
-    invokeAndWaitIfNeeded {
-      FileDocumentManager.getInstance().saveAllDocuments()
-    }
-
-    for (path in Files.walk(contentRootPath)) {
-      if (contentRootPath.relativize(path).any { file ->
-          file.name == ".idea" ||
-          file.name == "git" ||
-          file.name == ".git" ||
-          file.name == ".gitignore" ||
-          file.name == "venv" ||
-          file.name == FEATURE_TRAINER_VERSION ||
-          file.name.endsWith(".iml")
-        }) continue
-      if (path.isDirectory()) {
-        directories.add(path)
-      }
-      else {
-        if (path.getLastModifiedTime().toMillis() > stamp) {
-          needReplace.add(path)
+      for (path in Files.walk(contentRootPath)) {
+        if (contentRootPath.relativize(path).any { file ->
+            file.name == ".idea" ||
+            file.name == "git" ||
+            file.name == ".git" ||
+            file.name == ".gitignore" ||
+            file.name == "venv" ||
+            file.name == FEATURE_TRAINER_VERSION ||
+            file.name.endsWith(".iml")
+          }) continue
+        if (path.isDirectory()) {
+          directories.add(path)
         }
         else {
-          validContent.add(path)
+          if (path.getLastModifiedTime().toMillis() > stamp) {
+            needReplace.add(path)
+          }
+          else {
+            validContent.add(path)
+          }
         }
       }
-    }
 
-    var modified = false
+      var modified = false
 
-    for (path in needReplace) {
-      path.delete()
-      modified = true
-    }
-
-    val contentRoodDirectory = contentRootPath.toFile()
-    languageSupport.copyLearningProjectFiles(contentRoodDirectory, FileFilter {
-      val path = it.toPath()
-      val needCopy = needReplace.contains(path) || !validContent.contains(path)
-      modified = needCopy || modified
-      needCopy
-    })
-
-    for (path in directories) {
-      if (isEmptyDir(path)) {
-        modified = true
+      for (path in needReplace) {
         path.delete()
+        modified = true
       }
-    }
 
-    if (modified) {
-      VfsUtil.markDirtyAndRefresh(false, true, true, root)
-      PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
+      val contentRoodDirectory = contentRootPath.toFile()
+      languageSupport.copyLearningProjectFiles(contentRoodDirectory, FileFilter {
+        val path = it.toPath()
+        val needCopy = needReplace.contains(path) || !validContent.contains(path)
+        modified = needCopy || modified
+        needCopy
+      })
+
+      for (path in directories) {
+        if (isEmptyDir(path)) {
+          modified = true
+          path.delete()
+        }
+      }
+
+      if (modified) {
+        VfsUtil.markDirtyAndRefresh(false, true, true, root)
+        PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
+      }
     }
   }
 
