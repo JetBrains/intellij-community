@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCall
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionalTypeVariableCall
+import org.jetbrains.kotlin.analysis.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -221,8 +222,9 @@ object WrapWithSafeLetCallFixFactories {
 
     private fun KtAnalysisSession.getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return null
-        val successCallTarget =
-            (argumentExpression.parentOfType<KtCallExpression>()?.resolveCall()?.targetFunction?.candidates?.singleOrNull()) ?: return null
+        val callExpression = argumentExpression.parentOfType<KtCallExpression>()
+        val successCallTarget = callExpression?.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() ?: return null
+
         return successCallTarget.valueParameters.getOrNull(valueArgument.argumentIndex)?.name?.identifierOrNullIfSpecial
     }
 
@@ -294,7 +296,7 @@ object WrapWithSafeLetCallFixFactories {
      * function or the function doesn't have a parameter at the given index. Then caller can do whatever needed to cover such cases.
      */
     private fun KtAnalysisSession.doesFunctionAcceptNull(call: KtCall, index: Int): Boolean? {
-        val symbol = call.targetFunction.candidates.singleOrNull() ?: return null
+        val symbol = call.targetFunction.getSingleCandidateSymbolOrNull() ?: return null
         if (index == -1) {
             // Null extension receiver means the function does not accept extension receiver and hence cannot be invoked on a nullable
             // value.
