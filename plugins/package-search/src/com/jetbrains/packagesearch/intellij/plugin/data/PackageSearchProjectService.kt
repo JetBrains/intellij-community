@@ -236,8 +236,8 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
     val packageUpgradesStateFlow = installedPackagesStateFlow
         .mapLatestTimedWithLoading("packageUpgradesStateFlow", packageUpgradesLoadingFlow) {
             coroutineScope {
-                val stableUpdates = async { computePackageUpgrades(it, true, project.packageVersionNormalizer) }
-                val allUpdates = async { computePackageUpgrades(it, false, project.packageVersionNormalizer) }
+                val stableUpdates = async { computePackageUpgrades(it, true, packageVersionNormalizer) }
+                val allUpdates = async { computePackageUpgrades(it, false, packageVersionNormalizer) }
                 PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
             }
         }
