@@ -36,7 +36,7 @@ object ComposeWebModuleTemplate : Template() {
     ) = irsList {
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
         +RepositoryIR(DefaultRepository.GOOGLE)
-        +GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE)
+        //+GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE) //this module is intended to be used inside Compose MPP module!
         +GradleImportIR("org.jetbrains.compose.compose")
     }
 
