@@ -167,7 +167,7 @@ public final class CreateSwitchBranchesUtil {
   public static @NonNls List<String> generateStatements(@NotNull String caseLabelName, @NotNull PsiSwitchBlock switchBlock,
                                                         boolean isRuleBasedFormat, boolean isPatternsGenerated) {
     final String patternVariableName =
-      isPatternsGenerated ? " " + new VariableNameGenerator(switchBlock, VariableKind.PARAMETER).byName(caseLabelName).generate(true) : "";
+      isPatternsGenerated ? " " + new VariableNameGenerator(switchBlock, VariableKind.PARAMETER).byName(caseLabelName).generate(false) : "";
     if (switchBlock instanceof PsiSwitchExpression) {
       String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
       if (isRuleBasedFormat) {

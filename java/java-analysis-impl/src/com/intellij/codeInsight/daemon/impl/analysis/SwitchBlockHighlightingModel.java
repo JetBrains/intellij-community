@@ -783,7 +783,6 @@ public class SwitchBlockHighlightingModel {
                                               @NotNull List<PsiCaseLabelElement> elements,
                                               @NotNull List<HighlightInfo> results) {
       Set<PsiClass> missingClasses;
-      List<String> patternClassNames = new SmartList<>();
       if (elements.isEmpty()) {
         missingClasses = Collections.emptySet();
       }
@@ -795,7 +794,6 @@ public class SwitchBlockHighlightingModel {
           PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
           if (patternClass != null) {
             patternClasses.put(patternClass, patternLabelElement);
-            patternClassNames.add(patternClass.getName());
           }
         }
         Queue<PsiClass> nonVisited = new ArrayDeque<>();
@@ -823,10 +821,10 @@ public class SwitchBlockHighlightingModel {
       }
       HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
       if (!missingClasses.isEmpty()) {
-        missingClasses.forEach(aClass -> patternClassNames.add(aClass.getName()));
         Set<String> missingCases = new SmartHashSet<>();
         missingClasses.forEach(aClass -> missingCases.add(aClass.getName()));
-        IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, patternClassNames);
+        IntentionAction fix =
+          getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, StreamEx.of(missingCases).toList());
         QuickFixAction.registerQuickFixAction(info, fix);
       }
       results.add(info);
