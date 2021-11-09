@@ -7,10 +7,10 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
-import java.util.*
 
 class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap<String, WindowInfoImpl>()) {
   companion object {
@@ -100,6 +100,10 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
       // if order isn't defined then window's button will be the last one in the stripe
       if (info.order == -1) {
         info.order = getMaxOrder(list, info.anchor) + 1
+      }
+
+      if (ExperimentalUI.isNewUI() && info.isSplit) {
+        info.isSplit = false
       }
 
       idToInfo.put(id, info)
