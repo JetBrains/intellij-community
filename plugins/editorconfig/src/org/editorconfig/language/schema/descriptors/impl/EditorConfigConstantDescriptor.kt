@@ -21,4 +21,6 @@ data class EditorConfigConstantDescriptor(
   override fun matches(element: PsiElement) =
     (element is EditorConfigOptionValueIdentifier || element is EditorConfigQualifiedKeyPart || element is EditorConfigFlatOptionKey)
     && EditorConfigTextMatchingUtil.textMatchesToIgnoreCase(element, text)
+
+  override fun getPresentableText(): String = text
 }
