@@ -439,15 +439,20 @@ class RunToolbarSlotManager(val project: Project) {
 
     if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
       val runManager = RunManager.getInstance(project)
-      if (mainSlotData.configuration !=null && mainSlotData.configuration != runManager.selectedConfiguration && mainSlotData.environment?.getRunToolbarProcess()?.isTemporaryProcess() != true) {
-        runManager.selectedConfiguration = mainSlotData.configuration
-        if(RunToolbarProcess.logNeeded) LOG.info("MANAGER saveSlotsConfiguration. change selected configuration by main: ${mainSlotData.configuration} RunToolbar" )
+      mainSlotData.configuration?.let {
+        if (runManager.hasSettings(it) &&
+            it != runManager.selectedConfiguration &&
+            mainSlotData.environment?.getRunToolbarProcess()?.isTemporaryProcess() != true) {
+          runManager.selectedConfiguration = mainSlotData.configuration
+          if (RunToolbarProcess.logNeeded) LOG.info(
+            "MANAGER saveSlotsConfiguration. change selected configuration by main: ${mainSlotData.configuration} RunToolbar")
+        }
       }
     }
 
-    val configurtions = list.mapNotNull { slotsData[it]?.configuration }.toMutableList()
-    if(RunToolbarProcess.logNeeded) LOG.info("MANAGER saveSlotsConfiguration: ${configurtions} RunToolbar" )
-    runToolbarSettings.setRunConfigurations(configurtions)
+    val configurations = list.mapNotNull { slotsData[it]?.configuration }.toMutableList()
+    if (RunToolbarProcess.logNeeded) LOG.info("MANAGER saveSlotsConfiguration: ${configurations} RunToolbar")
+    runToolbarSettings.setRunConfigurations(configurations)
   }
 }
 
