@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.intellij.util.ThreeState
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -124,17 +123,12 @@ fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, contex
   return virtualEnvs + condaEnvs
 }
 
-fun chooseEnvironmentToSuggest(module: Module, environments: List<PyDetectedSdk>, trustedState: ThreeState): Pair<PyDetectedSdk, Boolean>? {
-  return if (trustedState == ThreeState.YES) {
-    environments.firstOrNull()?.let { it to false }
+fun chooseEnvironmentToSuggest(module: Module, environments: List<PyDetectedSdk>, trusted: Boolean): PyDetectedSdk? {
+  return if (trusted) {
+    environments.firstOrNull()
   }
   else {
-    val (detectedInnerEnvs, detectedOuterEnvs) = environments.partition { it.isLocatedInsideModule(module) }
-
-    when {
-      detectedInnerEnvs.isEmpty() || trustedState == ThreeState.NO -> detectedOuterEnvs.firstOrNull()?.let { it to false }
-      else -> detectedInnerEnvs.firstOrNull()?.let { it to true }
-    }
+    environments.firstOrNull { !it.isLocatedInsideModule(module) }
   }
 }
 
