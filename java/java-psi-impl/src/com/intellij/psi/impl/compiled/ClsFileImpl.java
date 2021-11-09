@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.Language;
@@ -11,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
@@ -503,6 +505,11 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     }
 
     return stubTree;
+  }
+
+  @Override
+  public @NotNull FileType getFileType() {
+    return JavaClassFileType.INSTANCE;
   }
 
   @Override
