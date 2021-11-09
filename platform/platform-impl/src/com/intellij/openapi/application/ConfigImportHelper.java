@@ -184,6 +184,7 @@ public final class ConfigImportHelper {
           // do not import plugins from other products even if configs are imported
           configImportOptions.importPlugins = false;
           configImportOptions.importBundledPlugins = settings != null && settings.shouldImportBundledPlugins();
+          configImportOptions.importSettings = settings;
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
         else if (importScenarioStatistics == null) {
@@ -720,6 +721,7 @@ public final class ConfigImportHelper {
     boolean headless;
     boolean importPlugins = true;
     boolean importBundledPlugins = false;
+    ConfigImportSettings importSettings;
     BuildNumber compatibleBuildNumber = null;
     ThrowableNotNullBiFunction<? super String, ? super ProgressIndicator, ? extends File, ? extends IOException> downloadFunction = null;
     Path bundledPluginPath = null;
@@ -763,7 +765,6 @@ public final class ConfigImportHelper {
 
     List<ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
 
-    ConfigImportSettings settings = findCustomConfigImportSettings();
     // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
     if (!options.importPlugins && !options.importBundledPlugins) {
       log.info("plugins are not imported.");
@@ -772,7 +773,7 @@ public final class ConfigImportHelper {
       log.info("non-empty plugins directory: " + newPluginsDir);
     }
     else {
-      migratePlugins(oldPluginsDir, newPluginsDir, oldConfigDir, actionCommands, options, settings);
+      migratePlugins(oldPluginsDir, newPluginsDir, oldConfigDir, actionCommands, options);
     }
 
     if (SystemInfo.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
@@ -809,8 +810,7 @@ public final class ConfigImportHelper {
                                      Path newPluginsDir,
                                      Path oldConfigDir,
                                      List<ActionCommand> actionCommands,
-                                     ConfigImportOptions options,
-                                     ConfigImportSettings settings) throws IOException {
+                                     ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     try {
       List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
@@ -835,7 +835,7 @@ public final class ConfigImportHelper {
       }
 
       if (options.importBundledPlugins) {
-        collectBundledPluginsToDownload(oldConfigDir, pluginsToDownload);
+        collectBundledPluginsToDownload(oldConfigDir, pluginsToDownload, options);
       }
 
       if (!pluginsToDownload.isEmpty()) {
@@ -1162,13 +1162,16 @@ public final class ConfigImportHelper {
     return result;
   }
 
-  private static void collectBundledPluginsToDownload(Path configDir, List<IdeaPluginDescriptor> pluginsToDownload) {
-    ConfigImportSettings settings = Objects.requireNonNull(findCustomConfigImportSettings());
-    @Nullable Set<@Nullable String> categories = settings.getBundledPluginCategoriesToImport();
-    @Nullable List<BundledPluginsState.PluginWithCategory> plugins = BundledPluginsState.Companion.getBundledIdsForOtherIde(configDir);
+  private static void collectBundledPluginsToDownload(Path configDir,
+                                                      List<IdeaPluginDescriptor> pluginsToDownload,
+                                                      ConfigImportOptions options) {
+    @Nullable Set<String> categories = options.importSettings.getBundledPluginCategoriesToImport();
+    @Nullable List<BundledPluginsState.PluginWithCategory> plugins = BundledPluginsState.getBundledPlugins(configDir);
     if (plugins != null) {
       for (BundledPluginsState.PluginWithCategory plugin : plugins) {
-        if (categories == null || categories.contains(plugin.getCategory()) || settings.shouldImportAnyway(plugin.getId())) {
+        if (categories == null ||
+            (plugin.getCategory() != null && categories.contains(plugin.getCategory())) ||
+            options.importSettings.shouldImportAnyway(plugin.getId())) {
           PluginNode pluginNode = new PluginNode(plugin.getId());
           pluginsToDownload.add(pluginNode);
         }

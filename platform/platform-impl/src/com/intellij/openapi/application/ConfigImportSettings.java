@@ -36,8 +36,8 @@ public interface ConfigImportSettings {
   }
 
   /**
-   * @return true if bundled plugins should be imported when importing settings from other product,
-   * false otherwise.
+   * @return true if bundled plugins should be downloaded from the plugin repository if they are missing
+   * in the current installation when importing settings from another product
    */
   default boolean shouldImportBundledPlugins() {
     return false;
@@ -51,7 +51,7 @@ public interface ConfigImportSettings {
    * or null to import all bundled plugins.
    */
   @Nullable
-  default Set<@Nullable String> getBundledPluginCategoriesToImport() {
+  default Set<String> getBundledPluginCategoriesToImport() {
     return null;
   }
 
@@ -62,7 +62,7 @@ public interface ConfigImportSettings {
    *
    * @return true if plugin should be imported anyway, false otherwise
    */
-  default boolean shouldImportAnyway(PluginId id) {
+  default boolean shouldImportAnyway(@NotNull PluginId id) {
     return false;
   }
 }
