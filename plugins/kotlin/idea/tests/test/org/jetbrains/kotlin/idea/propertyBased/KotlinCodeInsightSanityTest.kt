@@ -10,6 +10,7 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.propertyBased.*
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.PropertyChecker
+import org.jetbrains.kotlin.idea.quickfix.AbstractImportFixInfo
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import java.io.File
@@ -38,6 +39,7 @@ class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testRandomActivity() {
         enableInspections()
+        AbstractImportFixInfo.ignoreModuleError(testRootDisposable)
         val actionSupplier = actionOnKotlinFiles { file: PsiFile ->
             Generator.sampledFrom(
                 InvokeIntention(file, KotlinIntentionPolicy()),

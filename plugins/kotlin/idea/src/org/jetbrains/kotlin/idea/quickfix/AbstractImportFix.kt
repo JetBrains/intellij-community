@@ -7,9 +7,11 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.HintAction
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -18,6 +20,7 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
 import com.intellij.util.Processors
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
@@ -236,7 +239,8 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
                 // Sometimes fails with
                 // <production sources for module light_idea_test_case> is a module[ModuleDescriptorImpl@508c55a2] is not contained in resolver...
                 // TODO: remove try-catch when the problem is fixed
-                if (isUnitTestMode() && ex.message?.contains("<production sources for module light_idea_test_case>") == true) null
+                if (AbstractImportFixInfo.IGNORE_MODULE_ERROR &&
+                    ex.message?.contains("<production sources for module light_idea_test_case>") == true) null
                 else throw ex
             }
         }
@@ -769,4 +773,15 @@ private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpres
 
 private fun CallTypeAndReceiver<*, *>.toFilter() = { descriptor: DeclarationDescriptor ->
     callType.descriptorKindFilter.accepts(descriptor)
+}
+
+object AbstractImportFixInfo {
+    @Volatile
+    internal var IGNORE_MODULE_ERROR = false
+
+    @TestOnly
+    fun ignoreModuleError(disposable: Disposable) {
+        IGNORE_MODULE_ERROR = true
+        Disposer.register(disposable) { IGNORE_MODULE_ERROR = false }
+    }
 }
