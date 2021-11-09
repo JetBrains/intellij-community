@@ -556,7 +556,7 @@ private fun CoroutineScope.computeHeaderData(
     return result
 }
 
-private suspend fun List<PackageModel.Installed>.filterByTargetModules(
+private fun List<PackageModel.Installed>.filterByTargetModules(
     targetModules: TargetModules
 ) = when (targetModules) {
     is TargetModules.All -> this
