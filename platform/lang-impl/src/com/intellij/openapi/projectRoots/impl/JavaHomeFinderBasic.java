@@ -40,6 +40,7 @@ public class JavaHomeFinderBasic {
     }
 
     myFinders.add(this::findInPATH);
+    myFinders.add(this::findInJavaHome);
     myFinders.add(() -> findInSpecifiedPaths(paths));
     myFinders.add(this::findJavaInstalledBySdkMan);
     myFinders.add(this::findJavaInstalledByAsdfJava);
@@ -76,6 +77,11 @@ public class JavaHomeFinderBasic {
     }
 
     return result;
+  }
+
+  private @NotNull Set<String> findInJavaHome() {
+    String javaHome = mySystemInfo.getEnvironmentVariable("JAVA_HOME");
+    return javaHome != null ? scanAll(Paths.get(javaHome), false) : Collections.emptySet();
   }
 
   private @NotNull Set<String> findInPATH() {
