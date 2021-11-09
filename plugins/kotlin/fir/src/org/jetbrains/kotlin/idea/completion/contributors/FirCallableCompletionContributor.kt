@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
-import org.jetbrains.kotlin.analysis.api.impl.base.scopes.KtCompositeScope
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -101,7 +100,32 @@ internal open class FirCallableCompletionContributor(
         val availableNonExtensions = collectNonExtensions(implicitScopes, visibilityChecker, scopeNameFilter) { filter(it) }
         val extensionsWhichCanBeCalled = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
-        availableNonExtensions.forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
+        // TODO: consider relying on tower resolver when populating callable entries. For example
+        //  val Int.foo : ...
+        //  val Number.foo : ...
+        //  val String.foo : ...
+        //  fun String.test() {
+        //      with(1) {
+        //          val foo = ...
+        //          fo<caret>
+        //      }
+        //  }
+        //  completion should be able to all of the `foo` by inserting proper qualifiers:
+        //   foo -> foo
+        //   Int.foo -> this.foo
+        //   Number.foo -> (this as Number).foo
+        //   String.foo -> this@test.foo
+        //
+         availableNonExtensions
+            // skip shadowed variable or properties
+            .distinctBy {
+                when (it) {
+                    is KtVariableLikeSymbol -> it.name
+                    else -> it
+                }
+            }
+            .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
+
         // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
         // equal to the same symbols from top level without substitution.
         val extensionMembers = mutableSetOf<KtCallableSymbol>()
