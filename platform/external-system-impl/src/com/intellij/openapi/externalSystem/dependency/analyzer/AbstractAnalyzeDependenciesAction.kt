@@ -37,7 +37,7 @@ abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
     }
     val editorTabName = ExternalSystemBundle.message("external.system.dependency.analyzer.editor.tab.name")
     val file = UIComponentVirtualFile(editorTabName, object : UIComponentVirtualFile.Content {
-      override fun getIcon() = AllIcons.Actions.Find
+      override fun getIcon() = AllIcons.Actions.DependencyAnalyzer
       override fun createComponent() = dependencyAnalyzerView.component
       override fun getPreferredFocusedComponent(): JComponent? = null
     })
@@ -45,7 +45,7 @@ abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
   }
 
   init {
-    templatePresentation.icon = AllIcons.Actions.Find
+    templatePresentation.icon = AllIcons.Actions.DependencyAnalyzer
     templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name")
     templatePresentation.isEnabledAndVisible = Registry.`is`("external.system.dependency.analyzer")
   }
