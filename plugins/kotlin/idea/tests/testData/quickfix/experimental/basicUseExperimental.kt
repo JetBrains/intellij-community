@@ -6,11 +6,12 @@
 package a.b
 
 @RequiresOptIn
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class MyExperimentalAPI
 
 @MyExperimentalAPI
 class Some {
+    @MyExperimentalAPI
     fun foo() {}
 }
 
