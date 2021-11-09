@@ -3643,4 +3643,16 @@ public final class UIUtil {
     assert ReflectionUtil.setField(GraphicsEnvironment.class, null, Boolean.class, "headless", null);
     assert GraphicsEnvironment.isHeadless() == isHeadless;
   }
+
+  public static <E extends Throwable> void runWithHeadlessProperty(boolean propertyValue, @NotNull ThrowableRunnable<E> runnable) throws E {
+    boolean old = GraphicsEnvironment.isHeadless();
+    setHeadlessProperty(propertyValue);
+    try {
+      runnable.run();
+    }
+    finally {
+      setHeadlessProperty(old);
+    }
+  }
+
 }
