@@ -703,9 +703,10 @@ final class DistributionJARsBuilder {
 
         List<Map.Entry<String, Path>> dirToJar = new ArrayList<>()
 
-        String pluginVersion = context.buildNumber.endsWith(".SNAPSHOT")
+        String defaultPluginVersion = context.buildNumber.endsWith(".SNAPSHOT")
           ? context.buildNumber + ".${PluginXmlPatcher.pluginDateFormat.format(ZonedDateTime.now())}"
           : context.buildNumber
+
         List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
         Predicate<PluginLayout> autoPublishPluginChecker = loadPluginAutoPublishList(context)
 
@@ -714,6 +715,14 @@ final class DistributionJARsBuilder {
           void accept(PluginLayout plugin, Path pluginDir) {
             Path targetDirectory = autoPublishPluginChecker.test(plugin) ? autoUploadingDir : nonBundledPluginsArtifacts
             String pluginDirName = pluginDir.getFileName().toString()
+
+            Path moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
+            Path pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
+
+            String pluginVersion =
+              Files.exists(pluginXmlPath) ? plugin.versionEvaluator.evaluate(pluginXmlPath, defaultPluginVersion, context) :
+              defaultPluginVersion
+
             Path destFile = targetDirectory.resolve("$pluginDirName-${pluginVersion}.zip")
             if (prepareCustomPluginRepositoryForPublishedPlugins) {
               byte[] pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
@@ -729,7 +738,7 @@ final class DistributionJARsBuilder {
           context.notifyArtifactWasBuilt(item.value)
         }
 
-        PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(context, pluginVersion)
+        PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(context, defaultPluginVersion)
         if (helpPlugin != null) {
           PluginRepositorySpec spec = buildHelpPlugin(helpPlugin, stageDir, autoUploadingDir, moduleOutputPatcher, context)
           if (prepareCustomPluginRepositoryForPublishedPlugins) {
