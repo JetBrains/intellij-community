@@ -13,16 +13,23 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.EdtExecutorService
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Graphics
+import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -73,25 +80,50 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
 
     component.removeAll()
     if (component.isEnabled && component.isVisible) {
-      val actionsSchema = CustomActionsSchema.getInstance()
-      for ((actionId, layoutConstrains) in mapOf(
-        (if (runWidgetAvailabilityManager.isAvailable()) "RightToolbarSideGroup" else "RightToolbarSideGroupNoRunWidget") to BorderLayout.EAST,
-        "CenterToolbarSideGroup" to BorderLayout.CENTER,
-        "LeftToolbarSideGroup" to BorderLayout.WEST,
-      )) {
-        val action = actionsSchema.getCorrectedAction(actionId)
-        val actionGroup = action as? ActionGroup
-                          ?: throw IllegalArgumentException("Action group '$actionId' not found; actual action: $action")
-        val toolbar = ActionManager.getInstance().createActionToolbar(
-          ActionPlaces.MAIN_TOOLBAR,
-          actionGroup,
-          true,
-        )
-        toolbar.targetComponent = component
-        toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-
-        component.add(toolbar as JComponent, layoutConstrains)
+      CompletableFuture.supplyAsync(
+        this::correctedToolbarActions,
+        AppExecutorUtil.getAppExecutorService(),
+      ).thenAcceptAsync(
+        Consumer { applyTo(it, component) },
+        EdtExecutorService.getInstance(),
+      ).exceptionally {
+        thisLogger().error(it)
+        null
       }
+    }
+  }
+
+  @RequiresBackgroundThread
+  private fun correctedToolbarActions(): Map<ActionGroup, String> {
+    val actionsSchema = CustomActionsSchema.getInstance()
+
+    return mapOf(
+      (if (runWidgetAvailabilityManager.isAvailable()) "RightToolbarSideGroup" else "RightToolbarSideGroupNoRunWidget") to BorderLayout.EAST,
+      "CenterToolbarSideGroup" to BorderLayout.CENTER,
+      "LeftToolbarSideGroup" to BorderLayout.WEST,
+    ).mapKeys { (actionId, _) ->
+      val action = actionsSchema.getCorrectedAction(actionId)
+      action as? ActionGroup ?: throw IllegalArgumentException("Action group '$actionId' not found; actual action: $action")
+    }
+  }
+
+  @RequiresEdt
+  private fun applyTo(
+    actions: Map<ActionGroup, String>,
+    component: JComponent,
+  ) {
+    val actionManager = ActionManager.getInstance()
+
+    actions.mapKeys { (actionGroup, _) ->
+      actionManager.createActionToolbar(
+        ActionPlaces.MAIN_TOOLBAR,
+        actionGroup,
+        true,
+      )
+    }.forEach { (toolbar, layoutConstraints) ->
+      toolbar.targetComponent = component
+      toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+      component.add(toolbar as JComponent, layoutConstraints)
     }
   }
 }
