@@ -227,12 +227,17 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   protected fun initTreeSelectionListener(parentDisposable: Disposable) {
     if (tree.treeSelectionListeners.any { it == changeRunConfigurationListener }) return
 
+    val modalityState = ModalityState.stateForComponent(tree)
+
+    // The listener is supposed to be registered for a dialog, so the modality state cannot be NON_MODAL
+    if (modalityState == ModalityState.NON_MODAL) return
+
     changeRunConfigurationNodeAlarm = SingleAlarm(
       task = ::selectRunConfiguration,
       delay = 300,
       parentDisposable = parentDisposable,
       threadToUse = Alarm.ThreadToUse.SWING_THREAD,
-      modalityState = ModalityState.stateForComponent(tree)
+      modalityState = modalityState
     )
 
     tree.addTreeSelectionListener(changeRunConfigurationListener)
