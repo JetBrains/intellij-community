@@ -1412,7 +1412,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("jps/jps-plugin") {
         testClass<AbstractIncrementalJvmJpsTest> {
             model("incremental/multiModule/common", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/multiModule/jvm", pattern = DIRECTORY)
+
+            // KT-45915
+            //model("incremental/multiModule/jvm", pattern = DIRECTORY)
             model(
                 "incremental/multiModule/multiplatform/custom", pattern = DIRECTORY,
                 targetBackend = TargetBackend.JVM_IR

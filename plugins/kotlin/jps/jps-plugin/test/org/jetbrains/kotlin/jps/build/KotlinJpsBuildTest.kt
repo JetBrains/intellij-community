@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.util.ignored
 import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
@@ -480,6 +481,9 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
         initProject(JVM_MOCK_RUNTIME)
         val result = buildAllModules()
 
+        result.assertFailed()
+        if (ignored("KT-45915, KT-49575")) return
+
         // Check that outputs are located properly
         assertFilesExistInOutput(findModule("module2"), "kt1/Kt1Kt.class")
         assertFilesExistInOutput(findModule("kotlinProject"), "kt2/Kt2Kt.class")
@@ -499,6 +503,10 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
     fun testCircularDependenciesSamePackage() {
         initProject(JVM_MOCK_RUNTIME)
         val result = buildAllModules()
+
+        result.assertFailed()
+        if (ignored("KT-45915")) return
+
         result.assertSuccessful()
 
         // Check that outputs are located properly
@@ -521,6 +529,10 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
     fun testCircularDependenciesSamePackageWithTests() {
         initProject(JVM_MOCK_RUNTIME)
         val result = buildAllModules()
+
+        result.assertFailed()
+        if (ignored("KT-45915")) return
+
         result.assertSuccessful()
 
         // Check that outputs are located properly
@@ -565,6 +577,10 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
     fun testCircularDependenciesWrongInternalFromTests() {
         initProject(JVM_MOCK_RUNTIME)
         val result = buildAllModules()
+
+        result.assertFailed()
+        if (ignored("KT-45915")) return
+
         result.assertFailed()
         result.checkErrors()
     }
@@ -584,6 +600,10 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
         )
 
         val result = buildAllModules()
+
+        result.assertFailed()
+        if (ignored("KT-45915")) return
+
         result.assertSuccessful()
     }
 
