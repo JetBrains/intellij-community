@@ -29,7 +29,9 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     super.setUp()
     VcsConfiguration.StandardConfirmation.ADD.doNothing()
     repo.untrackedFilesHolder.createWaiter().waitFor()
-    _tracker = GitStageTracker(project)
+    _tracker = object: GitStageTracker(project) {
+      override fun isStagingAreaAvailable() = true
+    }
   }
 
   override fun tearDown() {
