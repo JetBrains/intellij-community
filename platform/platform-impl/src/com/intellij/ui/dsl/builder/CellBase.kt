@@ -5,6 +5,7 @@ import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 
 enum class RightGap {
@@ -33,10 +34,20 @@ interface CellBase<out T : CellBase<T>> {
   fun visible(isVisible: Boolean): CellBase<T>
 
   /**
+   * Binds cell visibility to provided [predicate]
+   */
+  fun visibleIf(predicate: ComponentPredicate): CellBase<T>
+
+  /**
    * Sets enabled state of the cell and all children recursively.
    * The cell is disabled while there is a disabled parent
    */
   fun enabled(isEnabled: Boolean): CellBase<T>
+
+  /**
+   * Binds cell enabled state to provided [predicate]
+   */
+  fun enabledIf(predicate: ComponentPredicate): CellBase<T>
 
   /**
    * Sets horizontal alignment of content inside the cell, [HorizontalAlign.LEFT] by default

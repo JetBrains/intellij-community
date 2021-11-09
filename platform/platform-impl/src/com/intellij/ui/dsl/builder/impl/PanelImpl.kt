@@ -294,8 +294,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun enabledIf(predicate: ComponentPredicate): PanelImpl {
-    enabled(predicate())
-    predicate.addListener { enabled(it) }
+    super.enabledIf(predicate)
     return this
   }
 
@@ -308,8 +307,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun visibleIf(predicate: ComponentPredicate): Panel {
-    visible(predicate())
-    predicate.addListener { visible(it) }
+    super.visibleIf(predicate)
     return this
   }
 

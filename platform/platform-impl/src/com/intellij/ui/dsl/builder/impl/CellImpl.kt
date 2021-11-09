@@ -93,8 +93,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun enabledIf(predicate: ComponentPredicate): Cell<T> {
-    enabled(predicate())
-    predicate.addListener { enabled(it) }
+    super.enabledIf(predicate)
     return this
   }
 
@@ -111,8 +110,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun visibleIf(predicate: ComponentPredicate): CellImpl<T> {
-    visible(predicate())
-    predicate.addListener { visible(it) }
+    super.visibleIf(predicate)
     return this
   }
 

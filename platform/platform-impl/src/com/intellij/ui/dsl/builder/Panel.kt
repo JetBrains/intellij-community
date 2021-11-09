@@ -23,17 +23,11 @@ interface Panel : CellBase<Panel> {
 
   override fun visible(isVisible: Boolean): Panel
 
-  /**
-   * Binds panel visibility to provided [predicate]
-   */
-  fun visibleIf(predicate: ComponentPredicate): Panel
+  override fun visibleIf(predicate: ComponentPredicate): Panel
 
   override fun enabled(isEnabled: Boolean): Panel
 
-  /**
-   * Binds panel enabled state to provided [predicate]
-   */
-  fun enabledIf(predicate: ComponentPredicate): Panel
+  override fun enabledIf(predicate: ComponentPredicate): Panel
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Panel
 

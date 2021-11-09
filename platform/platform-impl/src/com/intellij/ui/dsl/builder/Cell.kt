@@ -38,11 +38,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun enabled(isEnabled: Boolean): Cell<T>
 
-  fun enabledIf(predicate: ComponentPredicate): Cell<T>
+  override fun enabledIf(predicate: ComponentPredicate): Cell<T>
 
   override fun visible(isVisible: Boolean): Cell<T>
 
-  fun visibleIf(predicate: ComponentPredicate): Cell<T>
+  override fun visibleIf(predicate: ComponentPredicate): Cell<T>
 
   /**
    * Changes [component] font to bold
