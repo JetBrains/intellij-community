@@ -1,7 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
-import com.intellij.ide.impl.TrustChangeNotifier
+import com.intellij.ide.impl.TrustChangeListener
 import com.intellij.ide.impl.getTrustedState
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
@@ -38,8 +38,8 @@ internal val Project.trustedProjectFlow: Flow<ThreeState>
         send(getTrustedState())
         val connection = messageBus.simpleConnect()
         connection.subscribe(
-            TrustChangeNotifier.TOPIC,
-            TrustChangeNotifier {
+            TrustChangeListener.TOPIC,
+            TrustChangeListener {
                 if (it == this@trustedProjectFlow) trySend(getTrustedState())
             }
         )
