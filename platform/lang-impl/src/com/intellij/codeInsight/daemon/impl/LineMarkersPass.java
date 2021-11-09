@@ -75,6 +75,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     FileViewProvider viewProvider = myFile.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile root = viewProvider.getPsi(language);
+      if (root == null) {
+        LOG.error(viewProvider+" for file " +myFile+" returned null root for language "+language+" despite listing it as one of its own languages: "+viewProvider.getLanguages());
+        continue;
+      }
       HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
       if (!highlightingLevelManager.shouldHighlight(root)) continue;
       Divider.divideInsideAndOutsideInOneRoot(root, myRestrictRange.toScalarRange(), myPriorityBounds.toScalarRange(),
