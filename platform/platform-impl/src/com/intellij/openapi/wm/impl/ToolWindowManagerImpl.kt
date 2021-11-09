@@ -2052,7 +2052,17 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   internal fun activated(toolWindow: ToolWindowImpl, source: ToolWindowEventSource?) {
-    activateToolWindow(idToEntry[toolWindow.id]!!, getRegisteredMutableInfoOrLogError(toolWindow.id), source = source)
+    val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
+    if (ExperimentalUI.isNewUI()) {
+      val visibleToolWindow = idToEntry.values
+        .asSequence()
+        .filter { it.readOnlyWindowInfo.anchor == info.anchor && it.toolWindow.isVisible }
+        .firstOrNull()
+      if (visibleToolWindow != null) {
+        info.weight = visibleToolWindow.readOnlyWindowInfo.weight
+      }
+    }
+    activateToolWindow(idToEntry[toolWindow.id]!!, info, source = source)
   }
 
   /**
