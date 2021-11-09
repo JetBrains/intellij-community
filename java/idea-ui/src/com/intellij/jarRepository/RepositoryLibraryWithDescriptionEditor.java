@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryProperti
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
@@ -142,9 +143,9 @@ public class RepositoryLibraryWithDescriptionEditor
     showBalloon(JavaUiBundle.message("popup.reload.success.result", directory.getPath()), MessageType.INFO);
   }
 
-  private void showBalloon(String text, MessageType type) {
+  private void showBalloon(@NlsSafe String text, MessageType type) {
     JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(JavaUiBundle.message(text), type, null)
+      .createHtmlTextBalloonBuilder(text, type, null)
       .setHideOnClickOutside(true)
       .createBalloon()
       .show(RelativePoint.getSouthWestOf(myReloadButton.getRootPane()), Balloon.Position.atRight);
