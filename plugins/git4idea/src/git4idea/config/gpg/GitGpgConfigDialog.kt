@@ -3,6 +3,7 @@ package git4idea.config.gpg
 
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runUnderIndicator
@@ -48,7 +49,7 @@ class GitGpgConfigDialog(
     foreground = ERROR_FOREGROUND_COLOR
     isVisible = false
   }
-  private val docLinkLabel = BrowserLink(message("gpg.error.see.documentation.link.text"), message("gpg.jb.manual.link")).apply {
+  private val docLinkLabel = BrowserLink(message("gpg.error.see.documentation.link.text"), message("gpg.jb.manual.link", ApplicationInfoEx.getInstanceEx().shortVersion)).apply {
     isVisible = false
   }
 
