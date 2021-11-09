@@ -46,7 +46,7 @@ class SquareStripeButtonLook(val button: ActionButton) : IdeaActionButtonLook() 
                                                "#afb1b3" to fg)
           val alpha: MutableMap<String, Int> = HashMap(map.size)
           map.forEach { (key: String?, value: String) -> alpha[value] = 255 }
-          SVGLoader.setColorPatcherProvider(object : SvgElementColorPatcherProvider {
+          SVGLoader.setContextColorPatcher(object : SvgElementColorPatcherProvider {
             override fun forPath(path: String?): SvgElementColorPatcher? {
               return SVGLoader.newPatcher(null, map, alpha)
             }
@@ -56,7 +56,7 @@ class SquareStripeButtonLook(val button: ActionButton) : IdeaActionButtonLook() 
           return
         } finally {
           SVGLoader.setColorRedefinitionContext(false)
-          SVGLoader.setColorPatcherProvider(null)
+          SVGLoader.setContextColorPatcher(null)
         }
       }
 
