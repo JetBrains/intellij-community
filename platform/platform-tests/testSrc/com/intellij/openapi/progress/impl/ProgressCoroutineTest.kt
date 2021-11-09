@@ -20,7 +20,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
   fun `test suspending action job is a child of current job`() {
     val job = Job()
     withJob(job) {
-      runSuspendingAction {
+      runBlockingCancellable {
         assertJobIsChildOf(job = coroutineContext.job, parent = job)
       }
     }
@@ -31,7 +31,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
     val indicator = EmptyProgressIndicator()
     val future = backgroundActivity(indicator) {  // some blocking code under indicator
       assertThrows(ProcessCanceledException::class.java) {
-        runSuspendingAction {                     // want to switch to coroutine world from under the blocking code
+        runBlockingCancellable {                     // want to switch to coroutine world from under the blocking code
           ensureActive()
           lock.up()
           while (true) {    // never-ending suspending action
@@ -103,7 +103,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
       }
     }
     backgroundActivity(indicator) {
-      runSuspendingAction {
+      runBlockingCancellable {
         progressSink?.text("Hello")
         progressSink?.details("World")
         xx()

@@ -5,7 +5,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runSuspendingAction
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
@@ -89,7 +89,7 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     val cancelled = Semaphore(1)
     val job = launch(Dispatchers.Default) {
       cra {
-        runSuspendingAction {
+        runBlockingCancellable {
           inRead.up()
           cancelled.waitTimeout()
           ensureActive() // should throw
