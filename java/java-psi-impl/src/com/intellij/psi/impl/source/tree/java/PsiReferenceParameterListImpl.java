@@ -43,6 +43,20 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
   }
 
   @Override
+  public int getTypeArgumentCount() {
+    int children = countChildren(TYPE_SET);
+    if (children == 1) {
+      PsiTypeElement typeElement = (PsiTypeElement)findChildByType(JavaElementType.TYPE);
+      LOG.assertTrue(typeElement != null);
+      PsiType soleType = typeElement.getType();
+      if (soleType instanceof PsiDiamondType) {
+        return ((PsiDiamondType)soleType).resolveInferredTypes().getInferredTypes().size();
+      }
+    }
+    return children;
+  }
+
+  @Override
   public PsiType @NotNull [] getTypeArguments() {
     return PsiImplUtil.typesByReferenceParameterList(this);
   }
