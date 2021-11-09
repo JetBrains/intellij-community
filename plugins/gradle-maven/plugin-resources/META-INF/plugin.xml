@@ -4,7 +4,7 @@
   <category>Build Tools</category>
   <vendor>JetBrains</vendor>
   <description>
-    He was so badly dressed that even a man accustomed to shabbiness would have been ashamed to be seen in the street in such rags. In that quarter of the town, however, scarcely any shortcoming in dress would have created surprise. Owing to the proximity of the Hay Market, the number of establishments of bad character, the preponderance of the trading and working class population crowded in these streets and alleys in the heart of Petersburg, types so various were to be seen in the streets that no figure, however queer, would have caused surprise. But there was such accumulated bitterness and contempt in the young man’s heart, that, in spite of all the fastidiousness of youth, he minded his rags least of all in the street.
+    Provides integration with Maven Repositories in Gradle build script: exract repositories information for indexing, provide dependencies completion etc.
   </description>
   <depends>org.intellij.groovy</depends>
   <depends>org.jetbrains.idea.maven</depends>
