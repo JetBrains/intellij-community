@@ -402,9 +402,15 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   public void testRestoreChangelist() {
     final LocalTaskImpl task = new LocalTaskImpl("foo", "bar");
     runOpenTaskDialog(task);
+
+    myChangeListManager.ensureUpToDate();
+    UIUtil.dispatchAllInvocationEvents(); // event from TaskManagerImpl.myChangeListListener
+
     runOpenTaskDialog(new LocalTaskImpl("next", ""));
 
     myChangeListManager.ensureUpToDate();
+    UIUtil.dispatchAllInvocationEvents(); // event from TaskManagerImpl.myChangeListListener
+
     final String changelistName = myTaskManager.getChangelistName(task);
     myChangeListManager.removeChangeList(changelistName);
 
