@@ -591,7 +591,7 @@ private suspend fun computeSearchResultModels(
         val index = searchResults.packages.parallelMap { "${it.groupId}:${it.artifactId}" }
         searchResults.packages
             .parallelFilterNot { installedDependencies.any { installed -> installed.matchesCoordinates(it) } }
-            .parallelMapNotNull { PackageModel.fromSearchResult(it, project.packageVersionNormalizer) }
+            .parallelMapNotNull { PackageModel.fromSearchResult(it, packageVersionNormalizer) }
             .parallelMap {
                 val uiState = searchResultsUiStateOverrides[it.identifier]
                 cache.getOrPut(UiPackageModelCacheKey(targetModules, uiState, onlyStable, it)) {

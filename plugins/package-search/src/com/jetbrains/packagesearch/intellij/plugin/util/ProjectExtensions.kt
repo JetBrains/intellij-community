@@ -38,7 +38,7 @@ import kotlin.streams.toList
 internal val Project.packageSearchProjectService
     get() = service<PackageSearchProjectService>()
 
-internal val Project.packageVersionNormalizer
+internal val packageVersionNormalizer
     get() = service<PackageVersionNormalizerService>().normalizer
 
 @OptIn(ExperimentalTypeInference::class)

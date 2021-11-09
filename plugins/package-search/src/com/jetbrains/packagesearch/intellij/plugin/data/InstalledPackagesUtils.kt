@@ -82,7 +82,7 @@ internal suspend fun installedPackages(
             unifiedDependency = dependency,
             usageInfo = usageInfo,
             remoteInfo = remoteInfo,
-            normalizer = project.packageVersionNormalizer
+            normalizer = packageVersionNormalizer
         )
     }.filterNotNull().sortedBy { it.sortKey }
 }
