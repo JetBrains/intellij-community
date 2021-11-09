@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -36,7 +40,6 @@ import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import com.intellij.collaboration.ui.SingleValueModel
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.ChangeEvent
@@ -95,6 +98,9 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
   fun create(): JComponent {
     val mainPanel = Wrapper()
+    DataManager.registerDataProvider(mainPanel, DataProvider {
+      if (PlatformDataKeys.UI_DISPOSABLE.`is`(it)) uiDisposable else null
+    })
 
     val header = GHPRTitleComponent.create(project, detailsModel, editor.detailsData)
 

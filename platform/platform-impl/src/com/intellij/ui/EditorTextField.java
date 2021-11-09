@@ -63,7 +63,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
@@ -78,6 +80,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private final Project myProject;
   private FileType myFileType;
   private EditorEx myEditor;
+  private final Set<Editor> myEditorsToBeReleased = new HashSet<>();
   private Component myNextFocusable;
   private boolean myWholeTextSelected;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -501,9 +504,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   private void releaseEditorNow() {
     EditorEx editor = myEditor;
-    if (editor == null) return;
-    myEditor = null;
-    releaseEditor(editor);
+    if (editor != null) {
+      scheduleEditorRelease(editor);
+      myEditor = null;
+    }
+    releaseScheduledEditors();
   }
 
   void releaseEditorLater() {
@@ -514,8 +519,20 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     // swing goes nuts because of nested removals and indices get corrupted
     EditorEx editor = myEditor;
     if (editor == null) return;
-    ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor), ModalityState.stateForComponent(this));
+    scheduleEditorRelease(editor);
+    ApplicationManager.getApplication().invokeLater(() -> releaseScheduledEditors(), ModalityState.stateForComponent(this));
     myEditor = null;
+  }
+
+  private void scheduleEditorRelease(EditorEx editor) {
+    myEditorsToBeReleased.add(editor);
+  }
+
+  private void releaseScheduledEditors() {
+    for (Editor editorToRelease : myEditorsToBeReleased) {
+      releaseEditor(editorToRelease);
+    }
+    myEditorsToBeReleased.clear();
   }
 
   @Override
@@ -716,7 +733,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     final EditorEx editor = myEditor;
 
     if (editor != null) {
-      releaseEditor(editor);
+      releaseEditorNow();
       initEditorInner();
       revalidate();
     }
