@@ -94,8 +94,8 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val exactDuplicates = duplicates.filter {
       duplicate -> duplicate.changedExpressions.all { changedExpression -> changedExpression.pattern in initialParameters }
     }
-    val oldMethodCall = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java)
-    val newMethodCall = PsiTreeUtil.findChildOfType(elementsToReplace.callElements.first(), PsiMethodCallExpression::class.java)
+    val oldMethodCall = findMethodCallInside(calls.firstOrNull()) ?: throw IllegalStateException()
+    val newMethodCall = findMethodCallInside(elementsToReplace.callElements.firstOrNull()) ?: throw IllegalStateException()
     val parametrizedDuplicatesNumber = duplicates.size - exactDuplicates.size
     fun confirmChangeSignature(): Boolean {
       val dialog = SignatureSuggesterPreviewDialog(method, elementsToReplace.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber)
@@ -133,6 +133,10 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
         MethodExtractor().replace(duplicate.candidate, callElements)
       }
     }
+  }
+
+  private fun findMethodCallInside(element: PsiElement?): PsiMethodCallExpression? {
+    return PsiTreeUtil.findChildOfType(element, PsiMethodCallExpression::class.java, false)
   }
 
   private fun areElementsIntersected(firstElements: List<PsiElement>, secondElements: List<PsiElement>): Boolean {
