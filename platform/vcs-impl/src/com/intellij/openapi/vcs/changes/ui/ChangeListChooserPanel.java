@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -81,7 +81,7 @@ public final class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
-      public void init(LocalChangeList initial) {
+      public void init(@Nullable LocalChangeList initial) {
         super.init(initial);
         myDescriptionTextArea.addFocusListener(new FocusAdapter() {
           @Override

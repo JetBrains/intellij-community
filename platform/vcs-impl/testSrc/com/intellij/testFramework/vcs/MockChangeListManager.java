@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.Disposable;
@@ -332,7 +332,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
+  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
     MockChangeList changeList = new MockChangeList(name);
     myChangeLists.put(name, changeList);
     return changeList;
