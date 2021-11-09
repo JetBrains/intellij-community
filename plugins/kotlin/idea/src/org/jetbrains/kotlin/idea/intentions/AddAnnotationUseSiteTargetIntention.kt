@@ -49,7 +49,7 @@ class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationE
         if (!element.isPhysical) {
             // For preview
             if (useSiteTargets.isNotEmpty()) {
-                element.addUseSiteTarget(useSiteTargets.first(), element.project)
+                element.doAddUseSiteTarget(useSiteTargets.first())
             }
             return
         }
@@ -174,6 +174,10 @@ fun KtAnnotationEntry.applicableUseSiteTargets(): List<AnnotationUseSiteTarget> 
 
 fun KtAnnotationEntry.addUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget, project: Project) {
     project.executeWriteCommand(KotlinBundle.message("add.use.site.target")) {
-        replace(KtPsiFactory(this).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
+        doAddUseSiteTarget(useSiteTarget)
     }
+}
+
+private fun KtAnnotationEntry.doAddUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget) {
+    replace(KtPsiFactory(this).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
 }
