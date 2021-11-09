@@ -412,7 +412,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public boolean isProblemResolved(@Nullable RefEntity entity) {
-    return myFixedElements.containsKey(entity);
+    return entity != null && myFixedElements.containsKey(entity);
   }
 
   @Override
@@ -647,7 +647,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Nullable
     @Override
     public String getTailText() {
-      final UnusedDeclarationHint hint = ((UnusedDeclarationPresentation)getPresentation()).myFixedElements.get(getElement());
+      RefEntity element = getElement();
+      final UnusedDeclarationHint hint = element == null ? null : ((UnusedDeclarationPresentation)getPresentation()).myFixedElements.get(element);
       if (hint != null) {
         return hint.getDescription();
       }
@@ -656,7 +657,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
     @Override
     public boolean isQuickFixAppliedFromView() {
-      return ((UnusedDeclarationPresentation)getPresentation()).myFixedElements.containsKey(getElement());
+      RefEntity element = getElement();
+      return element != null && ((UnusedDeclarationPresentation)getPresentation()).myFixedElements.containsKey(element);
     }
 
     @Override

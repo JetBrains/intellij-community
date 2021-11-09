@@ -19,8 +19,8 @@ public class MagicIntegerConstAccessor extends ExternalStringAccessor<Integer> i
 
   public MagicIntegerConstAccessor(@NotNull Object object,
                                    @NotNull Field field,
-                                   int[] intValues,
-                                   String[] strValues) {
+                                   int @NotNull [] intValues,
+                                   String @NotNull [] strValues) {
     super(object, field);
     for (int i = 0; i < Math.min(intValues.length, strValues.length); i ++) {
       String value = strValues[i];

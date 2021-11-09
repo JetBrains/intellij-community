@@ -80,7 +80,9 @@ public final class StringDescriptorManager {
     if (propertiesFile == null || !propertiesFile.getContainingFile().isValid()) {
       propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
       synchronized (myPropertiesFileCache) {
-        myPropertiesFileCache.put(cacheKey, propertiesFile);
+        if (propertiesFile != null) {
+          myPropertiesFileCache.put(cacheKey, propertiesFile);
+        }
       }
     }
 

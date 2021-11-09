@@ -159,7 +159,7 @@ public final class DomApplicationComponent {
     myAcceptingOtherRootTagNamesDescriptions.remove(meta);
   }
 
-  public synchronized @Nullable DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
+  public synchronized @Nullable DomFileDescription<?> findFileDescription(@NotNull Class<?> rootElementClass) {
     return classToDescription.computeIfAbsent(rootElementClass, this::_findFileDescription);
   }
 
@@ -171,7 +171,7 @@ public final class DomApplicationComponent {
       .orElse(null);
   }
 
-  public DomElementsAnnotator getAnnotator(Class<?> rootElementClass) {
+  public DomElementsAnnotator getAnnotator(@NotNull Class<?> rootElementClass) {
     return myClass2Annotator.get(rootElementClass);
   }
 
