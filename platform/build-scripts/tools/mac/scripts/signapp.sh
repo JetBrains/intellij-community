@@ -17,6 +17,7 @@ CODESIGN_STRING=$5
 JDK_ARCHIVE="$6"
 NOTARIZE=$7
 BUNDLE_ID=$8
+COMPRESS_INPUT=${9:-false}
 
 cd "$(dirname "$0")"
 
@@ -137,7 +138,7 @@ if [ "$COMPRESS_INPUT" != "false" ]; then
   log "Zipping $BUILD_NAME to $INPUT_FILE ..."
   (
     cd "$EXPLODED"
-    ditto -c -k --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
+    ditto -c -k --zlibCompressionLevel 1 --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
     log "Finished zipping"
   )
 fi

@@ -98,9 +98,12 @@ abstract class MacDistributionCustomizer {
   String dmgImagePathForEAP = null
 
   /**
-   * If {@code true} will publish sit archive as artifact
+   * If {@code true} will publish sit archive as artifact.
+   *
+   * `true` by default because archive is required for patches.
    */
-  boolean publishArchive = false
+  boolean publishArchive = true
+
   /**
    * Application bundle name: &lt;name&gt;.app. Current convention is to have ProductName.app for release and ProductName Version EAP.app.
    * @param applicationInfo application info that can be used to check for EAP and building version

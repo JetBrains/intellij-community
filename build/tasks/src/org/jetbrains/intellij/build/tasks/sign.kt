@@ -146,13 +146,14 @@ fun signMacApp(
       jreArchiveFile?.fileName?.toString() ?: "no-jdk",
       if (notarize) "yes" else "no",
       bundleIdentifier,
+      publishAppArchive.toString(),
     )
 
     val env = System.getenv("ARTIFACTORY_URL")?.takeIf { it.isNotEmpty() }?.let { "ARTIFACTORY_URL=$it " } ?: ""
     @Suppress("SpellCheckingInspection")
     tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).startSpan().useWithScope {
       signFile(remoteDir = remoteDir,
-               commandString = "COMPRESS_INPUT=${publishAppArchive} $env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
+               commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
                file = appArchiveFile,
                ssh = ssh,
                ftpClient = sftp,
@@ -177,7 +178,7 @@ fun signMacApp(
         @Suppress("SpellCheckingInspection")
         processFile(localFile = dmgFile,
                     ssh = ssh,
-                    commandString = "REUSE_EXPLODED=true '$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
+                    commandString = "'$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
                     artifactDir = artifactDir,
                     artifactBuilt = artifactBuilt,
                     taskLogClassifier = "dmg")

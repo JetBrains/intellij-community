@@ -89,13 +89,15 @@ final class MacDmgBuilder {
                                    MacDistributionCustomizer customizer,
                                    BuildContext context) {
     BuildHelper buildHelper = BuildHelper.getInstance(context)
+    Path tempDir = context.paths.tempDir.resolve(sitFile.fileName.toString().replace(".sit", "")).resolve("bundled-jre")
     if (jreArchivePath != null || signMacArtifacts) {
       buildHelper.span(TracerManager.spanBuilder("bundle JBR and sign sit locally")
                          .setAttribute("jreArchive", jreArchivePath.toString())
                          .setAttribute("sitFile", sitFile.toString()), new Runnable() {
         @Override
         void run() {
-          bundleJBRAndSignSitLocally(sitFile, jreArchivePath, customizer, context)
+          Files.createDirectories(tempDir)
+          bundleJBRAndSignSitLocally(sitFile, tempDir, jreArchivePath, customizer, context)
         }
       })
     }
@@ -105,18 +107,19 @@ final class MacDmgBuilder {
     context.executeStep("build DMG locally", BuildOptions.MAC_DMG_STEP, new Runnable() {
       @Override
       void run() {
-        buildDmgLocally(sitFile, targetName, customizer, context)
+        buildDmgLocally(tempDir, targetName, customizer, context)
       }
     })
+
+    NioFiles.deleteRecursively(tempDir)
   }
 
   @SuppressWarnings('SpellCheckingInspection')
   private static void bundleJBRAndSignSitLocally(Path targetFile,
+                                                 Path tempDir,
                                                  Path jreArchivePath,
                                                  MacDistributionCustomizer customizer,
                                                  @NotNull BuildContext context) {
-    Path tempDir = context.paths.tempDir.resolve(targetFile.fileName).resolve("mac.dist.bundled.jre")
-    Files.createDirectories(tempDir)
     Files.copy(targetFile, tempDir.resolve(targetFile.fileName))
     if (jreArchivePath != null) {
       Files.copy(jreArchivePath, tempDir.resolve(jreArchivePath.fileName))
@@ -129,37 +132,26 @@ final class MacDmgBuilder {
       "./signapp.sh",
       targetFile.fileName.toString(),
       context.fullBuildNumber,
-      "\"\"",
-      "\"\"",
-      "\"\"",
+      "",
+      "",
+      "",
       (jreArchivePath == null ? "no-jdk" : '"' + jreArchivePath.fileName.toString() + '"'),
       "no",
       customizer.bundleIdentifier,
       ), tempDir)
-    NioFiles.deleteRecursively(tempDir.resolve(targetFile.fileName.toString() + ".exploded"))
-    Path artifactDir = Path.of(context.paths.artifacts)
-    Files.move(tempDir.resolve(targetFile.fileName), artifactDir.resolve(targetFile.fileName), StandardCopyOption.REPLACE_EXISTING)
   }
 
   @SuppressWarnings("SpellCheckingInspection")
-  private static void buildDmgLocally(Path sitFile, String targetFileName, MacDistributionCustomizer customizer, BuildContext context) {
-    Path tempDir = context.paths.tempDir.resolve("mac.dist.dmg")
-    Files.createDirectories(tempDir)
+  private static void buildDmgLocally(Path tempDir, String targetFileName, MacDistributionCustomizer customizer, BuildContext context) {
     Path dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
     Files.copy(Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath), dmgImageCopy)
-    Files.copy(sitFile, tempDir.resolve(sitFile.fileName))
     Path scriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
     Files.copy(scriptDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"), StandardCopyOption.COPY_ATTRIBUTES)
-    Files.copy(scriptDir.resolve("create-dmg.sh"), tempDir.resolve("create-dmg.sh"), StandardCopyOption.COPY_ATTRIBUTES)
-    Files.copy(scriptDir.resolve("makedmg-locally.sh"), tempDir.resolve("makedmg-locally.sh"), StandardCopyOption.COPY_ATTRIBUTES)
-    //noinspection SpellCheckingInspection
-    Files.setPosixFilePermissions(tempDir.resolve("makedmg.sh"), PosixFilePermissions.fromString("rwxrwxrwx"))
 
     Path artifactDir = Path.of(context.paths.artifacts)
     Files.createDirectories(artifactDir)
-    BuildHelper.runProcess(context, List.of("sh", "./makedmg-locally.sh", targetFileName, context.fullBuildNumber), tempDir)
     Path dmgFile = artifactDir.resolve("${targetFileName}.dmg")
-    Files.copy(tempDir.resolve(dmgFile.fileName), dmgFile)
+    BuildHelper.runProcess(context, List.of("sh", "makedmg.sh", targetFileName, context.fullBuildNumber, dmgFile.toString()), tempDir)
     context.notifyArtifactBuilt(dmgFile)
   }
 
