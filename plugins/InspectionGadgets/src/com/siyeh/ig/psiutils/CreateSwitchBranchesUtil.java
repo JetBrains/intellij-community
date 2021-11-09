@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -167,7 +168,8 @@ public final class CreateSwitchBranchesUtil {
   public static @NonNls List<String> generateStatements(@NotNull String caseLabelName, @NotNull PsiSwitchBlock switchBlock,
                                                         boolean isRuleBasedFormat, boolean isPatternsGenerated) {
     final String patternVariableName =
-      isPatternsGenerated ? " " + new VariableNameGenerator(switchBlock, VariableKind.PARAMETER).byName(caseLabelName).generate(false) : "";
+      isPatternsGenerated ? " " + new VariableNameGenerator(switchBlock, VariableKind.PARAMETER).byName(
+        StringUtil.getShortName(caseLabelName)).generate(false) : "";
     if (switchBlock instanceof PsiSwitchExpression) {
       String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
       if (isRuleBasedFormat) {

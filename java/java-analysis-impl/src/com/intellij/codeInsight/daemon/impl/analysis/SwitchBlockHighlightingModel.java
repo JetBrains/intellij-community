@@ -822,7 +822,7 @@ public class SwitchBlockHighlightingModel {
       HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
       if (!missingClasses.isEmpty()) {
         Set<String> missingCases = new SmartHashSet<>();
-        missingClasses.forEach(aClass -> missingCases.add(aClass.getName()));
+        missingClasses.forEach(aClass -> missingCases.add(aClass.getQualifiedName()));
         IntentionAction fix =
           getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, StreamEx.of(missingCases).toList());
         QuickFixAction.registerQuickFixAction(info, fix);
