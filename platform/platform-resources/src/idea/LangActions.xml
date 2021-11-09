@@ -354,8 +354,7 @@
             class="com.intellij.lang.documentation.ide.actions.ToggleAutoUpdateAction"/>
     <action id="Documentation.KeepTab"
             class="com.intellij.lang.documentation.ide.actions.KeepTabAction"
-            icon="AllIcons.Toolbar.Pin"
-            use-shortcut-of="QuickJavaDoc">
+            icon="AllIcons.Toolbar.Pin">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
 
