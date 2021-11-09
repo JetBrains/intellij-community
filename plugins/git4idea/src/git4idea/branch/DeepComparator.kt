@@ -221,6 +221,7 @@ class DeepComparator(private val project: Project,
       nonPickedCommits = collectedNonPickedCommits
     }
 
+    @Throws(VcsException::class)
     private fun getCommitsByPatch(root: VirtualFile,
                                   targetBranch: String,
                                   sourceBranch: String): IntSet {
@@ -229,6 +230,7 @@ class DeepComparator(private val project: Project,
       }
     }
 
+    @Throws(VcsException::class)
     private fun getCommitsByIndexReliable(root: VirtualFile, sourceBranch: String, targetBranch: String): IntSet {
       val resultFromGit = getCommitsByPatch(root, targetBranch, sourceBranch)
       if (dataPack == null || !dataPack.isFull) return resultFromGit
@@ -279,7 +281,7 @@ class DeepComparator(private val project: Project,
           }
         }
       }
-      Git.getInstance().runCommandWithoutCollectingOutput(handler)
+      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
       return pickedCommits
     }
 
