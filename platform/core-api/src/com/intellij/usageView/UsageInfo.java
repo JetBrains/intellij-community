@@ -268,11 +268,11 @@ public class UsageInfo {
   @Nullable
   public Segment getSegment() {
     PsiElement element = getElement();
-    TextRange range;
-    if (element == null
-        // in case of binary file
-        || myPsiFileRange == null && element instanceof PsiFile
-        || (range = element.getTextRange()) == null) {
+    if (element instanceof PsiFile && ((PsiFile)element).getFileType().isBinary()) {
+      return null;
+    }
+    TextRange range = element != null ? element.getTextRange() : null;
+    if (range == null) {
       return null;
     }
 
