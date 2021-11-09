@@ -208,3 +208,23 @@ internal suspend inline fun <R> MutableStateFlow<Boolean>.whileLoading(action: (
     emit(false)
     return r
 }
+
+internal inline fun <reified T> Flow<T>.batchAtIntervals(duration: Duration) = channelFlow {
+    val mutex = Mutex()
+    val buffer = mutableListOf<T>()
+    var job: Job? = null
+    collect {
+        mutex.withLock { buffer.add(it) }
+        if (job == null || job?.isCompleted == true) {
+            job = launch {
+                delay(duration)
+                val data = mutex.withLock {
+                    val d = buffer.toTypedArray()
+                    buffer.clear()
+                    d
+                }
+                send(data)
+            }
+        }
+    }
+}

@@ -12,6 +12,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRep
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
+import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
 import com.jetbrains.packagesearch.intellij.plugin.util.coroutineModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
@@ -31,18 +32,13 @@ import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.filter
@@ -56,9 +52,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import java.nio.file.Files
 import java.util.concurrent.Executors
@@ -144,8 +137,8 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     val moduleModelsStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading(
-            "moduleModelsStateFlow",
-            moduleModelsLoadingFlow
+            loggingContext = "moduleModelsStateFlow",
+            loadingFlow = moduleModelsLoadingFlow
         ) { projectModules -> projectModules.parallelMap { readAction { ModuleModel(it) } } }
         .catchAndLog(
             context = "${this::class.qualifiedName}#moduleModelsStateFlow",
@@ -157,7 +150,8 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     val projectModulesChangesFlow = projectModulesSharedFlow
         .flatMapLatest { modules ->
-            project.filesChangedEventFlow.batchAtIntervals(Duration.seconds(3)) { it.flatMap { it } }
+            project.filesChangedEventFlow.batchAtIntervals(Duration.seconds(3))
+                .map { it.flatMap { it } }
                 .map { changedFilesEvents ->
                     val changedBuildFiles = changedFilesEvents.mapNotNull { it.file }
                     modules.filter { it.buildFile in changedBuildFiles }
@@ -261,29 +255,5 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
         operationExecutedChannel.trySend(successes)
-    }
-}
-
-internal inline fun <reified T, K> Flow<T>.batchAtIntervals(
-    duration: Duration,
-    crossinline transform: suspend (Array<T>) -> K
-) = channelFlow {
-    val mutex = Mutex()
-    val buffer = mutableListOf<T>()
-    var job: Job? = null
-    collect {
-        if (job == null || job?.isCompleted == true) {
-            job = launch {
-                delay(duration)
-                val data = mutex.withLock {
-                    val d = transform(buffer.toTypedArray())
-                    buffer.clear()
-                    d
-                }
-                send(data)
-            }
-        }
-
-        mutex.withLock { buffer.add(it) }
     }
 }
