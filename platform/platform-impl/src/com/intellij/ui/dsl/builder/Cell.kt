@@ -22,21 +22,10 @@ enum class LabelPosition {
 @ApiStatus.Experimental
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
-  /**
-   * @see [Constraints.horizontalAlign]
-   */
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
-  /**
-   * @see [Constraints.verticalAlign]
-   */
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
-  /**
-   * Marks column with the cell as a resizable one. Size and placement of component in columns are managed by [horizontalAlign]
-   *
-   * @see [Grid.resizableColumns]
-   */
   override fun resizableColumn(): Cell<T>
 
   override fun gap(rightGap: RightGap): Cell<T>

@@ -160,7 +160,7 @@ interface Row {
   fun bottomGap(bottomGap: BottomGap): Row
 
   /**
-   * Creates sub-panel inside the cell of the row. The panel contains own rows and cells
+   * Creates sub-panel inside the cell of the row. The panel contains its own rows and cells
    */
   fun panel(init: Panel.() -> Unit): Panel
 

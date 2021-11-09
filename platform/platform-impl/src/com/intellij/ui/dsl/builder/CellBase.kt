@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.ui.dsl.gridLayout.Constraints
+import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
@@ -16,9 +18,6 @@ enum class RightGap {
    */
   COLUMNS
 }
-
-@DslMarker
-private annotation class CellBaseMarker
 
 /**
  * Common API for cells
@@ -40,19 +39,26 @@ interface CellBase<out T : CellBase<T>> {
   fun enabled(isEnabled: Boolean): CellBase<T>
 
   /**
-   * Horizontal align of content inside the cell
+   * Sets horizontal alignment of content inside the cell, [HorizontalAlign.LEFT] by default
+   *
+   * @see [Constraints.horizontalAlign]
    */
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
   /**
-   * Vertical align of content inside the cell
+   * Sets vertical alignment of content inside the cell, [VerticalAlign.CENTER] by default
+   *
+   * @see [Constraints.verticalAlign]
    */
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
   /**
    * Marks column of the cell as resizable: the column occupies all extra space in panel and changes size together with panel.
    * It's possible to have several resizable columns, which means extra space is shared between them.
-   * There is no need to set resizable for cells from one column: it has no effect
+   * There is no need to set resizable for cells in different rows but in the same column: it has no effect.
+   * Note that size and placement of component in columns are managed by [horizontalAlign]
+   *
+   * @see [Grid.resizableColumns]
    */
   fun resizableColumn(): CellBase<T>
 

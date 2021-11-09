@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -69,10 +70,13 @@ interface Panel : CellBase<Panel> {
    */
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
+  /**
+   * Adds horizontal line separator with optional [title]
+   */
   fun separator(@NlsContexts.Separator title: String? = null, background: Color? = null): Row
 
   /**
-   * Creates sub-panel that occupies whole width and uses own grid inside
+   * Creates sub-panel that occupies the whole width and uses its own grid inside
    */
   fun panel(init: Panel.() -> Unit): Panel
 
@@ -82,12 +86,12 @@ interface Panel : CellBase<Panel> {
   fun rowsRange(init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds panel with independent grid, title and some vertical space before and after the group.
+   * Adds panel with independent grid, title and some vertical space above and below the group.
    * Grouped radio buttons and checkboxes should use [Panel.buttonGroup] method, which uses different title gaps
    *
    * @param indent true if left indent is needed
-   * @param topGroupGap if specified forces enabling (useful for first group in panel) or disabling standard gap before the group
-   * @param bottomGroupGap if specified forces enabling (useful for last group in panel) or disabling standard gap after the group
+   * @param topGroupGap if specified forces enabling (useful for first group in panel) or disabling standard gap above the group
+   * @param bottomGroupGap if specified forces enabling (useful for last group in panel) or disabling standard gap below the group
    */
   fun group(@NlsContexts.BorderTitle title: String? = null,
             indent: Boolean = true,
@@ -96,7 +100,7 @@ interface Panel : CellBase<Panel> {
             init: Panel.() -> Unit): Panel
 
   /**
-   * Similar to [Panel.group] but uses the same grid as parent.
+   * Similar to [Panel.group] but uses the same grid as the parent.
    * See [RowsRange]
    */
   fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null,
@@ -106,11 +110,11 @@ interface Panel : CellBase<Panel> {
                      init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds collapsible panel with independent grid, title and some vertical space before the group.
+   * Adds collapsible panel with independent grid, title and some vertical space above and below the group.
    *
    * @param indent true if left indent is needed
-   * @param topGroupGap if specified forces enabling (useful for first group in panel) or disabling standard gap before the group
-   * @param bottomGroupGap if specified forces enabling (useful for last group in panel) or disabling standard gap after the group
+   * @param topGroupGap if specified forces enabling (useful for first group in panel) or disabling standard gap above the group
+   * @param bottomGroupGap if specified forces enabling (useful for last group in panel) or disabling standard gap below the group
    */
   fun collapsibleGroup(@NlsContexts.BorderTitle title: String,
                        indent: Boolean = true,
@@ -132,10 +136,19 @@ interface Panel : CellBase<Panel> {
   fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null,
                       indent: Boolean = title != null, init: Panel.() -> Unit)
 
+  /**
+   * Registers [callback] that will be called from [DialogPanel.apply] method
+   */
   fun onApply(callback: () -> Unit): Panel
 
+  /**
+   * Registers [callback] that will be called from [DialogPanel.reset] method
+   */
   fun onReset(callback: () -> Unit): Panel
 
+  /**
+   * Registers [callback] that will be called from [DialogPanel.isModified] method
+   */
   fun onIsModified(callback: () -> Boolean): Panel
 
   /**
@@ -149,6 +162,9 @@ interface Panel : CellBase<Panel> {
   fun customize(customGaps: Gaps): Panel
 }
 
+/**
+ * See [Panel.buttonGroup]
+ */
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
                                                noinline setter: (T) -> Unit,
                                                @NlsContexts.BorderTitle title: String? = null,
@@ -157,12 +173,18 @@ inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
   buttonGroup(PropertyBinding(getter, setter), title, indent, init)
 }
 
+/**
+ * See [Panel.buttonGroup]
+ */
 inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, @NlsContexts.BorderTitle title: String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
   buttonGroup(prop.toBinding(), title, indent, init)
 }
 
+/**
+ * See [Panel.buttonGroup]
+ */
 inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, @NlsContexts.BorderTitle title: String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
