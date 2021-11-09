@@ -374,13 +374,18 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                     }
                 }
 
-                ToolWindowManager.getInstance(project).notifyByBalloon(
-                    ToolWindowId.FIND,
-                    MessageType.INFO,
-                    DISABLE_COMPONENT_AND_DESTRUCTION_SEARCH_TEXT,
-                    Actions.Find,
-                    listener
-                )
+                val windowManager = ToolWindowManager.getInstance(project)
+                windowManager.getToolWindow(ToolWindowId.FIND)?.let { toolWindow ->
+                    windowManager.notifyByBalloon(
+                        toolWindow.id,
+                        MessageType.INFO,
+                        DISABLE_COMPONENT_AND_DESTRUCTION_SEARCH_TEXT,
+                        Actions.Find,
+                        listener
+                    )
+                }
+
+                Unit
             }
 
             return Alarm().also {
