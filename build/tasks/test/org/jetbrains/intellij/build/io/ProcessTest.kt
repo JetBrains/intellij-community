@@ -1,26 +1,29 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("UsePropertyAccessSyntax")
+
 package org.jetbrains.intellij.build.io
 
-import org.junit.*
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatCode
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
 
 class ProcessTest {
   companion object {
-    @BeforeClass
+    @BeforeAll
     @JvmStatic
     fun assumeShell() {
-      try {
+      assertThatCode {
         runProcess("sh", "--version")
-      }
-      catch (e: Throwable) {
-        Assume.assumeNoException(e)
-      }
+      }.doesNotThrowAnyException()
     }
   }
 
-  @After
+  @AfterEach
   fun allErrorOutputReadersAreDone() {
     assert(areAllIoTasksCompleted()) {
       "not all completed"
@@ -31,7 +34,7 @@ class ProcessTest {
     val script = Files.createTempFile("script", ".sh").toFile()
     try {
       script.writeText(code)
-      Assert.assertTrue(script.setExecutable(true))
+      assertThat(script.setExecutable(true)).isTrue()
       if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
         Files.setPosixFilePermissions(script.toPath(), PosixFilePermission.values().toSet())
       }
