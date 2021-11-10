@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="module" module-name="kotlin.core" />
   </component>
 </module>
