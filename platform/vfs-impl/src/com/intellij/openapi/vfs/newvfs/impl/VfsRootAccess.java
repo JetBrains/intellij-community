@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -124,12 +125,26 @@ public final class VfsRootAccess {
       allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
       allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
-      allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
-      allowed.add(FileUtil.toSystemIndependentName(findInUserHome(".m2")));
-      allowed.add(FileUtil.toSystemIndependentName(findInUserHome(".gradle")));
 
-      if (System.getenv().containsKey("GRADLE_USER_HOME")){
-        allowed.add(FileUtil.toSystemIndependentName(System.getenv("GRADLE_USER_HOME")));
+      String userHome = FileUtil.toSystemIndependentName(SystemProperties.getUserHome());
+      allowed.add(userHome);
+
+      String mavenHome = resolvedPath(userHome + "/.m2");
+      if (!mavenHome.startsWith(userHome + '/')) {
+        allowed.add(mavenHome);
+      }
+      mavenHome = resolvedPath(userHome + "/.m2/repository");
+      if (!mavenHome.startsWith(userHome + '/')) {
+        allowed.add(mavenHome);
+      }
+
+      String gradleHome = resolvedPath(userHome + "/.gradle");
+      if (gradleHome.startsWith(userHome + '/')) {
+        allowed.add(gradleHome);
+      }
+      gradleHome = System.getenv("GRADLE_USER_HOME");
+      if (gradleHome != null) {
+        allowed.add(FileUtil.toSystemIndependentName(gradleHome));
       }
 
       if (SystemInfo.isWindows) {
@@ -191,14 +206,12 @@ public final class VfsRootAccess {
     return javaHome;
   }
 
-  private static String findInUserHome(String path) {
-    File file = new File(SystemProperties.getUserHome(), path);
+  private static String resolvedPath(String path) {
     try {
-      // in case if we have a symlink like ~/.m2 -> /opt/.m2
-      return file.getCanonicalPath();
+      return FileUtil.toSystemIndependentName(Path.of(path).toRealPath().toString());
     }
     catch (IOException e) {
-      return file.getPath();
+      return path;
     }
   }
 
