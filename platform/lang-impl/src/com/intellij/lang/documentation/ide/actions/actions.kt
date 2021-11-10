@@ -45,6 +45,10 @@ internal fun registerBackForwardActions(component: JComponent) {
   ), component)
 }
 
+internal fun documentationHistory(dc: DataContext): DocumentationHistory? {
+  return dc.getData(DOCUMENTATION_HISTORY)
+}
+
 internal fun documentationToolWindowUI(dc: DataContext): DocumentationToolWindowUI? {
   val toolWindow = dc.getData(PlatformDataKeys.TOOL_WINDOW)
                    ?: return null

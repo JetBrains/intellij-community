@@ -7,13 +7,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 
 internal class DocumentationBackAction : AnAction(), ActionToIgnore {
 
-  private fun history(e: AnActionEvent) = e.dataContext.getData(DOCUMENTATION_HISTORY)
-
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = history(e)?.canBackward() == true
+    e.presentation.isEnabled = documentationHistory(e.dataContext)?.canBackward() == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    history(e)?.backward()
+    documentationHistory(e.dataContext)?.backward()
   }
 }
