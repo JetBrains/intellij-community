@@ -112,6 +112,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       val link = helpLink.value
       val linkLabel = LinkLabel<Any>(text, null) { _, _ ->
         openLinkInBrowser(link)
+        StatisticBase.logHelpLinkClicked(lesson.id)
       }
       footerContent.add(rigid(0, 5))
       footerContent.add(linkLabel.wrapWithUrlPanel())

@@ -32,4 +32,5 @@ object FeatureUsageStatisticConsts {
   const val TIP_FILENAME = "filename"
   const val LESSON_LINK_CLICKED_FROM_TIP = "lesson_link_clicked_from_tip"
   const val LESSON_STARTING_WAY = "starting_way"
+  const val HELP_LINK_CLICKED = "help_link_clicked"
 }
