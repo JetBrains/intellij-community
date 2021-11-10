@@ -41,6 +41,7 @@ import training.learn.course.LessonType
 import training.learn.exceptons.LessonPreparationException
 import training.learn.lesson.LessonManager
 import training.project.ProjectUtils
+import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.statistic.StatisticLessonListener
 import training.ui.LearnToolWindowFactory
@@ -52,7 +53,8 @@ import java.io.IOException
 
 internal class OpenLessonParameters(val projectWhereToStartLesson: Project,
                                     val lesson: Lesson,
-                                    val forceStartLesson: Boolean)
+                                    val forceStartLesson: Boolean,
+                                    val startingWay: LessonStartingWay)
 
 internal object OpenLessonActivities {
   private val LOG = logger<OpenLessonActivities>()
@@ -104,7 +106,7 @@ internal object OpenLessonActivities {
             LOG.debug("${projectWhereToStartLesson.name}: 1. learnProject is null or disposed")
             initLearnProject(projectWhereToStartLesson, null) {
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... LearnProject has been started")
-              openLessonWhenLearnProjectStart(OpenLessonParameters(it, params.lesson, params.forceStartLesson))
+              openLessonWhenLearnProjectStart(OpenLessonParameters(it, params.lesson, params.forceStartLesson, params.startingWay))
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... open lesson when learn project has been started")
             }
             return
@@ -211,7 +213,7 @@ internal object OpenLessonActivities {
       it.setLearnPanel()
     }
     LOG.debug("${project.name}: XmlLesson onStart()")
-    params.lesson.onStart()
+    params.lesson.onStart(params.startingWay)
 
     //to start any lesson we need to do 4 steps:
     //1. open editor or find editor
@@ -308,11 +310,11 @@ internal object OpenLessonActivities {
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
           if (onboarding.properties.canStartInDumbMode) {
-            CourseManager.instance.openLesson(project, onboarding, true)
+            CourseManager.instance.openLesson(project, onboarding, LessonStartingWay.ONBOARDING_PROMOTER, true)
           }
           else {
             DumbService.getInstance(project).runWhenSmart {
-              CourseManager.instance.openLesson(project, onboarding, true)
+              CourseManager.instance.openLesson(project, onboarding, LessonStartingWay.ONBOARDING_PROMOTER, true)
             }
           }
         }

@@ -21,6 +21,7 @@ import training.learn.course.LearningCourse
 import training.learn.course.LearningCourseBase
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
 import training.ui.LearnToolWindowFactory
 import training.util.LEARNING_PANEL_OPENED_IN
 import training.util.WeakReferenceDelegator
@@ -107,10 +108,10 @@ class CourseManager internal constructor() : Disposable {
    * @param projectWhereToOpen -- where to open projectWhereToOpen
    * @param forceStartLesson -- force start lesson without check for passed status (passed lessons will be opened as completed text)
    */
-  fun openLesson(projectWhereToOpen: Project, lesson: Lesson?, forceStartLesson: Boolean = false) {
+  fun openLesson(projectWhereToOpen: Project, lesson: Lesson?, startingWay: LessonStartingWay, forceStartLesson: Boolean = false) {
     LessonManager.instance.stopLesson()
     if (lesson == null) return //todo: remove null lessons
-    OpenLessonActivities.openLesson(OpenLessonParameters(projectWhereToOpen, lesson, forceStartLesson))
+    OpenLessonActivities.openLesson(OpenLessonParameters(projectWhereToOpen, lesson, forceStartLesson, startingWay))
   }
 
   fun findLessonById(lessonId: String): Lesson? {
