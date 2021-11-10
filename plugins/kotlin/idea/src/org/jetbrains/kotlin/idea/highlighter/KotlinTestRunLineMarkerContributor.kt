@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -69,10 +70,11 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
         if (declaration is KtNamedFunction && declaration.containingClass() == null) return null
 
-        if (!ProjectRootsUtil.isInProjectSource(declaration)) return null
-
         val targetPlatform = declaration.module?.platform ?: return null
         if (!targetPlatform.providesRunnableTests()) return null
+
+        if (targetPlatform.isJvm() && !ProjectRootsUtil.isInProjectSource(declaration, includeProjectResources = false)) return null
+
         val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(declaration) {
             declaration.resolveToDescriptorIfAny()
         } ?: return null

@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinModuleFileType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -58,6 +59,10 @@ fun FileIndex.isInSourceContentWithoutInjected(file: VirtualFile): Boolean {
     return file !is VirtualFileWindow && isInSourceContent(file)
 }
 
+fun FileIndex.isUnderSourceRootTypes(file: VirtualFile): Boolean {
+    return file !is VirtualFileWindow && isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES)
+}
+
 fun VirtualFile.getSourceRoot(project: Project): VirtualFile? = ProjectRootManager.getInstance(project).fileIndex.getSourceRootForFile(this)
 
 val PsiFileSystemItem.sourceRoot: VirtualFile?
@@ -65,12 +70,34 @@ val PsiFileSystemItem.sourceRoot: VirtualFile?
 
 object ProjectRootsUtil {
 
+    fun isInContent(
+        project: Project,
+        file: VirtualFile,
+        includeProjectSource: Boolean,
+        includeLibrarySource: Boolean,
+        includeLibraryClasses: Boolean,
+        includeScriptDependencies: Boolean,
+        includeScriptsOutsideSourceRoots: Boolean,
+        fileIndex: ProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
+    ): Boolean = isInContent(
+        project,
+        file,
+        includeProjectSource,
+        true,
+        includeLibrarySource,
+        includeLibraryClasses,
+        includeScriptDependencies,
+        includeScriptsOutsideSourceRoots,
+        fileIndex
+    )
+
     @Suppress("DEPRECATION")
     @JvmStatic
     fun isInContent(
         project: Project,
         file: VirtualFile,
         includeProjectSource: Boolean,
+        includeProjectResources: Boolean,
         includeLibrarySource: Boolean,
         includeLibraryClasses: Boolean,
         includeScriptDependencies: Boolean,
@@ -82,7 +109,8 @@ object ProjectRootsUtil {
         val kotlinExcludeLibrarySources = fileType == KotlinFileType.INSTANCE && !includeLibrarySource && !includeScriptsOutsideSourceRoots
         if (kotlinExcludeLibrarySources && !includeProjectSource) return false
 
-        if (fileIndex.isInSourceContentWithoutInjected(file)) return includeProjectSource
+        if (fileIndex.isUnderSourceRootTypes(file)) return includeProjectSource
+        if (includeProjectResources && fileIndex.isInSourceContentWithoutInjected(file)) return includeProjectSource
 
         if (kotlinExcludeLibrarySources) return false
 
@@ -168,10 +196,28 @@ object ProjectRootsUtil {
         return false
     }
 
+    fun isInContent(
+        element: PsiElement,
+        includeProjectSource: Boolean,
+        includeLibrarySource: Boolean,
+        includeLibraryClasses: Boolean,
+        includeScriptDependencies: Boolean,
+        includeScriptsOutsideSourceRoots: Boolean
+    ): Boolean = isInContent(
+        element,
+        includeProjectSource,
+        true,
+        includeLibrarySource,
+        includeLibraryClasses,
+        includeScriptDependencies,
+        includeScriptsOutsideSourceRoots
+    )
+
     @JvmStatic
     fun isInContent(
         element: PsiElement,
         includeProjectSource: Boolean,
+        includeProjectResources: Boolean,
         includeLibrarySource: Boolean,
         includeLibraryClasses: Boolean,
         includeScriptDependencies: Boolean,
@@ -187,6 +233,7 @@ object ProjectRootsUtil {
             project,
             virtualFile,
             includeProjectSource,
+            includeProjectResources,
             includeLibrarySource,
             includeLibraryClasses,
             includeScriptDependencies,
@@ -196,10 +243,15 @@ object ProjectRootsUtil {
 
     @JvmOverloads
     @JvmStatic
-    fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean = false): Boolean {
+    fun isInProjectSource(
+        element: PsiElement,
+        includeScriptsOutsideSourceRoots: Boolean = false,
+        includeProjectResources: Boolean = true
+    ): Boolean {
         return isInContent(
             element,
             includeProjectSource = true,
+            includeProjectResources = includeProjectResources,
             includeLibrarySource = false,
             includeLibraryClasses = false,
             includeScriptDependencies = false,
@@ -227,6 +279,7 @@ object ProjectRootsUtil {
         return isInContent(
             element,
             includeProjectSource = true,
+            includeProjectResources = true,
             includeLibrarySource = true,
             includeLibraryClasses = false,
             includeScriptDependencies = false,
@@ -239,6 +292,7 @@ object ProjectRootsUtil {
         return isInContent(
             element,
             includeProjectSource = true,
+            includeProjectResources = true,
             includeLibrarySource = true,
             includeLibraryClasses = true,
             includeScriptDependencies = true,
@@ -251,6 +305,7 @@ object ProjectRootsUtil {
         return isInContent(
             element,
             includeProjectSource = true,
+            includeProjectResources = true,
             includeLibrarySource = false,
             includeLibraryClasses = true,
             includeScriptDependencies = false,
