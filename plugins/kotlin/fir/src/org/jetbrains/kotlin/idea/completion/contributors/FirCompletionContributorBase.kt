@@ -121,7 +121,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     private fun LookupElement.adaptToReceiver(): LookupElement {
         return when (callableWeight?.kind) {
             // Make the text bold if it's immediate member of the receiver
-            CallableWeigher.CallableWeightKind.THIS_CLASS_MEMBER, CallableWeigher.CallableWeightKind.THIS_TYPE_EXTENSION ->
+            CallableWeigher.CallableWeightKind.ThisClassMember, CallableWeigher.CallableWeightKind.ThisTypeExtension ->
                 object : LookupElementDecorator<LookupElement>(this) {
                     override fun renderElement(presentation: LookupElementPresentation) {
                         super.renderElement(presentation)
@@ -130,7 +130,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
                 }
 
             // Make the text gray and insert type cast if the receiver type does not match.
-            CallableWeigher.CallableWeightKind.RECEIVER_CAST_REQUIRED -> object : LookupElementDecorator<LookupElement>(this) {
+            is CallableWeigher.CallableWeightKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
                 override fun renderElement(presentation: LookupElementPresentation) {
                     super.renderElement(presentation)
                     presentation.itemTextForeground = LookupElementFactory.CAST_REQUIRED_COLOR
