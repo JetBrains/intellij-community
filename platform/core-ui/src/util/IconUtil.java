@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
@@ -168,6 +169,7 @@ public class IconUtil {
       icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
     }
     if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
+        Registry.is("ide.locked.icon.enabled", false) &&
         (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
       icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
     }
