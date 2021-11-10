@@ -17,7 +17,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -184,7 +183,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         Project defaultProject = ProjectManager.getInstance().getDefaultProject();
         MavenIndicesManager mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager.class);
         if (mavenIndicesManager != null) {
-          Disposer.dispose(mavenIndicesManager);
+          mavenIndicesManager.clear();
         }
       },
       () -> deleteDirOnTearDown(myDir),

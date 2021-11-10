@@ -24,11 +24,10 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
     String patternForQuery = preparePattern(pattern);
 
-    MavenIndicesManager m = MavenIndicesManager.getInstance(project);
-    Set<MavenArtifactInfo> infos = m.getIndex()
-      .getIndices().stream()
-      .flatMap(i -> i.search(patternForQuery, 50).stream())
-      .collect(Collectors.toSet());
+    MavenProjectIndicesManager m = MavenProjectIndicesManager.getInstance(project);
+    Set<MavenArtifactInfo> infos = m.getIndices().stream().flatMap(
+      i -> i.search(patternForQuery, 50).stream()
+    ).collect(Collectors.toSet());
 
     ArrayList<MavenClassSearchResult> results = new ArrayList<>(processResults(infos, patternForQuery, maxResult));
     results.sort(Comparator.comparing(MavenClassSearchResult::getClassName));

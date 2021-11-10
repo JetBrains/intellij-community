@@ -87,7 +87,8 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     });
 
     myIndicesTable.setDefaultRenderer(Object.class, new MyCellRenderer());
-    myIndicesTable.setDefaultRenderer(MavenIndexUpdateManager.IndexUpdatingState.class, new MyIconCellRenderer());
+    myIndicesTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
+                                      new MyIconCellRenderer());
 
     myIndicesTable.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.repositories.no"));
 
@@ -111,7 +112,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private void doUpdateIndex() {
-    MavenIndicesManager.getInstance(myProject).scheduleUpdateContent(getSelectedIndices());
+    MavenProjectIndicesManager.getInstance(myProject).scheduleUpdate(getSelectedIndices());
   }
 
   private List<MavenIndex> getSelectedIndices() {
@@ -154,7 +155,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
   @Override
   public void reset() {
-    myIndicesTable.setModel(new MyTableModel(MavenIndicesManager.getInstance(myProject).getIndex().getIndices()));
+    myIndicesTable.setModel(new MyTableModel(MavenProjectIndicesManager.getInstance(myProject).getIndices()));
     myIndicesTable.getColumnModel().getColumn(0).setPreferredWidth(400);
     myIndicesTable.getColumnModel().getColumn(1).setPreferredWidth(50);
     myIndicesTable.getColumnModel().getColumn(2).setPreferredWidth(50);
@@ -213,7 +214,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      if (columnIndex == 3) return MavenIndexUpdateManager.IndexUpdatingState.class;
+      if (columnIndex == 3) return MavenIndicesManager.IndexUpdatingState.class;
       return super.getColumnClass(columnIndex);
     }
 
@@ -235,7 +236,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
           if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
           return DateFormatUtil.formatDate(timestamp);
         case 3:
-          return MavenIndicesManager.getInstance(myProject).getUpdatingState(i);
+          return MavenProjectIndicesManager.getInstance(myProject).getUpdatingState(i);
       }
       throw new RuntimeException();
     }
@@ -269,11 +270,11 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private class MyIconCellRenderer extends MyCellRenderer {
-    MavenIndexUpdateManager.IndexUpdatingState myState;
+    MavenIndicesManager.IndexUpdatingState myState;
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      myState = (MavenIndexUpdateManager.IndexUpdatingState)value;
+      myState = (MavenIndicesManager.IndexUpdatingState)value;
       return super.getTableCellRendererComponent(table, "", isSelected, hasFocus, row, column);
     }
 

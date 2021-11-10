@@ -33,6 +33,7 @@ public class MavenIndicesTestFixture {
   private final String[] myExtraRepoDirs;
 
   private MavenCustomRepositoryHelper myRepositoryHelper;
+  private MavenProjectIndicesManager myIndicesManager;
 
   public MavenIndicesTestFixture(Path dir, Project project) {
     this(dir, project, "local1", "local2");
@@ -60,7 +61,9 @@ public class MavenIndicesTestFixture {
       myRepositoryHelper.getTestDataPath(myLocalRepoDir));
 
     getIndicesManager().setTestIndexDir(myDir.resolve("MavenIndices"));
-    getIndicesManager().scheduleUpdateIndicesList(null);
+    myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
+
+    myIndicesManager.doInit();
   }
 
   public void addToRepository(String relPath) throws IOException {
@@ -74,6 +77,10 @@ public class MavenIndicesTestFixture {
 
   public MavenIndicesManager getIndicesManager() {
     return MavenIndicesManager.getInstance(myProject);
+  }
+
+  public MavenProjectIndicesManager getProjectIndicesManager() {
+    return myIndicesManager;
   }
 
   public MavenCustomRepositoryHelper getRepositoryHelper() {

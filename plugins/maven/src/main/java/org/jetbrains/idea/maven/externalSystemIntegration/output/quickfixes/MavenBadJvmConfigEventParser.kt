@@ -50,11 +50,10 @@ class MavenBadJvmConfigEventParser : MavenLoggedEventParser {
         errorLine += "\n$causeLine"
       }
       messageConsumer.accept(
-        BuildIssueEventImpl(
-          parentId,
-          MavenJvmConfigBuildIssue.getRunnerIssue(logLine.line, errorLine, parsingContext.ideaProject, parsingContext.runConfiguration),
-          MessageEvent.Kind.ERROR
-        )
+        BuildIssueEventImpl(parentId,
+                            MavenJvmConfigBuildIssue
+                              .getRunnerIssue(logLine.line, errorLine, parsingContext.ideaProject, parsingContext.runConfiguration),
+                            MessageEvent.Kind.ERROR)
       )
       return true
     }

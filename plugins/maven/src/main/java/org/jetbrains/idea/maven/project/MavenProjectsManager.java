@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -50,7 +51,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Cach
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
-import org.jetbrains.idea.maven.indices.MavenIndicesManager;
+import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
@@ -268,7 +269,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     // init maven tool window
     MavenProjectsNavigator.getInstance(myProject);
     // init indices manager
-    MavenIndicesManager.getInstance(myProject);
+    MavenProjectIndicesManager.getInstance(myProject);
     // add CompileManager before/after tasks
     MavenTasksManager.getInstance(myProject);
     // init maven shortcuts manager to subscribe to KeymapManagerListener
