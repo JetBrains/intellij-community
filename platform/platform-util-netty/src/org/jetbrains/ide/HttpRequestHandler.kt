@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.ide
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -17,6 +19,9 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.util.*
 
+/**
+ * See [Remote Communication](https://youtrack.jetbrains.com/articles/IDEA-A-63/Remote-Communication)
+ */
 abstract class HttpRequestHandler {
   enum class OriginCheckResult {
     ALLOW, FORBID,
@@ -44,7 +49,7 @@ abstract class HttpRequestHandler {
   }
 
   /**
-   * Write request from browser without Origin will be always blocked regardless of your implementation.
+   * Write request from browser without Origin will always be blocked regardless of your implementation.
    */
   @SuppressWarnings("SpellCheckingInspection")
   open fun isAccessible(request: HttpRequest): Boolean {

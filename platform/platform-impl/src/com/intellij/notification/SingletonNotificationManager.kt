@@ -22,8 +22,9 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
     }
   }
 
-  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project) =
+  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project) {
     notify(title, content, project) { }
+  }
 
   fun notify(@NotificationTitle title: String,
              @NotificationContent content: String,

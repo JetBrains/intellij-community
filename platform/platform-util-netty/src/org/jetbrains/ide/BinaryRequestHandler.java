@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -8,15 +8,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
+/**
+ * See [Remote Communication](https://youtrack.jetbrains.com/articles/IDEA-A-63/Remote-Communication)
+ */
 public abstract class BinaryRequestHandler {
-  public static final ExtensionPointName<BinaryRequestHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.binaryRequestHandler");
+  public static final ExtensionPointName<BinaryRequestHandler> EP_NAME = new ExtensionPointName<>("org.jetbrains.binaryRequestHandler");
 
   /**
    * uuidgen on Mac OS X could be used to generate UUID
    */
-  @NotNull
-  public abstract UUID getId();
+  public abstract @NotNull UUID getId();
 
-  @NotNull
-  public abstract ChannelHandler getInboundHandler(@NotNull ChannelHandlerContext context);
+  public abstract @NotNull ChannelHandler getInboundHandler(@NotNull ChannelHandlerContext context);
 }
