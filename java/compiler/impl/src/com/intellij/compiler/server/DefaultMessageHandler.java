@@ -51,7 +51,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         }
         break;
       case AUTH_TOKEN_REQUEST:
-        Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
+        Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(myProject);
         channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRequestParamsCommand(headers)));
         System.out.println("Message got");
         break;

@@ -126,9 +126,17 @@ public class JpsOutputLoaderManager implements Disposable {
     String previousCommitId = null;
     //String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
     //List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
-    String commitId = "";
+
     GitCommitsIterator commitsIterator = new GitCommitsIterator(myNettyClient, INTELLIJ_REPO_NAME);
     Set<String> availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
+    if (availableCommitsForRemote == null) {
+      String message = JpsBuildBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
+      LOG.warn(message);
+      myNettyClient.sendMainStatusMessage(message);
+      return null;
+    }
+
+    String commitId = "";
     int commitsBehind = 0;
     while (commitsIterator.hasNext() && !availableCommitsForRemote.contains(commitId)) {
       commitId = commitsIterator.next();

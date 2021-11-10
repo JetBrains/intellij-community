@@ -162,7 +162,8 @@ final class BuildSession implements Runnable, CanceledStatus {
         profilingHelper.startProfiling();
       }
 
-      if (ProjectStamps.PORTABLE_CACHES) {
+      if (ProjectStamps.PORTABLE_CACHES && myBuildType == BuildType.BUILD) {
+        LOG.info("Trying to download JPS caches before build");
         // Try to download caches
         JpsOutputLoaderManager loaderManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), myProjectPath, myChannel, mySessionId);
         loaderManager.load(true, false);
