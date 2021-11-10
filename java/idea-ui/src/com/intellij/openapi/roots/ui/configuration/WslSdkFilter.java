@@ -18,10 +18,11 @@ public class WslSdkFilter {
     }
 
     var distribution = WslPath.getDistributionByWindowsUncPath(path);
-    if (distribution == null) { // Project resides on local filesystem
-      return Conditions.alwaysTrue();
-    }
+    var projectOnLocalFs = distribution == null;
     return (Condition<Sdk>)sdk -> {
+      if (projectOnLocalFs && sdk.getSdkType().allowWslSdkForLocalProject()) {
+        return true;
+      }
       String sdkHomePath = sdk.getHomePath();
       return sdkHomePath == null || WslPath.getDistributionByWindowsUncPath(sdkHomePath) == distribution;
     };
