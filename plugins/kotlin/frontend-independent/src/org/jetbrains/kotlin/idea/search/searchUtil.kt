@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName as getKotlinFqNameOriginal
@@ -209,7 +210,7 @@ private val PsiMethod.canBeSetter: Boolean
     get() = JvmAbi.isSetterName(name) && parameters.size == 1 && returnTypeElement?.textMatches("void") != false
 
 private val PsiMethod.probablyCanHaveSyntheticAccessors: Boolean
-    get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !hasTypeParameters() && !isFinalProperty
+    get() = canHaveOverride && !hasTypeParameters() && !isFinalProperty
 
 private val PsiMethod.getterName: Name? get() = propertyNameByGetMethodName(Name.identifier(name))
 private val PsiMethod.setterNames: Collection<Name>? get() = propertyNamesBySetMethodName(Name.identifier(name)).takeIf { it.isNotEmpty() }
@@ -221,6 +222,8 @@ private val PsiMethod.isFinalProperty: Boolean
         val containingClassOrObject = property.containingClassOrObject ?: return true
         return containingClassOrObject is KtObjectDeclaration
     }
+
+private val PsiMethod.isTopLevelDeclaration: Boolean get() = unwrapped?.isTopLevelKtOrJavaMember() == true
 
 val PsiMethod.syntheticAccessors: Collection<Name>
     get() {
@@ -242,3 +245,9 @@ val PsiMethod.canHaveSyntheticSetter: Boolean get() = probablyCanHaveSyntheticAc
 val PsiMethod.syntheticGetter: Name? get() = if (canHaveSyntheticGetter) getterName else null
 
 val PsiMethod.syntheticSetters: Collection<Name>? get() = if (canHaveSyntheticSetter) setterNames else null
+
+/**
+ * Attention: only language constructs are checked. For example: static member, constructor, top-level property
+ * @return `false` if constraints are found. Otherwise, `true`
+ */
+val PsiMethod.canHaveOverride: Boolean get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !isTopLevelDeclaration

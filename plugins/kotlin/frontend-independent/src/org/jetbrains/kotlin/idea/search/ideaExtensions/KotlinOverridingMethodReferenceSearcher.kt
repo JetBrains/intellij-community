@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.impl.search.MethodTextOccurrenceProcessor
 import com.intellij.psi.impl.search.MethodUsagesSearcher
@@ -16,10 +15,7 @@ import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToL
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.search.canHaveSyntheticGetter
-import org.jetbrains.kotlin.idea.search.canHaveSyntheticSetter
-import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
-import org.jetbrains.kotlin.idea.search.syntheticAccessors
+import org.jetbrains.kotlin.idea.search.*
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -30,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 class KotlinOverridingMethodReferenceSearcher : MethodUsagesSearcher() {
     override fun processQuery(p: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
         val method = p.method
-        val canOverride = p.project.runReadActionInSmartMode { !method.hasModifier(JvmModifier.STATIC) && !method.isConstructor }
+        val canOverride = p.project.runReadActionInSmartMode { method.canHaveOverride }
         if (!canOverride) {
             return
         }
