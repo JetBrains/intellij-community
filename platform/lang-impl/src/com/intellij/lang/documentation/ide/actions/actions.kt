@@ -49,6 +49,14 @@ internal fun documentationHistory(dc: DataContext): DocumentationHistory? {
   return dc.getData(DOCUMENTATION_HISTORY)
 }
 
+internal fun documentationBrowser(dc: DataContext): DocumentationBrowser? {
+  val browser = dc.getData(DOCUMENTATION_BROWSER)
+  if (browser != null) {
+    return browser as DocumentationBrowser
+  }
+  return null
+}
+
 internal fun documentationToolWindowUI(dc: DataContext): DocumentationToolWindowUI? {
   val toolWindow = dc.getData(PlatformDataKeys.TOOL_WINDOW)
                    ?: return null
