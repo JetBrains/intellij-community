@@ -33,20 +33,25 @@ fun URI.withPath(newPath: String?): URI = URI(
   fragment
 )
 
-val URI.fragmentParameters: Map<String, String>
-  get() {
-    // TODO Url-decode values?
-    if (fragment.isNullOrBlank()) return emptyMap()
+private fun parseParameters(input: String?): Map<String, String> {
+  if (input.isNullOrBlank()) return emptyMap()
 
-    return fragment
-      .split('&')
-      .mapNotNull {
-        val split = it.split('=', limit = 2)
-        if (split.size != 2) return@mapNotNull null
-        split[0] to split[1]
-      }
-      .toMap()
-  }
+  // TODO Url-decode values?
+  return input
+    .split('&')
+    .mapNotNull {
+      val split = it.split('=', limit = 2)
+      if (split.size != 2) return@mapNotNull null
+      split[0] to split[1]
+    }
+    .toMap()
+}
+
+val URI.fragmentParameters: Map<String, String>
+  get() = parseParameters(fragment)
+
+val URI.queryParameters: Map<String, String>
+  get() = parseParameters(query)
 
 fun URI.newURIWithFragmentParameters(fragmentParameters: Map<String, String>): URI {
   val newFragment = fragmentParameters.toList().joinToString(separator = "&") { "${it.first}=${it.second}" }
