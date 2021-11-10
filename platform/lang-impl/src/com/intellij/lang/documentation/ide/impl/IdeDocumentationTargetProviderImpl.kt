@@ -16,7 +16,7 @@ import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
 import com.intellij.util.castSafelyTo
 
-internal class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
+open class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
 
   override fun documentationTarget(editor: Editor, file: PsiFile, lookupElement: LookupElement): DocumentationTarget? {
     val symbolTargets = (lookupElement.`object` as? Pointer<*>)
