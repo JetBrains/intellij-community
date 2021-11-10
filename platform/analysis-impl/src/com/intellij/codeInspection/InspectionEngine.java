@@ -134,7 +134,6 @@ public final class InspectionEngine {
           }
         }
       }
-      Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> withInjected = Collections.synchronizedMap(map);
       if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(injectedFiles, indicator, injectedFile -> {
         List<PsiElement> injectedElements = new ArrayList<>();
         Set<String> injectedDialects = new HashSet<>();
@@ -143,12 +142,17 @@ public final class InspectionEngine {
           inspectElements(toolWrappers, injectedFile, injectedFile.getTextRange(), isOnTheFly, indicator, ignoreSuppressedElements,
                           injectedElements,
                           injectedDialects, foundDescriptorCallback);
-        withInjected.putAll(result);
+        for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : result.entrySet()) {
+          LocalInspectionToolWrapper toolWrapper = entry.getKey();
+          List<ProblemDescriptor> list = entry.getValue();
+          // in case two injected fragments contain result of the same inspection, concatenate them
+          // assume map is ConcurrentHashMap here, otherwise synchronization would be needed
+          map.merge(toolWrapper, list, (oldList, newList)->ContainerUtil.concat(oldList, newList));
+        }
         return true;
       })) {
         throw new ProcessCanceledException();
       }
-      map = withInjected;
     }
 
     return map;
