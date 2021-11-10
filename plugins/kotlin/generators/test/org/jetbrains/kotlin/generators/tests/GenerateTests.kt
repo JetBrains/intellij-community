@@ -91,6 +91,7 @@ import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTes
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
 import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
@@ -1020,6 +1021,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
+    testGroup("fir-low-level-api-ide-impl") {
+        testClass<AbstractFirLibraryModuleDeclarationResolveTest> {
+            model("libraryModuleResolve", isRecursive = false)
+        }
+    }
 
    /* testGroup("idea/idea-fir-performance-tests/tests", "idea") {
         testClass<AbstractFirHighlightingPerformanceTest> {
