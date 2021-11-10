@@ -1,7 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
-import com.intellij.ide.impl.TrustChangeListener
+import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
@@ -54,8 +54,8 @@ internal fun <L : Any, K> Project.messageBusFlow(
 }
 
 internal val Project.trustedProjectFlow: Flow<Boolean>
-    get() = messageBusFlow(TrustChangeListener.TOPIC, { isTrusted() }) {
-        TrustChangeListener { if (it == this@trustedProjectFlow) trySend(isTrusted()) }
+    get() = messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
+        TrustStateListener { if (it == this@trustedProjectFlow) trySend(isTrusted()) }
     }.distinctUntilChanged()
 
 internal val Project.nativeModulesChangesFlow

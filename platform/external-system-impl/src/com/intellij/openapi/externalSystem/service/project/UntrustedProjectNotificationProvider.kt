@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.ide.impl.TrustChangeListener
+import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.UntrustedProjectEditorNotificationPanel
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.diagnostic.Logger
@@ -60,7 +60,7 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
     private val LOG = Logger.getInstance(UntrustedProjectNotificationProvider::class.java)
   }
 
-  class TrustedListener : TrustChangeListener {
+  class TrustedListener : TrustStateListener {
     override fun onProjectTrusted(project: Project) {
       EditorNotifications.getInstance(project).updateAllNotifications()
     }
