@@ -16,3 +16,9 @@ class TopLevelClass() {
 
     val memberProperty: Int = 0
 }
+
+enum class TopLevelEnum {
+    ENTRY1,
+    ENTRY2,
+    ENTRY3,
+}
