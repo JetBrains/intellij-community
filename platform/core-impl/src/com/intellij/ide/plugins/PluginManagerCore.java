@@ -4,10 +4,9 @@ package com.intellij.ide.plugins;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.lang.invoke.MethodHandles;
@@ -39,6 +40,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * See <a href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md">Plugin Model</a> documentation.
@@ -48,8 +50,8 @@ import java.util.stream.Stream;
 public final class PluginManagerCore {
   public static final @NonNls String META_INF = "META-INF/";
 
-  public static final PluginId CORE_ID = PluginId.getId("com.intellij");
   public static final String CORE_PLUGIN_ID = "com.intellij";
+  public static final PluginId CORE_ID = PluginId.getId(CORE_PLUGIN_ID);
 
   public static final PluginId JAVA_PLUGIN_ID = PluginId.getId("com.intellij.java");
   static final PluginId JAVA_MODULE_ID = PluginId.getId("com.intellij.modules.java");
@@ -73,6 +75,9 @@ public final class PluginManagerCore {
 
   private static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
   private static final MethodType HAS_LOADED_CLASS_METHOD_TYPE = MethodType.methodType(boolean.class, String.class);
+
+  private static final String THIRD_PARTY_PLUGINS_FILE = "alien_plugins.txt";
+  private static volatile @Nullable Boolean ourThirdPartyPluginsNoteAccepted = null;
 
   private static Reference<Map<PluginId, Set<String>>> brokenPluginVersions;
   private static volatile @Nullable PluginSet pluginSet;
@@ -338,13 +343,7 @@ public final class PluginManagerCore {
   }
 
   public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
-    String vendor = plugin.getVendor();
-    return isDevelopedByJetBrains(vendor) ||
-           (vendor == null &&  // a core plugin
-            !(plugin.getPluginClassLoader() instanceof PluginClassLoader) &&
-            plugin instanceof IdeaPluginDescriptorImpl &&
-            !((IdeaPluginDescriptorImpl)plugin).isUseIdeaClassLoader &&
-            ApplicationInfoEx.getInstanceEx().isVendorJetBrains());
+    return CORE_ID.equals(plugin.getPluginId()) || SPECIAL_IDEA_PLUGIN_ID.equals(plugin.getPluginId()) || isDevelopedByJetBrains(plugin.getVendor());
   }
 
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
@@ -799,6 +798,23 @@ public final class PluginManagerCore {
         Collections.singletonList(CORE_ID + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
     }
 
+    Collection<? extends IdeaPluginDescriptor> aliens = get3rdPartyPlugins(idMap);
+    if (!aliens.isEmpty()) {
+      if (GraphicsEnvironment.isHeadless()) {
+        getLogger().info("3rd-party plugin privacy note not accepted yet; disabling plugins for this headless session");
+        aliens.forEach(descriptor -> descriptor.setEnabled(false));
+      }
+      else if (!ask3rdPartyPluginsPrivacyConsent(aliens)) {
+        getLogger().info("3rd-party plugin privacy note declined; disabling plugins");
+        aliens.forEach(descriptor -> descriptor.setEnabled(false));
+        PluginEnabler.HEADLESS.disableById(aliens.stream().map(descriptor -> descriptor.getPluginId()).collect(Collectors.toSet()));
+        ourThirdPartyPluginsNoteAccepted = Boolean.FALSE;
+      }
+      else {
+        ourThirdPartyPluginsNoteAccepted = Boolean.TRUE;
+      }
+    }
+
     PluginSetBuilder pluginSetBuilder = new PluginSetBuilder(loadingResult.getEnabledPlugins());
     disableIncompatiblePlugins(pluginSetBuilder, idMap, pluginErrorsById);
     pluginSetBuilder.checkPluginCycles(globalErrors);
@@ -835,6 +851,56 @@ public final class PluginManagerCore {
     PluginSet pluginSet = pluginSetBuilder.createPluginSet(context.result.incompletePlugins.values());
     new ClassLoaderConfigurator(pluginSet, coreLoader).configure();
     return new PluginManagerState(pluginSet, disabledRequired, disabledAfterInit);
+  }
+
+  @ApiStatus.Internal
+  static @Nullable Boolean isThirdPartyPluginsNoteAccepted() {
+    Boolean result = ourThirdPartyPluginsNoteAccepted;
+    ourThirdPartyPluginsNoteAccepted = null;
+    return result;
+  }
+
+  @ApiStatus.Internal
+  static synchronized void write3rdPartyPlugins(@NotNull Collection<? extends IdeaPluginDescriptor> aliens) {
+    Path file = Paths.get(PathManager.getConfigPath(), THIRD_PARTY_PLUGINS_FILE);
+    try {
+      NioFiles.createDirectories(file.getParent());
+      try (BufferedWriter writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
+        //noinspection SSBasedInspection
+        writePluginsList(aliens.stream().map(PluginDescriptor::getPluginId).collect(Collectors.toList()), writer);
+      }
+    }
+    catch (IOException e) {
+      getLogger().error(file.toString(), e);
+    }
+  }
+
+  private static Collection<IdeaPluginDescriptorImpl> get3rdPartyPlugins(Map<PluginId, IdeaPluginDescriptorImpl> descriptors) {
+    Path file = Paths.get(PathManager.getConfigPath(), THIRD_PARTY_PLUGINS_FILE);
+    if (Files.exists(file)) {
+      try {
+        List<String> ids = Files.readAllLines(file);
+        Files.delete(file);
+        return ids.stream().map(id -> descriptors.get(PluginId.getId(id))).filter(descriptor -> descriptor != null).collect(Collectors.toList());
+      }
+      catch (IOException e) {
+        getLogger().error(file.toString(), e);
+      }
+    }
+
+    return Collections.emptyList();
+  }
+
+  private static boolean ask3rdPartyPluginsPrivacyConsent(Iterable<? extends IdeaPluginDescriptor> descriptors) {
+    String title = CoreBundle.message("third.party.plugins.privacy.note.title");
+    String pluginList = StreamSupport.stream(descriptors.spliterator(), false)
+      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + descriptor.getName() + " (" + descriptor.getVendor() + ')')
+      .collect(Collectors.joining("<br>"));
+    String text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
+    String[] buttons = {CoreBundle.message("third.party.plugins.privacy.note.accept"), CoreBundle.message("third.party.plugins.privacy.note.disable")};
+    int choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
+                                              AllIcons.General.WarningDialog, buttons, buttons[0]);
+    return choice == 0;
   }
 
   @SuppressWarnings("DuplicatedCode")
