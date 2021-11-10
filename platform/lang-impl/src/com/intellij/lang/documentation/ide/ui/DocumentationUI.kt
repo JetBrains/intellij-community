@@ -8,7 +8,6 @@ import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_BROWSER
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_HISTORY
 import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
 import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
@@ -87,7 +86,6 @@ internal class DocumentationUI(
   override fun getData(dataId: String): Any? {
     return when {
       DOCUMENTATION_BROWSER.`is`(dataId) -> browser
-      DOCUMENTATION_HISTORY.`is`(dataId) -> browser.history
       SELECTED_QUICK_DOC_TEXT.`is`(dataId) -> editorPane.selectedText?.replace(160.toChar(), ' ') // IDEA-86633
       else -> null
     }
