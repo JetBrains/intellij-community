@@ -719,7 +719,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         }
         List<RefElement> lastPath = paths.get(paths.size() - 1);
         if (lastPath.contains(refElement)) {
-          LOG.warn(String.format("Cycle was detected for the element %s", log(refElement)));
           return;
         }
         else {
