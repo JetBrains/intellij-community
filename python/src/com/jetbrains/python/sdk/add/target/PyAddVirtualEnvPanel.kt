@@ -128,10 +128,17 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
     if (targetEnvironmentConfiguration.isLocal()) {
       // asynchronously fill the combobox
-      addInterpretersAsync(interpreterCombobox) {
-        detectVirtualEnvs(module, existingSdks, context)
-          .filterNot { it.isAssociatedWithAnotherModule(module) }
-      }
+      addInterpretersAsync(
+        interpreterCombobox,
+        sdkObtainer = {
+          detectVirtualEnvs(module, existingSdks, context)
+            .filterNot { it.isAssociatedWithAnotherModule(module) }
+        },
+        onAdded = { sdks ->
+          val associatedVirtualEnv = sdks.find { it.isAssociatedWithModule(module) }
+          associatedVirtualEnv?.let { interpreterCombobox.selectedSdk = associatedVirtualEnv }
+        }
+      )
       addBaseInterpretersAsync(baseInterpreterCombobox, existingSdks, module, context)
     }
     else {
