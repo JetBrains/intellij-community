@@ -8,6 +8,8 @@ import com.intellij.ide.bookmark.providers.LineBookmarkProvider
 import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.ide.bookmark.ui.BookmarksViewState
 import com.intellij.ide.bookmark.ui.tree.GroupNode
+import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -20,6 +22,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.OpenSourceUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
 import javax.swing.JComponent
@@ -63,9 +66,23 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     }
     val manager = BookmarksManager.getInstance(project) ?: return null
     val window = getData(PlatformDataKeys.TOOL_WINDOW)
-    if (window?.id != ToolWindowId.PROJECT_VIEW) return null
-    val tree = getData(PlatformDataKeys.CONTEXT_COMPONENT) as? JTree ?: return null
-    return manager.createBookmark(TreeUtil.getLastUserObject(TreeUtil.getSelectedPathIfOne(tree)))
+    if (window?.id == ToolWindowId.BOOKMARKS) return null
+    val component = getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val allowed = UIUtil.getClientProperty(component, BookmarksManager.ALLOWED) ?: (window?.id == ToolWindowId.PROJECT_VIEW)
+    return when {
+      !allowed -> null
+      component is JTree -> {
+        val path = TreeUtil.getSelectedPathIfOne(component)
+        manager.createBookmark(path)
+        ?: when (val node = TreeUtil.getLastUserObject(path)) {
+          is AbstractTreeNode<*> -> manager.createBookmark(node.value)
+          is NodeDescriptor<*> -> manager.createBookmark(node.element)
+          else -> manager.createBookmark(node)
+        }
+      }
+      else -> manager.createBookmark(getData(CommonDataKeys.PSI_ELEMENT))
+              ?: manager.createBookmark(getData(CommonDataKeys.VIRTUAL_FILE))
+    }
   }
 
 

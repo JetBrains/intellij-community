@@ -4,8 +4,6 @@ package com.intellij.ide.bookmark.providers
 import com.intellij.ide.bookmark.*
 import com.intellij.ide.projectView.impl.DirectoryUrl
 import com.intellij.ide.projectView.impl.PsiFileUrl
-import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -56,8 +54,6 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
   override fun createBookmark(map: Map<String, String>) = createBookmark(map["url"], StringUtil.parseInt(map["line"], -1))
 
   override fun createBookmark(context: Any?): FileBookmark? = when (context) {
-    is AbstractTreeNode<*> -> createBookmark(context.value)
-    is NodeDescriptor<*> -> createBookmark(context.element)
     // below // migrate old bookmarks and favorites
     is com.intellij.ide.bookmarks.Bookmark -> createBookmark(context.file, context.line)
     is DirectoryUrl -> createBookmark(context.url)
