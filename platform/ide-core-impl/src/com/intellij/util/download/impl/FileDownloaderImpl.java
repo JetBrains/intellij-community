@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.FileDownloader;
@@ -255,9 +254,8 @@ class FileDownloaderImpl implements FileDownloader {
           throw new ProcessCanceledException();
         }
         catch (ExecutionException e) {
-          IOException ioCause = ExceptionUtil.findCause(e.getCause(), IOException.class);
-          if (ioCause != null) {
-            throw ioCause;
+          if (e.getCause() instanceof IOException) {
+            throw ((IOException)e.getCause());
           }
           if (e.getCause() instanceof ProcessCanceledException) {
             throw ((ProcessCanceledException)e.getCause());
