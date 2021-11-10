@@ -168,7 +168,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private fun navigateToSource(requestFocus: Boolean) {
     val node = selectedNode ?: return
     val task = Runnable { OpenSourceUtil.navigateToSource(requestFocus, false, node) }
-    ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { !isShowing }
+    ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
   }
 
   init {
