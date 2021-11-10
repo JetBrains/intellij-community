@@ -323,7 +323,12 @@ val Sdk.remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase?
   get() = sdkAdditionalData as? PyRemoteSdkAdditionalDataBase
 
 private fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
-  return isLocatedInsideBaseDir(module?.baseDir?.toNioPath())
+  val baseDirPath = try {
+    module?.baseDir?.toNioPath()
+  } catch (e: UnsupportedOperationException) {
+    return false
+  }
+  return isLocatedInsideBaseDir(baseDirPath)
 }
 
 private fun Sdk.isLocatedInsideBaseDir(baseDir: Path?): Boolean {
