@@ -24,6 +24,14 @@ public class JpsNettyClient {
     channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessage2(message)));
   }
 
+  public void sendLatestDownloadCommitMessage(@NotNull String latestDownloadCommit) {
+    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createLatestDownloadCommitMessage(latestDownloadCommit)));
+  }
+
+  public void requestLatestDownloadCommitMessage() {
+    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createLatestDownloadCommitRequest()));
+  }
+
   public void requestRepositoryCommits(@NotNull String latestCommit) {
     channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRequestRepositoryCommits(latestCommit)));
   }

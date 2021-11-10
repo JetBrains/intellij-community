@@ -1,10 +1,16 @@
 package org.jetbrains.jps.cache.git;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.cache.client.JpsNettyClient;
+
+import java.util.List;
 
 public final class GitRepositoryUtil {
   private static final Logger LOG = Logger.getInstance(GitRepositoryUtil.class);
+  private static final Object myLock = new Object();
+  private static String latestDownloadedCommit = "";
 
   private GitRepositoryUtil() {}
 
@@ -43,15 +49,36 @@ public final class GitRepositoryUtil {
   //  return null;
   //}
 
-  public static String getRemoteRepoName(@NotNull String remoteUrl) {
-    String[] splittedRemoteUrl = remoteUrl.split("/");
-    return splittedRemoteUrl[splittedRemoteUrl.length - 1];
-  }
-
   //public static boolean isAutoCrlfSetRight(@NotNull GitRepository  gitRepository) {
   //  GitCommandResult result = Git.getInstance().config(gitRepository, GitConfigUtil.CORE_AUTOCRLF);
   //  String value = result.getOutputAsJoinedString();
   //  LOG.info("CRLF configuration for " + gitRepository + " project: " + value);
   //  return value.equalsIgnoreCase("input");
   //}
+
+  public static String getRemoteRepoName(@NotNull String remoteUrl) {
+    String[] splittedRemoteUrl = remoteUrl.split("/");
+    return splittedRemoteUrl[splittedRemoteUrl.length - 1];
+  }
+
+  public static @NotNull String getLatestDownloadedCommit(@NotNull JpsNettyClient nettyClient) {
+    synchronized (myLock) {
+      try {
+        // TODO:: FIX awaiting
+        nettyClient.requestLatestDownloadCommitMessage();
+        myLock.wait();
+      }
+      catch (InterruptedException e) {
+        LOG.warn("Can't request latest downloaded commit", e);
+      }
+    }
+    return latestDownloadedCommit;
+  }
+
+  public static void setLatestDownloadedCommit(@NotNull String latestDownloadedCommit) {
+    synchronized (myLock) {
+      GitRepositoryUtil.latestDownloadedCommit = latestDownloadedCommit;
+      myLock.notify();
+    }
+  }
 }

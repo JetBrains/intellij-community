@@ -10,10 +10,12 @@ import com.intellij.util.containers.ContainerUtil;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.client.JpsNettyClient;
 import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.git.GitCommitsIterator;
+import org.jetbrains.jps.cache.git.GitRepositoryUtil;
 import org.jetbrains.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
@@ -33,12 +35,12 @@ import static org.jetbrains.jps.cache.JpsCachesPluginUtil.INTELLIJ_REPO_NAME;
 
 public class JpsOutputLoaderManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
-  private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final double SEGMENT_SIZE = 0.33;
   private final AtomicBoolean hasRunningTask;
   //private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
   private List<JpsOutputLoader<?>> myJpsOutputLoadersLoaders;
   private final JpsMetadataLoader myMetadataLoader;
+  private final CanceledStatus myCanceledStatus;
   private final JpsServerClient myServerClient;
   private final String myBuildOutDir;
   private final String myProjectPath;
@@ -53,10 +55,12 @@ public class JpsOutputLoaderManager implements Disposable {
   //}
 
   public JpsOutputLoaderManager(@NotNull JpsProject project,
+                                @NotNull CanceledStatus canceledStatus,
                                 @NotNull String projectPath,
                                 @NotNull Channel channel,
                                 @NotNull UUID sessionId) {
     myNettyClient = new JpsNettyClient(channel, sessionId);
+    myCanceledStatus = canceledStatus;
     myProjectPath = projectPath;
     hasRunningTask = new AtomicBoolean();
     myBuildOutDir = getBuildDirPath(project);
@@ -123,7 +127,7 @@ public class JpsOutputLoaderManager implements Disposable {
   private Pair<String, Integer> getNearestCommit(boolean isForceUpdate, boolean verbose) {
     Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myNettyClient);
 
-    String previousCommitId = null;
+    String previousCommitId = GitRepositoryUtil.getLatestDownloadedCommit(myNettyClient);
     //String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
     //List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
 
@@ -270,7 +274,7 @@ public class JpsOutputLoaderManager implements Disposable {
                                                           Map<String, Map<String, BuildTargetState>> commitSourcesState,
                                                           Map<String, Map<String, BuildTargetState>> currentSourcesState) {
     JpsLoaderContext loaderContext =
-      JpsLoaderContext.createNewContext(commitId, myNettyClient, commitSourcesState, currentSourcesState);
+      JpsLoaderContext.createNewContext(myCanceledStatus, commitId, myNettyClient, commitSourcesState, currentSourcesState);
     List<JpsOutputLoader<?>> loaders = getLoaders();
     loaders.forEach(loader -> loader.setContext(loaderContext));
     // Start loaders with own context
@@ -302,6 +306,7 @@ public class JpsOutputLoaderManager implements Disposable {
       return;
     }
 
+    myNettyClient.sendLatestDownloadCommitMessage(commitId);
     //PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
     //BuildManager.getInstance().clearState(myProject);
     //long endTime = System.nanoTime() - startTime;

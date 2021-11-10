@@ -131,12 +131,35 @@ public final class CmdlineProtoUtil {
   }
 
   public static BuilderMessage createRequestRepositoryCommits(@NotNull String latestCommit) {
-    BuilderMessage.LatestCommitMessage.Builder requestCommitsBuilder = BuilderMessage.LatestCommitMessage.newBuilder();
-    requestCommitsBuilder.setLatestCommit(latestCommit);
+    BuilderMessage.CommitMessage.Builder requestCommitsBuilder = BuilderMessage.CommitMessage.newBuilder();
+    requestCommitsBuilder.setCommit(latestCommit);
     BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
     newBuilder.setType(BuilderMessage.Type.REPOSITORY_COMMITS_REQUEST);
-    newBuilder.setLatestCommitMessage(requestCommitsBuilder.build());
+    newBuilder.setCommitMessage(requestCommitsBuilder.build());
     return newBuilder.build();
+  }
+
+  public static BuilderMessage createLatestDownloadCommitMessage(@NotNull String latestDownloadCommit) {
+    BuilderMessage.CommitMessage.Builder requestCommitsBuilder = BuilderMessage.CommitMessage.newBuilder();
+    requestCommitsBuilder.setCommit(latestDownloadCommit);
+    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
+    newBuilder.setType(BuilderMessage.Type.LATEST_DOWNLOADED_COMMIT_MESSAGE);
+    newBuilder.setCommitMessage(requestCommitsBuilder.build());
+    return newBuilder.build();
+  }
+
+  public static BuilderMessage createLatestDownloadCommitRequest() {
+    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
+    newBuilder.setType(BuilderMessage.Type.LATEST_DOWNLOADED_COMMIT_REQUEST);
+    return newBuilder.build();
+  }
+
+  public static CmdlineRemoteProto.Message.ControllerMessage createLatestDownloadCommitResponse(@NotNull String commit) {
+    CmdlineRemoteProto.Message.ControllerMessage.LatestDownloadedCommitResult latestDownloadedCommitResult =
+      CmdlineRemoteProto.Message.ControllerMessage.LatestDownloadedCommitResult.newBuilder().setCommit(commit).build();
+    return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
+      .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.LATEST_DOWNLOADED_COMMIT_RESULT)
+      .setLatestDownloadedCommit(latestDownloadedCommitResult).build();
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createRepositoryCommitsMessage(@NotNull List<String> commits) {

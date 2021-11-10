@@ -63,8 +63,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     List<AffectedModule> affectedModules = calculateAffectedModules(myContext.getCurrentSourcesState(),
                                                                     myContext.getCommitSourcesState(), true);
     //downloadProgressManager.finished(this);
-    //downloadProgressManager.getProgressIndicator().checkCanceled();
-
+    myContext.checkCanceled();
     if (affectedModules.size() > 0) {
       long start = System.currentTimeMillis();
       List<OutputLoadResult> loadResults = myClient.downloadCompiledModules(myContext, affectedModules);
@@ -340,7 +339,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       AffectedModule affectedModule = loadResult.getModule();
       File outPath = affectedModule.getOutPath();
       try {
-        //extractIndicatorManager.getProgressIndicator().checkCanceled();
+        context.checkCanceled();
         context.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.details.extracting.compilation.outputs.for.module", affectedModule.getName()));
         LOG.debug("Downloaded JPS compiled module from: " + loadResult.getDownloadUrl());
         File tmpFolder = new File(outPath.getParent(), outPath.getName() + "_tmp");

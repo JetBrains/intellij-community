@@ -21,6 +21,7 @@ import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.PreloadedDataExtension;
 import org.jetbrains.jps.cache.client.JpsServerAuthUtil;
 import org.jetbrains.jps.cache.git.GitCommitsIterator;
+import org.jetbrains.jps.cache.git.GitRepositoryUtil;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
@@ -243,14 +244,20 @@ public final class BuildMain {
           }
           case AUTHENTICATION_TOKEN: {
             CmdlineRemoteProto.Message.ControllerMessage.RequestParams requestParams = controllerMessage.getRequestParams();
-            System.out.println("Got request params: " + requestParams.getAuthHeadersMap());
+            //LOG.info("Got request params: " + requestParams.getAuthHeadersMap());
             JpsServerAuthUtil.setRequestHeaders(requestParams.getAuthHeadersMap());
             return;
           }
           case REPOSITORY_COMMITS_RESULT: {
             CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult repositoryCommitsResult = controllerMessage.getRepositoryCommitsResult();
-            System.out.println("Got repository commits: " + repositoryCommitsResult.getCommitList());
+            LOG.info("Got repository commits: " + repositoryCommitsResult.getCommitList());
             GitCommitsIterator.setRepositoryCommits(repositoryCommitsResult.getCommitList());
+            return;
+          }
+          case LATEST_DOWNLOADED_COMMIT_RESULT: {
+            CmdlineRemoteProto.Message.ControllerMessage.LatestDownloadedCommitResult latestDownloadedCommit = controllerMessage.getLatestDownloadedCommit();
+            LOG.info("Got latest downloaded commit: " + latestDownloadedCommit.getCommit());
+            GitRepositoryUtil.setLatestDownloadedCommit(latestDownloadedCommit.getCommit());
             return;
           }
           case CONSTANT_SEARCH_RESULT: {

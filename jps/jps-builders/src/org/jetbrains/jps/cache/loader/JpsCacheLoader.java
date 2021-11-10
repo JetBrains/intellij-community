@@ -50,7 +50,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
     try {
       // Start extracting after download
       myContext.sendMainStatusMessage(JpsBuildBundle.message("progress.text.extracting.downloaded.results"));
-      //extractIndicatorManager.getProgressIndicator().checkCanceled();
+      myContext.checkCanceled();
       //subTaskIndicator.setText2(JpsCacheBundle.message("progress.details.extracting.project.caches"));
       long start = System.currentTimeMillis();
 

@@ -48,11 +48,14 @@ class JpsCachesDownloader {
   private int hitsCount = 0;
   private final List<DownloadableFileUrl> myFilesDescriptions;
   private final JpsNettyClient myNettyClient;
+  private JpsLoaderContext myContext;
 
   JpsCachesDownloader(@NotNull List<DownloadableFileUrl> filesDescriptions,
-                      @NotNull JpsNettyClient nettyClient) {
+                      @NotNull JpsNettyClient nettyClient,
+                      @Nullable JpsLoaderContext context) {
     myFilesDescriptions = filesDescriptions;
     myNettyClient = nettyClient;
+    myContext = context;
   }
 
   @NotNull
@@ -67,7 +70,7 @@ class JpsCachesDownloader {
       final AtomicLong totalSize = new AtomicLong();
       for (final DownloadableFileUrl description : myFilesDescriptions) {
         results.add(EXECUTOR_SERVICE.submit(() -> {
-          //indicator.checkCanceled();
+          if (myContext != null) myContext.checkCanceled();
 
           final File existing = new File(targetDir, description.getDefaultFileName());
           byte attempt = 0;

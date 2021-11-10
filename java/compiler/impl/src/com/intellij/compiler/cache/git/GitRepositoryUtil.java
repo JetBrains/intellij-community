@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class GitRepositoryUtil {
   private static final Logger LOG = Logger.getInstance(GitRepositoryUtil.class);
+  private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final String INTELLIJ_REPO_NAME = "intellij.git";
   private static final int FETCH_SIZE = 100;
 
@@ -93,6 +95,18 @@ public final class GitRepositoryUtil {
     String result = processOutput.toString();
     if (result.isEmpty()) return Collections.emptyList();
     return ContainerUtil.map(processOutput.toString().split("\n"), commit -> commit.substring(1, commit.length() - 1));
+  }
+
+  public static void saveLatestDownloadedCommit(@NotNull String latestDownloadedCommit) {
+    PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, latestDownloadedCommit);
+    LOG.info("Saving latest downloaded commit: " + latestDownloadedCommit);
+  }
+
+  public static @NotNull String getLatestDownloadedCommit() {
+    String latestDownloadedCommit = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
+    LOG.info("Getting latest downloaded commit: " + latestDownloadedCommit);
+    if (latestDownloadedCommit == null) return "";
+    return latestDownloadedCommit;
   }
 
   //@Nullable

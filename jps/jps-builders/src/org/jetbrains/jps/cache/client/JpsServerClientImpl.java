@@ -60,7 +60,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     String downloadUrl = stringThree + "/metadata/" + metadataId;
     String fileName = "metadata.json";
     DownloadableFileUrl description = new DownloadableFileUrl(downloadUrl, fileName);
-    JpsCachesDownloader downloader = new JpsCachesDownloader(Collections.singletonList(description), nettyClient);
+    JpsCachesDownloader downloader = new JpsCachesDownloader(Collections.singletonList(description), nettyClient, null);
 
     LOG.debug("Downloading JPS metadata from: " + downloadUrl);
     File metadataFile;
@@ -87,7 +87,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     String downloadUrl = stringThree + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     DownloadableFileUrl description = new DownloadableFileUrl(downloadUrl, fileName);
-    JpsCachesDownloader downloader = new JpsCachesDownloader(Collections.singletonList(description), context.getNettyClient());
+    JpsCachesDownloader downloader = new JpsCachesDownloader(Collections.singletonList(description), context.getNettyClient(), context);
 
     LOG.debug("Downloading JPS caches from: " + downloadUrl);
     File zipFile;
@@ -120,7 +120,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     List<DownloadableFileUrl> descriptions = ContainerUtil.map(urlToModuleNameMap.entrySet(),
                                                                        entry -> new DownloadableFileUrl(entry.getKey(),
                                                                        entry.getValue().getOutPath().getName() + ".zip"));
-    JpsCachesDownloader downloader = new JpsCachesDownloader(descriptions, context.getNettyClient());
+    JpsCachesDownloader downloader = new JpsCachesDownloader(descriptions, context.getNettyClient(), context);
 
     List<File> downloadedFiles = new ArrayList<>();
     try {

@@ -53,7 +53,6 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       case AUTH_TOKEN_REQUEST:
         Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(myProject);
         channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRequestParamsCommand(headers)));
-        System.out.println("Message got");
         break;
       case CACHE_DOWNLOAD_MESSAGE:
         CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage cacheDownloadMessage = msg.getCacheDownloadMessage();
@@ -67,10 +66,18 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         }
         break;
       case REPOSITORY_COMMITS_REQUEST:
-        CmdlineRemoteProto.Message.BuilderMessage.LatestCommitMessage latestCommitMessage = msg.getLatestCommitMessage();
-        List<String> repositoryCommits = GitRepositoryUtil.fetchRepositoryCommits(myProject, latestCommitMessage.getLatestCommit());
+        CmdlineRemoteProto.Message.BuilderMessage.CommitMessage latestCommitMessage = msg.getCommitMessage();
+        List<String> repositoryCommits = GitRepositoryUtil.fetchRepositoryCommits(myProject, latestCommitMessage.getCommit());
         channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRepositoryCommitsMessage(repositoryCommits)));
-
+        break;
+      case LATEST_DOWNLOADED_COMMIT_MESSAGE:
+        CmdlineRemoteProto.Message.BuilderMessage.CommitMessage latestDownloadedCommitMessage = msg.getCommitMessage();
+        GitRepositoryUtil.saveLatestDownloadedCommit(latestDownloadedCommitMessage.getCommit());
+        break;
+      case LATEST_DOWNLOADED_COMMIT_REQUEST:
+        String latestDownloadedCommit = GitRepositoryUtil.getLatestDownloadedCommit();
+        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId,
+                                                         CmdlineProtoUtil.createLatestDownloadCommitResponse(latestDownloadedCommit)));
         break;
       case CONSTANT_SEARCH_TASK:
         // ignored, because the functionality is deprecated
