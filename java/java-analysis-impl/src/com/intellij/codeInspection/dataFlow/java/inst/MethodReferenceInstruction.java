@@ -32,9 +32,9 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
   @Override
   public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     PsiMethodReferenceExpression expression = getMethodReference();
-    final DfaValue qualifier = stateBefore.pop();
+    DfaValue qualifier = stateBefore.pop();
     JavaDfaHelpers.dropLocality(qualifier, stateBefore);
-    handleMethodReference(qualifier, expression, interpreter, stateBefore);
+    handleMethodReference(qualifier, interpreter, stateBefore);
     pushResult(interpreter, stateBefore, JavaDfaHelpers.getFunctionDfType(expression));
     return nextStates(interpreter, stateBefore);
   }
@@ -47,21 +47,17 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     return ((PsiMethodReferenceExpression)((JavaExpressionAnchor)Objects.requireNonNull(getDfaAnchor())).getExpression());
   }
 
-  private static void handleMethodReference(DfaValue qualifier,
-                                            PsiMethodReferenceExpression methodRef,
-                                            DataFlowInterpreter interpreter,
-                                            DfaMemoryState state) {
-    PsiType functionalInterfaceType = methodRef.getFunctionalInterfaceType();
-    if (functionalInterfaceType == null) return;
-    PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+  private void handleMethodReference(@NotNull DfaValue qualifier, @NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState state) {
+    PsiMethodReferenceExpression methodRef = getMethodReference();
+    PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(methodRef);
     if (sam == null) return;
     JavaResolveResult resolveResult = methodRef.advancedResolve(false);
     PsiMethod method = tryCast(resolveResult.getElement(), PsiMethod.class);
     if (method == null) return;
-    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     DfaCallArguments callArguments = getMethodReferenceCallArguments(state, methodRef, qualifier, interpreter, sam, method, substitutor);
     CheckNotNullInstruction.dereference(interpreter, state, callArguments.getQualifier(), NullabilityProblemKind.callMethodRefNPE.problem(methodRef, null));
+    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
     if (contracts.isEmpty() || !JavaMethodContractUtil.isPure(method)) return;
     PsiType returnType = substitutor.substitute(method.getReturnType());
     DfaValue defaultResult = interpreter.getFactory().fromDfType(typedObject(returnType, DfaPsiUtil.getElementNullability(returnType, method)));
