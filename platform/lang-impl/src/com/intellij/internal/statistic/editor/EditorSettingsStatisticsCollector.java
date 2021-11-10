@@ -36,7 +36,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
 
   @Override
   public int getVersion() {
-    return 6;
+    return 7;
   }
 
   @NotNull
@@ -86,6 +86,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionBulb(), "intentionBulb");
     addBoolIfDiffers(set, es, esDefault, s -> s.isDocCommentRenderingEnabled(), "renderDoc");
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionPreview(), "intentionPreview");
+    addBoolIfDiffers(set, es, esDefault, s -> s.isUseEditorFontInInlays(), "useEditorFontInInlays");
 
     for (String language : es.getOptions().getLanguageBreadcrumbsMap().keySet()) {
       final FeatureUsageData data = new FeatureUsageData().addLanguage(language);
