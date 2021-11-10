@@ -1016,13 +1016,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Override
     public AccessibleText getAccessibleText() {
-      if (Disposer.isDisposed(myEditor.getDisposable())) return null;
+      if (myEditor.isDisposed()) return null;
       return this;
     }
 
     @Override
     public AccessibleEditableText getAccessibleEditableText() {
-      if (Disposer.isDisposed(myEditor.getDisposable())) return null;
+      if (myEditor.isDisposed()) return null;
       return this;
     }
 

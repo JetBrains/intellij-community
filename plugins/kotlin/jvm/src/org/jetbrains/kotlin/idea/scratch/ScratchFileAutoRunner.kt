@@ -39,7 +39,7 @@ class ScratchFileAutoRunner(private val project: Project) : DocumentListener, Di
     override fun documentChanged(event: DocumentEvent) {
         val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
 
-        if (Disposer.isDisposed(this)) return
+        if (project.isDisposed) return
         val scratchFile = getScratchFile(file, project) ?: return
         if (!scratchFile.options.isInteractiveMode) return
 

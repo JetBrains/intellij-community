@@ -879,7 +879,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         registerKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), __ -> itemChoseCallback.run());
 
       Runnable updatePreviewRunnable = () -> {
-        if (Disposer.isDisposed(popupRef.get())) return;
+        if (popupRef.get().isDisposed()) return;
         int[] selectedRows = table.getSelectedRows();
         final List<Promise<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
         String file = null;
@@ -917,7 +917,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       Alarm previewUpdater = new Alarm(contentDisposable);
 
       table.getSelectionModel().addListSelectionListener(e -> {
-        if (!e.getValueIsAdjusting() && !Disposer.isDisposed(previewUpdater)) {
+        if (!e.getValueIsAdjusting() && !previewUpdater.isDisposed()) {
           previewUpdater.addRequest(updatePreviewRunnable, 50);
         }
       });

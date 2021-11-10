@@ -10,7 +10,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,13 +35,13 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
             override fun after(events: List<VFileEvent>) {
                 events.filter(::isRelevantEvent).let { createEvents ->
                     if (createEvents.isNotEmpty()) {
-                        ApplicationManager.getApplication().invokeLater {
-                            if (!Disposer.isDisposed(disposable)) {
-                                processBulk(createEvents) {
-                                    projectFileIndex.isInLibraryClasses(it) || isLibraryArchiveRoot(it)
-                                }
-                            }
-                        }
+                        ApplicationManager.getApplication().invokeLater({
+                           processBulk(createEvents) {
+                               projectFileIndex.isInLibraryClasses(it) || isLibraryArchiveRoot(
+                                   it
+                               )
+                           }
+                       }, project.disposed)
                     }
                 }
             }
