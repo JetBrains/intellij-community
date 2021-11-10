@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -128,7 +129,8 @@ class KotlinUAnnotation(
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtAnnotationEntry>(annotationEntry, givenParent), UAnnotation {
 
-    override val javaPsi = annotationEntry.toLightAnnotation()
+    override val javaPsi: PsiAnnotation? =
+        annotationEntry.actionUnderSafeAnalyzeBlock({ annotationEntry.toLightAnnotation() }, { null })
 
     override fun computeClassDescriptor(): ClassDescriptor? =
         sourcePsi.analyze()[BindingContext.ANNOTATION, sourcePsi]?.annotationClass

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.highlighter.markers.LineMarkerInfos
 import org.jetbrains.kotlin.idea.inspections.RecursivePropertyAccessorInspection
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -81,7 +82,7 @@ class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         // Check that there were no not-inlined lambdas on the way to enclosing function
         if (enclosingFunction != getEnclosingFunction(element, true)) return false
 
-        val bindingContext = element.analyze()
+        val bindingContext = element.safeAnalyzeNonSourceRootCode()
         val enclosingFunctionDescriptor = bindingContext[BindingContext.FUNCTION, enclosingFunction] ?: return false
 
         val call = bindingContext[BindingContext.CALL, element] ?: return false
