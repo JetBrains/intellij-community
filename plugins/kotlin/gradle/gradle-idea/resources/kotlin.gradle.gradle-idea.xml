@@ -42,6 +42,8 @@
                  restartRequired="false"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.scripting.settings.StandaloneScriptsStorage"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.caches.project.StableModuleNameProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.gradle.configuration.mpp.ExternalSystemBasedStableModuleNameProvider"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger"/>
   </extensions>
