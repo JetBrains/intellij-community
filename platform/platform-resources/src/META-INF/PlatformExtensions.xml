@@ -500,6 +500,8 @@
 
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <themeProvider id="JetBrainsLightTheme" path="/themes/Light.theme.json"/>
+    <themeProvider id="ExperimentalLight" path="/themes/expUI/expUI_light.theme.json"/>
+    <themeProvider id="ExperimentalDark" path="/themes/expUI/expUI_dark.theme.json"/>
 
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
