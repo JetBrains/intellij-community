@@ -83,7 +83,7 @@ abstract class BuildContext implements CompilationContext {
    */
   abstract boolean executeStep(String stepMessage, String stepId, Runnable step)
 
-  abstract boolean executeStep(SpanBuilder spanBuilder, String stepId, Runnable step)
+  abstract void executeStep(SpanBuilder spanBuilder, String stepId, Runnable step)
 
   abstract boolean shouldBuildDistributions()
 

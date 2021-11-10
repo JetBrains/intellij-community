@@ -4,7 +4,10 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.context.Scope
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
@@ -19,6 +22,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.lang.reflect.UndeclaredThrowableException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -299,25 +303,47 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  boolean executeStep(SpanBuilder spanBuilder, String stepId, Runnable step) {
+  void executeStep(SpanBuilder spanBuilder, String stepId, Runnable step) {
     if (options.buildStepsToSkip.contains(stepId)) {
       spanBuilder.startSpan().addEvent("skip").end()
+      return
     }
-    else {
-      messages.block(spanBuilder, new Supplier<Void>() {
-        @Override
-        Void get() {
-          step.run()
-          return null
-        }
-      })
+
+    Span span = spanBuilder.startSpan()
+    Scope scope = span.makeCurrent()
+    // we cannot flush tracing after "throw e" as we have to end the current span before that
+    boolean success = false
+    try {
+      step.run()
+      success = true
     }
-    return true
+    catch (Throwable e) {
+      if (e instanceof UndeclaredThrowableException) {
+        e = e.cause
+      }
+
+      span.recordException(e)
+      span.setStatus(StatusCode.ERROR, e.message)
+      throw e
+    }
+    finally {
+      try {
+        scope.close()
+      }
+      finally {
+        span.end()
+      }
+
+      if (!success) {
+        // print all pending spans - after current span
+        TracerProviderManager.flush()
+      }
+    }
   }
 
   @Override
   boolean shouldBuildDistributions() {
-    options.targetOS.toLowerCase() != BuildOptions.OS_NONE
+    return options.targetOS.toLowerCase() != BuildOptions.OS_NONE
   }
 
   @Override
