@@ -83,6 +83,7 @@ public final class ClasspathBootstrap {
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
   private static final String PROTOBUF_JAVA6_VERSION = "3.5.1";
   private static final String PROTOBUF_JAVA6_JAR_NAME = "protobuf-java-" + PROTOBUF_JAVA6_VERSION + ".jar";
+  private static final String PROTOBUF_JAVA6_DISTRIBUTION_JAR_NAME = "protobuf-java6.jar";
 
   private static final String EXTERNAL_JAVAC_MODULE_NAME = "intellij.platform.jps.build.javac.rt.rpc";
   private static final String EXTERNAL_JAVAC_JAR_NAME = "jps-javac-rt-rpc.jar";
@@ -234,7 +235,7 @@ public final class ClasspathBootstrap {
       // running regular installation
       Path rtDirPath = rootPath.resolveSibling("rt");
       cp.add(rtDirPath.resolve(EXTERNAL_JAVAC_JAR_NAME).toFile());
-      cp.add(rtDirPath.resolve(PROTOBUF_JAVA6_JAR_NAME).toFile());
+      cp.add(rtDirPath.resolve(PROTOBUF_JAVA6_DISTRIBUTION_JAR_NAME).toFile());
     }
     else {
       // running from sources or on the build server
@@ -242,9 +243,9 @@ public final class ClasspathBootstrap {
 
       // take the library from the local maven repository
       File localRepositoryDir = getMavenLocalRepositoryDir();
-      File protobufJava6File = new File(FileUtil.join(localRepositoryDir.getAbsolutePath(),
-                               "com", "google", "protobuf", "protobuf-java", PROTOBUF_JAVA6_VERSION,
-                               PROTOBUF_JAVA6_JAR_NAME));
+      File protobufJava6File = new File(
+        FileUtil.join(localRepositoryDir.getAbsolutePath(), "com", "google", "protobuf", "protobuf-java", PROTOBUF_JAVA6_VERSION, PROTOBUF_JAVA6_JAR_NAME)
+      );
       cp.add(protobufJava6File);
     }
   }
