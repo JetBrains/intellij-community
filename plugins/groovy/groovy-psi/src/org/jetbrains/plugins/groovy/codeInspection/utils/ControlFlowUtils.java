@@ -487,7 +487,7 @@ public final class ControlFlowUtils {
 
   public static Instruction @NotNull [] getCaseSectionInstructions(GrCaseSection caseSection) {
     return CachedValuesManager.getCachedValue(caseSection, () -> {
-      return CachedValueProvider.Result.create(new ControlFlowBuilder().buildControlFlow(caseSection), caseSection);
+      return CachedValueProvider.Result.create(ControlFlowBuilder.buildControlFlow(caseSection), caseSection);
     });
   }
 

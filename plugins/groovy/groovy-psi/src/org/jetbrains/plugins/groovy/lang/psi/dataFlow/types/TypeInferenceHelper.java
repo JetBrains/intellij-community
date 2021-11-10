@@ -54,12 +54,11 @@ public final class TypeInferenceHelper {
 
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<>();
 
-  static <T> T doInference(@NotNull Map<VariableDescriptor, DFAType> bindings, boolean allowCaching, @NotNull Computable<? extends T> computation) {
+  static <T> T doInference(@NotNull Map<VariableDescriptor, DFAType> bindings, @NotNull Computable<? extends T> computation) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       checkNestedContext();
     }
-    boolean reallyAllowsCaching = allowCaching && getCurrentContext().isInferenceResultsCachingAllowed();
-    return withContext(new PartialContext(bindings, reallyAllowsCaching), computation);
+    return withContext(new PartialContext(bindings), computation);
   }
 
   private static <T> T withContext(@NotNull InferenceContext context, @NotNull Computable<? extends T> computation) {

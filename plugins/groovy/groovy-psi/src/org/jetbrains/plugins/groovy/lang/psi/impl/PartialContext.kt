@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.psi.PsiReference
@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.createDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType
 import java.util.function.Function
 
-internal class PartialContext(private val types: Map<VariableDescriptor, DFAType>, private val isCachingAllowed: Boolean) : InferenceContext {
+internal class PartialContext(private val types: Map<VariableDescriptor, DFAType>) : InferenceContext {
   private val cache = HashMap<Any, Any>()
 
   private fun <T> doGetCachedValue(key: Any, computable: () -> T): T {
@@ -37,8 +37,6 @@ internal class PartialContext(private val types: Map<VariableDescriptor, DFAType
       computation.apply(element)
     }
   }
-
-  override fun isInferenceResultsCachingAllowed(): Boolean = isCachingAllowed
 
   override fun <T : PsiReference, R> resolveWithCaching(ref: T, resolver: AbstractResolver<T, R>, incomplete: Boolean): R? {
     return doGetCachedValue(Pair(ref, incomplete)) {

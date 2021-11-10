@@ -18,7 +18,7 @@ class DefaultSwitchExpressionTypeCalculator : GrTypeCalculator<GrSwitchExpressio
 
   companion object {
     private fun getCaseSectionType(section : GrCaseSection) : PsiType {
-      val flow = ControlFlowBuilder().buildControlFlow(section)
+      val flow = ControlFlowBuilder.buildControlFlow(section)
       val yields = ControlFlowUtils.collectYields(flow).takeIf(List<*>::isNotEmpty) ?: return PsiType.NULL
       return TypesUtil.getLeastUpperBoundNullable(yields.map { stmt: GrStatement ->
         when (stmt) {
