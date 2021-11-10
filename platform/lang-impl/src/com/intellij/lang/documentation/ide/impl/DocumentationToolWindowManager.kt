@@ -73,7 +73,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       ToggleShowDocsOnHoverAction(),
       ActionManager.getInstance().getAction(TOGGLE_AUTO_SHOW_ACTION_ID),
       ActionManager.getInstance().getAction(TOGGLE_AUTO_UPDATE_ACTION_ID),
-      AdjustFontSizeAction(), // TODO this action doesn't work because of wrong DataContext
+      AdjustFontSizeAction(),
     ))
     if (Registry.`is`("documentation.v2.tw.navigation.actions")) {
       // TODO these actions are always visible, but they are unavailable in the tool window title,

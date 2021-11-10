@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation.ide.ui
 
+import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -20,6 +21,8 @@ internal class DocumentationToolWindowUI(
   val browser: DocumentationBrowser get() = ui.browser
 
   val contentComponent: JComponent get() = ui.scrollPane
+
+  val editorPane: DocumentationEditorPane get() = ui.editorPane
 
   private var reusable: Disposable?
 
