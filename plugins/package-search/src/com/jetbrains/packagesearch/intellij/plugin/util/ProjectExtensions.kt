@@ -39,8 +39,10 @@ internal val Project.trustedProjectFlow: Flow<ThreeState>
         val connection = messageBus.simpleConnect()
         connection.subscribe(
             TrustStateListener.TOPIC,
-            TrustStateListener {
-                if (it == this@trustedProjectFlow) trySend(getTrustedState())
+            object : TrustStateListener {
+                override fun onProjectTrusted(project: Project) {
+                    if (project == this@trustedProjectFlow) trySend(getTrustedState())
+                }
             }
         )
         awaitClose { connection.disconnect() }

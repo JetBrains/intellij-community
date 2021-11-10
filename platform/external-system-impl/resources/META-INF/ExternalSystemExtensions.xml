@@ -28,8 +28,6 @@
     <search.optionContributor
       implementation="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupSearchableContributor"/>
 
-    <editorNotificationProvider implementation="com.intellij.openapi.externalSystem.service.project.UntrustedProjectNotificationProvider"/>
-
     <!--Auto-reload-->
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker"
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker"/>
@@ -128,7 +126,7 @@
     <notificationGroup id="Gradle Import" displayType="BALLOON"/>
   </extensions>
   <applicationListeners>
-    <listener class="com.intellij.openapi.externalSystem.service.project.UntrustedProjectNotificationProvider$TrustedListener"
+    <listener class="com.intellij.openapi.externalSystem.service.project.ExternalSystemTrustedListener"
               topic="com.intellij.ide.impl.TrustStateListener"
               activeInHeadlessMode="false" activeInTestMode="false" />
   </applicationListeners>

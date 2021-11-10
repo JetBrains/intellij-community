@@ -5,6 +5,7 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -23,6 +24,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.function.Consumer
 import kotlin.io.path.isDirectory
 
 /**
@@ -126,6 +128,7 @@ enum class OpenUntrustedProjectChoice {
 
 fun Project.isTrusted() = getTrustedState() == ThreeState.YES
 
+@ApiStatus.Internal
 fun Project.getTrustedState(): ThreeState {
   val explicit = this.service<TrustedProjectSettings>().trustedState
   if (explicit != ThreeState.UNSURE) {
@@ -211,18 +214,54 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
 
 /**
  * Listens to the change of the project trusted state, i.e. when a non-trusted project becomes trusted (the vice versa is not possible).
+ *
+ * Consider using the helper method [whenProjectTrusted] which accepts a lambda.
  */
 @ApiStatus.Experimental
-fun interface TrustStateListener {
+interface TrustStateListener {
   /**
    * Executed when the project becomes trusted.
    */
-  fun onProjectTrusted(project: Project)
+  @JvmDefault
+  fun onProjectTrusted(project: Project) {
+  }
+
+  /**
+   * Executed when the user clicks to the "Trust Project" button in the [editor notification][UntrustedProjectEditorNotificationPanel].
+   * Use this method if you need to know that the project has become trusted exactly because the user has clicked to that button.
+   *
+   * NB: [onProjectTrusted] is also called in this case, and most probably you want to use that method.
+   */
+  @JvmDefault
+  fun onProjectTrustedFromNotification(project: Project) {
+  }
 
   companion object {
     @JvmField
     @Topic.AppLevel
     val TOPIC = Topic.create("Trusted project status", TrustStateListener::class.java)
+  }
+}
+
+/**
+ * Adds a one-time listener of the project's trust state change: when the project becomes trusted, the listener is called and disconnected.
+ */
+@JvmOverloads
+fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project) -> Unit) {
+  val messageBus = ApplicationManager.getApplication().messageBus
+  val connection = if (parentDisposable == null) messageBus.connect() else messageBus.connect(parentDisposable)
+  connection.subscribe(TrustStateListener.TOPIC, object : TrustStateListener {
+    override fun onProjectTrusted(project: Project) {
+      listener(project)
+      connection.disconnect()
+    }
+  })
+}
+
+@JvmOverloads
+fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>) {
+  whenProjectTrusted(parentDisposable) { project ->
+    listener.accept(project)
   }
 }
 
