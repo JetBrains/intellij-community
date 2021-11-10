@@ -55,7 +55,11 @@ internal fun <L : Any, K> Project.messageBusFlow(
 
 internal val Project.trustedProjectFlow: Flow<Boolean>
     get() = messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
-        TrustStateListener { if (it == this@trustedProjectFlow) trySend(isTrusted()) }
+        object : TrustStateListener {
+            override fun onProjectTrusted(project: Project) {
+                if (project == this@trustedProjectFlow) trySend(isTrusted())
+            }
+        }
     }.distinctUntilChanged()
 
 internal val Project.nativeModulesChangesFlow
