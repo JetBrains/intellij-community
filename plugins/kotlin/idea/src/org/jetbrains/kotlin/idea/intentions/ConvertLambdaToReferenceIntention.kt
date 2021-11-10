@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
@@ -78,7 +79,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             is KtNameReferenceExpression -> callableExpression
             else -> return false
         }
-        val context = callableExpression.analyze()
+        val context = callableExpression.safeAnalyzeNonSourceRootCode()
         val calleeDescriptor =
             calleeReferenceExpression.getResolvedCall(context)?.resultingDescriptor as? CallableMemberDescriptor ?: return false
 
@@ -312,7 +313,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             val argument = parentValueArgument() ?: return null
             val callExpression = argument.getStrictParentOfType<KtCallExpression>() ?: return null
             return callExpression
-                .getResolvedCall(context ?: analyze(BodyResolveMode.PARTIAL))
+                .getResolvedCall(context ?: safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL))
                 ?.getParameterForArgument(argument)?.type
         }
 
@@ -329,7 +330,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             return when (val singleStatement = lambdaExpression.singleStatementOrNull()) {
                 is KtCallExpression -> {
                     val calleeReferenceExpression = singleStatement.calleeExpression as? KtNameReferenceExpression ?: return null
-                    val context = calleeReferenceExpression.analyze(BodyResolveMode.PARTIAL)
+                    val context = calleeReferenceExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
                     val resolvedCall = calleeReferenceExpression.getResolvedCall(context) ?: return null
                     val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
                     val descriptor by lazy { receiver?.type?.constructor?.declarationDescriptor }
@@ -360,7 +361,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                         else -> return null
                     }
                     val receiver = singleStatement.receiverExpression
-                    val context = receiver.analyze()
+                    val context = receiver.safeAnalyzeNonSourceRootCode()
                     when (receiver) {
                         is KtNameReferenceExpression -> {
                             val receiverDescriptor = context[REFERENCE_TARGET, receiver] ?: return null

@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -28,6 +27,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -136,7 +136,7 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
         val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
         val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
 
-        val bindingContext = analyze(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+        val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
         if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
             val resolvedCall = getResolvedCall(bindingContext)
             if (resolvedCall != null) {
@@ -465,7 +465,7 @@ fun KtDeclaration.getModalityFromDescriptor(descriptor: DeclarationDescriptor? =
 
 fun KtDeclaration.implicitModality(): KtModifierKeywordToken {
     var predictedModality = predictImplicitModality()
-    val bindingContext = analyze(BodyResolveMode.PARTIAL)
+    val bindingContext = safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this] ?: return predictedModality
     val containingDescriptor = descriptor.containingDeclaration ?: return predictedModality
 

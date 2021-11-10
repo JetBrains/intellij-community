@@ -18,7 +18,6 @@ import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
@@ -83,7 +82,7 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                     if (source is KotlinSourceElement) {
                         val psi = source.psi
                         if (psi is KtObjectDeclaration) {
-                            val bindingContext = psi.analyze()
+                            val bindingContext = psi.safeAnalyzeNonSourceRootCode()
                             val superTypes = psi.superTypeListEntries
                                 .map { entry ->
                                     val psiType = entry.typeReference?.getAbbreviatedTypeOrType(bindingContext)?.toPsiType(psi)
@@ -153,7 +152,7 @@ internal fun KotlinType?.fqNameEquals(fqName: String): Boolean {
 internal fun KotlinType.canBeNull() = isMarkedNullable || isNullabilityFlexible()
 
 internal fun getConstant(expr: KtConstantExpression): DfType {
-    val bindingContext = expr.analyze(BodyResolveMode.PARTIAL)
+    val bindingContext = expr.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val type = bindingContext.getType(expr)
     val constant: ConstantValue<Any?>? =
         if (type == null) null else ConstantExpressionEvaluator.getConstant(expr, bindingContext)?.toConstantValue(type)
