@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.hasNotReceiver
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -92,7 +93,7 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
             override fun visitUserType(type: KtUserType) {
                 if (type.parent is KtUserType) return
 
-                val context = type.analyze()
+                val context = type.safeAnalyzeNonSourceRootCode()
                 val applicableExpression = type.firstApplicableExpression(
                     validator = { applicableExpression(context) },
                     generator = { firstChild as? KtUserType }

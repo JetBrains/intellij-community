@@ -292,7 +292,7 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             e.throwAsInvalidModuleException()
 
             DiagnosticUtils.throwIfRunningOnServer(e)
-            LOG.error(e)
+            LOG.warn(e)
 
             return AnalysisResult.internalError(BindingContext.EMPTY, e)
         }
@@ -560,7 +560,7 @@ private object KotlinResolveDataProvider {
             e.throwAsInvalidModuleException()
 
             DiagnosticUtils.throwIfRunningOnServer(e)
-            LOG.error(e)
+            LOG.warn(e)
 
             return AnalysisResult.internalError(BindingContext.EMPTY, e)
         }
