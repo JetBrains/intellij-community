@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.io
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
 import com.intellij.util.lang.ImmutableZipFile
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
@@ -12,6 +13,7 @@ import org.jetbrains.intellij.build.tasks.buildJar
 import org.jetbrains.intellij.build.tasks.dir
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,6 +22,11 @@ import kotlin.random.Random
 
 @Suppress("UsePropertyAccessSyntax")
 class ZipTest {
+  @RegisterExtension
+  @JvmField
+  // not used in every test because we want to check the real FS behaviour
+  val fs = InMemoryFsExtension()
+
   @Test
   fun `interrupt thread`(@TempDir tempDir: Path) {
     val (list, archiveFile) = createLargeArchive(128, tempDir)
@@ -48,11 +55,14 @@ class ZipTest {
   }
 
   @Test
-  fun `read zip file with more than 65K entries`(@TempDir tempDir: Path) {
-    val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2, tempDir)
-    val zipFile = ImmutableZipFile.load(archiveFile)
-    for (name in list) {
-      assertThat(zipFile.getEntry(name)).isNotNull()
+  fun `read zip file with more than 65K entries`() {
+    Assumptions.assumeTrue(SystemInfoRt.isUnix)
+
+    val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2, fs.root)
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
+      for (name in list) {
+        assertThat(zipFile.getEntry(name)).isNotNull()
+      }
     }
   }
 
@@ -131,7 +141,7 @@ class ZipTest {
       assertThat(zipFile.getEntry("do-not-ignore-me")).isNotNull()
       assertThat(zipFile.getEntry("test-relative-ignore")).isNull()
       assertThat(zipFile.getEntry("some/nested/dir/icon-robots.txt")).isNull()
-      assertThat(zipFile.getEntry("jjmnh")).isNull()
+      assertThat(zipFile.getEntry("unknown")).isNull()
     }
   }
 
