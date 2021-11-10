@@ -23,6 +23,7 @@ import training.statistic.FeatureUsageStatisticConsts.COMPLETED_COUNT
 import training.statistic.FeatureUsageStatisticConsts.COURSE_SIZE
 import training.statistic.FeatureUsageStatisticConsts.DURATION
 import training.statistic.FeatureUsageStatisticConsts.EXPAND_WELCOME_PANEL
+import training.statistic.FeatureUsageStatisticConsts.HELP_LINK_CLICKED
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
 import training.statistic.FeatureUsageStatisticConsts.LAST_BUILD_LEARNING_OPENED
@@ -74,7 +75,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 14)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 15)
 
     var isLearnProjectCloseLogged = false
 
@@ -133,6 +134,7 @@ internal class StatisticBase : CounterUsagesCollector() {
       GROUP.registerEvent(NEED_SHOW_NEW_LESSONS_NOTIFICATIONS, newLessonsCount, lastBuildLearningOpened, showNewLessonsState)
 
     private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
+    private val helpLinkClicked = GROUP.registerEvent(HELP_LINK_CLICKED, lessonIdField, languageField)
 
     // LOGGING
     fun logLessonStarted(lesson: Lesson, startingWay: LessonStartingWay) {
@@ -229,6 +231,10 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     fun logLessonLinkClickedFromTip(lessonId: String, tipFilename: String) {
       lessonLinkClickedFromTip.log(lessonId, courseLanguage(), tipFilename)
+    }
+
+    fun logHelpLinkClicked(lessonId: String) {
+      helpLinkClicked.log(lessonId, courseLanguage())
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
