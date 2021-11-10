@@ -4,8 +4,6 @@ package com.intellij.ide.bookmark.providers
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkProvider
 import com.intellij.ide.projectView.impl.nodes.PackageElement
-import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
@@ -39,8 +37,6 @@ internal class PackageBookmarkProvider(private val project: Project) : BookmarkP
   }
 
   override fun createBookmark(context: Any?): PackageBookmark? = when (context) {
-    is AbstractTreeNode<*> -> createBookmark(context.value)
-    is NodeDescriptor<*> -> createBookmark(context.element)
     is PackageElement -> PackageBookmark(this, context)
     else -> null
   }
