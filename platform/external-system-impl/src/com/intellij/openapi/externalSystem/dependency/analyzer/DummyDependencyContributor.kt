@@ -1,14 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.*
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency.Data.Artifact
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency.Data.Module
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.InspectionResult.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Artifact
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Module
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
 
-class DummyDependenciesContributor(private val project: Project) : DependenciesContributor {
+class DummyDependencyContributor(private val project: Project) : DependencyContributor {
   override fun getExternalProjectName(externalProjectPath: String): String {
     return PathUtil.getFileName(externalProjectPath)
   }

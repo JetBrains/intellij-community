@@ -4,7 +4,7 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 
-interface DependenciesContributor {
+interface DependencyContributor {
 
   fun getExternalProjectPaths(): List<String>
 

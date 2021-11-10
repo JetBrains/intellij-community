@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project
 
 
 class ExternalSystemDependencyAnalyzerExtension : DependencyAnalyzerExtension {
-  override fun getContributor(project: Project, systemId: ProjectSystemId): DependenciesContributor? {
+  override fun getContributor(project: Project, systemId: ProjectSystemId): DependencyContributor? {
     ExternalSystemApiUtil.getManager(systemId) ?: return null
-    return DummyDependenciesContributor(project)
+    return DummyDependencyContributor(project)
   }
 }

@@ -2,10 +2,10 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.DependencyGroup
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.InspectionResult.Omitted
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.InspectionResult.VersionConflict
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.DependencyGroup
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Omitted
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.VersionConflict
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -24,7 +24,7 @@ import java.awt.BorderLayout
 import java.awt.GridLayout
 import javax.swing.*
 
-class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributor) : DependencyAnalyzerView {
+class DependencyAnalyzerViewImpl(private val contributor: DependencyContributor) : DependencyAnalyzerView {
   override val component: JComponent
 
   private val propertyGraph = PropertyGraph()

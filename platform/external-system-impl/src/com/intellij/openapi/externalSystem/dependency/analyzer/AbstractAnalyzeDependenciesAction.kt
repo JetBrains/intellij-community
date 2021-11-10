@@ -17,7 +17,7 @@ abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
 
   abstract fun getExternalProjectPath(e: AnActionEvent): String?
 
-  abstract fun getDependency(e: AnActionEvent): DependenciesContributor.Dependency?
+  abstract fun getDependency(e: AnActionEvent): DependencyContributor.Dependency?
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

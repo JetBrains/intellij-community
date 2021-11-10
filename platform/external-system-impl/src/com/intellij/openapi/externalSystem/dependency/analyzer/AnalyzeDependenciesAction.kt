@@ -10,5 +10,5 @@ class AnalyzeDependenciesAction : AbstractAnalyzeDependenciesAction() {
 
   override fun getExternalProjectPath(e: AnActionEvent): String? = null
 
-  override fun getDependency(e: AnActionEvent): DependenciesContributor.Dependency? = null
+  override fun getDependency(e: AnActionEvent): DependencyContributor.Dependency? = null
 }
