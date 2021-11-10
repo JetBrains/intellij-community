@@ -1,12 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar.experimental
 
-import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoClassPresentationUpdater.getActionTitlePluralized
 import com.intellij.ide.actions.SearchEverywhereAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
@@ -15,7 +16,9 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.BigPopup.searchFieldBackground
@@ -34,10 +37,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   private var hotKeyWasUsed = AdvancedSettings.getBoolean("ide.suppress.double.click.handler")
   private var subscribedForDoubleShift = false
   private var firstOpened = false
-
-  init {
-    templatePresentation.icon = AllIcons.Actions.Search
-  }
+  private var clearPosition = false
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = true
@@ -58,18 +58,11 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
 
     return object : ActionButtonWithText(this, presentation, place,
-      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+                                         ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       var seManager: SearchEverywhereManager? = null
 
       init {
         FocusManager.getCurrentManager().addPropertyChangeListener { this.repaint() }
-        presentation.icon = AllIcons.Actions.Search
-        presentation.text = if (hotKeyWasUsed) {
-          ActionsBundle.message("action.SearchEverywhereToolbar.text")
-        }
-        else {
-          ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text")
-        }
         setHorizontalTextAlignment(SwingConstants.LEFT);
       }
 
@@ -91,17 +84,25 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
       override fun actionPerformed(e: AnActionEvent) {
         seManager = SearchEverywhereManager.getInstance(e.project)
+        val focusManager = IdeFocusManager.findInstance()
+        val focusedComponent = focusManager.focusOwner
+        val ideWindow = focusManager.lastFocusedIdeWindow
+        val dataContext = if (ideWindow === focusedComponent || focusedComponent === focusManager.getLastFocusedFor(
+            ideWindow)) DataManager.getInstance().getDataContext(focusedComponent)
+        else DataManager.getInstance().dataContext
+
         if (!firstOpened) {
           super.actionPerformed(AnActionEvent(
-            e.inputEvent, e.dataContext, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE, templatePresentation,
+            e.inputEvent, dataContext, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE, templatePresentation,
             ActionManager.getInstance(), 0))
           firstOpened = true
         }
         else {
           super.actionPerformed(AnActionEvent(
-            e.inputEvent, e.dataContext, ActionPlaces.KEYBOARD_SHORTCUT, templatePresentation,
+            e.inputEvent, dataContext, ActionPlaces.KEYBOARD_SHORTCUT, templatePresentation,
             ActionManager.getInstance(), 0))
         }
+
       }
 
       override fun paint(g: Graphics?) {
@@ -122,15 +123,15 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         val iconRect = Rectangle()
         val textRect = Rectangle()
         val text = SwingUtilities.layoutCompoundLabel(this, fm, presentation.getText(true), icon,
-          SwingConstants.CENTER, horizontalTextAlignment(),
-          SwingConstants.CENTER, horizontalTextPosition(),
-          viewRect, iconRect, textRect, iconTextSpace())
+                                                      SwingConstants.CENTER, horizontalTextAlignment(),
+                                                      SwingConstants.CENTER, horizontalTextPosition(),
+                                                      viewRect, iconRect, textRect, iconTextSpace())
 
         if (seManager != null && seManager!!.isShown) {
           this.isOpaque = false
           this.border = null
           drawStringUnderlineCharAt(g, ActionsBundle.message("action.SearchEverywhereToolbar.searching.text"), getMnemonicCharIndex(text),
-            textRect.x, textRect.y + fm.ascent)
+                                    textRect.x, textRect.y + fm.ascent)
 
           return
         }
@@ -146,7 +147,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         look.paintBorder(g, this)
         g.color = if (presentation.isEnabled) foreground else inactiveTextColor
         drawStringUnderlineCharAt(g, text, getMnemonicCharIndex(text),
-          textRect.x, textRect.y + fm.ascent)
+                                  textRect.x, textRect.y + fm.ascent)
       }
     }
   }
@@ -158,6 +159,16 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
           hotKeyWasUsed = true
         }
       }
+    }
+    if (action is SearchEverywhereNewToolbarAction && event.place == ActionPlaces.MAIN_TOOLBAR) {
+      clearPosition = true
+    }
+  }
+
+  override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+    if (action.javaClass == SearchEverywhereAction::class.java && clearPosition) {
+      event.project?.let { WindowStateService.getInstance(it).putLocation(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, null) }
+      clearPosition = false
     }
   }
 }
