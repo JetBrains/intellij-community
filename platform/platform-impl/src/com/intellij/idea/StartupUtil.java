@@ -115,7 +115,7 @@ public final class StartupUtil {
     LoadingState.errorHandler = (message, throwable) -> Logger.getInstance(LoadingState.class).error(message, throwable);
 
     Activity activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration");
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless());
 
     ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
 

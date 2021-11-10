@@ -193,7 +193,7 @@ public final class Main {
     isLightEdit = false;
   }
 
-  public static boolean isHeadless(String @NotNull [] args) {
+  private static boolean isHeadless(String[] args) {
     if (Boolean.getBoolean(AWT_HEADLESS)) {
       return true;
     }
