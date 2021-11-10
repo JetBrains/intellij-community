@@ -24,8 +24,8 @@ import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
 import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
-import com.jetbrains.packagesearch.intellij.plugin.util.parallelForEach
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelUpdatedKeys
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
 import com.jetbrains.packagesearch.intellij.plugin.util.throttle
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
@@ -137,11 +137,30 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         )
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
+    val projectModulesChangesFlow = combine(
+        projectModulesSharedFlow,
+        project.filesChangedEventFlow.map { it.mapNotNull { it.file } }
+    ) { modules, changedBuildFiles -> modules.filter { it.buildFile in changedBuildFiles } }
+        .filter { it.isNotEmpty() }
+        .let { merge(it, operationExecutedChannel.consumeAsFlow()) }
+        .batchAtIntervals(Duration.seconds(1))
+        .map { it.flatMap { it } }
+        .catchAndLog(
+            context = "${this::class.qualifiedName}#projectModulesChangesFlow",
+            message = "Error while checking Modules changes",
+            fallbackValue = emptyList()
+        )
+        .shareIn(this, SharingStarted.Eagerly)
+
     val moduleModelsStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading(
             loggingContext = "moduleModelsStateFlow",
             loadingFlow = moduleModelsLoadingFlow
-        ) { projectModules -> projectModules.parallelMap { readAction { ModuleModel(it) } } }
+        ) { projectModules -> projectModules.parallelMap { it to ModuleModel(it) }.toMap() }
+        .modifiedBy(projectModulesChangesFlow) { repositories, changedModules ->
+            repositories.parallelUpdatedKeys(changedModules) { ModuleModel(it) }
+        }
+        .map { it.values.toList() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#moduleModelsStateFlow",
             message = "Error while evaluating modules models",
@@ -150,25 +169,8 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         )
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
-    val projectModulesChangesFlow = projectModulesSharedFlow
-        .flatMapLatest { modules ->
-            project.filesChangedEventFlow.map { changedFilesEvents ->
-                val changedBuildFiles = changedFilesEvents.mapNotNull { it.file }
-                modules.filter { it.buildFile in changedBuildFiles }
-            }
-        }
-        .filter { it.isNotEmpty() }
-        .catchAndLog(
-            context = "${this::class.qualifiedName}#projectModulesChangesFlow",
-            message = "Error while checking Modules changes",
-            fallbackValue = emptyList(),
-            retryChannel = retryFromErrorChannel
-        )
-        .shareIn(this, SharingStarted.Eagerly)
-
     val allInstalledKnownRepositoriesFlow =
         combine(moduleModelsStateFlow, knownRepositoriesFlow) { moduleModels, repos -> moduleModels to repos }
-            .replayOnSignals(projectModulesChangesFlow)
             .mapLatestTimedWithLoading(
                 loggingContext = "allInstalledKnownRepositoriesFlow",
                 loadingFlow = allInstalledKnownRepositoriesLoadingFlow
@@ -190,14 +192,9 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
             fetchProjectDependencies(it, cacheDirectory, json)
         }
-        .modifiedBy(
-            merge(projectModulesChangesFlow, operationExecutedChannel.consumeAsFlow()).batchAtIntervals(Duration.seconds(2))
-                .map { it.flatMap { it } }
-        ) { installed, changedModules ->
+        .modifiedBy(projectModulesChangesFlow) { installed, changedModules ->
             val (result, time) = installedPackagesDifferenceLoadingFlow.whileLoading {
-                val map = installed.toMutableMap()
-                changedModules.parallelForEach { map[it] = it.installedDependencies(cacheDirectory, json) }
-                map
+                installed.parallelUpdatedKeys(changedModules) { it.installedDependencies(cacheDirectory, json) }
             }
             logTrace("installedPackagesStep1LoadingFlow") {
                 "Took ${time} to elaborate diffs for ${changedModules.size} module" + if (changedModules.size > 1) "s" else ""
