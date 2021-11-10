@@ -75,11 +75,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       ActionManager.getInstance().getAction(TOGGLE_AUTO_UPDATE_ACTION_ID),
       AdjustFontSizeAction(),
     ))
-    if (Registry.`is`("documentation.v2.tw.navigation.actions")) {
-      // TODO these actions are always visible, but they are unavailable in the tool window title,
-      //  because they are updated with the wrong DataContext.
-      toolWindow.setTitleActions(navigationActions())
-    }
+    toolWindow.setTitleActions(navigationActions())
     toolWindow.installWatcher(contentManager)
     toolWindow.component.putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, true)
     toolWindow.helpId = "reference.toolWindows.Documentation"
