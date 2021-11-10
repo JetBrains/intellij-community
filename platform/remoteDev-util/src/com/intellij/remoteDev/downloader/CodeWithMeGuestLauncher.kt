@@ -46,7 +46,7 @@ object CodeWithMeGuestLauncher {
       override fun run(progressIndicator: ProgressIndicator) {
         try {
           val sessionInfo = when (uri.scheme) {
-            "tcp" -> {
+            "tcp", "gwws" -> {
               val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
               val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
               val unattendedMode = uri.fragmentParameters["jt"] != null
