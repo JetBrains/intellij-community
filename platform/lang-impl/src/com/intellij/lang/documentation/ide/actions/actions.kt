@@ -22,7 +22,6 @@ val DOCUMENTATION_TARGETS: DataKey<List<DocumentationTarget>> = DataKey.create("
 @JvmField
 val DOCUMENTATION_BROWSER: DataKey<DocumentationBrowserFacade> = DataKey.create("documentation.browser")
 
-internal val DOCUMENTATION_HISTORY: DataKey<DocumentationHistory> = DataKey.create("documentation.history")
 internal val DOCUMENTATION_POPUP: DataKey<JBPopup> = DataKey.create("documentation.popup")
 
 internal const val PRIMARY_GROUP_ID: String = "Documentation.PrimaryGroup"
@@ -46,7 +45,7 @@ internal fun registerBackForwardActions(component: JComponent) {
 }
 
 internal fun documentationHistory(dc: DataContext): DocumentationHistory? {
-  return dc.getData(DOCUMENTATION_HISTORY)
+  return documentationBrowser(dc)?.history
 }
 
 internal fun documentationBrowser(dc: DataContext): DocumentationBrowser? {
