@@ -6,7 +6,7 @@
     This package is a namespace package that contains all extensions
     distributed in the ``sphinx-contrib`` distribution.
 
-    :copyright: Copyright 2007-2014 by the Sphinx team, see AUTHORS.
+    :copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
 
