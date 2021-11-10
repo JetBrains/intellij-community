@@ -1062,7 +1062,7 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                          @NotNull Set<PluginId> depProcessed,
+                                                          @NotNull Set<IdeaPluginDescriptorImpl> depProcessed,
                                                           @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
     ModuleGraph moduleGraph = getPluginSet().getModuleGraph();
     for (IdeaPluginDescriptorImpl descriptor : moduleGraph.getDependencies(rootDescriptor)) {
@@ -1070,7 +1070,7 @@ public final class PluginManagerCore {
         case TERMINATE:
           return false;
         case CONTINUE:
-          if (depProcessed.add(descriptor.getPluginId())) {
+          if (depProcessed.add(descriptor)) {
             processAllNonOptionalDependencies(descriptor, depProcessed, consumer);
           }
           break;

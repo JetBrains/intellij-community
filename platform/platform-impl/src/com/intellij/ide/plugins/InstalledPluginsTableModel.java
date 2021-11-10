@@ -8,8 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.FileVisitResult;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 public class InstalledPluginsTableModel {
 
@@ -90,19 +89,25 @@ public class InstalledPluginsTableModel {
                   (descriptor, pair) -> {
                   });
 
+    List<IdeaPluginDescriptorImpl> impls = descriptors.stream()
+      .filter(IdeaPluginDescriptorImpl.class::isInstance)
+      .map(IdeaPluginDescriptorImpl.class::cast)
+      .collect(Collectors.toCollection(ArrayList::new));
+
     List<IdeaPluginDescriptorImpl> descriptorsToUpdate = action.isEnable() ?
-                                                         getDependenciesToEnable(descriptors, tempEnabled) :
-                                                         getDependentsToDisable(descriptors, tempEnabled);
+                                                         getDependenciesToEnable(impls, tempEnabled) :
+                                                         getDependentsToDisable(impls, tempEnabled);
 
-    List<String> pluginNames = ContainerUtil.map(descriptorsToUpdate,
-                                                 IdeaPluginDescriptorImpl::getName);
-
+    Set<String> pluginNamesToUpdate = descriptorsToUpdate.stream()
+      .map(IdeaPluginDescriptorImpl::getName)
+      .collect(Collectors.toCollection(TreeSet::new));
     if (HIDE_IMPLEMENTATION_DETAILS &&
-        !createUpdateDependenciesDialog(pluginNames, action)) {
+        !createUpdateDependenciesDialog(pluginNamesToUpdate, action)) {
       return;
     }
 
-    setNewEnabled(descriptorsToUpdate,
+    impls.addAll(descriptorsToUpdate);
+    setNewEnabled(impls,
                   myEnabled,
                   action,
                   this::handleBeforeChangeEnableState);
@@ -131,18 +136,11 @@ public class InstalledPluginsTableModel {
     return myEnabled;
   }
 
-  private static @NotNull List<IdeaPluginDescriptorImpl> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+  private static @NotNull List<IdeaPluginDescriptorImpl> getDependenciesToEnable(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                                                  @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
     ArrayList<IdeaPluginDescriptorImpl> result = new ArrayList<>();
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (!(descriptor instanceof IdeaPluginDescriptorImpl)) {
-        continue;
-      }
-
-      IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)descriptor;
-      result.add(descriptorImpl);
-
-      PluginManagerCore.processAllNonOptionalDependencies(descriptorImpl, dependency -> {
+    for (IdeaPluginDescriptorImpl descriptor : descriptors) {
+      PluginManagerCore.processAllNonOptionalDependencies(descriptor, dependency -> {
         PluginId dependencyId = dependency.getPluginId();
         PluginEnabledState state = enabledMap.get(dependencyId);
         if (state == null) {
@@ -160,20 +158,17 @@ public class InstalledPluginsTableModel {
     return result;
   }
 
-  private static @NotNull List<IdeaPluginDescriptorImpl> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+  private static @NotNull List<IdeaPluginDescriptorImpl> getDependentsToDisable(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
                                                                                 @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
     ArrayList<IdeaPluginDescriptorImpl> result = new ArrayList<>();
-    Set<PluginId> pluginIds = ContainerUtil.map2Set(descriptors,
-                                                    IdeaPluginDescriptor::getPluginId);
+    Set<PluginId> pluginIds = descriptors.stream()
+      .map(IdeaPluginDescriptorImpl::getPluginId)
+      .collect(Collectors.toUnmodifiableSet());
 
     for (IdeaPluginDescriptorImpl descriptor : PluginManagerCore.getPluginSet().allPlugins) {
       PluginId pluginId = descriptor.getPluginId();
-      if (pluginIds.contains(pluginId)) {
-        result.add(descriptor);
-        continue;
-      }
-
-      if (isDisabled(pluginId, enabledMap)) {
+      if (pluginIds.contains(pluginId) ||
+          isDisabled(pluginId, enabledMap)) {
         continue;
       }
 
@@ -195,7 +190,7 @@ public class InstalledPluginsTableModel {
     return result;
   }
 
-  private boolean createUpdateDependenciesDialog(@NotNull List<String> dependencies,
+  private boolean createUpdateDependenciesDialog(@NotNull Collection<String> dependencies,
                                                  @NotNull PluginEnableDisableAction action) {
     int size = dependencies.size();
     if (size == 0) {
@@ -240,10 +235,10 @@ public class InstalledPluginsTableModel {
     }
 
     String dependenciesText = hasOnlyOneDependency ?
-                              dependencies.get(0) :
-                              StringUtil.join(dependencies,
-                                              StringUtil.repeat("&nbsp;", 5)::concat,
-                                              "<br>");
+                              dependencies.iterator().next() :
+                              dependencies.stream()
+                                .map("&nbsp;".repeat(5)::concat)
+                                .collect(Collectors.joining("<br>"));
 
     boolean enabled = action.isEnable();
     return MessageDialogBuilder
