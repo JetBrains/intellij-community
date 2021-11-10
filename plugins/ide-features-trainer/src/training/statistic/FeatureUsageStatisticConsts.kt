@@ -31,4 +31,5 @@ object FeatureUsageStatisticConsts {
   const val SHOULD_SHOW_NEW_LESSONS = "show_it"
   const val TIP_FILENAME = "filename"
   const val LESSON_OPENED_FROM_TIP = "lesson_opened_from_tip"
+  const val LESSON_STARTING_WAY = "starting_way"
 }

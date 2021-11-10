@@ -30,6 +30,7 @@ import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENED_FIRST
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
 import training.statistic.FeatureUsageStatisticConsts.LESSON_OPENED_FROM_TIP
+import training.statistic.FeatureUsageStatisticConsts.LESSON_STARTING_WAY
 import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
 import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTIFICATIONS
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_COUNT
@@ -51,6 +52,10 @@ import training.util.KeymapUtil
 import java.awt.event.KeyEvent
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JOptionPane
+
+enum class LessonStartingWay {
+  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER
+}
 
 internal class StatisticBase : CounterUsagesCollector() {
   override fun getGroup() = GROUP
@@ -89,6 +94,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val newLessonsCount = EventFields.Int(NEW_LESSONS_COUNT)
     private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
     private val tipFilenameField = EventFields.StringValidatedByCustomRule(TIP_FILENAME, TipInfoValidationRule.RULE_ID)
+    private val lessonStartingWayField = EventFields.Enum<LessonStartingWay>(LESSON_STARTING_WAY)
     private val lastBuildLearningOpened = object : PrimitiveEventField<String?>() {
       override val name: String = LAST_BUILD_LEARNING_OPENED
       override val validationRule: List<String>
@@ -102,7 +108,8 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     // EVENTS
-    private val lessonStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START, lessonIdField, languageField)
+    private val lessonStartedEvent: EventId3<String?, String?, LessonStartingWay> = GROUP.registerEvent(START, lessonIdField, languageField,
+                                                                                                        lessonStartingWayField)
     private val lessonPassedEvent: EventId3<String?, String?, Long> = GROUP.registerEvent(PASSED, lessonIdField, languageField,
                                                                                           EventFields.Long(DURATION))
     private val lessonStoppedEvent = GROUP.registerVarargEvent(STOPPED, lessonIdField, taskIdField, languageField, reasonField)
@@ -128,9 +135,9 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val lessonOpenedFromTip = GROUP.registerEvent(LESSON_OPENED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
 
     // LOGGING
-    fun logLessonStarted(lesson: Lesson) {
+    fun logLessonStarted(lesson: Lesson, startingWay: LessonStartingWay) {
       sessionLessonTimestamp[lesson.id] = System.nanoTime()
-      lessonStartedEvent.log(lesson.id, courseLanguage())
+      lessonStartedEvent.log(lesson.id, courseLanguage(), startingWay)
     }
 
     fun logLessonPassed(lesson: Lesson) {
