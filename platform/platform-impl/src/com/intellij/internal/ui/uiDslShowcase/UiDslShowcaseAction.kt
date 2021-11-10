@@ -6,7 +6,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.BottomGap
@@ -30,6 +29,7 @@ val DEMOS = arrayOf(
   ::demoGaps,
   ::demoGroups,
   ::demoAvailability,
+  ::demoBinding,
   ::demoTips
 )
 
@@ -77,7 +77,17 @@ private class UiDslShowcaseDialog(project: Project?) : DialogWrapper(project, nu
         browserLink("View source", BASE_URL + fileName)
       }.bottomGap(BottomGap.MEDIUM)
 
-      val dialogPanel = demo.call()
+      val args = demo.parameters.associateBy(
+        { it },
+        {
+          when (it.name) {
+            "parentDisposable" -> myDisposable
+            else -> null
+          }
+        }
+      )
+
+      val dialogPanel = demo.callBy(args)
       if (annotation.scrollbar) {
         row {
           dialogPanel.border = JBEmptyBorder(10)
@@ -94,10 +104,6 @@ private class UiDslShowcaseDialog(project: Project?) : DialogWrapper(project, nu
             .resizableColumn()
         }
       }
-
-      val disposable = Disposer.newDisposable()
-      dialogPanel.registerValidators(disposable)
-      Disposer.register(myDisposable, disposable)
     }
 
     tabbedPane.add(annotation.title, content)
