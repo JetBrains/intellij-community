@@ -1830,7 +1830,7 @@ public class JavaDocInfoGenerator {
   private void generateParametersSection(StringBuilder buffer, String titleMessage, List<ParamInfo> collectedTags) {
     if (!collectedTags.isEmpty()) {
       startHeaderSection(buffer, titleMessage)
-        .append(StringUtil.join(collectedTags, tag -> generateOneParameter(tag), "<p>"))
+        .append(StringUtil.join(collectedTags, tag -> generateOneParameter(tag), "<br/>"))
         .append(DocumentationMarkup.SECTION_END);
     }
   }
@@ -1865,7 +1865,9 @@ public class JavaDocInfoGenerator {
     if (elements.length == 0) return "";
     String text = elements[0].getText();
     StringBuilder buffer = new StringBuilder();
+    buffer.append("<code>");
     buffer.append(tag.presentableName);
+    buffer.append("</code>");
     StringBuilder descriptionBuffer = new StringBuilder();
     generateValue(descriptionBuffer, tag, elements, text);
     if (!StringUtil.isEmptyOrSpaces(descriptionBuffer)) {
