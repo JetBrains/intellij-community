@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -30,7 +29,7 @@ internal object CallableWeigher {
         val overriddenSymbols = symbol.getDirectlyOverriddenSymbols()
         if (overriddenSymbols.isNotEmpty()) {
             val weights = overriddenSymbols
-                .mapNotNull { callableWeightByReceiver(it, context, null, substitutor) }
+                .mapNotNull { callableWeightByReceiver(it, context, substitutor, returnCastRequiredOnReceiverMismatch = false) }
                 .takeUnless { it.isEmpty() }
                 ?: symbol.getAllOverriddenSymbols().map { callableWeightBasic(context, it, substitutor) }
 
@@ -45,7 +44,7 @@ internal object CallableWeigher {
         symbol: KtCallableSymbol,
         substitutor: KtSubstitutor
     ): CallableWeight {
-        callableWeightByReceiver(symbol, context, CallableWeight.receiverCastRequired, substitutor)?.let { return it }
+        callableWeightByReceiver(symbol, context, substitutor, returnCastRequiredOnReceiverMismatch = true)?.let { return it }
         return when (symbol.getContainingSymbol()) {
             null, is KtPackageSymbol, is KtClassifierSymbol -> CallableWeight.globalOrStatic
             else -> CallableWeight.local
@@ -55,8 +54,8 @@ internal object CallableWeigher {
     private fun KtAnalysisSession.callableWeightByReceiver(
         symbol: KtCallableSymbol,
         context: WeighingContext,
-        weightForReceiverTypeMismatch: CallableWeight?,
-        substitutor: KtSubstitutor
+        substitutor: KtSubstitutor,
+        returnCastRequiredOnReceiverMismatch: Boolean
     ): CallableWeight? {
         val actualExplicitReceiverType = context.explicitReceiver?.getKtType()
         val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
@@ -70,9 +69,10 @@ internal object CallableWeigher {
             callableWeightByReceiver(symbol,
                                      actualExplicitReceiverType?.let { listOf(it) } ?: actualImplicitReceiverTypes,
                                      receiverType,
-                                     weightForReceiverTypeMismatch)
+                                     returnCastRequiredOnReceiverMismatch
+            )
         }
-        if (weightBasedOnExtensionReceiver == weightForReceiverTypeMismatch) return weightForReceiverTypeMismatch
+        if (returnCastRequiredOnReceiverMismatch && weightBasedOnExtensionReceiver?.kind is CallableWeightKind.ReceiverCastRequired) return weightBasedOnExtensionReceiver
 
         // In Fir, a local function takes its containing function's dispatch receiver as its dispatch receiver. But we don't consider a
         // local function as a class member. Hence, here we return null so that it's handled by other logic.
@@ -84,10 +84,10 @@ internal object CallableWeigher {
                 symbol,
                 actualImplicitReceiverTypes + listOfNotNull(actualExplicitReceiverType),
                 receiverType,
-                weightForReceiverTypeMismatch
+                returnCastRequiredOnReceiverMismatch
             )
         }
-        if (weightBasedOnDispatchReceiver == weightForReceiverTypeMismatch) return weightForReceiverTypeMismatch
+        if (returnCastRequiredOnReceiverMismatch && weightBasedOnDispatchReceiver?.kind is CallableWeightKind.ReceiverCastRequired) return weightBasedOnDispatchReceiver
         return weightBasedOnExtensionReceiver ?: weightBasedOnDispatchReceiver
     }
 
@@ -95,7 +95,7 @@ internal object CallableWeigher {
         symbol: KtCallableSymbol,
         actualReceiverTypes: List<KtType>,
         expectedReceiverType: KtType,
-        shortcutWeight: CallableWeight?,
+        returnCastRequiredOnReceiverTypeMismatch: Boolean
     ): CallableWeight? {
         if (expectedReceiverType is KtFunctionType) return null
         var bestMatchIndex: Int? = null
@@ -114,7 +114,11 @@ internal object CallableWeigher {
         // TODO: FE1.0 has logic that uses `null` for receiverIndex if the symbol matches every actual receiver in order to "prevent members
         //  of `Any` to show up on top". But that seems hacky and can cause collateral damage if the implicit receivers happen to implement
         //  some common interface. So that logic is left out here for now. We can add it back in future if needed.
-        if (bestMatchWeightKind == null) return shortcutWeight
+        if (bestMatchWeightKind == null) {
+            return if (returnCastRequiredOnReceiverTypeMismatch)
+                CallableWeight(CallableWeightKind.ReceiverCastRequired(expectedReceiverType.render()), null)
+            else null
+        }
         return CallableWeight(bestMatchWeightKind, bestMatchIndex)
     }
 
@@ -124,13 +128,13 @@ internal object CallableWeigher {
         expectedReceiverType: KtType,
     ): CallableWeightKind? = when {
         actualReceiverType isEqualTo expectedReceiverType -> when {
-            isExtensionCallOnTypeParameterReceiver(symbol) -> CallableWeightKind.TYPE_PARAMETER_EXTENSION
-            symbol.isExtension -> CallableWeightKind.THIS_TYPE_EXTENSION
-            else -> CallableWeightKind.THIS_CLASS_MEMBER
+            isExtensionCallOnTypeParameterReceiver(symbol) -> CallableWeightKind.TypeParameterExtension
+            symbol.isExtension -> CallableWeightKind.ThisTypeExtension
+            else -> CallableWeightKind.ThisClassMember
         }
         actualReceiverType isSubTypeOf expectedReceiverType -> when {
-            symbol.isExtension -> CallableWeightKind.BASE_TYPE_EXTENSION
-            else -> CallableWeightKind.BASE_CLASS_MEMBER
+            symbol.isExtension -> CallableWeightKind.BaseTypeExtension
+            else -> CallableWeightKind.BaseClassMember
         }
         else -> null
     }
@@ -142,15 +146,17 @@ internal object CallableWeigher {
         return parameterTypeOwner == originalSymbol
     }
 
-    enum class CallableWeightKind {
-        LOCAL, // local non_extension
-        THIS_CLASS_MEMBER,
-        BASE_CLASS_MEMBER,
-        THIS_TYPE_EXTENSION,
-        BASE_TYPE_EXTENSION,
-        GLOBAL_OR_STATIC, // global non_extension
-        TYPE_PARAMETER_EXTENSION,
-        RECEIVER_CAST_REQUIRED
+    sealed class CallableWeightKind(private val index: Int) : Comparable<CallableWeightKind> {
+        object Local : CallableWeightKind(0) // local non_extension
+        object ThisClassMember : CallableWeightKind(1)
+        object BaseClassMember : CallableWeightKind(2)
+        object ThisTypeExtension : CallableWeightKind(3)
+        object BaseTypeExtension : CallableWeightKind(4)
+        object GlobalOrStatic : CallableWeightKind(5) // global non_extension
+        object TypeParameterExtension : CallableWeightKind(6)
+        class ReceiverCastRequired(val fullyQualifiedCastType: String) : CallableWeightKind(7)
+
+        override fun compareTo(other: CallableWeightKind): Int = this.index - other.index
     }
 
     class CallableWeight(
@@ -177,9 +183,8 @@ internal object CallableWeigher {
         val receiverIndex: Int?
     ) {
         companion object {
-            val local = CallableWeight(CallableWeightKind.LOCAL, null)
-            val globalOrStatic = CallableWeight(CallableWeightKind.GLOBAL_OR_STATIC, null)
-            val receiverCastRequired = CallableWeight(CallableWeightKind.RECEIVER_CAST_REQUIRED, null)
+            val local = CallableWeight(CallableWeightKind.Local, null)
+            val globalOrStatic = CallableWeight(CallableWeightKind.GlobalOrStatic, null)
         }
     }
 
@@ -216,24 +221,24 @@ internal object CallableWeigher {
         override fun weigh(element: LookupElement): Comparable<*>? {
             val weight = element.callableWeight ?: return null
             val w1 = when (weight.kind) {
-                CallableWeightKind.LOCAL -> Weight1.LOCAL
+                CallableWeightKind.Local -> Weight1.LOCAL
 
-                CallableWeightKind.THIS_CLASS_MEMBER,
-                CallableWeightKind.BASE_CLASS_MEMBER,
-                CallableWeightKind.THIS_TYPE_EXTENSION,
-                CallableWeightKind.BASE_TYPE_EXTENSION -> Weight1.MEMBER_OR_EXTENSION
+                CallableWeightKind.ThisClassMember,
+                CallableWeightKind.BaseClassMember,
+                CallableWeightKind.ThisTypeExtension,
+                CallableWeightKind.BaseTypeExtension -> Weight1.MEMBER_OR_EXTENSION
 
-                CallableWeightKind.GLOBAL_OR_STATIC -> Weight1.GLOBAL_OR_STATIC
+                CallableWeightKind.GlobalOrStatic -> Weight1.GLOBAL_OR_STATIC
 
-                CallableWeightKind.TYPE_PARAMETER_EXTENSION -> Weight1.TYPE_PARAMETER_EXTENSION
+                CallableWeightKind.TypeParameterExtension -> Weight1.TYPE_PARAMETER_EXTENSION
 
-                CallableWeightKind.RECEIVER_CAST_REQUIRED -> Weight1.RECEIVER_CAST_REQUIRED
+                is CallableWeightKind.ReceiverCastRequired -> Weight1.RECEIVER_CAST_REQUIRED
             }
             val w2 = when (weight.kind) {
-                CallableWeightKind.THIS_CLASS_MEMBER -> Weight2.THIS_CLASS_MEMBER
-                CallableWeightKind.BASE_CLASS_MEMBER -> Weight2.BASE_CLASS_MEMBER
-                CallableWeightKind.THIS_TYPE_EXTENSION -> Weight2.THIS_TYPE_EXTENSION
-                CallableWeightKind.BASE_TYPE_EXTENSION -> Weight2.BASE_TYPE_EXTENSION
+                CallableWeightKind.ThisClassMember -> Weight2.THIS_CLASS_MEMBER
+                CallableWeightKind.BaseClassMember -> Weight2.BASE_CLASS_MEMBER
+                CallableWeightKind.ThisTypeExtension -> Weight2.THIS_TYPE_EXTENSION
+                CallableWeightKind.BaseTypeExtension -> Weight2.BASE_TYPE_EXTENSION
                 else -> Weight2.OTHER
             }
             return CompoundWeight(w1, weight.receiverIndex ?: Int.MAX_VALUE, w2)
