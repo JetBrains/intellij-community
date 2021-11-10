@@ -30,7 +30,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -49,8 +48,8 @@ public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
     System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null && System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null;
 
-  // we don't want test subclasses to accidentally remove allowed files, added by base classes
-  private static final Set<String> ourAdditionalRoots = CollectionFactory.createFilePathSet(); // guarded by ourAdditionalRoots
+  // we don't want test subclasses to accidentally remove allowed files added by base classes
+  private static final Set<String> ourAdditionalRoots = CollectionFactory.createFilePathSet(); // guarded by `ourAdditionalRoots`
   private static boolean insideGettingRoots;
 
   @TestOnly
@@ -102,12 +101,12 @@ public final class VfsRootAccess {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
 
-    @NonNls Set<String> allowed = CollectionFactory.createFilePathSet();
+    Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
     // The following is to avoid errors in tests like "File accessed outside allowed roots: file://C:/Program Files/idea/lib/idea.jar"
-    final String homePath2 = PathManager.getHomePathFor(Application.class);
+    String homePath2 = PathManager.getHomePathFor(Application.class);
     if (homePath2 != null) {
       allowed.add(FileUtil.toSystemIndependentName(homePath2));
     }
@@ -119,7 +118,7 @@ public final class VfsRootAccess {
         allowed.add(FileUtil.toSystemIndependentName(output));
       }
     }
-    catch (URISyntaxException|IllegalArgumentException ignored) { }
+    catch (URISyntaxException | IllegalArgumentException ignored) { }
 
     try {
       allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
@@ -154,8 +153,8 @@ public final class VfsRootAccess {
         }
       }
 
-      // see IDEA-167037 The assertion "File accessed outside allowed root" is triggered by files symlinked from the JDK installation folder
-      allowed.add("/etc"); // After recent update of Oracle JDK 1.8 under Ubuntu Certain files in the JDK installation are symlinked to /etc
+      // see IDEA-167037 (The assertion "File accessed outside allowed root" is triggered by files symlinked from a JDK directory)
+      allowed.add("/etc");
       allowed.add("/private/etc");
 
       for (final Project project : openProjects) {
@@ -185,7 +184,7 @@ public final class VfsRootAccess {
       }
     }
     catch (Error ignored) {
-      // sometimes library.getRoots() may crash if called from inside library modification
+      // sometimes `library.getRoots()` may crash if called during library modification
     }
 
     synchronized (ourAdditionalRoots) {
@@ -236,7 +235,7 @@ public final class VfsRootAccess {
     Disposer.register(disposable, () -> disallowRootAccess(roots));
   }
 
-  private static void doAllow(String @NotNull ... roots) {
+  private static void doAllow(String... roots) {
     synchronized (ourAdditionalRoots) {
       for (String root : roots) {
         String path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
@@ -248,8 +247,7 @@ public final class VfsRootAccess {
     }
   }
 
-  @TestOnly
-  private static void disallowRootAccess(String @NotNull ... roots) {
+  private static void disallowRootAccess(String... roots) {
     synchronized (ourAdditionalRoots) {
       for (String root : roots) {
         ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
