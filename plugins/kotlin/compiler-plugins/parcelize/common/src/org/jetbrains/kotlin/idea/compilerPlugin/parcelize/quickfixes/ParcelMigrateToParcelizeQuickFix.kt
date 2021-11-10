@@ -4,9 +4,6 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.parcelize.Parceler
-import org.jetbrains.kotlin.parcelize.ANDROID_PARCELABLE_CREATOR_CLASS_FQNAME
-import org.jetbrains.kotlin.parcelize.ANDROID_PARCEL_CLASS_FQNAME
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -21,6 +18,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
+import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -59,7 +57,7 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
                     && receiverTypeReference == null
                     && valueParameters.size == 2
                     && typeParameters.size == 0
-                    && valueParameters[0].typeReference?.getFqName() == ANDROID_PARCEL_CLASS_FQNAME.asString()
+                    && valueParameters[0].typeReference?.getFqName() == ParcelizeNames.PARCEL_ID.asFqNameString()
                     && valueParameters[1].typeReference?.getFqName() == StandardNames.FqNames._int.asString()
         }
 
@@ -121,7 +119,7 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
                     && receiverTypeReference == null
                     && valueParameters.size == 1
                     && typeParameters.size == 0
-                    && valueParameters[0].typeReference?.getFqName() == ANDROID_PARCEL_CLASS_FQNAME.asString()
+                    && valueParameters[0].typeReference?.getFqName() == ParcelizeNames.PARCEL_ID.asFqNameString()
         }
 
         private fun findCreateFromParcel(creator: KtClassOrObject) = creator.findFunction { doesLookLikeCreateFromParcelOverride() }
@@ -134,7 +132,7 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
                     && receiverTypeReference?.getFqName() == containingParcelableClassFqName
                     && valueParameters.size == 2
                     && typeParameters.size == 0
-                    && valueParameters[0].typeReference?.getFqName() == ANDROID_PARCEL_CLASS_FQNAME.asString()
+                    && valueParameters[0].typeReference?.getFqName() == ParcelizeNames.PARCEL_ID.asFqNameString()
                     && valueParameters[1].typeReference?.getFqName() == StandardNames.FqNames._int.asString()
         }
 
@@ -144,7 +142,7 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
                     && receiverTypeReference == null
                     && valueParameters.size == 1
                     && typeParameters.size == 0
-                    && valueParameters[0].typeReference?.getFqName() == ANDROID_PARCEL_CLASS_FQNAME.asString()
+                    && valueParameters[0].typeReference?.getFqName() == ParcelizeNames.PARCEL_ID.asFqNameString()
         }
 
         private fun KtObjectDeclaration.findCreateImplementation() = findFunction { doesLookLikeCreateImplementation() }
@@ -192,7 +190,7 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
         for (superTypeEntry in parcelerObject.superTypeListEntries) {
             val superClass =
                 bindingContext[BindingContext.TYPE, superTypeEntry.typeReference]?.constructor?.declarationDescriptor ?: continue
-            if (superClass.getAllSuperClassifiers().any { it.fqNameSafe == ANDROID_PARCELABLE_CREATOR_CLASS_FQNAME }) {
+            if (superClass.getAllSuperClassifiers().any { it.fqNameSafe == ParcelizeNames.CREATOR_FQN }) {
                 parcelerObject.removeSuperTypeListEntry(superTypeEntry)
             }
         }
@@ -216,13 +214,13 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
                 val flagsParameterName = parameters[1].name ?: "flags"
 
                 repeat(parameters.size) { removeParameter(0) }
-                addParameter(ktPsiFactory.createParameter("$parcelParameterName : ${ANDROID_PARCEL_CLASS_FQNAME.asString()}"))
+                addParameter(ktPsiFactory.createParameter("$parcelParameterName : ${ParcelizeNames.PARCEL_ID.asFqNameString()}"))
                 addParameter(ktPsiFactory.createParameter("$flagsParameterName : Int"))
             }
 
             parcelerObject.addDeclaration(newFunction).valueParameterList?.shortenReferences()
         } else if (parcelerObject.findWriteImplementation() == null) {
-            val writeFunction = "fun $parcelerTypeArg.write(parcel: ${ANDROID_PARCEL_CLASS_FQNAME.asString()}, flags: Int) = TODO()"
+            val writeFunction = "fun $parcelerTypeArg.write(parcel: ${ParcelizeNames.PARCEL_ID.asFqNameString()}, flags: Int) = TODO()"
             parcelerObject.addDeclaration(ktPsiFactory.createFunction(writeFunction)).valueParameterList?.shortenReferences()
         }
 
@@ -242,12 +240,12 @@ class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQui
                 val parcelParameterName = parameters[0].name ?: "parcel"
 
                 removeParameter(0)
-                addParameter(ktPsiFactory.createParameter("$parcelParameterName : ${ANDROID_PARCEL_CLASS_FQNAME.asString()}"))
+                addParameter(ktPsiFactory.createParameter("$parcelParameterName : ${ParcelizeNames.PARCEL_ID.asFqNameString()}"))
             }
 
             parcelerObject.addDeclaration(newFunction).valueParameterList?.shortenReferences()
         } else if (parcelerObject.findCreateImplementation() == null) {
-            val createFunction = "override fun create(parcel: ${ANDROID_PARCEL_CLASS_FQNAME.asString()}): $parcelerTypeArg = TODO()"
+            val createFunction = "override fun create(parcel: ${ParcelizeNames.PARCEL_ID.asFqNameString()}): $parcelerTypeArg = TODO()"
             parcelerObject.addDeclaration(ktPsiFactory.createFunction(createFunction)).valueParameterList?.shortenReferences()
         }
 
