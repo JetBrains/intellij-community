@@ -330,6 +330,9 @@
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$TrustListener"
+              topic="com.intellij.ide.impl.TrustStateListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 
   <projectListeners>
