@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
@@ -8,7 +9,6 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.toolWindowManager
@@ -49,7 +49,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
                 }
                 .map { toolWindowTask -> project.toolWindowManager.registerToolWindow(toolWindowTask) }
                 .onEach { toolWindow -> toolWindow.initialize(project) }
-                .flowOn(Dispatchers.AppUI)
+                .flowOn(Dispatchers.EDT)
                 .launchIn(project.lifecycleScope)
         }
         return isAvailable

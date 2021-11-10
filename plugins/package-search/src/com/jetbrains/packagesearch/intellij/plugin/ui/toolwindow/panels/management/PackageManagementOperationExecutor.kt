@@ -1,11 +1,13 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFailure
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +29,7 @@ internal open class PackageManagementOperationExecutor(
     private suspend fun execute(operations: List<PackageSearchOperation<*>>) {
         val failures = operations.asFlow()
             .mapNotNull { operationExecutor.doOperation(it) }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement())
             .toList()
 
         val successes = operations.map { it.projectModule } difference failures.map { it.operation.projectModule }
