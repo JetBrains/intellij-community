@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DocumentAdapter
@@ -41,7 +42,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -380,7 +380,7 @@ internal class PackagesListPanel(
                 }
                 isLoadingStateFlow.emit(false)
             }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
             .catch { logWarn("Error in PackagesListPanel main flow", it) }
             .launchIn(project.lifecycleScope)
 
@@ -391,7 +391,7 @@ internal class PackagesListPanel(
         ) { booleans -> emit(booleans.any { it }) }
             .debounce(150)
             .onEach { headerPanel.showBusyIndicator(it) }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)
 
         project.lookAndFeelFlow.onEach { updateUiOnLafChange() }
@@ -457,11 +457,11 @@ internal class PackagesListPanel(
         }
 
         project.uiStateSource.searchQueryFlow.onEach { searchTextField.text = it }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)
     }
 
-    private suspend fun updateUiOnLafChange() = withContext(Dispatchers.AppUI) {
+    private suspend fun updateUiOnLafChange() = withContext(Dispatchers.EDT) {
         @Suppress("MagicNumber") // Dimension constants
         with(searchTextField) {
             textEditor.putClientProperty("JTextField.Search.Gap", 6.scaled())

@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
@@ -18,7 +19,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesListPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computeModuleTreeModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
@@ -125,7 +125,7 @@ internal class PackageManagementPanel(
             .map { computeModuleTreeModel(it) }
             .flowOn(Dispatchers.Default)
             .onEach { modulesTree.display(it) }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
             .launchIn(this)
 
         combine(
@@ -144,7 +144,7 @@ internal class PackageManagementPanel(
             )
         }.flowOn(Dispatchers.Default)
             .onEach { packageDetailsPanel.display(it) }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
             .launchIn(this)
     }
 

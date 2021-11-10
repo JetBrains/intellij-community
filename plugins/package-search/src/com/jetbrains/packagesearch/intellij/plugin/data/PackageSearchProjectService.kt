@@ -41,12 +41,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
@@ -150,12 +152,10 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     val projectModulesChangesFlow = projectModulesSharedFlow
         .flatMapLatest { modules ->
-            project.filesChangedEventFlow.batchAtIntervals(Duration.seconds(3))
-                .map { it.flatMap { it } }
-                .map { changedFilesEvents ->
-                    val changedBuildFiles = changedFilesEvents.mapNotNull { it.file }
-                    modules.filter { it.buildFile in changedBuildFiles }
-                }
+            project.filesChangedEventFlow.map { changedFilesEvents ->
+                val changedBuildFiles = changedFilesEvents.mapNotNull { it.file }
+                modules.filter { it.buildFile in changedBuildFiles }
+            }
         }
         .filter { it.isNotEmpty() }
         .catchAndLog(
@@ -190,7 +190,10 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
             fetchProjectDependencies(it, cacheDirectory, json)
         }
-        .modifiedBy(projectModulesChangesFlow) { installed, changedModules ->
+        .modifiedBy(
+            merge(projectModulesChangesFlow, operationExecutedChannel.consumeAsFlow()).batchAtIntervals(Duration.seconds(2))
+                .map { it.flatMap { it } }
+        ) { installed, changedModules ->
             val (result, time) = installedPackagesDifferenceLoadingFlow.whileLoading {
                 val map = installed.toMutableMap()
                 changedModules.parallelForEach { map[it] = it.installedDependencies(cacheDirectory, json) }

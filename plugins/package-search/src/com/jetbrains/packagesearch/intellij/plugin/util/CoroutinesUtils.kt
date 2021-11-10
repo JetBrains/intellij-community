@@ -1,12 +1,12 @@
+@file:Suppress("FunctionName")
+
 package com.jetbrains.packagesearch.intellij.plugin.util
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -39,10 +40,6 @@ internal fun <T> Flow<T>.onEach(context: CoroutineContext, action: suspend (T) -
 
 internal fun <T, R> Flow<T>.map(context: CoroutineContext, action: suspend (T) -> R) =
     map { withContext(context) { action(it) } }
-
-@Suppress("unused") // The receiver is technically unused
-internal val Dispatchers.AppUI
-    get() = AppUIExecutor.onUiThread().coroutineDispatchingContext()
 
 internal fun <T> Flow<T>.replayOnSignals(vararg signals: Flow<Any>) = channelFlow {
     var lastValue: T? = null
@@ -156,21 +153,27 @@ internal fun <T> Flow<T>.throttle(timeMillis: Long, debounce: Boolean = true) = 
     }
 }
 
-internal fun <T, R> Flow<T>.modifiedBy(modifierFlow: Flow<R>, transform: suspend (T, R) -> T): Flow<T> = channelFlow {
-    var value: T? = null
-    val mutex = Mutex()
+internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
+    modifierFlow: Flow<R>,
+    crossinline transform: suspend (T, R) -> T
+): Flow<T> = flow {
+    coroutineScope {
+        val queue = Channel<Any?>()
 
-    onEach {
-        mutex.withLock {
-            value = it
-            send(it)
-        }
-    }.launchIn(this)
+        // wait for first main element using stateIn()
+        stateIn(this).onEach { queue.send(it) }.launchIn(this)
+        modifierFlow.onEach { queue.send(it) }.launchIn(this)
 
-    modifierFlow.collect { r ->
-        mutex.withLock {
-            value = value?.let { t -> transform(t, r) }
-                ?.also { send(it) }
+        var currentState: T = queue.receive() as T
+        emit(currentState)
+
+        for (e in queue) {
+            when (e) {
+                is T -> currentState = e
+                is R -> currentState = transform(currentState, e)
+                else -> continue
+            }
+            emit(currentState)
         }
     }
 }

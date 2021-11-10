@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowEx
@@ -16,7 +17,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleTo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories.RepositoryManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
 import com.jetbrains.packagesearch.intellij.plugin.util.addSelectionChangedListener
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
@@ -69,13 +69,13 @@ internal fun ToolWindow.initialize(project: Project) {
     project.packageSearchProjectService.projectModulesStateFlow
         .map { it.isNotEmpty() }
         .onEach { logInfo("PackageSearchToolWindowFactory#packageSearchModulesChangesFlow") { "Setting toolWindow.isAvailable = $it" } }
-        .onEach(Dispatchers.AppUI) { isAvailable = it }
+        .onEach(Dispatchers.EDT) { isAvailable = it }
         .launchIn(project.lifecycleScope)
 
     combine(
         project.lookAndFeelFlow,
         project.packageSearchProjectService.projectModulesStateFlow.filter { it.isNotEmpty() }
-    ) { _, _ -> withContext(Dispatchers.AppUI) { contentManager.component.updateAndRepaint() } }
+    ) { _, _ -> withContext(Dispatchers.EDT) { contentManager.component.updateAndRepaint() } }
         .launchIn(project.lifecycleScope)
 }
 

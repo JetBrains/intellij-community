@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.reposit
 import com.intellij.ide.CopyProvider
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TreeUIHelper
@@ -13,7 +14,6 @@ import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGe
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.event.KeyAdapter
@@ -87,7 +87,7 @@ internal class RepositoryTree(
         FileEditorManager.getInstance(project).openFile(file, focusEditor, true)
     }
 
-    override suspend fun display(viewModel: KnownRepositories.All) = withContext(Dispatchers.AppUI) {
+    override suspend fun display(viewModel: KnownRepositories.All) = withContext(Dispatchers.EDT) {
         val previouslySelectedItem = getSelectedRepositoryItem()
 
         clearSelection()
