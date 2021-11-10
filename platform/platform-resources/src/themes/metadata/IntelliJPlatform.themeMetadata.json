@@ -546,11 +546,24 @@
     },
     {
       "key": "Notification.arc",
-      "description": "Corners radius"
+      "description": "Notification border corners radius"
     },
     {
-      "key": "Notification.insets",
+      "key": "Notification.borderInsets",
       "description": "Top/Left/Bottom/Right insets of the notification"
+    },
+    {
+      "key": "Notification.iconOffsetSize",
+      "description": "Width/HorizontalOffset: Width for icon component, HorizontalOffset horizontal X for start icon"
+    },
+    {
+      "key": "Notification.titleContentInset"
+    },
+    {
+      "key": "Notification.contentActionsInset"
+    },
+    {
+      "key": "Notification.titleActionsInset"
     },
     {
       "key": "Notification.MoreButton.background",

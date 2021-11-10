@@ -32,7 +32,7 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
   @NotNull
   @Override
   public Insets getInsets() {
-    return JBUI.insets("Notification.insets", INSETS);
+    return JBUI.insets("Notification.borderInsets", INSETS);
   }
 
   @Override

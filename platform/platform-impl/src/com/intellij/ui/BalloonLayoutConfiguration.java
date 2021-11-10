@@ -7,9 +7,11 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -141,12 +143,18 @@ public final class BalloonLayoutConfiguration {
                                      int afterGearSpace,
                                      int beforeCloseSpace,
                                      int beforeGearSpace) {
-    this.iconPanelWidth = iconPanelWidth;
+    Dimension iconOffsets = UIManager.getDimension("Notification.iconOffsetSize");
+    this.iconPanelWidth = iconOffsets == null ? iconPanelWidth : iconOffsets.width;
     this.iconOffset = iconOffset;
+    if (iconOffsets != null) {
+      //noinspection SuspiciousNameCombination
+      this.iconOffset.width = iconOffsets.height;
+    }
+
     this.topSpaceHeight = topSpaceHeight;
-    this.titleContentSpaceHeight = titleContentSpaceHeight;
-    this.contentActionsSpaceHeight = contentActionsSpaceHeight;
-    this.titleActionsSpaceHeight = titleActionsSpaceHeight;
+    this.titleContentSpaceHeight = JBUI.getInt("Notification.titleContentInset", titleContentSpaceHeight);
+    this.contentActionsSpaceHeight = JBUI.getInt("Notification.contentActionsInset", contentActionsSpaceHeight);
+    this.titleActionsSpaceHeight = JBUI.getInt("Notification.titleActionsInset", titleActionsSpaceHeight);
     this.bottomSpaceHeight = bottomSpaceHeight;
     this.actionGap = actionGap;
 

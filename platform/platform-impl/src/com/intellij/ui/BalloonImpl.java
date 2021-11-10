@@ -990,7 +990,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         if (mySmartFadeout) {
           setAnimationEnabled(true);
         }
-        hide();
+        hide(Registry.is("ide.notification.action.center", false));
       }, fadeoutDelay, null);
     }
   }

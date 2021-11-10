@@ -332,7 +332,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (balloon instanceof BalloonImpl) {
-      ((BalloonImpl)balloon).startFadeoutTimer(0);
       if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0 || Registry.is("ide.notification.action.center", false)) {
         frameActivateBalloonListener(balloon, () -> {
           if (!balloon.isDisposed()) {
