@@ -153,12 +153,12 @@ public final class UITheme {
 
       Map<String, Integer> alpha = new HashMap<>(colors.size());
       colors.forEach((key, value) -> alpha.put(value, 255));
-      SVGLoader.setSelectionColorPatcherProvider(new SVGLoader.SvgElementColorPatcherProvider() {
+      theme.selectionColorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
         @Override
         public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
           return SVGLoader.newPatcher(null, colors, alpha);
         }
-      });
+      };
     }
 
     if (theme.icons != null && !theme.icons.isEmpty()) {

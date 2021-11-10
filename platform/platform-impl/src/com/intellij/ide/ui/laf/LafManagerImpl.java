@@ -655,6 +655,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.putAll(ourDefaults);
     if (!myFirstSetup) {
       SVGLoader.setContextColorPatcher(null);
+      SVGLoader.setSelectionColorPatcherProvider(null);
     }
 
     // set L&F
