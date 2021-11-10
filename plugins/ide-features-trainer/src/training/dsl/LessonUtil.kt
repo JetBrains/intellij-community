@@ -434,10 +434,10 @@ fun TaskContext.waitSmartModeStep() {
 private val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
 
 fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
-  if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) return
   task {
-    val step = CompletableFuture<Boolean>()
-    addStep(step)
+    val step = stateCheck {
+      EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled
+    }
     val callbackId = LearningUiManager.addCallback {
       EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled = true
       step.complete(true)
@@ -449,11 +449,7 @@ fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
                                       strong(ApplicationBundle.message("radiogroup.rename.local.variables").dropLast(1)),
                                       callbackId)
     ) {
-      if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-        step.complete(true)
-        false
-      }
-      else true
+      !EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled
     }
   }
 }
