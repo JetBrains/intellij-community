@@ -307,6 +307,11 @@ public class JBUI {
     }
 
     @NotNull
+    public static Border empty(@NotNull Insets insets) {
+      return empty(insets.top, insets.left, insets.bottom, insets.right);
+    }
+
+    @NotNull
     public static Border customLine(Color color, int top, int left, int bottom, int right) {
       return new CustomLineBorder(color, insets(top, left, bottom, right));
     }
@@ -776,8 +781,12 @@ public class JBUI {
         return insets("ToolWindow.HeaderTab.insets", insets(0, 12, 0, 12));
       }
 
-      public static int underlineArc() {
+      public static int headerTabUnderlineArc() {
         return getInt("ToolWindow.HeaderTab.underlineArc", 4);
+      }
+
+      public static JBInsets headerTabLeftRightInsets() {
+        return insets("ToolWindow.HeaderTab.leftRightInsets", insets(0, 8, 0, 8));
       }
 
       /**
@@ -826,6 +835,18 @@ public class JBUI {
       @NotNull
       public static Insets headerInsets() {
         return insets("ToolWindow.Header.insets", insets(4, 8, 4, 8));
+      }
+
+      public static int headerHeight() {
+        return getInt("ToolWindow.Header.height", 42);
+      }
+
+      public static JBInsets headerLabelLeftRightInsets() {
+        return insets("ToolWindow.Header.labelLeftRightInsets", insets(0, 12, 0, 16));
+      }
+
+      public static JBInsets headerToolbarLeftRightInsets() {
+        return insets("ToolWindow.Header.toolbarLeftRightInsets", insets(0, 12, 0, 8));
       }
 
       /**

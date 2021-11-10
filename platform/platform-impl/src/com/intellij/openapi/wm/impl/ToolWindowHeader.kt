@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.UIBundle
@@ -95,6 +96,9 @@ abstract class ToolWindowHeader internal constructor(
     toolbar.setReservePlaceAutoPopupIcon(false)
     val component = toolbar.component
     component.border = JBUI.Borders.empty(2, 0)
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      component.border = JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerToolbarLeftRightInsets())
+    }
     component.isOpaque = false
     @Suppress("LeakingThis")
     add(component)
@@ -138,7 +142,10 @@ abstract class ToolWindowHeader internal constructor(
     )
 
     isOpaque = true
-    border = JBUI.Borders.empty(0)
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      border = JBUI.Borders.empty()
+    }
+
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
         val manager = toolWindow.toolWindowManager
@@ -309,7 +316,10 @@ abstract class ToolWindowHeader internal constructor(
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()
     val insets = insets
-    val height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom
+    var height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      height = JBUI.scale(JBUI.CurrentTheme.ToolWindow.headerHeight()) - insets.top - insets.bottom
+    }
     return Dimension(size.width, height)
   }
 

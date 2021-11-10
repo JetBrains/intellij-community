@@ -49,6 +49,11 @@ abstract class ContentLayout {
 
     label.setText(title);
     label.setBorder(JBUI.Borders.empty(0, 2, 0, 7));
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      label.setBorder(shouldShowId()
+                      ? JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets())
+                      : JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets()));
+    }
     label.setVisible(shouldShowId());
   }
 

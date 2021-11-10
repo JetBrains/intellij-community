@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
@@ -134,7 +135,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     ContentManager manager = myUi.getContentManager();
     LayoutData data = new LayoutData(myUi);
 
-    data.eachX = TAB_LAYOUT_START;
+    data.eachX = getTabLayoutStart();
     data.eachY = 0;
 
     if (isIdVisible()) {
@@ -444,5 +445,9 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     PAINT_ALL,
     PAINT_SIMPLIFIED,
     HIDE
+  }
+
+  public static int getTabLayoutStart(){
+    return ExperimentalUI.isNewToolWindowsStripes() ? 0 : TAB_LAYOUT_START;
   }
 }
