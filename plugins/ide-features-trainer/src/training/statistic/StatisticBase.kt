@@ -29,7 +29,7 @@ import training.statistic.FeatureUsageStatisticConsts.LAST_BUILD_LEARNING_OPENED
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENED_FIRST_TIME
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
-import training.statistic.FeatureUsageStatisticConsts.LESSON_OPENED_FROM_TIP
+import training.statistic.FeatureUsageStatisticConsts.LESSON_LINK_CLICKED_FROM_TIP
 import training.statistic.FeatureUsageStatisticConsts.LESSON_STARTING_WAY
 import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
 import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTIFICATIONS
@@ -132,7 +132,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val needShowNewLessonsNotifications =
       GROUP.registerEvent(NEED_SHOW_NEW_LESSONS_NOTIFICATIONS, newLessonsCount, lastBuildLearningOpened, showNewLessonsState)
 
-    private val lessonOpenedFromTip = GROUP.registerEvent(LESSON_OPENED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
+    private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
 
     // LOGGING
     fun logLessonStarted(lesson: Lesson, startingWay: LessonStartingWay) {
@@ -227,8 +227,8 @@ internal class StatisticBase : CounterUsagesCollector() {
       needShowNewLessonsNotifications.log(newLessonsCount, previousOpenedVersion?.asString(), showNewLessons)
     }
 
-    fun logLessonOpenedFromTip(lessonId: String, tipFilename: String) {
-      lessonOpenedFromTip.log(lessonId, courseLanguage(), tipFilename)
+    fun logLessonLinkClickedFromTip(lessonId: String, tipFilename: String) {
+      lessonLinkClickedFromTip.log(lessonId, courseLanguage(), tipFilename)
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
