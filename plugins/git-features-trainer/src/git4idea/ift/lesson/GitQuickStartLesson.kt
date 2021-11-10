@@ -34,6 +34,7 @@ import git4idea.ift.GitLessonsUtil.openPushDialogText
 import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnCheckout
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
@@ -69,6 +70,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     val cloneActionText = GitBundle.message("action.Git.Clone.text")
 
     showWarningIfModalCommitEnabled()
+    showWarningIfStagingAreaEnabled()
 
     task {
       text(GitLessonsBundle.message("git.quick.start.introduction"))

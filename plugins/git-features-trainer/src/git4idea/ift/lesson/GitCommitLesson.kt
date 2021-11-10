@@ -38,6 +38,7 @@ import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.data.TableCell
@@ -82,6 +83,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     showWarningIfModalCommitEnabled()
+    showWarningIfStagingAreaEnabled()
 
     task {
       openCommitWindowText(GitLessonsBundle.message("git.commit.open.commit.window"))
