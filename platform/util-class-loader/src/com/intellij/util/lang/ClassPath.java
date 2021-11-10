@@ -32,7 +32,9 @@ public final class ClassPath {
 
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
 
+  // record loaded class name and source path
   static final boolean recordLoadingInfo = Boolean.getBoolean("idea.record.classpath.info");
+  // record class and resource loading time
   static final boolean recordLoadingTime = recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats");
 
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
