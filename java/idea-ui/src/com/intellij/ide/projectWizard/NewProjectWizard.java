@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,9 @@ public class NewProjectWizard extends AbstractProjectWizard {
   }
 
   protected void init(@NotNull ModulesProvider modulesProvider) {
+    if (isNewWizard()) {
+      getRootPane().putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, Boolean.TRUE);
+    }
     myWizardContext.setModulesProvider(modulesProvider);
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     Disposer.register(getDisposable(), projectTypeStep);
