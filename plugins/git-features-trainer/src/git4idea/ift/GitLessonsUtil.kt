@@ -31,6 +31,9 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
+import git4idea.config.GitVcsApplicationSettings
+import git4idea.i18n.GitBundle
+import git4idea.index.enableStagingArea
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
@@ -206,9 +209,29 @@ object GitLessonsUtil {
                                            action("ShowSettings"),
                                            strong(VcsBundle.message("version.control.main.configurable.name")),
                                            strong(VcsBundle.message("commit.dialog.configurable")),
-                                           strong(VcsBundle.message("settings.commit.without.dialog")),
-                                           callbackId)) {
+                                           strong(VcsBundle.message("settings.commit.without.dialog")))
+                  + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
         !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+      }
+    }
+  }
+
+  fun LessonContext.showWarningIfStagingAreaEnabled() {
+    task {
+      val step = stateCheck {
+        !GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
+      }
+      val callbackId = LearningUiManager.addCallback {
+        enableStagingArea(false)
+        step.complete(true)
+      }
+      showWarning(GitLessonsBundle.message("git.not.use.staging.area.warning",
+                                           action("ShowSettings"),
+                                           strong(VcsBundle.message("version.control.main.configurable.name")),
+                                           strong(GitBundle.message("settings.git.option.group")),
+                                           strong(GitBundle.message("settings.enable.staging.area")))
+                  + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
+        GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
       }
     }
   }
