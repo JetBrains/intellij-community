@@ -8,9 +8,10 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.returnIfNoDescriptorForDeclarationException
 import org.jetbrains.kotlin.idea.core.resolveCandidates
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -23,11 +24,8 @@ import org.jetbrains.uast.kotlin.resolveToDeclarationImpl
 class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getBindingContext(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
 
-    override fun getBindingContextIfAny(element: KtElement): BindingContext? = try {
-        getBindingContext(element)
-    } catch (e: Exception) {
-        e.returnIfNoDescriptorForDeclarationException { null }
-    }
+    override fun getBindingContextIfAny(element: KtElement): BindingContext? =
+        element.actionUnderSafeAnalyzeBlock({ getBindingContext(element) }, { null })
 
     override fun getTypeMapper(element: KtElement): KotlinTypeMapper = KotlinTypeMapper(
         getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
@@ -41,7 +39,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
 
     override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
         val resolutionFacade = ktExpression.getResolutionFacade()
-        val bindingContext = ktExpression.analyze()
+        val bindingContext = ktExpression.safeAnalyzeNonSourceRootCode(resolutionFacade)
         val call = ktExpression.getCall(bindingContext) ?: return emptySequence()
         return call.resolveCandidates(bindingContext, resolutionFacade)
             .mapNotNull { resolveToDeclarationImpl(ktExpression, it.candidateDescriptor) }
