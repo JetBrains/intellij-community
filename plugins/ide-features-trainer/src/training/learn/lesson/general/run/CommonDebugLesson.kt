@@ -35,6 +35,7 @@ import training.learn.CourseManager
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.util.KeymapUtil
@@ -170,7 +171,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
                 val activeToolWindow = LearningUiManager.activeToolWindow
                 if (activeToolWindow != null && !mayBeStopped && LessonManager.instance.currentLesson == this@CommonDebugLesson) {
                   val notification = TaskContext.RestoreNotification(LessonsBundle.message("debug.workflow.need.restart.lesson")) {
-                    CourseManager.instance.openLesson(activeToolWindow.project, this@CommonDebugLesson)
+                    CourseManager.instance.openLesson(activeToolWindow.project, this@CommonDebugLesson, LessonStartingWay.RESTORE_LINK)
                   }
                   LessonManager.instance.setRestoreNotification(notification)
                 }

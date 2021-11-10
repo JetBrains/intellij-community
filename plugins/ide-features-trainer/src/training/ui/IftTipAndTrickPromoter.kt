@@ -15,6 +15,7 @@ import training.FeaturesTrainerIcons
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.course.Lesson
+import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.util.RoundedPanel
 import javax.swing.Box
@@ -55,7 +56,7 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
 
     val openLessonLink = ActionLink(LearnBundle.message("tip.and.trick.promotion.open.lesson")) {
       TipDialog.hideForProject(project)
-      CourseManager.instance.openLesson(project, lesson, forceStartLesson = true)
+      CourseManager.instance.openLesson(project, lesson, LessonStartingWay.TIP_AND_TRICK_PROMOTER, forceStartLesson = true)
       StatisticBase.logLessonOpenedFromTip(lesson.id, tip.fileName)
     }
     container.add(openLessonLink)
