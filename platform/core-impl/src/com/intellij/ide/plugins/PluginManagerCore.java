@@ -94,7 +94,7 @@ public final class PluginManagerCore {
 
   /**
    * Bundled plugins that were updated.
-   * When we update bundled plugin it becomes not bundled, so it is more difficult for analytics to use that data.
+   * When we update a bundled plugin, it becomes non-bundled, so it is more difficult for analytics to use that data.
    */
   private static Set<PluginId> ourShadowedBundledPlugins;
 
@@ -104,9 +104,8 @@ public final class PluginManagerCore {
   private static BuildNumber ourBuildNumber;
 
   /**
-   * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins()}
-   * if you need to get loaded plugins only.
-   *
+   * Returns list of all available plugin descriptors (bundled and custom, including disabled ones).
+   * Use {@link #getLoadedPlugins()} if you need to get loaded plugins only.
    * <p>
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
    */
@@ -261,8 +260,7 @@ public final class PluginManagerCore {
    * This is an internal method, use {@link PluginException#createByClass(String, Throwable, Class)} instead.
    */
   @ApiStatus.Internal
-  public static @NotNull PluginException createPluginException(@NotNull String errorMessage, @Nullable Throwable cause,
-                                                               @NotNull Class<?> pluginClass) {
+  public static @NotNull PluginException createPluginException(@NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
     ClassLoader classLoader = pluginClass.getClassLoader();
     PluginId pluginId;
     if (classLoader instanceof PluginAwareClassLoader) {
@@ -368,7 +366,7 @@ public final class PluginManagerCore {
     return VENDOR_JETBRAINS.equals(vendorItem) || VENDOR_JETBRAINS_SRO.equals(vendorItem);
   }
 
-  private static Path getUpdatedBrokenPluginFile(){
+  private static Path getUpdatedBrokenPluginFile() {
     return Paths.get(PathManager.getConfigPath()).resolve("updatedBrokenPlugins.db");
   }
 
@@ -485,7 +483,7 @@ public final class PluginManagerCore {
   }
 
   @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableList()")
-  private static @NotNull List<Supplier<HtmlChunk>> preparePluginsError(@NotNull List<Supplier<@NlsContexts.DetailedDescription String>> globalErrorsSuppliers) {
+  private static @NotNull List<Supplier<HtmlChunk>> preparePluginErrors(@NotNull List<Supplier<@NlsContexts.DetailedDescription String>> globalErrorsSuppliers) {
     if (pluginLoadingErrors.isEmpty() && globalErrorsSuppliers.isEmpty()) {
       return new ArrayList<>();
     }
@@ -605,7 +603,7 @@ public final class PluginManagerCore {
   }
 
   /**
-   * Think twice before use and get approve from core team. Returns enabled plugins only.
+   * Think twice before use and get an approval from the core team. Returns enabled plugins only.
    */
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
@@ -706,9 +704,8 @@ public final class PluginManagerCore {
       else if (!shouldLoadPlugins) {
         descriptor.setEnabled(false);
         errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
-                                                                       message("plugin.loading.error.long.plugin.loading.disabled",
-                                                                               descriptor.getName()),
-                                                                       message("plugin.loading.error.short.plugin.loading.disabled")));
+                                                                    message("plugin.loading.error.long.plugin.loading.disabled", descriptor.getName()),
+                                                                    message("plugin.loading.error.short.plugin.loading.disabled")));
       }
     }
   }
@@ -781,7 +778,7 @@ public final class PluginManagerCore {
                                                        boolean checkEssentialPlugins) {
     PluginLoadingResult loadingResult = context.result;
     Map<PluginId, PluginLoadingError> pluginErrorsById = new HashMap<>(loadingResult.getPluginErrors$intellij_platform_core_impl());
-    @NotNull List<Supplier<String>> globalErrors = loadingResult.getGlobalErrors();
+    List<Supplier<String>> globalErrors = loadingResult.getGlobalErrors();
 
     if (loadingResult.duplicateModuleMap != null) {
       for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry : loadingResult.duplicateModuleMap.entrySet()) {
@@ -836,10 +833,10 @@ public final class PluginManagerCore {
     List<Supplier<HtmlChunk>> actions = prepareActions(disabledAfterInit, disabledRequired);
     pluginLoadingErrors = pluginErrorsById;
 
-    List<Supplier<HtmlChunk>> errorsList = preparePluginsError(globalErrors);
-    if (!errorsList.isEmpty()) {
+    List<Supplier<HtmlChunk>> errorList = preparePluginErrors(globalErrors);
+    if (!errorList.isEmpty()) {
       synchronized (pluginErrors) {
-        pluginErrors.addAll(errorsList);
+        pluginErrors.addAll(errorList);
         pluginErrors.addAll(actions);
       }
     }

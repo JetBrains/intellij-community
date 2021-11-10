@@ -222,10 +222,10 @@ public final class PluginManagerMain {
 
       if (result) {
         disabled.addAll(disabledDependants);
-        pluginEnabler.enablePlugins(disabled);
+        pluginEnabler.enable(disabled);
       }
       else if (!disabled.isEmpty()) {
-        pluginEnabler.enablePlugins(disabled);
+        pluginEnabler.enable(disabled);
       }
       return true;
     }
@@ -236,7 +236,6 @@ public final class PluginManagerMain {
   /** @deprecated Please use {@link com.intellij.ide.plugins.PluginEnabler} directly. */
   @Deprecated
   public interface PluginEnabler extends com.intellij.ide.plugins.PluginEnabler {
-
     @Override
     default boolean isDisabled(@NotNull PluginId pluginId) {
       return HEADLESS.isDisabled(pluginId);

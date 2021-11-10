@@ -344,7 +344,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 
 /**
  * The method looks for `-Dkey=value` program arguments and stores some of them in system properties.
- * We should use it for a limited number of safe keys; one of them is a list of IDs of required plugins.
+ * We should use it for a limited number of safe keys; one of them is a list of required plugins.
  *
  * @see SAFE_JAVA_ENV_PARAMETERS
  */
