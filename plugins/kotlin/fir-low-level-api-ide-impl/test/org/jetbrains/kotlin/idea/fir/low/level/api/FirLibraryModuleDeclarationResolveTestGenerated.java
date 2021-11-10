@@ -23,6 +23,11 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("enumEntry.kt")
+    public void testEnumEntry() throws Exception {
+        runTest("testData/libraryModuleResolve/enumEntry.kt");
+    }
+
     @TestMetadata("memberFunctionNoArgs.kt")
     public void testMemberFunctionNoArgs() throws Exception {
         runTest("testData/libraryModuleResolve/memberFunctionNoArgs.kt");
