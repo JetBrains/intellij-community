@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.project.Project;
@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
@@ -41,10 +42,20 @@ public final class VcsDiffUtil {
   @Nls
   @NotNull
   public static String getRevisionTitle(@NotNull @NlsSafe String revision, @Nullable FilePath file, @Nullable FilePath baseFile) {
+    return getRevisionTitle(revision, file, baseFile, false);
+  }
+
+  @Nls
+  @NotNull
+  public static String getRevisionTitle(@NotNull @NlsSafe String revision,
+                                        @Nullable FilePath file,
+                                        @Nullable FilePath baseFile,
+                                        boolean localMark) {
+    String localMarkOrEmpty = localMark ? VcsBundle.message("diff.title.local") : "";
     return revision +
            (file == null || VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
-            ? ""
-            : " (" + getRelativeFileName(baseFile, file) + ")");
+            ? localMarkOrEmpty
+            : localMarkOrEmpty + " (" + getRelativeFileName(baseFile, file) + ")");
   }
 
   public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
@@ -52,7 +63,8 @@ public final class VcsDiffUtil {
     ContentRevision beforeRevision = change.getBeforeRevision();
     FilePath aFile = afterRevision == null ? null : afterRevision.getFile();
     FilePath bFile = beforeRevision == null ? null : beforeRevision.getFile();
-    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevision, aFile, null));
+    boolean localMark = StringUtil.isEmpty(getShortHash(afterRevision));
+    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevision, aFile, null, localMark));
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
   }
 
@@ -61,7 +73,16 @@ public final class VcsDiffUtil {
   public static String getRevisionTitle(@Nullable ContentRevision revision,
                                         @Nullable FilePath file,
                                         @Nullable FilePath baseFile) {
-    return getRevisionTitle(getShortHash(revision), file, baseFile);
+    return getRevisionTitle(revision, file, baseFile, false);
+  }
+
+  @Nls
+  @NotNull
+  public static String getRevisionTitle(@Nullable ContentRevision revision,
+                                        @Nullable FilePath file,
+                                        @Nullable FilePath baseFile,
+                                        boolean localMark) {
+    return getRevisionTitle(getShortHash(revision), file, baseFile, localMark);
   }
 
   @NlsSafe
