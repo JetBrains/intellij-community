@@ -1,5 +1,5 @@
 <fold text='What is the expected r...sible'>What is the expected result?
-The the layout view should move to the designated place
+The layout view should move to the designated place
 What happens instead?
 A  "can't find file' error 
 Please provide any additional information below.

@@ -128,7 +128,7 @@ install_breakpointhook()
 #now that we've finished the needed pydev sitecustomize, let's run the default one (if available)
 
 #Ok, some weirdness going on in Python 3k: when removing this module from the sys.module to import the 'real'
-#sitecustomize, all the variables in this scope become None (as if it was garbage-collected), so, the the reference
+#sitecustomize, all the variables in this scope become None (as if it was garbage-collected), so, the reference
 #below is now being kept to create a cyclic reference so that it neven dies)
 __pydev_sitecustomize_module__ = sys.modules.get('sitecustomize') #A ref to this module
 

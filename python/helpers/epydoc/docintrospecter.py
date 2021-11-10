@@ -736,7 +736,7 @@ def register_introspecter(applicability_test, introspecter, priority=10):
     """
     Register an introspecter function.  Introspecter functions take
     two arguments, a python value and a C{ValueDoc} object, and should
-    add information about the given value to the the C{ValueDoc}.
+    add information about the given value to the C{ValueDoc}.
     Usually, the first line of an inspecter function will specialize
     it to a sublass of C{ValueDoc}, using L{ValueDoc.specialize_to()}:
 

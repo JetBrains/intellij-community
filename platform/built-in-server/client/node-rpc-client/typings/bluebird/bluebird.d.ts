@@ -478,7 +478,7 @@ interface Promise<T> extends PromiseLike<T>, Promise.Inspection<T> {
     cancel<U>(reason?: any): Promise<U>;
 
     /**
-     * Like `.then()`, but cancellation of the the returned promise or any of its descendant will not propagate cancellation to this promise or this promise's ancestors.
+     * Like `.then()`, but cancellation of the returned promise or any of its descendant will not propagate cancellation to this promise or this promise's ancestors.
      */
     fork<U>(onFulfilled: (value: T) => PromiseLike<U>, onRejected: (error: any) => PromiseLike<U>, onProgress?: (note: any) => any): Promise<U>;
     fork<U>(onFulfilled: (value: T) => PromiseLike<U>, onRejected?: (error: any) => U, onProgress?: (note: any) => any): Promise<U>;
@@ -738,7 +738,7 @@ declare namespace Promise {
         /**
          * Gives you a callback representation of the `PromiseResolver`. Note that this is not a method but a property. The callback accepts error object in first argument and success values on the 2nd parameter and the rest, I.E. node js conventions.
          *
-         * If the the callback is called with multiple success values, the resolver fullfills its promise with an array of the values.
+         * If the callback is called with multiple success values, the resolver fullfills its promise with an array of the values.
          */
         // TODO specify resolver callback
         callback: (err: any, value: T, ...values: T[]) => void;

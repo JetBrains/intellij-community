@@ -371,7 +371,7 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
     /** Enables/Disables the filters. */
     @Override public void setEnabled(boolean enabled) {
         // it is not possible to call to super.setEnabled(enabled);
-        // the filter header can embed the the header of the table, which
+        // the filter header can embed the header of the table, which
         // would then become also disabled.
         if (filtersHandler != null) {
             filtersHandler.setEnabled(enabled);

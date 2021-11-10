@@ -248,7 +248,7 @@ For Filter OBS browses this can be any of the following:
 timeLevel = What kind of time level?
 setTimeBy = Indicates the style of the macro - specific date or a rolling window.
 closestFromDate = Date value; use this when the setTimeBy is set to closest_periods_specific_date_range.
-closestToDate = Date value; use this when the the setTimeBy is set to closest_periods_specific_date_range.
+closestToDate = Date value; use this when the setTimeBy is set to closest_periods_specific_date_range.
 rangeMacro  = Use this when setTimeBye is set to rolling_window.
 timePeriods = Number of time periods.
 offset = Time period offset.</xsd:documentation>
@@ -278,7 +278,7 @@ offset = Time period offset.</xsd:documentation>
     </xsd:attribute>
     <xsd:attribute name="closestToDate" type="xsd:string" use="optional">
       <xsd:annotation>
-        <xsd:documentation>Date value; use this when the the setTimeBy is set to closest_periods_specific_date_range</xsd:documentation>
+        <xsd:documentation>Date value; use this when the setTimeBy is set to closest_periods_specific_date_range</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <xsd:attribute name="rangeMacro" type="TimeRangeType" use="optional">

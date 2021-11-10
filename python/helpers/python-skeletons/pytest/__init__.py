@@ -98,7 +98,7 @@ class mark:
 
     @staticmethod
     def xfail(condition=None, reason=None, raises=None, run=True, strict=False):
-        """mark the the test function as an expected failure if eval(condition)
+        """mark the test function as an expected failure if eval(condition)
         has a True value.
 
         Optionally specify a reason for better reporting and run=False if

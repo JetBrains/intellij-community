@@ -288,7 +288,7 @@
                                             minOccurs="0"
                                             maxOccurs="1">
                                     <xs:annotation>
-                                        <xs:documentation>URLs to ping when user clicks on the the icon.</xs:documentation>
+                                        <xs:documentation>URLs to ping when user clicks on the icon.</xs:documentation>
                                     </xs:annotation>
                                 </xs:element>
                             </xs:all>
@@ -688,7 +688,7 @@
                         minOccurs="0"
                         maxOccurs="1">
                 <xs:annotation>
-                    <xs:documentation>URLs to ping when user clicks on the the non-linear ad unit.</xs:documentation>
+                    <xs:documentation>URLs to ping when user clicks on the non-linear ad unit.</xs:documentation>
                 </xs:annotation>
                 <xs:complexType>
                     <xs:simpleContent>
@@ -717,7 +717,7 @@
                                 minOccurs="0"
                                 maxOccurs="1">
                         <xs:annotation>
-                            <xs:documentation>URLs to ping when user clicks on the the non-linear ad unit.</xs:documentation>
+                            <xs:documentation>URLs to ping when user clicks on the non-linear ad unit.</xs:documentation>
                         </xs:annotation>
                         <xs:complexType>
                             <xs:simpleContent>
@@ -774,7 +774,7 @@
                                 minOccurs="0"
                                 maxOccurs="1">
                         <xs:annotation>
-                            <xs:documentation>URL to open as destination page when user clicks on the the companion banner ad.</xs:documentation>
+                            <xs:documentation>URL to open as destination page when user clicks on the companion banner ad.</xs:documentation>
                         </xs:annotation>
                     </xs:element>
                     <xs:element name="CompanionClickTracking"
@@ -782,7 +782,7 @@
                                 minOccurs="0"
                                 maxOccurs="1">
                         <xs:annotation>
-                            <xs:documentation>URLs to ping when user clicks on the the companion banner ad.</xs:documentation>
+                            <xs:documentation>URLs to ping when user clicks on the companion banner ad.</xs:documentation>
                         </xs:annotation>
                     </xs:element>
                     <xs:element name="AltText"

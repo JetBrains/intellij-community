@@ -414,7 +414,7 @@
     </xsd:attribute>
     <xsd:attribute name="type" type="DataType">
       <xsd:annotation>
-        <xsd:documentation xml:lang="en">The type of the bind variable. Required unless the the replace attribute or the SequenceGroup attributes or the LookupGroup attributes are specified.</xsd:documentation>
+        <xsd:documentation xml:lang="en">The type of the bind variable. Required unless the replace attribute or the SequenceGroup attributes or the LookupGroup attributes are specified.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <xsd:attribute name="replace" type="ReplaceType">

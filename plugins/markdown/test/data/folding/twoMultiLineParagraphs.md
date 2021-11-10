@@ -1,5 +1,5 @@
 <fold text='What is the expected r...place'>What is the expected result?
-The the layout view should move to the designated place</fold>
+The layout view should move to the designated place</fold>
 
 <fold text='What happens instead?
 ...sible'>What happens instead?

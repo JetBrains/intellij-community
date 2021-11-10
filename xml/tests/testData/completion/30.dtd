@@ -732,7 +732,7 @@
 
 <!ELEMENT Arguments (Map?)>
 
-<!-- Old, holdover from the the original WorkflowCase,
+<!-- Old, holdover from the original WorkflowCase,
   == deprecate these!
   == Value may be an attribute for simple strings, or pcdata if a more
   == complex object.  I hate this, need to evolve a nice common

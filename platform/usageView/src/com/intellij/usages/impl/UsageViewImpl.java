@@ -1353,7 +1353,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   public UsageNode doAppendUsage(@NotNull Usage usage) {
     assert !ApplicationManager.getApplication().isDispatchThread();
-    // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
+    // invoke in ReadAction to be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!usage.isValid()) {
       // because the view is built incrementally, the usage may be already invalid, so need to filter such cases

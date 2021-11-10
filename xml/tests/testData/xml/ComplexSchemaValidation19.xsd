@@ -402,12 +402,12 @@
     </xs:attribute>
     <xs:attribute name="xpos" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Type:Number - The the x position of the center of the radial filling.</xs:documentation>
+        <xs:documentation>Type:Number - The x position of the center of the radial filling.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="ypos" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Type:Number - The the y position of the center of the radial filling.</xs:documentation>
+        <xs:documentation>Type:Number - The y position of the center of the radial filling.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="highLightCenter" type="xs:string">
@@ -3394,7 +3394,7 @@
     </xs:attribute>
     <xs:attribute name="rightToLeft" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Type:Boolean - Describes whether the component should be be layed out to support
+        <xs:documentation>Type:Boolean - Describes whether the component should be layed out to support
           locales using right-to-left fonts. If this is set to null
           then the rightToLeft property for the parent component
           is used.
@@ -7810,7 +7810,7 @@
     <xs:annotation>
       <xs:documentation>This is a list component that can contain BiListItem
         objects. It uses the normal object model and can therefore be extended and
-        used just like any other component. The only limitation is that the the direct
+        used just like any other component. The only limitation is that the direct
         children should only be of type BiListItem
         and the size and position of these should not be changed.
         The list uses a BiListSelectionModel
@@ -8254,7 +8254,7 @@
     </xs:attribute>
     <xs:attribute name="rightToLeft" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Type:Boolean - Describes whether the component should be be layed out to support
+        <xs:documentation>Type:Boolean - Describes whether the component should be layed out to support
           locales using right-to-left fonts. If this is set to null
           then the rightToLeft property for the parent component
           is used.
@@ -13528,7 +13528,7 @@
 
     <xs:attribute name="onbeforefinish" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Fires before the the wizard's finish event is called. Calling
+        <xs:documentation>Fires before the wizard's finish event is called. Calling
           preventDefault
           on the event object will prevent the wizard from dispatching the finish event.
         </xs:documentation>
@@ -13537,7 +13537,7 @@
 
     <xs:attribute name="onbeforecancel" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Fires before the the wizard's cancel event is called. Calling
+        <xs:documentation>Fires before the wizard's cancel event is called. Calling
           preventDefault
           on the event object will prevent the wizard from dispatching the cancel event.
         </xs:documentation>
@@ -13655,7 +13655,7 @@
 
     <xs:attribute name="onbeforefinish" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Fires before the the wizard pane's finish event is called. Calling
+        <xs:documentation>Fires before the wizard pane's finish event is called. Calling
           preventDefault
           on the event object will prevent the wizard pane from dispatching the finish event.
         </xs:documentation>
@@ -13664,7 +13664,7 @@
 
     <xs:attribute name="onbeforecancel" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Fires before the the wizard pane's cancel event is called. Calling
+        <xs:documentation>Fires before the wizard pane's cancel event is called. Calling
           preventDefault
           on the event object will prevent the wizard pane from dispatching the cancel event.
         </xs:documentation>
@@ -13710,7 +13710,7 @@
 
     <xs:attribute name="align" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Type:String - The text align of the the text on the label</xs:documentation>
+        <xs:documentation>Type:String - The text align of the text on the label</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="text" type="xs:string">

@@ -289,7 +289,7 @@ class HTMLWriter:
         @keyword include_source_code: If true, then generate colorized
               source code files for each python module.
         @type include_log: C{boolean}
-        @keyword include_log: If true, the the footer will include an
+        @keyword include_log: If true, the footer will include an
               href to the page 'epydoc-log.html'.
         @type src_code_tab_width: C{int}
         @keyword src_code_tab_width: Number of spaces to replace each tab

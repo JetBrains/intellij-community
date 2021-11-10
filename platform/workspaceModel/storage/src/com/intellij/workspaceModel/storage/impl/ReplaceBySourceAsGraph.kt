@@ -429,7 +429,7 @@ internal object ReplaceBySourceAsGraph {
    * delete related by the reference entity because we sure that the reference will be restored and entity from the second store
    * will be added to the main.
    * One important notes of the entity remove: we make it only if the second store contains entity which matched by source filter,
-   * we don't remove entity which already was replaced and we don't remove the the object itself.
+   * we don't remove entity which already was replaced and we don't remove the object itself.
    */
   private fun WorkspaceEntityStorageBuilderImpl.removeEntitiesByOneToOneRef(sourceFilter: (EntitySource) -> Boolean,
                                                                             replaceWith: AbstractEntityStorage,

@@ -1462,7 +1462,7 @@ public class Test {
           /**
            * @implNote Some leading implNote sentence.
            *
-           *     <p>That means that the the thing is like this.
+           *     <p>That means that the thing is like this.
            *
            *     <ol></ol>
            */
@@ -1476,7 +1476,7 @@ public class Test {
           /**
            * @implNote Some leading implNote sentence.
            *
-           * <p>That means that the the thing is like this.
+           * <p>That means that the thing is like this.
            *
            * <ol></ol>
            */

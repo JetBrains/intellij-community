@@ -520,7 +520,7 @@ class PyvalColorizer:
             # If the segment doesn't fit on the current line, then
             # line-wrap it, and insert the remainder of the line into
             # the segments list that we're iterating over.  (We'll go
-            # the the beginning of the next line at the start of the
+            # the beginning of the next line at the start of the
             # next iteration through the loop.)
             else:
                 split = self.linelen-state.charpos

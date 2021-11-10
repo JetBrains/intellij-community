@@ -47,7 +47,7 @@ C{para} blocks:
     - X{link}:   A Python identifier which should be hyperlinked to
                  the named object's documentation, when possible.
 
-The returned DOM tree will conform to the the following Document Type
+The returned DOM tree will conform to the following Document Type
 Description::
 
    <!ENTITY % colorized '(code | math | index | italic |

@@ -27,7 +27,7 @@ class MarkGenerator(object):
         """
 
     def xfail(self,condition=None, reason=None, raises=None, run=True, strict=False):
-        """mark the the test function as an expected failure if eval(self,condition)
+        """mark the test function as an expected failure if eval(self,condition)
         has a True value.
 
         Optionally specify a reason for better reporting and run=False if

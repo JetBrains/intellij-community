@@ -19,7 +19,7 @@ a mapping from the object name to the URL part required to resolve such object.
 Index file
 ----------
 
-Each line in the the index file describes an object.
+Each line in the index file describes an object.
 
 Each line contains the fully qualified name of the object and the URL at which
 the documentation is located. The fields are separated by a ``<tab>``

@@ -745,7 +745,7 @@ y"</pre>
         template is not a <a
           href="http://www.w3.org/TR/REC-xml-names#NT-QName">QName</a>.  An XSLT
         processor may signal the error; if it does not signal the error, then it must
-        recover by making the the result of instantiating the
+        recover by making the result of instantiating the
         <code>xsl:element</code> element be the sequence of nodes created by
         instantiating the content of the  <code>xsl:element</code> element, excluding
         any initial attribute nodes. If the <code>namespace</code> attribute is not
