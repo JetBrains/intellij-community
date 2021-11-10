@@ -50,7 +50,8 @@ interface CellBase<out T : CellBase<T>> {
   fun enabledIf(predicate: ComponentPredicate): CellBase<T>
 
   /**
-   * Sets horizontal alignment of content inside the cell, [HorizontalAlign.LEFT] by default
+   * Sets horizontal alignment of content inside the cell, [HorizontalAlign.LEFT] by default.
+   * Note that content width is usually less than cell width, use [HorizontalAlign.FILL] to stretch the content on whole cell width.
    *
    * @see [Constraints.horizontalAlign]
    */
@@ -58,6 +59,7 @@ interface CellBase<out T : CellBase<T>> {
 
   /**
    * Sets vertical alignment of content inside the cell, [VerticalAlign.CENTER] by default
+   * Note that content height is usually less than cell height, use [VerticalAlign.FILL] to stretch the content on whole cell height.
    *
    * @see [Constraints.verticalAlign]
    */
@@ -66,7 +68,7 @@ interface CellBase<out T : CellBase<T>> {
   /**
    * Marks column of the cell as resizable: the column occupies all extra space in panel and changes size together with panel.
    * It's possible to have several resizable columns, which means extra space is shared between them.
-   * There is no need to set resizable for cells in different rows but in the same column: it has no effect.
+   * There is no need to set resizable for cells in different rows but in the same column: it has no additional effect.
    * Note that size and placement of component in columns are managed by [horizontalAlign]
    *
    * @see [Grid.resizableColumns]
@@ -74,7 +76,7 @@ interface CellBase<out T : CellBase<T>> {
   fun resizableColumn(): CellBase<T>
 
   /**
-   * Separates next cell in current row with [rightGap]. [RightGap.SMALL] gap is set after row label automatically
+   * Separates the next cell in the current row with [rightGap]. [RightGap.SMALL] gap is set after row label automatically
    * by [Panel.row] methods.
    * Should not be used for last cell in a row
    */

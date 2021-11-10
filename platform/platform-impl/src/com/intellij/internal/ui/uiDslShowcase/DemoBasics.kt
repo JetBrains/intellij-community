@@ -12,7 +12,7 @@ import com.intellij.ui.dsl.builder.panel
                 "Every cell can contain some component or a sub-grid.")
 fun demoBasics(): DialogPanel {
   return panel {
-    row("Row 1 label:") {
+    row("Row1 label:") {
       textField()
       label("Some text")
     }

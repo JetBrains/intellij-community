@@ -4,6 +4,7 @@ package com.intellij.internal.ui.uiDslShowcase
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 
@@ -25,6 +26,12 @@ fun demoAvailability(): DialogPanel {
             checkBox("Option 2")
           }
         }.enabledIf(checkBox.selected)
+      }
+      row {
+        val mailCheckBox = checkBox("Use mail:")
+          .gap(RightGap.SMALL)
+        textField()
+          .enabledIf(mailCheckBox.selected)
       }
     }
 

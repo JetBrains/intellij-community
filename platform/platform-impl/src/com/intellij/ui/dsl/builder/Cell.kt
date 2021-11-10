@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.*
@@ -30,6 +31,9 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun gap(rightGap: RightGap): Cell<T>
 
+  /**
+   * Component that occupies the cell
+   */
   val component: T
 
   fun focused(): Cell<T>
@@ -52,7 +56,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS uses smaller font).
    * [comment] can contain html tags except <html>, which is added automatically in this method.
-   * The comment occupies available width before next comment (if present) or
+   * The comment occupies the available width before the next comment (if present) or
    * whole remaining width. Visibility and enabled state of the cell affects comment as well.
    *
    * For layout [RowLayout.LABEL_ALIGNED] comment after second columns is placed in second column (there are technical problems,
@@ -71,8 +75,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun label(@NlsContexts.Label label: String, position: LabelPosition = LabelPosition.LEFT): Cell<T>
 
   /**
-   * Adds label at specified [position]. [LabelPosition.TOP] labels occupy available width before next top label (if present) or
-   * whole remaining width. Visibility and enabled state of the cell affects label as well.
+   * Adds label at specified [position]. [LabelPosition.TOP] labels occupy available width before the next top label (if present) or
+   * whole remaining width. Visibility and enabled state of the cell affects the label as well.
    *
    * For layout [RowLayout.LABEL_ALIGNED] labels for two first columns are supported only (there are technical problems,
    * can be implemented later)
@@ -88,23 +92,46 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   fun accessibleDescription(@Nls description: String): Cell<T>
 
+  /**
+   * Binds component value that provided by [componentGet] and [componentSet] methods to specified [binding] property.
+   * The property is applied only when [DialogPanel.apply] is invoked. Methods [DialogPanel.isModified] and [DialogPanel.reset]
+   * are also supported automatically for bound properties
+   */
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
+  /**
+   * Binds [component] value changing to [property]. The property is updated when value is changed and is not related to [DialogPanel.apply]
+   */
   fun graphProperty(property: GraphProperty<*>): Cell<T>
 
+  /**
+   * Adds [component] validation
+   */
   fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
   /**
-   * Shows [message] if [condition] is true
+   * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply]
    */
   fun errorOnApply(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
 
+  /**
+   * Adds [component] validation
+   */
   fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
+  /**
+   * Registers [callback] that will be called for [component] from [DialogPanel.apply] method
+   */
   fun onApply(callback: () -> Unit): Cell<T>
 
+  /**
+   * Registers [callback] that will be called for [component] from [DialogPanel.reset] method
+   */
   fun onReset(callback: () -> Unit): Cell<T>
 
+  /**
+   * Registers [callback] that will be called for [component] from [DialogPanel.isModified] method
+   */
   fun onIsModified(callback: () -> Boolean): Cell<T>
 
   /**
