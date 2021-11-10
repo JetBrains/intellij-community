@@ -14272,6 +14272,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeAllArgumentNames/collectionLiteralIsNotLast.kt");
         }
 
+        @TestMetadata("collectionLiteralIsNotLast2.kt")
+        public void testCollectionLiteralIsNotLast2() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/collectionLiteralIsNotLast2.kt");
+        }
+
         @TestMetadata("defaultArguments.kt")
         public void testDefaultArguments() throws Exception {
             runTest("testData/intentions/removeAllArgumentNames/defaultArguments.kt");
@@ -14320,6 +14325,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("varargIsNotLast.kt")
         public void testVarargIsNotLast() throws Exception {
             runTest("testData/intentions/removeAllArgumentNames/varargIsNotLast.kt");
+        }
+
+        @TestMetadata("varargIsNotLast2.kt")
+        public void testVarargIsNotLast2() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/varargIsNotLast2.kt");
+        }
+
+        @TestMetadata("varargIsNotLast3.kt")
+        public void testVarargIsNotLast3() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/varargIsNotLast3.kt");
         }
     }
 

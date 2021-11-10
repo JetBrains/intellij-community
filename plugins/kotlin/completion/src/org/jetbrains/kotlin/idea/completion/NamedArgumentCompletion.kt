@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.ArgumentPositionData
@@ -24,9 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
-import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
-import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -116,34 +115,45 @@ object NamedArgumentCompletion {
 /**
  * Checks whether argument in the [resolvedCall] can be used without its name (as positional argument).
  */
-fun KtValueArgument.canBeUsedWithoutNameInCall(
-    resolvedCall: ResolvedCall<out CallableDescriptor>,
-    noOtherNamedArguments: Boolean = false
-): Boolean {
-    val valueArguments = resolvedCall.call.valueArguments
-    val parameter = resolvedCall.getParameterForArgument(this)
-    val isVararg = parameter?.isVararg == true
+fun KtValueArgument.canBeUsedWithoutNameInCall(resolvedCall: ResolvedCall<out CallableDescriptor>): Boolean {
+    if (resolvedCall.resultingDescriptor.valueParameters.isEmpty()) return true
 
-    if (noOtherNamedArguments) {
-        val parameters = resolvedCall.resultingDescriptor.valueParameters
-        if (isVararg && parameter != parameters.lastOrNull()) return false
-        val firstParameter = parameters.firstOrNull()
-        if (firstParameter?.hasDefaultValue() == true && resolvedCall.valueArguments[firstParameter] is DefaultValueArgument) return false
-        return isVararg || isNamed() || placedOnItsOwnPositionInCall(resolvedCall)
-    }
+    val argumentsThatCanBeUsedWithoutName = collectAllArgumentsThatCanBeUsedWithoutName(resolvedCall).map { it.argument }
+    if (argumentsThatCanBeUsedWithoutName.isEmpty() || argumentsThatCanBeUsedWithoutName.none { it == this }) return false
 
-    if (getArgumentExpression() is KtCollectionLiteralExpression && isVararg) {
-        val argumentIndex = valueArguments.indexOf(this)
-        if (argumentIndex == -1) return false
-        val nextArgument = valueArguments.getOrNull(argumentIndex + 1)
-        if (nextArgument != null && !nextArgument.isNamed()) return false
-    }
-
-    val argumentsBeforeThis = valueArguments.takeWhile { it != this }
+    val argumentsBeforeThis = argumentsThatCanBeUsedWithoutName.takeWhile { it != this }
     return if (languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)) {
         argumentsBeforeThis.none { it.isNamed() && !it.placedOnItsOwnPositionInCall(resolvedCall) }
     } else {
         argumentsBeforeThis.none { it.isNamed() }
+    }
+}
+
+data class ArgumentThatCanBeUsedWithoutName(val argument: KtValueArgument, val parameter: ValueParameterDescriptor)
+
+fun collectAllArgumentsThatCanBeUsedWithoutName(
+    resolvedCall: ResolvedCall<out CallableDescriptor>,
+): List<ArgumentThatCanBeUsedWithoutName> {
+    val arguments = resolvedCall.call.valueArguments.filterIsInstance<KtValueArgument>()
+    val argumentAndParameters = arguments.mapNotNull { argument ->
+        val parameter = resolvedCall.getParameterForArgument(argument) ?: return@mapNotNull null
+        argument to parameter
+    }.sortedBy { (_, parameter) -> parameter.index }
+    if (arguments.size != argumentAndParameters.size) return emptyList()
+
+    val firstVarargIndex = argumentAndParameters.indexOfFirst { (_, parameter) -> parameter.isVararg }
+    return argumentAndParameters.mapIndexedNotNull { index, (argument, parameter) ->
+        val parameterIndex = parameter.index
+        val isAfterFirstVararg = firstVarargIndex != -1 && index > firstVarargIndex
+        val isFirstVararg = index == firstVarargIndex
+        if (index != parameterIndex ||
+            isAfterFirstVararg ||
+            isFirstVararg && argumentAndParameters.drop(index + 1).any { (argument, _) -> !argument.isNamed() }
+        ) {
+            null
+        } else {
+            ArgumentThatCanBeUsedWithoutName(argument, parameter)
+        }
     }
 }
 

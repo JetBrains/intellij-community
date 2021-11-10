@@ -2,20 +2,16 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.completion.canBeUsedWithoutNameInCall
-import org.jetbrains.kotlin.idea.completion.placedOnItsOwnPositionInCall
+import org.jetbrains.kotlin.idea.completion.ArgumentThatCanBeUsedWithoutName
+import org.jetbrains.kotlin.idea.completion.collectAllArgumentsThatCanBeUsedWithoutName
 import org.jetbrains.kotlin.idea.core.copied
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
-import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 
-class RemoveAllArgumentNamesIntention: SelfTargetingIntention<KtCallElement>(
+class RemoveAllArgumentNamesIntention : SelfTargetingIntention<KtCallElement>(
     KtCallElement::class.java,
     KotlinBundle.lazyMessage("remove.all.argument.names")
 ) {
@@ -23,46 +19,45 @@ class RemoveAllArgumentNamesIntention: SelfTargetingIntention<KtCallElement>(
         val arguments = element.valueArgumentList?.arguments ?: return false
         if (arguments.count { it.isNamed() } < 2) return false
         val resolvedCall = element.resolveToCall() ?: return false
-        return arguments.all { it.canBeUsedWithoutNameInCall(resolvedCall, noOtherNamedArguments = true) }
+        return collectAllArgumentsThatCanBeUsedWithoutName(resolvedCall).any()
     }
 
     override fun applyTo(element: KtCallElement, editor: Editor?) {
-        val valueArgumentList = element.valueArgumentList ?: return
-        val arguments = valueArgumentList.arguments
+        val argumentList = element.valueArgumentList ?: return
         val resolvedCall = element.resolveToCall() ?: return
-        if (arguments.all { it.placedOnItsOwnPositionInCall(resolvedCall) || it.isVararg(resolvedCall) }) {
-            arguments.forEach { RemoveArgumentNameIntention.removeName(it) }
-            return
+        argumentList.removeArgumentNames(collectAllArgumentsThatCanBeUsedWithoutName(resolvedCall))
+    }
+
+    companion object {
+        fun KtValueArgumentList.removeArgumentNames(
+            argumentsThatCanBeUsedWithoutName: List<ArgumentThatCanBeUsedWithoutName>,
+            removeOnlyLastArgumentName: Boolean = false
+        ) {
+            val lastArgument = argumentsThatCanBeUsedWithoutName.lastOrNull()?.argument
+            argumentsThatCanBeUsedWithoutName.reversed().forEach { (argument, parameter) ->
+                val newArguments = if (!argument.isNamed() || (removeOnlyLastArgumentName && argument != lastArgument)) {
+                    listOf(argument.copied())
+                } else {
+                    createArgumentWithoutName(argument, parameter)
+                }
+                removeArgument(argument)
+                newArguments.reversed().forEach { addArgumentBefore(it, arguments.firstOrNull()) }
+            }
         }
 
-        val parameters = resolvedCall.resultingDescriptor.valueParameters
-        val argumentSize = arguments.size
-        val parameterSize = parameters.size
-        val defaultArgumentIndex = parameters.indexOfFirst { it.hasDefaultValue() }
-        val expectedArgumentIndexes = arguments.mapIndexedNotNull { index, argument ->
-            if (!argument.isNamed()) return@mapIndexedNotNull null
-            val parameter = resolvedCall.getParameterForArgument(argument) ?: return@mapIndexedNotNull null
-            if (argument.placedOnItsOwnPositionInCall(resolvedCall) ||
-                argumentSize >= parameterSize ||
-                defaultArgumentIndex == -1 ||
-                defaultArgumentIndex >= parameter.index
-            ) RemoveArgumentNameIntention.removeName(argument)
-            index to parameter.index
-        }.sortedBy { it.second }.map { it.first }
-
-        if (argumentSize != expectedArgumentIndexes.size) return
-        val argumentIndexes = (0 until argumentSize).zip(expectedArgumentIndexes).toMap()
-        if (argumentIndexes.all { it.key == it.value }) return
-        val newArguments = valueArgumentList.arguments
-        val copiedArguments = newArguments.map { it.copied() }
-        newArguments.forEachIndexed { index, argument ->
-            val expectedIndex = argumentIndexes[index]
-            if (expectedIndex != null && expectedIndex != index) {
-                argument.replace(copiedArguments[expectedIndex])
+        private fun createArgumentWithoutName(argument: KtValueArgument, parameter: ValueParameterDescriptor): List<KtValueArgument> {
+            if (!argument.isNamed()) return listOf(argument.copied())
+            val argumentExpr = argument.getArgumentExpression() ?: return emptyList()
+            val psiFactory = KtPsiFactory(argument)
+            val isVararg = parameter.isVararg
+            return when {
+                isVararg && argumentExpr is KtCollectionLiteralExpression ->
+                    argumentExpr.getInnerExpressions().map { psiFactory.createArgument(it) }
+                isVararg && argumentExpr is KtCallExpression && argumentExpr.isArrayOfMethod() ->
+                    argumentExpr.valueArguments.map { psiFactory.createArgument(it.getArgumentExpression()) }
+                else ->
+                    listOf(psiFactory.createArgument(argumentExpr, null, isVararg))
             }
         }
     }
-
-    private fun KtValueArgument.isVararg(resolvedCall: ResolvedCall<out CallableDescriptor>) =
-        resolvedCall.getParameterForArgument(this)?.isVararg == true
 }
