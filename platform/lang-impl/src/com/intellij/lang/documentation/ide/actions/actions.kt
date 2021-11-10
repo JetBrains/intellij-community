@@ -3,11 +3,16 @@ package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
+import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationHistory
+import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
+import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
+import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.util.ui.accessibility.ScreenReader
 import javax.swing.JComponent
 
@@ -38,4 +43,20 @@ internal fun registerBackForwardActions(component: JComponent) {
     KeyboardShortcut.fromString(if (ScreenReader.isActive()) "alt RIGHT" else "RIGHT"),
     KeymapUtil.parseMouseShortcut("button5")
   ), component)
+}
+
+internal fun documentationToolWindowUI(dc: DataContext): DocumentationToolWindowUI? {
+  val toolWindow = dc.getData(PlatformDataKeys.TOOL_WINDOW)
+                   ?: return null
+  if (toolWindow.id != DocumentationToolWindowManager.TOOL_WINDOW_ID) {
+    return null
+  }
+  val component = dc.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
+  val content = if (component is BaseLabel) {
+    component.content
+  }
+  else {
+    toolWindow.contentManager.selectedContent
+  }
+  return content?.toolWindowUI
 }
