@@ -10,15 +10,11 @@ interface DependenciesContributor {
 
   fun getExternalProjectName(externalProjectPath: String): @NlsContexts.Label String
 
-  fun getRoot(externalProjectPath: String): Dependency
+  fun getDependencyGroups(externalProjectPath: String): List<DependencyGroup>
 
   fun getDependencyScopes(externalProjectPath: String): List<@NlsSafe String>
 
   fun getDependencyScope(externalProjectPath: String, dependency: Dependency): @NlsSafe String
-
-  fun getDependencies(externalProjectPath: String, dependency: Dependency): List<Dependency>
-
-  fun getVariances(externalProjectPath: String, dependency: Dependency): List<Dependency>
 
   fun getInspectionResult(externalProjectPath: String, dependency: Dependency): List<InspectionResult>
 
@@ -31,6 +27,8 @@ interface DependenciesContributor {
       data class Artifact(val groupId: String, val artifactId: String, val version: String) : Data
     }
   }
+
+  data class DependencyGroup(val data: Dependency.Data, val variances: List<Dependency>)
 
   interface InspectionResult {
 

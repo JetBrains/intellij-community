@@ -3,11 +3,13 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.DependencyGroup
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.InspectionResult.Omitted
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.InspectionResult.VersionConflict
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -30,24 +32,38 @@ class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributo
   private val externalProjectProperty = propertyGraph.graphProperty<ExternalProjectItem?> { null }
   private val searchRequestProperty = propertyGraph.graphProperty { "" }
   private val searchScopeProperty = propertyGraph.graphProperty<Scope> { Scope.Any }
-  private val dependencyProperty = propertyGraph.graphProperty<DependencyItem?> { null }
+  private val dependencyProperty = propertyGraph.graphProperty<Dependency.Data?> { null }
   private val showGroupIdProperty = propertyGraph.graphProperty { false }
 
   private val usagesTitleProperty = propertyGraph.graphProperty(::getUsagesTitle)
 
   private val externalProjectsModel = CollectionComboBoxModel<ExternalProjectItem>()
   private val scopesModel = CollectionComboBoxModel<Scope>()
-  private val dependenciesModel = CollectionListModel<DependencyItem>()
-  private val usagesModel = CollectionListModel<DependencyItem>()
+  private val dependencyGroupsModel = CollectionListModel<DependencyGroupItem>()
+  private val dependencyTreeModel = CollectionListModel<DependencyItem>()
+  private val usagesTreeModel = CollectionListModel<DependencyItem>()
 
   override fun setSelectedExternalProject(externalProjectPath: String) {
     externalProjectProperty.set(ExternalProjectItem(externalProjectPath))
   }
 
   override fun setSelectedDependency(externalProjectPath: String, dependency: Dependency) {
-    val externalProject = ExternalProjectItem(externalProjectPath)
-    externalProjectProperty.set(externalProject)
-    dependencyProperty.set(DependencyItem(externalProject, dependency))
+    setSelectedExternalProject(externalProjectPath)
+    dependencyProperty.set(dependency.data)
+  }
+
+  private fun findDependencyItem(dependency: Dependency?): DependencyItem? {
+    return findDependencyItem(dependency?.data)
+  }
+
+  private fun findDependencyItem(data: Dependency.Data?): DependencyItem? {
+    return dependencyGroupsModel.items
+      .flatMap { it.variances }
+      .find { it.dependency.data == data }
+  }
+
+  private fun findDependencyGroup(data: Dependency.Data?): DependencyGroupItem? {
+    return findDependencyItem(data)?.group
   }
 
   private fun updateExternalProjectsModel() {
@@ -76,38 +92,35 @@ class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributo
     }
   }
 
-  private fun updateDependenciesModel() {
-    dependenciesModel.removeAll()
+  private fun updateDependencyModel() {
+    dependencyGroupsModel.removeAll()
+    dependencyTreeModel.removeAll()
+
     val externalProject = externalProjectProperty.get()
     if (externalProject != null) {
-      val queue = ArrayDeque<DependencyItem>()
-      val root = contributor.getRoot(externalProject.path)
-      queue.addLast(DependencyItem(externalProject, root))
-      while (queue.isNotEmpty()) {
-        val dependency = queue.removeFirst()
-        dependenciesModel.add(dependency)
-        dependency.dependencies.forEach {
-          queue.addLast(DependencyItem(externalProject, it))
-        }
-      }
+      val groups = contributor.getDependencyGroups(externalProject.path)
+        .map { DependencyGroupItem(externalProject, it) }
+      groups.forEach { dependencyGroupsModel.add(it) }
+      groups.forEach { dependencyTreeModel.add(it.variances) }
     }
 
-    val dependency = dependencyProperty.get()
-    if (dependency == null || dependency !in dependenciesModel) {
-      dependencyProperty.set(dependenciesModel.items.firstOrNull())
+    val dependency = findDependencyItem(dependencyProperty.get())
+    if (dependency == null) {
+      val item = dependencyTreeModel.items.firstOrNull()
+      dependencyProperty.set(item?.dependency?.data)
     }
   }
 
   private fun updateUsagesModel() {
-    usagesModel.removeAll()
+    usagesTreeModel.removeAll()
     val externalProject = externalProjectProperty.get()
-    val dependency = dependencyProperty.get()
-    if (externalProject != null && dependency != null) {
-      for (candidate in dependency.variances) {
-        var current: Dependency? = candidate
+    val group = findDependencyGroup(dependencyProperty.get())
+    if (externalProject != null && group != null) {
+      for (candidate in group.variances) {
+        var current: DependencyItem? = candidate
         while (current != null) {
-          usagesModel.add(DependencyItem(externalProject, current))
-          current = current.usage
+          usagesTreeModel.add(current)
+          current = findDependencyItem(current.dependency.usage)
         }
       }
     }
@@ -116,6 +129,13 @@ class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributo
   private fun horizontalFlow(vararg components: JComponent): JComponent {
     return JPanel().apply {
       layout = GridLayout(1, components.size)
+      components.forEach(::add)
+    }
+  }
+
+  private fun verticalFlow(vararg components: JComponent): JComponent {
+    return JPanel().apply {
+      layout = GridLayout(components.size, 1)
       components.forEach(::add)
     }
   }
@@ -145,11 +165,18 @@ class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributo
           toolbar = toolbarPanel {
             addOnLeft(JLabel(ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.title")))
           }
-          setContent(ScrollPaneFactory.createScrollPane(JBList(dependenciesModel).apply {
-            cellRenderer = DependenciesRenderer()
-            bind(dependencyProperty)
-            emptyText.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.empty")
-          }))
+          setContent(verticalFlow(
+            ScrollPaneFactory.createScrollPane(JBList(dependencyGroupsModel).apply {
+              cellRenderer = DependencyGroupRenderer()
+              bind(dependencyProperty.transform(::findDependencyGroup) { it?.group?.data })
+              emptyText.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.empty")
+            }),
+            ScrollPaneFactory.createScrollPane(JBList(dependencyTreeModel).apply {
+              cellRenderer = DependencyRenderer()
+              bind(dependencyProperty.transform(::findDependencyItem) { it?.dependency?.data })
+              emptyText.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.empty")
+            }))
+          )
         },
         toolWindowPanel {
           toolbar = toolbarPanel {
@@ -157,7 +184,7 @@ class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributo
               .bind(usagesTitleProperty)
               .apply { text = usagesTitleProperty.get() }
           }
-          setContent(ScrollPaneFactory.createScrollPane(JBList(usagesModel).apply {
+          setContent(ScrollPaneFactory.createScrollPane(JBList(usagesTreeModel).apply {
             cellRenderer = UsagesRenderer()
             emptyText.text = ""
           }))
@@ -169,7 +196,7 @@ class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributo
   init {
     externalProjectProperty.afterChange {
       updateScopesModel()
-      updateDependenciesModel()
+      updateDependencyModel()
     }
     dependencyProperty.afterChange {
       updateUsagesModel()
@@ -229,29 +256,31 @@ class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributo
     }
   }
 
-  private abstract inner class AbstractDependencyRenderer : ColoredListCellRenderer<DependencyItem>() {
-    open fun setupIcon(externalProject: ExternalProjectItem, dependency: DependencyItem) {
-      icon = when (dependency.dependency.data) {
-        is Dependency.Data.Module -> AllIcons.Nodes.Module
-        is Dependency.Data.Artifact -> AllIcons.Nodes.PpLib
+  private inner class DependencyGroupRenderer : ColoredListCellRenderer<DependencyGroupItem>() {
+    override fun customizeCellRenderer(
+      list: JList<out DependencyGroupItem>,
+      value: DependencyGroupItem?,
+      index: Int,
+      selected: Boolean,
+      hasFocus: Boolean
+    ) {
+      val item = value ?: return
+      val data = item.group.data
+      val inspectionResult = item.variances.flatMap { it.inspectionResult }
+      val scopes = item.variances.map { it.scope }.toSet()
+      icon = when {
+        inspectionResult.any { it is VersionConflict } -> AllIcons.General.Warning
+        data is Dependency.Data.Module -> AllIcons.Nodes.Module
+        data is Dependency.Data.Artifact -> AllIcons.Nodes.PpLib
+        else -> throw UnsupportedOperationException()
       }
+      append(data.displayText)
+      val scopesText = scopes.singleOrNull() ?: ExternalSystemBundle.message("external.system.dependency.analyzer.scope.n", scopes.size)
+      append(" ($scopesText)", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
+  }
 
-    open fun setupName(externalProject: ExternalProjectItem, dependency: DependencyItem) {
-      if (Omitted in dependency.inspectionResult) {
-        append(dependency.displayText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      }
-      else {
-        append(dependency.displayText)
-      }
-    }
-
-    open fun setupScope(externalProject: ExternalProjectItem, dependency: DependencyItem) {
-      if (Omitted !in dependency.inspectionResult) {
-        append(" (${dependency.scope})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      }
-    }
-
+  private open inner class DependencyRenderer : ColoredListCellRenderer<DependencyItem>() {
     override fun customizeCellRenderer(
       list: JList<out DependencyItem>,
       value: DependencyItem?,
@@ -259,29 +288,36 @@ class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributo
       selected: Boolean,
       hasFocus: Boolean
     ) {
-      val externalProject = externalProjectProperty.get() ?: return
-      val dependency = value ?: return
-      setupIcon(externalProject, dependency)
-      setupName(externalProject, dependency)
-      setupScope(externalProject, dependency)
-    }
-  }
-
-  private inner class DependenciesRenderer : AbstractDependencyRenderer() {
-    override fun setupIcon(externalProject: ExternalProjectItem, dependency: DependencyItem) {
-      if (dependency.inspectionResult.any { it is VersionConflict }) {
-        icon = AllIcons.General.Warning
+      val item = value ?: return
+      val data = item.dependency.data
+      val inspectionResult = item.inspectionResult
+      icon = when {
+        inspectionResult.any { it is VersionConflict } -> AllIcons.General.Warning
+        data is Dependency.Data.Module -> AllIcons.Nodes.Module
+        data is Dependency.Data.Artifact -> AllIcons.Nodes.PpLib
+        else -> throw UnsupportedOperationException()
+      }
+      if (Omitted in inspectionResult) {
+        append(data.displayText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
       else {
-        super.setupIcon(externalProject, dependency)
+        append(data.displayText)
+        append(" (${item.scope})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
     }
   }
 
-  private inner class UsagesRenderer : AbstractDependencyRenderer() {
-    override fun setupScope(externalProject: ExternalProjectItem, dependency: DependencyItem) {
-      super.setupScope(externalProject, dependency)
-      val versionConflict = dependency.inspectionResult.filterIsInstance<VersionConflict>().firstOrNull()
+  private inner class UsagesRenderer : DependencyRenderer() {
+    override fun customizeCellRenderer(
+      list: JList<out DependencyItem>,
+      value: DependencyItem?,
+      index: Int,
+      selected: Boolean,
+      hasFocus: Boolean
+    ) {
+      super.customizeCellRenderer(list, value, index, selected, hasFocus)
+      val item = value ?: return
+      val versionConflict = item.inspectionResult.filterIsInstance<VersionConflict>().firstOrNull()
       if (versionConflict != null) {
         val version = versionConflict.conflicted.version
         val message = ExternalSystemBundle.message("external.system.dependency.analyzer.error.version.conflict", version)
@@ -301,11 +337,19 @@ class DependencyAnalyzerViewImpl(private val contributor: DependenciesContributo
     val displayText by lazy { contributor.getExternalProjectName(path) }
   }
 
-  private inner class DependencyItem(val externalProject: ExternalProjectItem, val dependency: Dependency) {
+  private inner class DependencyGroupItem(
+    val externalProject: ExternalProjectItem,
+    val group: DependencyGroup
+  ) {
+    val variances by lazy { group.variances.map { DependencyItem(externalProject, this, it) } }
+  }
+
+  private inner class DependencyItem(
+    val externalProject: ExternalProjectItem,
+    val group: DependencyGroupItem,
+    val dependency: Dependency
+  ) {
     val scope by lazy { contributor.getDependencyScope(externalProject.path, dependency) }
-    val dependencies by lazy { contributor.getDependencies(externalProject.path, dependency) }
-    val variances by lazy { contributor.getVariances(externalProject.path, dependency) }
     val inspectionResult by lazy { contributor.getInspectionResult(externalProject.path, dependency) }
-    val displayText by lazy { dependency.data.displayText }
   }
 }

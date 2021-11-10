@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency.Data.Artifact
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency.Data.Module
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.InspectionResult
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.InspectionResult.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
@@ -20,11 +19,11 @@ class DummyDependenciesContributor(private val project: Project) : DependenciesC
     project.basePath!! + "/module"
   )
 
-  override fun getRoot(externalProjectPath: String): Dependency {
+  private fun getRoot(externalProjectPath: String): Dependency {
     return Dependency(Module(PathUtil.getFileName(externalProjectPath)), null)
   }
 
-  override fun getDependencies(externalProjectPath: String, dependency: Dependency): List<Dependency> {
+  private fun getDependencies(dependency: Dependency): List<Dependency> {
     return when (dependency.data.id) {
       "parent1" -> listOf(
         Dependency(Artifact("org.hamcrest", "hamcrest", "2.2"), dependency),
@@ -69,99 +68,23 @@ class DummyDependenciesContributor(private val project: Project) : DependenciesC
     }
   }
 
-  override fun getVariances(externalProjectPath: String, dependency: Dependency): List<Dependency> {
-    val result = ArrayList<Dependency>()
-    val queue = ArrayDeque<List<Dependency.Data>>()
-    for (variance in getVariances(externalProjectPath, dependency.data)) {
-      queue.addLast(listOf(variance))
-    }
+  override fun getDependencyGroups(externalProjectPath: String): List<DependencyGroup> {
+    val dependencies = ArrayList<Dependency>()
+    val queue = ArrayDeque<Dependency>()
+    queue.add(getRoot(externalProjectPath))
     while (queue.isNotEmpty()) {
-      val path = queue.removeFirst()
-      val usages = getUsages(externalProjectPath, path.last())
-      for (usage in usages) {
-        queue.add(path + usage)
-      }
-      if (usages.isEmpty()) {
-        var variance: Dependency? = null
-        for (data in path.reversed()) {
-          variance = Dependency(data, variance)
-        }
-        result.add(variance!!)
+      val dependency = queue.removeFirst()
+      dependencies.add(dependency)
+      getDependencies(dependency)
+        .forEach(queue::addLast)
+    }
+    val groups = dependencies.groupBy {
+      when (val data = it.data) {
+        is Module -> data.name
+        is Artifact -> data.groupId + ":" + data.artifactId
       }
     }
-    return result
-  }
-
-  private fun getVariances(projectId: String, dependency: Dependency.Data): List<Dependency.Data> {
-    if (getExternalProjectName(projectId) == "module") {
-      when (dependency.id) {
-        "org.hamcrest:hamcrest:2.2", "org.hamcrest:hamcrest:1.3" ->
-          return listOf(
-            Artifact("org.hamcrest", "hamcrest", "2.2"),
-            Artifact("org.hamcrest", "hamcrest", "1.3")
-          )
-        "org.hamcrest:hamcrest-core:2.2", "org.hamcrest:hamcrest-core:1.3" ->
-          return listOf(
-            Artifact("org.hamcrest", "hamcrest-core", "2.2"),
-            Artifact("org.hamcrest", "hamcrest-core", "1.3")
-          )
-      }
-    }
-    return listOf(dependency)
-  }
-
-  private fun getUsages(projectId: String, dependency: Dependency.Data): List<Dependency.Data> {
-    return when (dependency.id) {
-      "parent1" -> when (getExternalProjectName(projectId)) {
-        "module" -> listOf(Module("module"))
-        else -> emptyList()
-      }
-      "parent2" -> when (getExternalProjectName(projectId)) {
-        "module" -> listOf(Module("module"))
-        else -> emptyList()
-      }
-      "org.hamcrest:hamcrest:2.2" -> listOf(
-        Module("parent1"),
-        Artifact("org.hamcrest", "hamcrest-core", "2.2")
-      )
-      "org.hamcrest:hamcrest:1.3" -> listOf(
-        Artifact("org.hamcrest", "hamcrest-core", "1.3")
-      )
-      "org.hamcrest:hamcrest-core:2.2" -> listOf(
-        Module("parent1")
-      )
-      "org.hamcrest:hamcrest-core:1.3" -> listOf(
-        Module("parent2")
-      )
-      "org.opentest4j:opentest4j:1.2.0" -> listOf(
-        Artifact("org.junit.jupiter", "junit-jupiter-api", "5.8.0"),
-        Artifact("org.junit.platform", "junit-platform-engine", "1.8.0")
-      )
-      "org.apiguardian:apiguardian-api:1.1.2" -> listOf(
-        Module("parent1"),
-        Artifact("org.junit.jupiter", "junit-jupiter-api", "5.8.0"),
-        Artifact("org.junit.jupiter", "junit-jupiter-engine", "5.8.0"),
-        Artifact("org.junit.platform", "junit-platform-commons", "1.8.0"),
-        Artifact("org.junit.platform", "junit-platform-engine", "1.8.0")
-      )
-      "org.junit.jupiter:junit-jupiter-api:5.8.0" -> listOf(
-        Module("parent1"),
-        Artifact("org.junit.jupiter", "junit-jupiter-engine", "5.8.0")
-      )
-      "org.junit.jupiter:junit-jupiter-engine:5.8.0" -> listOf(
-        Module("parent1")
-      )
-      "org.junit.platform:junit-platform-commons:1.8.0" -> listOf(
-        Module("parent1"),
-        Artifact("org.junit.jupiter", "junit-jupiter-api", "5.8.0"),
-        Artifact("org.junit.platform", "junit-platform-engine", "1.8.0")
-      )
-      "org.junit.platform:junit-platform-engine:1.8.0" -> listOf(
-        Module("parent1"),
-        Artifact("org.junit.jupiter", "junit-jupiter-engine", "5.8.0")
-      )
-      else -> emptyList()
-    }
+    return groups.values.map { DependencyGroup(it.first().data, it) }
   }
 
   override fun getDependencyScopes(externalProjectPath: String): List<String> {
