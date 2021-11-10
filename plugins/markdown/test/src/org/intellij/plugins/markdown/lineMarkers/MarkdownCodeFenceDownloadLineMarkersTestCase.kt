@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lineMarkers
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
@@ -68,8 +67,6 @@ abstract class MarkdownCodeFenceDownloadLineMarkersTestCase: BasePlatformTestCas
 
   protected open fun doTest(expectedCount: Int, predicate: (LineMarkerInfo<*>) -> Boolean) {
     configureContent()
-    // Workaround for org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention.SettingsListener
-    (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
     myFixture.doHighlighting()
     val allMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, myFixture.project)
     val markers = allMarkers.filter(predicate)

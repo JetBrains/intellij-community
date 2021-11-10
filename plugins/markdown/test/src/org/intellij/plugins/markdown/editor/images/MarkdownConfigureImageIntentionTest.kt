@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 
@@ -78,8 +77,6 @@ class MarkdownConfigureImageIntentionTest: BasePlatformTestCase() {
   }
 
   private fun doActualTest(shouldHaveIntentions: Boolean) {
-    // Workaround for org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention.SettingsListener
-    (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
     val intentions = myFixture.filterAvailableIntentions(MarkdownBundle.message("markdown.configure.image.text"))
     when {
       shouldHaveIntentions -> assertSize(1, intentions)

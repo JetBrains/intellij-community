@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 
@@ -54,8 +53,6 @@ class MarkdownConfigureImageLineMarkerTooltipTest: BasePlatformTestCase() {
 
   private fun doTest(content: String, expectedTooltips: Iterable<String>) {
     myFixture.configureByText(getTestFileName(), content)
-    // Workaround for org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention.SettingsListener
-    (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
     myFixture.doHighlighting()
     val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, myFixture.project)
     val tooltips = markers.mapNotNull { it.lineMarkerTooltip }.sorted()
