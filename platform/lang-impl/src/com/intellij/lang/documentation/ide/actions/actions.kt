@@ -53,7 +53,7 @@ internal fun documentationBrowser(dc: DataContext): DocumentationBrowser? {
   if (browser != null) {
     return browser as DocumentationBrowser
   }
-  return null
+  return documentationToolWindowUI(dc)?.browser
 }
 
 internal fun documentationToolWindowUI(dc: DataContext): DocumentationToolWindowUI? {
