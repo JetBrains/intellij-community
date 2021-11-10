@@ -81,7 +81,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         return
       }
 
-      Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
+      Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX, JvmArchitecture.x64)
       Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "", buildContext)
 
       if (jreDirectoryPath != null) {
