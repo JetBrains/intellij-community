@@ -110,7 +110,7 @@ class CourseManager internal constructor() : Disposable {
   fun openLesson(projectWhereToOpen: Project, lesson: Lesson?, forceStartLesson: Boolean = false) {
     LessonManager.instance.stopLesson()
     if (lesson == null) return //todo: remove null lessons
-    OpenLessonActivities.openLesson(projectWhereToOpen, lesson, forceStartLesson)
+    OpenLessonActivities.openLesson(OpenLessonParameters(projectWhereToOpen, lesson, forceStartLesson))
   }
 
   fun findLessonById(lessonId: String): Lesson? {
