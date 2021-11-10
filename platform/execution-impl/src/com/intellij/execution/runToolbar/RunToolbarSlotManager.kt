@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.MessageBusConnection
-import java.util.function.Function
 import javax.swing.SwingUtilities
 
 class RunToolbarSlotManager(val project: Project) {
@@ -93,7 +92,8 @@ class RunToolbarSlotManager(val project: Project) {
       field = value
 
       if(value) {
-        if(RunToolbarProcess.logNeeded) LOG.info("SLOT MANAGER settings: new on top ${getMoveNewOnTop()}; update by selected ${getUpdateMainBySelected()} RunToolbar" )
+        if (RunToolbarProcess.logNeeded) LOG.info(
+          "SM settings: new on top ${getMoveNewOnTop()}; update by selected ${getUpdateMainBySelected()} RunToolbar")
 
         val runConfigurations = runToolbarSettings.getRunConfigurations()
         runConfigurations.forEachIndexed { index, entry ->
@@ -103,7 +103,7 @@ class RunToolbarSlotManager(val project: Project) {
             addSlot().configuration = entry
           }
         }
-        if(RunToolbarProcess.logNeeded) LOG.info("SLOT MANAGER restoreRunConfigurations: $runConfigurations RunToolbar" )
+        if (RunToolbarProcess.logNeeded) LOG.info("SM restoreRunConfigurations: $runConfigurations RunToolbar")
 
         val con = project.messageBus.connect()
         connection = con
@@ -115,11 +115,11 @@ class RunToolbarSlotManager(val project: Project) {
             mainSlotData.environment?.let {
               val slot = addSlot()
               slot.configuration = settings
-              if(RunToolbarProcess.logNeeded) LOG.info("SLOT MANAGER runConfigurationSelected: $settings first slot added RunToolbar" )
+              if (RunToolbarProcess.logNeeded) LOG.info("SM runConfigurationSelected: $settings first slot added RunToolbar")
               moveToTop(slot.id)
             } ?: kotlin.run {
               mainSlotData.configuration = settings
-              if(RunToolbarProcess.logNeeded) LOG.info("SLOT MANAGER runConfigurationSelected: $settings change main configuration RunToolbar" )
+              if (RunToolbarProcess.logNeeded) LOG.info("SM runConfigurationSelected: $settings change main configuration RunToolbar")
               update()
             }
           }
@@ -168,7 +168,7 @@ class RunToolbarSlotManager(val project: Project) {
 
     val separator = " "
     val ids = dataIds.indices.mapNotNull { "${it+1}: ${slotsData[dataIds[it]]}" }.joinToString(", ")
-    LOG.info("SLOT MANAGER state: $state" +
+    LOG.info("SM state: $state" +
              "${separator}== slots: 0: ${mainSlotData}, $ids" +
              "${separator}== slotsData: ${slotsData.values} RunToolbar")
   }
@@ -222,7 +222,6 @@ class RunToolbarSlotManager(val project: Project) {
     set(value) {
       if (value == field) return
       field = value
-      if(RunToolbarProcess.logNeeded) LOG.info("MANAGER STATE $value RunToolbar" )
       traceState()
       stateListeners.forEach { it.stateChanged(value) }
     }
@@ -325,7 +324,7 @@ class RunToolbarSlotManager(val project: Project) {
       }
     }
 
-    if(RunToolbarProcess.logNeeded) LOG.info( "SLOT MANAGER process stopped: $executionId RunToolbar" )
+    if (RunToolbarProcess.logNeeded) LOG.info("SM process stopped: $executionId RunToolbar")
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
 
@@ -485,7 +484,7 @@ class ActiveProcesses {
     activeSlots = list
     list.mapNotNull { it.environment }.forEach{ environment ->
       environment.getRunToolbarProcess()?.let {
-        processes.computeIfAbsent(it, Function { mutableListOf() }).add(environment)
+        processes.computeIfAbsent(it) { mutableListOf() }.add(environment)
       }
     }
 
@@ -504,6 +503,7 @@ internal open class SlotDate(override val id: String = "slt${index++}") : RunToo
   }
 
   override var configuration: RunnerAndConfigurationSettings? = null
+    get() = environment?.runnerAndConfigurationSettings ?: field
 
   override var environment: ExecutionEnvironment? = null
     set(value) {
@@ -524,7 +524,7 @@ internal open class SlotDate(override val id: String = "slt${index++}") : RunToo
   }
 
   override fun toString(): String {
-    return "($id-${environment?.let { "$it(${it.executor.actionName} ${it.executionId})" } ?: configuration?.configuration?.name ?: "configuration null"})"
+    return "$id-${environment?.let { "$it [${it.executor.actionName} ${it.executionId}]" } ?: configuration?.configuration?.name ?: "configuration null"}"
   }
 }
 
