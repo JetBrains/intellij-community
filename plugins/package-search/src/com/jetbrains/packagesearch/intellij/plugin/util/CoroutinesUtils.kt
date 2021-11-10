@@ -120,6 +120,12 @@ internal suspend fun <T, R> Iterable<T>.parallelFlatMap(transform: suspend (T) -
     map { async { transform(it) } }.flatMap { it.await() }
 }
 
+internal suspend inline fun <K, V> Map<K, V>.parallelUpdatedKeys(keys: Iterable<K>, crossinline action: suspend (K) -> V): Map<K, V> {
+    val map = toMutableMap()
+    keys.parallelForEach { map[it] = action(it) }
+    return map
+}
+
 internal fun timer(each: Duration, emitAtStartup: Boolean = true) = flow {
     if (emitAtStartup) emit(Unit)
     while (true) {

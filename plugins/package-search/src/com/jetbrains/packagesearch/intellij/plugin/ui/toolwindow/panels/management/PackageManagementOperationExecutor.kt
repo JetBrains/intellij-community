@@ -27,7 +27,7 @@ internal open class PackageManagementOperationExecutor(
     private val operationExecutor = ModuleOperationExecutor()
 
     private suspend fun execute(operations: List<PackageSearchOperation<*>>) {
-        val failures = operations.asFlow()
+        val failures = operations.distinct().asFlow()
             .mapNotNull { operationExecutor.doOperation(it) }
             .flowOn(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement())
             .toList()

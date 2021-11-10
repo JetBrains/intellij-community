@@ -23,6 +23,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -50,6 +51,7 @@ internal suspend fun installedPackages(
     val usageInfoByDependency = mutableMapOf<UnifiedDependency, MutableList<DependencyUsageInfo>>()
     for (module in dependenciesByModule.keys) {
         dependenciesByModule[module]?.forEach { dependency ->
+            yield()
             // Skip packages we don't know the version for
             val rawVersion = dependency.coordinates.version
 
