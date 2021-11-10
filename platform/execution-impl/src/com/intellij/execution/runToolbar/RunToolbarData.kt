@@ -82,18 +82,15 @@ internal fun RunToolbarData.startWaitingForAProcess(project: Project, settings: 
 }
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {
-  this.dataContext.setConfiguration(value)
+  this.runToolbarData()?.configuration = value
 }
 
 internal fun DataContext.setConfiguration(value: RunnerAndConfigurationSettings?) {
-  val runToolbarData = runToolbarData()
-  runToolbarData?.clear()
-  runToolbarData?.configuration = value
+  runToolbarData()?.configuration = value
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
-  val runToolbarData = runToolbarData()
-  return runToolbarData?.environment?.runnerAndConfigurationSettings ?: runToolbarData?.configuration
+  return runToolbarData()?.configuration
 }
 
 internal fun AnActionEvent.arrowIcon(): Icon? {
