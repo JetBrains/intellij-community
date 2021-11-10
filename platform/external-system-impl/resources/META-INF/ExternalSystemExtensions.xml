@@ -138,7 +138,7 @@
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.openapi.externalSystem.service.project.UntrustedProjectNotificationProvider$TrustedListener"
-              topic="com.intellij.ide.impl.TrustChangeListener"
+              topic="com.intellij.ide.impl.TrustStateListener"
               activeInHeadlessMode="false" activeInTestMode="false" />
   </applicationListeners>
 </idea-plugin>
