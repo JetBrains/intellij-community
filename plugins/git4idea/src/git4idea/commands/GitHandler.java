@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -424,6 +425,11 @@ public abstract class GitHandler {
   }
 
   private void start() {
+    if (myProject != null && !TrustedProjects.isTrusted(myProject)) {
+      LOG.error(new AssertionError("Shouldn't be possible to run a Git command in the safe mode"));
+      return;
+    }
+
     if (isStarted()) {
       throw new IllegalStateException("The process has been already started");
     }
