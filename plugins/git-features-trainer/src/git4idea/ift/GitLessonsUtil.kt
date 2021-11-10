@@ -34,7 +34,6 @@ import com.intellij.vcs.log.util.findBranch
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
-import training.learn.lesson.LessonManager
 import training.ui.LearningUiManager
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
@@ -195,23 +194,21 @@ object GitLessonsUtil {
   }
 
   fun LessonContext.showWarningIfModalCommitEnabled() {
-    if (VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) return
     task {
       val step = stateCheck {
         VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
       }
-      before {
-        val callbackId = LearningUiManager.addCallback {
-          CommitModeManager.setCommitFromLocalChanges(project, true)
-          step.complete(true)
-        }
-        LessonManager.instance.setWarningNotification(TaskContext.RestoreNotification(
-          GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
-                                   action("ShowSettings"),
-                                   strong(VcsBundle.message("version.control.main.configurable.name")),
-                                   strong(VcsBundle.message("commit.dialog.configurable")),
-                                   strong(VcsBundle.message("settings.commit.without.dialog")),
-                                   callbackId), callback = {}))
+      val callbackId = LearningUiManager.addCallback {
+        CommitModeManager.setCommitFromLocalChanges(project, true)
+        step.complete(true)
+      }
+      showWarning(GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
+                                           action("ShowSettings"),
+                                           strong(VcsBundle.message("version.control.main.configurable.name")),
+                                           strong(VcsBundle.message("commit.dialog.configurable")),
+                                           strong(VcsBundle.message("settings.commit.without.dialog")),
+                                           callbackId)) {
+        !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
       }
     }
   }
