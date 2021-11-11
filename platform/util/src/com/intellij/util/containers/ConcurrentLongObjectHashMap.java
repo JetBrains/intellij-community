@@ -234,7 +234,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
   static <V> Node<V> tabAt(Node<V>[] tab, int i) {
     try {
-      Object o = Unsafe.getObjectVolatile((Object)tab, ((long)i << ASHIFT) + ABASE);
+      Object o = Unsafe.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
       return (Node<V>)o;
     }
     catch (Throwable throwable) {
@@ -245,7 +245,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
   static <V> boolean casTabAt(Node<V>[] tab, int i,
                               Node<V> c, Node<V> v) {
     try {
-      return (boolean)Unsafe.compareAndSwapObject((Object)tab, ((long)i << ASHIFT) + ABASE, (Object)c, (Object)v);
+      return Unsafe.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, c, v);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
@@ -254,7 +254,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
   static <V> void setTabAt(Node<V>[] tab, int i, Node<V> v) {
     try {
-      Unsafe.putObjectVolatile((Object)tab, ((long)i << ASHIFT) + ABASE, (Object)v);
+      Unsafe.putObjectVolatile(tab, ((long)i << ASHIFT) + ABASE, v);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
