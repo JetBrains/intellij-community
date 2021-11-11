@@ -38,6 +38,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals(prefix + "list [item".length(), extracted.textOffsetToFile("list item".length()));
   }
 
+  public void testMarkdownUrlLink() {
+    TextContent extracted = extractText("a.md", "go to [http://localhost](http://localhost) and validate", 3);
+    assertEquals("go to http://localhost and validate", unknownOffsets(extracted));
+  }
+
   public void testMarkdownImage() {
     TextContent extracted = extractText("a.md", "[Before ![AltText](http://www.google.com.au/images/nav_logo7.png) after](http://google.com.au/)", 3);
     assertEquals("Before  after", unknownOffsets(extracted));
