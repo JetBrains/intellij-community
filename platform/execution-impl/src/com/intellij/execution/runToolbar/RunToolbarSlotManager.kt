@@ -246,6 +246,29 @@ class RunToolbarSlotManager(val project: Project) {
     return state
   }
 
+  private fun getAppropriateSettings(env: ExecutionEnvironment): Iterable<SlotDate> {
+    val sortedSlots = mutableListOf<SlotDate>()
+    sortedSlots.add(mainSlotData)
+    sortedSlots.addAll(dataIds.mapNotNull { slotsData[it] }.toList())
+
+    return sortedSlots.filter { it.configuration == env.runnerAndConfigurationSettings }
+  }
+
+  internal fun processNotStarted(env: ExecutionEnvironment) {
+    val config = env.runnerAndConfigurationSettings ?: return
+
+    val appropriateSettings = getAppropriateSettings(env)
+    val emptySlotsWithConfiguration = appropriateSettings.filter { it.environment == null }
+
+    emptySlotsWithConfiguration.map { it.waitingForAProcesses }.firstOrNull {
+      it.isWaitingForASingleProcess(config, env.executor.id)
+    }?.clear() ?: run {
+      slotsData.values.filter { it.configuration?.configuration is CompoundRunConfiguration }.firstOrNull { slotsData ->
+        slotsData.waitingForAProcesses.isWaitingForASubProcess(config, env.executor.id)
+      }?.clear()
+    }
+  }
+
   internal fun processStarted(env: ExecutionEnvironment) {
     addNewProcess(env)
     SwingUtilities.invokeLater {
@@ -254,11 +277,7 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   private fun addNewProcess(env: ExecutionEnvironment) {
-    val sortedSlots = mutableListOf<SlotDate>()
-    sortedSlots.add(mainSlotData)
-    sortedSlots.addAll(dataIds.mapNotNull { slotsData[it] }.toList())
-
-    val appropriateSettings = sortedSlots.filter { it.configuration == env.runnerAndConfigurationSettings }
+    val appropriateSettings = getAppropriateSettings(env)
     val emptySlotsWithConfiguration = appropriateSettings.filter { it.environment == null }
 
     var newSlot = false
