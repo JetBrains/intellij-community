@@ -15,7 +15,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -154,11 +153,6 @@ public final class ExperimentalUI {
       if (is("ide.experimental.ui.inter.font") && SystemInfo.isJetBrainsJvm) {
         installInterFont();
       }
-
-      setUIProperty("StatusBar.widgetInsets", JBUI.insets(6, 8), defaults);
-    }
-    else {
-      defaults.remove("StatusBar.widgetInsets");
     }
   }
 

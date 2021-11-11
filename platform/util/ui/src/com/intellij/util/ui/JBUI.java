@@ -705,15 +705,11 @@ public class JBUI {
         Color PRESSED_BACKGROUND = JBColor.namedColor("StatusBar.Widget.pressedBackground", ActionButton.pressedBackground());
 
         static Border iconBorder() {
-          return new JBEmptyBorder(insets("StatusBar.Widget.insets", insets(0, 4)));
+          return new JBEmptyBorder(insets("StatusBar.Widget.widgetInsets", insets(0, 4)));
         }
 
         static Border border() {
-          return new JBEmptyBorder(insets("StatusBar.Widget.insets", insets(0, 6)));
-        }
-
-        static Insets floatingBorderInsets() {
-          return insets("StatusBar.Breadcrumbs.floatingToolbarInsets", emptyInsets());
+          return new JBEmptyBorder(insets("StatusBar.Widget.widgetInsets", insets(0, 6)));
         }
       }
 
@@ -729,6 +725,10 @@ public class JBUI {
         Color FLOATING_BACKGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.floatingBackground", List.BACKGROUND);
         Color FLOATING_FOREGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.floatingForeground", UIUtil.getLabelForeground());
         JBValue CHEVRON_INSET = new JBValue.UIInteger("StatusBar.Breadcrumbs.chevronInset", 0);
+
+        static Insets floatingBorderInsets() {
+          return insets("StatusBar.Breadcrumbs.floatingToolbarInsets", emptyInsets());
+        }
       }
     }
 

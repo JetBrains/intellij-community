@@ -220,7 +220,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
           myPanel.getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
             Dimension size = myPanel.getPreferredSize();
             if (ExperimentalUI.isNewUI()) {
-              JBInsets.addTo(size, JBUI.CurrentTheme.StatusBar.Widget.floatingBorderInsets());
+              JBInsets.addTo(size, JBUI.CurrentTheme.StatusBar.Breadcrumbs.floatingBorderInsets());
             }
             hint.setSize(size);
             hint.setLocation(relativePoint);

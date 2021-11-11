@@ -869,7 +869,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       panel.setOpaque(true);
 
       if (ExperimentalUI.isNewUI()) {
-        panel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.StatusBar.Widget.floatingBorderInsets()));
+        panel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.StatusBar.Breadcrumbs.floatingBorderInsets()));
         panel.setBackground(JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_BACKGROUND);
       }
       else {

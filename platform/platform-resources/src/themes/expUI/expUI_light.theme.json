@@ -239,7 +239,8 @@
         "foreground": "Grey7",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
-        "pressedBackground": "Grey10"
+        "pressedBackground": "Grey10",
+        "widgetInsets": "6,8,6,8"
       },
       "Breadcrumbs": {
         "foreground": "Grey7",
