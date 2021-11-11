@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.Splitter;
@@ -42,14 +43,11 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBRectangle;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -277,6 +275,8 @@ public final class EditorWindow {
       else {
         parentSplitter.setSecondComponent(otherComponent);
       }
+
+      normalizeProportionsIfNeed(myOwner.getCurrentWindow().myPanel);
     }
     else if (parent instanceof EditorsSplitters) {
       Component currentFocusComponent = getGlobalInstance().getFocusedDescendantFor(parent);
@@ -622,6 +622,7 @@ public final class EditorWindow {
       else {
         splitter.setFirstComponent(res.myPanel);
       }
+      normalizeProportionsIfNeed(myPanel);
       // open only selected file in the new splitter instead of opening all tabs
       VirtualFile file = selectedEditor.getFile();
       VirtualFile nextFile = virtualFile == null ? file : virtualFile;
@@ -649,6 +650,34 @@ public final class EditorWindow {
       return res;
     }
     return null;
+  }
+
+  private void normalizeProportionsIfNeed(JComponent comp) {
+    if (!AdvancedSettings.getBoolean("editor.normalize.splits")) return;
+
+    Boolean isVertical = null;
+    if (comp instanceof Splitter) {
+      isVertical = ((Splitter)comp).isVertical();
+    } else if (comp.getComponents().length > 0 && comp.getComponents()[0] instanceof Splitter) {
+      isVertical = ((Splitter)comp.getComponents()[0]).isVertical();
+    }
+
+    List<Splitter> hierarchyStack = new SmartList<>();
+    while (comp != getManager().getMainSplitters() && comp != null) {
+      Container parent = comp.getParent();
+      if (parent instanceof Splitter) {
+        if (isVertical == null) { //Stack orientation (row or column) is not yet defined
+          isVertical = ((Splitter)parent).isVertical();
+        } else if (isVertical != ((Splitter)parent).isVertical()) {
+          break;
+        }
+        hierarchyStack.add((Splitter)parent);
+      }
+      comp = (JComponent)parent;
+    }
+    for (int i = 0; i < hierarchyStack.size(); i++) {
+      hierarchyStack.get(i).setProportion(1f / (2 + i));
+    }
   }
 
   /**
@@ -1104,6 +1133,7 @@ public final class EditorWindow {
     if (setCurrent) {
       myOwner.setCurrentWindow(this, false);
     }
+    normalizeProportionsIfNeed(myPanel);
   }
 
   private void processSiblingEditor(@NotNull EditorWithProviderComposite siblingEditor,
