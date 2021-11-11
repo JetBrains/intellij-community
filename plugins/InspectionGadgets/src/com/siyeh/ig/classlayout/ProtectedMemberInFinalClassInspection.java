@@ -74,26 +74,33 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
                          @Nullable Runnable refreshViews) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         for (CommonProblemDescriptor descriptor : descriptors) {
-          final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
-          final PsiElement parent = element.getParent();
-          final PsiElement grandParent = parent.getParent();
-          if (!(grandParent instanceof PsiMember)) {
-            return;
-          }
-          final PsiMember member = (PsiMember)grandParent;
-          final PsiModifierList modifierList = member.getModifierList();
-          if (modifierList == null) {
-            return;
-          }
-          final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-          modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
-          final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
-          final boolean canBePrivate = search.forEach(reference -> {
-            return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(), null, null);
-          });
-          modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
+          performFix((ProblemDescriptor)descriptor);
         }
       }, InspectionGadgetsBundle.message("weaken.visibility.quickfix"), true, project);
+    }
+
+    @Override
+    public boolean applyFixForPreview(@NotNull Project project,
+                                      @NotNull ProblemDescriptor previewDescriptor) {
+      performFix(previewDescriptor);
+      return true;
+    }
+
+    private static void performFix(ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMember)) return;
+      final PsiMember member = (PsiMember)grandParent;
+      final PsiModifierList modifierList = member.getModifierList();
+      if (modifierList == null) return;
+      final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
+      modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
+      final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
+      final boolean canBePrivate = search.forEach(reference -> {
+        return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(), null, null);
+      });
+      modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
     }
   }
 
