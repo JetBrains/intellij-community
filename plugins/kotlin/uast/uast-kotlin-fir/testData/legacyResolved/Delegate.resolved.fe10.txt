@@ -2,7 +2,7 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:lazy) -> USimpleNameReferenceExpression (identifier = lazy) -> PsiMethod:lazy: lazy
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to KtUltraLightMethodForSourceDeclaration:MyColor) -> USimpleNameReferenceExpression (identifier = MyColor) -> KtUltraLightMethodForSourceDeclaration:MyColor: MyColor
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = MyColor) -> Kotlin_Light_Method: MyColor
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:lazy) -> USimpleNameReferenceExpression (identifier = lazy) -> PsiMethod:lazy: lazy
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to KtUltraLightMethodForSourceDeclaration:MyColor) -> USimpleNameReferenceExpression (identifier = MyColor) -> KtUltraLightMethodForSourceDeclaration:MyColor: MyColor
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to KtUltraLightMethodForSourceDeclaration:MyColor) -> USimpleNameReferenceExpression (identifier = MyColor) -> KtUltraLightMethodForSourceDeclaration:MyColor: MyColor
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = MyColor) -> Kotlin_Light_Method: MyColor
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = MyColor) -> Kotlin_Light_Method: MyColor

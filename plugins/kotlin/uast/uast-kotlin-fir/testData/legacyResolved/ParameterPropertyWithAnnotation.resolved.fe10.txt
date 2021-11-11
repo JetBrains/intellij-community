@@ -1,8 +1,8 @@
-UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> KtUltraLightClass:annotation class MyAnnotation: MyAnnotation
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:annotation class MyAnnotation: MyAnnotation
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
-UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> KtUltraLightClass:annotation class MyAnnotation: MyAnnotation
-UTypeReferenceExpression (name = MyAnnotation2) -> USimpleNameReferenceExpression (identifier = MyAnnotation2) -> KtUltraLightClass:annotation class MyAnnotation2: MyAnnotation2
-UTypeReferenceExpression (name = MyAnnotation3) -> USimpleNameReferenceExpression (identifier = MyAnnotation3) -> KtUltraLightClass:annotation class MyAnnotation3: MyAnnotation3
-UTypeReferenceExpression (name = MyAnnotation4) -> USimpleNameReferenceExpression (identifier = MyAnnotation4) -> KtUltraLightClass:annotation class MyAnnotation4: MyAnnotation4
-UTypeReferenceExpression (name = MyAnnotation5) -> USimpleNameReferenceExpression (identifier = MyAnnotation5) -> KtUltraLightClass:annotation class MyAnnotation5: MyAnnotation5
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:annotation class MyAnnotation: MyAnnotation
+UTypeReferenceExpression (name = MyAnnotation2) -> USimpleNameReferenceExpression (identifier = MyAnnotation2) -> Kotlin_Light_Class:annotation class MyAnnotation2: MyAnnotation2
+UTypeReferenceExpression (name = MyAnnotation3) -> USimpleNameReferenceExpression (identifier = MyAnnotation3) -> Kotlin_Light_Class:annotation class MyAnnotation3: MyAnnotation3
+UTypeReferenceExpression (name = MyAnnotation4) -> USimpleNameReferenceExpression (identifier = MyAnnotation4) -> Kotlin_Light_Class:annotation class MyAnnotation4: MyAnnotation4
+UTypeReferenceExpression (name = MyAnnotation5) -> USimpleNameReferenceExpression (identifier = MyAnnotation5) -> Kotlin_Light_Class:annotation class MyAnnotation5: MyAnnotation5
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer

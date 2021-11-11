@@ -1,11 +1,11 @@
-UTypeReferenceExpression (name = Some<T>) -> USimpleNameReferenceExpression (identifier = Some) -> KtUltraLightClass:class Some<T : Some<T>>: Some
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+UTypeReferenceExpression (name = Some<T>) -> USimpleNameReferenceExpression (identifier = Some) -> Kotlin_Light_Class:class Some<T : Some<T>>: Some
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = java.util.List<? extends java.lang.Object>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
 UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = list) -> Light Parameter: list
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = list) -> Kotlin_Light_Value_Parameter: list
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = filterIsInstance) -> FUN: filterIsInstance
-    UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = Some) -> KtUltraLightClass:class Some<T : Some<T>>: Some
+    UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = Some) -> Kotlin_Light_Class:class Some<T : Some<T>>: Some
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = mapTo) -> FUN: mapTo
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = mutableSetOf) -> FUN: mutableSetOf
