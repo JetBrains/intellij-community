@@ -313,6 +313,26 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
         runTest("testData/handlers/basic/TypeParameter.kt");
     }
 
+    @TestMetadata("UnstableSmartCast.kt")
+    public void testUnstableSmartCast() throws Exception {
+        runTest("testData/handlers/basic/UnstableSmartCast.kt");
+    }
+
+    @TestMetadata("UnstableSmartCast_notDenotable.kt")
+    public void testUnstableSmartCast_notDenotable() throws Exception {
+        runTest("testData/handlers/basic/UnstableSmartCast_notDenotable.kt");
+    }
+
+    @TestMetadata("UnstableSmartCast_typeAlias.kt")
+    public void testUnstableSmartCast_typeAlias() throws Exception {
+        runTest("testData/handlers/basic/UnstableSmartCast_typeAlias.kt");
+    }
+
+    @TestMetadata("UnstableSmartCast_typeParams.kt")
+    public void testUnstableSmartCast_typeParams() throws Exception {
+        runTest("testData/handlers/basic/UnstableSmartCast_typeParams.kt");
+    }
+
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/basic/annotation")
     public static class Annotation extends AbstractBasicCompletionHandlerTest {
