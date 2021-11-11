@@ -187,6 +187,11 @@
       "foreground": "Grey13"
     },
 
+    "MemoryIndicator": {
+      "allocatedBackground": "Grey10",
+      "usedBackground": "#B7CEFA75"
+    },
+
     "MenuItem": {
       "background": "Grey2",
       "foreground": "Grey13"
@@ -245,8 +250,6 @@
         "chevronInset": "2"
       }
     },
-
-    "Menu.selectionBackground": "#FF00FF",
 
     "ToolTip":{
       "background": "Grey2",
