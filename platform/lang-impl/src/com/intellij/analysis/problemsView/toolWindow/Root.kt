@@ -18,6 +18,10 @@ abstract class Root(val panel: ProblemsViewPanel)
 
   private val nodes = mutableMapOf<VirtualFile, FileNode>()
 
+  private val nodesCache = ProblemsNodeCache<Pair<FileNode, Problem>> {
+    ProblemNode(it.first, it.first.file, it.second)
+  }
+
   override fun dispose() = Unit
 
   override fun getLeafState() = LeafState.NEVER
@@ -42,9 +46,9 @@ abstract class Root(val panel: ProblemsViewPanel)
     return getChildren(node)
   }
 
-  open fun getChildren(node: FileNode): Collection<Node> {
-    return getFileProblems(node.file).map { ProblemNode(node, node.file, it) }
-  }
+  open fun getChildren(node: FileNode): Collection<Node> = getNodesForProblems(getFileProblems(node.file).map { Pair(node, it) })
+
+  protected fun getNodesForProblems(fileProblems: List<Pair<FileNode, Problem>>): List<Node> = nodesCache.getNodes(fileProblems)
 
   override fun problemAppeared(problem: Problem) = when (problem) {
     !is FileProblem -> structureChanged()
