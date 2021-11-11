@@ -506,8 +506,8 @@ public class MavenGeneralSettings implements Cloneable {
     needUpdate = needUpdate || !Objects.equals(nonRecursive, nonRecursiveConfig);
     nonRecursive = nonRecursiveConfig;
 
-    String threadsConfig = StringUtil.notNullize(config.getOptionValue(THREADS));
-    needUpdate = needUpdate || !Objects.equals(StringUtil.notNullize(threads), threadsConfig);
+    String threadsConfig = StringUtil.nullize(config.getOptionValue(THREADS));
+    needUpdate = needUpdate || !Objects.equals(StringUtil.nullize(threads), threadsConfig);
     threads = threadsConfig;
 
     if (needUpdate) {
