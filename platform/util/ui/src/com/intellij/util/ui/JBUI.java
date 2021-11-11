@@ -705,11 +705,11 @@ public class JBUI {
         Color PRESSED_BACKGROUND = JBColor.namedColor("StatusBar.Widget.pressedBackground", ActionButton.pressedBackground());
 
         static Border iconBorder() {
-          return new JBEmptyBorder(insets("StatusBar.widgetInsets", insets(0, 4)));
+          return new JBEmptyBorder(insets("StatusBar.Widget.insets", insets(0, 4)));
         }
 
         static Border border() {
-          return new JBEmptyBorder(insets("StatusBar.widgetInsets", insets(0, 6)));
+          return new JBEmptyBorder(insets("StatusBar.Widget.insets", insets(0, 6)));
         }
 
         static Insets floatingBorderInsets() {
