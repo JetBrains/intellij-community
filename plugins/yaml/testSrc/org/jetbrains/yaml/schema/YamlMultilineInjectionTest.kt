@@ -3,6 +3,7 @@ package org.jetbrains.yaml.schema
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.json.codeinsight.JsonStandardComplianceInspection
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.IdeActions
@@ -354,6 +355,29 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
             }
           }
           
+    """.trimIndent())
+  }
+  
+  fun testInjectedJsonBlockQuickfix() {
+    myFixture.enableInspections(JsonStandardComplianceInspection::class.java)
+    myFixture.configureByText("test.yaml", """
+    myyaml:
+      #language=JSON
+      json: |
+        ab<caret>c: 1
+
+    """.trimIndent())
+    
+    myFixture.doHighlighting()
+    myInjectionFixture.assertInjectedLangAtCaret("JSON")
+    val wrapQuickfix = myFixture.getAvailableIntention("Wrap with double quotes")!!
+    myFixture.launchAction(wrapQuickfix)
+    myFixture.checkResult("""
+    myyaml:
+      #language=JSON
+      json: |
+        "abc": 1
+  
     """.trimIndent())
   }
   
