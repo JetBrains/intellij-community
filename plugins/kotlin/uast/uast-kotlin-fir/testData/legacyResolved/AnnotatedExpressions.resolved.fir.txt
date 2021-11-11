@@ -1,29 +1,29 @@
 UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:foo) -> USimpleNameReferenceExpression (identifier = foo) -> KtUltraLightMethodForSourceDeclaration:foo: foo
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: foo
     UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
     UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
     UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = b) -> LightVariableBuilder:b: b
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> LightVariableBuilder:b: b
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Variable: b
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
-    UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
+    UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> FUN: compareTo
-    UIfExpression -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
-    UIfExpression -> USimpleNameReferenceExpression (identifier = b) -> LightVariableBuilder:b: b
-    ULocalVariable (name = varae507364) -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
+    UIfExpression -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
+    UIfExpression -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
+    ULocalVariable (name = varae507364) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
-    ULocalVariable (name = varae507364) -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
+    ULocalVariable (name = varae507364) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
-    UIfExpression -> USimpleNameReferenceExpression (identifier = b) -> LightVariableBuilder:b: b
+    UIfExpression -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
 UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Light Parameter: str
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Kotlin_Light_Value_Parameter: str
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isBlank) -> FUN: isBlank
 UBinaryExpression (operator = !=) -> UQualifiedReferenceExpression -> null: null
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Light Parameter: str
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Kotlin_Light_Value_Parameter: str
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isNotEmpty) -> FUN: isNotEmpty
 UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> null: null

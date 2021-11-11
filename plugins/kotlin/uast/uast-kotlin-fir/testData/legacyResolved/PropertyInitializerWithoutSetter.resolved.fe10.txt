@@ -1,1 +1,1 @@
-UReturnExpression -> USimpleNameReferenceExpression (identifier = field) -> KtUltraLightMethodForSourceDeclaration:getWithoutSetter: getWithoutSetter
+UReturnExpression -> USimpleNameReferenceExpression (identifier = field) -> Kotlin_Light_Method: getWithoutSetter

@@ -1,17 +1,17 @@
 UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> KtUltraLightClass:annotation class Annotation(vararg val strings: String): Annotation
-UTypeReferenceExpression (name = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> KtUltraLightClass:annotation class Annotation(vararg val strings: String): Annotation
-UTypeReferenceExpression (name = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> KtUltraLightClass:annotation class AnnotationArray(vararg val value: Annotation): AnnotationArray
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = Annotation) -> KtUltraLightClass:annotation class Annotation(vararg val strings: String): Annotation
-UTypeReferenceExpression (name = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> KtUltraLightClass:annotation class AnnotationArray(vararg val value: Annotation): AnnotationArray
-null -> USimpleNameReferenceExpression (identifier = value) -> KtUltraLightMethodForSourceDeclaration:value: value
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = Annotation) -> KtUltraLightClass:annotation class Annotation(vararg val strings: String): Annotation
-UTypeReferenceExpression (name = Annotation[]) -> USimpleNameReferenceExpression (identifier = Annotation) -> KtUltraLightClass:annotation class Annotation(vararg val strings: String): Annotation
-UTypeReferenceExpression (name = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> KtUltraLightClass:annotation class AnnotationArray(vararg val value: Annotation): AnnotationArray
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Annotation) -> KtUltraLightClass:annotation class Annotation(vararg val strings: String): Annotation
-null -> USimpleNameReferenceExpression (identifier = strings) -> KtUltraLightMethodForSourceDeclaration:strings: strings
+UTypeReferenceExpression (name = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:annotation class Annotation(vararg val strings: String): Annotation
+UTypeReferenceExpression (name = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:annotation class Annotation(vararg val strings: String): Annotation
+UTypeReferenceExpression (name = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> Kotlin_Light_Class:annotation class AnnotationArray(vararg val value: Annotation): AnnotationArray
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:annotation class Annotation(vararg val strings: String): Annotation
+UTypeReferenceExpression (name = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> Kotlin_Light_Class:annotation class AnnotationArray(vararg val value: Annotation): AnnotationArray
+null -> USimpleNameReferenceExpression (identifier = value) -> Kotlin_Light_Method: value
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:annotation class Annotation(vararg val strings: String): Annotation
+UTypeReferenceExpression (name = Annotation[]) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:annotation class Annotation(vararg val strings: String): Annotation
+UTypeReferenceExpression (name = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> Kotlin_Light_Class:annotation class AnnotationArray(vararg val value: Annotation): AnnotationArray
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:annotation class Annotation(vararg val strings: String): Annotation
+null -> USimpleNameReferenceExpression (identifier = strings) -> Kotlin_Light_Method: strings
 UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = arrayOf) -> null: null
-UTypeReferenceExpression (name = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> KtUltraLightClass:annotation class AnnotationArray(vararg val value: Annotation): AnnotationArray
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Annotation) -> KtUltraLightClass:annotation class Annotation(vararg val strings: String): Annotation
-null -> USimpleNameReferenceExpression (identifier = strings) -> KtUltraLightMethodForSourceDeclaration:strings: strings
+UTypeReferenceExpression (name = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> Kotlin_Light_Class:annotation class AnnotationArray(vararg val value: Annotation): AnnotationArray
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:annotation class Annotation(vararg val strings: String): Annotation
+null -> USimpleNameReferenceExpression (identifier = strings) -> Kotlin_Light_Method: strings
 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 2)) -> null:
