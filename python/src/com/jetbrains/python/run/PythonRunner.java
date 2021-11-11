@@ -53,7 +53,7 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
     execute(state, () -> {
       try {
-        boolean useTargetsAPI = Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations");
+        boolean useTargetsAPI = Experiments.getInstance().isFeatureEnabled("python.use.targets.api");
 
         ExecutionResult executionResult;
         RunProfile profile = env.getRunProfile();

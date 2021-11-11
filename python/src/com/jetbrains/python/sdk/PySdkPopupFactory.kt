@@ -74,14 +74,14 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     }
 
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
-    if (Experiments.getInstance().isFeatureEnabled("add.python.interpreter.dialog.on.targets")) {
+    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
       val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
       addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { switchToSdk(it, currentSdk) })
       group.add(addNewInterpreterPopupGroup)
       group.addSeparator()
     }
     group.add(InterpreterSettingsAction())
-    if (!Experiments.getInstance().isFeatureEnabled("add.python.interpreter.dialog.on.targets")) {
+    if (!Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
       group.add(AddInterpreterAction(currentSdk))
     }
 

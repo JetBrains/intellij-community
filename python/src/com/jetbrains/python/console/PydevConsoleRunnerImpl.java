@@ -696,7 +696,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private void initAndRun(@NotNull Sdk sdk) throws ExecutionException {
     // Create Server process
     CommandLineProcess commandLineProcess;
-    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")) {
+    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
       commandLineProcess = createProcessUsingTargetsAPI(sdk);
     }
     else {

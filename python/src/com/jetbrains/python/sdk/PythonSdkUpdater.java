@@ -140,7 +140,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         Trigger.LOG.debug("Starting SDK refresh for '" + mySdkKey + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")) {
+        if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
           PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(sdk, myProject);
           String version = targetsFacade.getInterpreterVersion(indicator);
           commitSdkVersionIfChanged(sdk, version);
