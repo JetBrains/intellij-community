@@ -392,7 +392,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (!JavaPsiPatternUtil.isTotalForType(((PsiPattern)label), selectorType)) return true;
     int branchCount = SwitchUtils.calculateBranchCount(switchBlock);
     // it's a compilation error if switch contains both default and total pattern, so no additional suggestion is needed
-    return branchCount < 0 ? branchCount + 1 != -1 : branchCount != 1;
+    return branchCount > 1;
   }
 
   private void reportConstants(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
