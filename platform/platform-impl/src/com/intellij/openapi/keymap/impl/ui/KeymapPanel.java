@@ -58,10 +58,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.updateAllToolbarsImmediately;
 
@@ -636,15 +634,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group.addSeparator();
 
-    for (Shortcut shortcut : selectedKeymap.getShortcuts(actionId)) {
+    Shortcut[] shortcuts = selectedKeymap.getShortcuts(actionId);
+    for (Shortcut shortcut : shortcuts) {
       group.add(new RemoveShortcutAction(shortcut, selectedKeymap, actionId));
     }
 
-    for (final String abbreviation : AbbreviationManager.getInstance().getAbbreviations(actionId)) {
+    Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
+    for (final String abbreviation : abbreviations) {
       group.addAction(new RemoveAbbreviationAction(abbreviation, actionId));
     }
 
-    if (myManager.canResetActionInKeymap(selectedKeymap, actionId)) {
+    if (myManager.canResetActionInKeymap(selectedKeymap, actionId) || shortcuts.length + abbreviations.size() > 2) {
       group.add(new Separator());
       group.add(new ResetShortcutsAction(selectedKeymap, actionId));
     }
@@ -961,7 +961,18 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-      myManager.resetActionInKeymap(mySelectedKeymap, myActionId);
+      if (myManager.canResetActionInKeymap(mySelectedKeymap, myActionId)) {
+        myManager.resetActionInKeymap(mySelectedKeymap, myActionId);
+      }
+      else {
+        if (mySelectedKeymap.getShortcuts(myActionId).length > 0) {
+          myManager.getMutableKeymap(mySelectedKeymap).removeAllActionShortcuts(myActionId);
+          currentKeymapChanged();
+        }
+      }
+
+      AbbreviationManager.getInstance().removeAllAbbreviations(myActionId);
+
       repaintLists();
     }
   }
