@@ -7,11 +7,13 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -448,7 +450,9 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
   private void invokeMoveToInner() {
     saveRefactoringSettings();
-    final PsiClass targetClass = findTargetClass();
+    final String message = JavaRefactoringBundle.message("move.class.to.inner.find.target.class.progress");
+    final PsiClass targetClass = ProgressManager.getInstance().
+      runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> findTargetClass()), message, true, myProject);
     if (targetClass == null) return;
     final PsiClass[] classesToMove = new PsiClass[myElementsToMove.length];
     for (int i = 0; i < myElementsToMove.length; i++) {
