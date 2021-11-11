@@ -711,6 +711,10 @@ public class JBUI {
         static Border border() {
           return new JBEmptyBorder(insets("StatusBar.widgetInsets", insets(0, 6)));
         }
+
+        static Insets floatingBorderInsets() {
+          return insets("StatusBar.Breadcrumbs.floatingToolbarInsets", emptyInsets());
+        }
       }
 
       public interface Breadcrumbs {
