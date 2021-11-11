@@ -679,7 +679,10 @@ public final class PluginManagerCore {
       // add all required dependencies
       List<IdeaPluginDescriptorImpl> nonOptionalDependencies = new ArrayList<>();
       for (IdeaPluginDescriptorImpl descriptor : explicitlyEnabled) {
-        nonOptionalDependencies.addAll(builder.getModuleGraph().getDependencies(descriptor));
+        processAllNonOptionalDependencies(descriptor, dependency -> {
+          nonOptionalDependencies.add(dependency);
+          return FileVisitResult.CONTINUE;
+        });
       }
 
       explicitlyEnabled.addAll(nonOptionalDependencies);
