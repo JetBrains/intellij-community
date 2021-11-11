@@ -3,6 +3,7 @@ package com.intellij.ide.navigationToolbar.experimental
 
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager
 import com.intellij.openapi.Disposable
@@ -56,17 +57,22 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
 
   private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(project)
   private val runWidgetListener = RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
-    NewToolbarRootPaneExtension.getInstance(project)?.revalidate()
+    doLayoutAndRepaint()
   }
 
   init {
     Disposer.register(project, this)
 
-    project.messageBus
+    val connection = project.messageBus
       .connect(this)
-      .subscribe(NewToolbarPaneListener.TOPIC, NewToolbarPaneListener {
-        NewToolbarRootPaneExtension.getInstance(project)?.revalidate()
-      })
+
+    connection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      doLayoutAndRepaint()
+    })
+
+    connection.subscribe(NewToolbarPaneListener.TOPIC, NewToolbarPaneListener {
+      doLayoutAndRepaint()
+    })
 
     runWidgetAvailabilityManager.addListener(runWidgetListener)
   }
@@ -81,7 +87,7 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
     component.removeAll()
     if (component.isEnabled && component.isVisible) {
       CompletableFuture.supplyAsync(
-        this::correctedToolbarActions,
+        ::correctedToolbarActions,
         AppExecutorUtil.getAppExecutorService(),
       ).thenAcceptAsync(
         Consumer { applyTo(it, component) },
@@ -126,6 +132,13 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
       component.add(toolbar as JComponent, layoutConstraints)
     }
   }
+
+  private fun doLayoutAndRepaint() {
+    NewToolbarRootPaneExtension.getInstance(project)?.let {
+      doLayout(it.component)
+      it.repaint()
+    }
+  }
 }
 
 class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNorthExtension() {
@@ -136,9 +149,11 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
 
     private val logger = logger<NewToolbarRootPaneExtension>()
 
-    fun getInstance(project: Project): IdeRootPaneNorthExtension? {
+    fun getInstance(project: Project): NewToolbarRootPaneExtension? {
       return EP_NAME.getExtensionsIfPointIsRegistered(project)
-        .find { it is NewToolbarRootPaneExtension }
+        .asSequence()
+        .filterIsInstance<NewToolbarRootPaneExtension>()
+        .firstOrNull()
     }
   }
 
@@ -147,6 +162,8 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     init {
       isOpaque = true
       border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))
+
+      revalidate()
     }
 
     override fun getComponentGraphics(graphics: Graphics?): Graphics {
@@ -156,10 +173,7 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
 
   override fun getKey() = NEW_TOOLBAR_KEY
 
-  override fun getComponent(): JComponent {
-    revalidate()
-    return panel
-  }
+  override fun getComponent(): JPanel = panel
 
   override fun uiSettingsChanged(settings: UISettings) {
     logger.info("Show old main toolbar: ${settings.showMainToolbar}; show old navigation bar: ${settings.showNavigationBar}")
@@ -168,8 +182,7 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     panel.isEnabled = toolbarSettings.isEnabled
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
 
-    panel.revalidate()
-    panel.repaint()
+    repaint()
   }
 
   override fun copy() = NewToolbarRootPaneExtension(project)
@@ -182,5 +195,10 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
 
     project.service<NewToolbarRootPaneManager>().doLayout(panel)
     project.service<StatusBarWidgetsManager>().updateAllWidgets()
+  }
+
+  fun repaint() {
+    panel.revalidate()
+    panel.repaint()
   }
 }
