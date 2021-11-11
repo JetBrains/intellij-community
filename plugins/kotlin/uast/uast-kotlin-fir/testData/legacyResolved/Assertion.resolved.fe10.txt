@@ -1,4 +1,4 @@
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = s) -> LightVariableBuilder:s: s
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = s) -> Kotlin_Light_Variable: s
     UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null

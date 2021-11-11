@@ -1,5 +1,5 @@
 UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
-USwitchExpression -> USimpleNameReferenceExpression (identifier = bar) -> Light Parameter: bar
+USwitchExpression -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Value_Parameter: bar
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UYieldExpression -> USimpleNameReferenceExpression (identifier = bar) -> Light Parameter: bar
+UYieldExpression -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Value_Parameter: bar
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String

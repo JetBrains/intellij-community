@@ -5,13 +5,13 @@ UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpres
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
 UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> CLASS: Float
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to KtUltraLightMethodForSourceDeclaration:global) -> USimpleNameReferenceExpression (identifier = global) -> KtUltraLightMethodForSourceDeclaration:global: global
-    null -> USimpleNameReferenceExpression (identifier = b) -> Light Parameter: b
-    null -> USimpleNameReferenceExpression (identifier = a) -> Light Parameter: a
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:withDefault) -> USimpleNameReferenceExpression (identifier = withDefault) -> KtUltraLightMethodForSourceDeclaration:withDefault: withDefault
-    null -> USimpleNameReferenceExpression (identifier = d) -> Light Parameter: d
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = global) -> Kotlin_Light_Method: global
+    null -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Value_Parameter: b
+    null -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = withDefault) -> Kotlin_Light_Method: withDefault
+    null -> USimpleNameReferenceExpression (identifier = d) -> Kotlin_Light_Value_Parameter: d
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to KtUltraLightMethodForSourceDeclaration:withReceiver) -> USimpleNameReferenceExpression (identifier = withReceiver) -> KtUltraLightMethodForSourceDeclaration:withReceiver: withReceiver
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = withReceiver) -> Kotlin_Light_Method: withReceiver
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Math) -> PsiClass:Math: Math
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:atan2) -> USimpleNameReferenceExpression (identifier = atan2) -> PsiMethod:atan2: atan2
@@ -52,19 +52,19 @@ UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (ident
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = chunked) -> FUN: chunked
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toTypedArray) -> FUN: toTypedArray
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = with) -> FUN: with
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A {
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A {
 
     fun String.with2Receivers(a: Int, b: Float) {}
 
 }: A
         UBlockExpression -> UQualifiedReferenceExpression -> null: null
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to KtUltraLightMethodForSourceDeclaration:with2Receivers) -> USimpleNameReferenceExpression (identifier = with2Receivers) -> KtUltraLightMethodForSourceDeclaration:with2Receivers: with2Receivers
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = with2Receivers) -> Kotlin_Light_Method: with2Receivers
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
 UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> CLASS: Float
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-    UBlockExpression -> UObjectLiteralExpression -> KtUltraLightMethodForSourceDeclaration:Parent:
-    UTypeReferenceExpression (name = Parent) -> USimpleNameReferenceExpression (identifier = Parent) -> KtUltraLightClass:open class Parent(a: String, b: Int): Parent
-    null -> USimpleNameReferenceExpression (identifier = b) -> Light Parameter: b
-    null -> USimpleNameReferenceExpression (identifier = a) -> Light Parameter: a
+    UBlockExpression -> UObjectLiteralExpression -> Kotlin_Light_Method:
+    UTypeReferenceExpression (name = Parent) -> USimpleNameReferenceExpression (identifier = Parent) -> Kotlin_Light_Class:open class Parent(a: String, b: Int): Parent
+    null -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Value_Parameter: b
+    null -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
