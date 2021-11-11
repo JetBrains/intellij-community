@@ -2,16 +2,20 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.DependencyGroup
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Omitted
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.VersionConflict
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.properties.ObservableClearableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -20,6 +24,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.GridLayout
 import javax.swing.*
@@ -33,6 +38,8 @@ class DependencyAnalyzerViewImpl(private val contributor: DependencyContributor)
   private val searchRequestProperty = propertyGraph.graphProperty { "" }
   private val searchScopeProperty = propertyGraph.graphProperty<Scope> { Scope.Any }
   private val dependencyProperty = propertyGraph.graphProperty<Dependency.Data?> { null }
+
+  private val showDependencyTreeProperty = propertyGraph.graphProperty { false }
   private val showGroupIdProperty = propertyGraph.graphProperty { false }
 
   private val usagesTitleProperty = propertyGraph.graphProperty(::getUsagesTitle)
@@ -42,6 +49,9 @@ class DependencyAnalyzerViewImpl(private val contributor: DependencyContributor)
   private val dependencyGroupsModel = CollectionListModel<DependencyGroupItem>()
   private val dependencyTreeModel = CollectionListModel<DependencyItem>()
   private val usagesTreeModel = CollectionListModel<DependencyItem>()
+
+  private var showDependencyTree by showDependencyTreeProperty
+  private var showGroupId by showGroupIdProperty
 
   override fun setSelectedExternalProject(externalProjectPath: String) {
     externalProjectProperty.set(ExternalProjectItem(externalProjectPath))
@@ -126,74 +136,94 @@ class DependencyAnalyzerViewImpl(private val contributor: DependencyContributor)
     }
   }
 
-  private fun horizontalFlow(vararg components: JComponent): JComponent {
-    return JPanel().apply {
-      layout = GridLayout(1, components.size)
-      components.forEach(::add)
-    }
-  }
-
-  private fun verticalFlow(vararg components: JComponent): JComponent {
-    return JPanel().apply {
-      layout = GridLayout(components.size, 1)
-      components.forEach(::add)
-    }
-  }
-
   init {
+    val externalProjectComboBox = ComboBox(externalProjectsModel)
+      .bind(externalProjectProperty)
+      .apply { selectedItem = externalProjectProperty.get() }
+      .apply { renderer = ExternalProjectRenderer() }
+
     scopesModel.add(Scope.Any)
+    val searchDependencyIdTextField = JTextField()
+      .bind(searchRequestProperty)
+      .apply { text = searchRequestProperty.get() }
+    val searchDependencyScopeFilter = ComboBox(scopesModel)
+      .bind(searchScopeProperty)
+      .apply { selectedItem = searchScopeProperty.get() }
+    val searchDependencyScopeLabel = label(ExternalSystemBundle.message("external.system.dependency.analyzer.scope.label"))
+      .apply { labelFor = searchDependencyScopeFilter }
+
+    val dependencyTitle = label(ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.title"))
+    val dependencyList = JBList(dependencyGroupsModel)
+      .apply { cellRenderer = DependencyGroupRenderer() }
+      .apply { emptyText.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.empty") }
+      .bind(dependencyProperty.transform(::findDependencyGroup) { it?.group?.data })
+    val dependencyTree = JBList(dependencyTreeModel)
+      .apply { cellRenderer = DependencyRenderer() }
+      .apply { emptyText.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.empty") }
+      .bind(dependencyProperty.transform(::findDependencyItem) { it?.dependency?.data })
+    val showDependencyTreeAction = toggleAction(showDependencyTreeProperty)
+      .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.show") }
+      .apply { templatePresentation.icon = AllIcons.Actions.ShowAsTree }
+    val expandDependencyTreeAction = action(
+      {},
+      { it.presentation.isEnabled = showDependencyTree }
+    )
+      .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.expand") }
+      .apply { templatePresentation.icon = AllIcons.Actions.Expandall }
+    val collapseDependencyTreeAction = action(
+      {},
+      { it.presentation.isEnabled = showDependencyTree }
+    )
+      .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.collapse") }
+      .apply { templatePresentation.icon = AllIcons.Actions.Collapseall }
+
+    val usagesTitle = label(usagesTitleProperty)
+    val usagesTree = JBList(usagesTreeModel)
+      .apply { cellRenderer = UsagesRenderer() }
+      .apply { emptyText.text = "" }
+
     component = toolWindowPanel {
       toolbar = toolbarPanel {
-        addOnLeft(horizontalFlow(
-          ComboBox(externalProjectsModel)
-            .bind(externalProjectProperty)
-            .apply { selectedItem = externalProjectProperty.get() }
-            .apply { renderer = ExternalProjectRenderer() },
-          JTextField()
-            .bind(searchRequestProperty)
-            .apply { text = searchRequestProperty.get() },
-          ExternalSystemBundle.message("external.system.dependency.analyzer.scope.label")
-            .labelFor(
-              ComboBox(scopesModel)
-                .bind(searchScopeProperty)
-                .apply { selectedItem = searchScopeProperty.get() }
-            )
+        addToLeft(horizontalPanel(
+          externalProjectComboBox,
+          searchDependencyIdTextField,
+          horizontalPanel(
+            searchDependencyScopeLabel,
+            searchDependencyScopeFilter
+          )
         ))
       }
-      setContent(horizontalFlow(
+      setContent(splitPanel(
         toolWindowPanel {
           toolbar = toolbarPanel {
-            addOnLeft(JLabel(ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.title")))
+            addToLeft(dependencyTitle)
+            addToRight(actionToolbarPanel(
+              showDependencyTreeAction,
+              Separator(),
+              expandDependencyTreeAction,
+              collapseDependencyTreeAction
+            ))
           }
-          setContent(verticalFlow(
-            ScrollPaneFactory.createScrollPane(JBList(dependencyGroupsModel).apply {
-              cellRenderer = DependencyGroupRenderer()
-              bind(dependencyProperty.transform(::findDependencyGroup) { it?.group?.data })
-              emptyText.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.empty")
-            }),
-            ScrollPaneFactory.createScrollPane(JBList(dependencyTreeModel).apply {
-              cellRenderer = DependencyRenderer()
-              bind(dependencyProperty.transform(::findDependencyItem) { it?.dependency?.data })
-              emptyText.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.empty")
-            }))
-          )
+          setContent(cardPanel(showDependencyTreeProperty) { showDependencyTree ->
+            when (showDependencyTree) {
+              true -> ScrollPaneFactory.createScrollPane(dependencyTree, true)
+              else -> ScrollPaneFactory.createScrollPane(dependencyList, true)
+            }
+          })
         },
         toolWindowPanel {
           toolbar = toolbarPanel {
-            addOnLeft(JLabel())
-              .bind(usagesTitleProperty)
-              .apply { text = usagesTitleProperty.get() }
+            addToLeft(usagesTitle)
           }
-          setContent(ScrollPaneFactory.createScrollPane(JBList(usagesTreeModel).apply {
-            cellRenderer = UsagesRenderer()
-            emptyText.text = ""
-          }))
+          setContent(ScrollPaneFactory.createScrollPane(usagesTree, true))
         }
       ))
     }
   }
 
   init {
+    usagesTitleProperty.dependsOn(dependencyProperty)
+    usagesTitleProperty.dependsOn(showGroupIdProperty)
     externalProjectProperty.afterChange {
       updateScopesModel()
       updateDependencyModel()
@@ -202,24 +232,15 @@ class DependencyAnalyzerViewImpl(private val contributor: DependencyContributor)
       updateUsagesModel()
     }
     updateExternalProjectsModel()
-
-    usagesTitleProperty.dependsOn(dependencyProperty)
-    usagesTitleProperty.dependsOn(showGroupIdProperty)
   }
 
-  private fun getUsagesTitle(): @NlsContexts.Label String {
-    val dependency = dependencyProperty.get() ?: return ""
-    return ExternalSystemBundle.message("external.system.dependency.analyzer.usages.title", dependency.displayText)
-  }
+  private fun label(text: @Nls String) =
+    JLabel(text)
+      .apply { border = JBUI.Borders.empty(JBUI.scale(6)) }
 
-  private fun <C : JComponent> JPanel.addOnLeft(component: C): C {
-    add(component, BorderLayout.WEST)
-    return component
-  }
-
-  private fun <C : JComponent> @NlsContexts.Label String.labelFor(component: C): LabeledComponent<C> {
-    return LabeledComponent.create(component, this, BorderLayout.WEST)
-  }
+  private fun label(property: ObservableClearableProperty<@Nls String>) =
+    label(property.get())
+      .bind(property)
 
   private fun toolWindowPanel(configure: SimpleToolWindowPanel.() -> Unit) =
     SimpleToolWindowPanel(true, true)
@@ -227,16 +248,64 @@ class DependencyAnalyzerViewImpl(private val contributor: DependencyContributor)
 
   private fun toolbarPanel(configure: BorderLayoutPanel.() -> Unit) =
     BorderLayoutPanel()
-      .apply { border = JBUI.Borders.empty() }
+      .apply { layout = BorderLayout() }
+      .apply { border = JBUI.Borders.empty(JBUI.scale(1), JBUI.scale(2)) }
       .apply { withMinimumHeight(JBUI.scale(30)) }
       .apply { withPreferredHeight(JBUI.scale(30)) }
       .apply { configure() }
+
+  private fun horizontalPanel(vararg components: JComponent) =
+    JPanel()
+      .apply { layout = HorizontalLayout(0) }
+      .apply { border = JBUI.Borders.empty() }
+      .apply { components.forEach(::add) }
+
+  private fun splitPanel(vararg components: JComponent) =
+    JPanel()
+      .apply { layout = GridLayout(0, components.size) }
+      .apply { border = JBUI.Borders.empty() }
+      .apply { components.forEach(::add) }
+
+  private fun <T> cardPanel(property: ObservableClearableProperty<T>, createPanel: (T) -> JComponent) =
+    object : CardLayoutPanel<T, T, JComponent>() {
+      override fun prepare(key: T) = key
+      override fun create(ui: T) = createPanel(ui)
+    }
+      .apply { select(property.get(), true) }
+      .apply { property.afterChange { select(it, true) } }
+
+  private fun JComponent.actionToolbarPanel(vararg actions: AnAction): JComponent {
+    val actionManager = ActionManager.getInstance()
+    val actionGroup = DefaultActionGroup(*actions)
+    val toolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, true)
+    toolbar.targetComponent = this
+    toolbar.component.isOpaque = false
+    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    return toolbar.component
+  }
+
+  private fun toggleAction(property: ObservableClearableProperty<Boolean>) =
+    object : ToggleAction(), DumbAware {
+      override fun isSelected(e: AnActionEvent) = property.get()
+      override fun setSelected(e: AnActionEvent, state: Boolean) = property.set(state)
+    }
+
+  private fun action(action: (AnActionEvent) -> Unit, update: (AnActionEvent) -> Unit) =
+    object : DumbAwareAction() {
+      override fun actionPerformed(e: AnActionEvent) = action(e)
+      override fun update(e: AnActionEvent) = update(e)
+    }
+
+  private fun getUsagesTitle(): @NlsContexts.Label String {
+    val dependency = dependencyProperty.get() ?: return ""
+    return ExternalSystemBundle.message("external.system.dependency.analyzer.usages.title", dependency.displayText)
+  }
 
   private val Dependency.Data.displayText: @NlsSafe String
     get() = when (this) {
       is Dependency.Data.Module -> name
       is Dependency.Data.Artifact ->
-        if (showGroupIdProperty.get()) {
+        if (showGroupId) {
           "$groupId:$artifactId:$version"
         }
         else {
