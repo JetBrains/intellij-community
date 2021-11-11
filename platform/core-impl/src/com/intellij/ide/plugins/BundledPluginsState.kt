@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -34,7 +35,7 @@ class BundledPluginsState {
     @JvmStatic
     fun shouldSave(): Boolean {
       val savedVersion = PropertiesComponent.getInstance().getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) } ?: return true
-      return PluginManagerCore.isRunningFromSources() || savedVersion < ApplicationInfo.getInstance().build
+      return (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources()) || savedVersion < ApplicationInfo.getInstance().build
     }
 
     @JvmStatic
