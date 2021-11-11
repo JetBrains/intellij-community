@@ -426,8 +426,7 @@ public abstract class GitHandler {
 
   private void start() {
     if (myProject != null && !TrustedProjects.isTrusted(myProject)) {
-      LOG.error(new AssertionError("Shouldn't be possible to run a Git command in the safe mode"));
-      return;
+      throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
     }
 
     if (isStarted()) {
