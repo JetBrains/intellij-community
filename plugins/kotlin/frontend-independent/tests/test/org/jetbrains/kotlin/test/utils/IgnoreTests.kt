@@ -279,9 +279,16 @@ object IgnoreTests {
         originalTestFile: File,
         firTestFile: File = deriveFirTestFile(originalTestFile),
         additionalFileToMarkFirIdentical: File? = null,
-        additionalFileToDeleteIfIdentical: File? = null
+        additionalFileToDeleteIfIdentical: File? = null,
+        additionalFilesToCompare: Collection<Pair<File, File>> = emptyList()
     ) {
-        if (firTestFile.exists() && firTestFile.readText().trim() == originalTestFile.readText().trim()) {
+        if (firTestFile.exists() &&
+            firTestFile.readText().trim() == originalTestFile.readText().trim() &&
+            additionalFilesToCompare.all { (a, b) ->
+                if (!a.exists() || !b.exists()) false
+                else a.readText().trim() == b.readText().trim()
+            }
+        ) {
             val message = if (isTeamCityBuild) {
                 "Please remove $firTestFile and add // FIR_IDENTICAL to test source file $originalTestFile"
             } else {
