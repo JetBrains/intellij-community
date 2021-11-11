@@ -9,8 +9,6 @@ import kotlinx.html.style
 import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.tr
-import org.apache.commons.text.similarity.LevenshteinDistance
-import org.languagetool.rules.IncorrectExample
 import java.net.URL
 
 internal class LanguageToolRule(
@@ -57,4 +55,6 @@ internal class LanguageToolRule(
     }
     +GrazieBundle.message("grazie.tooltip.powered-by-language-tool")
   }
+
+  override fun getSearchableDescription(): String = "LanguageTool"
 }
