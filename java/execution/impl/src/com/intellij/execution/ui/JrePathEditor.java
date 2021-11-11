@@ -30,6 +30,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -91,7 +92,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     buildModel(editable);
     myComboBoxModel.setSelectedItem(myDefaultJreItem);
 
-    ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel);
+    ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, JBUI.scale(300));
     comboBox.setEditable(editable);
     comboBox.setRenderer(new ColoredListCellRenderer<>() {
       {
