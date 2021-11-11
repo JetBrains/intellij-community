@@ -452,7 +452,7 @@ public class SwitchBlockHighlightingModel {
     private HighlightInfo checkLabelAndSelectorCompatibility(@NotNull PsiCaseLabelElement label) {
       if (label instanceof PsiDefaultCaseLabelElement) return null;
       if (isNullType(label)) {
-        if (!(mySelectorType instanceof PsiClassType) && !isNullType(mySelector)) {
+        if (mySelectorType instanceof PsiPrimitiveType && !isNullType(mySelector)) {
           return createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
                                                             JavaHighlightUtil.formatType(mySelectorType)));
         }
