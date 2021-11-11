@@ -17,10 +17,13 @@ abstract class AbstractHighLevelBasicCompletionHandlerTest : AbstractBasicComple
         IgnoreTests.runTestIfEnabledByFileDirective(testDataFilePath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
             super.doTest(testPath)
             val originalTestFile = testDataFile()
+            val originalAfterFile = originalTestFile.withExtension("kt.after")
+            val firAfterFile = originalTestFile.withExtension("fir.kt.after")
             IgnoreTests.cleanUpIdenticalFirTestFile(
                 originalTestFile,
-                additionalFileToMarkFirIdentical = originalTestFile.withExtension("kt.after"),
-                additionalFileToDeleteIfIdentical = originalTestFile.withExtension("fir.kt.after")
+                additionalFileToMarkFirIdentical = originalAfterFile,
+                additionalFileToDeleteIfIdentical = firAfterFile,
+                additionalFilesToCompare = listOf(originalAfterFile to firAfterFile)
             )
         }
     }
