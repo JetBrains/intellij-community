@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class JsonSchemaCatalogManager {
   static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
-  static final String DEFAULT_CATALOG_HTTPS = "https://schemastore.azurewebsites.net/api/json/catalog.json";
+  static final String DEFAULT_CATALOG_HTTPS = "https://schemastore.org/api/json/catalog.json";
   private static final Set<String> SCHEMA_URL_PREFIXES_WITH_TOO_MANY_VARIANTS = Set.of(
     // To match changing schema URLs for azure-pipelines:
     // - https://raw.githubusercontent.com/microsoft/azure-pipelines-vscode/master/service-schema.json
