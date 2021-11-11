@@ -57,6 +57,8 @@ class ExtractVariableFromBubbleLesson(private val sample: LessonSample)
           actions(it)
         }
       }
+
+      restoreRefactoringOptionsInformer()
     }
 
   override val suitableTips = listOf("IntroduceVariable")
