@@ -1,4 +1,4 @@
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> Kotlin_Light_Class:interface Base {
     fun print()
 }: Base
@@ -11,8 +11,8 @@ UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identi
     fun print()
 }: Base
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = createBase) -> Kotlin_Light_Method: createBase
-UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> CLASS: CharSequence
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> PsiClass:CharSequence: CharSequence
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> Kotlin_Light_Class:interface Base {
     fun print()
 }: Base

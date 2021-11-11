@@ -5,11 +5,11 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = or
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = jetbrains) -> PsiPackage:org.jetbrains: jetbrains
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = uast) -> PsiPackage:org.jetbrains.uast: uast
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:org.jetbrains.uast.kotlin: kotlin
-    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
-    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> FUN: compareTo
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
@@ -19,18 +19,18 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ko
         UBinaryExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> FUN: minus
         UBinaryExpression (operator = -) -> USimpleNameReferenceExpression (identifier = c) -> Kotlin_Light_Variable: c
     ULabeledExpression (label = lbd) -> USimpleNameReferenceExpression (identifier = lbd) -> null: null
-    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
         UReturnExpression -> USimpleNameReferenceExpression (identifier = lbd) -> FUNCTION_LITERAL: <anonymous>
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = d) -> Kotlin_Light_Variable: d
-    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
         UBinaryExpression (operator = <) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
         UBinaryExpression (operator = <) -> USimpleNameReferenceExpression (identifier = <) -> FUN: compareTo
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> FUN: compareTo
-    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: bar
@@ -43,6 +43,6 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ko
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
     UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = lmbd) -> Kotlin_Light_Value_Parameter: lmbd

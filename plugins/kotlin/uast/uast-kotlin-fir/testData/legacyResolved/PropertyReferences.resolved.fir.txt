@@ -1,10 +1,10 @@
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = mutableProp) -> Kotlin_Light_Method: setMutableProp
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Method: getMutableProp
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = init) -> Kotlin_Light_Value_Parameter: init
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     ULocalVariable (name = result) -> USimpleNameReferenceExpression (identifier = privateProp) -> Kotlin_Light_Variable: privateProp
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = privateProp) -> Kotlin_Light_Variable: privateProp
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Variable: privateProp

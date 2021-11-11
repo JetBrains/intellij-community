@@ -5,7 +5,7 @@ UPolyadicExpression (operator = +) -> UQualifiedReferenceExpression -> null: nul
 UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = case4) -> Kotlin_Light_Method: getCase4
 UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = case4) -> Kotlin_Light_Method: getCase4
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = repeat) -> FUN: repeat
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UReturnExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
 UReturnExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
