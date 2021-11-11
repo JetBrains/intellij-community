@@ -1,9 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui.uiDslShowcase
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
@@ -19,7 +23,8 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaMethod
 
-const val BASE_URL = "https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/src/com/intellij/internal/ui/uiDslShowcase/"
+const val BASE_URL = "https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/"
+
 val DEMOS = arrayOf(
   ::demoBasics,
   ::demoRowLayout,
@@ -41,7 +46,8 @@ class UiDslShowcaseAction : DumbAwareAction("UI DSL Showcase") {
 }
 
 @Suppress("DialogTitleCapitalization")
-private class UiDslShowcaseDialog(project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, false) {
+private class UiDslShowcaseDialog(val project: Project?) :
+  DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 
   init {
     title = "UI DSL Showcase"
@@ -71,10 +77,14 @@ private class UiDslShowcaseDialog(project: Project?) : DialogWrapper(project, nu
         label("<html>Description: ${annotation.description}")
       }
 
-      val simpleName = demo.javaMethod!!.declaringClass.simpleName
+      val simpleName = "src/${demo.javaMethod!!.declaringClass.name}".replace('.', '/')
       val fileName = (simpleName.substring(0..simpleName.length - 3) + ".kt")
       row {
-        browserLink("View source", BASE_URL + fileName)
+        link("View source") {
+          if (!openInIdeaProject(fileName)) {
+            BrowserUtil.browse(BASE_URL + fileName)
+          }
+        }
       }.bottomGap(BottomGap.MEDIUM)
 
       val args = demo.parameters.associateBy(
@@ -107,5 +117,24 @@ private class UiDslShowcaseDialog(project: Project?) : DialogWrapper(project, nu
     }
 
     tabbedPane.add(annotation.title, content)
+  }
+
+  private fun openInIdeaProject(fileName: String): Boolean {
+    if (project == null) {
+      return false
+    }
+    val moduleManager = ModuleManager.getInstance(project)
+    val module = moduleManager.findModuleByName("intellij.platform.ide.impl")
+    if (module == null) {
+      return false
+    }
+    for (contentRoot in module.rootManager.contentRoots) {
+      val file = contentRoot.findFileByRelativePath(fileName)
+      if (file?.isValid == true) {
+        OpenFileDescriptor(project, file).navigate(true)
+        return true
+      }
+    }
+    return false
   }
 }
