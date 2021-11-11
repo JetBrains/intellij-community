@@ -1,10 +1,10 @@
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> CLASS: Float
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> CLASS: Float
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> PsiClass:Float: Float
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> PsiClass:Float: Float
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = global) -> Kotlin_Light_Method: global
     null -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Value_Parameter: b
     null -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
@@ -59,11 +59,11 @@ UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (ident
 }: A
         UBlockExpression -> UQualifiedReferenceExpression -> null: null
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = with2Receivers) -> Kotlin_Light_Method: with2Receivers
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> CLASS: Float
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> PsiClass:Float: Float
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     UBlockExpression -> UObjectLiteralExpression -> Kotlin_Light_Method:
     UTypeReferenceExpression (name = Parent) -> USimpleNameReferenceExpression (identifier = Parent) -> Kotlin_Light_Class:open class Parent(a: String, b: Int): Parent
     null -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Value_Parameter: b

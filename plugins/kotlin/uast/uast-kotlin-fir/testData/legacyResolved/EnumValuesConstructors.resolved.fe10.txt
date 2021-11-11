@@ -1,5 +1,0 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-UTypeReferenceExpression (name = Style) -> USimpleNameReferenceExpression (identifier = Style) -> Kotlin_Light_Method: Style
-UTypeReferenceExpression (name = Style) -> USimpleNameReferenceExpression (identifier = Style) -> Kotlin_Light_Method: Style
-UTypeReferenceExpression (name = Style) -> USimpleNameReferenceExpression (identifier = Style) -> Kotlin_Light_Method: Style
-UTypeReferenceExpression (name = Style) -> USimpleNameReferenceExpression (identifier = Style) -> Kotlin_Light_Method: Style

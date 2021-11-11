@@ -54,10 +54,10 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolve
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor) -> Kotlin_Light_Method: ambiguousSamAcceptor
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Callable) -> PsiClass:Callable: Callable
 UTypeReferenceExpression (name = java.util.function.Supplier<java.lang.String>) -> USimpleNameReferenceExpression (identifier = Supplier) -> PsiClass:Supplier: Supplier
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
 UTypeReferenceExpression (name = java.util.concurrent.Callable<java.lang.String>) -> USimpleNameReferenceExpression (identifier = Callable) -> PsiClass:Callable: Callable
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO

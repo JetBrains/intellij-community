@@ -1,17 +1,17 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> CLASS: Map
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> TYPEALIAS: A
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> PsiClass:Map: Map
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> PsiClass:String: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
 UTypeReferenceExpression (name = kotlin.jvm.functions.Function1<? super java.util.Map<java.lang.String,? extends java.lang.Integer>,? extends kotlin.Unit>) -> USimpleNameReferenceExpression (identifier = My) -> TYPEALIAS: My
 UTypeReferenceExpression (name = kotlin.jvm.functions.Function1<? super java.util.Map<java.lang.String,? extends java.lang.Integer>,? extends kotlin.Unit>) -> USimpleNameReferenceExpression (identifier = My) -> TYPEALIAS: My
 UTypeReferenceExpression (name = kotlin.jvm.functions.Function1<? super java.util.Map<java.lang.String,? extends java.lang.Integer>,? extends kotlin.Unit>) -> USimpleNameReferenceExpression (identifier = My) -> TYPEALIAS: My
-UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> CLASS: Map
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> TYPEALIAS: A
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> CLASS: Map
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> TYPEALIAS: A
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> CLASS: Map
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> TYPEALIAS: A
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> PsiClass:Map: Map
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> PsiClass:String: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> PsiClass:Map: Map
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> PsiClass:String: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> PsiClass:Map: Map
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> PsiClass:String: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer

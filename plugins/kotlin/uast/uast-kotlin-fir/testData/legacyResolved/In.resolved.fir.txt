@@ -1,4 +1,4 @@
-UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> CLASS: Boolean
+UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> PsiClass:Boolean: Boolean
     UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = in) -> FUN: contains
     UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> FUN: rangeTo

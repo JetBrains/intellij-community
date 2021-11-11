@@ -1,9 +1,9 @@
 UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UTypeReferenceExpression (name = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = field) -> null: null
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = value) -> Kotlin_Light_Value_Parameter: value

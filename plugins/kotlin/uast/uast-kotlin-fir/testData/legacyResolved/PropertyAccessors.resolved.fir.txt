@@ -1,4 +1,4 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
 UReturnExpression -> UQualifiedReferenceExpression -> null: null
 UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> Kotlin_Light_Class:class PropertyTest {
     var stringRepresentation: String
@@ -14,4 +14,4 @@ UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = t
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = setDataFromString) -> Kotlin_Light_Method: setDataFromString
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = value) -> Kotlin_Light_Value_Parameter: value
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String

@@ -1,7 +1,7 @@
 UTypeReferenceExpression (name = Some<T>) -> USimpleNameReferenceExpression (identifier = Some) -> Kotlin_Light_Class:class Some<T : Some<T>>: Some
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
-UTypeReferenceExpression (name = java.util.List<? extends java.lang.Object>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
-UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
+UTypeReferenceExpression (name = java.util.List<? extends java.lang.Object>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = list) -> Kotlin_Light_Value_Parameter: list
