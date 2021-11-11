@@ -101,7 +101,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
     return true
   }
 
-  private fun getVisibleAutoUpdatingContent(): Content? {
+  fun getVisibleAutoUpdatingContent(): Content? {
     return getVisibleReusableContent()?.takeIf {
       it.toolWindowUI.isAutoUpdate
     }

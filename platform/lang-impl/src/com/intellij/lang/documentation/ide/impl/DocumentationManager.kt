@@ -8,6 +8,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.InlineDocumentation
 import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
+import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.lang.documentation.impl.resolveLink
@@ -227,19 +228,25 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     popupPosition: Point
   ) {
     EDT.assertIsEdt()
-    cs.launch(ModalityState.current().asContextElement()) {
-      val request = readAction {
-        val ownerTarget = documentation()?.ownerTarget
-                          ?: return@readAction null
-        val linkResult = resolveLink(ownerTarget, url)
-        linkResult?.target?.documentationRequest()
-      }
-      withContext(Dispatchers.EDT) {
+    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
+      val pauseAutoUpdateHandle = toolWindowManager.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
+      try {
+        val request = withContext(Dispatchers.Default) {
+          readAction {
+            val ownerTarget = documentation()?.ownerTarget
+                              ?: return@readAction null
+            val linkResult = resolveLink(ownerTarget, url)
+            linkResult?.target?.documentationRequest()
+          }
+        }
         if (request == null) {
           BrowserUtil.browseAbsolute(url)
-          return@withContext
+          return@launch
         }
         showDocumentation(request, InlinePopupContext(project, editor, popupPosition))
+      }
+      finally {
+        pauseAutoUpdateHandle?.let(Disposer::dispose)
       }
     }
   }

@@ -79,6 +79,11 @@ internal class DocumentationToolWindowUI(
     }
   }
 
+  fun pauseAutoUpdate(): Disposable {
+    check(isAutoUpdate)
+    return autoUpdater.pause()
+  }
+
   fun keep() {
     Disposer.dispose(checkNotNull(reusable))
     reusable = null
