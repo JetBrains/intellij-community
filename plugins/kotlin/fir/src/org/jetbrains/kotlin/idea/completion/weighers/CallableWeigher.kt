@@ -8,12 +8,15 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtStarProjectionTypeArgument
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
-import org.jetbrains.kotlin.psi.KtFunctionType
-import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 internal object CallableWeigher {
     const val WEIGHER_ID = "kotlin.callableWeigher"
@@ -57,7 +60,9 @@ internal object CallableWeigher {
         substitutor: KtSubstitutor,
         returnCastRequiredOnReceiverMismatch: Boolean
     ): CallableWeight? {
-        val actualExplicitReceiverType = context.explicitReceiver?.getKtType()
+        val actualExplicitReceiverType = context.explicitReceiver?.let {
+            getReferencedClassTypeInCallableReferenceExpression(it) ?: it.getKtType()
+        }
         val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
 
         val expectedExtensionReceiverType = symbol.receiverType?.let { substitutor.substituteOrSelf(it) }
@@ -89,6 +94,34 @@ internal object CallableWeigher {
         }
         if (returnCastRequiredOnReceiverMismatch && weightBasedOnDispatchReceiver?.kind is CallableWeightKind.ReceiverCastRequired) return weightBasedOnDispatchReceiver
         return weightBasedOnExtensionReceiver ?: weightBasedOnDispatchReceiver
+    }
+
+    /**
+     * Return the type from the referenced class if this explicit receiver is a receiver in a callable reference expression. For example,
+     * in the following code, `String` is such a receiver. And this method should return the `String` type in this case.
+     * ```
+     * val l = String::length
+     * ```
+     */
+    private fun KtAnalysisSession.getReferencedClassTypeInCallableReferenceExpression(explicitReceiver: KtExpression): KtType? {
+        val callableReferenceExpression = explicitReceiver.getParentOfType<KtCallableReferenceExpression>(strict = true) ?: return null
+        if (callableReferenceExpression.lhs != explicitReceiver) return null
+        val symbol = when (explicitReceiver) {
+            is KtDotQualifiedExpression -> explicitReceiver.selectorExpression?.mainReference?.resolveToSymbol()
+            is KtNameReferenceExpression -> explicitReceiver.mainReference.resolveToSymbol()
+            else -> return null
+        }
+        return when (symbol) {
+            is KtTypeAliasSymbol -> symbol.expandedType
+            is KtClassOrObjectSymbol -> buildClassType(symbol) {
+                if (symbol is KtNamedClassOrObjectSymbol) {
+                    repeat(symbol.typeParameters.size) {
+                        argument(KtStarProjectionTypeArgument(token))
+                    }
+                }
+            }
+            else -> null
+        }
     }
 
     private fun KtAnalysisSession.callableWeightByReceiver(
