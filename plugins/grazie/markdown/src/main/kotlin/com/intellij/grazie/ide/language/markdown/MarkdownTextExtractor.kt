@@ -28,5 +28,6 @@ class MarkdownTextExtractor : TextExtractor() {
   }
 
   private fun isLinkText(e: PsiElement) =
-    (e.elementType == MarkdownTokenTypes.TEXT || e is PsiWhiteSpace) && e.parent.elementType == MarkdownElementTypes.LINK_TEXT
+    (e.elementType == MarkdownTokenTypes.TEXT || e.elementType == MarkdownTokenTypes.GFM_AUTOLINK || e is PsiWhiteSpace) &&
+    e.parent.elementType == MarkdownElementTypes.LINK_TEXT
 }
