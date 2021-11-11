@@ -783,11 +783,12 @@ public class SwitchBlockHighlightingModel {
                                               @NotNull List<PsiCaseLabelElement> elements,
                                               @NotNull List<HighlightInfo> results) {
       Set<PsiClass> missingClasses;
+      Map<PsiClass, PsiPattern> patternClasses = null;
       if (elements.isEmpty()) {
         missingClasses = Collections.emptySet();
       }
       else {
-        Map<PsiClass, PsiPattern> patternClasses = new HashMap<>();
+        patternClasses = new HashMap<>();
         for (PsiCaseLabelElement element : elements) {
           PsiPattern patternLabelElement = ObjectUtils.tryCast(element, PsiPattern.class);
           if (patternLabelElement == null) continue;
@@ -821,13 +822,40 @@ public class SwitchBlockHighlightingModel {
       }
       HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
       if (!missingClasses.isEmpty()) {
+        List<String> allNames = findAllNames(elements, missingClasses, patternClasses);
         Set<String> missingCases = new SmartHashSet<>();
         missingClasses.forEach(aClass -> missingCases.add(aClass.getQualifiedName()));
-        IntentionAction fix =
-          getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, StreamEx.of(missingCases).toList());
+        IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
         QuickFixAction.registerQuickFixAction(info, fix);
       }
       results.add(info);
+    }
+
+    @NotNull
+    private static List<String> findAllNames(@NotNull List<PsiCaseLabelElement> elements,
+                                             @NotNull Set<PsiClass> missingClasses,
+                                             @NotNull Map<PsiClass, PsiPattern> patternClasses) {
+      List<String> result = new ArrayList<>();
+      elements.forEach(element -> result.add(element.getText()));
+      for (PsiClass aClass : missingClasses) {
+        String className = aClass.getQualifiedName();
+        PsiPattern pattern = patternClasses.get(aClass);
+        if (pattern != null) {
+          result.add(result.lastIndexOf(pattern.getText()) + 1, className);
+        }
+        else {
+          pattern =
+            StreamEx.of(elements).select(PsiPattern.class).findFirst(who -> JavaPsiPatternUtil.dominates(who, TypeUtils.getType(aClass)))
+              .orElse(null);
+          if (pattern != null) {
+            result.add(result.indexOf(pattern.getText()), aClass.getQualifiedName());
+          }
+          else {
+            result.add(aClass.getQualifiedName());
+          }
+        }
+      }
+      return result;
     }
 
     @NotNull

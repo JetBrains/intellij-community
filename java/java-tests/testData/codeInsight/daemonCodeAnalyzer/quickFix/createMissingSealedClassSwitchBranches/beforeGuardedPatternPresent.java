@@ -6,7 +6,7 @@ final class Sub2 implements I {}
 class Test {
   void test(I i) {
     switch (i<caret>) {
-      case Sub1 sub1 && sub1 != null:
+      case Sub1 sub1 && Math.random() > 0.5:
         break;
       case Sub2 sub2:
         break;

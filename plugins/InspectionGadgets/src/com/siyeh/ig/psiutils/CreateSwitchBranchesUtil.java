@@ -82,7 +82,7 @@ public final class CreateSwitchBranchesUtil {
       return PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class);
     }
     Map<String, String> prevToNext =
-      StreamEx.of(allNames).pairMap(Couple::of).toMap(c -> c.getFirst(), c -> c.getSecond());
+      StreamEx.of(allNames).distinct().pairMap(Couple::of).toMap(c -> c.getFirst(), c -> c.getSecond());
     List<String> missingLabels = StreamEx.of(allNames).filter(missingNames::contains).toList();
     String nextLabel = getNextLabel(prevToNext, missingLabels);
     PsiElement bodyElement = body.getFirstBodyElement();
@@ -90,8 +90,8 @@ public final class CreateSwitchBranchesUtil {
     while (bodyElement != null) {
       PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(bodyElement, PsiSwitchLabelStatementBase.class);
       if (label != null) {
-        List<String> constants = caseExtractor.apply(label);
-        while (nextLabel != null && constants.contains(nextLabel)) {
+        List<String> caseLabelNames = caseExtractor.apply(label);
+        while (nextLabel != null && caseLabelNames.contains(nextLabel)) {
           addedLabels.add(addSwitchLabelStatementBefore(missingLabels.get(0), bodyElement, switchBlock, isRuleBasedFormat, isPatternsGenerated));
           missingLabels.remove(0);
           if (missingLabels.isEmpty()) {

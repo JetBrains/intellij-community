@@ -2,11 +2,9 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiSwitchBlock;
-import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +44,10 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
 
   @Override
   protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor() {
-    return label -> Collections.emptyList();
+    return label -> {
+      PsiCaseLabelElementList list = label.getCaseLabelElementList();
+      if (list == null) return Collections.emptyList();
+      return ContainerUtil.map(list.getElements(), PsiCaseLabelElement::getText);
+    };
   }
 }
