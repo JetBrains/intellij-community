@@ -189,8 +189,6 @@ public final class NewMappings implements Disposable {
   }
 
   private void updateMappedRoots(boolean fireMappingsChangedEvent) {
-    if (!TrustedProjects.isTrusted(myProject)) return;
-
     myRootUpdateQueue.cancelAllUpdates();
 
     if (!myActivated) return;
@@ -250,6 +248,10 @@ public final class NewMappings implements Disposable {
 
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
+
+    if (!TrustedProjects.isTrusted(myProject)) {
+      return new Mappings(Collections.emptyList(), pointerDisposable);
+    }
 
     try {
       // direct mappings have priority over <Project> mappings
