@@ -754,8 +754,7 @@ public final class ActionsTree {
     }
     if (actionId == null) return new RowData(null, null);
     Shortcut[] shortcuts = myKeymap.getShortcuts(actionId);
-    Set<String> abbreviations = data instanceof String ?
-                          AbbreviationManager.getInstance().getAbbreviations(actionId) : null;
+    Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
     return new RowData(shortcuts, abbreviations);
   }
 
