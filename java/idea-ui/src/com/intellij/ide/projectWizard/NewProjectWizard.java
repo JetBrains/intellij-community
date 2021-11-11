@@ -29,6 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Set;
@@ -54,7 +55,10 @@ public class NewProjectWizard extends AbstractProjectWizard {
 
   protected void init(@NotNull ModulesProvider modulesProvider) {
     if (isNewWizard()) {
-      getRootPane().putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, Boolean.TRUE);
+      JRootPane pane = getRootPane();
+      if (pane != null) {
+        pane.putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, Boolean.TRUE);
+      }
     }
     myWizardContext.setModulesProvider(modulesProvider);
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
