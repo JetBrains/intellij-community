@@ -122,6 +122,13 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
     return true
   }
 
+  fun updateVisibleReusableTab(request: DocumentationRequest): Boolean {
+    val content = getVisibleReusableContent() ?: return false
+    content.toolWindowUI.browser.resetBrowser(request)
+    waitForFocusRequest()
+    return true
+  }
+
   private fun getVisibleReusableContent(): Content? {
     if (!toolWindow.isVisible) {
       return null

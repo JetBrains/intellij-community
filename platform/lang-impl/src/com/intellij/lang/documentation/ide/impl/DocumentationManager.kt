@@ -128,6 +128,9 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       toolWindowManager.showInToolWindow(request)
       return
     }
+    else if (toolWindowManager.updateVisibleReusableTab(request)) {
+      return
+    }
 
     if (getPopup() != null) {
       return
