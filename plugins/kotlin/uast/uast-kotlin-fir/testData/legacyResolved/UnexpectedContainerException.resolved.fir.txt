@@ -1,4 +1,4 @@
-UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> CLASS: Throwable
+UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> PsiClass:Throwable: Throwable
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = crashMe) -> Kotlin_Light_Method: crashMe
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> UQualifiedReferenceExpression -> PROPERTY: java
     UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = Callback) -> Kotlin_Light_Class:interface Callback {
@@ -9,9 +9,9 @@ UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExp
         UTypeReferenceExpression (name = Callback) -> USimpleNameReferenceExpression (identifier = Callback) -> Kotlin_Light_Class:interface Callback {
     fun onError(throwable: Throwable)
 }: Callback
-        UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> CLASS: Throwable
+        UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> PsiClass:Throwable: Throwable
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to PsiMethod:UnsupportedOperationException) -> USimpleNameReferenceExpression (identifier = UnsupportedOperationException) -> PsiMethod:UnsupportedOperationException: UnsupportedOperationException
-UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> CLASS: Any
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
 UTypeReferenceExpression (name = java.lang.Class<T>) -> USimpleNameReferenceExpression (identifier = Class) -> PsiClass:Class: Class
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T

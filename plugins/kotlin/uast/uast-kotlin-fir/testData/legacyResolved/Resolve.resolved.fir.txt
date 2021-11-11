@@ -62,7 +62,7 @@ UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = intRange) -> Kotlin_Light_Variable: intRange
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = contains) -> FUN: contains
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
-    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = IntRange) -> PRIMARY_CONSTRUCTOR: IntRange
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
     fun foo() {}
@@ -74,7 +74,7 @@ UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifie
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = t) -> Kotlin_Light_Value_Parameter: t
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: foo
-UTypeReferenceExpression (name = java.util.List<? extends A>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
+UTypeReferenceExpression (name = java.util.List<? extends A>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
     fun foo() {}
     inline fun inlineFoo() {
