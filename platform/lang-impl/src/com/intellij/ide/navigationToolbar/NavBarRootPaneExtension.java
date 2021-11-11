@@ -178,7 +178,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
       @Override
       public void updateUI() {
         super.updateUI();
-        setOpaque(true);
         if (myScrollPane == null || myNavigationBar == null) return;
 
         myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -198,7 +197,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     };
 
     panel.add(myScrollPane, BorderLayout.CENTER);
-    panel.setOpaque(false);
+    panel.setOpaque(!ExperimentalUI.isNewUI());
     panel.updateUI();
     return panel;
   }
