@@ -183,13 +183,13 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       // the user might've explicitly invoked the action during the delay
       return // return here to not compute the request unnecessarily
     }
+    if (toolWindowManager.hasVisibleAutoUpdatingTab()) {
+      return // don't show a documentation popup if an auto-updating tab is visible, it will be updated
+    }
     val request = withContext(Dispatchers.Default) {
       mapper(lookupElement)
     }
     if (request == null) {
-      return
-    }
-    if (toolWindowManager.updateVisibleAutoUpdatingTab(request)) {
       return
     }
     coroutineScope {
