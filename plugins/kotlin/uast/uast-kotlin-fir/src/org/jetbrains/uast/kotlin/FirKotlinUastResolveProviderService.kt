@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.analyseForUast
 import org.jetbrains.kotlin.analysis.api.calls.KtAnnotationCall
 import org.jetbrains.kotlin.analysis.api.calls.getSingleCandidateSymbolOrNull
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -278,11 +279,45 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             else ->
                 return null
         }
-        val lightElement = resolvedTargetElement?.takeIf {
+        resolvedTargetElement?.takeIf {
             it is KtDeclaration && it.getKtModule() is KtSourceModule
-        }?.getMaybeLightElement(ktExpression)
+        }?.getMaybeLightElement(ktExpression)?.let { return it }
+
+        fun resolveToPsiClassOrEnumEntry(classOrObject: KtClassOrObject): PsiElement? {
+            analyseForUast(ktExpression) {
+                return if (classOrObject is KtEnumEntry) {
+                    classOrObject.getEnumEntrySymbol().containingEnumClassIdIfNonLocal?.let { enumClassId ->
+                        buildClassType(enumClassId)
+                    }
+                } else {
+                    buildClassType(classOrObject.getClassOrObjectSymbol())
+                }?.let { ktType ->
+                    toPsiClass(ktType, null, classOrObject, classOrObject.typeOwnerKind)?.let { psiClass ->
+                        if (resolvedTargetElement is KtEnumEntry) {
+                            psiClass.findFieldByName(resolvedTargetElement.name, false)
+                        } else psiClass
+                    }
+                }
+            }
+        }
+
+        when (resolvedTargetElement) {
+            is KtClassOrObject -> {
+                resolveToPsiClassOrEnumEntry(resolvedTargetElement)?.let { return it }
+            }
+            is KtConstructor<*> -> {
+                resolveToPsiClassOrEnumEntry(resolvedTargetElement.getContainingClassOrObject())?.let { return it }
+            }
+            is KtTypeAlias -> {
+                analyseForUast(ktExpression) {
+                    val ktType = resolvedTargetElement.getTypeAliasSymbol().expandedType
+                    toPsiClass(ktType, null, resolvedTargetElement, resolvedTargetElement.typeOwnerKind)?.let { return it }
+                }
+            }
+        }
+
         // TODO: need to handle resolved target to library source
-        return lightElement ?: resolvedTargetElement
+        return resolvedTargetElement
     }
 
     override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType? {

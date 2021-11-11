@@ -1,4 +1,4 @@
-UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
 UTypeReferenceExpression (name = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:annotation class Annotation(vararg val strings: String): Annotation
 UTypeReferenceExpression (name = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:annotation class Annotation(vararg val strings: String): Annotation
 UTypeReferenceExpression (name = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> Kotlin_Light_Class:annotation class AnnotationArray(vararg val value: Annotation): AnnotationArray

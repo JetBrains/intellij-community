@@ -1,6 +1,6 @@
 UComment -> USimpleNameReferenceExpression (identifier = Margherita) -> null: Margherita
 UComment -> USimpleNameReferenceExpression (identifier = Pizza) -> null: Pizza
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UComment -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> null: java
@@ -20,7 +20,7 @@ UComment -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Margherita) -> null: Margherita
 UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> Kotlin_Light_Class:/** Ingredient of [Pizza] */
     interface Ingredient: Ingredient
-UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> CLASS: Boolean
+UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> PsiClass:Boolean: Boolean
 UComment -> USimpleNameReferenceExpression (identifier = Pizza) -> null: Pizza
 UComment -> USimpleNameReferenceExpression (identifier = Pizza) -> null: Pizza
 UComment -> USimpleNameReferenceExpression (identifier = P) -> null: P
@@ -90,7 +90,7 @@ UTypeReferenceExpression (name = Pizza.Builder<P>) -> USimpleNameReferenceExpres
         protected abstract fun self(): P
     }: Builder
 UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifier = P) -> Kotlin_Light_Type_Parameter: P
-UTypeReferenceExpression (name = java.util.Set<Pizza.Ingredient>) -> USimpleNameReferenceExpression (identifier = MutableSet) -> CLASS: MutableSet
+UTypeReferenceExpression (name = java.util.Set<Pizza.Ingredient>) -> USimpleNameReferenceExpression (identifier = MutableSet) -> PsiClass:Set: Set
 UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Pizza) -> Kotlin_Light_Class:/**
  * Common Pizza Interface
  *
@@ -245,7 +245,7 @@ UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifie
 UComment -> USimpleNameReferenceExpression (identifier = Pizza) -> null: Pizza
 UComment -> USimpleNameReferenceExpression (identifier = size) -> null: size
 UComment -> USimpleNameReferenceExpression (identifier = Margherita) -> null: Margherita
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UTypeReferenceExpression (name = Pizza) -> USimpleNameReferenceExpression (identifier = Pizza) -> Kotlin_Light_Class:/**
  * Common Pizza Interface
  *
@@ -355,4 +355,4 @@ interface Pizza {
 }: Pizza
 UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> Kotlin_Light_Class:/** Ingredient of [Pizza] */
     interface Ingredient: Ingredient
-UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> CLASS: Boolean
+UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> PsiClass:Boolean: Boolean
