@@ -103,6 +103,8 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
           }
         }
       }
+
+      restoreUiInformer()
     }
 
   protected abstract fun LessonContext.runTask()
@@ -125,6 +127,17 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
                                         strong(ActionsBundle.message("group.ViewAppearanceGroup.text").dropMnemonic()),
                                         callbackId)) {
         UISettings.instance.run { !showNavigationBar && !showMainToolbar }
+      }
+    }
+  }
+
+  private fun LessonContext.restoreUiInformer() {
+    if (UISettings.instance.run { showNavigationBar || showMainToolbar }) return
+    restoreChangedSettingsInformer {
+      UISettings.instance.apply {
+        showNavigationBar = false
+        showMainToolbar = false
+        fireUISettingsChanged()
       }
     }
   }

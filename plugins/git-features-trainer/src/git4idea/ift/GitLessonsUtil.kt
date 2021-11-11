@@ -236,6 +236,16 @@ object GitLessonsUtil {
     }
   }
 
+  fun LessonContext.restoreCommitWindowStateInformer() {
+    val enabledModalInterface = !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+    val enabledStagingArea = GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
+    if (!enabledModalInterface && !enabledStagingArea) return
+    restoreChangedSettingsInformer {
+      if (enabledModalInterface) CommitModeManager.setCommitFromLocalChanges(null, false)
+      if (enabledStagingArea) enableStagingArea(true)
+    }
+  }
+
   fun TaskContext.openPushDialogText(@Nls introduction: String) {
     openGitDialogText(introduction, DvcsBundle.message("action.push").dropMnemonic(),
                       "Vcs.Push", AllIcons.Vcs.Push, VcsPushAction::class)
