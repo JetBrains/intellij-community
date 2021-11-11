@@ -58,7 +58,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
     Font font = UIUtil.getLabelFont();
-    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? RelativeFont.SMALL.derive(font) : font;
+    return !ExperimentalUI.isNewUI() && UISettings.getInstance().getUseSmallLabelsOnTabs() ? RelativeFont.SMALL.derive(font) : font;
   }
 
   @Override

@@ -152,7 +152,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     myFrame = frame;
     setLayout(new BorderLayout());
     setBorder(ExperimentalUI.isNewUI() ?
-              JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.StatusBar.BORDER_COLOR, 1, 0, 0, 0), JBUI.Borders.empty(0, 10)) :
+              JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.StatusBar.BORDER_COLOR, 1, 0, 0, 0),
+                                    JBUI.Borders.empty(0, 10, 1, 10)) :
               JBUI.Borders.empty(1, 0, 0, 6));
 
     myInfoAndProgressPanel = new InfoAndProgressPanel();
@@ -562,7 +563,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
              JBUI.CurrentTheme.StatusBar.Widget.PRESSED_BACKGROUND :
              JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND;
 
-    if (getUI() instanceof StatusBarUI) {
+    if (!ExperimentalUI.isNewUI() && getUI() instanceof StatusBarUI) {
       point.y += StatusBarUI.BORDER_WIDTH.get();
       bounds.height -= StatusBarUI.BORDER_WIDTH.get();
     }
