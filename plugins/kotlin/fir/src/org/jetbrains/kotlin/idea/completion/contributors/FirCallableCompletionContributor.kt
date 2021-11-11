@@ -201,7 +201,32 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ) {
-        val typeOfPossibleReceiver = explicitReceiver.getKtType() ?: return
+        val smartCastInfo = explicitReceiver.getSmartCastInfo()
+        if (smartCastInfo?.isStable == false) {
+            // Collect members available from unstable smartcast as well.
+            collectDotCompletionForCallableReceiver(
+                smartCastInfo.smartCastType,
+                visibilityChecker,
+                implicitScopes,
+                extensionChecker,
+                context,
+                // Only offer the hint if the type is denotable.
+                smartCastInfo.smartCastType.takeIf { it.approximateToSuperPublicDenotable() == null }
+            )
+        }
+
+        val receiverType = explicitReceiver.getKtType() ?: return
+        collectDotCompletionForCallableReceiver(receiverType, visibilityChecker, implicitScopes, extensionChecker, context)
+    }
+
+    private fun KtAnalysisSession.collectDotCompletionForCallableReceiver(
+        typeOfPossibleReceiver: KtType,
+        visibilityChecker: CompletionVisibilityChecker,
+        implicitScopes: KtScope,
+        extensionChecker: ExtensionApplicabilityChecker,
+        context: WeighingContext,
+        explicitReceiverTypeHint: KtType? = null
+    ) {
         val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope() ?: return
 
         val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }
@@ -218,7 +243,7 @@ internal open class FirCallableCompletionContributor(
             .forEach {
                 if (it !in syntheticPropertyOrigins) {
                     // For basic completion, FE1.0 skips Java functions that are mapped to Kotlin properties.
-                    addCallableSymbolToCompletion(context, it, getOptions(it))
+                    addCallableSymbolToCompletion(context, it, getOptions(it), explicitReceiverTypeHint = explicitReceiverTypeHint)
                 }
             }
 
@@ -228,13 +253,19 @@ internal open class FirCallableCompletionContributor(
         extensionNonMembers.forEach { (symbol, applicabilityResult) ->
             getExtensionOptions(symbol, applicabilityResult)?.let {
                 extensionMembers += symbol
-                addCallableSymbolToCompletion(context, symbol, it, applicabilityResult.substitutor)
+                addCallableSymbolToCompletion(
+                    context,
+                    symbol,
+                    it,
+                    applicabilityResult.substitutor,
+                    explicitReceiverTypeHint = explicitReceiverTypeHint
+                )
             }
         }
 
         collectTopLevelExtensionsFromIndices(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
             .filter { it !in extensionMembers && filter(it) }
-            .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
+            .forEach { addCallableSymbolToCompletion(context, it, getOptions(it), explicitReceiverTypeHint = explicitReceiverTypeHint) }
     }
 
     private fun KtAnalysisSession.collectTopLevelExtensionsFromIndices(
