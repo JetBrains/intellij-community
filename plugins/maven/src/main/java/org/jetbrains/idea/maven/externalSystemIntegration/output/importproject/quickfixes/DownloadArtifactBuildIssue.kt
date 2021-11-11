@@ -40,8 +40,15 @@ class CleanBrokenArtifactsAndReimportQuickFix(val unresolvedArtifactFiles: Colle
 
   private fun deleteLastUpdatedFiles(unresolvedArtifactDirectory: Path) {
     MavenLog.LOG.info("start deleting lastUpdated file from $unresolvedArtifactDirectory")
-    val listUpdatedFiles = Files.list(unresolvedArtifactDirectory).filter { child ->
-      child.fileName.toString().endsWith(".lastUpdated", true)
+
+    val listUpdatedFiles = try {
+      Files.list(unresolvedArtifactDirectory).filter { child ->
+        child.fileName.toString().endsWith(".lastUpdated", true)
+      }
+    }
+    catch (e: Exception) {
+      MavenLog.LOG.warn("error deleting lastUpdated file from $unresolvedArtifactDirectory", e)
+      return
     }
 
     for (childFiles in listUpdatedFiles) {
