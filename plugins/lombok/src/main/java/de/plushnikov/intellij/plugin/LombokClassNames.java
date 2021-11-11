@@ -43,6 +43,7 @@ public interface LombokClassNames {
   @NonNls String SLF_4_J = "lombok.extern.slf4j.Slf4j";
   @NonNls String SNEAKY_THROWS = "lombok.SneakyThrows";
   @NonNls String SUPER_BUILDER = "lombok.experimental.SuperBuilder";
+  @NonNls String STANDARD_EXCEPTION = "lombok.experimental.StandardException";
   @NonNls String SYNCHRONIZED = "lombok.Synchronized";
   @NonNls String TOLERATE = "lombok.experimental.Tolerate";
   @NonNls String TO_STRING = "lombok.ToString";

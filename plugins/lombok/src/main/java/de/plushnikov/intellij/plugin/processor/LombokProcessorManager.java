@@ -77,6 +77,7 @@ public final class LombokProcessorManager {
       application.getService(ValueProcessor.class),
 
       application.getService(UtilityClassProcessor.class),
+      application.getService(StandardExceptionProcessor.class),
 
       application.getService(FieldNameConstantsOldProcessor.class),
       application.getService(FieldNameConstantsFieldProcessor.class),
