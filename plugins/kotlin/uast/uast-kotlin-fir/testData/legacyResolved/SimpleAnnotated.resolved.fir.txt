@@ -2,4 +2,4 @@ UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpress
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
 UTypeReferenceExpression (name = kotlin.SinceKotlin) -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:kotlin: kotlin
 UTypeReferenceExpression (name = kotlin.SinceKotlin) -> USimpleNameReferenceExpression (identifier = SinceKotlin) -> PRIMARY_CONSTRUCTOR: SinceKotlin
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
