@@ -3,9 +3,10 @@
 
 package org.jetbrains.intellij.build.io
 
+import com.intellij.openapi.util.SystemInfoRt
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.nio.file.FileSystems
@@ -17,17 +18,18 @@ class ProcessTest {
     @BeforeAll
     @JvmStatic
     fun assumeShell() {
-      assertThatCode {
-        runProcess("sh", "--version")
-      }.doesNotThrowAnyException()
+      assumeTrue(SystemInfoRt.isUnix)
+      assumeTrue {
+        runCatching {
+          runProcess("sh", "--version")
+        }.isSuccess
+      }
     }
   }
 
   @AfterEach
   fun allErrorOutputReadersAreDone() {
-    assert(areAllIoTasksCompleted()) {
-      "not all completed"
-    }
+    assertThat(areAllIoTasksCompleted()).isTrue()
   }
 
   private fun runShell(@Suppress("SameParameterValue") code: String, timeoutMillis: Long) {
