@@ -37,7 +37,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
     return isPopupElement ? JBInsets.create(1, 2) :
-           ExperimentalUI.isNewUI() ? JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1, 1, 3, 1)) : JBUI.emptyInsets();
+           ExperimentalUI.isNewUI() ? JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1)) : JBUI.emptyInsets();
   }
 
   @Override
@@ -51,7 +51,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     return ExperimentalUI.isNewUI() ?
             item != null && item.isInFloatingMode() ?
               JBUI.insets("StatusBar.Breadcrumbs.floatingItemInsets", JBUI.insets(1)) :
-              JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(3, 0)) :
+              JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(2, 0)) :
             JBUI.insets(3);
   }
 

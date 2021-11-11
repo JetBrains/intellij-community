@@ -688,7 +688,7 @@ public class JBUI {
 
     public static final class StatusBar {
       public static final Color BACKGROUND = JBColor.namedColor("StatusBar.background", JBColor.PanelBackground);
-
+      public static final Color BORDER_COLOR = JBColor.namedColor("StatusBar.borderColor", Gray.x91);
       /**
        * @deprecated Use {@link Widget#HOVER_BACKGROUND} instead.
        */
