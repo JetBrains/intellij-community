@@ -1,4 +1,4 @@
-UReturnExpression -> USimpleNameReferenceExpression (identifier = field) -> KtUltraLightMethodForSourceDeclaration:getWithSetter: getWithSetter
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = field) -> KtUltraLightMethodForSourceDeclaration:setWithSetter: setWithSetter
+UReturnExpression -> USimpleNameReferenceExpression (identifier = field) -> Kotlin_Light_Method: getWithSetter
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = field) -> Kotlin_Light_Method: setWithSetter
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = p) -> Light Parameter: p
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = p) -> Kotlin_Light_Value_Parameter: p

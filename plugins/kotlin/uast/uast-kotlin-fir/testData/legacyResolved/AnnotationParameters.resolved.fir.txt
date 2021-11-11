@@ -5,23 +5,23 @@ UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpr
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
 UTypeReferenceExpression (name = java.lang.String[]) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = RequiresPermission) -> USimpleNameReferenceExpression (identifier = RequiresPermission) -> KtUltraLightClass:annotation class RequiresPermission(val anyOf: IntArray): RequiresPermission
-null -> USimpleNameReferenceExpression (identifier = anyOf) -> KtUltraLightMethodForSourceDeclaration:anyOf: anyOf
+UTypeReferenceExpression (name = RequiresPermission) -> USimpleNameReferenceExpression (identifier = RequiresPermission) -> Kotlin_Light_Class:annotation class RequiresPermission(val anyOf: IntArray): RequiresPermission
+null -> USimpleNameReferenceExpression (identifier = anyOf) -> Kotlin_Light_Method: anyOf
 UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = intArrayOf) -> null: null
-UTypeReferenceExpression (name = IntRange) -> USimpleNameReferenceExpression (identifier = IntRange) -> KtUltraLightClass:annotation class IntRange(val from: Long, val to: Long): IntRange
-null -> USimpleNameReferenceExpression (identifier = from) -> KtUltraLightMethodForSourceDeclaration:from: from
-null -> USimpleNameReferenceExpression (identifier = to) -> KtUltraLightMethodForSourceDeclaration:to: to
-UTypeReferenceExpression (name = WithDefaultValue) -> USimpleNameReferenceExpression (identifier = WithDefaultValue) -> KtUltraLightClass:annotation class WithDefaultValue(val value: Int = 42): WithDefaultValue
-UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression (identifier = SuppressLint) -> KtUltraLightClass:annotation class SuppressLint(vararg val value: String): SuppressLint
+UTypeReferenceExpression (name = IntRange) -> USimpleNameReferenceExpression (identifier = IntRange) -> Kotlin_Light_Class:annotation class IntRange(val from: Long, val to: Long): IntRange
+null -> USimpleNameReferenceExpression (identifier = from) -> Kotlin_Light_Method: from
+null -> USimpleNameReferenceExpression (identifier = to) -> Kotlin_Light_Method: to
+UTypeReferenceExpression (name = WithDefaultValue) -> USimpleNameReferenceExpression (identifier = WithDefaultValue) -> Kotlin_Light_Class:annotation class WithDefaultValue(val value: Int = 42): WithDefaultValue
+UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression (identifier = SuppressLint) -> Kotlin_Light_Class:annotation class SuppressLint(vararg val value: String): SuppressLint
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = IntRange) -> USimpleNameReferenceExpression (identifier = IntRange) -> KtUltraLightClass:annotation class IntRange(val from: Long, val to: Long): IntRange
-UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression (identifier = SuppressLint) -> KtUltraLightClass:annotation class SuppressLint(vararg val value: String): SuppressLint
+UTypeReferenceExpression (name = IntRange) -> USimpleNameReferenceExpression (identifier = IntRange) -> Kotlin_Light_Class:annotation class IntRange(val from: Long, val to: Long): IntRange
+UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression (identifier = SuppressLint) -> Kotlin_Light_Class:annotation class SuppressLint(vararg val value: String): SuppressLint
 UReturnExpression -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
-UTypeReferenceExpression (name = RequiresPermission) -> USimpleNameReferenceExpression (identifier = RequiresPermission) -> KtUltraLightClass:annotation class RequiresPermission(val anyOf: IntArray): RequiresPermission
-null -> USimpleNameReferenceExpression (identifier = anyOf) -> KtUltraLightMethodForSourceDeclaration:anyOf: anyOf
+UTypeReferenceExpression (name = RequiresPermission) -> USimpleNameReferenceExpression (identifier = RequiresPermission) -> Kotlin_Light_Class:annotation class RequiresPermission(val anyOf: IntArray): RequiresPermission
+null -> USimpleNameReferenceExpression (identifier = anyOf) -> Kotlin_Light_Method: anyOf
 UNamedExpression (name = anyOf) -> UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) -> null:
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UTypeReferenceExpression (name = RequiresStrPermission) -> USimpleNameReferenceExpression (identifier = RequiresStrPermission) -> KtUltraLightClass:annotation class RequiresStrPermission(val strs: Array<String>): RequiresStrPermission
-null -> USimpleNameReferenceExpression (identifier = strs) -> KtUltraLightMethodForSourceDeclaration:strs: strs
+UTypeReferenceExpression (name = RequiresStrPermission) -> USimpleNameReferenceExpression (identifier = RequiresStrPermission) -> Kotlin_Light_Class:annotation class RequiresStrPermission(val strs: Array<String>): RequiresStrPermission
+null -> USimpleNameReferenceExpression (identifier = strs) -> Kotlin_Light_Method: strs
 UNamedExpression (name = strs) -> UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) -> null:
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
