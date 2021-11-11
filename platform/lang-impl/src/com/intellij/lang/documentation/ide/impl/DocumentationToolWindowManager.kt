@@ -102,10 +102,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
   }
 
   private fun getVisibleAutoUpdatingContent(): Content? {
-    if (!autoUpdate || !toolWindow.isVisible) {
-      return null
-    }
-    return contentManager.selectedContent?.takeIf {
+    return getVisibleReusableContent()?.takeIf {
       it.toolWindowUI.isAutoUpdate
     }
   }
@@ -120,14 +117,18 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       }
       waitForFocusRequest = false
     }
-    if (!toolWindow.isVisible) {
-      return false
-    }
-    val content = contentManager.selectedContent?.takeIf {
-      it.isReusable
-    } ?: return false
+    val content = getVisibleReusableContent() ?: return false
     contentManager.requestFocus(content, false)
     return true
+  }
+
+  private fun getVisibleReusableContent(): Content? {
+    if (!toolWindow.isVisible) {
+      return null
+    }
+    return contentManager.selectedContent?.takeIf {
+      it.toolWindowUI.isReusable
+    }
   }
 
   /**
