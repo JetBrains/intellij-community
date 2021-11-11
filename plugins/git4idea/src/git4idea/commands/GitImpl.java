@@ -873,8 +873,7 @@ public class GitImpl extends GitImplBase {
   @NotNull
   public static String runBundledCommand(@Nullable Project project, String... args) throws VcsException {
     if (project != null && !TrustedProjects.isTrusted(project)) {
-      LOG.error(new AssertionError("Shouldn't be possible to run a Git command in the safe mode"));
-      return "";
+      throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
     }
 
     try {
