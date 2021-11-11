@@ -7,11 +7,14 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -63,6 +66,13 @@ private fun findDependencyScope(element: PsiElement): PsiElement? {
       return parent
     }
   }
+  if (element is GrParameter && element.parent?.parent is GrFunctionalExpression) {
+    val funExpr = element.parent.parent as GrFunctionalExpression
+    val enclosingCall = funExpr.parentOfType<GrMethodCall>()?.takeIf { it.closureArguments.any { it === funExpr } }
+    if (enclosingCall != null) {
+      return enclosingCall
+    }
+  }
   val lValue = if (element.parent is GrTuple) element.parent else element
   return PsiTreeUtil.findFirstParent(lValue) {
     (it.parent !is GrExpression || it is GrMethodCallExpression || it is GrBinaryExpression || it is GrInstanceOfExpression || isExpressionStatement(it))
@@ -83,6 +93,9 @@ private fun findReadsInside(scope: PsiElement, instructionsByElement: Instructio
           if (instruction !is ReadWriteVariableInstruction || instruction.isWrite) continue
           result += instruction
         }
+      }
+      if (element is GrClosableBlock) {
+        return
       }
       super.visitElement(element)
     }
