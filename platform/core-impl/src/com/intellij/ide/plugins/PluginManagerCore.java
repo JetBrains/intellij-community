@@ -77,7 +77,7 @@ public final class PluginManagerCore {
   private static final MethodType HAS_LOADED_CLASS_METHOD_TYPE = MethodType.methodType(boolean.class, String.class);
 
   private static final String THIRD_PARTY_PLUGINS_FILE = "alien_plugins.txt";
-  private static volatile @Nullable Boolean ourThirdPartyPluginsNoteAccepted = null;
+  private static volatile @Nullable Boolean thirdPartyPluginsNoteAccepted = null;
 
   private static Reference<Map<PluginId, Set<String>>> brokenPluginVersions;
   private static volatile @Nullable PluginSet pluginSet;
@@ -805,10 +805,10 @@ public final class PluginManagerCore {
         getLogger().info("3rd-party plugin privacy note declined; disabling plugins");
         aliens.forEach(descriptor -> descriptor.setEnabled(false));
         PluginEnabler.HEADLESS.disableById(aliens.stream().map(descriptor -> descriptor.getPluginId()).collect(Collectors.toSet()));
-        ourThirdPartyPluginsNoteAccepted = Boolean.FALSE;
+        thirdPartyPluginsNoteAccepted = Boolean.FALSE;
       }
       else {
-        ourThirdPartyPluginsNoteAccepted = Boolean.TRUE;
+        thirdPartyPluginsNoteAccepted = Boolean.TRUE;
       }
     }
 
@@ -852,8 +852,8 @@ public final class PluginManagerCore {
 
   @ApiStatus.Internal
   static @Nullable Boolean isThirdPartyPluginsNoteAccepted() {
-    Boolean result = ourThirdPartyPluginsNoteAccepted;
-    ourThirdPartyPluginsNoteAccepted = null;
+    Boolean result = thirdPartyPluginsNoteAccepted;
+    thirdPartyPluginsNoteAccepted = null;
     return result;
   }
 
