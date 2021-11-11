@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.openapi.rd.GraphicsExKt;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.PopupState;
@@ -113,9 +114,11 @@ final class ContentComboLabel extends ContentLabel {
       size.width += myComboIcon.getIconWidth();
     }
 
-    setBorder(myLayout.shouldShowId()
-              ? JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, ICONS_GAP)
-              : JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, ICONS_GAP));
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      setBorder(myLayout.shouldShowId()
+                ? JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, ICONS_GAP)
+                : JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, ICONS_GAP));
+    }
 
     return size;
   }
