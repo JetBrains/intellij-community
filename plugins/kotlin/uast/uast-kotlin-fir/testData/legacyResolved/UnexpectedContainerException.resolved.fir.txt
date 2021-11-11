@@ -1,10 +1,10 @@
 UTypeReferenceExpression (name = java.lang.Throwable) -> USimpleNameReferenceExpression (identifier = Throwable) -> CLASS: Throwable
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = crashMe) -> Kotlin_Light_Method: crashMe
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> UQualifiedReferenceExpression -> null: null
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> UQualifiedReferenceExpression -> PROPERTY: java
     UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = Callback) -> Kotlin_Light_Class:interface Callback {
     fun onError(throwable: Throwable)
 }: Callback
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PROPERTY: java
         UReturnExpression -> UObjectLiteralExpression -> null:
         UTypeReferenceExpression (name = Callback) -> USimpleNameReferenceExpression (identifier = Callback) -> Kotlin_Light_Class:interface Callback {
     fun onError(throwable: Throwable)
