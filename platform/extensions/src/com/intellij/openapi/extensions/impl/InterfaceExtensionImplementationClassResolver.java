@@ -32,7 +32,7 @@ final class InterfaceExtensionImplementationClassResolver implements Implementat
       if (!idString.equals("com.intellij.java") && !idString.equals("com.intellij.java.ide") && !idString.equals("org.jetbrains.android")
           && !idString.equals("com.intellij.kotlinNative.platformDeps") && !idString.equals("com.jetbrains.rider.android")) {
         ExtensionPointImpl.LOG.error(componentManager.createError("Created extension classloader is not equal to plugin's one.\n" +
-                                                                  "See https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md#internalignoredependencyviolation\n" +
+                                                                  "See https://youtrack.jetbrains.com/articles/IDEA-A-65/Plugin-Model#internalignoredependencyviolation\n" +
                                                                   "(\n" +
                                                                   "  className=" + className + ",\n" +
                                                                   "  extensionInstanceClassloader=" + result.getClassLoader() + ",\n" +
