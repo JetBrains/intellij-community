@@ -117,7 +117,7 @@ public class StandardExceptionProcessor extends AbstractClassProcessor {
         .withBodyText("super(message);\n" +
                       "if (cause != null) super.initCause(cause);");
       if (addConstructorProperties) {
-        messageCauseConstructor.withAnnotation("java.beans.ConstructorProperties(\"message\",\"cause\")");
+        messageCauseConstructor.withAnnotation("java.beans.ConstructorProperties({\"message\",\"cause\"})");
       }
       target.add(messageCauseConstructor);
     }
