@@ -58,7 +58,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
                      StandardCopyOption.REPLACE_EXISTING)
         }
         generateVMOptions(distBinDir)
-        generateScripts(distBinDir, extraJarNames)
+        UnixScriptBuilder.generateScripts(buildContext, extraJarNames, distBinDir, OsFamily.LINUX)
         generateReadme(unixDistPath)
         generateVersionMarker(unixDistPath, buildContext)
         customizer.copyAdditionalFiles(buildContext, unixDistPath)
@@ -99,73 +99,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         NioFiles.deleteRecursively(tempTar)
       }
     }
-  }
-
-  private static String makePathsVar(String variableName, List<String> jarNames) {
-    if (jarNames.isEmpty()) {
-      return ""
-    }
-    String classPath = "$variableName=\"\$IDE_HOME/lib/${jarNames[0]}\"\n"
-    if (jarNames.size() == 1) {
-      return classPath
-    }
-    return classPath + String.join("", jarNames[1..-1].collect { "$variableName=\"\$$variableName:\$IDE_HOME/lib/${it}\"\n" })
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void generateScripts(@NotNull Path distBinDir, @NotNull List<String> extraJarNames) {
-    String fullName = buildContext.applicationInfo.productName
-    String baseName = buildContext.productProperties.baseFileName
-    String scriptName = "${baseName}.sh"
-    String vmOptionsFileName = baseName
-
-    String bootClassPath = makePathsVar("BOOT_CLASS_PATH", buildContext.xBootClassPathJarNames)
-    String classPathVarName = "CLASSPATH"
-    String classPath = makePathsVar(classPathVarName, buildContext.bootClassPathJarNames + extraJarNames)
-    if (buildContext.productProperties.toolsJarRequired) {
-      classPath += "$classPathVarName=\"\$$classPathVarName:\$JDK/lib/tools.jar\"\n"
-    }
-
-    List<String> additionalJvmArgs = buildContext.additionalJvmArguments
-    if (!bootClassPath.isEmpty()) {
-      additionalJvmArgs += "-Xbootclasspath/a:\$BOOT_CLASS_PATH"
-    }
-
-    Path vmOptionsPath = distBinDir.resolve("${buildContext.productProperties.baseFileName}64.vmoptions")
-    if (!Files.exists(vmOptionsPath)) {
-      throw new IllegalStateException("File '$vmOptionsPath' should be already generated at this point")
-    }
-
-    String defaultXmxParameter = Files.readAllLines(vmOptionsPath).find { it.startsWith("-Xmx") }
-    if (defaultXmxParameter == null) {
-      throw new IllegalStateException("-Xmx was not found in '$vmOptionsPath'")
-    }
-
-    buildContext.ant.copy(todir: distBinDir.toString()) {
-      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts") {
-        if (!buildContext.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")) {
-          exclude(name: "remote-dev-server.sh")
-        }
-      }
-
-      filterset(begintoken: "__", endtoken: "__") {
-        filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
-        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
-        filter(token: "product_code", value: buildContext.applicationInfo.productCode)
-        filter(token: "vm_options", value: vmOptionsFileName)
-        filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: additionalJvmArgs.join(' '))
-        filter(token: "ide_default_xmx", value: defaultXmxParameter.strip())
-        filter(token: "class_path", value: bootClassPath + classPath)
-        filter(token: "script_name", value: scriptName)
-      }
-    }
-
-    Files.move(distBinDir.resolve("executable-template.sh"), distBinDir.resolve(scriptName), StandardCopyOption.REPLACE_EXISTING)
-    BuildTasksImpl.copyInspectScript(buildContext, distBinDir)
-
-    buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.sh", eol: "unix")
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)

@@ -85,6 +85,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     doCopyExtraFiles(macDistDir, arch, true)
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   private void doCopyExtraFiles(Path macDistDir, JvmArchitecture arch, boolean copyDistFiles) {
     //noinspection SpellCheckingInspection
     List<String> platformProperties = new ArrayList<String>(Arrays.asList(
@@ -118,6 +119,8 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     if (arch != null) {
       customizer.copyAdditionalFiles(buildContext, macDistDir, arch)
     }
+
+    UnixScriptBuilder.generateScripts(buildContext, new ArrayList<String>(), macDistDir.resolve("bin"), OsFamily.MACOS)
   }
 
   @Override
