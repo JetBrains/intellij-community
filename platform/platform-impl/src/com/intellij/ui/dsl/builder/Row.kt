@@ -99,7 +99,8 @@ interface Row {
 
   /**
    * Adds comment after the row with appropriate color and font size (macOS uses smaller font).
-   * [comment] can contain html tags except <html>, which is added automatically in this method.
+   * [comment] can contain html tags except &lt;html&gt;, which is added automatically in this method.
+   * \n does not work as new line in html, use &lt;br&gt; instead.
    * Visibility and enabled state of the row affects row comment as well.
    *
    * @see MAX_LINE_LENGTH_WORD_WRAP
@@ -194,7 +195,8 @@ interface Row {
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
   /**
-   * Adds text. [text] can contain html tags except <html>, which is added automatically in this method.
+   * Adds text. [text] can contain html tags except &lt;html&gt;, which is added automatically in this method.
+   * \n does not work as new line in html, use &lt;br&gt; instead.
    * It is preferable to use [label] method for short plain single-lined strings because labels use less resources and simpler
    *
    * @see DEFAULT_COMMENT_WIDTH
@@ -206,7 +208,8 @@ interface Row {
 
   /**
    * Adds comment with appropriate color and font size (macOS uses smaller font).
-   * [comment] can contain html tags except <html>, which is added automatically in this method
+   * [comment] can contain html tags except &lt;html&gt;, which is added automatically in this method.
+   * \n does not work as new line in html, use &lt;br&gt; instead.
    *
    * @see DEFAULT_COMMENT_WIDTH
    * @see MAX_LINE_LENGTH_WORD_WRAP
