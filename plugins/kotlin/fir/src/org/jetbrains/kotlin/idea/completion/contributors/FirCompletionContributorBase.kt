@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.shortenReferencesInRange
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -106,6 +108,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         options: CallableInsertionOptions,
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
         priority: ItemPriority? = null,
+        explicitReceiverTypeHint: KtType? = null,
     ) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any deprecated items that could leads to compile errors.
@@ -115,11 +118,13 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         }
         priority?.let { lookup.priority = it }
         applyWeighers(context, lookup, symbol, substitutor)
-        sink.addElement(lookup.adaptToReceiver())
+        sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render()))
     }
 
-    private fun LookupElement.adaptToReceiver(): LookupElement {
-        return when (callableWeight?.kind) {
+    private fun LookupElement.adaptToReceiver(weigherContext: WeighingContext, explicitReceiverTypeHint: String?): LookupElement {
+        val explicitReceiverRange = weigherContext.explicitReceiver?.textRange
+        val explicitReceiverText = weigherContext.explicitReceiver?.text
+        return when (val kind = callableWeight?.kind) {
             // Make the text bold if it's immediate member of the receiver
             CallableWeigher.CallableWeightKind.ThisClassMember, CallableWeigher.CallableWeightKind.ThisTypeExtension ->
                 object : LookupElementDecorator<LookupElement>(this) {
@@ -140,6 +145,19 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
                     for (fragment in fragments) {
                         presentation.appendTailText(fragment.text, true)
                     }
+                }
+
+                override fun handleInsert(context: InsertionContext) {
+                    super.handleInsert(context)
+                    if (explicitReceiverRange == null || explicitReceiverText == null) return
+                    val castType = explicitReceiverTypeHint ?: kind.fullyQualifiedCastType
+                    val newReceiver = "(${explicitReceiverText} as $castType)"
+                    context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
+                    context.commitDocument()
+                    shortenReferencesInRange(
+                        context.file as KtFile,
+                        explicitReceiverRange.grown(newReceiver.length)
+                    )
                 }
             }
             else -> this

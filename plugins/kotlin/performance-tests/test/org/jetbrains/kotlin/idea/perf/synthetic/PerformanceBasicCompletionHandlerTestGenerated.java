@@ -1174,5 +1174,25 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         public void testTypeParameter() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/TypeParameter.kt");
         }
+
+        @TestMetadata("UnstableSmartCast.kt")
+        public void testUnstableSmartCast() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast_notDenotable.kt")
+        public void testUnstableSmartCast_notDenotable() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast_notDenotable.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast_typeAlias.kt")
+        public void testUnstableSmartCast_typeAlias() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast_typeAlias.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast_typeParams.kt")
+        public void testUnstableSmartCast_typeParams() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast_typeParams.kt");
+        }
     }
 }
