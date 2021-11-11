@@ -26,12 +26,12 @@ import javax.swing.Icon
 
 interface RunToolbarData {
   companion object {
-    var RUN_TOOLBAR_DATA_KEY: DataKey<RunToolbarData> = DataKey.create("RUN_TOOLBAR_DATA_KEY")
-    var RUN_TOOLBAR_POPUP_STATE_KEY: DataKey<Boolean> = DataKey.create("RUN_TOOLBAR_POPUP_STATE_KEY")
-    var RUN_TOOLBAR_MAIN_STATE: DataKey<RunToolbarMainSlotState> = DataKey.create("RUN_TOOLBAR_MAIN_STATE")
+    @JvmField val RUN_TOOLBAR_DATA_KEY: DataKey<RunToolbarData> = DataKey.create("RUN_TOOLBAR_DATA_KEY")
+    @JvmField val RUN_TOOLBAR_POPUP_STATE_KEY: DataKey<Boolean> = DataKey.create("RUN_TOOLBAR_POPUP_STATE_KEY")
+    @JvmField val RUN_TOOLBAR_MAIN_STATE: DataKey<RunToolbarMainSlotState> = DataKey.create("RUN_TOOLBAR_MAIN_STATE")
 
     @ApiStatus.Internal
-    val RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY = Key<Boolean>("RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY")
+    @JvmField val RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY = Key<Boolean>("RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY")
 
     internal fun prepareDescription(@Nls text: String, @Nls description: String): @Nls String {
       return HtmlBuilder().append(text)
