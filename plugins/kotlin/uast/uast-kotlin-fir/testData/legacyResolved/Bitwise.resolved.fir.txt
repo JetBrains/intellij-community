@@ -1,6 +1,6 @@
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+    UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = and) -> FUN: and
     UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = mask) -> Kotlin_Light_Variable: mask
@@ -25,9 +25,9 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
     UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = signed) -> Kotlin_Light_Variable: signed
     UBinaryExpression (operator = /) -> USimpleNameReferenceExpression (identifier = /) -> FUN: div
     UBinaryExpression (operator = /) -> USimpleNameReferenceExpression (identifier = one) -> Kotlin_Light_Variable: one
-UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> CLASS: Long
-    UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> CLASS: Long
-    UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> CLASS: Long
+UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
+    UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
+    UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
     UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = and) -> FUN: and
     UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = mask) -> Kotlin_Light_Variable: mask

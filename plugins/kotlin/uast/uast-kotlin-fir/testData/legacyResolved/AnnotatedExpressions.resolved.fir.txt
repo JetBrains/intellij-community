@@ -16,7 +16,7 @@ UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpress
     ULocalVariable (name = varae507364) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
     UIfExpression -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
 UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
