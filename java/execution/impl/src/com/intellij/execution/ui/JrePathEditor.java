@@ -95,11 +95,6 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, JBUI.scale(300));
     comboBox.setEditable(editable);
     comboBox.setRenderer(new ColoredListCellRenderer<>() {
-      {
-        setIpad(JBInsets.create(1, 0));
-        setMyBorder(null);
-      }
-
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends JreComboBoxItem> list,
                                            JreComboBoxItem value,
@@ -421,6 +416,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     @Override
     public void render(SimpleColoredComponent component, boolean selected) {
       component.append(ExecutionBundle.message("default.jre.name"));
+      component.setIcon(EmptyIcon.ICON_16);
       //may be null if JrePathEditor is added to a GUI Form where the default constructor is used and setDefaultJreSelector isn't called
       if (myDefaultJreSelector != null) {
         updateDefaultJrePresentation((@Nls String description) -> component.append(description, SimpleTextAttributes.GRAY_ATTRIBUTES));
