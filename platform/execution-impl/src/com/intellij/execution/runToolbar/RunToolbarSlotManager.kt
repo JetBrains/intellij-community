@@ -93,7 +93,7 @@ class RunToolbarSlotManager(val project: Project) {
 
       if(value) {
         if (RunToolbarProcess.logNeeded) LOG.info(
-          "SM settings: new on top ${getMoveNewOnTop()}; update by selected ${getUpdateMainBySelected()} RunToolbar")
+          "SM settings: new on top ${runToolbarSettings.getMoveNewOnTop()}; update by selected ${getUpdateMainBySelected()} RunToolbar")
 
         val runConfigurations = runToolbarSettings.getRunConfigurations()
         runConfigurations.forEachIndexed { index, entry ->
@@ -138,8 +138,10 @@ class RunToolbarSlotManager(val project: Project) {
     return runToolbarSettings.getUpdateMainBySelected()
   }
 
-  private fun getMoveNewOnTop(): Boolean {
-    return runToolbarSettings.getMoveNewOnTop()
+  private fun getMoveNewOnTop(executionEnvironment: ExecutionEnvironment): Boolean {
+    if (!runToolbarSettings.getMoveNewOnTop()) return false
+    val suppressValue = executionEnvironment.getUserData(RunToolbarData.RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY) ?: false
+    return !suppressValue
   }
 
   private fun clear() {
@@ -304,7 +306,7 @@ class RunToolbarSlotManager(val project: Project) {
       } != null
 
       if (!isCompoundProcess) {
-        if (getMoveNewOnTop()) {
+        if (getMoveNewOnTop(env)) {
           moveToTop(slot.id)
         }
       }
