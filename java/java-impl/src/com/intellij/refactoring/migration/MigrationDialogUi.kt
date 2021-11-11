@@ -5,9 +5,9 @@ import com.intellij.application.options.ModulesComboBox
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JLabel
@@ -36,6 +36,7 @@ class MigrationDialogUi(map: MigrationMap?) {
 
     row(JavaRefactoringBundle.message("migration.dialog.scope.label")) {
       modulesCombo = cell(ModulesComboBox())
+        .applyToComponent { setMinimumAndPreferredWidth(JBUI.scale(380)) }
         .horizontalAlign(HorizontalAlign.FILL)
         .component
       bottomGap(BottomGap.SMALL)
@@ -45,7 +46,6 @@ class MigrationDialogUi(map: MigrationMap?) {
       descriptionLabel = text(map?.description ?: "", 68)
         .component
     }
-      .layout(RowLayout.INDEPENDENT)
   }
 
   fun preferredFocusedComponent(): JComponent = editLink
