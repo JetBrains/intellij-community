@@ -31,9 +31,9 @@ UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UBlockExpression -> UQualifiedReferenceExpression -> PROPERTY: size
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = size) -> PROPERTY: size
-    UBlockExpression -> UQualifiedReferenceExpression -> null: null
+    UBlockExpression -> UQualifiedReferenceExpression -> PROPERTY: indices
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = indices) -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = indices) -> PROPERTY: indices
     UTypeReferenceExpression (name = java.util.Date) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
     UTypeReferenceExpression (name = java.util.Date) -> USimpleNameReferenceExpression (identifier = util) -> PsiPackage:java.util: util
     UTypeReferenceExpression (name = java.util.Date) -> USimpleNameReferenceExpression (identifier = Date) -> PsiClass:Date: Date
