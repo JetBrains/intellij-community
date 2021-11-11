@@ -33,15 +33,17 @@ public abstract class LanguageLevelCombo extends ComboBoxWithSeparators<Language
 
     Arrays.stream(LanguageLevel.values())
       .sorted((l1, l2) -> l2.toJavaVersion().feature - l1.toJavaVersion().feature)
-      .filter(level -> !level.isPreview() && ArrayUtil.contains(level.toJavaVersion().feature, LTS))
+      .filter(level -> level != LanguageLevel.JDK_X && !level.isPreview() && ArrayUtil.contains(level.toJavaVersion().feature, LTS))
       .forEach(level -> addItem(new Entry(level)));
 
     addItem(new Separator(JavaUiBundle.message("language.level.combo.other.versions")));
 
     Arrays.stream(LanguageLevel.values())
       .sorted((l1, l2) -> l2.toJavaVersion().feature - l1.toJavaVersion().feature)
-      .filter(level -> level.isPreview() || !ArrayUtil.contains(level.toJavaVersion().feature, LTS))
+      .filter(level -> level != LanguageLevel.JDK_X && (level.isPreview() || !ArrayUtil.contains(level.toJavaVersion().feature, LTS)))
       .forEach(level -> addItem(new Entry(level)));
+
+    addItem(new Entry(LanguageLevel.JDK_X));
   }
 
   private class Entry extends ComboBoxWithSeparators<LanguageLevel>.EntryModel<LanguageLevel> {
