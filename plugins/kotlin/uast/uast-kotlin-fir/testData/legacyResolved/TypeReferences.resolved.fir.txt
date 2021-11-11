@@ -1,26 +1,26 @@
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithType) -> LightVariableBuilder:varWithType: varWithType
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithType) -> Kotlin_Light_Variable: varWithType
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithoutType) -> LightVariableBuilder:varWithoutType: varWithoutType
-    UReturnExpression -> USimpleNameReferenceExpression (identifier = result) -> LightVariableBuilder:result: result
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithoutType) -> Kotlin_Light_Variable: varWithoutType
+    UReturnExpression -> USimpleNameReferenceExpression (identifier = result) -> Kotlin_Light_Variable: result
 UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
 UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
-    ULocalVariable (name = a) -> USimpleNameReferenceExpression (identifier = arg) -> Light Parameter: arg
-    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
-    ULocalVariable (name = var708e23eb) -> USimpleNameReferenceExpression (identifier = arg) -> Light Parameter: arg
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
+    ULocalVariable (name = a) -> USimpleNameReferenceExpression (identifier = arg) -> Kotlin_Light_Value_Parameter: arg
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
+    ULocalVariable (name = var708e23eb) -> USimpleNameReferenceExpression (identifier = arg) -> Kotlin_Light_Value_Parameter: arg
     UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
     UTypeReferenceExpression (name = java.util.List<? extends T>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
-    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = at) -> LightVariableBuilder:at: at
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = at) -> Kotlin_Light_Variable: at
     UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
     ULocalVariable (name = tsl) -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = tl) -> LightVariableBuilder:tl: tl
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = tl) -> Kotlin_Light_Variable: tl
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = map) -> FUN: map
         UReturnExpression -> UQualifiedReferenceExpression -> null: null
         UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> FUNCTION_LITERAL: <anonymous>
@@ -31,8 +31,8 @@ UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifie
     UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = ListOfLists) -> TYPEALIAS: ListOfLists
     UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends T>>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
     UTypeReferenceExpression (name = java.util.List<? extends T>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
-    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:parameterizedFoo) -> USimpleNameReferenceExpression (identifier = parameterizedFoo) -> KtUltraLightMethodForSourceDeclaration:parameterizedFoo: parameterizedFoo
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = parameterizedFoo) -> Kotlin_Light_Method: parameterizedFoo
     UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> CLASS: List
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = emptyList) -> FUN: emptyList

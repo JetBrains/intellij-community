@@ -1,54 +1,54 @@
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
-    UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = and) -> null: null
-    UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = mask) -> LightVariableBuilder:mask: mask
-    UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = mask) -> Kotlin_Light_Variable: mask
+    UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = or) -> null: null
-    UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = mask) -> LightVariableBuilder:mask: mask
-    UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = mask) -> Kotlin_Light_Variable: mask
+    UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = xor) -> null: null
-    UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = mask) -> LightVariableBuilder:mask: mask
-    UBinaryExpression (operator = >>) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = mask) -> Kotlin_Light_Variable: mask
+    UBinaryExpression (operator = >>) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = >>) -> USimpleNameReferenceExpression (identifier = shr) -> null: null
-    UBinaryExpression (operator = >>>) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = >>>) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = >>>) -> USimpleNameReferenceExpression (identifier = ushr) -> null: null
-    UBinaryExpression (operator = <<) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = <<) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = <<) -> USimpleNameReferenceExpression (identifier = shl) -> null: null
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = pos) -> LightVariableBuilder:pos: pos
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = pos) -> Kotlin_Light_Variable: pos
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> null: null
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = zero) -> LightVariableBuilder:zero: zero
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = zero) -> Kotlin_Light_Variable: zero
     UBinaryExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> null: null
-    UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = zebra) -> LightVariableBuilder:zebra: zebra
+    UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = zebra) -> Kotlin_Light_Variable: zebra
     UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = *) -> null: null
-    UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = signed) -> LightVariableBuilder:signed: signed
+    UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = signed) -> Kotlin_Light_Variable: signed
     UBinaryExpression (operator = /) -> USimpleNameReferenceExpression (identifier = /) -> null: null
-    UBinaryExpression (operator = /) -> USimpleNameReferenceExpression (identifier = one) -> LightVariableBuilder:one: one
+    UBinaryExpression (operator = /) -> USimpleNameReferenceExpression (identifier = one) -> Kotlin_Light_Variable: one
 UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
     UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
     UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
-    UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = and) -> null: null
-    UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = mask) -> LightVariableBuilder:mask: mask
-    UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = &) -> USimpleNameReferenceExpression (identifier = mask) -> Kotlin_Light_Variable: mask
+    UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = or) -> null: null
-    UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = mask) -> LightVariableBuilder:mask: mask
-    UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = |) -> USimpleNameReferenceExpression (identifier = mask) -> Kotlin_Light_Variable: mask
+    UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = xor) -> null: null
-    UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = mask) -> LightVariableBuilder:mask: mask
-    UBinaryExpression (operator = >>) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = ^) -> USimpleNameReferenceExpression (identifier = mask) -> Kotlin_Light_Variable: mask
+    UBinaryExpression (operator = >>) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = >>) -> USimpleNameReferenceExpression (identifier = shr) -> null: null
-    UBinaryExpression (operator = >>>) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = >>>) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = >>>) -> USimpleNameReferenceExpression (identifier = ushr) -> null: null
-    UBinaryExpression (operator = <<) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = <<) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = <<) -> USimpleNameReferenceExpression (identifier = shl) -> null: null
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = pos) -> LightVariableBuilder:pos: pos
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = pos) -> Kotlin_Light_Variable: pos
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> null: null
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = zero) -> LightVariableBuilder:zero: zero
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = zero) -> Kotlin_Light_Variable: zero
     UBinaryExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> null: null
-    UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = zebra) -> LightVariableBuilder:zebra: zebra
+    UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = zebra) -> Kotlin_Light_Variable: zebra
     UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = *) -> null: null
-    UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = signed) -> LightVariableBuilder:signed: signed
+    UBinaryExpression (operator = *) -> USimpleNameReferenceExpression (identifier = signed) -> Kotlin_Light_Variable: signed
     UBinaryExpression (operator = /) -> USimpleNameReferenceExpression (identifier = /) -> null: null
-    UBinaryExpression (operator = /) -> USimpleNameReferenceExpression (identifier = one) -> LightVariableBuilder:one: one
+    UBinaryExpression (operator = /) -> USimpleNameReferenceExpression (identifier = one) -> Kotlin_Light_Variable: one

@@ -13,6 +13,6 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:funPlainCall) -> USimpleNameReferenceExpression (identifier = funPlainCall) -> KtUltraLightMethodForSourceDeclaration:funPlainCall: funPlainCall
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:funNamedArgumentsCall) -> USimpleNameReferenceExpression (identifier = funNamedArgumentsCall) -> KtUltraLightMethodForSourceDeclaration:funNamedArgumentsCall: funNamedArgumentsCall
-    null -> USimpleNameReferenceExpression (identifier = a) -> Light Parameter: a
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = funPlainCall) -> Kotlin_Light_Method: funPlainCall
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = funNamedArgumentsCall) -> Kotlin_Light_Method: funNamedArgumentsCall
+    null -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a

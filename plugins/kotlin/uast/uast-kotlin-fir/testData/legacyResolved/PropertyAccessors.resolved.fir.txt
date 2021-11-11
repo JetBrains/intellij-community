@@ -1,6 +1,6 @@
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UReturnExpression -> UQualifiedReferenceExpression -> null: null
-UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> KtUltraLightClass:class PropertyTest {
+UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> Kotlin_Light_Class:class PropertyTest {
     var stringRepresentation: String
         get() = this.toString()
         set(value) {
@@ -12,6 +12,6 @@ UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = t
     }
 }: PropertyTest
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:setDataFromString) -> USimpleNameReferenceExpression (identifier = setDataFromString) -> KtUltraLightMethodForSourceDeclaration:setDataFromString: setDataFromString
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:setDataFromString) -> USimpleNameReferenceExpression (identifier = value) -> Light Parameter: value
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = setDataFromString) -> Kotlin_Light_Method: setDataFromString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = value) -> Kotlin_Light_Value_Parameter: value
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String

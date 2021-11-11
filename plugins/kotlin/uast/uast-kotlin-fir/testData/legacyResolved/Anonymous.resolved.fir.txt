@@ -11,12 +11,12 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = In
     ULocalVariable (name = runnable) -> UObjectLiteralExpression -> null:
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable) -> LightVariableBuilder:runnable: runnable
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:run) -> USimpleNameReferenceExpression (identifier = run) -> KtUltraLightMethodForSourceDeclaration:run: run
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable) -> Kotlin_Light_Variable: runnable
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = run) -> Kotlin_Light_Method: run
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable2) -> LightVariableBuilder:runnable2: runnable2
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable2) -> Kotlin_Light_Variable: runnable2
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:run) -> USimpleNameReferenceExpression (identifier = run) -> PsiMethod:run: run
     ULocalVariable (name = closeableRunnable) -> UObjectLiteralExpression -> null:
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable

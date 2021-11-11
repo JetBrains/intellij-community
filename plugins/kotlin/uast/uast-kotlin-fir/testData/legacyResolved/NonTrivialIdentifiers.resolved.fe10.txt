@@ -1,5 +1,5 @@
-UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> KtUltraLightMethodForSourceDeclaration:invoke:
-    UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> KtUltraLightClass:class A {
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> Kotlin_Light_Method:
+    UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> Kotlin_Light_Class:class A {
 
     operator fun invoke(){
         this()
@@ -11,7 +11,7 @@ UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), ar
 
 }: A
 UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A {
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A {
 
     operator fun invoke(){
         this()
@@ -22,10 +22,10 @@ UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifie
     }
 
 }: A
-    UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> KtUltraLightMethodForSourceDeclaration:invoke:
-    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = a) -> Light Parameter: a
+    UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> Kotlin_Light_Method:
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
     UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A {
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A {
 
     operator fun invoke(){
         this()
@@ -36,12 +36,12 @@ UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifie
     }
 
 }: A
-    UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) -> KtUltraLightMethodForSourceDeclaration:invoke:
-    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = a) -> Light Parameter: a
+    UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) -> Kotlin_Light_Method:
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
     UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:invoke) -> USimpleNameReferenceExpression (identifier = p) -> LightVariableBuilder:p: p
-            UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> KtUltraLightMethodForSourceDeclaration:invoke:
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A {
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = p) -> Kotlin_Light_Variable: p
+            UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> Kotlin_Light_Method:
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A {
 
     operator fun invoke(){
         this()

@@ -5,7 +5,11 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.light.LightMethodBuilder
+import com.intellij.psi.impl.light.LightParameter
+import com.intellij.psi.impl.light.LightTypeParameterBuilder
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.elements.LightVariableBuilder
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
@@ -37,28 +41,51 @@ interface UastResolveEverythingTestBase : UastPluginSelection, UastFileCompariso
 
     fun renderLightElementDifferently(element: PsiElement?): String {
         var str = element.toString()
-        if (!isFirUastPlugin || element !is KtLightElement<*, *>) return str
-        // NB: all declarations in FIR LC are internal, so type checking won't work.
-        TAG.forEach { (firLC, uLC) -> str = str.replace(firLC, uLC) }
-        REGEX.forEach { (firRegex, uLC) -> str = firRegex.replace(str, uLC) }
+        if (!element.needsDifferentRender) return str
+        // NB: many declarations in (FIR) LC are internal, so type checking won't work.
+        REGEXES.forEach { (lcRegex, tag) -> str = lcRegex.replace(str, tag) }
+        TAGS.forEach { (lc, tag) -> str = str.replace(lc, tag) }
         return str
     }
 
     companion object {
-        private val TAG: Map<String, String> = mapOf(
-            "FirLightAnnotationClassSymbol" to "KtUltraLightClass",
-            "FirLightClassForSymbol" to "KtUltraLightClass",
-            "FirLightInterfaceClassSymbol" to "KtUltraLightClass",
+        private val PsiElement?.needsDifferentRender: Boolean
+            get() = this is KtLightElement<*, *> ||
+                    this is LightMethodBuilder ||
+                    this is LightVariableBuilder ||
+                    this is LightParameter ||
+                    this is LightTypeParameterBuilder
 
-            "FirLightSimpleMethodForSymbol" to "KtUltraLightMethodForSourceDeclaration",
-            "FirLightAccessorMethodForSymbol" to "KtUltraLightMethodForSourceDeclaration",
-            "FirLightConstructorForSymbol" to "KtUltraLightMethodForSourceDeclaration",
+        private const val TAG_CLASS = "Kotlin_Light_Class"
+        private const val TAG_METHOD = "Kotlin_Light_Method"
+        private const val TAG_VARIABLE = "Kotlin_Light_Variable"
+        private const val TAG_VALUE_PARAMETER = "Kotlin_Light_Value_Parameter"
+        private const val TAG_TYPE_PARAMETER = "Kotlin_Light_Type_Parameter"
 
-            "FirLightTypeParameter:" to "Light PSI class: ",
+        private val TAGS: Map<String, String> = mapOf(
+            // NB: class details include `annotation`/`interface`/`enum`, primary ctor(), etc., hence not filtering out.
+            "KtUltraLightClassForLocalDeclaration" to TAG_CLASS,
+            "KtUltraLightClass" to TAG_CLASS,
+
+            "Light Parameter" to TAG_VALUE_PARAMETER,
         )
 
-        private val REGEX: Map<Regex, String> = mapOf(
-            Regex("Fir Light Parameter .+$") to "Light Parameter",
+        // NB: Except for class, all other kinds' name is redundant, hence captured by regex and removed.
+        private val REGEXES: Map<Regex, String> = mapOf(
+            Regex("^FirLight.*Class.*Symbol:") to "$TAG_CLASS:",
+
+            Regex("^FirLightConstructorForSymbol:.+$") to TAG_METHOD,
+            Regex("^FirLight.*Method.*Symbol:.+$") to TAG_METHOD,
+            Regex("^KtUltraLightMethodForSourceDeclaration:.+$") to TAG_METHOD,
+            Regex("^LightMethodBuilder:.+$") to TAG_METHOD,
+
+            Regex("^KtLightField:.+$") to TAG_VARIABLE,
+            Regex("^LightVariableBuilder:.+$") to TAG_VARIABLE,
+
+            Regex("^Fir Light Parameter .+$") to TAG_VALUE_PARAMETER,
+
+            Regex("^FirLightTypeParameter:.+$") to TAG_TYPE_PARAMETER,
+            Regex("^Light PSI class: .+$") to TAG_TYPE_PARAMETER,
         )
     }
 }
