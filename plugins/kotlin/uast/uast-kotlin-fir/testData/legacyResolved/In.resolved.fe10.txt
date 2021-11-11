@@ -1,8 +1,8 @@
 UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> PsiClass:Boolean: Boolean
-    UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = in) -> PsiMethod:contains: contains
     UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> null: null
     UBinaryExpression (operator = &&) -> USimpleNameReferenceExpression (identifier = &&) -> null: null
-    UBinaryExpression (operator = !in) -> USimpleNameReferenceExpression (identifier = y) -> LightVariableBuilder:y: y
+    UBinaryExpression (operator = !in) -> USimpleNameReferenceExpression (identifier = y) -> Kotlin_Light_Variable: y
     UBinaryExpression (operator = !in) -> USimpleNameReferenceExpression (identifier = !in) -> PsiMethod:contains: contains
     UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> null: null

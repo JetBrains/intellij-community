@@ -1,5 +1,5 @@
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A: A
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A: A
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A: A
+UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A: A
+UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A: A
+UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A: A
 UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = F) -> PsiClass:Function2: Function2
 UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = F) -> PsiClass:Function2: Function2

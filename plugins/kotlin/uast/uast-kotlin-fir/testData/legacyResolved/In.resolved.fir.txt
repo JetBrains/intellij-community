@@ -1,8 +1,8 @@
 UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> CLASS: Boolean
-    UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
+    UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
     UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = in) -> FUN: contains
     UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> FUN: rangeTo
     UBinaryExpression (operator = &&) -> USimpleNameReferenceExpression (identifier = &&) -> null: null
-    UBinaryExpression (operator = !in) -> USimpleNameReferenceExpression (identifier = y) -> LightVariableBuilder:y: y
+    UBinaryExpression (operator = !in) -> USimpleNameReferenceExpression (identifier = y) -> Kotlin_Light_Variable: y
     UBinaryExpression (operator = !in) -> USimpleNameReferenceExpression (identifier = !in) -> FUN: contains
     UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> FUN: rangeTo

@@ -1,62 +1,62 @@
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> KtUltraLightMethodForSourceDeclaration:A:
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> UQualifiedReferenceExpression -> null: null
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Light Parameter: i
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> UQualifiedReferenceExpression -> null: null
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> KtUltraLightMethodForSourceDeclaration:AWithInit:
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:AWithInit) -> UQualifiedReferenceExpression -> null: null
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Light Parameter: i
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> UQualifiedReferenceExpression -> null: null
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
-UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> KtUltraLightMethodForSourceDeclaration:AWith2Init:
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:AWith2Init) -> UQualifiedReferenceExpression -> null: null
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Light Parameter: i
+UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> UQualifiedReferenceExpression -> null: null
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null:
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> KtUltraLightMethodForSourceDeclaration:setA: setA
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> KtUltraLightMethodForSourceDeclaration:getA: getA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Method: setA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Method: getA
     UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Light Parameter: i
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null:
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> KtUltraLightMethodForSourceDeclaration:setA: setA
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> KtUltraLightMethodForSourceDeclaration:getA: getA
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = s) -> Light Parameter: s
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Method: setA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Method: getA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = s) -> Kotlin_Light_Value_Parameter: s
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null:
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> KtUltraLightMethodForSourceDeclaration:setA: setA
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> KtUltraLightMethodForSourceDeclaration:getA: getA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Method: setA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Method: getA
     UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Light Parameter: i
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null:
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> KtUltraLightMethodForSourceDeclaration:setA: setA
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> KtUltraLightMethodForSourceDeclaration:getA: getA
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = s) -> Light Parameter: s
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Method: setA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Method: getA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = s) -> Kotlin_Light_Value_Parameter: s
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-    ULocalVariable (name = local) -> USimpleNameReferenceExpression (identifier = s) -> Light Parameter: s
+    ULocalVariable (name = local) -> USimpleNameReferenceExpression (identifier = s) -> Kotlin_Light_Value_Parameter: s
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = local) -> LightVariableBuilder:local: local
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = local) -> Kotlin_Light_Variable: local
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> CLASS: Int
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> CLASS: String
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> KtLightField:a: a
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> KtUltraLightMethodForSourceDeclaration:getA: getA
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Method: getA
     UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Light Parameter: i
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
