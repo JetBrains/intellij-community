@@ -92,7 +92,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
   )
 
-  protected static final Map<String, String> CE_CLASS_VERSIONS = [
+  protected static final Map<String, String> BASE_CLASS_VERSIONS = [
     ""                                                      : "11",
     "lib/idea_rt.jar"                                       : "1.6",
     "lib/forms_rt.jar"                                      : "1.6",
@@ -100,11 +100,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
     "lib/util.jar!/com/intellij/serialization/"             : "1.8",
     "lib/external-system-rt.jar"                            : "1.6",
-    "plugins/java/lib/jshell-frontend.jar"                  : "9",
-    "plugins/java/lib/sa-jdwp"                              : "",  // ignored
-    "plugins/java/lib/rt/debugger-agent.jar"                : "1.6",
-    "plugins/Groovy/lib/groovy-rt.jar"                      : "1.6",
-    "plugins/Groovy/lib/groovy-constants-rt.jar"            : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                  : "1.6",
     "plugins/javaFX/lib/rt/sceneBuilderBridge.jar"          : "11",
     "plugins/junit/lib/junit-rt.jar"                        : "1.6",
@@ -122,6 +117,14 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/xpath/lib/rt/xslt-rt.jar"                      : "1.6",
     "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"        : "1.6",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar": "1.8",
+  ]
+
+  protected static final Map<String, String> CE_CLASS_VERSIONS = BASE_CLASS_VERSIONS + [
+    "plugins/java/lib/jshell-frontend.jar"      : "9",
+    "plugins/java/lib/sa-jdwp"                  : "",  // ignored
+    "plugins/java/lib/rt/debugger-agent.jar"    : "1.6",
+    "plugins/Groovy/lib/groovy-rt.jar"          : "1.6",
+    "plugins/Groovy/lib/groovy-constants-rt.jar": "1.6",
   ]
 
   BaseIdeaProperties() {
