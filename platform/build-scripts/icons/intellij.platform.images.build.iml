@@ -25,6 +25,6 @@
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="PROVIDED" />
-    <orderEntry type="library" scope="PROVIDED" name="okhttp" level="project" />
+    <orderEntry type="library" name="okhttp" level="project" />
   </component>
 </module>
