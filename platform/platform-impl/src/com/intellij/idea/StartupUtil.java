@@ -545,7 +545,7 @@ public final class StartupUtil {
     // caches available font family names (for the default locale), to speed up editor reopening (`ComplementaryFontsRegistry` initialization)
     GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
 
-    // pre-load cursors used by drag-n-drop AWT subsystem
+    // preload cursors used by drag-n-drop AWT subsystem
     activity = activity.endAndStart("DnD setup");
     DragSource.getDefaultDragSource();
     activity.end();

@@ -18,8 +18,7 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
-
-  private val _moduleGraph = ModuleGraphBase.createModuleGraph(unsortedPlugins)
+  private val _moduleGraph = createModuleGraph(unsortedPlugins)
   private val builder = _moduleGraph.builder()
   val moduleGraph: SortedModuleGraph = _moduleGraph.sorted(builder)
 

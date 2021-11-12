@@ -14,7 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +102,7 @@ public final class ExperimentalUI {
   }
 
   private static IconPathPatcher createPathPatcher() {
-    HashMap<String, String> paths = new HashMap<>();
+    Map<String, String> paths = new HashMap<>();
     paths.put("general/chevron-right.svg", "/expui/general/chevronRight.svg");
     paths.put("nodes/class.svg", "/expui/nodes/class.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
@@ -133,9 +133,8 @@ public final class ExperimentalUI {
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
     return new IconPathPatcher() {
       @Override
-      public @Nullable String patchPath(@NotNull String path,
-                                        @Nullable ClassLoader classLoader) {
-        return paths.get(StringUtil.trimStart(path, "/"));
+      public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+        return paths.get(Strings.trimStart(path, "/"));
       }
     };
   }

@@ -1,4 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.serialize
@@ -12,7 +14,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
-class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap<String, WindowInfoImpl>()) {
+class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap()) {
   companion object {
     @NonNls internal const val TAG = "layout"
   }
@@ -54,7 +56,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
 
   /**
    * Sets new `anchor` and `id` for the specified tool window.
-   * Also the method properly updates order of all other tool windows.
+   * Also, the method properly updates order of all other tool windows.
    */
   fun setAnchor(info: WindowInfoImpl, newAnchor: ToolWindowAnchor, suppliedNewOrder: Int) {
     var newOrder = suppliedNewOrder
@@ -178,7 +180,7 @@ private fun normalizeOrder(infos: List<WindowInfoImpl>) {
 /**
  * @param anchor anchor of the stripe.
  * @return maximum ordinal number in the specified stripe. Returns `-1`
- * if there is no any tool window with the specified anchor.
+ * if there is no tool window with the specified anchor.
  */
 private fun getMaxOrder(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): Int {
   var result = -1
