@@ -129,7 +129,7 @@ public final class PlatformUtils {
   }
 
   public static boolean isPyCharm() {
-    return is(PYCHARM_PREFIX) || isPyCharmCommunity() || isPyCharmEducational() || isPyCharmDs();
+    return is(PYCHARM_PREFIX) || isPyCharmCommunity() || isPyCharmEducational() || isDataSpell();
   }
 
   /**
@@ -144,7 +144,7 @@ public final class PlatformUtils {
     return is(PYCHARM_CE_PREFIX);
   }
 
-  public static boolean isPyCharmDs() {
+  public static boolean isDataSpell() {
     return is(DATASPELL_PREFIX);
   }
 
