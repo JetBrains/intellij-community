@@ -25,7 +25,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.lang.reflect.UndeclaredThrowableException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiFunction
 import java.util.function.Supplier
@@ -241,8 +240,8 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  @Nullable Path findFileInModuleSources(String moduleName, String relativePath) {
-    for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName)) ) {
+  @Nullable Path findFileInModuleSources(@NotNull String moduleName, @NotNull String relativePath) {
+    for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName))) {
       if (relativePath.startsWith(info.second)) {
         Path result = info.first.resolve(Strings.trimStart(Strings.trimStart(relativePath, info.second), "/"))
         if (Files.exists(result)) {
@@ -269,7 +268,7 @@ final class BuildContextImpl extends BuildContext {
         if (!prefix.endsWith("/")) {
           prefix += "/"
         }
-        return new Pair<>(Paths.get(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), Strings.trimStart(prefix, "/"))
+        return new Pair<>(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), Strings.trimStart(prefix, "/"))
       })
       .collect(Collectors.toList())
   }

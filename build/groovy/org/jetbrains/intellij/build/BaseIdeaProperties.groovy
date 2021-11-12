@@ -133,39 +133,42 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.java.ide.resources")
 
-    productLayout.platformLayoutCustomizer = { PlatformLayout layout, _ ->
-      layout.customize {
-        for (String name : JAVA_IDE_API_MODULES) {
-          if (!productLayout.productApiModules.contains(name)) {
-            withModule(name)
+    productLayout.platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+      @Override
+      void accept(PlatformLayout layout, BuildContext context) {
+        layout.customize {
+          for (String name : JAVA_IDE_API_MODULES) {
+            if (!productLayout.productApiModules.contains(name)) {
+              withModule(name)
+            }
           }
-        }
-        for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
-          if (!productLayout.productImplementationModules.contains(name)) {
-            withModule(name)
+          for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
+            if (!productLayout.productImplementationModules.contains(name)) {
+              withModule(name)
+            }
           }
+
+          //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
+          withModule("intellij.java.rt", "idea_rt.jar")
+
+          // for compatibility with users' projects which take these libraries from IDEA installation
+          withProjectLibrary("jetbrains-annotations", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
+          // for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
+          withProjectLibrary("JUnit3", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
+          withProjectLibrary("commons-net")
+
+          withoutProjectLibrary("Ant")
+
+          // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
+          // to avoid class linkage conflicts "Gradle" library is placed into the 'lib' directory of the Gradle plugin layout so we need to exclude it from the platform layout explicitly
+          // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
+          withoutProjectLibrary("Gradle")
+
+          //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
+          withoutProjectLibrary("layoutlib")
         }
-
-        //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
-        withModule("intellij.java.rt", "idea_rt.jar")
-
-        // for compatibility with users' projects which take these libraries from IDEA installation
-        withProjectLibrary("jetbrains-annotations", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
-        // for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
-        withProjectLibrary("JUnit3", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
-        withProjectLibrary("commons-net")
-
-        withoutProjectLibrary("Ant")
-
-        // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
-        // to avoid class linkage conflicts "Gradle" library is placed into the 'lib' directory of the Gradle plugin layout so we need to exclude it from the platform layout explicitly
-        // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
-        withoutProjectLibrary("Gradle")
-
-        //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
-        withoutProjectLibrary("layoutlib")
       }
-    } as BiConsumer<PlatformLayout, BuildContext>
+    }
 
     productLayout.compatiblePluginsToIgnore = [
       "intellij.java.plugin",

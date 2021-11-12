@@ -73,7 +73,7 @@ abstract class BuildContext implements CompilationContext {
 
   abstract JpsModule findApplicationInfoModule()
 
-  abstract @Nullable Path findFileInModuleSources(String moduleName, String relativePath)
+  abstract @Nullable Path findFileInModuleSources(@NotNull String moduleName, @NotNull String relativePath)
 
   abstract void signFile(String path, Map<String, String> options = Collections.emptyMap())
 
