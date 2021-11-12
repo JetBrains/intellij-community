@@ -176,6 +176,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
+  public static Instruction[] buildSmallControlFlow(GroovyPsiElement scope) {
+    return new ControlFlowBuilder(GrResolverPolicy.getInstance()).doBuildControlFlow(scope);
+  }
+
   private Instruction[] doBuildLargeControlFlow(GroovyPsiElement scope) {
     var topOwner = ControlFlowUtils.getTopmostOwner(scope);
     if (topOwner == null) {
