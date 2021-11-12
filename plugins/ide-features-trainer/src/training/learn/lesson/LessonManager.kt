@@ -80,7 +80,7 @@ class LessonManager {
   private fun stopLesson(lessonPassed: Boolean) {
     shownRestoreNotification = null
     currentLessonExecutor?.takeIf { !it.hasBeenStopped }?.let {
-      it.lesson.onStop(it.project, lessonPassed)
+      it.lesson.onStop(it.project, lessonPassed, it.currentTaskIndex, it.currentVisualIndex)
       it.stopLesson()
       currentLessonExecutor = null
     }
