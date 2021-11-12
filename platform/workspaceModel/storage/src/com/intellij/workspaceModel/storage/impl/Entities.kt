@@ -5,7 +5,9 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -192,6 +194,29 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> builder.updateOneToAbstractManyChildrenOfParent(connectionId, id.asParent(), children!!.map { it.createEntityId().asChild() }.asSequence())
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneChildOfParent(connectionId, id.asParent(), child!!.createEntityId().asChild())
     }
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    builder.getMutableVirtualFileUrlIndex().index(entity, propertyName, virtualFileUrl)
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).index((entity as WorkspaceEntityBase).id,
+                                                                                                propertyName, virtualFileUrls)
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun indexJarDirectories(entity: WorkspaceEntity, virtualFileUrls: Set<VirtualFileUrl>) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).indexJarDirectories(
+      (entity as WorkspaceEntityBase).id, virtualFileUrls)
   }
 }
 
