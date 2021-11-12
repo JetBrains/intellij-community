@@ -563,6 +563,7 @@ public final class MavenIndex implements MavenSearchIndex {
 
   private void markAsBroken() {
     if (!isBroken) {
+      MavenLog.LOG.info("index is broken " + this);
       myListener.indexIsBroken(this);
     }
     isBroken = true;

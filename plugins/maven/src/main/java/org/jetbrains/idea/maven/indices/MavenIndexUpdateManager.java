@@ -8,8 +8,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -17,28 +19,28 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenRehighlighter;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
+@ApiStatus.Internal
 public class MavenIndexUpdateManager implements Disposable {
 
   private final Object myUpdatingIndicesLock = new Object();
-  private final List<MavenSearchIndex> myWaitingIndices = new ArrayList<>();
+  private final List<String> myWaitingIndicesUrl = new ArrayList<>();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
   private final MergingUpdateQueue myUpdateQueueList = new MergingUpdateQueue(
     getClass().getName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, this, null, false
   ).usePassThroughInUnitTestMode();
-  private volatile MavenSearchIndex myUpdatingIndex;
+  private volatile String myCurrentUpdateIndexUrl;
 
-  public Promise<Void> scheduleUpdateContent(@Nullable Project project, List<MavenIndex> indices) {
-    return scheduleUpdateContent(project, indices, true);
+  Promise<Void> scheduleUpdateContent(@NotNull Project project, List<String> indicesUrl) {
+    return scheduleUpdateContent(project, indicesUrl, true);
   }
 
   @Override
@@ -46,16 +48,35 @@ public class MavenIndexUpdateManager implements Disposable {
     myUpdatingQueue.clear();
   }
 
-  Promise<Void> scheduleUpdateContent(@Nullable Project project, List<MavenIndex> indices, final boolean fullUpdate) {
-    final List<MavenSearchIndex> toSchedule = new ArrayList<>();
+  void scheduleUpdateIndicesList(@NotNull Project project, @Nullable Consumer<? super List<MavenIndex>> consumer) {
+    myUpdateQueueList.queue(Update.create(this, () -> {
+      MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(project);
+      indicesManager.updateIndicesListSync();
+      DependencySearchService.getInstance(project).updateProviders();
+
+      MavenIndexHolder indexHolder = indicesManager.getIndex();
+      MavenIndex localIndex = indexHolder.getLocalIndex();
+      if (localIndex != null) {
+        if (localIndex.getUpdateTimestamp() == -1) {
+          scheduleUpdateContent(project, List.of(localIndex.getRepositoryPathOrUrl()));
+        }
+      }
+      if (consumer != null) {
+        consumer.consume(indexHolder.getIndices());
+      }
+    }));
+  }
+
+  Promise<Void> scheduleUpdateContent(@NotNull Project project, List<String> indicesUrls, final boolean fullUpdate) {
+    final List<String> toSchedule = new ArrayList<>();
 
     synchronized (myUpdatingIndicesLock) {
-      for (MavenSearchIndex each : indices) {
-        if (myWaitingIndices.contains(each)) continue;
+      for (String each : indicesUrls) {
+        if (myWaitingIndicesUrl.contains(each)) continue;
         toSchedule.add(each);
       }
 
-      myWaitingIndices.addAll(toSchedule);
+      myWaitingIndicesUrl.addAll(toSchedule);
     }
     if (toSchedule.isEmpty()) {
       return Promises.resolvedPromise();
@@ -79,33 +100,18 @@ public class MavenIndexUpdateManager implements Disposable {
     return promise;
   }
 
-  public void scheduleUpdateIndicesList(@NotNull Project project, @Nullable Consumer<? super List<MavenIndex>> consumer) {
-    myUpdateQueueList.queue(Update.create(this, () -> {
-      MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(project);
-      indicesManager.updateIndicesListSync();
-      DependencySearchService.getInstance(project).updateProviders();
-
-      MavenIndexHolder indexHolder = indicesManager.getIndex();
-      MavenIndex localIndex = indexHolder.getLocalIndex();
-      if (localIndex != null) {
-        if (localIndex.getUpdateTimestamp() == -1) {
-          scheduleUpdateContent(project, Collections.singletonList(localIndex));
-        }
-      }
-      if (consumer != null) {
-        consumer.consume(indexHolder.getIndices());
-      }
-    }));
-  }
-
-  private void doUpdateIndicesContent(final Project projectOrNull,
-                                      List<MavenSearchIndex> indices,
+  private void doUpdateIndicesContent(@NotNull Project project,
+                                      @NotNull List<String> indicesUrl,
                                       boolean fullUpdate,
-                                      MavenProgressIndicator indicator)
+                                      @NotNull MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    MavenLog.LOG.assertTrue(!fullUpdate || projectOrNull != null);
 
-    List<MavenSearchIndex> remainingWaiting = new ArrayList<>(indices);
+    List<MavenIndex> indices = ContainerUtil.filter(
+      MavenIndicesManager.getInstance(project).getIndex().getIndices(),
+      index -> indicesUrl.contains(index.getRepositoryPathOrUrl())
+    );
+
+    List<String> remainingWaitingUrl = new ArrayList<>(indicesUrl);
 
     try {
       for (MavenSearchIndex each : indices) {
@@ -116,27 +122,25 @@ public class MavenIndexUpdateManager implements Disposable {
                                                 each.getRepositoryPathOrUrl()));
 
         synchronized (myUpdatingIndicesLock) {
-          remainingWaiting.remove(each);
-          myWaitingIndices.remove(each);
-          myUpdatingIndex = each;
+          remainingWaitingUrl.remove(each.getRepositoryPathOrUrl());
+          myWaitingIndicesUrl.remove(each.getRepositoryPathOrUrl());
+          myCurrentUpdateIndexUrl = each.getRepositoryPathOrUrl();
         }
 
         try {
-          MavenIndices.updateOrRepair(each, fullUpdate, fullUpdate ? getMavenSettings(projectOrNull, indicator) : null, indicator);
-          if (projectOrNull != null) {
-            MavenRehighlighter.rehighlight(projectOrNull);
-          }
+          MavenIndices.updateOrRepair(each, fullUpdate, fullUpdate ? getMavenSettings(project, indicator) : null, indicator);
+          MavenRehighlighter.rehighlight(project);
         }
         finally {
           synchronized (myUpdatingIndicesLock) {
-            myUpdatingIndex = null;
+            myCurrentUpdateIndexUrl = null;
           }
         }
       }
     }
     finally {
       synchronized (myUpdatingIndicesLock) {
-        myWaitingIndices.removeAll(remainingWaiting);
+        myWaitingIndicesUrl.removeAll(remainingWaitingUrl);
       }
     }
   }
@@ -157,10 +161,10 @@ public class MavenIndexUpdateManager implements Disposable {
     return settings;
   }
 
-  public IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
+  IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
     synchronized (myUpdatingIndicesLock) {
-      if (myUpdatingIndex == index) return IndexUpdatingState.UPDATING;
-      if (myWaitingIndices.contains(index)) return IndexUpdatingState.WAITING;
+      if (Objects.equals(myCurrentUpdateIndexUrl, index.getRepositoryPathOrUrl())) return IndexUpdatingState.UPDATING;
+      if (myWaitingIndicesUrl.contains(index.getRepositoryPathOrUrl())) return IndexUpdatingState.WAITING;
       return IndexUpdatingState.IDLE;
     }
   }

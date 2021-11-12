@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -29,7 +30,10 @@ import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.jetbrains.idea.maven.indices.MavenArtifactManager.loadUserArchetypes;
@@ -175,11 +179,12 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   public Promise<Void> scheduleUpdateContentAll() {
-    return myIndexUpdateManager.scheduleUpdateContent(myProject, myMavenIndices.getIndices());
+    return myIndexUpdateManager
+      .scheduleUpdateContent(myProject, ContainerUtil.map(myMavenIndices.getIndices(), i -> i.getRepositoryPathOrUrl()));
   }
 
   public Promise<Void> scheduleUpdateContent(@NotNull List<MavenIndex> indices) {
-    return myIndexUpdateManager.scheduleUpdateContent(myProject, indices);
+    return myIndexUpdateManager.scheduleUpdateContent(myProject, ContainerUtil.map(indices, i -> i.getRepositoryPathOrUrl()));
   }
 
   public void scheduleUpdateIndicesList(@Nullable Consumer<? super List<MavenIndex>> consumer) {
@@ -282,7 +287,7 @@ public final class MavenIndicesManager implements Disposable {
     @Override
     public void indexIsBroken(@NotNull MavenSearchIndex index) {
       if (index instanceof MavenIndex) {
-        myManager.myIndexUpdateManager.scheduleUpdateContent(null, Collections.singletonList((MavenIndex)index), false);
+        myManager.myIndexUpdateManager.scheduleUpdateContent(myManager.myProject, List.of(index.getRepositoryPathOrUrl()), false);
       }
     }
   }
