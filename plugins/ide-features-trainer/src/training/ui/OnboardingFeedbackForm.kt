@@ -9,7 +9,6 @@ import com.intellij.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.submitGeneralFeedback
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
@@ -24,6 +23,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.io.JsonObjectBuilder
 import org.jetbrains.io.json
+import training.FeaturesTrainerIcons
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
@@ -142,8 +142,8 @@ fun showFeedbackForm(project: Project?) {
 
 private fun createLikenessPanel(saver: MutableList<JsonObjectBuilder.() -> Unit>): NonOpaquePanel {
   val votePanel = NonOpaquePanel()
-  val likeIcon = getLikenessIcon("img/like.png")
-  val dislikeIcon = getLikenessIcon("img/dislike.png")
+  val likeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Like)
+  val dislikeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Dislike)
   votePanel.layout = BoxLayout(votePanel, BoxLayout.X_AXIS)
   val likeAnswer = FeedbackOption(likeIcon)
   votePanel.add(likeAnswer)
@@ -188,8 +188,8 @@ private fun installSubPanelLogic(feedbackOption: FeedbackOption, feedbackSubPane
   }
 }
 
-private fun getLikenessIcon(s: String): Icon {
-  return IndentedIcon(IconUtil.scale(IconLoader.getIcon(s, FeedbackOption::class.java), null, 0.25f), JBUI.insets(6))
+private fun getLikenessIcon(icon: Icon): Icon {
+  return IndentedIcon(IconUtil.scale(icon, null, 0.25f), JBUI.insets(6))
 }
 
 private class FeedbackOption(@NlsContexts.Label text: String?, icon: Icon?) : JButton() {
