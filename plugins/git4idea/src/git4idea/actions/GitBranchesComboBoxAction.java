@@ -39,7 +39,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
     String branchName = repo.getCurrentRevision() != null ? GitBranchUtil.getDisplayableBranchText(repo)
                                                           : GitBundle.message("no.revisions.available");
     String name = DvcsBranchUtil.shortenBranchName(branchName);
-    presentation.setText(name);
+    presentation.setText(name, false);
     presentation.setIcon(AllIcons.Vcs.Branch);
     presentation.setEnabledAndVisible(true);
   }
