@@ -40,9 +40,6 @@ import javax.swing.*;
  * Status bar widget which displays the current branch for the file currently open in the editor.
  */
 public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
-  private static final Icon INCOMING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingLayer);
-  private static final Icon INCOMING_OUTGOING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingOutgoingLayer);
-  private static final Icon OUTGOING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.OutgoingLayer);
   private static final @NonNls String ID = "git";
   private final GitVcsSettings mySettings;
 
@@ -74,20 +71,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   @Nullable
   @Override
   protected Icon getIcon(@NotNull GitRepository repository) {
-    String currentBranchName = repository.getCurrentBranchName();
-    if (repository.getState() == Repository.State.NORMAL && currentBranchName != null) {
-      GitRepository indicatorRepo =
-        (GitRepositoryManager.getInstance(myProject).moreThanOneRoot() && mySettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC)
-        ? repository
-        : null;
-      boolean hasIncoming = GitBranchIncomingOutgoingManager.getInstance(myProject).hasIncomingFor(indicatorRepo, currentBranchName);
-      boolean hasOutgoing = GitBranchIncomingOutgoingManager.getInstance(myProject).hasOutgoingFor(indicatorRepo, currentBranchName);
-      if (hasIncoming) {
-        return hasOutgoing ? INCOMING_OUTGOING_LAYERED : INCOMING_LAYERED;
-      }
-      else if (hasOutgoing) return OUTGOING_LAYERED;
-    }
-    return super.getIcon(repository);
+    return BranchIconUtil.Companion.getBranchIcon(repository);
   }
 
   @NotNull
