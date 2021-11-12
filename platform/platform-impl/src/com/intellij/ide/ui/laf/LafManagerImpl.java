@@ -75,7 +75,7 @@ import java.util.function.BooleanSupplier;
 
 @State(name = "LafManager", storages = @Storage("laf.xml"), category = SettingsCategory.UI)
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance(LafManager.class);
+  private static final Logger LOG = Logger.getInstance(LafManagerImpl.class);
 
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ELEMENT_PREFERRED_LIGHT_LAF = "preferred-light-laf";
@@ -246,11 +246,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) {
     myEventDispatcher.addListener(listener);
-  }
-
-  @Override
-  public void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable) {
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC, listener);
   }
 
   @Override
