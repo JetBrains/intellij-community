@@ -4,7 +4,10 @@ package com.intellij.codeInspection.sourceToSink;
 import com.intellij.codeInspection.UntaintedAnnotationProvider;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
+import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +37,11 @@ public enum TaintValue implements RestrictionInfo {
 
     @Override
     String getErrorMessage(@NotNull AnnotationContext context) {
-      return context.getOwner() instanceof PsiMethod ?
-             "jvm.inspections.source.to.sink.flow.returned.unsafe" :
-             "jvm.inspections.source.to.sink.flow.passed.unsafe";
+      PsiModifierListOwner owner = context.getOwner();
+      if (owner instanceof PsiMethod) return "jvm.inspections.source.to.sink.flow.returned.unsafe";
+      if (owner instanceof PsiParameter) return "jvm.inspections.source.to.sink.flow.passed.unsafe";
+      if (owner instanceof PsiLocalVariable) return "jvm.inspections.source.to.sink.flow.assigned.unsafe";
+      return "jvm.inspections.source.to.sink.flow.common.unsafe";
     }
   },
   UNKNOWN(UntaintedAnnotationProvider.DEFAULT_POLY_TAINTED_ANNOTATION, RestrictionInfoKind.UNKNOWN) {
@@ -48,9 +53,11 @@ public enum TaintValue implements RestrictionInfo {
 
     @Override
     String getErrorMessage(@NotNull AnnotationContext context) {
-      return context.getOwner() instanceof PsiMethod ?
-             "jvm.inspections.source.to.sink.flow.returned.unknown" :
-             "jvm.inspections.source.to.sink.flow.passed.unknown";
+      PsiModifierListOwner owner = context.getOwner();
+      if (owner instanceof PsiMethod) return "jvm.inspections.source.to.sink.flow.returned.unknown";
+      if (owner instanceof PsiParameter) return "jvm.inspections.source.to.sink.flow.passed.unknown";
+      if (owner instanceof PsiLocalVariable) return "jvm.inspections.source.to.sink.flow.assigned.unknown";
+      return "jvm.inspections.source.to.sink.flow.common.unknown";
     }
   };
 
