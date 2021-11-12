@@ -27,6 +27,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiFunction
+import java.util.function.Function
+import java.util.function.Predicate
 import java.util.function.Supplier
 import java.util.stream.Collectors
 
@@ -252,23 +254,32 @@ final class BuildContextImpl extends BuildContext {
     return null
   }
 
-  private static @NotNull List<Pair<Path, String>> getSourceRootsWithPrefixes(JpsModule module) {
+  @NotNull
+  private static List<Pair<Path, String>> getSourceRootsWithPrefixes(@NotNull JpsModule module) {
     return module.sourceRoots
       .stream()
-      .filter({ JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) })
-      .map({ JpsModuleSourceRoot moduleSourceRoot ->
-        String prefix
-        JpsElement properties = moduleSourceRoot.properties
-        if (properties instanceof JavaSourceRootProperties) {
-          prefix = ((JavaSourceRootProperties)properties).packagePrefix.replace(".", "/")
+      .filter(new Predicate<JpsModuleSourceRoot>() {
+        @Override
+        boolean test(JpsModuleSourceRoot root) {
+          return JavaModuleSourceRootTypes.PRODUCTION.contains(root.rootType)
         }
-        else {
-          prefix = ((JavaResourceRootProperties)properties).relativeOutputPath
+      })
+      .map(new Function<JpsModuleSourceRoot, Pair<Path, String>>() {
+        @Override
+        Pair<Path, String> apply(JpsModuleSourceRoot moduleSourceRoot) {
+          String prefix
+          JpsElement properties = moduleSourceRoot.properties
+          if (properties instanceof JavaSourceRootProperties) {
+            prefix = ((JavaSourceRootProperties)properties).packagePrefix.replace(".", "/")
+          }
+          else {
+            prefix = ((JavaResourceRootProperties)properties).relativeOutputPath
+          }
+          if (!prefix.endsWith("/")) {
+            prefix += "/"
+          }
+          return new Pair<>(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), Strings.trimStart(prefix, "/"))
         }
-        if (!prefix.endsWith("/")) {
-          prefix += "/"
-        }
-        return new Pair<>(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), Strings.trimStart(prefix, "/"))
       })
       .collect(Collectors.toList())
   }
