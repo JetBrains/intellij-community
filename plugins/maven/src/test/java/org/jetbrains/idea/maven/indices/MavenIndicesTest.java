@@ -161,6 +161,24 @@ public class MavenIndicesTest extends CodeInsightFixtureTestCase {
     Assert.assertTrue(remoteDiff.oldIndices.isEmpty());
   }
 
+  public void testGetRemoteDiffWithDuplicates() {
+    myFixture.addFileToProject("Indices/Index10/index.properties",
+                               "#Sun Oct 31 18:51:24 MSK 2021\n" +
+                               "dataDirName=data0\n" +
+                               "kind=REMOTE\n" +
+                               "id=central\n" +
+                               "pathOrUrl=https\\://repo.maven.apache.org/maven2\n" +
+                               "version=5").getVirtualFile();
+
+    MavenIndexUtils.RepositoryInfo remoteRepo = new MavenIndexUtils
+      .RepositoryInfo("central", "https\\://repo.maven.apache.org/maven2");
+    Map<String, Set<String>> remoteRepositoryIdsByUrl = Map.of(remoteRepo.url, Collections.singleton(remoteRepo.id));
+    remoteDiff = MavenIndices.getRemoteDiff(remoteRepositoryIdsByUrl, Collections.emptyList(), myContext);
+    Assert.assertEquals(1, remoteDiff.newIndices.size());
+    Assert.assertEquals(remoteRepo.url, remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
+    Assert.assertTrue(remoteDiff.oldIndices.isEmpty());
+  }
+
   public void testGroupRemoteRepositoriesByUrl() {
     MavenRemoteRepository remote1 = new MavenRemoteRepository("id1", "name", "http://foo/bar", null, null, null);
     MavenRemoteRepository remote2 = new MavenRemoteRepository("id2", "name", "  http://foo\\bar\\\\  ", null, null, null);

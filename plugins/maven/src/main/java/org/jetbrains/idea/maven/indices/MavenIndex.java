@@ -50,7 +50,7 @@ public final class MavenIndex implements MavenSearchIndex {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  private Set<String> myRegisteredRepositoryIds;
+  private final Set<String> myRegisteredRepositoryIds;
 
   private final String myRepositoryPathOrUrl;
   private final Kind myKind;
@@ -59,6 +59,7 @@ public final class MavenIndex implements MavenSearchIndex {
   private volatile IndexData myData;
   private volatile String myFailureMessage;
   private volatile boolean isBroken;
+  private volatile boolean isClose;
 
   private String myDataDirName;
   private final IndexListener myListener;
@@ -132,6 +133,7 @@ public final class MavenIndex implements MavenSearchIndex {
         if (myData != null) {
           myData.close(true);
         }
+        if (isClose) return null;
         myData = new IndexData(dataDir);
         return null;
       }
@@ -155,6 +157,11 @@ public final class MavenIndex implements MavenSearchIndex {
     else {
       FileUtil.delete(currentDataDir);
     }
+  }
+
+  public synchronized void finalClose(boolean releaseIndexContext) {
+    isClose = true;
+    close(releaseIndexContext);
   }
 
   @Override
@@ -314,6 +321,10 @@ public final class MavenIndex implements MavenSearchIndex {
     }
 
     synchronized (this) {
+      if (isClose) {
+        newData.close(false);
+        return;
+      }
       if (myData != null) {
         myData.close(true);
       }
@@ -562,6 +573,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   private void markAsBroken() {
+    if (isClose) return;
     if (!isBroken) {
       MavenLog.LOG.info("index is broken " + this);
       myListener.indexIsBroken(this);

@@ -98,8 +98,8 @@ public class MavenIndices implements Disposable {
 
   private static void closeOldIndices(@NotNull RepositoryDiff<MavenIndex> localDiff,
                                       @NotNull RepositoryDiff<List<MavenIndex>> remoteDiff) {
-    if (localDiff.oldIndices != null) localDiff.oldIndices.close(false);
-    remoteDiff.oldIndices.forEach(i -> i.close(false));
+    if (localDiff.oldIndices != null) localDiff.oldIndices.finalClose(false);
+    remoteDiff.oldIndices.forEach(i -> i.finalClose(false));
   }
 
   @NotNull
@@ -159,7 +159,7 @@ public class MavenIndices implements Disposable {
   public void dispose() {
     try {
       updateIndicesLock.lock();
-      myIndexHolder.getIndices().forEach(i -> i.close(false));
+      myIndexHolder.getIndices().forEach(i -> i.finalClose(false));
     }
     catch (Exception e) {
       MavenLog.LOG.error("indices dispose error", e);
@@ -218,7 +218,7 @@ public class MavenIndices implements Disposable {
     indexPropertyHolders = indexPropertyHolders != null ? indexPropertyHolders : readCurrentIndexFileProperty(context.indicesDir);
     Map<String, MavenIndexUtils.IndexPropertyHolder> propertyHolderMapByUrl = indexPropertyHolders.stream()
       .filter(iph -> iph.kind == MavenSearchIndex.Kind.REMOTE)
-      .collect(Collectors.toMap(iph -> iph.repositoryPathOrUrl, Function.identity()));
+      .collect(Collectors.toMap(iph -> iph.repositoryPathOrUrl, Function.identity(), (i1, i2) -> i1));
 
     List<MavenIndex> oldIndices = ContainerUtil
       .filter(currentRemoteIndex, i -> !remoteRepositoryIdsByUrl.containsKey(i.getRepositoryPathOrUrl()));
