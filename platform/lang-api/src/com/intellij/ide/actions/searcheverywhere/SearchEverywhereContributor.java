@@ -20,8 +20,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Contributor which provides and processes items for <i>Search Everywhere</i> dialog
+ * Contributor which provides and processes items for <i>Search Everywhere</i> dialog.
  *
+ * @author Konstantin Bulenkov
  * @author Mikhail Sokolov
  */
 public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Disposable {
@@ -29,13 +30,13 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
 
   /**
-   * Unique ID of provider
+   * Unique ID of provider. Usually {@link Class#getSimpleName()} of the implementing class is used.
    */
   @NotNull
   String getSearchProviderId();
 
   /**
-   * Shown name for group defined by this contributor. This name shown in:
+   * Display name for the group defined by this contributor. This name is shown in:
    * <ul>
    *   <li>Contributor tab if there is separate tab for this contributor</li>
    *   <li>Group separator in results list when splitting by groups is enabled in results</li>
@@ -47,7 +48,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
 
   /**
    * Full group name for contributor. Used in filters, empty results placeholders, etc.
-   * Usually equals to {@code getGroupName}
+   * Usually equals to {@code getGroupName}.
    */
   @NotNull
   @Nls
@@ -60,19 +61,19 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * This weight is used for example for ordering groups in results list when splitting by groups is enabled.</p>
    *
    * <p>Please do not use this method to set found items weights. For this purposes look at {@link SearchEverywhereContributor#getElementPriority(Object, String)}
-   * and {@link WeightedSearchEverywhereContributor#fetchWeightedElements(String, ProgressIndicator, Processor)} methods</p>
+   * and {@link WeightedSearchEverywhereContributor#fetchWeightedElements(String, ProgressIndicator, Processor)} methods.</p>
    */
   int getSortWeight();
 
   /**
-   * Defines if results found by this contributor can be shown in <i>Find</i> toolwindow
+   * Defines if results found by this contributor can be shown in <i>Find</i> toolwindow.
    */
   boolean showInFindResults();
 
   /**
    * <p>Defines if separate tab should be shown for this contributor in <i>Search Everywhere</i> dialog.</p>
-   * <p>Please try not to override this method unless it strongly needed. Big amount of separate tabs can make <i>Search Everywhere</i>
-   * dialog unusable</p>
+   * <p>Please do not override this method unless absolutely necessary. Too many separate tabs make the <i>Search Everywhere</i>
+   * dialog unusable.</p>
    */
   default boolean isShownInSeparateTab() {
     return false;
@@ -83,7 +84,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    *
    * @deprecated method is left for backward compatibility only. If you want to consider elements weight in your search contributor
    * please use {@link WeightedSearchEverywhereContributor#fetchWeightedElements(String, ProgressIndicator, Processor)} method for fetching
-   * this elements
+   * this elements.
    */
   @Deprecated
   default int getElementPriority(@NotNull Item element, @NotNull String searchPattern) {
@@ -94,7 +95,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * <p>Returns list of commands supported by this contributor.</p>
    * <p>Usually commands are used for additional elements filtering, but you can implement any behavior for your commands.
    * {@link SearchEverywhereCommandInfo} doesn't contain any behavior details. All commands should be processed in
-   * {@link SearchEverywhereContributor#fetchElements(String, ProgressIndicator, Processor)} method</p>
+   * {@link SearchEverywhereContributor#fetchElements(String, ProgressIndicator, Processor)} method.</p>
    */
   @NotNull
   default List<SearchEverywhereCommandInfo> getSupportedCommands() {
@@ -102,7 +103,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   }
 
   /**
-   * Return an advertisement text which can be shown in a right part of search field
+   * Return an advertisement text which can be shown in a right part of search field.
    */
   @Nullable
   @Nls
@@ -117,9 +118,9 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * <p>Performs searching process. All found items will be passed to consumer.</p>
    * <p>Searching is performed until any of following events happens:
    * <ul>
-   *   <li>all items which match pattern are found</li>
-   *   <li>progressIndicator is cancelled</li>
-   *   <li>consumer returns false for any item</li>
+   *   <li>all items which match {@code pattern} are found</li>
+   *   <li>{@code progressIndicator} is cancelled</li>
+   *   <li>{@code consumer} returns {@code false} for any item</li>
    * </ul></p>
    * @param pattern searching pattern used for matching
    * @param progressIndicator {@link ProgressIndicator} which can be used for tracking or cancelling searching process
@@ -134,9 +135,9 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * <p>Search for pattern matches with elements limit. Found items will be returned as {@link ContributorSearchResult} structure.</p>
    * <p>Searching is performed until any of following events happens:
    * <ul>
-   *   <li>all items which match pattern are found</li>
-   *   <li>progressIndicator is cancelled</li>
-   *   <li>elements limit is reached</li>
+   *   <li>all items which match {@code pattern} are found</li>
+   *   <li>{@code progressIndicator} is cancelled</li>
+   *   <li>{@code elementsLimit} is reached</li>
    * </ul></p>
    *
    * @param pattern searching pattern used for matching
@@ -166,8 +167,8 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * <p>Search for all pattern matches. Found items will be returned as {@link List}.</p>
    * <p>Searching is performed until any of following events happens:
    * <ul>
-   *   <li>all items which match pattern are found</li>
-   *   <li>progressIndicator is cancelled</li>
+   *   <li>all items which match {@code pattern} are found</li>
+   *   <li>{@code progressIndicator} is cancelled</li>
    * </ul></p>
    *
    * @param pattern searching pattern used for matching
@@ -183,7 +184,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
 
   /**
    * <p>Process selected item. Method called when user choose item from results list.</p>
-   * <p>Returned result defines if dialog should be closed after processing element</p>
+   * <p>Returned result defines if dialog should be closed after processing element.</p>
    *
    * @param selected item chosen by user
    * @param modifiers keyboard modifiers (see {@link InputEvent#getModifiers()})
@@ -194,13 +195,13 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   boolean processSelectedItem(@NotNull Item selected, int modifiers, @NotNull String searchText);
 
   /**
-   * Creates {@link ListCellRenderer} for found items
+   * Creates {@link ListCellRenderer} for found items.
    */
   @NotNull
   ListCellRenderer<? super Item> getElementsRenderer();
 
   /**
-   * Get context data for selected element
+   * Get context data for selected element.
    * @param element selected item
    * @param dataId {@link DataKey} ID
    *
@@ -211,7 +212,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   Object getDataForItem(@NotNull Item element, @NotNull String dataId);
 
   /**
-   * Filter out special symbols from pattern before search
+   * Filter out special symbols from pattern before search.
    */
   @NotNull
   default String filterControlSymbols(@NotNull String pattern) {
@@ -221,14 +222,14 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   /**
    * <p>Defines if multi-selection should be supported in results list for items found by this contributor.</p>
    * <p>For example few classes can be simultaneously open from <i>Search Everywhere</i> (in different tabs). So classes contributor
-   * supports multi-selection. But actions contributor doesn't since only one action can be performed at same time</p>
+   * supports multi-selection, but actions contributor doesn't since only one action can be performed at same time.</p>
    */
   default boolean isMultiSelectionSupported() {
     return false;
   }
 
   /**
-   * Defines if this contributor allowed to call while indexing in process
+   * Defines if this contributor allowed to call while indexing in process.
    */
   @Override
   default boolean isDumbAware() {
@@ -236,7 +237,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   }
 
   /**
-   * Defines if contributor should try to perform search with empty search pattern
+   * Defines if contributor should try to perform search with empty search pattern.
    */
   default boolean isEmptyPatternSupported() {
     return false;
