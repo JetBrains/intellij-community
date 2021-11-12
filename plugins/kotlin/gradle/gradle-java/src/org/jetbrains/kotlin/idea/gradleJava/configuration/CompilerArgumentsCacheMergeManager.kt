@@ -23,14 +23,12 @@ abstract class CompilerArgumentsCacheMergeManager {
             projectDataNode.also { projectDataNodeByPath[projectPath] = it }
         else {
             val directoryPath = projectPath.substringBeforeLast("${File.separator}buildSrc")
-            projectDataNodeByPath.getValue(directoryPath)
+            projectDataNodeByPath.entries.first { it.key.startsWith(directoryPath) }.value
         }
         val kotlinIdeaProjectData = ExternalSystemApiUtil.find(mainProjectDataNode, KotlinIdeaProjectData.KEY)?.data
             ?: KotlinIdeaProjectData().also {
                 mainProjectDataNode.createChild(KotlinIdeaProjectData.KEY, it)
             }
-
-
         kotlinIdeaProjectData.compilerArgumentsCacheHolder.mergeCacheAware(cachePart)
     }
 
