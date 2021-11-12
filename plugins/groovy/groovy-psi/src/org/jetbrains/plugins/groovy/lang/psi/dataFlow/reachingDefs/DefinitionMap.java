@@ -44,7 +44,10 @@ public final class DefinitionMap {
         myDefs.addAll(otherDefs);
       }
     }
-    myPreviousClosureContext = other.myPreviousClosureContext;
+    if (!other.myPreviousClosureContext.isEmpty()) {
+      // not a hack actually; we may want to merge with instructions further in the flow, like with for-statements
+      myPreviousClosureContext = other.myPreviousClosureContext;
+    }
   }
 
   public int @Nullable [] getDefinitions(int varIndex) {
