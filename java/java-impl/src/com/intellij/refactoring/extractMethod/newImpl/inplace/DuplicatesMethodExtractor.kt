@@ -33,6 +33,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
 
   override fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
     val file = targetClass.containingFile
+    JavaDuplicatesFinder.linkCopiedClassMembersWithOrigin(file)
     val copiedFile = file.copy() as PsiFile
     val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
     val copiedElements = elements.map { PsiTreeUtil.findSameElementInCopy(it, copiedFile) }
