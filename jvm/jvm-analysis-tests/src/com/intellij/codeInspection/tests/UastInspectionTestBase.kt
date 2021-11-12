@@ -32,11 +32,14 @@ abstract class UastInspectionTestBase : JavaCodeInsightFixtureTestCase() {
 
   enum class ULanguage(val ext: String) { JAVA(".java"), KOTLIN(".kt") }
 
+  protected fun JavaCodeInsightTestFixture.setLanguageLevel(languageLevel: LanguageLevel) {
+    LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
+  }
+
   protected fun JavaCodeInsightTestFixture.testHighlighting(lang: ULanguage, text: String) {
     configureByText("UnderTest${lang.ext}", text)
     checkHighlighting()
   }
-
 
   protected fun JavaCodeInsightTestFixture.testQuickFix(
     lang: ULanguage,
