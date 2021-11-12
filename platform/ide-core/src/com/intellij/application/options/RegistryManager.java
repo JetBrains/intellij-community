@@ -3,9 +3,18 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface RegistryManager {
+  @Topic.AppLevel
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  // only afterValueChanged is dispatched
+  Topic<RegistryValueListener> TOPIC = new Topic<>(RegistryValueListener.class, Topic.BroadcastDirection.NONE, true);
+
   static @NotNull RegistryManager getInstance() {
     return ApplicationManager.getApplication().getService(RegistryManager.class);
   }

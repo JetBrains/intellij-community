@@ -811,12 +811,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS,
                    AppUIUtil.adjustFractionalMetrics(UISettings.Companion.getPreferredFractionalMetricsValue()));
 
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this);
+    myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
+
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
     }
-
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this);
-    myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
   }
 
   @NotNull

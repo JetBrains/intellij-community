@@ -1814,15 +1814,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun loadState(state: Element) {
+    val isNewUi = ExperimentalUI.isNewUI()
     for (element in state.children) {
       if (DesktopLayout.TAG == element.name) {
         val layout = DesktopLayout()
-        layout.readExternal(element)
+        layout.readExternal(element, isNewUi)
         scheduleSetLayout(layout)
       }
       else if (LAYOUT_TO_RESTORE == element.name) {
         layoutToRestoreLater = DesktopLayout()
-        layoutToRestoreLater!!.readExternal(element)
+        layoutToRestoreLater!!.readExternal(element, isNewUi)
       }
       else if (RECENT_TW_TAG == element.name) {
         recentToolWindows.clear()

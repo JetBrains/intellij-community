@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSuppor
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.sun.jna.platform.WindowUtils
 import org.jdom.Element
@@ -441,7 +442,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       defaultFrameInfoHelper.copyFrom(info)
     }
     state.getChild(DesktopLayout.TAG)?.let {
-      layout.readExternal(it)
+      layout.readExternal(it, ExperimentalUI.isNewUI())
     }
   }
 

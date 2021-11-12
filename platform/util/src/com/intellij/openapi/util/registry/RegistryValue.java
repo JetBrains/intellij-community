@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
@@ -249,12 +249,15 @@ public class RegistryValue {
   public void setValue(String value) {
     resetCache();
 
+    RegistryValueListener globalValueChangeListener = myRegistry.getValueChangeListener();
+    globalValueChangeListener.beforeValueChanged(this);
     for (RegistryValueListener each : myListeners) {
       each.beforeValueChanged(this);
     }
 
     myRegistry.getUserProperties().put(myKey, value);
 
+    globalValueChangeListener.afterValueChanged(this);
     for (RegistryValueListener each : myListeners) {
       each.afterValueChanged(this);
     }

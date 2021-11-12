@@ -9,7 +9,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
-import com.intellij.ui.ExperimentalUI
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
@@ -85,7 +84,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
     }
   }
 
-  fun readExternal(layoutElement: Element) {
+  fun readExternal(layoutElement: Element, isNewUi: Boolean) {
     val infoBinding = XmlSerializer.getBeanBinding(WindowInfoImpl::class.java)
 
     val list = mutableListOf<WindowInfoImpl>()
@@ -104,7 +103,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
         info.order = getMaxOrder(list, info.anchor) + 1
       }
 
-      if (ExperimentalUI.isNewUI() && info.isSplit) {
+      if (info.isSplit && isNewUi) {
         info.isSplit = false
       }
 
