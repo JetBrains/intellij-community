@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Extend this class and register the implementation as {@code com.intellij.findUsagesHandlerFactory} extension in plugin.xml
- * to  provide a factory of {@link FindUsagesHandler find usage handlers}.
+ * to provide a factory of {@link FindUsagesHandler find usage handlers}.
  *
  * @see com.intellij.find.usages.symbol.SymbolSearchTargetFactory
  */
