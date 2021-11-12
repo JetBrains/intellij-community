@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyseForUast
 import org.jetbrains.kotlin.analysis.api.calls.KtAnnotationCall
 import org.jetbrains.kotlin.analysis.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -284,18 +285,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
         fun resolveToPsiClassOrEnumEntry(classOrObject: KtClassOrObject): PsiElement? {
             analyseForUast(ktExpression) {
-                return if (classOrObject is KtEnumEntry) {
-                    classOrObject.getEnumEntrySymbol().containingEnumClassIdIfNonLocal?.let { enumClassId ->
-                        buildClassType(enumClassId)
-                    }
-                } else {
-                    buildClassType(classOrObject.getClassOrObjectSymbol())
-                }?.let { ktType ->
-                    toPsiClass(ktType, null, classOrObject, classOrObject.typeOwnerKind)?.let { psiClass ->
-                        if (resolvedTargetElement is KtEnumEntry) {
-                            psiClass.findFieldByName(resolvedTargetElement.name, false)
-                        } else psiClass
-                    }
+                val ktType = when (classOrObject) {
+                    is KtEnumEntry ->
+                        classOrObject.getEnumEntrySymbol().containingEnumClassIdIfNonLocal?.let { enumClassId ->
+                            buildClassType(enumClassId)
+                        }
+                    else ->
+                        buildClassType(classOrObject.getClassOrObjectSymbol())
+                } ?: return null
+                val psiClass = toPsiClass(ktType, source = null, classOrObject, classOrObject.typeOwnerKind)
+                return when (classOrObject) {
+                    is KtEnumEntry -> psiClass?.findFieldByName(classOrObject.name, false)
+                    else -> psiClass
                 }
             }
         }
@@ -310,7 +311,23 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             is KtTypeAlias -> {
                 analyseForUast(ktExpression) {
                     val ktType = resolvedTargetElement.getTypeAliasSymbol().expandedType
-                    toPsiClass(ktType, null, resolvedTargetElement, resolvedTargetElement.typeOwnerKind)?.let { return it }
+                    toPsiClass(
+                        ktType,
+                        source = null,
+                        resolvedTargetElement,
+                        resolvedTargetElement.typeOwnerKind
+                    )?.let { return it }
+                }
+            }
+            is KtTypeParameter -> {
+                analyseForUast(ktExpression) {
+                    val ktType = buildTypeParameterType(resolvedTargetElement.getTypeParameterSymbol())
+                    toPsiClass(
+                        ktType,
+                        ktExpression.toUElement(),
+                        resolvedTargetElement,
+                        resolvedTargetElement.typeOwnerKind
+                    )?.let { return it }
                 }
             }
         }
