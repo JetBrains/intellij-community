@@ -18,6 +18,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -79,14 +80,20 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
     TextRange range = new UnfairTextRange(conditionalStart.getTextRange().getEndOffset() - startOffset, conditionalEnd.getStartOffset() - startOffset);
     if (range.getStartOffset() < range.getEndOffset()) {
       ASTNode current = conditionalStart.getTreeNext();
-      registrar.startInjecting(language);
+      List<TextRange> injectionsRanges = new ArrayList<>();
       while (current != conditionalEnd) {
         if (!(current.getPsi() instanceof OuterLanguageElement)) {
-          registrar.addPlace(null, null, (PsiLanguageInjectionHost)host, current.getTextRange().shiftLeft(startOffset));
+          injectionsRanges.add(current.getTextRange().shiftLeft(startOffset));
         }
         current = current.getTreeNext();
       }
-      registrar.doneInjecting();
+      if (!injectionsRanges.isEmpty()) {
+        registrar.startInjecting(language);
+        for (TextRange injectionsRange : injectionsRanges) {
+          registrar.addPlace(null, null, (PsiLanguageInjectionHost)host, injectionsRange);
+        }
+        registrar.doneInjecting();
+      }
     }
   }
 
