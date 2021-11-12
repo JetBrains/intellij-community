@@ -91,10 +91,8 @@ public class PyParamSpecType implements PyType {
       return String.format("[%s]",
                            StringUtil.join(myParameters, param -> {
                                              if (param != null) {
-                                               final StringBuilder builder = new StringBuilder();
                                                final PyType type = param.getType(context);
-                                               builder.append(type != null ? type.getName() : PyNames.UNKNOWN_TYPE);
-                                               return builder.toString();
+                                               return type != null ? type.getName() : PyNames.UNKNOWN_TYPE;
                                              }
                                              return PyNames.UNKNOWN_TYPE;
                                            },
