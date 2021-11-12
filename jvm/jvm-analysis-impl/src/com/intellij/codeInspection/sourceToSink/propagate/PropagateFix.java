@@ -96,9 +96,16 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   private static void annotate(Project project, @NlsSafe String actionTitle, @NotNull Collection<TaintNode> toAnnotate) {
-    List<TaintNode> nonMarkedNodes = ContainerUtil.filter(toAnnotate, n -> n.myTaintValue != TaintValue.TAINTED);
+    List<TaintNode> nonMarkedNodes = ContainerUtil.filter(toAnnotate, PropagateFix::isNonMarked);
     if (getPsiElements(nonMarkedNodes) == null) return;
     WriteCommandAction.runWriteCommandAction(project, actionTitle, null, () -> markSafe(project, nonMarkedNodes));
+  }
+
+  private static boolean isNonMarked(@NotNull TaintNode taintNode) {
+    if (taintNode.myTaintValue == TaintValue.TAINTED) return false;
+    PsiElement psiElement = taintNode.getPsiElement();
+    if (psiElement == null) return true;
+    return TaintAnalyzer.fromAnnotation(psiElement) != TaintValue.UNTAINTED; 
   }
 
   private static void markSafe(Project project, @NotNull Collection<TaintNode> nonMarked) {
