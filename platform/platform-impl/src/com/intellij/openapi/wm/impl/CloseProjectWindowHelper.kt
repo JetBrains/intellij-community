@@ -69,6 +69,6 @@ open class CloseProjectWindowHelper {
 
   private fun couldReturnToWelcomeScreen(project: Project?): Boolean {
     return project?.let { SHOW_WELCOME_FRAME_FOR_PROJECT.get(project) }
-           ?: (isShowWelcomeScreen && !PlatformUtils.isPyCharmDs() && !PlatformUtils.isDataGrip())
+           ?: (isShowWelcomeScreen && !PlatformUtils.isDataSpell() && !PlatformUtils.isDataGrip())
   }
 }

@@ -153,7 +153,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     boolean preferAttach = currentProject != null &&
                            canAttach &&
                            (PlatformUtils.isDataGrip() && !ProjectUtil.isValidProjectPath(file)
-                            || PlatformUtils.isPyCharmDs());
+                            || PlatformUtils.isDataSpell());
     if (preferAttach && PlatformProjectOpenProcessor.attachToProject(currentProject, file, null)) {
       return CompletableFuture.completedFuture(null);
     }
