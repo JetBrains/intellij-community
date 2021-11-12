@@ -22,18 +22,17 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
   private final PsiManager myManager;
   private final Map<VariableDescriptor, Integer> varIndexes;
 
-  private final TypeDfaState initialState;
 
-  public TypesSemilattice(@NotNull PsiManager manager, @NotNull TypeDfaState initialState, Map<VariableDescriptor, Integer> varIndexes) {
+  public TypesSemilattice(@NotNull PsiManager manager,
+                          Map<VariableDescriptor, Integer> varIndexes) {
     myManager = manager;
-    this.initialState = initialState;
     this.varIndexes = varIndexes;
   }
 
   @Override
   @NotNull
   public TypeDfaState initial() {
-    return new TypeDfaState(initialState);
+    return new TypeDfaState();
   }
 
   @NotNull

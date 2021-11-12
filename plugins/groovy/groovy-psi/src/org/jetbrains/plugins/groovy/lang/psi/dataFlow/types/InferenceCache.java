@@ -69,14 +69,6 @@ final class InferenceCache {
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly) {
-    return getInferredType(descriptor, instruction, mixinOnly, null);
-  }
-
-  @Nullable
-  PsiType getInferredType(@NotNull VariableDescriptor descriptor,
-                          @NotNull Instruction instruction,
-                          boolean mixinOnly,
-                          @Nullable Map<VariableDescriptor, DFAType> initialState) {
     if (myTooComplexInstructions.contains(instruction)) return null;
 
     final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
@@ -88,20 +80,14 @@ final class InferenceCache {
     if (!cache.containsKey(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
       DFAFlowInfo flowInfo = collectFlowInfo(definitionMaps, instruction, descriptor, mixinPredicate);
-      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo, initialState);
+      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo);
       if (dfaResult == null) {
         myTooComplexInstructions.addAll(flowInfo.getInterestingInstructions());
       }
       else {
-        if (TypeInferenceHelper.getCurrentContext().isInferenceResultsCachingAllowed()) {
-          Set<Instruction> stored = flowInfo.getInterestingInstructions();
-          stored.add(instruction);
-          cacheDfaResult(dfaResult, stored);
-        }
-        else {
-          DFAType dfaType = dfaResult.get(instruction.num()).getVariableType(descriptor);
-          return dfaType == null ? null : dfaType.getResultType(myScope.getManager());
-        }
+        Set<Instruction> stored = flowInfo.getInterestingInstructions();
+        stored.add(instruction);
+        cacheDfaResult(dfaResult, stored);
       }
     }
     DFAType dfaType = getCachedInferredType(descriptor, instruction);
@@ -111,27 +97,10 @@ final class InferenceCache {
   @Nullable
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
-                                            @NotNull DFAFlowInfo flowInfo,
-                                            @Nullable Map<VariableDescriptor, DFAType> initialTypes) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager());
-    final TypeDfaState initialState = computeInitialState(flowInfo, new InitialTypeProvider(owner, initialTypes));
-    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager(), initialState, myVarIndexes.getValue());
+                                            @NotNull DFAFlowInfo flowInfo) {
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager(), new InitialTypeProvider(owner));
+    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager(), myVarIndexes.getValue());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
-  }
-
-  private TypeDfaState computeInitialState(@NotNull DFAFlowInfo flowInfo, @NotNull InitialTypeProvider provider) {
-    TypeDfaState state = new TypeDfaState();
-    Set<VariableDescriptor> descriptors = ControlFlowBuilderUtil.getDescriptorsWithoutWrites(myFlow);
-    for (VariableDescriptor descriptor : descriptors) {
-      if (!flowInfo.getInterestingDescriptors().contains(descriptor)) {
-        continue;
-      }
-      DFAType initialType = provider.initialType(descriptor);
-      if (initialType != null) {
-        state.putType(descriptor, initialType);
-      }
-    }
-    return state;
   }
 
   @Nullable

@@ -28,17 +28,18 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final DFAFlowInfo myFlowInfo;
   private final InferenceCache myCache;
   private final PsiManager myManager;
-  private final int lastInterestingInstructionIndex;
+  private final InitialTypeProvider myTypeProvider;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull DFAFlowInfo flowInfo,
                   @NotNull InferenceCache cache,
-                  @NotNull PsiManager manager) {
+                  @NotNull PsiManager manager,
+                  @NotNull InitialTypeProvider typeProvider) {
     myFlow = flow;
     myManager = manager;
     myFlowInfo = flowInfo;
     myCache = cache;
-    lastInterestingInstructionIndex = flowInfo.getInterestingInstructions().stream().mapToInt(Instruction::num).max().orElse(0);
+    myTypeProvider = typeProvider;
   }
 
   @Override
@@ -165,6 +166,16 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         }
       );
     }
+    else if (myFlowInfo.getInterestingDescriptors().contains(descriptor)){
+      DFAType type = state.getVariableType(descriptor);
+      if (type == null) {
+        DFAType thisInitialType = myTypeProvider.initialType(descriptor);
+        if (thisInitialType != null) {
+          // todo: implement as flushing type
+          updateVariableType(state, instruction, descriptor, () -> thisInitialType);
+        }
+      }
+    }
   }
 
   private void handleArguments(TypeDfaState state, ArgumentsInstruction instruction) {
@@ -218,7 +229,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         type = computation.compute();
       }
       else {
-        type = TypeInferenceHelper.doInference(state.getBindings(), true, computation);
+        type = TypeInferenceHelper.doInference(state.getBindings(), computation);
       }
     }
 
@@ -288,30 +299,21 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   //  }
   //}
 
-  private void handleClosureDFAResult(@NotNull Instruction instruction,
-                                      @NotNull GrControlFlowOwner block,
-                                      @NotNull Map<VariableDescriptor, DFAType> initialTypes,
-                                      @NotNull BiConsumer<? super VariableDescriptor, ? super DFAType> typeConsumer) {
-    InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
-    Instruction[] blockFlow = block.getControlFlow();
-    Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
-    runWithCycleCheck(instruction, () -> {
-      for (VariableDescriptor outerDescriptor : myFlowInfo.getInterestingDescriptors()) {
-        PsiType descriptorType = blockCache.getInferredType(outerDescriptor, lastBlockInstruction, false, initialTypes);
-        if (descriptorType != null) {
-          typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
-        }
-      }
-      return null;
-    });
-  }
-
-  private void runWithCycleCheck(@NotNull Instruction instruction, @NotNull Computable<?> action) {
-    if (myFlowInfo.getAcyclicInstructions().contains(instruction)) {
-      action.get();
-    }
-    else {
-      TypeInferenceHelper.doInference(Collections.emptyMap(), false, action);
-    }
-  }
+  //private void handleClosureDFAResult(@NotNull Instruction instruction,
+  //                                    @NotNull GrControlFlowOwner block,
+  //                                    @NotNull Map<VariableDescriptor, DFAType> initialTypes,
+  //                                    @NotNull BiConsumer<? super VariableDescriptor, ? super DFAType> typeConsumer) {
+  //  InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
+  //  Instruction[] blockFlow = block.getControlFlow();
+  //  Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
+  //  runWithCycleCheck(instruction, () -> {
+  //    for (VariableDescriptor outerDescriptor : myFlowInfo.getInterestingDescriptors()) {
+  //      PsiType descriptorType = blockCache.getInferredType(outerDescriptor, lastBlockInstruction, false, initialTypes);
+  //      if (descriptorType != null) {
+  //        typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
+  //      }
+  //    }
+  //    return null;
+  //  });
+  //}
 }
