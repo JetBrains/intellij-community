@@ -5,17 +5,26 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.remoteDev.util.getJetBrainsSystemCachesDir
+import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.io.exists
+import com.intellij.util.io.inputStream
 import com.intellij.util.io.isFile
+import com.intellij.util.io.size
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.sun.net.httpserver.HttpHandler
+import com.sun.net.httpserver.HttpServer
 import org.jetbrains.annotations.ApiStatus
+import java.net.Inet4Address
+import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.div
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
+// If you want to provide a custom url:
+// 1) set TestJetBrainsClientDownloaderConfigurationProvider as serviceImplementation in RemoteDevUtil.xml
+// 2) call (service<JetBrainsClientDownloaderConfigurationProvider> as TestJetBrainsClientDownloaderConfigurationProvider)
+// .startServerAndServeClient(lifetime, clientDistribution, clientJdkBuildTxt)
 @ApiStatus.Experimental
 interface JetBrainsClientDownloaderConfigurationProvider {
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
@@ -43,7 +52,6 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
 @ApiStatus.Experimental
 class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownloaderConfigurationProvider {
-
   var x11DisplayForClient: String? = null
   var guestConfigFolder: Path? =  null
   var guestSystemFolder: Path? = null
@@ -94,5 +102,63 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
     vmOptionsFile.writeText(patchedContent)
     thisLogger().info("Patched $vmOptionsFile successfully")
+  }
+
+  private var tarGzServer: HttpServer? = null
+  fun mockClientDownloadsServer(lifetime: Lifetime, ipv4Address: InetSocketAddress) : InetSocketAddress {
+    require(tarGzServer == null)
+    thisLogger().info("Initializing HTTP server to download distributions as if from outer world")
+
+    val server = HttpServer.create(ipv4Address, 0)
+    thisLogger().info("HTTP server is bound to ${server.address}")
+
+    server.createContext("/")
+    thisLogger().info("Starting http server at ${server.address}")
+
+
+    clientDownloadLocation = URI("http:/${server.address}/")
+    verifySignature = false
+
+    lifetime.onTerminationOrNow {
+      clientDownloadLocation = URI("INVALID")
+      verifySignature = true
+
+      tarGzServer = null
+
+      server.stop(10)
+    }
+
+    server.start()
+
+    tarGzServer = server
+
+    return server.address
+  }
+
+  fun serveFile(file: Path) {
+    require(file.exists())
+    require(file.isFile())
+
+    val server = tarGzServer
+    require(server != null)
+
+    server.createContext("/${file.name}", HttpHandler { httpExchange ->
+      httpExchange.sendResponseHeaders(200, file.size())
+      httpExchange.responseBody.use { responseBody ->
+        file.inputStream().use {
+          it.copyTo(responseBody, 1024 * 1024)
+        }
+      }
+    })
+  }
+
+
+  @Suppress("unused")
+  fun startServerAndServeClient(lifetime: Lifetime, clientDistribution: Path, clientJdkBuildTxt: Path) {
+    require(clientJdkBuildTxt.name.endsWith(".txt")) { "Do not mix-up client archive and client jdk build txt arguments" }
+
+    mockClientDownloadsServer(lifetime, InetSocketAddress(Inet4Address.getLoopbackAddress(), 0))
+    serveFile(clientDistribution)
+    serveFile(clientJdkBuildTxt)
   }
 }
