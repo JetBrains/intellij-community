@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -59,9 +60,7 @@ public class StandardExceptionProcessor extends AbstractClassProcessor {
   }
 
   private static boolean checkWrongInheritorOfThrowable(@NotNull PsiClass psiClass) {
-    final PsiClass throwableClass =
-      PsiTypesUtil.getPsiClass(PsiType.getJavaLangThrowable(psiClass.getManager(), psiClass.getResolveScope()));
-    return throwableClass == null || !psiClass.isInheritor(throwableClass, true);
+    return !InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE);
   }
 
   private static boolean checkWrongAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
