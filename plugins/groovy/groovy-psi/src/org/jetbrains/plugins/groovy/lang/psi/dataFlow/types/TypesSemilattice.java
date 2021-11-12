@@ -1,11 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author ven
@@ -55,131 +63,43 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     if (another.getVarTypes().isEmpty()) {
       return cached;
     }
-    Map<VariableDescriptor, DFAType> mapToPublish = getMapToPublish(another, varIndexes);
-    checkDfaStatesConsistency(cached, mapToPublish);
-    Map<VariableDescriptor, DFAType> newState = new HashMap<>(cached);
-    newState.putAll(mapToPublish);
+
+    List<Map.Entry<VariableDescriptor, DFAType>> newTypes = new SmartList<>();
+    for (Map.Entry<VariableDescriptor, DFAType> candidateEntry : another.getVarTypes().entrySet()) {
+      var descriptor = candidateEntry.getKey();
+      if (another.getProhibitedCachingVars().get(varIndexes.getOrDefault(descriptor, 0)) ||
+          (cached.containsKey(descriptor) && checkDfaStatesConsistency(cached, candidateEntry))) {
+        continue;
+      }
+      newTypes.add(candidateEntry);
+    }
+    if (newTypes.isEmpty()) {
+      return cached;
+    }
+    Map<VariableDescriptor, DFAType> newState = new HashMap<>(cached.size() + newTypes.size());
+    newState.putAll(cached);
+    for (var entry : newTypes) {
+      newState.put(entry.getKey(), entry.getValue());
+    }
     return newState;
   }
 
-  private static Map<VariableDescriptor, DFAType> getMapToPublish(TypeDfaState another,
-                                                                  Map<VariableDescriptor, Integer> varIndexes) {
-    return filter(another.getVarTypes(), descriptor -> !another.getProhibitedCachingVars().get(varIndexes.getOrDefault(descriptor, 0)));
-  }
-
-  private static void checkDfaStatesConsistency(@NotNull Map<VariableDescriptor, DFAType> cached,
-                                                @NotNull Map<VariableDescriptor, DFAType> incoming) {
+  private static boolean checkDfaStatesConsistency(@NotNull Map<VariableDescriptor, DFAType> cached,
+                                                   @NotNull Map.Entry<VariableDescriptor, DFAType> incoming) {
     if (!ApplicationManager.getApplication().isUnitTestMode() ||
         ApplicationManagerEx.isInStressTest() ||
         DfaCacheConsistencyKt.mustSkipConsistencyCheck()) {
-      return;
+      return true;
     }
-    Collection<VariableDescriptor> commonDescriptors = intersection(cached.keySet(), incoming.keySet());
-    Map<VariableDescriptor, Couple<DFAType>> differingEntries = filter(diff(cached, incoming), commonDescriptors::contains);
-    if (!differingEntries.isEmpty()) {
-      throw new IllegalStateException("Attempt to cache different types: " + differingEntries);
+    DFAType cachedType = cached.get(incoming.getKey());
+    if (cachedType != null && !Objects.equals(cachedType, incoming.getValue())) {
+      throw new IllegalStateException("Attempt to cache different types: for descriptor " +
+                                      incoming.getKey() +
+                                      ", existing was " +
+                                      cachedType +
+                                      " and incoming is " +
+                                      incoming.getValue());
     }
-  }
-}
-
-class TypeDfaState {
-  private final Map<VariableDescriptor, DFAType> myVarTypes;
-
-  /**
-   * During the DFA process, types of some descriptors become inferred.
-   * In the presense of cyclic instructions, these inferred types may become incorrect:
-   * a variable may be overwritten at some non-interesting write instruction, and then it would affect the flow before this write.
-   * This scenario requires to erase descriptor types at non-interesting write instruction,
-   * but the information about erased descriptors should be memoized somewhere --
-   * otherwise, semilattice may "restore" erased type while joining state, and then the further flow will be unaffected.
-   * This is why we need this field:
-   * it should carry information about erased types to distinguish them from not-yet-processed ones.
-   */
-  private final BitSet myProhibitedCachingVars;
-
-  TypeDfaState() {
-    myVarTypes = new HashMap<>();
-    myProhibitedCachingVars = new BitSet();
-  }
-
-  TypeDfaState(TypeDfaState another) {
-    myVarTypes = new HashMap<>(another.myVarTypes);
-    myProhibitedCachingVars = BitSet.valueOf(another.myProhibitedCachingVars.toLongArray());
-  }
-
-  Map<VariableDescriptor, DFAType> getVarTypes() {
-    return myVarTypes;
-  }
-
-  void joinState(TypeDfaState another, PsiManager manager, Map<VariableDescriptor, Integer> varIndexes) {
-    myVarTypes.keySet().removeIf(var -> another.myProhibitedCachingVars.get(varIndexes.get(var)));
-    for (Map.Entry<VariableDescriptor, DFAType> entry : another.myVarTypes.entrySet()) {
-      final VariableDescriptor descriptor = entry.getKey();
-      if (myProhibitedCachingVars.get(varIndexes.getOrDefault(descriptor, 0))) {
-        continue;
-      }
-      final DFAType t1 = entry.getValue();
-      if (myVarTypes.containsKey(descriptor)) {
-        final DFAType t2 = myVarTypes.get(descriptor);
-        if (t1 != null && t2 != null) {
-          myVarTypes.put(descriptor, DFAType.create(t1, t2, manager));
-        }
-        else {
-          myVarTypes.put(descriptor, null);
-        }
-      }
-      else if (t1 != null && !t1.getFlushingType().equals(PsiType.NULL)) {
-        DFAType dfaType = DFAType.create(null);
-        myVarTypes.put(descriptor, dfaType.addFlushingType(t1.getFlushingType(), manager));
-      }
-    }
-    myProhibitedCachingVars.or(another.myProhibitedCachingVars);
-  }
-
-  boolean contentsEqual(TypeDfaState another) {
-    return myVarTypes.equals(another.myVarTypes) && myProhibitedCachingVars.equals(another.myProhibitedCachingVars);
-  }
-
-  @Nullable
-  DFAType getVariableType(VariableDescriptor descriptor) {
-    return myVarTypes.get(descriptor);
-  }
-
-  @Contract("_ -> new")
-  @NotNull
-  DFAType getOrCreateVariableType(VariableDescriptor descriptor) {
-    DFAType result = getVariableType(descriptor);
-    return result == null ? DFAType.create(null) : result.copy();
-  }
-
-  Map<VariableDescriptor, DFAType> getBindings() {
-    return new HashMap<>(myVarTypes);
-  }
-
-  void putType(VariableDescriptor descriptor, @Nullable DFAType type) {
-    myVarTypes.put(descriptor, type);
-  }
-
-  @Override
-  @NonNls
-  public String toString() {
-    return myVarTypes.toString();
-  }
-
-  public boolean containsVariable(@NotNull VariableDescriptor descriptor) {
-    return myVarTypes.containsKey(descriptor);
-  }
-
-  public void removeBinding(@NotNull VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
-    myProhibitedCachingVars.set(varIndexes.getOrDefault(descriptor, 0));
-    myVarTypes.remove(descriptor);
-  }
-
-  BitSet getProhibitedCachingVars() {
-    return myProhibitedCachingVars;
-  }
-
-  public void restoreBinding(@NotNull VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
-    myProhibitedCachingVars.set(varIndexes.getOrDefault(descriptor, 0), false);
+    return true;
   }
 }
