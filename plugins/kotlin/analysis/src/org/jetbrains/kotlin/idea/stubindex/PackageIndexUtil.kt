@@ -52,11 +52,12 @@ object PackageIndexUtil {
         searchScope: GlobalSearchScope,
         project: Project
     ): Boolean {
-        return StubIndex.getInstance().getContainingFiles(
+        val files = StubIndex.getInstance().getContainingFiles(
             KotlinExactPackagesIndex.getInstance().key,
             packageFqName.asString(),
             project,
             searchScope
-        ).hasNext()
+        )
+        return files.any { it in searchScope }
     }
 }

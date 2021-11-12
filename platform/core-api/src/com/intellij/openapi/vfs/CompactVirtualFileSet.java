@@ -18,8 +18,9 @@ import java.util.stream.IntStream;
  * without materialization of all containing files.
  * Remove operations are not supported.
  * NOT thread-safe.
- * Use {@link VfsUtilCore#createCompactVirtualFileSet()} to instantiate a new set.
+ * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet()} instead
  */
+@Deprecated
 @ApiStatus.Internal
 public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implements VirtualFileSet {
   static final int BIT_SET_LIMIT = 1000;
@@ -170,12 +171,10 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   /**
    * Make unmodifiable
-   * @return
    */
   @Override
-  public Set<VirtualFile> freeze() {
+  public void freeze() {
     frozen = true;
-    return this;
   }
 
   @Override

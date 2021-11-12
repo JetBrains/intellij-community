@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public interface VirtualFileSet extends Set<VirtualFile> {
-  Set<VirtualFile> freeze();
+  void freeze();
 
   boolean process(@NotNull Processor<? super VirtualFile> processor);
 }
