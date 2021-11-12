@@ -68,7 +68,7 @@ class MutableOneToMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable)
     }
-    thisRef.diff.updateOneToManyChildrenOfParent(connectionId!!, thisRef.id, value)
+    thisRef.diff.updateOneToManyChildrenOfParent(connectionId!!, thisRef.id, value.map { it.id.asChild() })
   }
 }
 

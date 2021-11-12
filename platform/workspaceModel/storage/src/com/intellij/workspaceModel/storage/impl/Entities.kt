@@ -165,7 +165,32 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
     }
   }
 
-  internal fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
+  open fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
+
+  open fun applyToBuilder(builder: WorkspaceEntityStorageBuilder, entitySource: EntitySource) {
+    throw NotImplementedError()
+  }
+
+  open fun getEntityData(): WorkspaceEntityData<T> {
+    throw NotImplementedError()
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun addToBuilder() {
+    diff.putEntity(getEntityData())
+  }
+
+  // For generated entities
+  @Suppress("unused")
+  fun applyRef(connectionId: ConnectionId, child: WorkspaceEntityData<*>?, children: List<WorkspaceEntityData<*>>?) {
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_ONE -> diff.updateOneToOneChildOfParent(connectionId, id, child!!.createEntityId().asChild())
+      ConnectionId.ConnectionType.ONE_TO_MANY -> diff.updateOneToManyChildrenOfParent(connectionId, id, children!!.map { it.createEntityId().asChild() }.asSequence())
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> diff.updateOneToAbstractManyChildrenOfParent(connectionId, id.asParent(), children!!.map { it.createEntityId().asChild() }.asSequence())
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> diff.updateOneToAbstractOneChildOfParent(connectionId, id.asParent(), child!!.createEntityId().asChild())
+    }
+  }
 }
 
 interface SoftLinkable {

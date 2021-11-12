@@ -44,6 +44,6 @@ class MutableOneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEn
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, true)
     }
-    thisRef.diff.updateOneToAbstractManyChildrenOfParent(connectionId!!, thisRef.id.asParent(), value)
+    thisRef.diff.updateOneToAbstractManyChildrenOfParent(connectionId!!, thisRef.id.asParent(), value.map { it.id.asChild() })
   }
 }

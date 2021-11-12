@@ -75,7 +75,7 @@ class MutableOneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable)
       }
-      thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id, value)
+      thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id, value?.id?.asChild())
     }
   }
 }
