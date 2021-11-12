@@ -6,8 +6,16 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 
+/**
+ * Extension point that provides credentials for Maven repositories that require authorization
+ */
 @ApiStatus.Experimental
 interface JarRepositoryAuthenticationDataProvider {
+  /**
+   * @param url url of Maven repository
+   * @return credentials that allow downloading libraries from the Maven repository located in [url].
+   *         [null] if authorization is not needed.
+   */
   fun provideAuthenticationData(url: String): AuthenticationData?
 
   data class AuthenticationData(val userName: String, val password: String)
