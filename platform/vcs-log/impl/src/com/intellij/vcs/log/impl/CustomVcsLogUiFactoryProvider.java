@@ -2,18 +2,22 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 @ApiStatus.Experimental
 public interface CustomVcsLogUiFactoryProvider {
   ProjectExtensionPointName<CustomVcsLogUiFactoryProvider> LOG_CUSTOM_UI_FACTORY_PROVIDER_EP =
     new ProjectExtensionPointName<>("com.intellij.customVcsLogUiFactoryProvider");
 
-  boolean isActive(@NotNull VcsLogManager vcsLogManager);
+  boolean isActive(@NotNull Map<VirtualFile, VcsLogProvider> providers);
 
   @NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> createLogUiFactory(@NotNull String logId,
                                                                                     @NotNull VcsLogManager vcsLogManager,
