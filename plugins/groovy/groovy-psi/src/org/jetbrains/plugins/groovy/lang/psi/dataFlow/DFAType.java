@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.util.Comparing;
@@ -95,8 +95,13 @@ public final class DFAType {
     if (mixin == null) {
       return;
     }
-
-    mixins.add(new Mixin(mixin, instruction, instruction != null && instruction.isNegated()));
+    Mixin newMixin = new Mixin(mixin, instruction, instruction != null && instruction.isNegated());
+    for (var existingMixin : mixins) {
+      if (Objects.equals(existingMixin, newMixin)) {
+        return;
+      }
+    }
+    mixins.add(newMixin);
   }
 
   public DFAType addFlushingType(@Nullable PsiType flushingType, @NotNull PsiManager manager) {
