@@ -88,6 +88,7 @@ fi
 # ---------------------------------------------------------------------
 # Collect JVM options and IDE properties.
 # ---------------------------------------------------------------------
+IDE_PROPERTIES_PROPERTY=""
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$__product_uc___PROPERTIES"
