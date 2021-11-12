@@ -177,6 +177,8 @@ public final class HighlightManagerImpl extends HighlightManager {
     addOccurrenceHighlight(editor, start, end, null, attributesKey, flags, outHighlighters, null);
   }
 
+  public static final int OCCURRENCE_LAYER = HighlighterLayer.SELECTION - 1;
+
   private void addOccurrenceHighlight(@NotNull Editor editor,
                                       int start,
                                       int end,
@@ -186,7 +188,7 @@ public final class HighlightManagerImpl extends HighlightManager {
                                       @Nullable Collection<? super RangeHighlighter> outHighlighters,
                                       @Nullable Color scrollMarkColor) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, HighlighterLayer.SELECTION - 1,
+    markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER,
                                                        HighlighterTargetArea.EXACT_RANGE, false, highlighter -> {
 
         HighlightFlags info = new HighlightFlags(editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor, flags);

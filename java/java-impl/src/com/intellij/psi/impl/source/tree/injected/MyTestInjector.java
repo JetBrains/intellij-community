@@ -86,6 +86,7 @@ public class MyTestInjector {
                                                       @NonNls final String suffix) {
     if (language == null) return;
     final ConcatenationAwareInjector injector = (injectionPlacesRegistrar, operands) -> {
+      if (operands[0].getParent() instanceof PsiNameValuePair) return; // do not inject into @SupressWarnings
       PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class);
       if (variable == null) return;
       if (!varName.equals(variable.getName())) return;

@@ -4,9 +4,11 @@ package com.intellij.java.codeInsight.highlighting
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
+import com.intellij.codeInsight.highlighting.HighlightManagerImpl
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
@@ -186,13 +188,15 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
     String text = '''
       public class Foo {
         public static void a(boolean b, String c) {
-           @SuppressWarnings({"SillyAssignment"})
+           @SuppressWarnings("SillyAssignment")
            String java = "class A {{int i = 0; i = i;}}";
         }
       }'''
     myFixture.configureByText 'Foo.java', text.stripIndent()
     myFixture.enableInspections(new SillyAssignmentInspection())
     myFixture.editor.caretModel.moveToOffset(myFixture.file.text.indexOf("illyAssignment"))
+    assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR))
+    
     ctrlShiftF7()
     assertRangeText 'i'
   }
@@ -353,7 +357,7 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void assertRangeText(String... texts) {
-    def highlighters = myFixture.editor.markupModel.allHighlighters
+    def highlighters = myFixture.editor.markupModel.allHighlighters.findAll { it.layer == HighlightManagerImpl.OCCURRENCE_LAYER }
     def actual = highlighters.collect { myFixture.file.text.substring(it.startOffset, it.endOffset) }
     assertSameElements actual, texts
   }
