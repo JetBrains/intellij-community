@@ -578,7 +578,7 @@ class WaitingForAProcesses {
   internal fun checkAndUpdate(settings: RunnerAndConfigurationSettings, executorId: String): Boolean {
     if (executorId != this.executorId) return false
     if (subSettingsList.remove(settings)) {
-      clear()
+      if (subSettingsList.isEmpty()) clear()
       return true
     }
     return false
