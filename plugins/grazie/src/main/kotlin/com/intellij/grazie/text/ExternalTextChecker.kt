@@ -1,11 +1,11 @@
 package com.intellij.grazie.text
 
-import com.intellij.openapi.progress.runSuspendingAction
+import com.intellij.openapi.progress.runBlockingCancellable
 
 /** A checker that might wait for something (e.g. a web request) without consuming CPU */
 abstract class ExternalTextChecker : TextChecker() {
   override fun check(extracted: TextContent): Collection<TextProblem> =
-    runSuspendingAction { checkExternally(extracted) }
+    runBlockingCancellable { checkExternally(extracted) }
 
   /**
    * Check a text for problems in the same way as [TextChecker.check], possibly suspending in the middle to perform a web request
