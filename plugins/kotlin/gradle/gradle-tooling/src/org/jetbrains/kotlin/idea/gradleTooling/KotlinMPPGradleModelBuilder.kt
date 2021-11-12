@@ -743,16 +743,16 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
             if (!importingContext.getProperty(IS_HMPP_ENABLED)) {
                 val name = sourceSet.name
                 if (name == COMMON_MAIN_SOURCE_SET_NAME) {
-                    sourceSet.isTestModule = false
+                    sourceSet.isTestComponent = false
                     continue
                 }
                 if (name == COMMON_TEST_SOURCE_SET_NAME) {
-                    sourceSet.isTestModule = true
+                    sourceSet.isTestComponent = true
                     continue
                 }
             }
 
-            sourceSet.isTestModule = importingContext.compilationsBySourceSet(sourceSet)?.all { it.isTestModule } ?: false
+            sourceSet.isTestComponent = importingContext.compilationsBySourceSet(sourceSet)?.all { it.isTestComponent } ?: false
 
             importingContext.computeSourceSetPlatforms(sourceSet)
         }
