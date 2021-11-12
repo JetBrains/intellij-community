@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstru
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement
+import com.intellij.openapi.util.Key
 
 internal fun GrControlFlowOwner.getVarIndexes(): Object2IntMap<VariableDescriptor> {
   return CachedValuesManager.getCachedValue(this) {
@@ -47,6 +48,7 @@ private fun doGetVarIndexes(owner: GrControlFlowOwner): Object2IntMap<VariableDe
 
 private typealias InstructionsByElement = (PsiElement) -> Collection<Instruction>
 private typealias ReadInstructions = Collection<ReadWriteVariableInstruction>
+private val READS = Key<ReadInstructions>("groovy.dfa.read.instructon.in.scope")
 
 internal fun findReadDependencies(writeInstruction: Instruction, instructionsByElement: InstructionsByElement): ReadInstructions {
   require(
@@ -56,7 +58,7 @@ internal fun findReadDependencies(writeInstruction: Instruction, instructionsByE
   )
   val element = writeInstruction.element ?: return emptyList()
   val scope = findDependencyScope(element) ?: return emptyList()
-  return findReadsInside(scope, instructionsByElement)
+  return findReadsInsideCacheable(scope, instructionsByElement)
 }
 
 private fun findDependencyScope(element: PsiElement): PsiElement? {
@@ -76,6 +78,17 @@ private fun findDependencyScope(element: PsiElement): PsiElement? {
   val lValue = if (element.parent is GrTuple) element.parent else element
   return PsiTreeUtil.findFirstParent(lValue) {
     (it.parent !is GrExpression || it is GrMethodCallExpression || it is GrBinaryExpression || it is GrInstanceOfExpression || isExpressionStatement(it))
+  }
+}
+
+private fun findReadsInsideCacheable(scope : PsiElement, instructionsByElement: InstructionsByElement): ReadInstructions {
+  val existing = scope.getUserData(READS)
+  if (existing == null) {
+    val newReads = findReadsInside(scope, instructionsByElement)
+    scope.putUserData(READS, newReads)
+    return newReads
+  } else {
+    return existing
   }
 }
 
