@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * Implement this interface and register the implementation as {@code com.intellij.usageTypeProvider} extension in plugin.xml
  * to provide usage types.
  *
+ * @see UsageType
  * @see UsageTypeProviderEx
  */
 public interface UsageTypeProvider {
