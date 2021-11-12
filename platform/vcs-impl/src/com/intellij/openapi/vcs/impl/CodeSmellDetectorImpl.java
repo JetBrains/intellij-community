@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -177,7 +176,6 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     ProcessCanceledException exception = null;
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    DumbService dumbService = DumbService.getInstance(myProject);
     // repeat several times when accidental background activity cancels highlighting
     int retries = 100;
     for (int i = 0; i < retries; i++) {
@@ -197,7 +195,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
         InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, p -> currentProfile == null ? new InspectionProfileWrapper(
           (InspectionProfileImpl)p) : new InspectionProfileWrapper(currentProfile,
                                                                    ((InspectionProfileImpl)p).getProfileManager()), () -> {
-          infos.set(dumbService.runReadActionInSmartMode(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator)));
+          infos.set(ReadAction.nonBlocking(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator)).inSmartMode(myProject).executeSynchronously());
         });
         return infos.get();
       }
