@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,7 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,16 +95,32 @@ public final class PluginManager {
     return PluginManagerCore.isPluginInstalled(id);
   }
 
+  public static @Nullable PluginDescriptor getPluginByClass(@NotNull Class<?> aClass) {
+    ClassLoader loader = aClass.getClassLoader();
+    return loader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)loader).getPluginDescriptor() : null;
+  }
+
+  /**
+   * @deprecated Use {@link #getPluginByClass}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public static @Nullable PluginId getPluginByClassName(@NotNull String className) {
-    return PluginManagerCore.getPluginByClassName(className);
+    return getPluginByClassNameAsNoAccessToClass(className);
+  }
+
+  /**
+   * Use only if {@link Class} is not available.
+   */
+  @ApiStatus.Internal
+  public static @Nullable PluginId getPluginByClassNameAsNoAccessToClass(@NotNull String className) {
+    PluginDescriptor result = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className);
+    PluginId id = result == null ? null : result.getPluginId();
+    return (id == null || PluginManagerCore.CORE_ID.equals(id)) ? null : id;
   }
 
   public static @NotNull List<? extends IdeaPluginDescriptor> getLoadedPlugins() {
     return PluginManagerCore.getLoadedPlugins();
-  }
-
-  public @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
-    return PluginManagerCore.getPluginOrPlatformByClassName(className);
   }
 
   /**
@@ -143,20 +163,21 @@ public final class PluginManager {
   }
 
   /**
-   * @deprecated Use {@link DisabledPluginsState#enablePluginsById(Collection, boolean)}
+   * @deprecated Use {@link PluginManagerCore#enablePlugin(PluginId)}
    */
   @Deprecated
   public static boolean enablePlugin(@NotNull String id) {
     return PluginManagerCore.enablePlugin(PluginId.getId(id));
   }
 
-  /**
-   * Consider using {@link DisabledPluginsState#enablePluginsById(Collection, boolean)}.
-   */
   public boolean enablePlugin(@NotNull PluginId id) {
     return PluginManagerCore.enablePlugin(id);
   }
 
+  /**
+   * @deprecated Use own logger.
+   */
+  @Deprecated
   @ApiStatus.Internal
   public static @NotNull Logger getLogger() {
     return PluginManagerCore.getLogger();

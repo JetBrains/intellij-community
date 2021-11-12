@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -229,7 +229,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
       if (list.size() > 1) {
         String duplicateDescriptions = StringUtil.join(list, a -> {
           Class<?> fixClass = IntentionActionDelegate.unwrap(a).getClass();
-          return "Registered: " + fixClass + " from plugin " + PluginManager.getInstance().getPluginOrPlatformByClassName(fixClass.getName());
+          return "Registered: " + fixClass + " from plugin " + PluginManager.getPluginByClass(fixClass);
         }, "\n");
         duplicates.add(list.size() + " intention duplicates found for " + IntentionActionDelegate.unwrap(list.get(0)) + ":\n" + duplicateDescriptions);
       }

@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
 import com.intellij.ide.TipsOfTheDayUsagesCollector.TipInfoValidationRule
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
@@ -254,8 +254,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     private fun getPluginVersion(lesson: Lesson): String? {
-      val pluginId = PluginManagerCore.getPluginByClassName(lesson::class.java.name)
-      return PluginManagerCore.getPlugin(pluginId)?.version
+      return PluginManager.getPluginByClass(lesson::class.java)?.version
     }
 
     private fun getDefaultKeymap(): Keymap? {

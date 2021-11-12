@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl
 
 import com.google.common.base.Stopwatch
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -169,11 +169,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
 
   object PluginAwareEntityTypesResolver : EntityTypesResolver {
     override fun getPluginId(clazz: Class<*>): String? {
-      val className = clazz.name
-      if (className.startsWith("[")) {
-        return PluginManager.getInstance().getPluginOrPlatformByClassName(clazz.componentType.name)?.idString
-      }
-      return PluginManager.getInstance().getPluginOrPlatformByClassName(className)?.idString
+      return (clazz.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.pluginId?.idString
     }
 
     override fun resolveClass(name: String, pluginId: String?): Class<*> {

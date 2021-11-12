@@ -364,14 +364,15 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       if (myProject != null) {
         try {
           String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
-          PluginId pluginId = PluginManager.getPluginByClassName(javaPsiFacadeFqn);
+          PluginId pluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(javaPsiFacadeFqn);
           Class<?> facade = null;
           if (pluginId != null) {
             IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
             if (plugin != null) {
               facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
             }
-          } else {
+          }
+          else {
             facade = Class.forName(javaPsiFacadeFqn);
           }
           if (facade != null) {

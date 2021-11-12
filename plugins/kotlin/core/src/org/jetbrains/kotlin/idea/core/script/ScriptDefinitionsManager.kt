@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.ide.script.IdeConsoleRootType
@@ -44,7 +44,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
-import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.script.dependencies.Environment
 import kotlin.script.dependencies.ScriptContents
@@ -384,10 +383,12 @@ fun loadDefinitionsFromTemplatesByPaths(
             scriptingWarnLog("Cannot load script definition class $templateClassName", e)
             null
         } catch (e: Throwable) {
-            if (e is ControlFlowException) throw e
+            if (e is ControlFlowException) {
+                throw e
+            }
 
             val message = "Cannot load script definition class $templateClassName"
-            PluginManagerCore.getPluginByClassName(templateClassName)?.let {
+            PluginManager.getPluginByClassNameAsNoAccessToClass(templateClassName)?.let {
                 scriptingErrorLog(message, PluginException(message, e, it))
             } ?: scriptingErrorLog(message, e)
             null

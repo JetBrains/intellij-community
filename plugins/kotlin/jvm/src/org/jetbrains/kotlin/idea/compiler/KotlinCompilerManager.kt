@@ -3,8 +3,11 @@
 package org.jetbrains.kotlin.idea.compiler
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.compiler.*
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.compiler.CompilationStatusListener
+import com.intellij.openapi.compiler.CompileContext
+import com.intellij.openapi.compiler.CompilerMessageCategory
+import com.intellij.openapi.compiler.CompilerTopics
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.UntraceableException
 import com.intellij.openapi.project.Project
@@ -17,11 +20,10 @@ import org.jetbrains.kotlin.js.JavaScript
 import java.io.PrintStream
 import java.io.PrintWriter
 
-
-class KotlinCompilerStartupActivity : StartupActivity {
+internal class KotlinCompilerStartupActivity : StartupActivity {
     // Extending PluginException ensures that Exception Analyzer recognizes this as a Kotlin exception
     private class KotlinCompilerException(private val text: String) :
-        PluginException("", PluginManagerCore.getPluginByClassName(KotlinCompilerStartupActivity::class.java.name)),
+        PluginException("", PluginManager.getPluginByClass(KotlinCompilerStartupActivity::class.java)?.pluginId),
         UntraceableException {
         override fun printStackTrace(s: PrintWriter) {
             s.print(text)

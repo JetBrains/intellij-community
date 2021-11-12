@@ -15,7 +15,7 @@ import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 import javax.swing.table.AbstractTableModel
 
-class ListPersistentStateComponentsAction : AnAction() {
+internal class ListPersistentStateComponentsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     ComponentListDialog().show()
   }
@@ -75,12 +75,19 @@ class ListPersistentStateComponentsAction : AnAction() {
         )
       }
 
-      private fun getCategory(aClass : Class<PersistentStateComponent<*>>, state: State?, descriptor: PluginDescriptor?, roamingType: String) =
+      private fun getCategory(aClass : Class<PersistentStateComponent<*>>, state: State?, descriptor: PluginDescriptor?, roamingType: String): String {
         if (roamingType != RoamingType.DISABLED.toString() && descriptor != null) {
-          if (descriptor.name == PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.idString) state?.category?.name ?: ""
-          else ComponentCategorizer.getPluginCategory(aClass, descriptor.pluginId).toString()
+          if (descriptor.name == PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.idString) {
+            return state?.category?.name ?: ""
+          }
+          else {
+            return ComponentCategorizer.getPluginCategory(aClass, descriptor).toString()
+          }
         }
-        else ""
+        else {
+          return ""
+        }
+      }
 
       private fun getRoamingType(state: State?): String {
         if (state != null) {
@@ -125,7 +132,6 @@ class ListPersistentStateComponentsAction : AnAction() {
         return columnNames[column]
       }
     }
-
   }
 
   data class ComponentDescriptor(

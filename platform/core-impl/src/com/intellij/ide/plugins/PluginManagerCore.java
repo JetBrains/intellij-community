@@ -3,9 +3,11 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.core.CoreBundle;
-import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -257,26 +259,21 @@ public final class PluginManagerCore {
   }
 
   /**
-   * This is an internal method, use {@link PluginException#createByClass(String, Throwable, Class)} instead.
+   * @deprecated Use {@link PluginManager#getPluginByClass}.
    */
-  @ApiStatus.Internal
-  public static @NotNull PluginException createPluginException(@NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class<?> pluginClass) {
-    ClassLoader classLoader = pluginClass.getClassLoader();
-    PluginId pluginId;
-    if (classLoader instanceof PluginAwareClassLoader) {
-      pluginId = ((PluginAwareClassLoader)classLoader).getPluginId();
-    }
-    else {
-      pluginId = getPluginByClassName(pluginClass.getName());
-    }
-    return new PluginException(errorMessage, cause, pluginId);
-  }
-
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public static @Nullable PluginId getPluginByClassName(@NotNull String className) {
-    PluginId id = getPluginOrPlatformByClassName(className);
-    return (id != null && !CORE_ID.equals(id)) ? id : null;
+    PluginDescriptor result = getPluginDescriptorOrPlatformByClassName(className);
+    PluginId id = result == null ? null : result.getPluginId();
+    return (id == null || CORE_ID.equals(id)) ? null : id;
   }
 
+  /**
+   * @deprecated Use {@link PluginManager#getPluginByClass}.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public static @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
     PluginDescriptor result = getPluginDescriptorOrPlatformByClassName(className);
     return result == null ? null : result.getPluginId();

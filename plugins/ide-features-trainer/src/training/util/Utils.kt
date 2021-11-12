@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.util
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionManager
@@ -81,8 +81,7 @@ fun createBalloon(@Nls text: String, delay: Long): Balloon =
 internal const val trainerPluginConfigName: String = "ide-features-trainer.xml"
 
 internal val featureTrainerVersion: String by lazy {
-  val featureTrainerPluginId = PluginManagerCore.getPluginByClassName(CourseManager::class.java.name)
-  PluginManagerCore.getPlugin(featureTrainerPluginId)?.version ?: "UNKNOWN"
+  PluginManager.getPluginByClass(CourseManager::class.java)?.version ?: "UNKNOWN"
 }
 
 val adaptToNotNativeLocalization: Boolean

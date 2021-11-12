@@ -11,10 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.RawPluginDescriptor;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
@@ -1443,8 +1440,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @Override
   public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    PluginId pluginId = callerClass != null ? PluginManagerCore.getPluginByClassName(callerClass.getName()) : null;
-    replaceAction(actionId, newAction, pluginId);
+    PluginDescriptor plugin = callerClass == null ? null : PluginManager.getPluginByClass(callerClass);
+    replaceAction(actionId, newAction, plugin == null ? null : plugin.getPluginId());
   }
 
   private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
