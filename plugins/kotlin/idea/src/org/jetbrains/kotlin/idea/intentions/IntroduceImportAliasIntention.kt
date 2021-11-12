@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.imports.canBeAddedToImport
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceImportAlias.KotlinIntroduceImportAliasHandler
@@ -22,6 +23,7 @@ class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenc
 
         val targets = element.resolveMainReferenceToDescriptors()
         if (targets.isEmpty() || targets.any { !it.canBeAddedToImport() }) return null
+        if (element.references.mapNotNull(PsiReference::resolve).isEmpty()) return null
         return element.textRange
     }
 
