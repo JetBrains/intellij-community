@@ -292,7 +292,23 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private void createMetricsPanel(@NotNull JPanel centerPanel) {
     // text field without horizontal margins
-    myVersion = new JTextField();
+    myVersion = new JTextField() {
+      @Override
+      public void setBorder(Border border) {
+        super.setBorder(null);
+      }
+
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        if (myVersion != null) {
+          PluginDetailsPageComponent.setFont(myVersion);
+        }
+        if (myVersionSize != null) {
+          PluginDetailsPageComponent.setFont(myVersionSize);
+        }
+      }
+    };
     myVersion.putClientProperty("TextFieldWithoutMargins", Boolean.TRUE);
     myVersion.setEditable(false);
     setFont(myVersion);
