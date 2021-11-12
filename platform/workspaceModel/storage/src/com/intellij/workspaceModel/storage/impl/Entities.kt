@@ -151,7 +151,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
 abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
 
   internal lateinit var original: WorkspaceEntityData<T>
-  internal lateinit var diff: WorkspaceEntityStorageBuilderImpl
+  lateinit var diff: WorkspaceEntityStorageBuilder
 
   internal val modifiable = ThreadLocal.withInitial { false }
 
@@ -178,17 +178,19 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
   // For generated entities
   @Suppress("unused")
   fun addToBuilder() {
-    diff.putEntity(getEntityData())
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    builder.putEntity(getEntityData())
   }
 
   // For generated entities
   @Suppress("unused")
   fun applyRef(connectionId: ConnectionId, child: WorkspaceEntityData<*>?, children: List<WorkspaceEntityData<*>>?) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
     when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_ONE -> diff.updateOneToOneChildOfParent(connectionId, id, child!!.createEntityId().asChild())
-      ConnectionId.ConnectionType.ONE_TO_MANY -> diff.updateOneToManyChildrenOfParent(connectionId, id, children!!.map { it.createEntityId().asChild() }.asSequence())
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> diff.updateOneToAbstractManyChildrenOfParent(connectionId, id.asParent(), children!!.map { it.createEntityId().asChild() }.asSequence())
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> diff.updateOneToAbstractOneChildOfParent(connectionId, id.asParent(), child!!.createEntityId().asChild())
+      ConnectionId.ConnectionType.ONE_TO_ONE -> builder.updateOneToOneChildOfParent(connectionId, id, child!!.createEntityId().asChild())
+      ConnectionId.ConnectionType.ONE_TO_MANY -> builder.updateOneToManyChildrenOfParent(connectionId, id, children!!.map { it.createEntityId().asChild() }.asSequence())
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> builder.updateOneToAbstractManyChildrenOfParent(connectionId, id.asParent(), children!!.map { it.createEntityId().asChild() }.asSequence())
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneChildOfParent(connectionId, id.asParent(), child!!.createEntityId().asChild())
     }
   }
 }
