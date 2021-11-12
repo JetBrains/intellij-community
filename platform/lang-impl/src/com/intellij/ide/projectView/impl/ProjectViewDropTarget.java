@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
@@ -241,12 +241,6 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     private void doDrop(PsiElement target, PsiElement[] sources, boolean externalDrop) {
       if (target == null) return;
-
-      if (DumbService.isDumb(myProject)) {
-        Messages.showMessageDialog(myProject, LangBundle.message("dialog.message.move.refactoring.available.while.indexing.in.progress"),
-                                   LangBundle.message("dialog.title.indexing"), null);
-        return;
-      }
 
       if (!myProject.isInitialized()) {
         Messages.showMessageDialog(myProject, LangBundle.message("dialog.message.move.refactoring.available"),

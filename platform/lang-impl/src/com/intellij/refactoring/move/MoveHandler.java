@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.move;
 
@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -17,6 +19,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.SlowOperations;
@@ -92,9 +95,11 @@ public class MoveHandler implements RefactoringActionHandler {
   public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     final PsiElement targetContainer = dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
     final Set<PsiElement> filesOrDirs = new HashSet<>();
-    for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
-      if (delegate.canMove(dataContext) && delegate.isValidTarget(targetContainer, elements)) {
-        delegate.collectFilesOrDirsFromContext(dataContext, filesOrDirs);
+    if (!DumbService.isDumb(project)) {
+      for (MoveHandlerDelegate delegate : MoveHandlerDelegate.EP_NAME.getExtensionList()) {
+        if (delegate.canMove(dataContext) && delegate.isValidTarget(targetContainer, elements)) {
+          delegate.collectFilesOrDirsFromContext(dataContext, filesOrDirs);
+        }
       }
     }
     if (!filesOrDirs.isEmpty()) {
@@ -124,11 +129,25 @@ public class MoveHandler implements RefactoringActionHandler {
     if (elements.length == 0) return;
 
     SlowOperations.allowSlowOperations(() -> {
-      for (MoveHandlerDelegate delegate : MoveHandlerDelegate.EP_NAME.getExtensionList()) {
-        if (delegate.canMove(elements, targetContainer, null)) {
-          logDelegate(project, delegate, elements[0].getLanguage());
-          delegate.doMove(project, elements, delegate.adjustTargetForMove(dataContext, targetContainer), callback);
-          break;
+      if (DumbService.isDumb(project)) {
+        MoveFilesOrDirectoriesHandler filesOrDirectoriesHandler = MoveHandlerDelegate.EP_NAME.findExtensionOrFail(MoveFilesOrDirectoriesHandler.class);
+        if (filesOrDirectoriesHandler.canMove(elements, targetContainer, null)) {
+          int copyDumb = Messages.showYesNoDialog(project,
+                                                  RefactoringBundle.message("move.handler.is.dumb.during.indexing"),
+                                                  getRefactoringName(), Messages.getQuestionIcon());
+          if (copyDumb == Messages.YES) {
+            logDelegate(project, filesOrDirectoriesHandler, elements[0].getLanguage());
+            filesOrDirectoriesHandler.doMove(project, elements, filesOrDirectoriesHandler.adjustTargetForMove(dataContext, targetContainer), callback);
+          }
+        }
+      }
+      else {
+        for (MoveHandlerDelegate delegate : MoveHandlerDelegate.EP_NAME.getExtensionList()) {
+          if (delegate.canMove(elements, targetContainer, null)) {
+            logDelegate(project, delegate, elements[0].getLanguage());
+            delegate.doMove(project, elements, delegate.adjustTargetForMove(dataContext, targetContainer), callback);
+            break;
+          }
         }
       }
     });
