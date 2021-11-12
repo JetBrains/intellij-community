@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
@@ -103,12 +104,16 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     switch (kind) {
       case IN_PLACE_UNKNOWN:
+        List<VariableDescriptor> descriptors = new ArrayList<>();
         for (var descriptor : state.getVarTypes().keySet()) {
           if (!currentClosureFrame.getStartState().containsVariable(descriptor)) {
-            state.removeBinding(descriptor);
+            descriptors.add(descriptor);
           }
         }
-        state.joinState(currentClosureFrame.getStartState(), myManager);
+        for (var descr : descriptors) {
+          state.removeBinding(descr, myFlowInfo.getVarIndexes());
+        }
+        state.joinState(currentClosureFrame.getStartState(), myManager, myFlowInfo.getVarIndexes());
         break;
       case UNKNOWN:
         var reassignments = currentClosureFrame.getReassignments();
@@ -118,7 +123,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
           List<DFAType> assignments = newBinding.getValue();
           PsiType upperBoundByWrites =
             TypesUtil
-              .getLeastUpperBound(assignments.stream().map(dfaType -> dfaType.getResultType(myManager)).toArray(PsiType[]::new),
+              .getLeastUpperBound(assignments.stream().map(dfaType -> dfaType.getResultType(myManager)).filter(it -> it != null).toArray(PsiType[]::new),
                                   myManager);
           DFAType existingType = initialState.getVariableType(descriptor);
           if (existingType == null) existingType = DFAType.create(null);
