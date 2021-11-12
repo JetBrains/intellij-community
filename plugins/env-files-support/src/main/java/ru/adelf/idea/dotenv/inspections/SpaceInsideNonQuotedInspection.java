@@ -5,15 +5,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvFactory;
-import ru.adelf.idea.dotenv.psi.DotEnvFile;
-import ru.adelf.idea.dotenv.psi.DotEnvProperty;
-import ru.adelf.idea.dotenv.psi.DotEnvTypes;
-import ru.adelf.idea.dotenv.psi.DotEnvValue;
+import ru.adelf.idea.dotenv.psi.*;
 
 public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
@@ -45,16 +43,11 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
     private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
-        PsiTreeUtil.findChildrenOfType(file, DotEnvProperty.class).forEach(dotEnvProperty -> {
-            if (dotEnvProperty.getValueText().trim().contains(" ")) {
-                DotEnvValue value = dotEnvProperty.getValue();
-
-                if (value != null) {
-                    PsiElement firstChild = value.getFirstChild();
-
-                    if (firstChild != null && !firstChild.getText().equals("\"")) {
-                        problemsHolder.registerProblem(value, "Space inside allowed only for quoted values", addQuotesQuickFix);
-                    }
+        PsiTreeUtil.findChildrenOfType(file, DotEnvValue.class).forEach(dotEnvValue -> {
+            // first child valuechars -> non quoted value
+            if(dotEnvValue.getFirstChild().getNode().getElementType() == DotEnvTypes.VALUE_CHARS) {
+                if (dotEnvValue.getText().trim().contains(" ")) {
+                    problemsHolder.registerProblem(dotEnvValue, "Space inside allowed only for quoted values", addQuotesQuickFix);
                 }
             }
         });
