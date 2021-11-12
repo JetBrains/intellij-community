@@ -44,6 +44,10 @@ class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync"
     val categoriesPanel = SettingsSyncPanelFactory.createPanel(message("configurable.what.to.sync.label"))
     configPanel = panel {
       row {
+        comment(message("settings.sync.info.message"), 80)
+          .visibleIf(LoggedInPredicate().not().or(EnabledPredicate().not()))
+      }
+      row {
         cell {
           label("") // The first component must be always visible
           button(message("config.button.login")) {
