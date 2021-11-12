@@ -29,6 +29,23 @@ def bar14(String a, Integer b, Exception c) {}
 
 def bar15(String a, Integer b, Exception c) {}
 
+def func1(Closure cl) {}
+def func2(Closure cl) {}
+def func3(Closure cl) {}
+def func4(Closure cl) {}
+def func5(Closure cl) {}
+def func6(Closure cl) {}
+def func7(Closure cl) {}
+def func8(Closure cl) {}
+def func9(Closure cl) {}
+def func10(Closure cl) {}
+def func11(Closure cl) {}
+def func12(Closure cl) {}
+def func13(Closure cl) {}
+def func14(Closure cl) {}
+def func15(Closure cl) {}
+
+
 
 def foo(x, a1_1, a1_2, a2_1, a2_2, a3_1, a3_2, a4_1, a4_2, a5_1, a5_2, a6_1, a6_2, a7_1, a7_2, a8_1, a8_2, a9_1, a9_2, a10_1, a10_2, a11_1, a11_2, a12_1, a12_2, a13_1, a13_2, a14_1, a14_2) {
   func15 {

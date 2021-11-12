@@ -613,9 +613,9 @@ foo${n}(a) {
 
   void 'test complex DFA with a lot of closures'() {
     fixture.configureByFile("stress/dfa.groovy")
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 8000, {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 9000, {
       myFixture.psiManager.dropPsiCaches()
       myFixture.doHighlighting()
-    }).attempts(5).assertTiming()
+    }).attempts(20).assertTiming()
   }
 }
