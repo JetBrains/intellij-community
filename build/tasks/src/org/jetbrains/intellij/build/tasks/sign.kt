@@ -10,6 +10,7 @@ import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
+import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
@@ -59,18 +60,19 @@ fun prepareMacZip(macZip: Path,
   Files.newByteChannel(macZip, StandardOpenOption.READ).use { sourceFileChannel ->
     ZipFile(sourceFileChannel).use { zipFile ->
       writeNewFile(sitFile) { targetFileChannel ->
-        ZipArchiveOutputStream(targetFileChannel).use { zipOutStream ->
-          // file just used for transfer
-          zipOutStream.setLevel(Deflater.BEST_SPEED)
+        ZipArchiveOutputStream(targetFileChannel).use { out ->
+          // file is used only for transfer to mac builder
+          out.setLevel(Deflater.BEST_SPEED)
+          out.setUseZip64(Zip64Mode.Never)
 
           // exclude existing product-info.json as a custom one will be added
           val productJsonZipPath = "$zipRoot/Resources/product-info.json"
-          zipFile.copyRawEntries(zipOutStream, ZipArchiveEntryPredicate { it.name != productJsonZipPath })
+          zipFile.copyRawEntries(out, ZipArchiveEntryPredicate { it.name != productJsonZipPath })
           if (macAdditionalDir != null) {
-            zipOutStream.dir(macAdditionalDir, prefix = "$zipRoot/")
+            out.dir(macAdditionalDir, prefix = "$zipRoot/")
           }
 
-          zipOutStream.entry(productJsonZipPath, productJson)
+          out.entry(productJsonZipPath, productJson)
         }
       }
     }

@@ -26,8 +26,7 @@ fun buildMacZip(targetFile: Path,
 
       val entryCustomizer: EntryCustomizer = { entry, _, relativeFile ->
         if (patterns.any { it.matches(relativeFile) }) {
-          // 0755
-          entry.unixMode = 493
+          entry.unixMode = executableFileUnixMode
         }
       }
 

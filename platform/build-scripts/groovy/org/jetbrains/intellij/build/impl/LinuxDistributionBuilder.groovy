@@ -61,7 +61,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         generateVMOptions(distBinDir)
         generateScripts(distBinDir)
         generateReadme(unixDistPath)
-        generateVersionMarker(unixDistPath)
+        generateVersionMarker(unixDistPath, buildContext)
         customizer.copyAdditionalFiles(buildContext, unixDistPath)
       }
     })
@@ -184,10 +184,10 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   // please keep in sync with `SystemHealthMonitor#checkInstallationIntegrity`
   @CompileStatic
-  private void generateVersionMarker(Path unixDistPath) {
+  private static void generateVersionMarker(Path unixDistPath, BuildContext context) {
     Path targetDir = unixDistPath.resolve("lib")
-    Files.writeString(targetDir.resolve("build-marker-${buildContext.fullBuildNumber}"), buildContext.fullBuildNumber)
     Files.createDirectories(targetDir)
+    Files.writeString(targetDir.resolve("build-marker-${context.fullBuildNumber}"), context.fullBuildNumber)
   }
 
   @Override

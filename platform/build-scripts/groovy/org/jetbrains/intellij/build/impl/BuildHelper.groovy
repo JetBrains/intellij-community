@@ -189,7 +189,10 @@ final class BuildHelper {
                                              MethodType.methodType(aVoid,
                                                                    path, path, path,
                                                                    path,
-                                                                   string, byte[].class, list,
+                                                                   string, byte[].class,
+                                                                   list, list,
+                                                                   Collection.class,
+                                                                   Map.class,
                                                                    path))
   }
 

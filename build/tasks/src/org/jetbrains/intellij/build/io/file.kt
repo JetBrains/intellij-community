@@ -13,7 +13,7 @@ internal val RW_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOp
                                         StandardOpenOption.CREATE_NEW)
 internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
 
-private val isWindows = !System.getProperty("os.name").startsWith("windows", ignoreCase = true)
+internal val isWindows = !System.getProperty("os.name").startsWith("windows", ignoreCase = true)
 
 fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
   Files.createDirectories(targetDir)
