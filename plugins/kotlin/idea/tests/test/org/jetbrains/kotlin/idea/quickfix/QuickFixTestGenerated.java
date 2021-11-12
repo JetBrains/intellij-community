@@ -5273,6 +5273,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/localVariable/inAnnotation.kt");
                 }
 
+                @TestMetadata("inAnnotationValue.kt")
+                public void testInAnnotationValue() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/localVariable/inAnnotationValue.kt");
+                }
+
                 @TestMetadata("inBinaryOperation.kt")
                 public void testInBinaryOperation() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/localVariable/inBinaryOperation.kt");
@@ -5281,6 +5286,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 @TestMetadata("inClass.kt")
                 public void testInClass() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/localVariable/inClass.kt");
+                }
+
+                @TestMetadata("inDefaultValue.kt")
+                public void testInDefaultValue() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/localVariable/inDefaultValue.kt");
+                }
+
+                @TestMetadata("inDefaultValueLocalFun.kt")
+                public void testInDefaultValueLocalFun() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/localVariable/inDefaultValueLocalFun.kt");
                 }
 
                 @TestMetadata("inFun.kt")
