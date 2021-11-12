@@ -79,14 +79,20 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
     @TargetVersions("6.0.1")
     fun testCreateActualForJvmTest() = doMultiFileQuickFixTest()
 
+    @Test
+    @TargetVersions("6.0.1")
+    @Ignore // TODO: KTIJ-16294
+    fun testCreateActualForJvmTestWithCustomPath() = doMultiFileQuickFixTest()
+
     private fun doMultiFileQuickFixTest() {
         configureByFiles(subPath = "before")
         val projectPath = myProjectRoot.toNioPath()
-        val (mainFilePath, mainFileText) = Files.walk(projectPath.resolve("src")).asSequence()
+
+        val (mainFilePath, mainFileText) = Files.walk(projectPath).asSequence()
             .filter { it.isRegularFile() }
             .firstNotNullOfOrNull {
-                val text = it.readText()
-                if (text.startsWith("// \"")) it to text else null
+                val text = kotlin.runCatching { it.readText() }.getOrNull()
+                if (text?.startsWith("// \"") == true) it to text else null
             } ?: error("file with action is not found")
 
         importProject()
@@ -103,14 +109,25 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
             val action = actionHint.findAndCheck(actions) { "Test file: ${projectPath.relativize(mainFilePath).pathString}" }
             if (action != null) {
                 action.invoke(myProject, null, ktFile)
-                val expected = LocalFileSystem.getInstance().findFileByIoFile(testDataDirectory().resolve("after/src"))!!.apply {
+                val expected = LocalFileSystem.getInstance().findFileByIoFile(testDataDirectory().resolve("after"))?.apply {
                     UsefulTestCase.refreshRecursively(this)
-                }
+                } ?: error("Expected directory is not found")
+
+                val projectVFile = (LocalFileSystem.getInstance().findFileByIoFile(File("$projectPath"))
+                    ?: error("VirtualFile is not found for project path"))
 
                 PlatformTestUtil.assertDirectoriesEqual(
                     expected,
-                    LocalFileSystem.getInstance().findFileByIoFile(File("$projectPath/src"))!!,
-                )
+                    projectVFile,
+                ) {
+                    if (it.parent == projectVFile)
+                        when (it.name) {
+                            ".gradle", "gradle", "build" -> false
+                            else -> true
+                        }
+                    else
+                        true
+                }
             }
 
             DirectiveBasedActionUtils.checkAvailableActionsAreExpected(ktFile, action?.let { actions - it } ?: actions)
