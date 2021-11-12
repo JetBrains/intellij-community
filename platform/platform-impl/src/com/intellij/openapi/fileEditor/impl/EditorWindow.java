@@ -43,7 +43,6 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
@@ -662,7 +661,7 @@ public final class EditorWindow {
       isVertical = ((Splitter)comp.getComponents()[0]).isVertical();
     }
 
-    List<Splitter> hierarchyStack = new SmartList<>();
+    Map<Splitter, Boolean> hierarchyStack = new LinkedHashMap<>();
     while (comp != getManager().getMainSplitters() && comp != null) {
       Container parent = comp.getParent();
       if (parent instanceof Splitter) {
@@ -671,12 +670,14 @@ public final class EditorWindow {
         } else if (isVertical != ((Splitter)parent).isVertical()) {
           break;
         }
-        hierarchyStack.add((Splitter)parent);
+        hierarchyStack.put((Splitter)parent, ((Splitter)parent).getFirstComponent() == comp);
       }
       comp = (JComponent)parent;
     }
-    for (int i = 0; i < hierarchyStack.size(); i++) {
-      hierarchyStack.get(i).setProportion(1f / (2 + i));
+    int i = 0;
+    for (Map.Entry<Splitter, Boolean> entry : hierarchyStack.entrySet()) {
+      entry.getKey().setProportion(entry.getValue() ? 1 - 1f / (2 + i) : 1f / (2 + i));
+      i++;
     }
   }
 
