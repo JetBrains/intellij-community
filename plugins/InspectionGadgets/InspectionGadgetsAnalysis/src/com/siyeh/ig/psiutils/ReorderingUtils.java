@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.ContractReturnValue.BooleanReturnVal
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -416,6 +417,7 @@ public final class ReorderingUtils {
 
   private static boolean isErroneous(PsiElement element) {
     return element instanceof PsiErrorElement ||
+           element instanceof OuterLanguageElement ||
            element instanceof PsiLiteralExpression &&
            PsiLiteralUtil.isUnsafeLiteral((PsiLiteralExpression)element);
   }
