@@ -880,7 +880,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val parameter = expr.loopParameter
             if (parameter == null) {
                 broken = true
-                return
+                return@inlinedBlock
             }
             val parameterVar = factory.varFactory.createVariableValue(KtVariableDescriptor(parameter))
             val parameterType = parameter.type()
