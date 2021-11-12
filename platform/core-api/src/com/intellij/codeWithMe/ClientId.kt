@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeWithMe
 
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
@@ -8,9 +8,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Processor
+import kotlinx.coroutines.ThreadContextElement
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Function
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * ClientId is a global context class that is used to distinguish the originator of an action in multi-client systems
@@ -260,6 +263,8 @@ data class ClientId(val value: String) {
         clientIdService.clientIdValue = clientId?.value
       }
     }
+
+    fun coroutineContext(): CoroutineContext = currentOrNull?.asContextElement() ?: EmptyCoroutineContext
   }
 }
 
@@ -269,4 +274,21 @@ fun isForeignClientOnServer(): Boolean {
 
 fun isOnGuest(): Boolean {
   return ClientId.localId != ClientId.defaultLocalId
+}
+
+fun ClientId.asContextElement(): CoroutineContext.Element = ClientIdElement(this)
+
+private object ClientIdElementKey : CoroutineContext.Key<ClientIdElement>
+
+private class ClientIdElement(private val clientId: ClientId) : ThreadContextElement<AccessToken> {
+
+  override val key: CoroutineContext.Key<*> get() = ClientIdElementKey
+
+  override fun updateThreadContext(context: CoroutineContext): AccessToken {
+    return ClientId.withClientId(clientId)
+  }
+
+  override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken): Unit {
+    oldState.finish()
+  }
 }
