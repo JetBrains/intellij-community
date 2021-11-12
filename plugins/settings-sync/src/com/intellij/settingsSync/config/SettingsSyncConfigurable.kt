@@ -43,9 +43,21 @@ class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync"
   override fun createPanel(): DialogPanel {
     val categoriesPanel = SettingsSyncPanelFactory.createPanel(message("configurable.what.to.sync.label"))
     configPanel = panel {
+      val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
+      row {
+        cell {
+          label(message("sync.status"))
+          @Suppress("DialogTitleCapitalization") // Partial content
+          label(message("sync.status.disabled")).visibleIf(isSyncEnabled.not())
+          @Suppress("DialogTitleCapitalization") // Partial content
+          label(message("sync.status.enabled")).visibleIf(isSyncEnabled)
+          label(message("sync.status.login.message")).visibleIf(LoggedInPredicate().not())
+          // TODO<rv>: Add last sync time and "Sync now" link
+        }
+      }
       row {
         comment(message("settings.sync.info.message"), 80)
-          .visibleIf(LoggedInPredicate().not().or(EnabledPredicate().not()))
+          .visibleIf(isSyncEnabled.not())
       }
       row {
         cell {
@@ -56,9 +68,9 @@ class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync"
           button(message("config.button.enable")) {
             enableSync()
           }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not()))
-          button(message("config.button.disable")) {
+          button(message("config.button.disable")) {LoggedInPredicate().and(EnabledPredicate())
             disableSync()
-          }.visibleIf(LoggedInPredicate().and(EnabledPredicate()))
+          }.visibleIf(isSyncEnabled)
         }
       }
       row {
