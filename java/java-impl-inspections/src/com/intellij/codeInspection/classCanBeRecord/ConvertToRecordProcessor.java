@@ -282,8 +282,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
     for (var entry : comments.entrySet()) {
       String paramName = entry.getKey();
-      String paramComment = comments.get(paramName);
-      if (paramComment == null) continue;
+      String paramComment = entry.getValue();
       PsiDocTag docTag = parserFacade.createDocTagFromText("@param " + paramName + " " + paramComment);
       recordDoc.add(docTag);
     }
