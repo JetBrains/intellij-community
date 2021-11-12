@@ -90,7 +90,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     border = JBUI.Borders.empty(3, 0, 0, 3)
     add(slotPane)
 
-    val bottomPane = object : JPanel(MigLayout("fillx, ins 0, novisualpadding, gap 0, hidemode 3, wrap 3", "[][]push[]")){
+    val bottomPane = object : JPanel(MigLayout("fillx, ins 0, novisualpadding, gap 0, hidemode 2, wrap 3", "[][]push[]")) {
       override fun getPreferredSize(): Dimension {
         val preferredSize = super.getPreferredSize()
         baseWidth()?.let {
@@ -126,6 +126,8 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
             ShowSettingsUtil.getInstance().showSettingsDialog(project, RunToolbarSettingsConfigurable::class.java)
           }
         })
+
+        isVisible = RunToolbarProcess.isSettingsAvailable
       })
 
       add(newSlotDetails, "skip")
