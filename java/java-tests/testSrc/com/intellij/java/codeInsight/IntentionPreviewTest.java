@@ -99,6 +99,27 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
                  "}\n", text);
   }
 
+  public void testDefineDefaultValues() {
+    configureFromFileText("Test.java",
+                          "public class Test {\n" +
+                          "    void test(int <caret>a,  String b) {\n" +
+                          "\n" +
+                          "    }\n" +
+                          "}\n");
+    IntentionAction action = findActionWithText("Generate overloaded method with default parameter values");
+    assertNotNull(action);
+    String text = getPreviewText(action);
+    assertEquals("public class Test {\n" +
+                 "    void test() {\n" +
+                 "        test(0, null);\n" +
+                 "    }\n" +
+                 "\n" +
+                 "    void test(int a, String b) {\n" +
+                 "\n" +
+                 "    }\n" +
+                 "}\n", text);
+  }
+
   @Override
   protected void setupEditorForInjectedLanguage() {
     // we want to stay at host editor

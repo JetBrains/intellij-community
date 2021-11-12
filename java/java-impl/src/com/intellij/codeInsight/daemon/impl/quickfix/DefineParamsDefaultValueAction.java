@@ -47,6 +47,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,13 +111,15 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     if (containingClass == null) return;
     final PsiMethod existingMethod = containingClass.findMethodBySignature(methodPrototype, false);
     if (existingMethod != null) {
-      editor.getCaretModel().moveToOffset(existingMethod.getTextOffset());
-      HintManager.getInstance().showErrorHint(editor,
-                                              JavaBundle.message("default.param.value.warning", existingMethod.isConstructor() ? 0 : 1));
+      if (containingClass.isPhysical()) {
+        editor.getCaretModel().moveToOffset(existingMethod.getTextOffset());
+        HintManager.getInstance().showErrorHint(editor,
+                                                JavaBundle.message("default.param.value.warning", existingMethod.isConstructor() ? 0 : 1));
+      }
       return;
     }
 
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+    if (element.isPhysical() && !FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     Runnable runnable = () -> {
       final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
@@ -126,7 +129,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       PsiCodeBlock body = prototype.getBody();
       final String callArgs =
         "(" + StringUtil.join(parameterList.getParameters(), psiParameter -> {
-          if (ArrayUtil.find(parameters, psiParameter) > -1) return "IntelliJIDEARulezzz";
+          if (ArrayUtil.find(parameters, psiParameter) > -1) return TypeUtils.getDefaultValue(psiParameter.getType());
           return psiParameter.getName();
         }, ",") + ");";
       final String methodCall;
@@ -156,11 +159,17 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
         startTemplate(project, editor, toDefaults, prototype);
       }
     };
-    if (startInWriteAction()) {
+    if (startInWriteAction() || !containingClass.isPhysical()) {
       runnable.run();
     } else {
       ApplicationManager.getApplication().runWriteAction(runnable);
     }
+  }
+
+  @Override
+  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+    invoke(project, editor, file);
+    return true;
   }
 
   public static void startTemplate(@NotNull Project project,
@@ -170,7 +179,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     TemplateBuilderImpl builder = new TemplateBuilderImpl(delegateMethod);
     RangeMarker rangeMarker = editor.getDocument().createRangeMarker(delegateMethod.getTextRange());
     for (final PsiExpression exprToBeDefault  : argsToBeDelegated) {
-      builder.replaceElement(exprToBeDefault, new TextExpression(""));
+      builder.replaceElement(exprToBeDefault, new TextExpression(exprToBeDefault.getText()));
     }
     Template template = builder.buildTemplate();
     editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
@@ -185,7 +194,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
   private static PsiParameter @Nullable [] getParams(@NotNull PsiElement element, @NotNull PsiParameterList parameterList) {
     final PsiParameter[] parameters = parameterList.getParameters();
-    if (parameters.length == 1) {
+    if (parameters.length == 1 || !parameterList.isPhysical()) {
       return parameters;
     }
     final ParameterClassMember[] members = new ParameterClassMember[parameters.length];
