@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -38,11 +40,11 @@ import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction, HighPriorityAction {
-  private final PsiLiteralExpression myLiteral;
-  private final PsiCall myCall;
+public final class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction, HighPriorityAction {
+  private final @NotNull PsiLiteralExpression myLiteral;
+  private final @NotNull PsiCall myCall;
 
-  public ChangeStringLiteralToCharInMethodCallFix(final PsiLiteralExpression literal, final PsiCall methodCall) {
+  public ChangeStringLiteralToCharInMethodCallFix(@NotNull PsiLiteralExpression literal, @NotNull PsiCall methodCall) {
     myLiteral = literal;
     myCall = methodCall;
   }
@@ -77,6 +79,12 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
                                                                            myLiteral.getParent());
       myLiteral.replace(newExpression);
     }
+  }
+
+  @Override
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ChangeStringLiteralToCharInMethodCallFix(PsiTreeUtil.findSameElementInCopy(myLiteral, target),
+                                                        PsiTreeUtil.findSameElementInCopy(myCall, target));
   }
 
   @Override
