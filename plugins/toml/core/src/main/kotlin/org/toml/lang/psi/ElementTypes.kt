@@ -5,6 +5,7 @@
 
 package org.toml.lang.psi
 
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,7 +28,7 @@ object TomlFileType : LanguageFileType(TomlLanguage), FileTypeIdentifiableByVirt
     override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
 
     override fun isMyFileType(file: VirtualFile): Boolean {
-        return file.name == "config" && file.parent?.name == ".cargo"
+        return file.name == "config" && file.parent?.name == ".cargo" || FileTypeManager.getInstance().getFileTypeByFileName(file.name) == this
     }
 }
 
