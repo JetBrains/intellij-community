@@ -185,8 +185,7 @@ private fun isProjectImplicitlyTrusted(project: Project): Boolean =
   isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) }, project)
 
 @JvmOverloads
-@ApiStatus.Internal
-internal fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
+public fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
   if (isTrustedCheckDisabled()) {
     return true
   }
