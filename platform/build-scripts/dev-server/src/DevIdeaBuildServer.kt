@@ -18,6 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CountDownLatch
+import kotlin.io.path.createDirectories
 import kotlin.system.exitProcess
 
 val skippedPluginModules = hashSetOf(
@@ -169,11 +170,9 @@ fun parseQuery(url: URI): Map<String, List<String?>> {
 
 fun clearDirContent(dir: Path) {
   if (Files.isDirectory(dir)) {
-    Files.newDirectoryStream(dir).use {
-      for (path in it) {
-        FileUtil.delete(dir)
-      }
-    }
+    // because of problem on Windows https://stackoverflow.com/a/55198379/2467248
+    FileUtil.delete(dir)
+    dir.createDirectories()
   }
 }
 
