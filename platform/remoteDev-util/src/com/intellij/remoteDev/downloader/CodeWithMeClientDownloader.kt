@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
 import com.intellij.remoteDev.connection.StunTurnServerInfo
@@ -442,7 +441,7 @@ object CodeWithMeClientDownloader {
         if (SystemInfo.isMac) {
           val app = guestRoot.toFile().listFiles { file -> file.name.endsWith(".app") && file.isDirectory }!!.singleOrNull()
           if (app != null) {
-            return app.toPath() to listOf("open", app.toString(), "--args")
+            return app.toPath() to listOf("open", "-n", "-a", app.toString(), "--args")
           }
         }
 
