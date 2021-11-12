@@ -829,7 +829,9 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       @Override
       public void updateUI() {
         super.updateUI();
-        setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+        if (!ExperimentalUI.isNewUI()) {
+          setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+        }
       }
     };
 
