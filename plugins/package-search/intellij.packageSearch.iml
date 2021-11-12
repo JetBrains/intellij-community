@@ -11,7 +11,7 @@
           <option name="apiVersion" value="1.5" />
           <option name="pluginClasspaths">
             <array>
-              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-955/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-955.jar" />
+              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
             </array>
           </option>
         </compilerArguments>
