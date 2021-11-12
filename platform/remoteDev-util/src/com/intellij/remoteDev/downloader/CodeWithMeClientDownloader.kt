@@ -459,8 +459,7 @@ object CodeWithMeClientDownloader {
   fun runCwmGuestProcessFromDownload(lifetime: Lifetime,
                                      url: String,
                                      guestRoot: Path,
-                                     jdkRoot: Path,
-                                     patchVmOptions: ((String) -> String)? = null): Lifetime {
+                                     jdkRoot: Path): Lifetime {
     val (executable, fullLauncherCmd) = findLauncherUnderCwmGuestRoot(guestRoot)
     val guestHome = findCwmGuestHome(guestRoot)
 
@@ -475,21 +474,8 @@ object CodeWithMeClientDownloader {
     val parameters = listOf("thinClient", url)
     val processLifetimeDef = lifetime.createNested()
 
-    if (patchVmOptions != null) {
-      val vmOptionsFile = executable.resolveSibling("jetbrains_client64.vmoptions")
-      LOG.info("Patching $vmOptionsFile")
-
-      require(vmOptionsFile.isFile() && vmOptionsFile.exists())
-
-      val originalContent = vmOptionsFile.readText(Charsets.UTF_8)
-      LOG.info("Original .vmoptions=\n$originalContent")
-
-      val patchedContent = patchVmOptions(originalContent)
-      LOG.info("Patched .vmoptions=$patchedContent")
-
-      vmOptionsFile.writeText(patchedContent)
-      LOG.info("Patched $vmOptionsFile successfully")
-    }
+    val vmOptionsFile = executable.resolveSibling("jetbrains_client64.vmoptions")
+    service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile)
 
     if (SystemInfo.isWindows) {
       val hProcess = WindowsFileUtil.windowsShellExecute(
