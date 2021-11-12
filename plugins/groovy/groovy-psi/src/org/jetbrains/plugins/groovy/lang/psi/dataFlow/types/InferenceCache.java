@@ -43,9 +43,14 @@ final class InferenceCache {
   private final Lazy<Object2IntMap<VariableDescriptor>> myVarIndexes;
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
-  private final AtomicReference<List<Map<VariableDescriptor, DFAType>>> myVarTypes;
-  private final SharedVariableInferenceCache mySharedVariableInferenceCache;
+  private final AtomicReference<Map<VariableDescriptor, DFAType>>[] myVarTypes;
+  //private final SharedVariableInferenceCache mySharedVariableInferenceCache;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
+  /**
+   * Instructions outside any cycle. The DFA has straightforward direction of these instructions, so it is safe
+   * to apply additional optimizations on this flow
+   */
+  private final Set<Instruction> simpleInstructions;
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
     myScope = scope;
@@ -54,11 +59,17 @@ final class InferenceCache {
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
     mySharedVariableInferenceCache = new SharedVariableInferenceCache(scope);
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
-    List<Map<VariableDescriptor, DFAType>> noTypes = new ArrayList<>();
+    //noinspection unchecked
+    AtomicReference<Map<VariableDescriptor, DFAType>>[] basicTypes = new AtomicReference[myFlow.length];
     for (int i = 0; i < myFlow.length; i++) {
-      noTypes.add(new HashMap<>());
+      basicTypes[i] = new AtomicReference<>(new HashMap<>());
     }
-    myVarTypes = new AtomicReference<>(noTypes);
+    myVarTypes = basicTypes;
+    simpleInstructions = findNodesOutsideCycles(mapGraph(Arrays.stream(myFlow).collect(Collectors.toMap(instr -> instr, instr -> {
+      List<Instruction> list = new ArrayList<>();
+      instr.allSuccessors().forEach(list::add);
+      return list;
+    }))));
   }
 
   boolean isTooComplexToAnalyze() {
@@ -76,7 +87,7 @@ final class InferenceCache {
       return null;
     }
 
-    Map<VariableDescriptor, DFAType> cache = myVarTypes.get().get(instruction.num());
+    Map<VariableDescriptor, DFAType> cache = myVarTypes[instruction.num()].get();
     if (!cache.containsKey(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
       DFAFlowInfo flowInfo = collectFlowInfo(definitionMaps, instruction, descriptor, mixinPredicate);
@@ -105,7 +116,14 @@ final class InferenceCache {
 
   @Nullable
   DFAType getCachedInferredType(@NotNull VariableDescriptor descriptor, @NotNull Instruction instruction) {
-    return myVarTypes.get().get(instruction.num()).get(descriptor);
+    return myVarTypes[instruction.num()].get().get(descriptor);
+  }
+
+  void publishDescriptor(@NotNull TypeDfaState intermediateState, @NotNull Instruction instruction) {
+    if (simpleInstructions.contains(instruction) && TypeInferenceHelper.getCurrentContext() == TypeInferenceHelper.getTopContext()) {
+      myVarTypes[instruction.num()].getAndUpdate(
+        oldState -> TypesSemilattice.mergeForCaching(oldState, intermediateState, myVarIndexes.getValue()));
+    }
   }
 
   private DFAFlowInfo collectFlowInfo(@NotNull List<DefinitionMap> definitionMaps,
@@ -152,25 +170,6 @@ final class InferenceCache {
                            myVarIndexes.getValue());
   }
 
-  private List<Pair<Instruction, Set<? extends VariableDescriptor>>> getClosureInstructionsWithForeigns() {
-    if (CompileStaticUtil.isCompileStatic(myScope)) {
-      return emptyList();
-    }
-    List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions = new ArrayList<>();
-    for (Instruction closureInstruction : myFlow) {
-      PsiElement closure = closureInstruction.getElement();
-      if (closure instanceof GrFunctionalExpression) {
-        GrControlFlowOwner owner = FunctionalExpressionFlowUtil.getControlFlowOwner((GrFunctionalExpression)closure);
-        if (owner == null) {
-          continue;
-        }
-        Set<ResolvedVariableDescriptor> foreignVariables = ControlFlowUtils.getOverwrittenForeignVariableDescriptors(owner);
-        closureInstructions.add(Pair.create(closureInstruction, foreignVariables));
-      }
-    }
-    return closureInstructions;
-  }
-
   @NotNull
   private Set<Pair<Instruction, VariableDescriptor>> findDependencies(@NotNull List<DefinitionMap> definitionMaps,
                                                                       @NotNull List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions,
@@ -181,17 +180,6 @@ final class InferenceCache {
     int[] definitions = definitionMap.getDefinitions(varIndex);
 
     LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = new LinkedHashSet<>();
-
-    int latestDefinition = Math.max(instruction.num(), definitions == null ? 0 : ArrayUtil.max(definitions));
-    for (Pair<Instruction, Set<? extends VariableDescriptor>> closureInstruction : closureInstructions) {
-      if (closureInstruction.first.num() > latestDefinition) break;
-      if (closureInstruction.second.contains(descriptor)) {
-        pairs.add(Pair.create(closureInstruction.first, descriptor));
-        if (closureInstruction.first instanceof ReadWriteVariableInstruction) {
-          pairs.add(Pair.create(closureInstruction.first, ((ReadWriteVariableInstruction)closureInstruction.first).getDescriptor()));
-        }
-      }
-    }
 
     if (definitions == null) return pairs;
 
@@ -209,32 +197,17 @@ final class InferenceCache {
 
   private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult,
                               Set<Instruction> storingInstructions) {
-    myVarTypes.getAndUpdate((currentState) -> addDfaResult(currentState, dfaResult, storingInstructions, myVarIndexes.getValue()));
-  }
-
-  @NotNull SharedVariableInferenceCache getSharedVariableInferenceCache() {
-    return mySharedVariableInferenceCache;
-  }
-
-  @NotNull
-  private static List<Map<VariableDescriptor, DFAType>> addDfaResult(@NotNull List<Map<VariableDescriptor, DFAType>> oldTypes,
-                                                                     @NotNull List<TypeDfaState> dfaResult,
-                                                                     @NotNull Set<Instruction> storingInstructions,
-                                                                     @NotNull Object2IntMap<VariableDescriptor> varIndexes) {
-    List<Map<VariableDescriptor, DFAType>> newTypes = new ArrayList<>(oldTypes);
-    Set<Integer> interestingInstructionNums = storingInstructions.stream().map(Instruction::num).collect(Collectors.toSet());
-    for (int i = 0; i < dfaResult.size(); i++) {
-      if (interestingInstructionNums.contains(i)) {
-        newTypes.set(i, TypesSemilattice.mergeForCaching(newTypes.get(i), dfaResult.get(i), varIndexes));
-      }
+    for (var instruction : storingInstructions) {
+      int index = instruction.num();
+      myVarTypes[index].getAndUpdate(oldState -> TypesSemilattice.mergeForCaching(oldState, dfaResult.get(index), myVarIndexes.getValue()));
     }
-    return newTypes;
   }
+
+  //@NotNull SharedVariableInferenceCache getSharedVariableInferenceCache() {
+  //  return mySharedVariableInferenceCache;
+  //}
 
   private boolean isDescriptorAvailable(@NotNull VariableDescriptor descriptor) {
-    if (myVarIndexes.getValue().containsKey(descriptor)) {
-      return true;
-    }
-    return ControlFlowUtils.getForeignVariableDescriptors(myScope).contains(descriptor);
+    return myVarIndexes.getValue().containsKey(descriptor);
   }
 }

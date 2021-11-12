@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -19,8 +18,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -62,6 +63,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     else if (instruction instanceof FunctionalBlockEndInstruction) {
       handleFunctionalExpression(state, (FunctionalBlockEndInstruction)instruction);
     }
+    myCache.publishDescriptor(state, instruction);
   }
 
   private void handleStartFunctionalExpression(TypeDfaState state, FunctionalBlockBeginInstruction instruction) {
