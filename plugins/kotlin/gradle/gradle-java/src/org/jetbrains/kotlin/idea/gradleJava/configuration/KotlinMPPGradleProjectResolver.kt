@@ -424,7 +424,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
                     // TODO NOW: Use TestSourceSetUtil instead!
 
-                    if (sourceSet.isTestModule) {
+                    if (sourceSet.isTestComponent) {
                         it.productionModuleId = getInternalModuleName(
                             gradleModule,
                             externalProject,
@@ -494,7 +494,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 val path = toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
                 val currentModules = userData[path] ?: ArrayList<String>().apply { userData[path] = this }
                 // Test modules should not be added. Otherwise we could get dependnecy of java.mail on jvmTest
-                val allSourceSets = target.compilations.filter { !it.isTestModule }.flatMap { it.declaredSourceSets }.toSet()
+                val allSourceSets = target.compilations.filter { !it.isTestComponent }.flatMap { it.declaredSourceSets }.toSet()
                 val availableViaDependsOn = allSourceSets.flatMap { it.allDependsOnSourceSets }.mapNotNull { mppModel.sourceSetsByName[it] }
                 allSourceSets.union(availableViaDependsOn).forEach { sourceSet ->
                     currentModules.add(getKotlinModuleId(gradleModule, sourceSet, resolverCtx))
@@ -639,12 +639,12 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         }
 
         internal fun getSiblingKotlinModuleData(
-            kotlinModule: KotlinModule,
+            kotlinComponent: KotlinComponent,
             gradleModule: IdeaModule,
             ideModule: DataNode<ModuleData>,
             resolverCtx: ProjectResolverContext
         ): DataNode<out ModuleData>? {
-            val usedModuleId = getKotlinModuleId(gradleModule, kotlinModule, resolverCtx)
+            val usedModuleId = getKotlinModuleId(gradleModule, kotlinComponent, resolverCtx)
             return ideModule.findChildModuleById(usedModuleId)
         }
 
@@ -688,8 +688,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 null
             }
 
-        private fun getExternalModuleName(gradleModule: IdeaModule, kotlinModule: KotlinModule) =
-            gradleModule.name + ":" + kotlinModule.fullName()
+        private fun getExternalModuleName(gradleModule: IdeaModule, kotlinComponent: KotlinComponent) =
+            gradleModule.name + ":" + kotlinComponent.fullName()
 
         private fun gradlePathToQualifiedName(
             rootName: String,
@@ -704,9 +704,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         private fun getInternalModuleName(
             gradleModule: IdeaModule,
             externalProject: ExternalProject,
-            kotlinModule: KotlinModule,
+            kotlinComponent: KotlinComponent,
             resolverCtx: ProjectResolverContext,
-            actualName: String = kotlinModule.name
+            actualName: String = kotlinComponent.name
         ): String {
             val delimiter: String
             val moduleName = StringBuilder()
@@ -731,7 +731,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 moduleName.append(gradleModule.name)
             }
             moduleName.append(delimiter)
-            moduleName.append(kotlinModule.fullName(actualName))
+            moduleName.append(kotlinComponent.fullName(actualName))
             return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
         }
 
@@ -794,11 +794,11 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             }
         }
 
-        private val KotlinModule.sourceType
-            get() = if (isTestModule) ExternalSystemSourceType.TEST else ExternalSystemSourceType.SOURCE
+        private val KotlinComponent.sourceType
+            get() = if (isTestComponent) ExternalSystemSourceType.TEST else ExternalSystemSourceType.SOURCE
 
-        private val KotlinModule.resourceType
-            get() = if (isTestModule) ExternalSystemSourceType.TEST_RESOURCE else ExternalSystemSourceType.RESOURCE
+        private val KotlinComponent.resourceType
+            get() = if (isTestComponent) ExternalSystemSourceType.TEST_RESOURCE else ExternalSystemSourceType.RESOURCE
 
         @OptIn(ExperimentalGradleToolingApi::class)
         private fun createSourceSetInfo(
@@ -813,7 +813,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 info.moduleId = getKotlinModuleId(gradleModule, sourceSet, resolverCtx)
                 info.gradleModuleId = getModuleId(resolverCtx, gradleModule)
                 info.actualPlatforms.pushPlatforms(sourceSet.actualPlatforms)
-                info.isTestModule = sourceSet.isTestModule
+                info.isTestModule = sourceSet.isTestComponent
                 info.dependsOn = mppModel.resolveAllDependsOnSourceSets(sourceSet).map { dependsOnSourceSet ->
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name)
                 }
@@ -880,7 +880,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 sourceSetInfo.moduleId = getKotlinModuleId(gradleModule, compilation, resolverCtx)
                 sourceSetInfo.gradleModuleId = getModuleId(resolverCtx, gradleModule)
                 sourceSetInfo.actualPlatforms.pushPlatforms(compilation.platform)
-                sourceSetInfo.isTestModule = compilation.isTestModule
+                sourceSetInfo.isTestModule = compilation.isTestComponent
                 sourceSetInfo.dependsOn = compilation.declaredSourceSets.flatMap { it.allDependsOnSourceSets }.map {
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
                 }.distinct().toList()
@@ -922,7 +922,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         private fun KotlinPlatform.isNotSupported() = IdePlatformKindTooling.getToolingIfAny(this) == null
 
         internal fun KotlinSourceSetInfo.addSourceSets(
-            sourceSets: Collection<KotlinModule>,
+            sourceSets: Collection<KotlinComponent>,
             selfName: String,
             gradleModule: IdeaModule,
             resolverCtx: ProjectResolverContext

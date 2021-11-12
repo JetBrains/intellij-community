@@ -37,7 +37,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
         /* Add dependencies from current sourceSet to all visible source sets (dependsOn, test to production, ...)*/
         for (visibleSourceSet in visibleSourceSets) {
             val toDataNode = getSiblingKotlinModuleData(visibleSourceSet, gradleModule, ideModule, resolverCtx) ?: continue
-            addDependency(fromDataNode, toDataNode, visibleSourceSet.isTestModule)
+            addDependency(fromDataNode, toDataNode, visibleSourceSet.isTestComponent)
         }
 
         if (!processedModuleIds.add(getKotlinModuleId(gradleModule, sourceSet, resolverCtx))) continue
@@ -212,14 +212,14 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateSourceSetInfos(
     val dependeeSourceSets = closedSourceSetGraph.successors(sourceSet)
     val sourceSetInfos = if (isAndroid) {
         ideModule.kotlinAndroidSourceSets?.filter {
-            (it.kotlinModule as? KotlinCompilation)?.declaredSourceSets?.contains(sourceSet) ?: false
+          (it.kotlinComponent as? KotlinCompilation)?.declaredSourceSets?.contains(sourceSet) ?: false
         } ?: emptyList()
     } else {
         listOfNotNull(fromDataNode.kotlinSourceSetData?.sourceSetInfo)
     }
     for (sourceSetInfo in sourceSetInfos) {
-        if (sourceSetInfo.kotlinModule is KotlinCompilation) {
-            val selfName = sourceSetInfo.kotlinModule.fullName()
+        if (sourceSetInfo.kotlinComponent is KotlinCompilation) {
+            val selfName = sourceSetInfo.kotlinComponent.fullName()
             sourceSetInfo.addSourceSets(dependeeSourceSets, selfName, gradleModule, resolverCtx)
         }
     }

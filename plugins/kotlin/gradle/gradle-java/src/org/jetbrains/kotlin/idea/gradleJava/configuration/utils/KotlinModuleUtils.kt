@@ -5,14 +5,14 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleTooling.compilationFullName
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinModule
+import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
-internal fun KotlinModule.fullName(simpleName: String = name) = when (this) {
+internal fun KotlinComponent.fullName(simpleName: String = name) = when (this) {
     is KotlinCompilation -> compilationFullName(simpleName, disambiguationClassifier)
     else -> simpleName
 }
 
 fun KotlinMPPGradleProjectResolver.Companion.getKotlinModuleId(
-    gradleModule: IdeaModule, kotlinModule: KotlinModule, resolverCtx: ProjectResolverContext
-) = getGradleModuleQualifiedName(resolverCtx, gradleModule, kotlinModule.fullName())
+    gradleModule: IdeaModule, kotlinComponent: KotlinComponent, resolverCtx: ProjectResolverContext
+) = getGradleModuleQualifiedName(resolverCtx, gradleModule, kotlinComponent.fullName())

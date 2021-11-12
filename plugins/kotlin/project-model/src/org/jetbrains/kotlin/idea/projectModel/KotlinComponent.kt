@@ -5,8 +5,8 @@ import java.io.Serializable
 
 typealias KotlinDependencyId = Long
 
-interface KotlinModule : Serializable {
+interface KotlinComponent : Serializable {
     val name: String
     val dependencies: Array<KotlinDependencyId>
-    val isTestModule: Boolean
+    val isTestComponent: Boolean
 }
