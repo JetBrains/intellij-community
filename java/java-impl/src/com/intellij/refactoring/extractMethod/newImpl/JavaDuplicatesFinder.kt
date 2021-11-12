@@ -112,7 +112,8 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
       return@filterNot true
     }
 
-    if (ExtractMethodHelper.hasReferencesToScope(duplicate.pattern, changedExpressions.map{ change -> change.pattern })){
+    if (ExtractMethodHelper.hasReferencesToScope(duplicate.pattern, changedExpressions.map{ change -> change.pattern }) ||
+      ExtractMethodHelper.hasReferencesToScope(duplicate.candidate, changedExpressions.map { change -> change.candidate })){
       return null
     }
 
@@ -152,13 +153,13 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
     return when {
       pattern.parent is PsiExpressionStatement -> false
       pattern is PsiReferenceExpression && pattern.parent is PsiCall -> false
-      pattern is PsiExpression && candidate is PsiExpression -> canBeReplaced(pattern.type, candidate.type)
+      pattern is PsiExpression && candidate is PsiExpression -> pattern.type != PsiType.VOID && canBeReplaced(pattern.type, candidate.type)
       else -> false
     }
   }
 
   private fun canBeReplaced(pattern: PsiType?, candidate: PsiType?): Boolean {
-    return pattern != null && pattern != PsiType.VOID && candidate != null && pattern.isAssignableFrom(candidate)
+    return pattern != null && candidate != null && pattern.isAssignableFrom(candidate)
   }
 
   private fun isOvercomplicated(duplicate: Duplicate): Boolean {
