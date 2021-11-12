@@ -18,6 +18,7 @@ import training.dsl.LessonUtil.restorePopupPosition
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonType
+import training.util.LessonEndInfo
 import training.util.isToStringContains
 import java.awt.Point
 import java.awt.event.KeyEvent
@@ -133,7 +134,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     epilogue()
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
   }

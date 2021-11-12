@@ -65,10 +65,7 @@ import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
-import training.util.getActionById
-import training.util.invokeActionForFocusContext
-import training.util.isToStringContains
-import training.util.learningToolWindow
+import training.util.*
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
@@ -159,7 +156,7 @@ class PythonOnboardingTour :
     }
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
 
@@ -167,7 +164,7 @@ class PythonOnboardingTour :
     uiSettings.showNavigationBar = showNavigationBarPreference
     uiSettings.fireUISettingsChanged()
 
-    if (!lessonPassed) return
+    if (!lessonEndInfo.lessonPassed) return
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
     invokeLater {
       val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
