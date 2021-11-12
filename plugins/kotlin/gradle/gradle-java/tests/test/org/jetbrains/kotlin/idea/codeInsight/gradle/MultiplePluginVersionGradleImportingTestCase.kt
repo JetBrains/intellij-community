@@ -140,7 +140,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         return repositories.joinToString("\n")
     }
 
-    override fun configureByFiles(properties: Map<String, String>?): List<VirtualFile> {
+    override fun configureByFiles(properties: Map<String, String>?, subPath: String?): List<VirtualFile> {
         val unitedProperties = HashMap(properties ?: emptyMap())
 
         unitedProperties.putAll(androidProperties())
@@ -149,7 +149,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
         unitedProperties["kotlin_plugin_repositories"] = repositories(false)
         unitedProperties["kts_kotlin_plugin_repositories"] = repositories(true)
-        return super.configureByFiles(unitedProperties)
+        return super.configureByFiles(unitedProperties, subPath)
     }
 
 
