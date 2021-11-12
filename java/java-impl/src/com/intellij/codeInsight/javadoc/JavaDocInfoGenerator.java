@@ -2391,7 +2391,15 @@ public class JavaDocInfoGenerator {
       StringBuilder buffer = new StringBuilder();
       appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), LT);
 
+      PsiFile file = owner.getContainingFile();
+      boolean allExtends = parameters.length > 1 & ContainerUtil.and(parameters, parameter -> parameter.getExtendsList().getReferenceElements().length > 0);
+      int indent = !allExtends ? 0 : file != null ? CodeStyle.getIndentSize(file) : 4;
+      if (indent > 0) {
+        buffer.append("\n");
+      }
+
       for (int i = 0; i < parameters.length; i++) {
+        buffer.append(StringUtil.repeatSymbol(' ', indent));
         PsiTypeParameter p = parameters[i];
 
         generateTypeAnnotations(buffer, p, p, true, false);
@@ -2401,7 +2409,7 @@ public class JavaDocInfoGenerator {
           getHighlightingManager().getTypeParameterNameAttributes(),
           Objects.requireNonNullElse(p.getName(), CommonBundle.getErrorTitle()));
 
-        PsiClassType[] refs = JavaDocUtil.getExtendsList(p);
+        PsiClassType[] refs = p.getExtendsList().getReferencedTypes();
         if (refs.length > 0) {
           appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), " extends ");
           for (int j = 0; j < refs.length; j++) {
@@ -2415,6 +2423,7 @@ public class JavaDocInfoGenerator {
         if (i < parameters.length - 1) {
           appendStyledSpan(buffer, getHighlightingManager().getCommaAttributes(), ", ");
         }
+        if (indent > 0) buffer.append("\n");
       }
 
       appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), GT);
