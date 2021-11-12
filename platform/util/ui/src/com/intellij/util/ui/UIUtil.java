@@ -1841,7 +1841,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean hasFocus(@NotNull Component component) {
-    if (Boolean.getBoolean("java.awt.headless") || component.hasFocus()) {
+    if (GraphicsEnvironment.isHeadless() || component.hasFocus()) {
       return true;
     }
 
@@ -1855,7 +1855,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsFocused(@NotNull JComponent component, boolean value) {
-    if (Boolean.getBoolean("java.awt.headless")) {
+    if (GraphicsEnvironment.isHeadless()) {
       return;
     }
     component.putClientProperty(HAS_FOCUS, value ? Boolean.TRUE : null);
@@ -3482,7 +3482,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (Boolean.getBoolean("java.awt.headless") || component.isShowing()) {
+    if (GraphicsEnvironment.isHeadless() || component.isShowing()) {
       return true;
     }
 
@@ -3503,7 +3503,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsShowing(@NotNull JComponent component, boolean value) {
-    if (Boolean.getBoolean("java.awt.headless")) {
+    if (GraphicsEnvironment.isHeadless()) {
       return;
     }
     component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
@@ -3662,7 +3662,10 @@ public final class UIUtil {
   public static void setHeadlessProperty(boolean isHeadless) {
     System.setProperty("java.awt.headless", Boolean.toString(isHeadless));
     // reset field value to let java.awt.GraphicsEnvironment.getHeadlessProperty re-read updated property
-    assert ReflectionUtil.setField(GraphicsEnvironment.class, null, Boolean.class, "headless", null);
+    boolean set = ReflectionUtil.setField(GraphicsEnvironment.class, null, Boolean.class, "headless", null);
+    assert set;
+    set = ReflectionUtil.setField(Toolkit.class, null, Toolkit.class, "toolkit", null);
+    assert set;
     assert GraphicsEnvironment.isHeadless() == isHeadless;
   }
 
