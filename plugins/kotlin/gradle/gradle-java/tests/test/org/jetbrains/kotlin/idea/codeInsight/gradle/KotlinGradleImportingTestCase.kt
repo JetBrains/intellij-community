@@ -57,8 +57,8 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         return result
     }
 
-    protected open fun configureByFiles(properties: Map<String, String>? = null): List<VirtualFile> {
-        val rootDir = testDataDirectory()
+    protected open fun configureByFiles(properties: Map<String, String>? = null, subPath: String? = null): List<VirtualFile> {
+        val rootDir = testDataDirectory().let { if (subPath != null) it.resolve(subPath) else it }
         assert(rootDir.exists()) { "Directory ${rootDir.path} doesn't exist" }
 
         return rootDir.walk().mapNotNull {
