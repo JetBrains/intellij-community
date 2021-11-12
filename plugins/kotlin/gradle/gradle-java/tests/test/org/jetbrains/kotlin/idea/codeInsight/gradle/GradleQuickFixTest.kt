@@ -84,6 +84,10 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
     @Ignore // TODO: KTIJ-16294
     fun testCreateActualForJvmTestWithCustomPath() = doMultiFileQuickFixTest()
 
+    @Test
+    @TargetVersions("6.0.1")
+    fun testCreateActualForJvmTestWithCustomExistentPath() = doMultiFileQuickFixTest()
+
     private fun doMultiFileQuickFixTest() {
         configureByFiles(subPath = "before")
         val projectPath = myProjectRoot.toNioPath()
