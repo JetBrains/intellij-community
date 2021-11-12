@@ -72,6 +72,10 @@ internal object FUSGroupIds {
                 "https://maven.pkg.jetbrains.space/public/p/ktor/eap/",
                 "https://maven.pkg.jetbrains.space/public/p/space/maven/"
             )
+        ),
+        CLOJARS(
+            ids = setOf("clojars"),
+            urls = setOf("https://repo.clojars.org/")
         );
 
         companion object {
