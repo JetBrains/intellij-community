@@ -2,24 +2,38 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptorBase
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.io.readText
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection
 import org.jetbrains.kotlin.idea.inspections.runInspection
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.pathString
 import kotlin.reflect.KMutableProperty0
+import kotlin.streams.asSequence
 
 class GradleQuickFixTest : KotlinGradleImportingTestCase() {
     private lateinit var codeInsightTestFixture: CodeInsightTestFixture
@@ -47,6 +61,60 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
     @Ignore // Import failed: A problem occurred evaluating root project 'project'
     fun testUpdateKotlinxCoroutines() {
         doGradleQuickFixTest(GradleKotlinxCoroutinesDeprecationInspection())
+    }
+
+    @Test
+    @TargetVersions("6.0.1")
+    fun testCreateActualForJs() = doMultiFileQuickFixTest()
+
+    @Test
+    @TargetVersions("6.0.1")
+    fun testCreateActualForJsTest() = doMultiFileQuickFixTest()
+
+    @Test
+    @TargetVersions("6.0.1")
+    fun testCreateActualForJvm() = doMultiFileQuickFixTest()
+
+    @Test
+    @TargetVersions("6.0.1")
+    fun testCreateActualForJvmTest() = doMultiFileQuickFixTest()
+
+    private fun doMultiFileQuickFixTest() {
+        configureByFiles(subPath = "before")
+        val projectPath = myProjectRoot.toNioPath()
+        val (mainFilePath, mainFileText) = Files.walk(projectPath.resolve("src")).asSequence()
+            .filter { it.isRegularFile() }
+            .firstNotNullOfOrNull {
+                val text = it.readText()
+                if (text.startsWith("// \"")) it to text else null
+            } ?: error("file with action is not found")
+
+        importProject()
+
+        val ktFile = runReadAction {
+            LocalFileSystem.getInstance().findFileByNioFile(mainFilePath)?.toPsiFile(myProject)
+        } as KtFile
+
+        val actionHint = ActionHint.parse(ktFile, mainFileText)
+        codeInsightTestFixture.configureFromExistingVirtualFile(ktFile.virtualFile)
+
+        runInEdtAndWait {
+            val actions = codeInsightTestFixture.availableIntentions
+            val action = actionHint.findAndCheck(actions) { "Test file: ${projectPath.relativize(mainFilePath).pathString}" }
+            if (action != null) {
+                action.invoke(myProject, null, ktFile)
+                val expected = LocalFileSystem.getInstance().findFileByIoFile(testDataDirectory().resolve("after/src"))!!.apply {
+                    UsefulTestCase.refreshRecursively(this)
+                }
+
+                PlatformTestUtil.assertDirectoriesEqual(
+                    expected,
+                    LocalFileSystem.getInstance().findFileByIoFile(File("$projectPath/src"))!!,
+                )
+            }
+
+            DirectiveBasedActionUtils.checkAvailableActionsAreExpected(ktFile, action?.let { actions - it } ?: actions)
+        }
     }
 
     private fun doGradleQuickFixTest(localInspectionTool: LocalInspectionTool) {
@@ -81,7 +149,7 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
     }
 
     private fun checkResult(file: VirtualFile) {
-        val expectedFile = File(testDataDirectory(), "build.gradle.after")
+        val expectedFile = File(testDataDirectory(), "${file.name}.after")
         val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(file).toString())
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s) }
     }

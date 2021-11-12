@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.io.File
 import kotlin.io.path.Path
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 fun PsiDirectory.getPackage(): PsiPackage? = JavaDirectoryService.getInstance()!!.getPackage(this)
@@ -146,12 +147,14 @@ private fun Module.getOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder
 }
 
 private fun Module.createSourceRootDirectory(): VirtualFile? {
-    val contentEntry = rootManager.contentEntries.firstOrNull()
-        ?: throw KotlinExceptionWithAttachments("Content entry is not found").withAttachment("module", this.name)
+    val moduleName = name.takeLastWhile { it != '.' }
+    val contentEntriesPaths = rootManager.contentEntries.mapNotNull { contentEntry ->
+        contentEntry.file?.let { it.fileSystem.getNioPath(it) } ?: VfsUtilCore.convertToURL(contentEntry.url)?.path?.let(::Path)
+    }
 
-    val sourceRootPath = contentEntry.file?.toNioPath()
-        ?: VfsUtilCore.convertToURL(contentEntry.url)?.path?.let(::Path)
-        ?: throw KotlinExceptionWithAttachments("Content url is corrupted").withAttachment("url", contentEntry.url)
+    val sourceRootPath = contentEntriesPaths.find { it.name == moduleName }
+        ?: contentEntriesPaths.firstOrNull()
+        ?: throw KotlinExceptionWithAttachments("Content entry path is not found").withAttachment("module", this.name)
 
     val srcFolderPath = sourceRootPath.resolve("kotlin")
     runWriteAction {
