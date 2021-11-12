@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Extend this class and register the implementation as {@code com.intellij.findUsagesHandlerFactory} extension in plugin.xml
- * to provide a factory of find usage handlers.
+ * to  provide a factory of {@link FindUsagesHandler find usage handlers}.
  *
  * @see com.intellij.find.usages.symbol.SymbolSearchTargetFactory
  */
@@ -23,7 +23,8 @@ public abstract class FindUsagesHandlerFactory implements PluginAware {
   PluginDescriptor pluginDescriptor;
 
   /**
-   * @return {@code true} if this factory is applicable for an {@code element}, otherwise {@code false}
+   * {@code true} if this factory can provide a {@code FindUsagesHandler} which is able to find usages of {@code element},
+   * otherwise {@code false}
    */
   public abstract boolean canFindUsages(@NotNull PsiElement element);
 
