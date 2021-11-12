@@ -1,0 +1,15 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.projectModel
+
+import java.io.Serializable
+
+typealias KotlinKPMAttributeKeyId = Long
+typealias KotlinKPMAttributeValueId = Long
+typealias KotlinKPMVariantAttributesMap = Map<KotlinKPMAttributeKeyId, KotlinKPMAttributeValueId>
+
+interface KotlinVariantData : Serializable {
+    val variantAttributes: KotlinKPMVariantAttributesMap
+    val compilationOutputs: KotlinCompilationOutput?
+}
+
+typealias KotlinVariant = Pair</* Name of corresponding fragment */ String, KotlinVariantData>
