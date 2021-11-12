@@ -52,7 +52,9 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
         try {
           val detailsFromProvider = Int2ObjectOpenHashMap<T>()
           doLoadCommitsData(toLoad) { metadata ->
-            detailsFromProvider[storage.getCommitIndex(metadata.id, metadata.root)] = metadata
+            val commitIndex = storage.getCommitIndex(metadata.id, metadata.root)
+            saveInCache(commitIndex, metadata)
+            detailsFromProvider[commitIndex] = metadata
           }
           val result = commits.mapNotNull { detailsFromCache[it] ?: detailsFromProvider[it] }
           notifyLoaded()
@@ -84,7 +86,6 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
         continue
       }
       doLoadCommitsDataFromProvider(logProvider, root, hashes) { details: T ->
-        saveInCache(storage.getCommitIndex(details.id, details.root), details)
         consumer.consume(details)
       }
     }

@@ -12,7 +12,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
-import com.intellij.util.EmptyConsumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
@@ -34,7 +33,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   private val factory = project.getService(VcsLogObjectsFactory::class.java)
   private val cache = Caffeine.newBuilder().maximumSize(10000).build<Int, VcsCommitMetadata>()
   private val loader = SequentialLimitedLifoExecutor(this, MAX_LOADING_TASKS) { task: TaskDescriptor ->
-    doLoadCommitsData(task.commits, EmptyConsumer.getInstance())
+    doLoadCommitsData(task.commits, this::saveInCache)
     notifyLoaded()
   }
   /**
@@ -92,6 +91,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   }
 
   override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)
+  private fun saveInCache(details: VcsCommitMetadata) = saveInCache(storage.getCommitIndex(details.id, details.root), details)
 
   private fun cacheCommit(commitId: Int, taskNumber: Long) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
@@ -123,7 +123,10 @@ class MiniDetailsGetter internal constructor(project: Project,
     }
     if (!toLoad.isEmpty()) {
       indicator.checkCanceled()
-      doLoadCommitsData(toLoad, consumer)
+      doLoadCommitsData(toLoad) { metadata ->
+        saveInCache(metadata)
+        consumer.consume(metadata)
+      }
       notifyLoaded()
     }
   }
@@ -143,7 +146,6 @@ class MiniDetailsGetter internal constructor(project: Project,
         notIndexed.add(commit)
       }
       else {
-        saveInCache(commit, metadata)
         consumer.consume(metadata)
       }
     })
