@@ -25,6 +25,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
@@ -417,4 +419,17 @@ fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
 
 fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
     return lambdaArguments.singleOrNull()?.getArgumentExpression().safeAs() ?: getLastLambdaExpression()
+}
+
+fun KtFunctionLiteral.collectLabeledReturnExpressions(label: String, context: BindingContext): List<KtReturnExpression> =
+    collectDescendantsOfType { it.getLabelName() == label && it.getTargetFunction(context) == this }
+
+fun KtReturnExpression.setLabel(label: String, psiFactory: KtPsiFactory = KtPsiFactory(this)) {
+    val returnedExpression = this.returnedExpression
+    val newLabeledReturn = if (returnedExpression != null) {
+        psiFactory.createExpressionByPattern("return@$label $0", returnedExpression)
+    } else {
+        psiFactory.createExpression("return@$label")
+    }
+    replace(newLabeledReturn)
 }

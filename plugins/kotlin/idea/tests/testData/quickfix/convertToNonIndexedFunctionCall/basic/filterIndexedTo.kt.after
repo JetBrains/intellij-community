@@ -1,0 +1,7 @@
+// "Convert to 'filterTo'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.filterTo(mutableListOf()) { s ->
+        s == "a"
+    }
+}

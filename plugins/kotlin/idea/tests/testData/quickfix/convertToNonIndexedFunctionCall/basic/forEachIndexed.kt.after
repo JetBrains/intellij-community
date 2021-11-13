@@ -1,0 +1,7 @@
+// "Convert to 'forEach'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.forEach { s ->
+        println(s)
+    }
+}

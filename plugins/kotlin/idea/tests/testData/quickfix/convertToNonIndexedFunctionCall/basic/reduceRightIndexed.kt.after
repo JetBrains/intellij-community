@@ -1,0 +1,7 @@
+// "Convert to 'reduceRight'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.reduceRight { s, acc ->
+        s + acc
+    }
+}

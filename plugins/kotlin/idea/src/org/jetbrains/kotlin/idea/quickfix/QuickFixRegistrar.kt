@@ -328,8 +328,11 @@ class QuickFixRegistrar : QuickFixContributor {
         NULL_FOR_NONNULL_TYPE.registerFactory(AddFunctionParametersFix)
 
         UNUSED_PARAMETER.registerFactory(RemoveUnusedFunctionParameterFix)
-        UNUSED_ANONYMOUS_PARAMETER.registerFactory(RenameToUnderscoreFix.Factory)
-        UNUSED_ANONYMOUS_PARAMETER.registerFactory(RemoveSingleLambdaParameterFix)
+        UNUSED_ANONYMOUS_PARAMETER.registerFactory(
+            RenameToUnderscoreFix.Factory,
+            RemoveSingleLambdaParameterFix,
+            ConvertToNonIndexedFunctionCallFix
+        )
         EXPECTED_PARAMETERS_NUMBER_MISMATCH.registerFactory(ChangeFunctionLiteralSignatureFix)
 
         EXPECTED_PARAMETER_TYPE_MISMATCH.registerFactory(ChangeTypeFix)

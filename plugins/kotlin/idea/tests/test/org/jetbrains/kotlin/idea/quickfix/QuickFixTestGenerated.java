@@ -3225,6 +3225,136 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/convertToNonIndexedFunctionCall")
+    public abstract static class ConvertToNonIndexedFunctionCall extends AbstractQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/convertToNonIndexedFunctionCall/basic")
+        public static class Basic extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("filterIndexed.kt")
+            public void testFilterIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/filterIndexed.kt");
+            }
+
+            @TestMetadata("filterIndexedTo.kt")
+            public void testFilterIndexedTo() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/filterIndexedTo.kt");
+            }
+
+            @TestMetadata("foldIndexed.kt")
+            public void testFoldIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/foldIndexed.kt");
+            }
+
+            @TestMetadata("foldRightIndexed.kt")
+            public void testFoldRightIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/foldRightIndexed.kt");
+            }
+
+            @TestMetadata("forEachIndexed.kt")
+            public void testForEachIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/forEachIndexed.kt");
+            }
+
+            @TestMetadata("mapIndexed.kt")
+            public void testMapIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/mapIndexed.kt");
+            }
+
+            @TestMetadata("mapIndexedNotNull.kt")
+            public void testMapIndexedNotNull() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/mapIndexedNotNull.kt");
+            }
+
+            @TestMetadata("mapIndexedNotNullTo.kt")
+            public void testMapIndexedNotNullTo() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/mapIndexedNotNullTo.kt");
+            }
+
+            @TestMetadata("mapIndexedTo.kt")
+            public void testMapIndexedTo() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/mapIndexedTo.kt");
+            }
+
+            @TestMetadata("onEachIndexed.kt")
+            public void testOnEachIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/onEachIndexed.kt");
+            }
+
+            @TestMetadata("reduceIndexed.kt")
+            public void testReduceIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/reduceIndexed.kt");
+            }
+
+            @TestMetadata("reduceIndexedOrNull.kt")
+            public void testReduceIndexedOrNull() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/reduceIndexedOrNull.kt");
+            }
+
+            @TestMetadata("reduceRightIndexed.kt")
+            public void testReduceRightIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/reduceRightIndexed.kt");
+            }
+
+            @TestMetadata("reduceRightIndexedOrNull.kt")
+            public void testReduceRightIndexedOrNull() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/reduceRightIndexedOrNull.kt");
+            }
+
+            @TestMetadata("runningFoldIndexed.kt")
+            public void testRunningFoldIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/runningFoldIndexed.kt");
+            }
+
+            @TestMetadata("runningReduceIndexed.kt")
+            public void testRunningReduceIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/runningReduceIndexed.kt");
+            }
+
+            @TestMetadata("scanIndexed.kt")
+            public void testScanIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/scanIndexed.kt");
+            }
+
+            @TestMetadata("scanReduceIndexed.kt")
+            public void testScanReduceIndexed() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/basic/scanReduceIndexed.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/convertToNonIndexedFunctionCall")
+        public static class Uncategorized extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extension.kt")
+            public void testExtension() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/extension.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/labeledReturn.kt");
+            }
+
+            @TestMetadata("lambdaInParentheses.kt")
+            public void testLambdaInParentheses() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/lambdaInParentheses.kt");
+            }
+
+            @TestMetadata("notIndex.kt")
+            public void testNotIndex() throws Exception {
+                runTest("testData/quickfix/convertToNonIndexedFunctionCall/notIndex.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/createFromUsage")
     public abstract static class CreateFromUsage extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)

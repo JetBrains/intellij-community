@@ -1,0 +1,7 @@
+// "Convert to 'map'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.map { s ->
+        s + s
+    }
+}
