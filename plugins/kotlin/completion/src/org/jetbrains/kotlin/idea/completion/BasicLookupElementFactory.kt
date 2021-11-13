@@ -75,12 +75,7 @@ class BasicLookupElementFactory(
         qualifyNestedClasses: Boolean = false,
         includeClassTypeArguments: Boolean = true
     ): LookupElement {
-        val lookupObject = object : DeclarationLookupObjectImpl(null) {
-            override val psiElement: PsiElement
-                get() = psiClass
-
-            override fun getIcon(flags: Int) = psiClass.getIcon(flags)
-        }
+        val lookupObject = PsiClassLookupObject(psiClass)
         var element = LookupElementBuilder.create(lookupObject, psiClass.name!!).withInsertHandler(KotlinClassifierInsertHandler)
 
         val typeParams = psiClass.typeParameters

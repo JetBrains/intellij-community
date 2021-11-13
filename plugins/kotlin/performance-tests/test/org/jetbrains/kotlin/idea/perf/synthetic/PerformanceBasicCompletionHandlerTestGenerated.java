@@ -43,6 +43,11 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
         runTest("../completion/tests/testData/handlers/basic/ClassNameForMethodWithPackageConflict2.kt");
     }
 
+    @TestMetadata("ClassNameWithAliasConfict.kt")
+    public void testClassNameWithAliasConfict() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/ClassNameWithAliasConfict.kt");
+    }
+
     @TestMetadata("ClassNameWithPackageConflict.kt")
     public void testClassNameWithPackageConflict() throws Exception {
         runTest("../completion/tests/testData/handlers/basic/ClassNameWithPackageConflict.kt");
@@ -108,6 +113,31 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
         runTest("../completion/tests/testData/handlers/basic/InterfaceNameBeforeRunBug.kt");
     }
 
+    @TestMetadata("JavaClassName.kt")
+    public void testJavaClassName() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/JavaClassName.kt");
+    }
+
+    @TestMetadata("JavaClassNameWithAliasConfict.kt")
+    public void testJavaClassNameWithAliasConfict() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithAliasConfict.kt");
+    }
+
+    @TestMetadata("JavaClassNameWithConflict.kt")
+    public void testJavaClassNameWithConflict() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithConflict.kt");
+    }
+
+    @TestMetadata("JavaClassNameWithConflict2.kt")
+    public void testJavaClassNameWithConflict2() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithConflict2.kt");
+    }
+
+    @TestMetadata("JavaClassNameWithKotlinNestedClassConflict.kt")
+    public void testJavaClassNameWithKotlinNestedClassConflict() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithKotlinNestedClassConflict.kt");
+    }
+
     @TestMetadata("JavaSAM.kt")
     public void testJavaSAM() throws Exception {
         runTest("../completion/tests/testData/handlers/basic/JavaSAM.kt");
@@ -151,6 +181,11 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
     @TestMetadata("LocalFunction.kt")
     public void testLocalFunction() throws Exception {
         runTest("../completion/tests/testData/handlers/basic/LocalFunction.kt");
+    }
+
+    @TestMetadata("NestedClassNameWithFileLevelConflict.kt")
+    public void testNestedClassNameWithFileLevelConflict() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/NestedClassNameWithFileLevelConflict.kt");
     }
 
     @TestMetadata("NestedTypeArg.kt")
