@@ -54,8 +54,8 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     if (iconPngPath != null) {
       Files.copy(Paths.get(iconPngPath), distBinDir.resolve("${buildContext.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
     }
-    generateScripts(distBinDir)
     generateVMOptions(distBinDir)
+    generateScripts(distBinDir)
     generateReadme(unixDistPath)
     generateVersionMarker(unixDistPath)
     customizer.copyAdditionalFiles(buildContext, unixDistPath)
@@ -109,6 +109,19 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
     }
 
+    List<String> additionalJvmArgs = buildContext.additionalJvmArguments
+    if (!bootClassPath.isEmpty()) additionalJvmArgs += "-Xbootclasspath/a:\$BOOT_CLASS_PATH"
+
+    Path vmOptionsPath = distBinDir.resolve("${buildContext.productProperties.baseFileName}64.vmoptions")
+    if (!Files.exists(vmOptionsPath)) {
+      throw new IllegalStateException("File '$vmOptionsPath' should be already generated at this point")
+    }
+
+    String defaultXmxParameter = Files.readAllLines(vmOptionsPath).find { it.startsWith("-Xmx") }
+    if (defaultXmxParameter == null) {
+      throw new IllegalStateException("-Xmx was not found in '$vmOptionsPath'")
+    }
+
     buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts") {
         if (!buildContext.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")) {
@@ -124,6 +137,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "system_selector", value: buildContext.systemSelector)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments.join(' '))
+        filter(token: "ide_default_xmx", value: defaultXmxParameter.strip())
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: scriptName)
       }
