@@ -209,8 +209,8 @@ class FeedbackForm(
 
       override fun doAction(e: ActionEvent) {
         val ratingComponent = ratingComponent
-        missingRatingTooltip?.isVisible = ratingComponent?.rating == 0
-        if (ratingComponent == null || ratingComponent.rating != 0) {
+        missingRatingTooltip?.isVisible = ratingComponent?.myRating == 0
+        if (ratingComponent == null || ratingComponent.myRating != 0) {
           super.doAction(e)
         }
         else {
@@ -240,8 +240,8 @@ class FeedbackForm(
         mapOf(
           "systeminfo" to systemInfo,
           "needsupport" to needSupport
-        ) + (ratingComponent?.let { mapOf("rating" to it.rating) } ?: mapOf()) + (topic?.let { mapOf("topic" to it.id)} ?: emptyMap() )
-      , onDone = {
+        ) + (ratingComponent?.let { mapOf("rating" to it.myRating) } ?: mapOf()) + (topic?.let { mapOf("topic" to it.id) } ?: emptyMap())
+        , onDone = {
         ApplicationManager.getApplication().invokeLater {
           var message = ApplicationBundle.message("feedback.form.thanks", ApplicationNamesInfo.getInstance().fullProductName)
           if (isEvaluation) {

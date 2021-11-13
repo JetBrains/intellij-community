@@ -199,13 +199,13 @@ class ProjectCreationFeedbackDialog(
 
       row {
         ratingComponent = RatingComponent().also {
-          it.requestFocus()
-          it.rating = ratingProperty.get()
           it.addPropertyChangeListener(RatingComponent.RATING_PROPERTY) { _ ->
-            ratingProperty.set(it.rating)
+            ratingProperty.set(it.myRating)
             missingRatingTooltip?.isVisible = false
           }
-          cell(it).label(FeedbackBundle.message("dialog.created.project.rating.label"), LabelPosition.TOP)
+          cell(it)
+            .label(FeedbackBundle.message("dialog.created.project.rating.label"), LabelPosition.TOP)
+            .focused()
         }
 
         missingRatingTooltip = label(FeedbackBundle.message("dialog.created.project.rating.required")).applyToComponent {
@@ -339,12 +339,15 @@ class ProjectCreationFeedbackDialog(
 
       override fun doAction(e: ActionEvent) {
         val ratingComponent = ratingComponent
-        missingRatingTooltip?.isVisible = ratingComponent?.rating == 0
-        if (ratingComponent == null || ratingComponent.rating != 0) {
+        missingRatingTooltip?.isVisible = ratingComponent?.myRating == 0
+        if (ratingComponent == null || ratingComponent.myRating != 0) {
           super.doAction(e)
         }
         else {
           enabled = false
+          SwingUtilities.invokeLater {
+            ratingComponent.requestFocusInWindow()
+          }
         }
       }
     }
