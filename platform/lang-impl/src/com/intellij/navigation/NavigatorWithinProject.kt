@@ -147,15 +147,18 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
       val searcher = invokeAndWaitIfNeeded { SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)) }
       Disposer.register(project, searcher)
 
-      searcher.search(fqn, EmptyProgressIndicator())
-        .filterIsInstance<PsiElement>()
-        .forEach {
-          invokeLater {
-            PsiNavigateUtil.navigate(it)
-            makeSelectionsVisible()
+      try {
+        searcher.search(fqn, EmptyProgressIndicator())
+          .filterIsInstance<PsiElement>()
+          .forEach {
+            invokeLater {
+              PsiNavigateUtil.navigate(it)
+              makeSelectionsVisible()
+            }
           }
-        }
-      Disposer.dispose(searcher)
+      } finally {
+        Disposer.dispose(searcher)
+      }
     }
   }
 
