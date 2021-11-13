@@ -75,6 +75,9 @@
     <extensionPoint qualifiedName="com.intellij.externalSystemCrcCalculator"
                     interface="com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator"
                     dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.externalSystemContentRootContributor"
+                    interface="com.intellij.openapi.externalSystem.util.ExternalSystemContentRootContributor"
+                    dynamic="true" />
     <extensionPoint name="externalSystemDependencyAnalyzer"
                     interface="com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerExtension"
                     dynamic="true"/>
