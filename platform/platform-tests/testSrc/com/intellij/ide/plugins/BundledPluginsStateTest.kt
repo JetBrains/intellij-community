@@ -18,7 +18,7 @@ class BundledPluginsStateTest : LightPlatformTestCase() {
   fun testSaving() {
     val file = PathManager.getConfigDir().resolve(BundledPluginsState.BUNDLED_PLUGINS_FILENAME)
     BundledPluginsState.saveBundledPluginsOrLog(listOf(getIdeaDescriptor("a", null), getIdeaDescriptor("b", "Keyboard")))
-    assertEquals("a | null\nb | Keyboard\n", file.readText())
+    assertEquals("a|null\nb|Keyboard\n", file.readText())
   }
 
   @Test
@@ -27,7 +27,7 @@ class BundledPluginsStateTest : LightPlatformTestCase() {
     val dir = Paths.get(project.basePath!!).resolve("kek")
     NioFiles.createDirectories(dir)
     val file = dir.resolve(BundledPluginsState.BUNDLED_PLUGINS_FILENAME)
-    file.writeText("a | null\nb | Keyboard\nabs | Themes\nc | null")
+    file.writeText("a|null\nb|Keyboard\nabs|Themes\nc|null")
     val parsingResult = BundledPluginsState.getBundledPlugins(dir)?.sortedBy(PluginWithCategory::id)
     TestCase.assertEquals(listOf(
       PluginWithCategory(PluginId.getId("a"), null),
