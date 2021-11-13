@@ -6,7 +6,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
@@ -15,15 +17,14 @@ import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class PostponableLogRefresher implements VcsLogRefresher {
   private static final Logger LOG = Logger.getInstance(PostponableLogRefresher.class);
   private final @NotNull VcsLogData myLogData;
   private final @NotNull Set<VirtualFile> myRootsToRefresh = new HashSet<>();
   private final @NotNull Set<VcsLogWindow> myLogWindows = new HashSet<>();
+  private final @NotNull Map<String, Throwable> myCreationTraces = new HashMap<>();
 
   public PostponableLogRefresher(@NotNull VcsLogData logData) {
     myLogData = logData;
@@ -36,15 +37,20 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   public @NotNull Disposable addLogWindow(@NotNull VcsLogWindow window) {
-    if (ContainerUtil.exists(myLogWindows, w -> w.getId().equals(window.getId()))) {
-      throw new CannotAddVcsLogWindowException("Log window with id '" + window.getId() + "' was already added.");
+    String windowId = window.getId();
+    if (ContainerUtil.exists(myLogWindows, w -> w.getId().equals(windowId))) {
+      throw new CannotAddVcsLogWindowException("Log window with id '" + windowId + "' was already added. " +
+                                               "Existing windows:\n" + getLogWindowsInformation(),
+                                               myCreationTraces.get(windowId));
     }
 
     myLogWindows.add(window);
+    myCreationTraces.put(windowId, new Throwable("Creation trace for " + window));
     refresherActivated(window.getRefresher(), true);
     return () -> {
       LOG.debug("Removing disposed log window " + window);
       myLogWindows.remove(window);
+      myCreationTraces.remove(windowId);
     };
   }
 
@@ -100,6 +106,14 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
 
   public @NotNull Set<VcsLogWindow> getLogWindows() {
     return myLogWindows;
+  }
+
+  public @NotNull String getLogWindowsInformation() {
+    return StringUtil.join(myLogWindows, window -> {
+      String isVisible = window.isVisible() ? " (visible)" : "";
+      String isDisposed = Disposer.isDisposed(window.getRefresher()) ? " (disposed)" : "";
+      return window + isVisible + isDisposed;
+    }, "\n");
   }
 
   public static class VcsLogWindow {
