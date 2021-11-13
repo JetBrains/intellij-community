@@ -91,6 +91,14 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
     @TargetVersions("6.0.1")
     fun testCreateActualForJvmTestWithCustomPath2() = doMultiFileQuickFixTest()
 
+    @Test
+    @TargetVersions("6.0.1")
+    fun testCreateActualForNativeiOS() = doMultiFileQuickFixTest()
+
+    @Test
+    @TargetVersions("6.0.1")
+    fun testCreateActualForNativeiOSWithExistentPath() = doMultiFileQuickFixTest()
+
     private fun doMultiFileQuickFixTest() {
         configureByFiles(subPath = "before")
         val projectPath = myProjectRoot.toNioPath()
