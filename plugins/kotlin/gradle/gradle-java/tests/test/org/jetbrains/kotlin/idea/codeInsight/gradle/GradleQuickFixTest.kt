@@ -81,12 +81,15 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
 
     @Test
     @TargetVersions("6.0.1")
-    @Ignore // TODO: KTIJ-16294
     fun testCreateActualForJvmTestWithCustomPath() = doMultiFileQuickFixTest()
 
     @Test
     @TargetVersions("6.0.1")
     fun testCreateActualForJvmTestWithCustomExistentPath() = doMultiFileQuickFixTest()
+
+    @Test
+    @TargetVersions("6.0.1")
+    fun testCreateActualForJvmTestWithCustomPath2() = doMultiFileQuickFixTest()
 
     private fun doMultiFileQuickFixTest() {
         configureByFiles(subPath = "before")

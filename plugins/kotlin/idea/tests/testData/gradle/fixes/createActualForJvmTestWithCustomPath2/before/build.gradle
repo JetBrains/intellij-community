@@ -1,0 +1,27 @@
+plugins {
+    id 'org.jetbrains.kotlin.multiplatform' version '{{kotlin_plugin_version}}'
+}
+
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'kotlin-multiplatform'
+
+kotlin {
+    jvm()
+
+    sourceSets {
+        jvmMain {
+            kotlin.srcDirs = ["myJvmPath/mySrc/doo"]
+        }
+        commonMain {
+            dependencies {
+                api 'org.jetbrains.kotlin:kotlin-stdlib-common'
+            }
+        }
+    }
+}

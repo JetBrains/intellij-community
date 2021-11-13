@@ -5,6 +5,9 @@ package org.jetbrains.kotlin.idea.core
 import com.intellij.ide.util.DirectoryChooserUtil
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemContentRootContributor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
@@ -23,6 +26,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
+import org.jetbrains.kotlin.idea.caches.project.SourceType
+import org.jetbrains.kotlin.idea.caches.project.sourceType
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
@@ -32,9 +37,10 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.io.File
+import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.name
-import kotlin.io.path.pathString
 
 fun PsiDirectory.getPackage(): PsiPackage? = JavaDirectoryService.getInstance()!!.getPackage(this)
 
@@ -147,22 +153,43 @@ private fun Module.getOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder
 }
 
 private fun Module.createSourceRootDirectory(): VirtualFile? {
-    val moduleName = name.takeLastWhile { it != '.' }
     val contentEntriesPaths = rootManager.contentEntries.mapNotNull { contentEntry ->
         contentEntry.file?.let { it.fileSystem.getNioPath(it) } ?: VfsUtilCore.convertToURL(contentEntry.url)?.path?.let(::Path)
     }
 
-    val sourceRootPath = contentEntriesPaths.find { it.name == moduleName }
-        ?: contentEntriesPaths.firstOrNull()
-        ?: throw KotlinExceptionWithAttachments("Content entry path is not found").withAttachment("module", this.name)
+    val srcFolderPath = findSourceRootPathByExternalProject(contentEntriesPaths) ?: chooseSourceRootPathHeuristically(contentEntriesPaths)
 
-    val srcFolderPath = sourceRootPath.resolve("kotlin")
     runWriteAction {
-        VfsUtil.createDirectoryIfMissing(srcFolderPath.pathString)
+        VfsUtil.createDirectoryIfMissing(srcFolderPath.absolutePathString())
         project.invalidateProjectRoots()
     }
 
     return VfsUtil.findFile(srcFolderPath, true)
+}
+
+private fun Module.findSourceRootPathByExternalProject(allowedPaths: List<Path>): Path? = findContentRootsByExternalProject()
+    ?.firstNotNullOfOrNull { externalContentRoot ->
+        val path = Path(externalContentRoot.path)
+        path.takeIf { allowedPaths.any { path.startsWith(it) } }
+    }
+
+private fun Module.findContentRootsByExternalProject(): Collection<ExternalSystemContentRootContributor.ExternalContentRoot>? {
+    val sourceRootTypes = when (sourceType?.takeUnless { isAndroidModule() }) {
+        null -> listOf(ExternalSystemSourceType.SOURCE, ExternalSystemSourceType.TEST)
+        SourceType.PRODUCTION -> listOf(ExternalSystemSourceType.SOURCE)
+        SourceType.TEST -> listOf(ExternalSystemSourceType.TEST)
+    }
+
+    return ExternalSystemApiUtil.getExternalProjectContentRoots(this, sourceRootTypes)
+}
+
+private fun Module.chooseSourceRootPathHeuristically(contentEntries: List<Path>): Path {
+    val moduleName = name.takeLastWhile { it != '.' }
+    val sourceRootPath = contentEntries.find { it.name == moduleName }
+        ?: contentEntries.firstOrNull()
+        ?: throw KotlinExceptionWithAttachments("Content entry path is not found").withAttachment("module", name)
+
+    return sourceRootPath.resolve("kotlin")
 }
 
 private fun getPackageDirectoriesInModule(rootPackage: PsiPackage, module: Module): Array<PsiDirectory> =
