@@ -38,10 +38,7 @@ abstract class DeclarationLookupObjectImpl(
     override fun toString() = super.toString() + " " + (descriptor ?: psiElement)
 
     override fun hashCode(): Int {
-        return if (descriptor != null)
-            descriptor.original.hashCode()
-        else
-            psiElement!!.hashCode()
+        return descriptor?.original?.hashCode() ?: psiElement!!.hashCode()
     }
 
     override fun equals(other: Any?): Boolean {
