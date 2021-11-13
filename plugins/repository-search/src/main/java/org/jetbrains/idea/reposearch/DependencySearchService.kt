@@ -241,7 +241,6 @@ class DependencySearchService(private val myProject: Project) {
 
   @TestOnly
   fun clearCache() {
-    println("clear cache")
     cache.clear()
   }
 }
