@@ -22,7 +22,7 @@ internal fun getExistingLogIds(project: Project): Set<String> {
 }
 
 internal fun <T : VcsLogUiEx> findVcsLogUi(editors: Array<FileEditor>, clazz: Class<T>): T? {
-  return editors.asSequence().mapNotNull { VcsLogContentUtil.getLogUi(it.component) }.filterIsInstance(clazz).firstOrNull()
+  return editors.asSequence().flatMap { VcsLogContentUtil.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
 }
 
 internal fun updateTabName(project: Project, ui: VcsLogUiEx) {
