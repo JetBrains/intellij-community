@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
  */
 
 class RequestFeedbackNotification : Notification(
-  "Feedback Notification",
+  "Project Creation Feedback",
   FeedbackBundle.message("notification.request.feedback.title"),
   FeedbackBundle.message("notification.request.feedback.content"),
   NotificationType.INFORMATION
