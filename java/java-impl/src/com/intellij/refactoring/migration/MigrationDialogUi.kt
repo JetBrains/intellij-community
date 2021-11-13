@@ -5,6 +5,7 @@ import com.intellij.application.options.ModulesComboBox
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
@@ -43,7 +44,7 @@ class MigrationDialogUi(map: MigrationMap?) {
     }
 
     row {
-      descriptionLabel = text(map?.description ?: "", 68)
+      descriptionLabel = text(map?.description ?: "", DEFAULT_COMMENT_WIDTH)
         .component
     }
   }
