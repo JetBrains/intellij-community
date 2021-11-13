@@ -27,6 +27,7 @@ private const val PRIVACY_POLICY_THIRD_PARTIES_URL = "https://www.jetbrains.com/
 fun submitGeneralFeedback(project: Project?,
                           title: String,
                           description: String,
+                          feedbackType: String,
                           collectedData: String,
                           email: String = DEFAULT_NO_EMAIL_ZENDESK_REQUESTER,
                           onDone: () -> Unit = {}, onError: () -> Unit = {}) {
@@ -41,7 +42,9 @@ fun submitGeneralFeedback(project: Project?,
       email,
       title,
       description,
-      mapOf("collected_data" to collectedData),
+      mapOf(
+        "collected_data" to collectedData,
+        "feedback_type" to feedbackType),
       onDone,
       onError
     )
