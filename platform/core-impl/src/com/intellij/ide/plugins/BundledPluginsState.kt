@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -22,8 +23,10 @@ import kotlin.io.path.writeText
 class BundledPluginsState {
   init {
     if (shouldSave()) {
-      val bundledIds = PluginManagerCore.getLoadedPlugins().filter { it.isBundled }
-      saveBundledPluginsOrLog(bundledIds)
+      ProcessIOExecutorService.INSTANCE.execute {
+        val bundledIds = PluginManagerCore.getLoadedPlugins().filter { it.isBundled }
+        saveBundledPluginsOrLog(bundledIds)
+      }
     }
   }
 
@@ -32,13 +35,11 @@ class BundledPluginsState {
     private const val SAVED_VERSION_KEY: @NonNls String = "bundled.plugins.list.saved.version"
     private val logger = Logger.getInstance(this::class.java)
 
-    @JvmStatic
     fun shouldSave(): Boolean {
       val savedVersion = PropertiesComponent.getInstance().getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) } ?: return true
       return (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources()) || savedVersion < ApplicationInfo.getInstance().build
     }
 
-    @JvmStatic
     fun saveBundledPluginsOrLog(plugins: List<IdeaPluginDescriptor>) {
       val file = PathManager.getConfigDir().resolve(BUNDLED_PLUGINS_FILENAME)
       try {
@@ -62,14 +63,12 @@ class BundledPluginsState {
       val bundledPlugins = mutableListOf<PluginWithCategory>()
       try {
         file.readLines().map {
-          val splitResult = it.split("|")
+          val splitResult = it.trim().split("|")
           if (splitResult.size != 2) {
             logger.warn("Incompatible format for bundled plugins list: $file")
             return null
           }
-          var (id, category) = splitResult
-          id = id.trim()
-          category = category.trim()
+          val (id, category) = splitResult
           bundledPlugins.add(PluginWithCategory(PluginId.getId(id), if (category == "null") null else category))
         }
       }
@@ -85,7 +84,7 @@ class BundledPluginsState {
     private fun saveBundledPlugins(file: Path,
                                    plugins: List<IdeaPluginDescriptor>) {
       NioFiles.createDirectories(file.parent)
-      file.writeText(plugins.joinToString("") { "${it.pluginId.idString} | ${it.category}\n" })
+      file.writeText(plugins.joinToString("") { "${it.pluginId.idString}|${it.category}\n" })
     }
   }
 
