@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -36,7 +37,9 @@ import java.util.function.Function;
 public final class VcsLogContentUtil {
 
   private static @Nullable VcsLogUiEx getLogUi(@NotNull JComponent c) {
-    return ContainerUtil.getFirstItem(VcsLogPanel.getLogUis(c));
+    List<VcsLogUiEx> uis = VcsLogPanel.getLogUis(c);
+    if (uis.size() > 1) throw new IllegalArgumentException("Component " + c + " has more than one log ui: " + uis);
+    return ContainerUtil.getOnlyItem(uis);
   }
 
   @Nullable
