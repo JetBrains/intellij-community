@@ -17,7 +17,6 @@ import org.jetbrains.concurrency.all
 import org.jetbrains.concurrency.resolvedPromise
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletableFuture.completedFuture
 import java.util.concurrent.ExecutorService
 import java.util.function.BiConsumer
 import java.util.function.Consumer
@@ -96,6 +95,7 @@ class DependencySearchService(private val myProject: Project) {
 
 
     if (parameters.isLocalOnly || remoteProviders.size == 0) {
+      thisNewFuture.complete(localResultSet)
       return resolvedPromise(0)
     }
 

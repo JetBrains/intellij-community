@@ -493,7 +493,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
-    return map.computeIfAbsent(key, k -> new HashSet<>());
+    return map.computeIfAbsent(key, k -> new TreeSet<>());
   }
 
   private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
@@ -558,7 +558,7 @@ public final class MavenIndex implements MavenSearchIndex {
   private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
     synchronized (cache) {
       Set<String> values = cache.get(key);
-      if (values == null) values = new HashSet<>();
+      if (values == null) values = new TreeSet<>();
       if (values.add(value)) {
         cache.put(key, values);
       }
@@ -780,7 +780,7 @@ public final class MavenIndex implements MavenSearchIndex {
     @Override
     public Set<String> read(@NotNull DataInput s) throws IOException {
       int count = s.readInt();
-      Set<String> result = new HashSet<>(count);
+      Set<String> result = new TreeSet<>();
       try {
         while (count-- > 0) {
           result.add(s.readUTF());

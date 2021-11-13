@@ -588,7 +588,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
   }
 
-  protected static <T> void assertContain(List<? extends T> actual, T... expected) {
+  protected static <T> void assertContain(Collection<? extends T> actual, T... expected) {
     List<T> expectedList = Arrays.asList(expected);
     assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
   }
