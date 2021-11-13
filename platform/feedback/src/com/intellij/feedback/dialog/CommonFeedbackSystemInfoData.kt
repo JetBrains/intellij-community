@@ -5,6 +5,7 @@ import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.util.SystemInfo
@@ -99,7 +100,16 @@ data class CommonFeedbackSystemInfoData(
     private fun getPluginsNamesWithVersion(filter: (IdeaPluginDescriptor) -> Boolean): List<String> =
       PluginManagerCore.getLoadedPlugins().stream()
         .filter { filter(it) }
-        .map { p: IdeaPluginDescriptor -> p.pluginId.idString + " (" + p.version + ")" }
+        .map { p: IdeaPluginDescriptor ->
+          val pluginId = p.pluginId
+          val pluginInfo = getPluginInfoById(pluginId)
+          if (pluginInfo.isSafeToReport()) {
+            pluginId.idString + " (" + p.version + ")"
+          }
+          else {
+            "third.party"
+          }
+        }
         .toList()
   }
 

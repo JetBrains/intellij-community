@@ -13,6 +13,8 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
@@ -110,10 +112,13 @@ public final class NewProjectUtil {
       final NewProjectStatisticService newProjectStatisticService = NewProjectStatisticService.getInstance();
       final ProjectBuilder projectBuilder = wizard.getWizardContext().getProjectBuilder();
       if (projectBuilder instanceof AbstractModuleBuilder) {
-        final String builderId = ((AbstractModuleBuilder)projectBuilder).getBuilderId();
-        if (builderId != null) {
-          final NewProjectInfoState newProjectInfoState = newProjectStatisticService.getState();
-          newProjectInfoState.getCreatedProjectInfo().add(NewProjectInfoEntry.createNewProjectInfoEntry(builderId));
+        final PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(projectBuilder.getClass());
+        if (pluginInfo.isSafeToReport()) {
+          final String builderId = ((AbstractModuleBuilder)projectBuilder).getBuilderId();
+          if (builderId != null) {
+            final NewProjectInfoState newProjectInfoState = newProjectStatisticService.getState();
+            newProjectInfoState.getCreatedProjectInfo().add(NewProjectInfoEntry.createNewProjectInfoEntry(builderId));
+          }
         }
       }
     }

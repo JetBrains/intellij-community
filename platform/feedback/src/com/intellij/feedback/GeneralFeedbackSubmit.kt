@@ -43,8 +43,8 @@ fun submitGeneralFeedback(project: Project?,
       title,
       description,
       mapOf(
-        "collected_data" to collectedData,
-        "feedback_type" to feedbackType),
+        "feedback_type" to feedbackType,
+        "collected_data" to collectedData),
       onDone,
       onError
     )
