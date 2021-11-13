@@ -136,7 +136,8 @@ fun showFeedbackForm(project: Project?) {
       }
       "system_info" to Json { }.encodeToJsonElement(systemInfoData)
     }.toString()
-    submitGeneralFeedback(project, "Onboarding Lesson Feedback", "", collectedData)
+    submitGeneralFeedback(project, "Onboarding Lesson Feedback", "",
+                          "Onboarding Lesson Feedback", collectedData)
   }
 }
 

@@ -41,6 +41,7 @@ class ProjectCreationFeedbackDialog(
 ) : DialogWrapper(project) {
 
   private val TICKET_TITLE_ZENDESK = "Project Creation Feedback"
+  private val FEEDBACK_TYPE_ZENDESK = "Project Creation Feedback"
 
   private val NO_PROBLEM = "No problem"
   private val EMPTY_PROJECT = "Empty project"
@@ -107,6 +108,7 @@ class ProjectCreationFeedbackDialog(
     submitGeneralFeedback(project,
                           TICKET_TITLE_ZENDESK,
                           createRequestDescription(),
+                          FEEDBACK_TYPE_ZENDESK,
                           createCollectedDataJsonString(),
                           email,
                           { ProjectCreationFeedbackCountCollector.logFeedbackSentSuccessfully() },
