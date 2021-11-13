@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.util.Query
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -83,12 +84,13 @@ private fun findLongestExistingPackage(
     module: Module,
     packageName: String,
     pureKotlinSourceFolders: PureKotlinSourceFoldersHolder,
+    allowedScope: GlobalSearchScope,
 ): PsiPackage? {
     val manager = PsiManager.getInstance(module.project)
 
     var nameToMatch = packageName
     while (true) {
-        val vFiles = ModulePackageIndex.getInstance(module).getDirsByPackageName(nameToMatch, false)
+        val vFiles = ModulePackageIndex.getInstance(module).getDirsByPackageName(nameToMatch, false).filtering(allowedScope::contains)
         val directory = getWritableModuleDirectory(vFiles, module, manager)
         if (directory != null && pureKotlinSourceFolders.hasPurePrefixInPath(module, directory.virtualFile.path)) {
             return directory.getPackage()
@@ -192,9 +194,6 @@ private fun Module.chooseSourceRootPathHeuristically(contentEntries: List<Path>)
     return sourceRootPath.resolve("kotlin")
 }
 
-private fun getPackageDirectoriesInModule(rootPackage: PsiPackage, module: Module): Array<PsiDirectory> =
-    rootPackage.getDirectories(GlobalSearchScope.moduleScope(module))
-
 // This is Kotlin version of PackageUtil.findOrCreateDirectoryForPackage
 fun findOrCreateDirectoryForPackage(module: Module, packageName: String): PsiDirectory? {
     val project = module.project
@@ -203,30 +202,34 @@ fun findOrCreateDirectoryForPackage(module: Module, packageName: String): PsiDir
     var restOfName = packageName
 
     if (packageName.isNotEmpty()) {
-        val rootPackage = findLongestExistingPackage(module, packageName, pureKotlinSourceFoldersHolder)
-        if (rootPackage != null) {
-            val beginIndex = rootPackage.qualifiedName.length + 1
-            val subPackageName = if (beginIndex < packageName.length) packageName.substring(beginIndex) else ""
-            var postfixToShow = subPackageName.replace('.', File.separatorChar)
-            if (subPackageName.isNotEmpty()) {
-                postfixToShow = File.separatorChar + postfixToShow
+        val sourcePaths = module.getNonGeneratedKotlinSourceRoots(pureKotlinSourceFoldersHolder)
+        if (sourcePaths.isNotEmpty()) {
+            val allowedScope = sourcePaths.map { GlobalSearchScopesCore.DirectoryScope(project, it, true) }.reduce(GlobalSearchScope::union)
+            val rootPackage = findLongestExistingPackage(module, packageName, pureKotlinSourceFoldersHolder, allowedScope)
+            if (rootPackage != null) {
+                val beginIndex = rootPackage.qualifiedName.length + 1
+                val subPackageName = if (beginIndex < packageName.length) packageName.substring(beginIndex) else ""
+                var postfixToShow = subPackageName.replace('.', File.separatorChar)
+                if (subPackageName.isNotEmpty()) {
+                    postfixToShow = File.separatorChar + postfixToShow
+                }
+
+                val moduleDirectories = rootPackage.getDirectories(allowedScope)
+                val result = mutableListOf<PsiDirectory>()
+                for (directory in moduleDirectories) {
+                    if (!pureKotlinSourceFoldersHolder.hasPurePrefixInVirtualFile(project, directory.virtualFile)) continue
+                    result += directory
+                }
+
+                existingDirectoryByPackage = DirectoryChooserUtil.selectDirectory(
+                    project,
+                    result.toTypedArray(),
+                    null,
+                    postfixToShow,
+                ) ?: return null
+
+                restOfName = subPackageName
             }
-
-            val moduleDirectories = getPackageDirectoriesInModule(rootPackage, module)
-            val result = mutableListOf<PsiDirectory>()
-            for (directory in moduleDirectories) {
-                if (!pureKotlinSourceFoldersHolder.hasPurePrefixInVirtualFile(project, directory.virtualFile)) continue
-                result += directory
-            }
-
-            existingDirectoryByPackage = DirectoryChooserUtil.selectDirectory(
-                project,
-                result.toTypedArray(),
-                null,
-                postfixToShow,
-            ) ?: return null
-
-            restOfName = subPackageName
         }
     }
 
