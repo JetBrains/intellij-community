@@ -3,7 +3,7 @@
 
     <applicationService serviceImplementation="com.intellij.feedback.state.createdProject.NewProjectStatisticService"/>
 
-    <notificationGroup displayType="BALLOON" id="Feedback Notification" bundle="messages.FeedbackMessages"/>
+    <notificationGroup displayType="BALLOON" id="Project Creation Feedback" bundle="messages.FeedbackMessages"/>
 
     <typedHandler implementation="com.intellij.feedback.track.active.EditorTypingEventTracker"/>
     <editorFactoryMouseListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>

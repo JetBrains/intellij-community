@@ -6,7 +6,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 
 class ThanksForFeedbackNotification : Notification(
-  "Feedback Notification",
+  "Project Creation Feedback",
   FeedbackBundle.message("notification.thanks.feedback.title"),
   FeedbackBundle.message("notification.thanks.feedback.content"),
   NotificationType.INFORMATION
