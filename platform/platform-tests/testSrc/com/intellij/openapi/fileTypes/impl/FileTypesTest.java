@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -1401,6 +1402,52 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     finally {
       Disposer.dispose(disposable);
       WriteAction.run(() -> myFileTypeManager.removeAssociatedExtension(PlainTextFileType.INSTANCE, myWeirdExtension));
+    }
+  }
+
+  public void testIsFileOfTypeMustNotQueryAllFileTypesIdentifiableByVirtualFileForPerformanceReasons() throws IOException {
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      AtomicInteger count = new AtomicInteger();
+      class MyFileTypeIdentifiableByFile extends FakeFileType {
+        @Override public boolean isMyFileType(@NotNull VirtualFile file) { count.incrementAndGet(); return false; }
+        @Override public @NotNull String getName() { return "myfake"; }
+        @Override public @Nls @NotNull String getDisplayName() { return getName(); }
+        @Override public @NotNull @NlsContexts.Label String getDescription() { return getName(); }
+      }
+      FileType myType = new MyFileTypeIdentifiableByFile();
+      myFileTypeManager.registerFileType(myType, List.of(), disposable);
+
+      File f = createTempFile("xx.lkj_lkj_lkj_ljk", "a");
+      VirtualFile virtualFile = getVirtualFile(f);
+
+      FakeVirtualFile vf = new FakeVirtualFile(virtualFile, "myname.myname") {
+        @Override
+        public @NotNull FileType getFileType() {
+          return myFileTypeManager.getFileTypeByFile(this); // otherwise this call will be redirected to FileTypeManger.getIsntance() which is not what we are testing
+        }
+
+        @Override
+        public boolean isValid() {
+          return false; //to avoid detect by content
+        }
+      };
+      FileType ft = myFileTypeManager.getFileTypeByFile(vf);
+      assertEquals(UnknownFileType.INSTANCE, ft);
+      assertTrue(count.toString(), count.get() > 0);
+
+      count.set(0);
+      assertFalse(myFileTypeManager.isFileOfType(vf, PlainTextFileType.INSTANCE));
+      assertEquals(count.toString(), 0, count.get());
+
+      class MyOtherFileTypeIdentifiableByFile extends MyFileTypeIdentifiableByFile {
+        @Override public boolean isMyFileType(@NotNull VirtualFile file) { return false; }
+      }
+      assertFalse(myFileTypeManager.isFileOfType(vf, new MyOtherFileTypeIdentifiableByFile()));
+      assertEquals(count.toString(), 0, count.get());
+    }
+    finally {
+      Disposer.dispose(disposable);
     }
   }
 }
