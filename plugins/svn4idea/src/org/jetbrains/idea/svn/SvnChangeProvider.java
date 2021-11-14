@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -42,11 +41,9 @@ public class SvnChangeProvider implements ChangeProvider {
   public static final @NonNls String PROPERTY_LAYER = "Property";
 
   @NotNull private final SvnVcs myVcs;
-  @NotNull private final VcsContextFactory myFactory;
 
   public SvnChangeProvider(@NotNull SvnVcs vcs) {
     myVcs = vcs;
-    myFactory = VcsContextFactory.SERVICE.getInstance();
   }
 
   @Override
@@ -137,7 +134,7 @@ public class SvnChangeProvider implements ChangeProvider {
           if (isAncestor(copyFromURL, childUrl)) {
             String relativePath = getRelativeUrl(copyFromURL, childUrl);
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
-            FilePath newFilePath = myFactory.createFilePathOn(newPath);
+            FilePath newFilePath = VcsUtil.getFilePath(newPath);
             if (!context.isDeleted(newFilePath)) {
               applyMovedChange(context, newFilePath, dirtyScope, deletedToDelete, deletedChild, context.getTreeConflictStatus(newPath),
                                clName);
@@ -169,9 +166,9 @@ public class SvnChangeProvider implements ChangeProvider {
           status = null;
         }
         if (status != null && status.is(StatusType.STATUS_DELETED)) {
-          final FilePath filePath = myFactory.createFilePathOn(wcPath, status.isDirectory());
-          final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
-          final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
+          FilePath filePath = VcsUtil.getFilePath(wcPath, status.isDirectory());
+          SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
+          ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
           context.getBuilder().processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
                                                    SvnUtil.getChangelistName(status), SvnVcs.getKey());
           foundRename = true;
@@ -193,27 +190,17 @@ public class SvnChangeProvider implements ChangeProvider {
                                 @NotNull SvnChangedFile deletedFile,
                                 @Nullable Status copiedStatus,
                                 @Nullable String clName) {
-    final Change change = context
-      .createMovedChange(createBeforeRevision(deletedFile, true), CurrentContentRevision.create(oldPath), copiedStatus,
-                         deletedFile.getStatus());
-    final boolean isUnder = dirtyScope == null
-                            ? true
-                            : ReadAction.compute(() -> ChangeListManagerImpl.isUnder(change, dirtyScope));
+    FilePath filePath = VcsUtil.getFilePath(deletedFile.getStatus().getFile(), deletedFile.getFilePath().isDirectory());
+    SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, deletedFile.getStatus().getRevision());
+    ContentRevision afterRevision = CurrentContentRevision.create(oldPath);
+    Change change = context.createMovedChange(beforeRevision, afterRevision, copiedStatus, deletedFile.getStatus());
+    boolean isUnder = dirtyScope == null || ReadAction.compute(() -> ChangeListManagerImpl.isUnder(change, dirtyScope));
+
     if (isUnder) {
       context.getBuilder().removeRegisteredChangeFor(oldPath);
       context.getBuilder().processChangeInList(change, clName, SvnVcs.getKey());
       deletedToDelete.add(deletedFile);
     }
-  }
-
-  @NotNull
-  private SvnContentRevision createBeforeRevision(@NotNull SvnChangedFile changedFile, boolean forDeleted) {
-    Status status = changedFile.getStatus();
-    FilePath path = changedFile.getFilePath();
-
-    return SvnContentRevision
-      .createBaseRevision(myVcs, forDeleted ? VcsUtil.getFilePath(status.getFile(), path.isDirectory()) : path,
-                          status.getRevision());
   }
 
   @Override
