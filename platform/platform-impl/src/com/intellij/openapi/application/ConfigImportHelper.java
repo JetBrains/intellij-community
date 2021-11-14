@@ -186,7 +186,6 @@ public final class ConfigImportHelper {
         if (!guessedOldConfigDirs.fromSameProduct) {
           // do not import plugins from other products even if configs are imported
           configImportOptions.importPlugins = false;
-          configImportOptions.importBundledPlugins = settings != null && settings.shouldImportBundledPlugins();
           configImportOptions.importSettings = settings;
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
@@ -723,8 +722,7 @@ public final class ConfigImportHelper {
     final Logger log;
     boolean headless;
     boolean importPlugins = true;
-    boolean importBundledPlugins = false;
-    ConfigImportSettings importSettings;
+    @Nullable ConfigImportSettings importSettings;
     BuildNumber compatibleBuildNumber = null;
     MarketplacePluginDownloadService downloadService = null;
     Path bundledPluginPath = null;
@@ -769,8 +767,12 @@ public final class ConfigImportHelper {
     List<ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
 
     // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
-    if (!options.importPlugins && !options.importBundledPlugins) {
+    boolean importBundledPlugins = options.importSettings != null && options.importSettings.shouldImportBundledPlugins();
+    if (!options.importPlugins && !importBundledPlugins) {
       log.info("plugins are not imported.");
+    }
+    else if (!Files.isDirectory(oldPluginsDir) && !importBundledPlugins) {
+      log.info("non-existing plugins directory: " + oldPluginsDir);
     }
     else if (!isEmptyDirectory(newPluginsDir)) {
       log.info("non-empty plugins directory: " + newPluginsDir);
@@ -819,10 +821,7 @@ public final class ConfigImportHelper {
       List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
       List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
       List<PluginId> pendingUpdates;
-      if (!Files.isDirectory(oldPluginsDir)) {
-        pendingUpdates = new ArrayList<>();
-        log.info("non-existing plugins directory: " + oldPluginsDir);
-      } else if (!options.importPlugins) {
+      if (!options.importPlugins) {
         pendingUpdates = new ArrayList<>();
         log.info("non-bundled plugins are not imported.");
       } else {
@@ -837,7 +836,7 @@ public final class ConfigImportHelper {
         migratePlugins(newPluginsDir, pluginsToMigrate, pendingUpdates, log);
       }
 
-      if (options.importBundledPlugins) {
+      if (options.importSettings != null && options.importSettings.shouldImportBundledPlugins()) {
         collectBundledPluginsToDownload(oldConfigDir, pluginsToDownload, options);
       }
 
@@ -1169,14 +1168,13 @@ public final class ConfigImportHelper {
   private static void collectBundledPluginsToDownload(Path configDir,
                                                       List<IdeaPluginDescriptor> pluginsToDownload,
                                                       ConfigImportOptions options) {
-    @Nullable Set<String> categories = options.importSettings.getBundledPluginCategoriesToImport();
-    @Nullable List<BundledPluginsState.PluginWithCategory> plugins = BundledPluginsState.getBundledPlugins(configDir);
+    @Nullable List<kotlin.Pair<PluginId, @Nullable String>> plugins = BundledPluginsState.getBundledPlugins(configDir);
+    @NotNull ConfigImportSettings settings = Objects.requireNonNull(options.importSettings);
     if (plugins != null) {
-      for (BundledPluginsState.PluginWithCategory plugin : plugins) {
-        if (categories == null ||
-            (plugin.getCategory() != null && categories.contains(plugin.getCategory())) ||
-            options.importSettings.shouldImportAnyway(plugin.getId())) {
-          PluginNode pluginNode = new PluginNode(plugin.getId());
+      // pairs of PluginId to Category
+      for (kotlin.Pair<PluginId, @Nullable String> plugin : plugins) {
+        if (settings.shouldImport(plugin.getFirst(), plugin.getSecond())) {
+          PluginNode pluginNode = new PluginNode(plugin.getFirst());
           pluginsToDownload.add(pluginNode);
         }
       }

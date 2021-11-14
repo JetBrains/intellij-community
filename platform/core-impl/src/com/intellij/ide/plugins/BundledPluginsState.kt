@@ -52,7 +52,7 @@ class BundledPluginsState {
     }
 
     @JvmStatic
-    fun getBundledPlugins(configDir: Path): List<PluginWithCategory>? {
+    fun getBundledPlugins(configDir: Path): List<Pair<PluginId, Category>>? {
       val file = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
       if (!file.exists()) {
         return null
@@ -60,7 +60,7 @@ class BundledPluginsState {
       else if (!Files.isRegularFile(file)) {
         return null
       }
-      val bundledPlugins = mutableListOf<PluginWithCategory>()
+      val bundledPlugins = mutableListOf<Pair<PluginId, Category>>()
       try {
         file.readLines().map {
           val splitResult = it.trim().split("|")
@@ -69,7 +69,7 @@ class BundledPluginsState {
             return null
           }
           val (id, category) = splitResult
-          bundledPlugins.add(PluginWithCategory(PluginId.getId(id), if (category == "null") null else category))
+          bundledPlugins.add(Pair(PluginId.getId(id), if (category == "null") null else category))
         }
       }
       catch (e: IOException) {
@@ -88,5 +88,6 @@ class BundledPluginsState {
     }
   }
 
-  data class PluginWithCategory(val id: PluginId, val category: String?)
 }
+
+typealias Category = String?
