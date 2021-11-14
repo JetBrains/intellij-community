@@ -35,7 +35,10 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.lang.reflect.UndeclaredThrowableException
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Consumer
 import java.util.function.Function
@@ -634,21 +637,6 @@ idea.fatal.error.notification=disabled
       extraJars.add(file.name)
     }
     return extraJars
-  }
-
-  static void appendLibsToClasspathJar(BuildContext buildContext, @NotNull Path distDir, @NotNull List<String> extraJars) {
-    Path srcClassPathTxt = buildContext.paths.distAllDir.resolve("lib/classpath.txt")
-    Path destLibDir = distDir.resolve("lib")
-    //no file in fleet
-    if (Files.exists(srcClassPathTxt)) {
-      Path classPathTxt = destLibDir.resolve("classpath.txt")
-      Files.copy(srcClassPathTxt, classPathTxt, StandardCopyOption.REPLACE_EXISTING)
-      Files.writeString(classPathTxt, "\n" + String.join("\n", extraJars), StandardOpenOption.APPEND)
-      buildContext.messages.warning("added ${extraJars.size()} extra jars to classpath.txt")
-    }
-    else {
-      buildContext.messages.warning("no classpath.txt - no patching")
-    }
   }
 
   private void logFreeDiskSpace(String phase) {

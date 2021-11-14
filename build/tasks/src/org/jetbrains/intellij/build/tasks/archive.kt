@@ -114,10 +114,8 @@ fun crossPlatformZip(macDistDir: Path,
         }
       }
 
-      // linux has extra dbus-java
-      val excludeCommonClasspathFile = Files.exists(linuxDistDir.resolve("lib/classpath.txt"))
       out.dir(startDir = distAllDir, prefix = "", fileFilter = { _, relativeFile ->
-        relativeFile.toString() != "bin/idea.properties" && (!excludeCommonClasspathFile || relativeFile.toString() != "lib/classpath.txt")
+        relativeFile.toString() != "bin/idea.properties"
       }, entryCustomizer = entryCustomizer)
 
       out.dir(startDir = macDistDir, prefix = "", fileFilter = { _, relativeFile ->

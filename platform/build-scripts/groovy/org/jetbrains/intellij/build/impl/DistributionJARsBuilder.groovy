@@ -241,10 +241,10 @@ final class DistributionJARsBuilder {
         scramble(context)
       }
 
-      buildHelper.writeClasspath.invokeWithArguments(context.paths.distAllDir,
-                                                     context.productProperties.productLayout.mainJarName,
-                                                     context.productProperties.isAntRequired ?
-                                                     context.paths.communityHomeDir.resolve("lib/ant/lib") : null)
+      context.bootClassPathJarNames = (List<String>)buildHelper.generateClasspath
+        .invokeWithArguments(context.paths.distAllDir,
+                             context.productProperties.productLayout.mainJarName,
+                             context.productProperties.isAntRequired ? context.paths.communityHomeDir.resolve("lib/ant/lib") : null)
       return result
     })
     List<DistributionFileEntry> entries = ForkJoinTask.invokeAll(Arrays.asList(

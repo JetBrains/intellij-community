@@ -45,7 +45,7 @@ final class BuildHelper {
   private final MethodHandle runProcessHandle
 
   final MethodHandle brokenPluginsTask
-  final MethodHandle writeClasspath
+  final MethodHandle generateClasspath
   final BiConsumer<Path, List<?>> buildJar
   final BiConsumer<List<Triple<Path, String, List<?>>>, Boolean> buildJars
   final BiFunction<Path, IntConsumer, ?> createZipSource
@@ -104,9 +104,9 @@ final class BuildHelper {
                                           "buildBrokenPlugins",
                                           MethodType.methodType(aVoid, path, string, bool))
 
-    writeClasspath = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ReorderJarsKt"),
-                                       "writeClasspath",
-                                       MethodType.methodType(aVoid, path, string, path))
+    generateClasspath = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ReorderJarsKt"),
+                                          "generateClasspath",
+                                          MethodType.methodType(list, path, string, path))
 
     Class<?> jarBuilder = helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.JarBuilder")
 

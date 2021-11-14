@@ -402,13 +402,16 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  @SuppressWarnings('SpellCheckingInspection')
+  @SuppressWarnings("SpellCheckingInspection")
   @NotNull List<String> getAdditionalJvmArguments() {
     List<String> jvmArgs = new ArrayList<>()
 
     String classLoader = productProperties.classLoader
     if (classLoader != null) {
-      jvmArgs.add('-Djava.system.class.loader=' + classLoader)
+      jvmArgs.add("-Djava.system.class.loader=" + classLoader)
+      if (classLoader == "com.intellij.util.lang.PathClassLoader") {
+        jvmArgs.add("-Didea.strict.classpath=true")
+      }
     }
 
     jvmArgs.add('-Didea.vendor.name=' + applicationInfo.shortCompanyName)

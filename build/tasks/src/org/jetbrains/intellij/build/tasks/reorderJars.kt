@@ -60,11 +60,11 @@ internal fun reorderJar(relativePath: String, file: Path, traceContext: Context)
     }
 }
 
-fun writeClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?) {
-  tracer.spanBuilder("generate classpath.txt")
+fun generateClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?): List<String> {
+  tracer.spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
     .startSpan()
-    .use {
+    .use { span ->
       val libDir = homeDir.resolve("lib")
 
       val osName = System.getProperty("os.name")
@@ -79,9 +79,9 @@ fun writeClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?) {
         rootDir = homeDir,
         mainJarName = mainJarName
       )
-      val coreClassLoaderFiles = computeAppClassPath(sourceToNames, libDir, antLibDir)
-      val resultFile = libDir.resolve("classpath.txt")
-      Files.writeString(resultFile, coreClassLoaderFiles.joinToString(separator = "\n") { libDir.relativize(it).toString() })
+      val result = computeAppClassPath(sourceToNames, libDir, antLibDir).map { libDir.relativize(it).toString() }
+      span.setAttribute(AttributeKey.stringArrayKey("result"), result)
+      return result
     }
 }
 

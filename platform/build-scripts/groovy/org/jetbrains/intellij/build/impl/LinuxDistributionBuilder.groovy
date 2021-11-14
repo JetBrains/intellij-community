@@ -48,8 +48,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
         BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
         BuildTasksImpl.copyDistFiles(buildContext, unixDistPath)
-        List<String> extraJars = BuildTasksImpl.addDbusJava(buildContext, unixDistPath.resolve("lib"))
-        BuildTasksImpl.appendLibsToClasspathJar(buildContext, unixDistPath, extraJars)
+        List<String> extraJarNames = BuildTasksImpl.addDbusJava(buildContext, unixDistPath.resolve("lib"))
         Files.copy(ideaProperties, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
         //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
         // for real installers we need to checkout all text files with 'lf' separators anyway
@@ -59,7 +58,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
                      StandardCopyOption.REPLACE_EXISTING)
         }
         generateVMOptions(distBinDir)
-        generateScripts(distBinDir)
+        generateScripts(distBinDir, extraJarNames)
         generateReadme(unixDistPath)
         generateVersionMarker(unixDistPath, buildContext)
         customizer.copyAdditionalFiles(buildContext, unixDistPath)
@@ -103,14 +102,18 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private static String makePathsVar(String variableName, List<String> jarNames) {
-    if (jarNames.isEmpty()) return ""
+    if (jarNames.isEmpty()) {
+      return ""
+    }
     String classPath = "$variableName=\"\$IDE_HOME/lib/${jarNames[0]}\"\n"
-    if (jarNames.size() == 1) return classPath
-    return classPath + jarNames[1..-1].collect { "$variableName=\"\$$variableName:\$IDE_HOME/lib/${it}\"\n" }.join("")
+    if (jarNames.size() == 1) {
+      return classPath
+    }
+    return classPath + String.join("", jarNames[1..-1].collect { "$variableName=\"\$$variableName:\$IDE_HOME/lib/${it}\"\n" })
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void generateScripts(@NotNull Path distBinDir) {
+  private void generateScripts(@NotNull Path distBinDir, @NotNull List<String> extraJarNames) {
     String fullName = buildContext.applicationInfo.productName
     String baseName = buildContext.productProperties.baseFileName
     String scriptName = "${baseName}.sh"
@@ -118,13 +121,15 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
     String bootClassPath = makePathsVar("BOOT_CLASS_PATH", buildContext.xBootClassPathJarNames)
     String classPathVarName = "CLASSPATH"
-    String classPath = makePathsVar(classPathVarName, buildContext.bootClassPathJarNames)
+    String classPath = makePathsVar(classPathVarName, buildContext.bootClassPathJarNames + extraJarNames)
     if (buildContext.productProperties.toolsJarRequired) {
       classPath += "$classPathVarName=\"\$$classPathVarName:\$JDK/lib/tools.jar\"\n"
     }
 
     List<String> additionalJvmArgs = buildContext.additionalJvmArguments
-    if (!bootClassPath.isEmpty()) additionalJvmArgs += "-Xbootclasspath/a:\$BOOT_CLASS_PATH"
+    if (!bootClassPath.isEmpty()) {
+      additionalJvmArgs += "-Xbootclasspath/a:\$BOOT_CLASS_PATH"
+    }
 
     Path vmOptionsPath = distBinDir.resolve("${buildContext.productProperties.baseFileName}64.vmoptions")
     if (!Files.exists(vmOptionsPath)) {
@@ -220,7 +225,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       paths += jreDirectoryPath
       javaExecutablePath = "jbr/bin/java"
     }
-    boolean hasPatchedClasspathTxt = Files.exists(unixDistPath.resolve("lib/classpath.txt"))
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(Paths.get(productJsonDir), javaExecutablePath)
     paths += productJsonDir
@@ -235,9 +239,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           tarfileset(dir: path, prefix: tarRoot) {
             executableFilesPatterns.each {pattern ->
               exclude(name: pattern)
-            }
-            if (hasPatchedClasspathTxt && path == buildContext.paths.distAll) {
-              exclude(name: "lib/classpath.txt")
             }
             type(type: "file")
           }
@@ -348,7 +349,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro")
         arg(value: "--volume=${snapDir}/result:/build/result")
         arg(value: "--volume=${buildContext.paths.distAll}:/build/dist.all:ro")
-        arg(value: "--volume=${unixSnapDistPath}/lib/classpath.txt:/build/dist.all/lib/classpath.txt:ro")
         arg(value: "--volume=${unixSnapDistPath}:/build/dist.unix:ro")
         arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
         arg(value: "--workdir=/build")

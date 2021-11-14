@@ -16,12 +16,10 @@ public final class PathClassLoader extends UrlClassLoader {
 
   private static final boolean isParallelCapable = registerAsParallelCapable();
 
-  private final BytecodeTransformer transformer;
+  private BytecodeTransformer transformer;
 
   public PathClassLoader(@NotNull UrlClassLoader.Builder builder) {
     super(builder, RESOURCE_FILE_FACTORY, isParallelCapable);
-
-    transformer = null;
   }
 
   public interface BytecodeTransformer {
@@ -37,9 +35,9 @@ public final class PathClassLoader extends UrlClassLoader {
     return RESOURCE_FILE_FACTORY;
   }
 
-  public PathClassLoader(Builder builder, BytecodeTransformer transformer) {
-    super(builder, RESOURCE_FILE_FACTORY, isParallelCapable);
-
+  public void setTransformer(BytecodeTransformer transformer) {
+    // redefinition is not allowed
+    assert this.transformer == null;
     this.transformer = transformer;
   }
 
@@ -65,6 +63,7 @@ public final class PathClassLoader extends UrlClassLoader {
   @Override
   public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader, @Nullable ProtectionDomain protectionDomain)
     throws IOException {
+    BytecodeTransformer transformer = this.transformer;
     if (transformer != null && transformer.isApplicable(name, this, protectionDomain)) {
       byte[] transformedData = transformer.transform(this, name, protectionDomain, data);
       if (transformedData != null) {
