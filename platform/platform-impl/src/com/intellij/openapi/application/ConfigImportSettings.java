@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
 @ApiStatus.Internal
 public interface ConfigImportSettings {
@@ -22,8 +21,7 @@ public interface ConfigImportSettings {
    * @return the {@link PathManager#getPathsSelector() path selector} of an IDE to import configs from,
    * or null if no import should happen if there are no configs for this product.
    */
-  @Nullable
-  default String getProductToImportFrom(@NotNull List<String> programArgs) {
+  default @Nullable String getProductToImportFrom(@NotNull List<String> programArgs) {
     return null;
   }
 
@@ -44,25 +42,11 @@ public interface ConfigImportSettings {
   }
 
   /**
-   * If settings are imported from other product and if bundled plugins importing enabled,
-   * then bundled plugin would be imported only if it belongs to one of the categories returned by this method
+   * Determines whether bundled plugin from other product should be imported if bundled plugins importing enabled or not.
    *
-   * @return the array of plugin categories to import,
-   * or null to import all bundled plugins.
+   * @return true if plugin should be imported
    */
-  @Nullable
-  default Set<String> getBundledPluginCategoriesToImport() {
-    return null;
-  }
-
-  /**
-   * If settings are imported from other product and if bundled plugins importing enabled,
-   * and plugin category isn't in the set returned from {@code getBundledPluginCategoriesToImport()},
-   * it can be whitelisted to be imported anyway
-   *
-   * @return true if plugin should be imported anyway, false otherwise
-   */
-  default boolean shouldImportAnyway(@NotNull PluginId id) {
-    return false;
+  default boolean shouldImport(@NotNull PluginId id, @Nullable String category) {
+    return true;
   }
 }
