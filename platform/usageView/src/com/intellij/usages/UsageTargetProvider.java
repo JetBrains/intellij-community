@@ -16,10 +16,10 @@ import org.jetbrains.annotations.Nullable;
 public interface UsageTargetProvider {
 
   /**
-   * @param editor a currently opened editor
-   * @param file   a currently opened file in the {@code editor}
+   * @param editor currently opened editor
+   * @param file   currently opened file in the {@code editor}
    * @return array of usage targets at the current editor offset in the file,
-   * or {@code null} or an empty array if there is no usage targets at the current editor offset in the file
+   * or {@code null} or an empty array if there are no usage targets at the current editor offset in the file
    */
   default UsageTarget @Nullable [] getTargets(@NotNull Editor editor, @NotNull PsiFile file) {
     return null;
