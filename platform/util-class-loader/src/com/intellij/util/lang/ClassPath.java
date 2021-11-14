@@ -145,7 +145,6 @@ public final class ClassPath {
   }
 
   /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
-  @ApiStatus.Internal
   synchronized void addFiles(@NotNull List<Path> files) {
     for (int i = files.size() - 1; i >= 0; i--) {
       this.files.add(files.get(i));
@@ -153,8 +152,12 @@ public final class ClassPath {
     allUrlsWereProcessed = false;
   }
 
-  // think twice before use
+  // use only after approval
   public synchronized void appendFiles(@NotNull List<Path> newList) {
+    if (newList.isEmpty()) {
+      return;
+    }
+
     Set<Path> existing = new HashSet<>(files);
     for (int i = newList.size() - 1; i >= 0; i--) {
       Path file = newList.get(i);

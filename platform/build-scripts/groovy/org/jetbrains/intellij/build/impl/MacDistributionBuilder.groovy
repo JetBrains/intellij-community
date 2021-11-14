@@ -298,8 +298,8 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     properties.addAll(platformProperties)
     Files.write(macDistDir.resolve("bin/idea.properties"), properties)
 
-    String bootClassPath = context.xBootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
-    String classPath = context.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
+    String bootClassPath = String.join(":", context.xBootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/$it" })
+    String classPath = String.join(":", context.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/$it" })
 
     List<String> fileVmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties)
     List<String> additionalJvmArgs = context.additionalJvmArguments
