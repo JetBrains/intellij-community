@@ -12,6 +12,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.ArrayUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -30,7 +31,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   }
 
   @Override
-  public PsiClass addClass(@NotNull @NonNls final String classText) {
+  public PsiClass addClass(@NonNls @NotNull @Language("JAVA") String classText) {
     assertInitialized();
 
     String rootPath = getTempDirPath();
@@ -53,7 +54,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     return psiClass;
   }
 
-  private PsiClass addClass(@NonNls final String rootPath, @NotNull @NonNls final String classText) {
+  private PsiClass addClass(@NonNls final String rootPath, @NonNls @NotNull @Language("JAVA") String classText) {
     final String qName =
       ReadAction.compute(() -> {
         final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());

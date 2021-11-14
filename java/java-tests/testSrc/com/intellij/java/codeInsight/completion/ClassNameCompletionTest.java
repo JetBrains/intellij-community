@@ -16,6 +16,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.TestDataPath;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -93,8 +95,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path +"/after3.java");
   }
 
-  private void createClass(String text) {
-    //noinspection LanguageMismatch
+  private void createClass(@NotNull @Language("JAVA") String text) {
     myFixture.addClass(text);
   }
 

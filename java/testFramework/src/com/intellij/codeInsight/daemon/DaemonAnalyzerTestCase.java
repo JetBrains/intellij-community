@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -46,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlSchemaProvider;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -376,17 +376,14 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  public PsiClass createClass(String text) throws IOException {
-    return createClass(myModule, text);
-  }
-
-  protected PsiClass createClass(final Module module, final String text) throws IOException {
+  @NotNull
+  public PsiClass createClass(@NotNull @Language("JAVA") String text) throws IOException {
     return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
       final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, text);
       final String qname = javaFile.getClasses()[0].getQualifiedName();
       assertNotNull(qname);
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getSourceRoots();
+      final VirtualFile[] files = ModuleRootManager.getInstance(myModule).getSourceRoots();
       File dir;
       if (files.length > 0) {
         dir = VfsUtilCore.virtualToIoFile(files[0]);
@@ -394,7 +391,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       else {
         dir = createTempDirectory();
         VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-        addSourceContentToRoots(module, vDir);
+        addSourceContentToRoots(myModule, vDir);
       }
 
       File file = new File(dir, qname.replace('.', '/') + ".java");
