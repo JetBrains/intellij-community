@@ -43,12 +43,10 @@ public class SvnChangeProvider implements ChangeProvider {
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final VcsContextFactory myFactory;
-  @NotNull private final SvnFileUrlMappingImpl mySvnFileUrlMapping;
 
   public SvnChangeProvider(@NotNull SvnVcs vcs) {
     myVcs = vcs;
     myFactory = VcsContextFactory.SERVICE.getInstance();
-    mySvnFileUrlMapping = (SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping();
   }
 
   @Override
@@ -56,7 +54,7 @@ public class SvnChangeProvider implements ChangeProvider {
                          @NotNull ChangeListManagerGate addGate) throws VcsException {
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
-      final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs, mySvnFileUrlMapping);
+      final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs);
       final EventDispatcher<StatusReceiver> statusReceiver = EventDispatcher.create(StatusReceiver.class);
       statusReceiver.addListener(context);
       statusReceiver.addListener(nestedCopiesBuilder);
@@ -76,7 +74,7 @@ public class SvnChangeProvider implements ChangeProvider {
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);
 
-      mySvnFileUrlMapping.acceptNestedData(nestedCopiesBuilder.getCopies());
+      myVcs.getSvnFileUrlMappingImpl().acceptNestedData(nestedCopiesBuilder.getCopies());
     } catch (SvnExceptionWrapper e) {
       LOG.info(e);
       throw new VcsException(e.getCause());
