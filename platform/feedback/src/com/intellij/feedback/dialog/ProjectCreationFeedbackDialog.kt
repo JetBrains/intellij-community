@@ -18,9 +18,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.layout.*
 import com.intellij.util.BooleanFunction
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
@@ -57,7 +55,6 @@ class ProjectCreationFeedbackDialog(
   private val checkBoxEmptyProjectDontWorkProperty = propertyGraph.graphProperty { false }
   private val checkBoxHardFindDesireProjectProperty = propertyGraph.graphProperty { false }
   private val checkBoxFrameworkProperty = propertyGraph.graphProperty { false }
-  private val textFieldFrameworkProperty = propertyGraph.graphProperty { "" }
   private val checkBoxOtherProperty = propertyGraph.graphProperty { false }
   private val textFieldOtherProblemProperty = propertyGraph.graphProperty { "" }
   private val textAreaOverallFeedbackProperty = propertyGraph.graphProperty { "" }
@@ -71,23 +68,10 @@ class ProjectCreationFeedbackDialog(
 
   private val textAreaRowSize = 4
   private val textFieldEmailColumnSize = 25
-  private val textFieldNoFrameworkColumnSize = 41
   private val textFieldOtherColumnSize = 41
   private val textAreaOverallFeedbackColumnSize = 42
 
   private val jsonConverter = Json { prettyPrint = true }
-
-  private val checkBoxFrameworkComponentPredicate = object : ComponentPredicate() {
-    override fun addListener(listener: (Boolean) -> Unit) {
-      checkBoxFrameworkProperty.afterChange {
-        listener(checkBoxFrameworkProperty.get())
-      }
-    }
-
-    override fun invoke(): Boolean {
-      return checkBoxFrameworkProperty.get()
-    }
-  }
 
   init {
     init()
@@ -144,7 +128,7 @@ class ProjectCreationFeedbackDialog(
       resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.3.label"))
     }
     if (checkBoxFrameworkProperty.get()) {
-      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.4.label", textFieldFrameworkProperty.get()))
+      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.4.label"))
     }
     if (checkBoxOtherProperty.get()) {
       resultProblemsList.add(textFieldOtherProblemProperty.get())
@@ -167,7 +151,7 @@ class ProjectCreationFeedbackDialog(
           add(createProblemJsonObject(HARD_TO_FIND))
         }
         if (checkBoxFrameworkProperty.get()) {
-          add(createProblemJsonObject(LACK_OF_FRAMEWORK, textFieldFrameworkProperty.get()))
+          add(createProblemJsonObject(LACK_OF_FRAMEWORK))
         }
         if (checkBoxOtherProperty.get()) {
           add(createProblemJsonObject(OTHER, textFieldOtherProblemProperty.get()))
@@ -232,15 +216,6 @@ class ProjectCreationFeedbackDialog(
       row {
         checkBox(FeedbackBundle.message("dialog.created.project.checkbox.4.label")).bindSelected(checkBoxFrameworkProperty)
       }
-      indent {
-        row {
-          textField()
-            .bindText(textFieldFrameworkProperty)
-            .columns(textFieldNoFrameworkColumnSize).applyToComponent {
-              emptyText.text = FeedbackBundle.message("dialog.created.project.checkbox.4.textfield.placeholder")
-            }
-        }.visibleIf(checkBoxFrameworkComponentPredicate)
-      }
 
       row {
         checkBox("").bindSelected(checkBoxOtherProperty).applyToComponent {
@@ -254,10 +229,14 @@ class ProjectCreationFeedbackDialog(
             checkBoxOtherProperty.get() && it.text.isBlank()
           }
           .applyToComponent {
-            isEnabled = checkBoxOtherProperty.get()
             emptyText.text = FeedbackBundle.message("dialog.created.project.checkbox.5.placeholder")
-            checkBoxOther?.addChangeListener { _ ->
-              isEnabled = checkBoxOtherProperty.get()
+            textFieldOtherProblemProperty.afterChange {
+              if (it.isNotBlank()) {
+                checkBoxOtherProperty.set(true)
+              }
+              else {
+                checkBoxOtherProperty.set(false)
+              }
             }
             putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
                               BooleanFunction<JBTextField> { textField -> textField.text.isEmpty() })
@@ -321,11 +300,6 @@ class ProjectCreationFeedbackDialog(
       }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.MEDIUM)
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
-      checkBoxFrameworkProperty.afterChange {
-        SwingUtilities.invokeLater {
-          pack()
-        }
-      }
     }
   }
 
