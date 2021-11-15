@@ -24,30 +24,29 @@ import java.util.Arrays;
  * @author ven
  */
 public abstract class LanguageLevelCombo extends ComboBoxWithSeparators<LanguageLevel> {
-  private final static Integer[] LTS = {8, 11, 17};
+  private final static LanguageLevel[] LTS = {LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8};
 
   public LanguageLevelCombo(@Nls String defaultItem) {
     addItem(new DefaultEntry(defaultItem));
 
     addItem(new Separator(JavaUiBundle.message("language.level.combo.lts.versions")));
 
-    Arrays.stream(LanguageLevel.values())
-      .sorted((l1, l2) -> l2.toJavaVersion().feature - l1.toJavaVersion().feature)
-      .filter(level -> level != LanguageLevel.JDK_X && !level.isPreview() && ArrayUtil.contains(level.toJavaVersion().feature, LTS))
-      .forEach(level -> addItem(new Entry(level)));
+    for (LanguageLevel level : LTS) {
+      addItem(new Entry(level));
+    }
 
     addItem(new Separator(JavaUiBundle.message("language.level.combo.other.versions")));
 
     Arrays.stream(LanguageLevel.values())
       .sorted((l1, l2) -> l2.toJavaVersion().feature - l1.toJavaVersion().feature)
-      .filter(level -> level != LanguageLevel.JDK_X && (level.isPreview() || !ArrayUtil.contains(level.toJavaVersion().feature, LTS)))
+      .filter(level -> level != LanguageLevel.JDK_X && (level.isPreview() || !ArrayUtil.contains(level, LTS)))
       .forEach(level -> addItem(new Entry(level)));
 
     addItem(new Entry(LanguageLevel.JDK_X));
   }
 
   private class Entry extends ComboBoxWithSeparators<LanguageLevel>.EntryModel<LanguageLevel> {
-    private Entry(@Nullable LanguageLevel myItem) {
+    private Entry(@NotNull LanguageLevel myItem) {
       super(myItem);
     }
 
