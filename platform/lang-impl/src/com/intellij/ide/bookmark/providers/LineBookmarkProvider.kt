@@ -2,6 +2,7 @@
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.DirectoryUrl
 import com.intellij.ide.projectView.impl.PsiFileUrl
 import com.intellij.openapi.editor.Document
@@ -23,8 +24,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
+import javax.swing.tree.TreePath
 
 class LineBookmarkProvider(private val project: Project) : BookmarkProvider, EditorMouseListener, Simple {
   override fun getWeight() = Int.MIN_VALUE
@@ -61,6 +64,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     // above // migrate old bookmarks and favorites
     is PsiElement -> createBookmark(context)
     is VirtualFile -> createBookmark(context, -1)
+    is TreePath -> createBookmark(context)
     else -> null
   }
 
@@ -91,6 +95,16 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
       else -> null
     }
   }
+
+  private fun createBookmark(path: TreePath): FileBookmark? {
+     val file = path.asVirtualFile ?: return null
+    val parent = path.parentPath?.asVirtualFile ?: return null
+    // see com.intellij.ide.projectView.impl.ClassesTreeStructureProvider
+    return if (!parent.isDirectory || file.parent != parent) null else createBookmark(file)
+  }
+
+  private val TreePath.asVirtualFile
+    get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
   private val MouseEvent.isUnexpected
     get() = !SwingUtilities.isLeftMouseButton(this) || isPopupTrigger || if (SystemInfo.isMac) !isMetaDown else !isControlDown
