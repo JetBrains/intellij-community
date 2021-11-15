@@ -76,7 +76,7 @@ import javax.swing.event.TreeSelectionListener
 internal class BranchesDashboardUi(project: Project, private val logUi: BranchesVcsLogUi) : Disposable {
   private val uiController = BranchesDashboardController(project, this)
 
-  private val tree = FilteringBranchesTree(project, BranchesTreeComponent(project), uiController)
+  private val tree = FilteringBranchesTree(project, BranchesTreeComponent(project), uiController, disposable = this)
   private val branchViewSplitter = BranchViewSplitter()
   private val branchesTreePanel = BranchesTreePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(tree.component, true)
