@@ -2,14 +2,9 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.util.io.exists
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
 import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
@@ -36,15 +31,12 @@ import com.jetbrains.packagesearch.intellij.plugin.util.throttle
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -62,11 +54,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.json.Json
-import org.jetbrains.annotations.Nls
 import java.nio.file.Files
 import java.util.concurrent.Executors
 import kotlin.time.Duration
@@ -263,52 +251,9 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             .launchIn(this)
 
         coroutineContext.job.invokeOnCompletion { installedDependenciesExecutor.close() }
-        var syncMutex: Mutex? = null
-        isLoadingFlow.onEach { isLoading ->
-            if (isLoading) {
-                syncMutex = Mutex(true).also {
-                    ProgressManager.getInstance().runBackgroundLoadingBar(
-                        project,
-                        PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
-                        PackageSearchBundle.message("packagesearch.ui.loading"),
-                        it
-                    )
-                }
-            } else {
-                syncMutex?.unlock()
-            }
-        }.launchIn(this)
     }
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
         operationExecutedChannel.trySend(successes)
     }
 }
-
-private fun ProgressManager.runBackground(
-    project: Project,
-    @Nls message: String,
-    runnable: suspend (ProgressIndicator) -> Unit
-): Job {
-    val deferred = Job()
-    run(object : Task.Backgroundable(project, message) {
-        override fun run(indicator: ProgressIndicator): Unit = runBlocking {
-            val job = launch { runnable(indicator) }
-            while (job.isActive) {
-                if (indicator.isCanceled) {
-                    job.cancel()
-                    deferred.completeExceptionally(ProcessCanceledException())
-                }
-                delay(Duration.milliseconds(50))
-            }
-            deferred.complete()
-        }
-    })
-    return deferred
-}
-
-private fun ProgressManager.runBackgroundLoadingBar(project: Project, @Nls upperMessage: String, @Nls lowerMessage: String, syncSignal: Mutex) =
-    runBackground(project, upperMessage) {
-        it.text = lowerMessage
-        syncSignal.lock()
-    }
