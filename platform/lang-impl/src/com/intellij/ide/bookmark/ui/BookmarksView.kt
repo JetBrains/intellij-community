@@ -75,6 +75,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun getData(dataId: String): Any? = when {
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
+    PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
     else -> null
   }
 
