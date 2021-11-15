@@ -15,4 +15,15 @@ if [ ! -f "$REMOTE_DEV_SERVER_LAUNCHER_PATH" ]; then
   exit 1
 fi
 
-exec "$REMOTE_DEV_SERVER_LAUNCHER_PATH" "__script_name__" "__product_code__" "__product_uc__" "__vm_options__" "__ide_default_xmx__" "$@"
+should_restart_host="1"
+
+while [ "$should_restart_host" = "1" ]; do
+  # reset it from previous iteration
+  should_restart_host="0"
+  "$REMOTE_DEV_SERVER_LAUNCHER_PATH" "__script_name__" "__product_code__" "__product_uc__" "__vm_options__" "__ide_default_xmx__" "$@"
+  host_exit_code=$?
+  # 17 is the special exit code that IDE in remote dev mode uses to indicate it needs to be restarted
+  if [ $host_exit_code -eq 17 ]; then
+    should_restart_host="1"
+  fi
+done
