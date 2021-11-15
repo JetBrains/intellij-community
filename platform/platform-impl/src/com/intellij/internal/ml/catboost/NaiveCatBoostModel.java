@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ml.catboost;
 
 import java.io.*;
@@ -22,16 +22,18 @@ public class NaiveCatBoostModel {
   private final double[] leafValues;
   private final double scale;
   private final double bias;
+  private final boolean predictProbability;
 
   private NaiveCatBoostModel(int[] floatFeaturesIndex,
-                            int floatFeatureCount,
-                            int binaryFeatureCount,
-                            int treeCount,
-                            ArrayList<double[]> borders,
-                            int[] treeDepth,
-                            int[] treeSplitBorder,
-                            int[] treeSplitFeatureIndex,
-                            int[] treeSplitXorMask, double[] values, double scale, double bias) {
+                             int floatFeatureCount,
+                             int binaryFeatureCount,
+                             int treeCount,
+                             ArrayList<double[]> borders,
+                             int[] treeDepth,
+                             int[] treeSplitBorder,
+                             int[] treeSplitFeatureIndex,
+                             int[] treeSplitXorMask, double[] values, double scale, double bias,
+                             boolean predictProbability) {
     this.floatFeaturesIndex = floatFeaturesIndex;
     this.floatFeatureCount = floatFeatureCount;
     this.binaryFeatureCount = binaryFeatureCount;
@@ -44,6 +46,7 @@ public class NaiveCatBoostModel {
     leafValues = values;
     this.scale = scale;
     this.bias = bias;
+    this.predictProbability = predictProbability;
   }
 
   public double makePredict(double[] features) {
@@ -79,8 +82,13 @@ public class NaiveCatBoostModel {
       treeSplitsIndex += current_tree_depth;
       currentTreeLeafValuesIndex += (1 << current_tree_depth);
     }
+    result = scale * result + bias;
 
-    return scale * result + bias;
+    return predictProbability ? sigmoid(result) : result;
+  }
+
+  private static double sigmoid(double x) {
+    return 1. / (1. + Math.exp(-x));
   }
 
   public static NaiveCatBoostModel loadModel(InputStream fileStream) throws IOException {
@@ -105,6 +113,8 @@ public class NaiveCatBoostModel {
     double scale = stream.readDouble();
     double bias = stream.readDouble();
 
+    boolean predictProbability = stream.available() > 0 && stream.readBoolean(); // check eof for backward compatibility
+
     return new NaiveCatBoostModel(
       floatFeaturesIndex,
       floatFeatureCount,
@@ -117,7 +127,8 @@ public class NaiveCatBoostModel {
       treeSplitXorMask,
       leafValues,
       scale,
-      bias
+      bias,
+      predictProbability
     );
   }
 
@@ -147,7 +158,8 @@ public class NaiveCatBoostModel {
     return array;
   }
 
-  private static <T> ArrayList<T> readArrayList(DataInputStream stream, Function<? super DataInputStream, ? extends T> readElement) throws IOException {
+  private static <T> ArrayList<T> readArrayList(DataInputStream stream, Function<? super DataInputStream, ? extends T> readElement)
+    throws IOException {
     int size = stream.readInt();
     assert size > 0;
     ArrayList<T> list = new ArrayList<>(size);
