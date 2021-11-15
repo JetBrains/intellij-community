@@ -13,7 +13,7 @@ data class Duplicate(val pattern: List<PsiElement>, val candidate: List<PsiEleme
 class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChanges: Set<PsiExpression> = emptySet()) {
 
   companion object {
-    private val ORIGINAL_PSI_ELEMENT = Key<PsiElement>("java.duplicates.finder.original.element")
+    private val ELEMENT_IN_PHYSICAL_FILE = Key<PsiElement>("ELEMENT_IN_PHYSICAL_FILE")
 
     /**
      * Ensures that all [PsiMember] elements in copied [root] will be linked to [PsiMember] in the original [root] element.
@@ -21,11 +21,11 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
      */
     fun linkCopiedClassMembersWithOrigin(root: PsiElement) {
       SyntaxTraverser.psiTraverser(root).filter(PsiMember::class.java).forEach { member ->
-        member.putCopyableUserData(ORIGINAL_PSI_ELEMENT, member)
+        member.putCopyableUserData(ELEMENT_IN_PHYSICAL_FILE, member)
       }
     }
 
-    private fun getOriginalElement(element: PsiElement): PsiElement? = element.getCopyableUserData(ORIGINAL_PSI_ELEMENT)
+    private fun getElementInPhysicalFile(element: PsiElement): PsiElement? = element.getCopyableUserData(ELEMENT_IN_PHYSICAL_FILE)
 
     fun textRangeOf(range: List<PsiElement>) = TextRange(range.first().textRange.startOffset, range.last().textRange.endOffset)
   }
@@ -146,7 +146,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
 
   private fun areElementsEquivalent(pattern: PsiElement?, candidate: PsiElement?): Boolean {
     val manager = pattern?.manager ?: return false
-    return manager.areElementsEquivalent(getOriginalElement(pattern) ?: pattern, candidate)
+    return manager.areElementsEquivalent(getElementInPhysicalFile(pattern) ?: pattern, candidate)
   }
 
   private fun canBeReplaced(pattern: PsiElement, candidate: PsiElement): Boolean {
