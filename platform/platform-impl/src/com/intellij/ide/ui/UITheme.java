@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.jr.ob.JSON;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +14,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.io.DigestUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -39,6 +38,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.function.Function;
 
@@ -120,7 +120,7 @@ public final class UITheme {
     return "Temp theme".equals(id);
   }
 
-  // caches classes - must be not extracted to util class
+  // it caches classes - must be not extracted to util class
   private static final NotNullLazyValue<JSON> JSON_READER = NotNullLazyValue.atomicLazy(() -> {
     // .disable(JSON.Feature.PRESERVE_FIELD_ORDERING) - cannot be disabled, for unknown reason order is important
     // for example, button label font color for light theme is not white, but black
@@ -643,26 +643,36 @@ public final class UITheme {
     final Map<String, String> newPalette = new HashMap<>();
     final Map<String, Integer> alphas = new HashMap<>();
 
-    private byte[] hash = null;
+    private byte[] hash;
 
     byte @NotNull [] digest() {
-      if (hash != null) return hash;
-
-      final Hasher hasher = Hashing.sha256().newHasher();
-      //order is significant
-      for (Map.Entry<String, String> e : new TreeMap<>(newPalette).entrySet()) {
-        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
-        hasher.putString(e.getValue(), StandardCharsets.UTF_8);
+      if (hash != null) {
+        return hash;
       }
-      //order is significant
-      for (Map.Entry<String, Integer> e : new TreeMap<>(alphas).entrySet()) {
-        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
-        final Integer value = e.getValue();
-        if (value != null) {
-          hasher.putInt(value);
+
+      MessageDigest hasher = DigestUtil.sha256();
+      // order is significant
+      if (!newPalette.isEmpty()) {
+        for (Map.Entry<String, String> e : new TreeMap<>(newPalette).entrySet()) {
+          hasher.update(e.getKey().getBytes(StandardCharsets.UTF_8));
+          hasher.update(e.getValue().getBytes(StandardCharsets.UTF_8));
         }
       }
-      hash = hasher.hash().asBytes();
+      if (!alphas.isEmpty()) {
+        // order is significant
+        for (Map.Entry<String, Integer> e : new TreeMap<>(alphas).entrySet()) {
+          hasher.update(e.getKey().getBytes(StandardCharsets.UTF_8));
+          Integer value = e.getValue();
+          if (value != null) {
+            int i = value.intValue();
+            hasher.update((byte)i);
+            hasher.update((byte)(i >>> 8));
+            hasher.update((byte)(i >>> 16));
+            hasher.update((byte)(i >>> 24));
+          }
+        }
+      }
+      hash = hasher.digest();
       return hash;
     }
   }
