@@ -21,7 +21,6 @@ internal class MarkdownInlayUpdateOnSoftWrapListener: EditorFactoryListener {
       val softWrapModel = (editor.softWrapModel as? SoftWrapModelEx) ?: return
       softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
         override fun softWrapsChanged() {
-          editor.putUserData(MarkdownTableInlayProvider.DISABLE_TABLE_INLAYS, softWrapModel.isSoftWrappingEnabled)
           InlayHintsPassFactory.forceHintsUpdateOnNextPass()
         }
 
