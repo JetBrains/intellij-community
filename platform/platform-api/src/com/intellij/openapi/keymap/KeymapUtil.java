@@ -47,6 +47,7 @@ public final class KeymapUtil {
   private KeymapUtil() {
   }
 
+  @NlsSafe
   @NotNull
   public static String getShortcutText(@NotNull @NonNls String actionId) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
