@@ -88,7 +88,8 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private final JPanel myPanel;
   @NotNull private final MyPanel myMainPanel;
-  @NotNull protected final Wrapper myContentPanel;
+  @NotNull private final Wrapper myContentPanel;
+  @NotNull private final JPanel myTopPanel;
   @NotNull private final ActionToolbar myToolbar;
   @NotNull private final ActionToolbar myRightToolbar;
   @NotNull protected final Wrapper myToolbarWrapper;
@@ -162,12 +163,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
     myDiffInfoWrapper = new Wrapper();
-    BorderLayoutPanel topPanel = buildTopPanel();
+    myTopPanel = buildTopPanel();
 
     Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
     bottomContentSplitter.setFirstComponent(myContentPanel);
 
-    myMainPanel.add(topPanel, BorderLayout.NORTH);
+    myMainPanel.add(myTopPanel, BorderLayout.NORTH);
     myMainPanel.add(bottomContentSplitter, BorderLayout.CENTER);
 
     myMainPanel.setFocusTraversalPolicyProvider(true);
@@ -380,8 +381,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       myState.destroy();
       myToolbarStatusPanel.setContent(null);
       myContentPanel.setContent(null);
-      myToolbarWrapper.setBorder(null);
-      myRightToolbarWrapper.setBorder(null);
+      myTopPanel.setBorder(null);
       myDiffInfoWrapper.setContent(null);
 
       myToolbarGroup.removeAll();
@@ -1388,8 +1388,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
       if (shouldAddToolbarBottomBorder(toolbarComponents)) {
-        myToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
-        myRightToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+        myTopPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       }
     }
 
@@ -1453,8 +1452,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       myToolbarStatusPanel.setContent(toolbarComponents1.statusPanel); // TODO: combine both panels ?
       if (shouldAddToolbarBottomBorder(toolbarComponents1)) {
-        myToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
-        myRightToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+        myTopPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       }
     }
 

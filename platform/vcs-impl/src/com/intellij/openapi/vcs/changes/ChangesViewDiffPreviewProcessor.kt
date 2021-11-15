@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
@@ -14,8 +15,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_E
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.EditedCommitNode
@@ -65,14 +64,15 @@ private inline fun <reified T : ChangesBrowserNode<*>> findNodeOfType(node: Chan
 }
 
 private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesListView,
-                                              isInEditor : Boolean) :
-  ChangeViewDiffRequestProcessor(changesView.project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
+                                              private val isInEditor: Boolean)
+  : ChangeViewDiffRequestProcessor(changesView.project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
 
   init {
-    if (!isInEditor) {
-      myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    }
     putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true)
+  }
+
+  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
+    return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
   override fun getSelectedChanges(): Stream<Wrapper> =
