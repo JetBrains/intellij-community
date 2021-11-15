@@ -607,7 +607,7 @@ public final class UIUtil {
    * @return the property value from the specified component or {@code null}
    */
   public static <T> T getClientProperty(Object component, @NotNull Class<T> type) {
-    return ObjectUtils.tryCast(ClientProperty.get(ObjectUtils.tryCast(component, Component.class), (Object)type), type);
+    return ObjectUtils.tryCast(ClientProperty.get(ObjectUtils.tryCast(component, Component.class), type), type);
   }
 
   /**
