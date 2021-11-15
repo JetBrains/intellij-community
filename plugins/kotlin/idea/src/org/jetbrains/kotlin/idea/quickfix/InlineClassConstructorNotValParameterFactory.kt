@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.intentions.AddValVarToConstructorParameterActio
 
 object InlineClassConstructorNotValParameterFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-        val parameter = Errors.INLINE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.cast(diagnostic).psiElement
+        val parameter = Errors.VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.cast(diagnostic).psiElement
         return if (parameter.isMutable)
             ChangeVariableMutabilityFix(parameter, false)
         else
