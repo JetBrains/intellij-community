@@ -46,6 +46,7 @@ public final class Main {
   public static final int ACTIVATE_NOT_INITIALIZED = 14;
   public static final int ACTIVATE_ERROR = 15;
   public static final int ACTIVATE_DISPOSING = 16;
+  public static final int REMOTE_DEV_RESTART = 17;
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String CWM_HOST_COMMAND = "cwmHost";
