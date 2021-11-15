@@ -161,6 +161,10 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   private fun canAdd(bookmark: Bookmark) = null != findGroupsToAdd(bookmark)
 
   override fun add(bookmark: Bookmark, type: BookmarkType) {
+    synchronized(notifier) {
+      // if all groups are removed we should add default group
+      if (allGroups.isEmpty()) addOrReuseGroup(project.name)
+    }
     val groups = findGroupsToAdd(bookmark) ?: return
     val group = chooseGroupToAdd(groups) ?: return
     group.add(bookmark, type, null)
