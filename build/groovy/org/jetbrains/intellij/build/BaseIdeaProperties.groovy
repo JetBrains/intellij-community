@@ -92,7 +92,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
   )
 
-  protected static final Map<String, String> BASE_CLASS_VERSIONS = [
+  private static final Map<String, String> BASE_CLASS_VERSIONS = [
     ""                                                      : "11",
     "lib/idea_rt.jar"                                       : "1.6",
     "lib/forms_rt.jar"                                      : "1.6",
