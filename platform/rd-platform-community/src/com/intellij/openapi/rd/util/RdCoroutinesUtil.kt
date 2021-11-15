@@ -12,11 +12,17 @@ private val applicationThreadPool get() = RdCoroutineHost.applicationThreadPool
 private val processIODispatcher get() = RdCoroutineHost.processIODispatcher
 private val nonUrgentDispatcher get() = RdCoroutineHost.nonUrgentDispatcher
 private val uiDispatcher get() = RdCoroutineHost.instance.uiDispatcher
+private val uiDispatcherAnyModality get() = RdCoroutineHost.instance.uiDispatcherAnyModality
 
 fun Lifetime.launchOnUi(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(uiDispatcher, start, action)
+
+fun Lifetime.launchOnUiAnyModality(
+  start: CoroutineStart = CoroutineStart.DEFAULT,
+  action: suspend CoroutineScope.() -> Unit
+): Job = launch(uiDispatcherAnyModality, start, action)
 
 fun Lifetime.launchIOBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
