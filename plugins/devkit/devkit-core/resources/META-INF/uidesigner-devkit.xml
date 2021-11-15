@@ -1,9 +1,11 @@
 <idea-plugin>
+  <!-- todo IDEA-282478
   <actions>
     <action class="org.jetbrains.idea.devkit.formConversion.ConvertFormToDslAction"
             text="Convert Form to UI DSL"/>
   </actions>
-  
+  -->
+
   <extensions defaultExtensionNs="com.intellij">
     <editorNotificationProvider implementation="org.jetbrains.idea.devkit.formConversion.ConvertFormNotificationProvider"/>
   </extensions>
