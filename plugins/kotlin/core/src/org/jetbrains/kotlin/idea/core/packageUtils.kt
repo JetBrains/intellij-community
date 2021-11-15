@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.core
 
+import com.intellij.icons.AllIcons
+import com.intellij.ide.util.ChooseElementsDialog
 import com.intellij.ide.util.DirectoryChooserUtil
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
@@ -21,6 +24,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
+import com.intellij.psi.search.scope.GeneratedFilesScope
+import com.intellij.psi.search.scope.TestsScope
+import com.intellij.ui.FileColorManager
 import com.intellij.util.Query
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -39,11 +45,14 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
+import java.awt.Color
 import java.io.File
 import java.nio.file.Path
+import javax.swing.Icon
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 fun PsiDirectory.getPackage(): PsiPackage? = JavaDirectoryService.getInstance()!!.getPackage(this)
 
@@ -160,12 +169,10 @@ private fun VirtualFile.pathOrNull(): Path? = fileSystem.getNioPath(this)
 
 private fun Module.createSourceRootDirectory(nonGeneratedSourceFolders: List<SourceFolder>): VirtualFile? {
     val sourceFolderPaths = nonGeneratedSourceFolders.mapNotNull { convertUrlToPath(it.url) }.ifEmpty { null }
-    val contentEntriesPaths by lazy { rootManager.contentEntries.mapNotNull { it.file?.pathOrNull() ?: convertUrlToPath(it.url) } }
+    val contentEntryPaths by lazy { rootManager.contentEntries.mapNotNull { it.file?.pathOrNull() ?: convertUrlToPath(it.url) } }
 
-    val allowedPaths = sourceFolderPaths ?: contentEntriesPaths
-    val srcFolderPath = findSourceRootPathByExternalProject(allowedPaths)
-        ?: sourceFolderPaths?.singleOrNull()
-        ?: chooseSourceRootPathHeuristically(contentEntriesPaths)
+    val allowedPaths = sourceFolderPaths ?: contentEntryPaths
+    val srcFolderPath = chooseSourceRootPath(allowedPaths, sourceFolderPaths, contentEntryPaths) ?: return null
 
     runWriteAction {
         VfsUtil.createDirectoryIfMissing(srcFolderPath.absolutePathString())
@@ -175,10 +182,75 @@ private fun Module.createSourceRootDirectory(nonGeneratedSourceFolders: List<Sou
     return VfsUtil.findFile(srcFolderPath, true)
 }
 
-private fun Module.findSourceRootPathByExternalProject(allowedPaths: List<Path>): Path? = findContentRootsByExternalProject()
-    ?.firstNotNullOfOrNull { externalContentRoot ->
-        val path = Path(externalContentRoot.path)
-        path.takeIf { allowedPaths.any { path.startsWith(it) } }
+private fun Module.chooseSourceRootPath(allowedPaths: List<Path>, sourceFolderPaths: List<Path>?, contentEntryPaths: List<Path>): Path? {
+    val externalContentRoots = findSourceRootPathByExternalProject(allowedPaths)
+    if (!externalContentRoots.isNullOrEmpty()) {
+        val resultContentRoot = externalContentRoots.singleOrNull()
+            ?: ExternalContentRootChooser(project, externalContentRoots).showAndGetResult().firstOrNull()
+
+        return resultContentRoot?.nioPath
+    }
+
+    return sourceFolderPaths?.singleOrNull() ?: chooseSourceRootPathHeuristically(contentEntryPaths)
+}
+
+private fun Module.findSourceRootPathByExternalProject(
+    allowedPaths: List<Path>,
+): List<ExternalSystemContentRootContributor.ExternalContentRoot>? = findContentRootsByExternalProject()?.filter { externalContentRoot ->
+    val path = externalContentRoot.nioPath
+    allowedPaths.any { path.startsWith(it) }
+}
+
+private class ExternalContentRootChooser(project: Project, items: List<ExternalSystemContentRootContributor.ExternalContentRoot>) :
+    ChooseElementsDialog<ExternalSystemContentRootContributor.ExternalContentRoot>(
+        project,
+        items,
+        JavaRefactoringBundle.message("select.source.root.chooser.title"),
+        null,
+        true,
+    ) {
+
+    init {
+        myChooser.setSingleSelectionMode()
+    }
+
+    private val projectPath = project.basePath?.let(::Path)
+    private val testsColor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        FileColorManager.getInstance(project).getScopeColor(TestsScope.INSTANCE.scopeId)
+    }
+
+    private val generatedColor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        FileColorManager.getInstance(project).getScopeColor(GeneratedFilesScope.INSTANCE.scopeId)
+    }
+
+    override fun getItemText(item: ExternalSystemContentRootContributor.ExternalContentRoot): String =
+        projectPath?.relativize(item.nioPath)?.pathString ?: item.path
+
+    override fun getItemIcon(item: ExternalSystemContentRootContributor.ExternalContentRoot): Icon = item.icon
+
+    override fun getItemBackgroundColor(item: ExternalSystemContentRootContributor.ExternalContentRoot): Color? = when {
+        item.rootType.isGenerated -> generatedColor
+        item.rootType.isTest -> testsColor
+        else -> null
+    }
+}
+
+val ExternalSystemContentRootContributor.ExternalContentRoot.nioPath: Path get() = Path(path)
+
+val ExternalSystemContentRootContributor.ExternalContentRoot.icon: Icon
+    get() = when (rootType) {
+        ExternalSystemSourceType.SOURCE -> AllIcons.Modules.SourceRoot
+        ExternalSystemSourceType.TEST -> AllIcons.Modules.TestRoot
+
+        ExternalSystemSourceType.SOURCE_GENERATED -> AllIcons.Modules.GeneratedSourceRoot
+        ExternalSystemSourceType.TEST_GENERATED -> AllIcons.Modules.GeneratedTestRoot
+
+        ExternalSystemSourceType.RESOURCE -> AllIcons.Modules.ResourcesRoot
+        ExternalSystemSourceType.TEST_RESOURCE -> AllIcons.Modules.TestResourcesRoot
+
+        ExternalSystemSourceType.EXCLUDED -> AllIcons.Modules.ExcludeRoot
+
+        ExternalSystemSourceType.RESOURCE_GENERATED, ExternalSystemSourceType.TEST_RESOURCE_GENERATED -> AllIcons.Modules.GeneratedFolder
     }
 
 private fun Module.findContentRootsByExternalProject(): Collection<ExternalSystemContentRootContributor.ExternalContentRoot>? {
