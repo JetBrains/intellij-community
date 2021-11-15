@@ -7,9 +7,13 @@ import com.intellij.usages.UsageTarget;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Usage view and usage popup support hiding usages in imports.
+ * This extension provides the ability to hide search results inside import statements from usage views and usage popups.
  * Extend this class and register the implementation as {@code com.intellij.importFilteringRule} extension in plugin.xml
  * to provide a way to determine whether a usage is in import.
+ *
+ * @see com.intellij.find.actions.FindUsagesAction
+ * @see com.intellij.find.actions.ShowUsagesAction
+ * @see com.intellij.refactoring.BaseRefactoringProcessor#showUsageView
  */
 public abstract class ImportFilteringRule {
 
