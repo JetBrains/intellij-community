@@ -85,7 +85,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
     val project = panel.project
     val file = panel.virtualFile
-    if (project != null && file != null
+    if (project != null && file != null && file.parent != null
         && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim(), allowRunConfigurations = !insideFence)
     ) {
       val hash = MarkdownUtil.md5(rawCodeLine, "")
