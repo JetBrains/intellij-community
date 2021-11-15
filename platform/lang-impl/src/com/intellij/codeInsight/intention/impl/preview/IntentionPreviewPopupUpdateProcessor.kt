@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -190,7 +192,10 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                        action: IntentionAction,
                        originalFile: PsiFile,
                        originalEditor: Editor): String? {
-      val preview = IntentionPreviewComputable(project, action, originalFile, originalEditor).generatePreview()
+      val preview =
+        ProgressManager.getInstance().runProcess<IntentionPreviewDiffResult?>(
+          { IntentionPreviewComputable(project, action, originalFile, originalEditor).generatePreview() },
+          EmptyProgressIndicator())
       return preview?.psiFile?.text
     }
   }
