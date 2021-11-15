@@ -3,6 +3,9 @@
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend -Xopt-in=kotlin.io.path.ExperimentalPathApi -Xopt-in=kotlin.RequiresOptIn -Xopt-in=com.intellij.openapi.util.IntellijInternalApi" />
+        </compilerSettings>
         <compilerArguments>
           <option name="pluginClasspaths">
             <array>
