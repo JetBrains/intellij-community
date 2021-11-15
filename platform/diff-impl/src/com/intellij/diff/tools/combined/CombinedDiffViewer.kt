@@ -74,7 +74,10 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     val diffBlockFactory = CombinedDiffBlockFactory.findApplicable(content) ?: return
 
     val viewer = content.viewer
-    if (!viewer.isEditorBased) {
+    if (viewer.isEditorBased) {
+      viewer.editors.forEach { it.settings.additionalLinesCount = 0 }
+    }
+    else {
       focusListener.register(viewer.component, this)
     }
 
