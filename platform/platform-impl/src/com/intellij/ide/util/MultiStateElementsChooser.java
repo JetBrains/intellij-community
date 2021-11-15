@@ -282,6 +282,10 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       return null;
     }
     @Nullable
+    default Color getBackgroundColor() {
+      return null;
+    }
+    @Nullable
     default @Nls String getLocation() {
       return null;
     }
@@ -628,6 +632,12 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       setForeground(properties != null && properties.getColor() != null ?
                     properties.getColor() :
                     selected ? table.getSelectionForeground() : table.getForeground());
+
+      setBackground(selected
+                    ? table.getSelectionBackground()
+                    : properties != null && properties.getBackgroundColor() != null
+                      ? properties.getBackgroundColor()
+                      : table.getBackground());
 
       @SuppressWarnings("unchecked") MyTableModel model = (MyTableModel)table.getModel();
       setEnabled(selected || (MultiStateElementsChooser.this.isEnabled() &&
