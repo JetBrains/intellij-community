@@ -119,6 +119,9 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
             myRunPanel.add(actionToolbar.getComponent(), BorderLayout.CENTER);
             final boolean needGap = isNeedGap(action);
             myRunPanel.setBorder(JBUI.Borders.emptyLeft(needGap ? 5 : 1));
+            NavBarLeftSideExtension.EP_NAME.forEachExtensionSafe(extension -> {
+              extension.process(myWrapperPanel);
+            });
             myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
           }
         }
