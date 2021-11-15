@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude;
 
-import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
@@ -17,25 +17,25 @@ import java.io.IOException;
 public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
   public void testMarkAsPlainText() {
     OverrideFileTypeManager manager = OverrideFileTypeManager.getInstance();
-    VirtualFile file = myFixture.getTempDirFixture().createFile("test.xml");
-    FileType originalType = file.getFileType();
+    VirtualFile xml = myFixture.getTempDirFixture().createFile("test.xml");
+    FileType originalType = xml.getFileType();
     assertEquals(StdFileTypes.XML, originalType);
-    manager.addFile(file, PlainTextFileType.INSTANCE);
+    manager.addFile(xml, PlainTextFileType.INSTANCE);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
-    assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
-    assertTrue(FileTypeManager.getInstance().isFileOfType(file, PlainTextFileType.INSTANCE));
-    assertFalse(FileTypeManager.getInstance().isFileOfType(file, StdFileTypes.XML));
-    manager.removeFile(file);
+    assertEquals(PlainTextFileType.INSTANCE, xml.getFileType());
+    assertTrue(FileTypeManager.getInstance().isFileOfType(xml, PlainTextFileType.INSTANCE));
+    assertFalse(FileTypeManager.getInstance().isFileOfType(xml, StdFileTypes.XML));
+    manager.removeFile(xml);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
-    FileType revertedType = file.getFileType();
+    FileType revertedType = xml.getFileType();
     assertEquals(originalType, revertedType);
 
-    manager.addFile(file, ModuleFileType.INSTANCE);
+    manager.addFile(xml, ArchiveFileType.INSTANCE);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
-    assertEquals(ModuleFileType.INSTANCE, file.getFileType());
-    manager.removeFile(file);
+    assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
+    manager.removeFile(xml);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
-    assertEquals(originalType, file.getFileType());
+    assertEquals(originalType, xml.getFileType());
   }
 
   public void testMustNotBeAbleToOverrideNotOverridableFileType() throws IOException {
