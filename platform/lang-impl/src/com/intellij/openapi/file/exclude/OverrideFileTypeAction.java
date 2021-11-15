@@ -5,7 +5,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsActions;
@@ -45,10 +44,7 @@ class OverrideFileTypeAction extends AnAction {
 
     for (FileType type : ContainerUtil.sorted(Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes()),
                                               (f1,f2)->f1.getDisplayName().compareToIgnoreCase(f2.getDisplayName()))) {
-      if (type instanceof InternalFileType) continue;
-      if (type instanceof DirectoryFileType) continue;
-      if (type instanceof UnknownFileType) continue;
-      if (type instanceof FakeFileType) continue;
+      if (!OverrideFileTypeManager.isOverridable(type)) continue;
       boolean hasDuplicate = duplicates.get(type.getDisplayName()).size() > 1;
       String dupHint = null;
       if (hasDuplicate) {
@@ -93,7 +89,7 @@ class OverrideFileTypeAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       for (VirtualFile file : myFiles) {
-        if (file.isValid() && !file.isDirectory()) {
+        if (file.isValid() && !file.isDirectory() && OverrideFileTypeManager.isOverridable(file.getFileType())) {
           OverrideFileTypeManager.getInstance().addFile(file, myType);
         }
       }
@@ -101,7 +97,7 @@ class OverrideFileTypeAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = ContainerUtil.exists(myFiles, file -> file.isValid() && !file.isDirectory());
+      boolean enabled = ContainerUtil.exists(myFiles, file -> file.isValid() && !file.isDirectory() && OverrideFileTypeManager.isOverridable(file.getFileType()));
       e.getPresentation().setEnabled(enabled);
     }
   }
