@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import javax.swing.JComponent
 
@@ -25,7 +26,8 @@ abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
     val externalProjectPath = getExternalProjectPath(e)
     val dependency = getDependency(e)
     val contributor = DependencyAnalyzerExtension.findContributor(project, systemId) ?: return
-    val dependencyAnalyzerView = DependencyAnalyzerViewImpl(contributor)
+    val disposable = Disposer.newDisposable()
+    val dependencyAnalyzerView = DependencyAnalyzerViewImpl(contributor, disposable)
     if (externalProjectPath != null) {
       if (dependency != null) {
         dependencyAnalyzerView.setSelectedDependency(externalProjectPath, dependency)
@@ -40,7 +42,11 @@ abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
       override fun createComponent() = dependencyAnalyzerView.component
       override fun getPreferredFocusedComponent(): JComponent? = null
     })
-    FileEditorManager.getInstance(project).openFile(file, true)
+    val editorManager = FileEditorManager.getInstance(project)
+    val editors = editorManager.openFile(file, true)
+    for (editor in editors) {
+      Disposer.register(editor, disposable)
+    }
   }
 
   init {

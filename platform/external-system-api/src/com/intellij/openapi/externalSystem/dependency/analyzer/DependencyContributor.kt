@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 
 interface DependencyContributor {
+
+  fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable)
 
   fun getExternalProjectPaths(): List<String>
 
@@ -18,17 +21,17 @@ interface DependencyContributor {
 
   fun getInspectionResult(externalProjectPath: String, dependency: Dependency): List<InspectionResult>
 
-  class Dependency(val data: Data, val usage: Dependency?) {
+  data class Dependency(val data: Data, val usage: Dependency?) {
 
     override fun toString() = "$data -> $usage"
 
     sealed interface Data {
 
-      class Module(val name: String) : Data {
+      data class Module(val name: String) : Data {
         override fun toString() = name
       }
 
-      class Artifact(val groupId: String, val artifactId: String, val version: String) : Data {
+      data class Artifact(val groupId: String, val artifactId: String, val version: String) : Data {
         override fun toString() = "$groupId:$artifactId:$version"
       }
     }

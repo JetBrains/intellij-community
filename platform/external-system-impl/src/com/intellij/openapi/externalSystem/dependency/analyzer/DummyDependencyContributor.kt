@@ -6,18 +6,21 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContrib
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Module
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.*
 import com.intellij.openapi.project.Project
+import com.intellij.util.LocalTimeCounter
 import com.intellij.util.PathUtil
 
-class DummyDependencyContributor(private val project: Project) : DependencyContributor {
-  override fun getExternalProjectName(externalProjectPath: String): String {
-    return PathUtil.getFileName(externalProjectPath)
-  }
+abstract class DummyDependencyContributor(private val project: Project) : DependencyContributor {
 
   override fun getExternalProjectPaths() = listOf(
     project.basePath!! + "/parent1",
     project.basePath!! + "/parent2",
-    project.basePath!! + "/module"
+    project.basePath!! + "/module",
+    project.basePath!! + "/module" + LocalTimeCounter.currentTime()
   )
+
+  override fun getExternalProjectName(externalProjectPath: String): String {
+    return PathUtil.getFileName(externalProjectPath)
+  }
 
   private fun getRoot(externalProjectPath: String): Dependency {
     return Dependency(Module(PathUtil.getFileName(externalProjectPath)), null)
