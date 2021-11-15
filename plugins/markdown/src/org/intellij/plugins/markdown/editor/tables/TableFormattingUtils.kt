@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.startOffset
@@ -159,5 +160,10 @@ internal object TableFormattingUtils {
       }
       currentTable.reformatColumnOnChange(document, emptyList(), columnIndex, trimToMaxContent, preventExpand)
     }
+  }
+
+  fun MarkdownTableImpl.isSoftWrapping(editor: Editor): Boolean {
+    val range = textRange
+    return editor.softWrapModel.getSoftWrapsForRange(range.startOffset, range.endOffset).isNotEmpty()
   }
 }
