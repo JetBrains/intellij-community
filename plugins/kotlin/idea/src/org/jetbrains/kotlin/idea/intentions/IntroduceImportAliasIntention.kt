@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.imports.canBeAddedToImport
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceImportAlias.KotlinIntroduceImportAliasHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
@@ -27,8 +28,13 @@ class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenc
         return element.textRange
     }
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun applyTo(element: KtNameReferenceExpression, editor: Editor?) {
         if (editor == null) return
-        KotlinIntroduceImportAliasHandler.doRefactoring(element.project, editor, element)
+        val project = element.project
+        project.executeWriteCommand(KotlinBundle.message("intention.add.import.alias.group.name"), groupId = null) {
+            KotlinIntroduceImportAliasHandler.doRefactoring(project, editor, element)
+        }
     }
 }
