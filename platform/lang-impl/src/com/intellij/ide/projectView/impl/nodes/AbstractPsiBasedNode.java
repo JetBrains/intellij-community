@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -232,6 +233,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   private static @Nullable Icon getBookmarkIcon(@NotNull Project project, @Nullable Object context) {
+    if (Registry.is("ide.project.view.bookmarks.icon.hide", false)) return null;
     BookmarksManager manager = BookmarksManager.getInstance(project);
     if (manager == null) return null; // bookmarks manager is not available
     Bookmark bookmark = manager.createBookmark(context);
