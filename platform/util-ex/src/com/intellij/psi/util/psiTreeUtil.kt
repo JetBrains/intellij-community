@@ -399,6 +399,4 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
 }
 
 
-inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> {
-  return PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
-}
+inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> = PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
