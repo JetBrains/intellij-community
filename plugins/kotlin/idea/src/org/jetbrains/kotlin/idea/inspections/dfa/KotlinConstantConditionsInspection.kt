@@ -483,6 +483,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     ): Boolean {
         if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
         if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
+        if (condition.textLength == 0) return true
         return isCompilationWarning(condition)
     }
 
