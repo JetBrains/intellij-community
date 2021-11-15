@@ -8,6 +8,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
+import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
@@ -247,3 +248,7 @@ internal fun filterUnseenLessons(newLessons: List<Lesson>): List<Lesson> {
   }
   return unseenLessons
 }
+
+internal val iftNotificationGroup: NotificationGroup get() =
+  NotificationGroup.findRegisteredGroup("IDE Features Trainer")
+  ?: error("Not found notificationGroup for IDE Features Trainer")
