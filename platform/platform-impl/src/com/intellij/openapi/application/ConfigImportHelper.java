@@ -771,7 +771,7 @@ public final class ConfigImportHelper {
     if (!options.importPlugins && !importBundledPlugins) {
       log.info("plugins are not imported.");
     }
-    else if (!Files.isDirectory(oldPluginsDir) && !importBundledPlugins) {
+    else if (options.importPlugins && !Files.isDirectory(oldPluginsDir)) {
       log.info("non-existing plugins directory: " + oldPluginsDir);
     }
     else if (!isEmptyDirectory(newPluginsDir)) {
@@ -821,10 +821,7 @@ public final class ConfigImportHelper {
       List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
       List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
       List<PluginId> pendingUpdates;
-      if (!options.importPlugins) {
-        pendingUpdates = new ArrayList<>();
-        log.info("non-bundled plugins are not imported.");
-      } else {
+      if (options.importPlugins) {
         pendingUpdates = collectPendingPluginUpdates(actionCommands, options);
         PluginDescriptorLoader.getDescriptorsToMigrate(oldPluginsDir,
                                                        options.compatibleBuildNumber,
@@ -834,10 +831,13 @@ public final class ConfigImportHelper {
                                                        pluginsToDownload);
 
         migratePlugins(newPluginsDir, pluginsToMigrate, pendingUpdates, log);
+      } else {
+        pendingUpdates = new ArrayList<>();
+        log.info("non-bundled plugins are not imported.");
       }
 
       if (options.importSettings != null && options.importSettings.shouldImportBundledPlugins()) {
-        collectBundledPluginsToDownload(oldConfigDir, pluginsToDownload, options);
+        collectBundledPluginsToDownload(oldConfigDir, pluginsToDownload, options.importSettings);
       }
 
       if (!pluginsToDownload.isEmpty()) {
@@ -1167,9 +1167,8 @@ public final class ConfigImportHelper {
 
   private static void collectBundledPluginsToDownload(Path configDir,
                                                       List<IdeaPluginDescriptor> pluginsToDownload,
-                                                      ConfigImportOptions options) {
+                                                      @NotNull ConfigImportSettings settings) {
     @Nullable List<kotlin.Pair<PluginId, @Nullable String>> plugins = BundledPluginsState.getBundledPlugins(configDir);
-    @NotNull ConfigImportSettings settings = Objects.requireNonNull(options.importSettings);
     if (plugins != null) {
       // pairs of PluginId to Category
       for (kotlin.Pair<PluginId, @Nullable String> plugin : plugins) {
