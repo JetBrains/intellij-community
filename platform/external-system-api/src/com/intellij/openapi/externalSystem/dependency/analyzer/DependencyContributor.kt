@@ -18,17 +18,25 @@ interface DependencyContributor {
 
   fun getInspectionResult(externalProjectPath: String, dependency: Dependency): List<InspectionResult>
 
-  data class Dependency(val data: Data, val usage: Dependency?) {
+  class Dependency(val data: Data, val usage: Dependency?) {
+
+    override fun toString() = "$data -> $usage"
 
     sealed interface Data {
 
-      data class Module(val name: String) : Data
+      class Module(val name: String) : Data {
+        override fun toString() = name
+      }
 
-      data class Artifact(val groupId: String, val artifactId: String, val version: String) : Data
+      class Artifact(val groupId: String, val artifactId: String, val version: String) : Data {
+        override fun toString() = "$groupId:$artifactId:$version"
+      }
     }
   }
 
-  data class DependencyGroup(val data: Dependency.Data, val variances: List<Dependency>)
+  data class DependencyGroup(val data: Dependency.Data, val variances: List<Dependency>) {
+    override fun toString() = data.toString()
+  }
 
   interface InspectionResult {
 
