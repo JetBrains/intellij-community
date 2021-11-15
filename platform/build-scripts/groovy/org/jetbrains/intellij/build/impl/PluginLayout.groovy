@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 
 import java.nio.file.Files
@@ -85,7 +86,19 @@ final class PluginLayout extends BaseLayout {
       layout.explicitlySetJarPaths.remove(layout.mainJarName)
     }
     layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
-    layout.bundlingRestrictions = spec.bundlingRestrictions
+    layout.bundlingRestrictions = spec.bundlingRestrictions.build()
+    return layout
+  }
+
+  static PluginLayout simplePlugin(@NotNull String mainModuleName) {
+    if (mainModuleName.isEmpty()) {
+      throw new IllegalArgumentException("mainModuleName must be not empty")
+    }
+
+    PluginLayout layout = new PluginLayout(mainModuleName)
+    layout.directoryName = convertModuleNameToFileName(layout.mainModule)
+    layout.withModuleImpl(mainModuleName, layout.mainJarName)
+    layout.bundlingRestrictions = PluginBundlingRestrictions.NONE
     return layout
   }
 
@@ -121,7 +134,30 @@ final class PluginLayout extends BaseLayout {
     private String directoryName
     private boolean mainJarNameSetExplicitly
     private boolean directoryNameSetExplicitly
-    private PluginBundlingRestrictions bundlingRestrictions = new PluginBundlingRestrictions()
+    private final PluginBundlingRestrictionBuilder bundlingRestrictions = new PluginBundlingRestrictionBuilder()
+
+    @CompileStatic
+    final class PluginBundlingRestrictionBuilder {
+      /**
+       * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
+       */
+      public List<OsFamily> supportedOs = OsFamily.ALL
+
+      /**
+       * Set to {@code true} if the plugin should be included in distribution for EAP builds only.
+       */
+      public boolean includeInEapOnly
+
+      PluginBundlingRestrictions build() {
+        if (supportedOs == OsFamily.ALL && !includeInEapOnly) {
+          return PluginBundlingRestrictions.NONE
+        }
+        else {
+          return new PluginBundlingRestrictions(supportedOs, includeInEapOnly)
+        }
+      }
+    }
+
 
     PluginLayoutSpec(PluginLayout layout) {
       super(layout)
@@ -160,7 +196,7 @@ final class PluginLayout extends BaseLayout {
     /**
      * Returns {@link PluginBundlingRestrictions} instance which can be used to exclude the plugin from some distributions.
      */
-    PluginBundlingRestrictions getBundlingRestrictions() {
+    PluginBundlingRestrictionBuilder getBundlingRestrictions() {
       return bundlingRestrictions
     }
 

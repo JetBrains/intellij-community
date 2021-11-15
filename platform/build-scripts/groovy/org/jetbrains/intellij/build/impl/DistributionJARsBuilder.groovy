@@ -12,6 +12,8 @@ import groovy.transform.TypeCheckingMode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.NotNull
@@ -468,24 +470,32 @@ final class DistributionJARsBuilder {
     }
   }
 
-  void generateProjectStructureMapping(@NotNull Path targetFile, @NotNull BuildContext buildContext) {
+  void generateProjectStructureMapping(@NotNull Path targetFile, @NotNull BuildContext context) {
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
-    ForkJoinTask<List<DistributionFileEntry>> libDirLayout = processLibDirectoryLayout(moduleOutputPatcher, platform, buildContext, false).fork()
-    def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
-    def pluginsToBundle = allPlugins.findAll { satisfiesBundlingRequirements(it, null, buildContext) }
-
-    List<DistributionFileEntry> entries = new ArrayList<>()
-    for (PluginLayout plugin in pluginsToBundle) {
-      entries.addAll(processLayout(plugin,
-                                   buildContext.paths.tempDir,
-                                   false,
-                                   moduleOutputPatcher,
-                                   plugin.moduleJars,
-                                   buildContext).fork().join())
-    }
+    ForkJoinTask<List<DistributionFileEntry>> libDirLayout = processLibDirectoryLayout(moduleOutputPatcher, platform, context, false).fork()
+    Set<PluginLayout> allPlugins = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
+    List<DistributionFileEntry> entries = new ArrayList<DistributionFileEntry>()
+    allPlugins.stream()
+      .filter(new Predicate<PluginLayout>() {
+        @Override
+        boolean test(PluginLayout plugin) {
+          return satisfiesBundlingRequirements(plugin, null, context)
+        }
+      })
+      .forEach(new Consumer<PluginLayout>() {
+        @Override
+        void accept(PluginLayout plugin) {
+          entries.addAll(processLayout(plugin,
+                                       context.paths.tempDir,
+                                       false,
+                                       moduleOutputPatcher,
+                                       plugin.moduleJars,
+                                       context).fork().join())
+        }
+      })
     entries.addAll(libDirLayout.join())
 
-    ProjectStructureMapping.writeReport(entries, targetFile, buildContext.paths)
+    ProjectStructureMapping.writeReport(entries, targetFile, context.paths)
   }
 
   @Nullable
@@ -568,8 +578,11 @@ final class DistributionJARsBuilder {
       new Supplier<List<DistributionFileEntry>>() {
         @Override
         List<DistributionFileEntry> get() {
-          Collection<PluginLayout> pluginsToBundle = plugins.findAll {
-            satisfiesBundlingRequirements(it, null, context) && !pluginDirectoriesToSkip.contains(it.directoryName)
+          List<PluginLayout> pluginsToBundle = new ArrayList<PluginLayout>(plugins.size())
+          for (PluginLayout plugin : plugins) {
+            if (satisfiesBundlingRequirements(plugin, null, context) && !pluginDirectoriesToSkip.contains(plugin.directoryName)) {
+              pluginsToBundle.add(plugin)
+            }
           }
           Span.current().setAttribute("satisfiableCount", pluginsToBundle.size())
           return buildPlugins(new ModuleOutputPatcher(), pluginsToBundle,
@@ -581,7 +594,7 @@ final class DistributionJARsBuilder {
 
   private static boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily, @NotNull BuildContext context) {
     PluginBundlingRestrictions bundlingRestrictions = plugin.bundlingRestrictions
-    if (!context.applicationInfo.isEAP && bundlingRestrictions.includeInEapOnly) {
+    if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
       return false
     }
     return osFamily == null
@@ -603,10 +616,12 @@ final class DistributionJARsBuilder {
             return null
           }
 
-          Collection<PluginLayout> osSpecificPlugins = pluginLayouts.findAll {
-            satisfiesBundlingRequirements(it, osFamily, context)
+          List<PluginLayout> osSpecificPlugins = new ArrayList<PluginLayout>()
+          for (PluginLayout pluginLayout : pluginLayouts) {
+            if (satisfiesBundlingRequirements(pluginLayout, osFamily, context)) {
+              osSpecificPlugins.add(pluginLayout)
+            }
           }
-
           if (osSpecificPlugins.isEmpty()) {
             return null
           }
@@ -807,19 +822,56 @@ final class DistributionJARsBuilder {
     }
   }
 
-  static Set<PluginLayout> getPluginsByModules(BuildContext buildContext, Collection<String> modules) {
+  static Set<PluginLayout> getPluginsByModules(BuildContext context, Collection<String> modules) {
     if (modules.isEmpty()) {
       return Collections.emptySet()
     }
 
-    List<PluginLayout> allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
+    List<PluginLayout> allNonTrivialPlugins = context.productProperties.productLayout.allNonTrivialPlugins
     Map<String, List<PluginLayout>> nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
-    Set<PluginLayout> result = new LinkedHashSet<>(modules.size())
+    Set<PluginLayout> result = new ObjectLinkedOpenCustomHashSet<>(modules.size(), new Hash.Strategy<PluginLayout>() {
+      @Override
+      int hashCode(@Nullable PluginLayout layout) {
+        if (layout == null) {
+          return 0
+        }
+
+        int result = layout.mainModule.hashCode()
+        result = 31 * result + layout.bundlingRestrictions.supportedOs.hashCode()
+        return result
+      }
+
+      @Override
+      boolean equals(@Nullable PluginLayout a, @Nullable PluginLayout b) {
+        if (a.is(b)) {
+          return true
+        }
+        if (a == null || b == null) {
+          return false
+        }
+        return a.mainModule == b.mainModule && a.bundlingRestrictions.supportedOs == b.bundlingRestrictions.supportedOs
+      }
+    })
     for (String moduleName : modules) {
-      PluginLayout layout = (nonTrivialPlugins[moduleName] ?: nonTrivialPlugins[buildContext.findModule(moduleName)?.name])?.first()
-        ?: PluginLayout.plugin(moduleName)
-      if (!result.add(layout)) {
-        throw new IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
+      List<PluginLayout> customLayouts = nonTrivialPlugins.get(moduleName)
+      if (customLayouts == null) {
+        String alternativeModuleName = context.findModule(moduleName)?.name
+        if (alternativeModuleName != moduleName) {
+          customLayouts = nonTrivialPlugins.get(alternativeModuleName)
+        }
+      }
+
+      if (customLayouts == null) {
+        if (!result.add(PluginLayout.simplePlugin(moduleName))) {
+          throw new IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
+        }
+      }
+      else {
+        for (PluginLayout layout : customLayouts) {
+          if (!result.add(layout)) {
+            throw new IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
+          }
+        }
       }
     }
     return result
