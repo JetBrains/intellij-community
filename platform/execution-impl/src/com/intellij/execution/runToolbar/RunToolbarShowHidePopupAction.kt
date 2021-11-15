@@ -3,11 +3,12 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionButton
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import java.awt.Dimension
 import java.awt.Point
@@ -42,7 +43,8 @@ class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("action.Run
 
   private class ExtraSlotsActionButton(action: AnAction,
                                        presentation: Presentation,
-                                       place: String) : SegmentedActionButton(action, presentation, place), PopupControllerComponent {
+                                       place: String) : ActionButton(action, presentation, place,
+                                                                     ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE), PopupControllerComponent {
 
     override fun addNotify() {
       super.addNotify()
