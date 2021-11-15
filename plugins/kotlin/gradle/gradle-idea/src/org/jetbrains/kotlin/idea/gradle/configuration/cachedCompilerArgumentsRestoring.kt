@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradle.configuration
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -14,45 +15,78 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinCachedCompilerArgument
 import org.jetbrains.kotlin.idea.projectModel.KotlinRawCompilerArgument
 import java.io.File
 import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
+
+sealed interface EntityArgsInfo : ArgsInfo<CommonCompilerArguments, String>
 
 data class EntityArgsInfoImpl(
     override val currentCompilerArguments: CommonCompilerArguments,
     override val defaultCompilerArguments: CommonCompilerArguments,
     override val dependencyClasspath: Collection<String>
-) : ArgsInfo<CommonCompilerArguments, String>
+) : EntityArgsInfo
+
+class EmptyEntityArgsInfo : EntityArgsInfo {
+    override val currentCompilerArguments: CommonCompilerArguments = CommonCompilerArguments.DummyImpl()
+    override val defaultCompilerArguments: CommonCompilerArguments = CommonCompilerArguments.DummyImpl()
+    override val dependencyClasspath: Collection<String> = emptyList()
+}
+
+sealed interface FlatSerializedArgsInfo : ArgsInfo<List<String>, String>
 
 data class FlatSerializedArgsInfoImpl(
     override val currentCompilerArguments: List<String>,
     override val defaultCompilerArguments: List<String>,
     override val dependencyClasspath: Collection<String>
-) : ArgsInfo<List<String>, String>
+) : FlatSerializedArgsInfo
+
+class EmptyFlatArgsInfo : FlatSerializedArgsInfo {
+    override val currentCompilerArguments: List<String> = emptyList()
+    override val defaultCompilerArguments: List<String> = emptyList()
+    override val dependencyClasspath: Collection<String> = emptyList()
+}
 
 object CachedArgumentsRestoring {
+    private val LOGGER = Logger.getInstance(CachedArgumentsRestoring.javaClass)
     fun restoreSerializedArgsInfo(
         cachedSerializedArgsInfo: CachedSerializedArgsInfo,
         compilerArgumentsCacheHolder: CompilerArgumentsCacheHolder
-    ): FlatSerializedArgsInfoImpl {
+    ): FlatSerializedArgsInfo {
         val cacheAware = compilerArgumentsCacheHolder.getCacheAware(cachedSerializedArgsInfo.cacheOriginIdentifier)
-            ?: error("Failed to find CompilerArgumentsCacheAware for UUID '${cachedSerializedArgsInfo.cacheOriginIdentifier}'")
-        val currentCompilerArguments = cachedSerializedArgsInfo.currentCompilerArguments.map { it.restoreArgumentAsString(cacheAware) }
-        val defaultCompilerArguments = cachedSerializedArgsInfo.defaultCompilerArguments.map { it.restoreArgumentAsString(cacheAware) }
-        val dependencyClasspath = cachedSerializedArgsInfo.dependencyClasspath.map { it.restoreArgumentAsString(cacheAware) }
+            ?: return EmptyFlatArgsInfo().also {
+                LOGGER.error("CompilerArgumentsCacheAware with UUID '${cachedSerializedArgsInfo.cacheOriginIdentifier}' was not found!")
+            }
+        val currentCompilerArguments =
+            cachedSerializedArgsInfo.currentCompilerArguments.mapNotNull { it.restoreArgumentAsString(cacheAware) }
+        val defaultCompilerArguments =
+            cachedSerializedArgsInfo.defaultCompilerArguments.mapNotNull { it.restoreArgumentAsString(cacheAware) }
+        val dependencyClasspath = cachedSerializedArgsInfo.dependencyClasspath.mapNotNull { it.restoreArgumentAsString(cacheAware) }
         return FlatSerializedArgsInfoImpl(currentCompilerArguments, defaultCompilerArguments, dependencyClasspath)
     }
 
     fun restoreExtractedArgs(
         cachedExtractedArgsInfo: CachedExtractedArgsInfo,
         compilerArgumentsCacheHolder: CompilerArgumentsCacheHolder
-    ): EntityArgsInfoImpl {
+    ): EntityArgsInfo {
         val cacheAware = compilerArgumentsCacheHolder.getCacheAware(cachedExtractedArgsInfo.cacheOriginIdentifier)
-            ?: error("Failed to find CompilerArgumentsCacheAware for UUID '${cachedExtractedArgsInfo.cacheOriginIdentifier}'")
+            ?: return EmptyEntityArgsInfo().also {
+                LOGGER.error("CompilerArgumentsCacheAware with UUID '${cachedExtractedArgsInfo.cacheOriginIdentifier}' was not found!")
+            }
         val currentCompilerArguments = restoreCachedCompilerArguments(cachedExtractedArgsInfo.currentCompilerArguments, cacheAware)
         val defaultCompilerArgumentsBucket = restoreCachedCompilerArguments(cachedExtractedArgsInfo.defaultCompilerArguments, cacheAware)
         val dependencyClasspath = cachedExtractedArgsInfo.dependencyClasspath
-            .map { it.restoreArgumentAsString(cacheAware) }
+            .mapNotNull { it.restoreArgumentAsString(cacheAware) }
             .map { PathUtil.toSystemIndependentName(it) }
         return EntityArgsInfoImpl(currentCompilerArguments, defaultCompilerArgumentsBucket, dependencyClasspath)
+    }
+
+    private fun Map.Entry<KotlinCachedCompilerArgument<*>, KotlinCachedCompilerArgument<*>>.obtainPropertyWithCachedValue(
+        propertiesByName: Map<String, KProperty1<out CommonCompilerArguments, *>>,
+        cacheAware: CompilerArgumentsCacheAware
+    ): Pair<KProperty1<out CommonCompilerArguments, *>, KotlinRawCompilerArgument<*>>? {
+        val (key, value) = restoreEntry(this, cacheAware) ?: return null
+        val restoredKey = (key as? KotlinRawRegularCompilerArgument)?.data ?: return null
+        return (propertiesByName[restoredKey] ?: return null) to value
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -60,84 +94,112 @@ object CachedArgumentsRestoring {
         cachedBucket: CachedCompilerArgumentsBucket,
         cacheAware: CompilerArgumentsCacheAware
     ): CommonCompilerArguments {
+        fun KProperty1<*, *>.prepareLogMessage(): String =
+            "Failed to restore value for $returnType compiler argument '$name'. Default value will be used!"
+
         val compilerArgumentsClassName = cachedBucket.compilerArgumentsClassName.data.let {
-            cacheAware.getCached(it) ?: error("Failed to restore name of compiler arguments class from id $it")
+            cacheAware.getCached(it) ?: return CommonCompilerArguments.DummyImpl().also { _ ->
+                LOGGER.error("Failed to restore name of compiler arguments class from id $it! 'CommonCompilerArguments' instance was created instead")
+            }
         }
         val compilerArgumentsClass = Class.forName(compilerArgumentsClassName) as Class<out CommonCompilerArguments>
         val newCompilerArgumentsBean = compilerArgumentsClass.getConstructor().newInstance()
         val propertiesByName = compilerArgumentsClass.kotlin.memberProperties.associateBy { it.name }
-        cachedBucket.singleArguments.entries.map { restoreEntry(it, cacheAware) }.mapNotNull {
-            val key = propertiesByName[(it.first as KotlinRawRegularCompilerArgument).data] ?: return@mapNotNull null
-            val newValue = when (val valueToRestore = it.second) {
-                is KotlinRawRegularCompilerArgument -> valueToRestore.data
+        cachedBucket.singleArguments.entries.mapNotNull {
+            val (property, value) = it.obtainPropertyWithCachedValue(propertiesByName, cacheAware) ?: return@mapNotNull null
+            val newValue = when (value) {
                 is KotlinRawEmptyCompilerArgument -> null
-                else -> error("Cannot restore value for compiler argument '$key'. Array is expected, but '${valueToRestore.data}' was received")
+                is KotlinRawRegularCompilerArgument -> value.data
+                else -> {
+                    LOGGER.error(property.prepareLogMessage())
+                    return@mapNotNull null
+                }
             }
-            key to newValue
+            property to newValue
         }.forEach { (prop, newVal) ->
             (prop as KMutableProperty1<CommonCompilerArguments, String?>).set(newCompilerArgumentsBean, newVal)
         }
-        cachedBucket.flagArguments.entries.map { restoreEntry(it, cacheAware) }.mapNotNull {
-            val key = propertiesByName[(it.first as KotlinRawRegularCompilerArgument).data] ?: return@mapNotNull null
-            key to (it.second as KotlinRawBooleanCompilerArgument).data
+        cachedBucket.flagArguments.entries.mapNotNull {
+            val (property, value) = it.obtainPropertyWithCachedValue(propertiesByName, cacheAware) ?: return@mapNotNull null
+            val restoredValue = (value as? KotlinRawBooleanCompilerArgument)?.data ?: run {
+                LOGGER.error(property.prepareLogMessage())
+                return@mapNotNull null
+            }
+            property to restoredValue
         }.forEach { (prop, newVal) ->
             (prop as KMutableProperty1<CommonCompilerArguments, Boolean>).set(newCompilerArgumentsBean, newVal)
         }
-        cachedBucket.multipleArguments.entries.map { restoreEntry(it, cacheAware) }.mapNotNull {
-            val key = propertiesByName[(it.first as KotlinRawRegularCompilerArgument).data] ?: return@mapNotNull null
-            val newValue = when (val valueToRestore = it.second) {
-                is KotlinRawMultipleCompilerArgument -> valueToRestore.data.toTypedArray()
+        cachedBucket.multipleArguments.entries.mapNotNull {
+            val (property, value) = it.obtainPropertyWithCachedValue(propertiesByName, cacheAware) ?: return@mapNotNull null
+            val restoredValue = when (value) {
                 is KotlinRawEmptyCompilerArgument -> null
-                else -> error("Cannot restore value for compiler argument '$key'. Array is expected, but '${valueToRestore.data}' was received")
+                is KotlinRawMultipleCompilerArgument -> value.data.toTypedArray()
+                else -> {
+                    LOGGER.error(property.prepareLogMessage())
+                    return@mapNotNull null
+                }
             }
-            key to newValue
+            property to restoredValue
         }.forEach { (prop, newVal) ->
             (prop as KMutableProperty1<CommonCompilerArguments, Array<String>?>).set(newCompilerArgumentsBean, newVal)
         }
-        val classpathValue = (restoreCompilerArgument(cachedBucket.classpathParts, cacheAware) as KotlinRawMultipleCompilerArgument)
-            .data
-            .joinToString(File.pathSeparator)
+        val classpathValue = (restoreCompilerArgument(cachedBucket.classpathParts, cacheAware) as KotlinRawMultipleCompilerArgument?)
+            ?.data
+            ?.joinToString(File.pathSeparator)
         when (newCompilerArgumentsBean) {
             is K2JVMCompilerArguments -> newCompilerArgumentsBean.classpath = classpathValue
             is K2MetadataCompilerArguments -> newCompilerArgumentsBean.classpath = classpathValue
         }
 
-        val freeArgs = cachedBucket.freeArgs.map { it.restoreArgumentAsString(cacheAware) }
-        val internalArgs = cachedBucket.internalArguments.map { it.restoreArgumentAsString(cacheAware) }
+        val freeArgs = cachedBucket.freeArgs.mapNotNull { it.restoreArgumentAsString(cacheAware) }
+        val internalArgs = cachedBucket.internalArguments.mapNotNull { it.restoreArgumentAsString(cacheAware) }
         parseCommandLineArguments(freeArgs + internalArgs, newCompilerArgumentsBean)
 
         return newCompilerArgumentsBean
     }
 
-    private fun KotlinCachedCompilerArgument<*>.restoreArgumentAsString(cacheAware: CompilerArgumentsCacheAware): String =
+    private fun KotlinCachedCompilerArgument<*>.restoreArgumentAsString(cacheAware: CompilerArgumentsCacheAware): String? =
         when (val arg = restoreCompilerArgument(this, cacheAware)) {
             is KotlinRawBooleanCompilerArgument -> arg.data.toString()
             is KotlinRawRegularCompilerArgument -> arg.data
             is KotlinRawMultipleCompilerArgument -> arg.data.joinToString(File.separator)
-            else -> error("Unknown argument received: ${arg::class.qualifiedName}")
+            else -> {
+                LOGGER.error("Unknown argument received" + arg?.let { ": ${it::class.qualifiedName}" }.orEmpty())
+                null
+            }
         }
 
-    private inline fun <reified TKey, reified TVal> restoreEntry(entry: Map.Entry<TKey, TVal>, cacheAware: CompilerArgumentsCacheAware) =
-        restoreCompilerArgument(entry.key, cacheAware) to restoreCompilerArgument(entry.value, cacheAware)
+    private fun restoreEntry(
+        entry: Map.Entry<KotlinCachedCompilerArgument<*>, KotlinCachedCompilerArgument<*>>,
+        cacheAware: CompilerArgumentsCacheAware
+    ): Pair<KotlinRawCompilerArgument<*>, KotlinRawCompilerArgument<*>>? {
+        val key = restoreCompilerArgument(entry.key, cacheAware) ?: return null
+        val value = restoreCompilerArgument(entry.value, cacheAware) ?: return null
+        return key to value
+    }
 }
 
 object CachedCompilerArgumentsRestoringManager {
+    private val LOGGER = Logger.getInstance(CachedCompilerArgumentsRestoringManager.javaClass)
 
     @Suppress("UNCHECKED_CAST")
     fun <TCache> restoreCompilerArgument(
         argument: TCache,
         cacheAware: CompilerArgumentsCacheAware
-    ): KotlinRawCompilerArgument<*> =
+    ): KotlinRawCompilerArgument<*>? =
         when (argument) {
             is KotlinCachedEmptyCompilerArgument -> KotlinRawEmptyCompilerArgument
             is KotlinCachedBooleanCompilerArgument -> BOOLEAN_ARGUMENT_RESTORING_STRATEGY.restoreArgument(argument, cacheAware)
             is KotlinCachedRegularCompilerArgument -> REGULAR_ARGUMENT_RESTORING_STRATEGY.restoreArgument(argument, cacheAware)
             is KotlinCachedMultipleCompilerArgument -> MULTIPLE_ARGUMENT_RESTORING_STRATEGY.restoreArgument(argument, cacheAware)
-            else -> error("Unknown argument received" + argument?.let { ": ${it::class.java.name}" })
+            else -> {
+                LOGGER.error("Unknown argument received" + argument?.let { ": ${it::class.java.name}" })
+                null
+            }
         }
 
     private interface CompilerArgumentRestoringStrategy<TCache, TArg> {
-        fun restoreArgument(cachedArgument: TCache, cacheAware: CompilerArgumentsCacheAware): KotlinRawCompilerArgument<TArg>
+        fun restoreArgument(cachedArgument: TCache, cacheAware: CompilerArgumentsCacheAware): KotlinRawCompilerArgument<TArg>?
     }
 
     private val BOOLEAN_ARGUMENT_RESTORING_STRATEGY =
@@ -145,10 +207,11 @@ object CachedCompilerArgumentsRestoringManager {
             override fun restoreArgument(
                 cachedArgument: KotlinCachedBooleanCompilerArgument,
                 cacheAware: CompilerArgumentsCacheAware
-            ): KotlinRawBooleanCompilerArgument {
-                val restoredValue = cacheAware.getCached(cachedArgument.data) ?: error("Cache doesn't contain key ${cachedArgument.data}")
-                return KotlinRawBooleanCompilerArgument(java.lang.Boolean.valueOf(restoredValue))
-            }
+            ): KotlinRawBooleanCompilerArgument? =
+                cacheAware.getCached(cachedArgument.data)?.let { KotlinRawBooleanCompilerArgument(java.lang.Boolean.valueOf(it)) } ?: run {
+                    LOGGER.error("Cannot find boolean argument value for key '${cachedArgument.data}'")
+                    null
+                }
         }
 
     private val REGULAR_ARGUMENT_RESTORING_STRATEGY =
@@ -156,10 +219,11 @@ object CachedCompilerArgumentsRestoringManager {
             override fun restoreArgument(
                 cachedArgument: KotlinCachedRegularCompilerArgument,
                 cacheAware: CompilerArgumentsCacheAware
-            ): KotlinRawRegularCompilerArgument {
-                return cacheAware.getCached(cachedArgument.data)?.let { KotlinRawRegularCompilerArgument(it) }
-                    ?: error("Cache doesn't contain key ${cachedArgument.data}")
-            }
+            ): KotlinRawRegularCompilerArgument? =
+                cacheAware.getCached(cachedArgument.data)?.let { KotlinRawRegularCompilerArgument(it) } ?: run {
+                    LOGGER.error("Cannot find string argument value for key '${cachedArgument.data}'")
+                    null
+                }
         }
 
     private val MULTIPLE_ARGUMENT_RESTORING_STRATEGY =
@@ -168,7 +232,7 @@ object CachedCompilerArgumentsRestoringManager {
                 cachedArgument: KotlinCachedMultipleCompilerArgument,
                 cacheAware: CompilerArgumentsCacheAware
             ): KotlinRawMultipleCompilerArgument {
-                val cachedArguments = cachedArgument.data.map { restoreCompilerArgument(it, cacheAware).data.toString() }
+                val cachedArguments = cachedArgument.data.mapNotNull { restoreCompilerArgument(it, cacheAware)?.data?.toString() }
                 return KotlinRawMultipleCompilerArgument(cachedArguments)
             }
         }
