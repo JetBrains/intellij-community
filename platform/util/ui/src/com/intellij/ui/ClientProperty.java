@@ -14,16 +14,6 @@ import java.awt.Window;
 
 @ApiStatus.AvailableSince("2022.1")
 public final class ClientProperty {
-  private static @Nullable JComponent getContainer(@Nullable Component component) {
-    if (component instanceof JComponent) return (JComponent)component;
-    if (component instanceof Window && component instanceof RootPaneContainer) {
-      RootPaneContainer container = (RootPaneContainer)component;
-      return container.getRootPane();
-    }
-    return null;
-  }
-
-
   /**
    * Sets the value for the client property of the component.
    * This is a convenient way to specify a value as a lambda.
@@ -44,9 +34,10 @@ public final class ClientProperty {
    * @param window a Swing window that may hold a client property value
    * @param key    a typed key corresponding to a client property
    * @param value  new value for the client property
+   * @return {@code true} if property is set to the corresponding root pane, {@code false} otherwise
    */
-  public static <T> void put(@NotNull Window window, @NotNull Key<T> key, @Nullable T value) {
-    put(window, (Object)key, value);
+  public static <T> boolean put(@NotNull Window window, @NotNull Key<T> key, @Nullable T value) {
+    return put(window, (Object)key, value);
   }
 
   /**
@@ -56,10 +47,21 @@ public final class ClientProperty {
    * @param window a Swing window that may hold a client property value
    * @param key    a key corresponding to a client property
    * @param value  new value for the client property
+   * @return {@code true} if property is set to the corresponding root pane, {@code false} otherwise
    */
-  public static void put(@Nullable Window window, @NotNull @NonNls Object key, @Nullable Object value) {
-    JComponent container = getContainer(window);
-    if (container != null) container.putClientProperty(key, value);
+  public static boolean put(@Nullable Window window, @NotNull @NonNls Object key, @Nullable Object value) {
+    JComponent holder = getPropertiesHolder(window);
+    if (holder != null) holder.putClientProperty(key, value);
+    return holder != null;
+  }
+
+  private static @Nullable JComponent getPropertiesHolder(@Nullable Component component) {
+    if (component instanceof JComponent) return (JComponent)component;
+    if (component instanceof Window && component instanceof RootPaneContainer) {
+      RootPaneContainer container = (RootPaneContainer)component;
+      return container.getRootPane(); // store window properties in its root pane
+    }
+    return null;
   }
 
 
@@ -69,8 +71,8 @@ public final class ClientProperty {
    * @return the property value from the specified component or {@code null}
    */
   public static @Nullable Object get(@Nullable Component component, @NotNull @NonNls Object key) {
-    JComponent container = getContainer(component);
-    return container == null ? null : container.getClientProperty(key);
+    JComponent holder = getPropertiesHolder(component);
+    return holder == null ? null : holder.getClientProperty(key);
   }
 
   /**
