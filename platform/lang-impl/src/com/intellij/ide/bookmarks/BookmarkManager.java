@@ -155,6 +155,9 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   public void addEditorBookmark(@NotNull Editor editor, int lineIndex) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Document document = editor.getDocument();
+
+    if (lineIndex >= document.getLineCount()) return;  // Android Studio: avoid IndexOutOfBoundsException
+
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return;
 
