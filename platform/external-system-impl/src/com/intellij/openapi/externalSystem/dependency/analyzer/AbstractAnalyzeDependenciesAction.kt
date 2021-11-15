@@ -2,16 +2,12 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.UIComponentVirtualFile
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import javax.swing.JComponent
 
 abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
   abstract fun getSystemId(e: AnActionEvent): ProjectSystemId?
@@ -26,27 +22,16 @@ abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
     val externalProjectPath = getExternalProjectPath(e)
     val dependency = getDependency(e)
     val contributor = DependencyAnalyzerExtension.findContributor(project, systemId) ?: return
-    val disposable = Disposer.newDisposable()
-    val dependencyAnalyzerView = DependencyAnalyzerViewImpl(contributor, disposable)
+    val tab = DependencyAnalyzerEditorTab(contributor)
     if (externalProjectPath != null) {
       if (dependency != null) {
-        dependencyAnalyzerView.setSelectedDependency(externalProjectPath, dependency)
+        tab.view.setSelectedDependency(externalProjectPath, dependency)
       }
       else {
-        dependencyAnalyzerView.setSelectedExternalProject(externalProjectPath)
+        tab.view.setSelectedExternalProject(externalProjectPath)
       }
     }
-    val editorTabName = ExternalSystemBundle.message("external.system.dependency.analyzer.editor.tab.name")
-    val file = UIComponentVirtualFile(editorTabName, object : UIComponentVirtualFile.Content {
-      override fun getIcon() = AllIcons.Actions.DependencyAnalyzer
-      override fun createComponent() = dependencyAnalyzerView.component
-      override fun getPreferredFocusedComponent(): JComponent? = null
-    })
-    val editorManager = FileEditorManager.getInstance(project)
-    val editors = editorManager.openFile(file, true)
-    for (editor in editors) {
-      Disposer.register(editor, disposable)
-    }
+    UIComponentEditorTab.show(project, tab)
   }
 
   init {
