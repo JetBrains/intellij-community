@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -35,6 +36,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Index data class - present index state.
+ * Contains index list and knows how to update it.
+ */
+@ApiStatus.Internal
 public class MavenIndices implements Disposable {
   public static final String LOCAL_REPOSITORY_ID = "local";
   private static final Object ourDirectoryLock = new Object();
@@ -54,7 +60,7 @@ public class MavenIndices implements Disposable {
     myListener = listener;
   }
 
-  public void updateIndicesList(@NotNull Project project) {
+  void updateIndicesList(@NotNull Project project) {
     if (Disposer.isDisposed(this)) return;
     updateIndicesLock.lock();
     try {

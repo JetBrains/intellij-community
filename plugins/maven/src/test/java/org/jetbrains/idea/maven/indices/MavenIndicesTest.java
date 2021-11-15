@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
@@ -68,12 +69,21 @@ public class MavenIndicesTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    if (localDiff != null && localDiff.oldIndices != null) localDiff.oldIndices.close(false);
-    if (localDiff != null && localDiff.newIndices != null) localDiff.newIndices.close(false);
-
-    if (remoteDiff != null) remoteDiff.oldIndices.forEach(i -> i.close(false));
-    if (remoteDiff != null) remoteDiff.newIndices.forEach(i -> i.close(false));
+    RunAll.runAll(
+      () -> super.tearDown(),
+      () -> {
+        if (localDiff != null && localDiff.oldIndices != null) localDiff.oldIndices.close(false);
+      },
+      () -> {
+        if (localDiff != null && localDiff.newIndices != null) localDiff.newIndices.close(false);
+      },
+      () -> {
+        if (remoteDiff != null) remoteDiff.oldIndices.forEach(i -> i.close(false));
+      },
+      () -> {
+        if (remoteDiff != null) remoteDiff.newIndices.forEach(i -> i.close(false));
+      }
+    );
   }
 
   public void testGetLocalInitAndNoDiff() {

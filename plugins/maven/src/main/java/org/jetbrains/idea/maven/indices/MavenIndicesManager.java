@@ -38,6 +38,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.jetbrains.idea.maven.indices.MavenArtifactManager.loadUserArchetypes;
 
+/**
+ * Main api class for work with maven indices.
+ *
+ * Get current index state, schedule update index list, check MavenId in index, add data to index.
+ */
 public final class MavenIndicesManager implements Disposable {
   private final @NotNull Project myProject;
   private final @NotNull MavenIndices myMavenIndices;
@@ -171,6 +176,11 @@ public final class MavenIndicesManager implements Disposable {
     return localIndex != null && localIndex.hasVersion(groupId, artifactId, version);
   }
 
+  /**
+   * Add artifact info to index async.
+   * @param mavenId
+   * @param artifactFile
+   */
   public void addArtifactIndexAsync(@Nullable MavenId mavenId, @NotNull File artifactFile) {
     if (myMavenIndices.isNotInit()) return;
     MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
@@ -178,15 +188,26 @@ public final class MavenIndicesManager implements Disposable {
     ApplicationManager.getApplication().executeOnPooledThread(() -> myIndexFixer.fixIndex(mavenId, artifactFile, localIndex));
   }
 
-  public Promise<Void> scheduleUpdateContentAll() {
-    return myIndexUpdateManager
+  /**
+   * Schedule update all indices content async.
+   */
+  public void scheduleUpdateContentAll() {
+    myIndexUpdateManager
       .scheduleUpdateContent(myProject, ContainerUtil.map(myMavenIndices.getIndices(), i -> i.getRepositoryPathOrUrl()));
   }
 
+  /**
+   * Schedule update indices content async.
+   */
   public Promise<Void> scheduleUpdateContent(@NotNull List<MavenIndex> indices) {
     return myIndexUpdateManager.scheduleUpdateContent(myProject, ContainerUtil.map(indices, i -> i.getRepositoryPathOrUrl()));
   }
 
+  /**
+   * Schedule update indices list {@link MavenIndices} async.
+   *
+   * @param consumer - consumer for new indices.
+   */
   public void scheduleUpdateIndicesList(@Nullable Consumer<? super List<MavenIndex>> consumer) {
     myIndexUpdateManager.scheduleUpdateIndicesList(myProject, consumer);
   }

@@ -28,6 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Internal api class for update maven indices state.
+ *
+ * Contains logic for schedule async tasks for update index list or index.
+ */
 @ApiStatus.Internal
 public class MavenIndexUpdateManager implements Disposable {
 
