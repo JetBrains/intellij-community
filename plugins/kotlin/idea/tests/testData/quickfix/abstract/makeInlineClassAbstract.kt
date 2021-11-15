@@ -1,6 +1,6 @@
 // "Make 'A' 'abstract'" "false"
 // ERROR: Class 'A' is not abstract and does not implement abstract member public abstract fun foo(): String defined in I
-// ERROR: Primary constructor is required for inline class
+// ERROR: Primary constructor is required for value class
 // ACTION: Create test
 // ACTION: Implement members
 // ACTION: Extract 'A' from current file
