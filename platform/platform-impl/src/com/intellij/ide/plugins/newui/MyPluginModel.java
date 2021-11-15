@@ -1156,7 +1156,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       String message = IdeBundle.message("dialog.message.unable.to.apply.changes",
                                          pluginNames.size(),
                                          joinPluginNamesOrIds(pluginNames));
-      throw new ConfigurationException(XmlStringUtil.wrapInHtml(message));
+      throw new ConfigurationException(XmlStringUtil.wrapInHtml(message)).withHtmlMessage();
     }
   }
 
