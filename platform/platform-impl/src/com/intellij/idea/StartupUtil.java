@@ -36,6 +36,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.Java11Shim;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -56,6 +57,7 @@ import java.awt.dnd.DragSource;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.management.ManagementFactory;
@@ -981,6 +983,17 @@ public final class StartupUtil {
     @Override
     public <E> @NotNull List<E> copyOfCollection(Collection<? extends E> collection) {
       return List.copyOf(collection);
+    }
+  }
+
+  public static byte @Nullable [] getResourceAsBytes(@NotNull String path, @NotNull ClassLoader classLoader) throws IOException {
+    if (classLoader instanceof UrlClassLoader) {
+      return ((UrlClassLoader)classLoader).getResourceAsBytes(path);
+    }
+    else {
+      try (InputStream stream = classLoader.getResourceAsStream(path)) {
+        return stream == null ? null : stream.readAllBytes();
+      }
     }
   }
 }

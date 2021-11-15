@@ -15,7 +15,7 @@ class WinIntelliJLaf : IntelliJLaf() {
   }
 
   override fun getPrefix(): String {
-    return "win10intellijlaf"
+    return "com/intellij/laf/win10/win10intellijlaf"
   }
 
   override fun getSystemPrefix(): String? {

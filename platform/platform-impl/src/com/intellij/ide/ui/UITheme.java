@@ -132,13 +132,25 @@ public final class UITheme {
   public static @NotNull UITheme loadFromJson(@NotNull InputStream stream,
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
-                                              @NotNull Function<? super String, String> iconsMapper)
-    throws IllegalStateException, IOException {
-
-    //UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
+                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.getValue().beanFrom(UITheme.class, stream);
     theme.id = themeId;
+    return loadFromJson(theme, provider, iconsMapper);
+  }
 
+  public static @NotNull UITheme loadFromJson(byte[] data,
+                                              @NotNull @NonNls String themeId,
+                                              @Nullable ClassLoader provider,
+                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
+    UITheme theme = JSON_READER.getValue().beanFrom(UITheme.class, data);
+    theme.id = themeId;
+    return loadFromJson(theme, provider, iconsMapper);
+  }
+
+  private static @NotNull UITheme loadFromJson(@NotNull UITheme theme,
+                                               @Nullable ClassLoader provider,
+                                               @NotNull Function<? super String, String> iconsMapper)
+    throws IllegalStateException {
     if (provider != null) {
       theme.providerClassLoader = provider;
     }

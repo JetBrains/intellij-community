@@ -66,7 +66,7 @@ fun readModuleDescriptor(input: ByteArray,
                               readInto = readInto)
 }
 
-private fun readModuleDescriptor(reader: XMLStreamReader2,
+internal fun readModuleDescriptor(reader: XMLStreamReader2,
                                  readContext: ReadModuleContext,
                                  pathResolver: PathResolver,
                                  dataLoader: DataLoader,

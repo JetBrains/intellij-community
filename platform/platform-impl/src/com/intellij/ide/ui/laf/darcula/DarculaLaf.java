@@ -5,6 +5,7 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.IdeaLaf;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,12 +34,11 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.StringReader;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
@@ -146,22 +146,29 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   private void patchStyledEditorKit(UIDefaults defaults) {
-    URL url = getClass().getResource(getPrefix() + (JBUIScale.isUsrHiDPI() ? "@2x.css" : ".css"));
-    StyleSheet styleSheet = StartupUiUtil.loadStyleSheet(url);
-    defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
+    String relativePath = getPrefix() + (JBUIScale.isUsrHiDPI() ? "@2x.css" : ".css");
     try {
-      Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
-      keyField.setAccessible(true);
-      AppContext.getAppContext().put(keyField.get(null), StartupUiUtil.loadStyleSheet(url));
+      byte[] dataBytes = StartupUtil.getResourceAsBytes(relativePath, DarculaLaf.class.getClassLoader());
+      if (dataBytes == null) {
+        Logger.getInstance(DarculaLaf.class).error("Cannot find " + relativePath + " file");
+        return;
+      }
+
+      StyleSheet styleSheet = new StyleSheet();
+      styleSheet.loadRules(new StringReader(new String(dataBytes, StandardCharsets.UTF_8)), null);
+      defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
+
+      Object defaultStylesKey = MethodHandles.privateLookupIn(HTMLEditorKit.class, MethodHandles.lookup())
+        .findStaticGetter(HTMLEditorKit.class, "DEFAULT_STYLES_KEY", Object.class).invokeExact();
+      AppContext.getAppContext().put(defaultStylesKey, styleSheet);
     }
-    catch (Exception e) {
-      log(e);
+    catch (Throwable e) {
+      Logger.getInstance(DarculaLaf.class).warn(relativePath + " loading failed", e);
     }
   }
 
-  @NotNull
-  protected String getPrefix() {
-    return "darcula";
+  protected @NotNull String getPrefix() {
+    return "com/intellij/ide/ui/laf/darcula/darcula";
   }
 
   @Nullable
@@ -233,16 +240,18 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   protected void loadDefaultsFromJson(UIDefaults defaults) {
     loadDefaultsFromJson(defaults, getPrefix());
-    if (getSystemPrefix() != null) {
-      loadDefaultsFromJson(defaults, getSystemPrefix());
+    String systemPrefix = getSystemPrefix();
+    if (systemPrefix != null) {
+      loadDefaultsFromJson(defaults, systemPrefix);
     }
   }
 
   private void loadDefaultsFromJson(UIDefaults defaults, String prefix) {
     String filename = prefix + ".theme.json";
-    try (InputStream stream = getClass().getResourceAsStream(filename)) {
-      assert stream != null : "Can't load " + filename;
-      UITheme theme = UITheme.loadFromJson(stream, "Darcula", getClass().getClassLoader(), Function.identity());
+    try {
+      byte[] data = StartupUtil.getResourceAsBytes(filename, DarculaLaf.class.getClassLoader());
+      assert data != null : "Can't load " + filename;
+      UITheme theme = UITheme.loadFromJson(data, "Darcula", getClass().getClassLoader(), Function.identity());
       theme.applyProperties(defaults);
     }
     catch (IOException e) {

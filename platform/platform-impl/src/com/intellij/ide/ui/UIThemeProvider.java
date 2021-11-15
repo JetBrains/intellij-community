@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.function.Function;
 
 /**
@@ -40,14 +41,14 @@ public final class UIThemeProvider implements PluginAware {
   public String id;
 
   @ApiStatus.Internal
-  public @Nullable InputStream getThemeJsonStream() {
-    return myPluginDescriptor.getClassLoader().getResourceAsStream(path.charAt(0) == '/' ? path.substring(1) : path);
+  public byte[] getThemeJson() throws IOException {
+    return StartupUtil.getResourceAsBytes(path.charAt(0) == '/' ? path.substring(1) : path, myPluginDescriptor.getClassLoader());
   }
 
   public @Nullable UITheme createTheme() {
     try {
       ClassLoader classLoader = myPluginDescriptor.getPluginClassLoader();
-      InputStream stream = getThemeJsonStream();
+      byte[] stream = getThemeJson();
       if (stream == null) {
         Logger.getInstance(getClass()).warn("Cannot find theme resource: " + path + " (classLoader=" + classLoader + ", pluginDescriptor=" + myPluginDescriptor + ")");
         return null;

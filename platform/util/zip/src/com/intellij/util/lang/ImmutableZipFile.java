@@ -21,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
 @ApiStatus.Internal
@@ -201,7 +200,7 @@ public final class ImmutableZipFile implements Closeable {
       int compressedSize = buffer.getInt(offset + 20);
       int uncompressedSize = buffer.getInt(offset + 24);
       int headerOffset = buffer.getInt(offset + 42);
-      int method = buffer.getShort(offset + 10) & 0xffff;
+      byte method = (byte)(buffer.getShort(offset + 10) & 0xffff);
 
       int nameLengthInBytes = buffer.getShort(offset + 28) & 0xffff;
       int extraFieldLength = buffer.getShort(offset + 30) & 0xffff;
@@ -293,8 +292,8 @@ public final class ImmutableZipFile implements Closeable {
       buffer.get(tempNameBytes, 0, nameLengthInBytes);
       String name = new String(tempNameBytes, 0, nameLengthInBytes - extraSuffixLength, StandardCharsets.UTF_8);
       int entrySetIndex = indexes[entryIndex];
-      // headerOffset is required only to compute data offset, but dataOffset is already known
-      ImmutableZipEntry entry = new ImmutableZipEntry(name, size, size, -1, nameLengthInBytes, ZipEntry.STORED);
+      // headerOffset and nameLengthInBytes are required only to compute data offset, but dataOffset is already known
+      ImmutableZipEntry entry = new ImmutableZipEntry(name, size, size, ImmutableZipEntry.STORED);
       entry.setDataOffset(dataOffsets[entryIndex]);
       entrySet[entrySetIndex] = entry;
       entries[entryIndex++] = entry;

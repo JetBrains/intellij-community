@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.completion.ml.experiment
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.StartupUtil
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -9,7 +12,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.serialization.json.Json
 import java.util.*
-import kotlin.collections.HashMap
 
 class ClientExperimentStatus : ExperimentStatus {
   companion object {
@@ -21,9 +23,8 @@ class ClientExperimentStatus : ExperimentStatus {
           return ExperimentConfig.disabledExperiment()
         }
 
-        val experimentInfo = ClientExperimentStatus::class.java.classLoader.getResourceAsStream("experiment.json")!!.use {
-          Json.Default.decodeFromString(ExperimentConfig.serializer(), it.readAllBytes().toString(Charsets.UTF_8))
-        }
+        val data = StartupUtil.getResourceAsBytes("experiment.json", ClientExperimentStatus::class.java.classLoader)!!
+        val experimentInfo = Json.Default.decodeFromString(ExperimentConfig.serializer(), data.toString(Charsets.UTF_8))
         checkExperimentGroups(experimentInfo)
         return experimentInfo
       }

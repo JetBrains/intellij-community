@@ -28,6 +28,6 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   @NotNull
   protected String getPrefix() {
-    return "intellijlaf";
+    return "com/intellij/ide/ui/laf/intellijlaf";
   }
 }
