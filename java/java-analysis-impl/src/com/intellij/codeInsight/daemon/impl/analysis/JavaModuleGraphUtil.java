@@ -328,7 +328,10 @@ public final class JavaModuleGraphUtil {
       Map<String, PsiJavaModule> exports = new HashMap<>();
       return processExports(source, (pkg, m) -> {
         PsiJavaModule found = exports.put(pkg, m);
-        return found == null || found instanceof LightJavaModule && m instanceof LightJavaModule ? null : new Trinity<>(pkg, found, m);
+        return found == null ||
+               found instanceof LightJavaModule && m instanceof LightJavaModule ||
+               found.getName().equals(m.getName())
+               ? null : new Trinity<>(pkg, found, m);
       });
     }
 
