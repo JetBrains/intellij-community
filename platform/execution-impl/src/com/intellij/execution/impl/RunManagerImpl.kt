@@ -139,7 +139,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
   // See also notYetAppliedInitialSelectedConfigurationId, which helps when the initially selected RC is stored in some arbitrary *.run.xml file in project
-  private var selectedConfigurationId: String? = null
+  protected open var selectedConfigurationId: String? = null
   // RCs stored in arbitrary *.run.xml files are loaded a bit later than RCs from workspace and from .idea/runConfigurations.
   // This var helps if initially selected RC is a one from such file.
   // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
