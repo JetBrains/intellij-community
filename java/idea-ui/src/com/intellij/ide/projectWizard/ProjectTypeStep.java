@@ -94,8 +94,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
   private final Map<ProjectTemplate, ModuleBuilder> myBuilders = FactoryMap.create(key -> (ModuleBuilder)key.createModuleBuilder());
+  private final MultiMap<TemplatesGroup, ProjectTemplate> myTemplatesMap;
   private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<>();
-  private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private JPanel myPanel;
   private JPanel myOptionsPanel;
   private JBList<TemplatesGroup> myProjectTypeList;
@@ -537,7 +537,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   @Nullable
-  private ModuleWizardStep getCustomStep() {
+  public ModuleWizardStep getCustomStep() {
     return myCustomSteps.get(myCurrentCard);
   }
 
