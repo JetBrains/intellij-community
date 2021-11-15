@@ -294,6 +294,17 @@ public final class LaterInvocator {
     reincludeSkippedItemsAndRequestFlush();
   }
 
+  @ApiStatus.Internal
+  public static void cancelAllModals() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (ourModalityStack.peek() != ModalityState.NON_MODAL) {
+      ModalityStateEx topLevelModal = ourModalityStack.peek();
+      topLevelModal.cancelAllEntities();
+      // let event queue pump once before trying to cancel next modal
+      invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> { cancelAllModals(); });
+    }
+  }
+
   public static Object @NotNull [] getCurrentModalEntities() {
     ApplicationManager.getApplication().assertIsWriteThread();
     return ArrayUtil.toObjectArray(ourModalEntities);

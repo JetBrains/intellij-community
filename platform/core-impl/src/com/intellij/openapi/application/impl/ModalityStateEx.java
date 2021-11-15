@@ -10,6 +10,8 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 
 public final class ModalityStateEx extends ModalityState {
@@ -55,6 +57,17 @@ public final class ModalityStateEx extends ModalityState {
       if (!otherEntities.contains(entity) && !ourTransparentEntities.contains(entity)) return true; // I have entity which is absent in anotherState
     }
     return false;
+  }
+
+  void cancelAllEntities() {
+    for (Object entity : myModalEntities) {
+      if (entity instanceof Dialog) {
+        ((Dialog)entity).setVisible(false);
+      }
+      else if (entity instanceof ProgressIndicator) {
+        ((ProgressIndicator)entity).cancel();
+      }
+    }
   }
 
   @NonNls
