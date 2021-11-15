@@ -2213,6 +2213,10 @@
                  description="The host is used to download dependency config updates for framework starters"/>
 
     <dependencyCollector kind="java" implementation="com.intellij.ide.JavaDependencyCollector"/>
+
+    <registryKey key="java.formatter.chained.calls.pre212.compatibility"
+                 defaultValue="false"
+                 description="Format chained calls as in versions prior to 2021.2"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
