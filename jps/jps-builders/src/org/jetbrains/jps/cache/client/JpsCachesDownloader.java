@@ -64,6 +64,12 @@ class JpsCachesDownloader {
     List<Pair<File, DownloadableFileUrl>> existingFiles = new CopyOnWriteArrayList<>();
 
     try {
+      int expectedDownloads;
+      if (myContext != null) {
+        expectedDownloads = myContext.getTotalExpectedDownloads();
+      } else {
+        expectedDownloads = 0;
+      }
       myNettyClient.sendMainStatusMessage(JpsBuildBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
       long start = System.currentTimeMillis();
       List<Future<Void>> results = new ArrayList<>();
@@ -77,7 +83,7 @@ class JpsCachesDownloader {
           File downloaded = null;
           while (downloaded == null && attempt++ < MAX_RETRY_COUNT) {
             try {
-              downloaded = downloadFile(description, existing);
+              downloaded = downloadFile(description, existing, expectedDownloads);
             } catch (IOException e) {
               int httpStatusCode = -1;
               //if (e  instanceof HttpRequests.HttpStatusException) {
@@ -159,10 +165,10 @@ class JpsCachesDownloader {
   }
 
   @NotNull
-  private File downloadFile(@NotNull final DownloadableFileUrl description, @NotNull final File existingFile) throws IOException {
+  private File downloadFile(@NotNull final DownloadableFileUrl description, @NotNull final File existingFile, int expectedDownloads) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
     Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(myNettyClient);
-    myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.connecting.to.download.file.text", presentableUrl));
+    //myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.connecting.to.download.file.text", presentableUrl));
 
     try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
       HttpGet httpRequest = new HttpGet(description.getDownloadUrl());
@@ -178,7 +184,7 @@ class JpsCachesDownloader {
         Header header = response.getFirstHeader(CDN_CACHE_HEADER);
         if (header != null && header.getValue().startsWith("Hit")) hitsCount++;
 
-        myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
+        myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl), expectedDownloads);
         return saveToFile(FileUtil.createTempFile("download.", ".tmp").toPath(), responseEntity).toFile();
       }
       else {

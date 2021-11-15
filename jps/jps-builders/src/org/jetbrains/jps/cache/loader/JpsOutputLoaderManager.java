@@ -274,7 +274,7 @@ public class JpsOutputLoaderManager implements Disposable {
                                                           Map<String, Map<String, BuildTargetState>> commitSourcesState,
                                                           Map<String, Map<String, BuildTargetState>> currentSourcesState) {
     JpsLoaderContext loaderContext =
-      JpsLoaderContext.createNewContext(myCanceledStatus, commitId, myNettyClient, commitSourcesState, currentSourcesState);
+      JpsLoaderContext.createNewContext(totalDownloads, myCanceledStatus, commitId, myNettyClient, commitSourcesState, currentSourcesState);
     List<JpsOutputLoader<?>> loaders = getLoaders();
     loaders.forEach(loader -> loader.setContext(loaderContext));
     // Start loaders with own context

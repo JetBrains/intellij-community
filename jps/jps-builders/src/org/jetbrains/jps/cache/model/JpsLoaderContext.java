@@ -14,12 +14,14 @@ import java.util.UUID;
 
 public final class JpsLoaderContext {
   private final String commitId;
+  private final int totalExpectedDownloads;
   private final JpsNettyClient nettyClient;
   private final CanceledStatus canceledStatus;
   private final Map<String, Map<String, BuildTargetState>> commitSourcesState;
   private final Map<String, Map<String, BuildTargetState>> currentSourcesState;
 
-  private JpsLoaderContext(@NotNull CanceledStatus canceledStatus,
+  private JpsLoaderContext(int totalExpectedDownloads,
+                           @NotNull CanceledStatus canceledStatus,
                            @NotNull String commitId, @NotNull JpsNettyClient nettyClient,
                            @NotNull Map<String, Map<String, BuildTargetState>> commitSourcesState,
                            @Nullable Map<String, Map<String, BuildTargetState>> currentSourcesState) {
@@ -28,6 +30,7 @@ public final class JpsLoaderContext {
     this.canceledStatus = canceledStatus;
     this.commitSourcesState = commitSourcesState;
     this.currentSourcesState = currentSourcesState;
+    this.totalExpectedDownloads = totalExpectedDownloads;
   }
 
   @NotNull
@@ -57,14 +60,19 @@ public final class JpsLoaderContext {
     return currentSourcesState;
   }
 
+  public int getTotalExpectedDownloads() {
+    return totalExpectedDownloads;
+  }
+
   public void checkCanceled() throws ProcessCanceledException {
     if (canceledStatus.isCanceled()) throw new ProcessCanceledException();
   }
 
-  public static JpsLoaderContext createNewContext(@NotNull CanceledStatus canceledStatus,
+  public static JpsLoaderContext createNewContext(int totalExpectedDownloads,
+                                                  @NotNull CanceledStatus canceledStatus,
                                                   @NotNull String commitId, @NotNull JpsNettyClient nettyClient,
                                                   @NotNull Map<String, Map<String, BuildTargetState>> commitSourcesState,
                                                   @Nullable Map<String, Map<String, BuildTargetState>> currentSourcesState) {
-    return new JpsLoaderContext(canceledStatus, commitId, nettyClient, commitSourcesState, currentSourcesState);
+    return new JpsLoaderContext(totalExpectedDownloads, canceledStatus, commitId, nettyClient, commitSourcesState, currentSourcesState);
   }
 }

@@ -188,6 +188,16 @@ public final class CmdlineProtoUtil {
     return newBuilder.build();
   }
 
+  public static BuilderMessage createCacheDownloadMessageWithProgress(String text, float progress) {
+    BuilderMessage.CacheDownloadMessage.Builder cacheDownloadMessageBuilder = BuilderMessage.CacheDownloadMessage.newBuilder();
+    cacheDownloadMessageBuilder.setDescriptionText(text);
+    cacheDownloadMessageBuilder.setDone(progress);
+    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
+    newBuilder.setType(BuilderMessage.Type.CACHE_DOWNLOAD_MESSAGE);
+    newBuilder.setCacheDownloadMessage(cacheDownloadMessageBuilder.build());
+    return newBuilder.build();
+  }
+
   public static CmdlineRemoteProto.Message.ControllerMessage createCancelCommand() {
     return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
       .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.CANCEL_BUILD_COMMAND).build();

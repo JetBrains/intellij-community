@@ -63,6 +63,9 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         }
         if (cacheDownloadMessage.getDescriptionText() != null) {
           progressIndicator.setText(cacheDownloadMessage.getDescriptionText());
+          if (cacheDownloadMessage.hasDone()) {
+            progressIndicator.setFraction(cacheDownloadMessage.getDone());
+          }
         }
         break;
       case REPOSITORY_COMMITS_REQUEST:

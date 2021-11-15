@@ -11670,6 +11670,17 @@ public final class CmdlineRemoteProto {
          */
         com.google.protobuf.ByteString
             getDescriptionTextBytes();
+
+        /**
+         * <code>optional float done = 9;</code>
+         * @return Whether the done field is set.
+         */
+        boolean hasDone();
+        /**
+         * <code>optional float done = 9;</code>
+         * @return The done.
+         */
+        float getDone();
       }
       /**
        * Protobuf type {@code org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage}
@@ -11790,6 +11801,40 @@ public final class CmdlineRemoteProto {
             com.google.protobuf.ByteString value) {
           descriptionText_ = value.toStringUtf8();
           bitField0_ |= 0x00000002;
+        }
+
+        public static final int DONE_FIELD_NUMBER = 9;
+        private float done_;
+        /**
+         * <code>optional float done = 9;</code>
+         * @return Whether the done field is set.
+         */
+        @java.lang.Override
+        public boolean hasDone() {
+          return ((bitField0_ & 0x00000004) != 0);
+        }
+        /**
+         * <code>optional float done = 9;</code>
+         * @return The done.
+         */
+        @java.lang.Override
+        public float getDone() {
+          return done_;
+        }
+        /**
+         * <code>optional float done = 9;</code>
+         * @param value The done to set.
+         */
+        private void setDone(float value) {
+          bitField0_ |= 0x00000004;
+          done_ = value;
+        }
+        /**
+         * <code>optional float done = 9;</code>
+         */
+        private void clearDone() {
+          bitField0_ = (bitField0_ & ~0x00000004);
+          done_ = 0F;
         }
 
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage parseFrom(
@@ -12001,6 +12046,42 @@ public final class CmdlineRemoteProto {
             return this;
           }
 
+          /**
+           * <code>optional float done = 9;</code>
+           * @return Whether the done field is set.
+           */
+          @java.lang.Override
+          public boolean hasDone() {
+            return instance.hasDone();
+          }
+          /**
+           * <code>optional float done = 9;</code>
+           * @return The done.
+           */
+          @java.lang.Override
+          public float getDone() {
+            return instance.getDone();
+          }
+          /**
+           * <code>optional float done = 9;</code>
+           * @param value The done to set.
+           * @return This builder for chaining.
+           */
+          public Builder setDone(float value) {
+            copyOnWrite();
+            instance.setDone(value);
+            return this;
+          }
+          /**
+           * <code>optional float done = 9;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearDone() {
+            copyOnWrite();
+            instance.clearDone();
+            return this;
+          }
+
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage)
         }
         @java.lang.Override
@@ -12020,10 +12101,11 @@ public final class CmdlineRemoteProto {
                   "bitField0_",
                   "mainText_",
                   "descriptionText_",
+                  "done_",
                 };
                 java.lang.String info =
-                    "\u0001\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u1008\u0000\u0002" +
-                    "\u1008\u0001";
+                    "\u0001\u0003\u0000\u0001\u0001\t\u0003\u0000\u0000\u0000\u0001\u1008\u0000\u0002" +
+                    "\u1008\u0001\t\u1001\u0002";
                 return newMessageInfo(DEFAULT_INSTANCE, info, objects);
             }
             // fall through
