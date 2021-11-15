@@ -81,7 +81,7 @@ public class JavaHomeFinderBasic {
 
   private @NotNull Set<String> findInJavaHome() {
     String javaHome = mySystemInfo.getEnvironmentVariable("JAVA_HOME");
-    return javaHome != null ? scanAll(Paths.get(javaHome), false) : Collections.emptySet();
+    return javaHome != null ? scanAll(mySystemInfo.getPath(javaHome), false) : Collections.emptySet();
   }
 
   private @NotNull Set<String> findInPATH() {
@@ -93,7 +93,7 @@ public class JavaHomeFinderBasic {
 
       Set<Path> dirsToCheck = new HashSet<>();
       for (String p : pathVarString.split(mySystemInfo.getPathSeparator())) {
-        Path dir = Paths.get(p);
+        Path dir = mySystemInfo.getPath(p);
         if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", mySystemInfo.isFileSystemCaseSensitive())) {
           continue;
         }
@@ -133,7 +133,7 @@ public class JavaHomeFinderBasic {
         continue;
       }
 
-      paths.addAll(listPossibleJdkInstallRootsFromHomes(Paths.get(homePath)));
+      paths.addAll(listPossibleJdkInstallRootsFromHomes(mySystemInfo.getPath(homePath)));
     }
 
     return scanAll(paths, true);
@@ -215,7 +215,7 @@ public class JavaHomeFinderBasic {
     // first, try the special environment variable
     String candidatesPath = mySystemInfo.getEnvironmentVariable("SDKMAN_CANDIDATES_DIR");
     if (candidatesPath != null) {
-      Path candidatesDir = Path.of(candidatesPath);
+      Path candidatesDir = mySystemInfo.getPath(candidatesPath);
       if (Files.isDirectory(candidatesDir)) {
         return candidatesDir;
       }
@@ -224,7 +224,7 @@ public class JavaHomeFinderBasic {
     // then, try to use its 'primary' variable
     String primaryPath = mySystemInfo.getEnvironmentVariable("SDKMAN_DIR");
     if (primaryPath != null) {
-      Path candidatesDir = Path.of(primaryPath, "candidates");
+      Path candidatesDir = mySystemInfo.getPath(primaryPath, "candidates");
       if (Files.isDirectory(candidatesDir)) {
         return candidatesDir;
       }
@@ -322,7 +322,7 @@ public class JavaHomeFinderBasic {
     // https://asdf-vm.com/#/core-configuration?id=environment-variables
     String dataDir = mySystemInfo.getEnvironmentVariable("ASDF_DATA_DIR");
     if (dataDir != null) {
-      Path primaryDir = Paths.get(dataDir);
+      Path primaryDir = mySystemInfo.getPath(dataDir);
       if (safeIsDirectory(primaryDir)) {
         Path installsDir = primaryDir.resolve("installs");
         if (safeIsDirectory(installsDir)) return installsDir;

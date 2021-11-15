@@ -25,6 +25,11 @@ public abstract class JavaHomeFinder {
       return EnvironmentUtil.getValue(name);
     }
 
+    @NotNull
+    public Path getPath(String path, String... more) {
+      return Path.of(path, more);
+    }
+
     @Nullable
     public Path getUserHome() {
       return Path.of(SystemProperties.getUserHome());
