@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -162,7 +161,6 @@ public class XDebuggerTreeInlayPopup<D> {
           }
         }).onSuccess(expr -> {
         AppUIUtil.invokeOnEdt(() -> {
-          if (SystemInfo.isMac) IdeEventQueue.getInstance().getPopupManager().closeAllPopups(); // workaround till JBR-3979 is fixed
           XDebuggerWatchesManager manager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
           manager.showInplaceEditor(myPresentationPosition, myEditor, mySession, expr);
         });
