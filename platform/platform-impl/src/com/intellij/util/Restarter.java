@@ -38,7 +38,7 @@ public final class Restarter {
   private Restarter() { }
 
   public static boolean isSupported() {
-    return ourRestartSupported.getValue();
+    return ourRestartSupported.getValue() && !ourIsRemoteDevRestartMode;
   }
 
   private static final NullableLazyValue<File> ourStarter = NullableLazyValue.createValue(() -> {
@@ -114,8 +114,21 @@ public final class Restarter {
     return restarter != null && Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
   }
 
+  private static boolean ourIsRemoteDevRestartMode = false;
+
+  public static void setRemoteDevRestartMode() {
+    ourIsRemoteDevRestartMode = true;
+  }
+
+  public static boolean isRemoteDevRestartMode() {
+    return ourIsRemoteDevRestartMode;
+  }
+
   public static void scheduleRestart(boolean elevate, String @NotNull ... beforeRestart) throws IOException {
-    if (SystemInfo.isWindows) {
+    if (ourIsRemoteDevRestartMode) {
+        throw new IOException("Cannot restart application: remote dev mode requires exit(17) to be called for restart.");
+    }
+    else if (SystemInfo.isWindows) {
       restartOnWindows(elevate, beforeRestart);
     }
     else if (SystemInfo.isMac) {
