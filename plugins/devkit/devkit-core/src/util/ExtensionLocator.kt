@@ -11,7 +11,6 @@ import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
 import com.intellij.util.xml.DomManager
-import com.intellij.util.xml.GenericAttributeValue
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import java.util.*
@@ -26,6 +25,15 @@ fun locateExtensionsByExtensionPoint(extensionPoint: ExtensionPoint): List<Exten
 
 fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint, extensionId: String): ExtensionLocator {
   return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, extensionId)
+}
+
+/**
+ * @param extensionIdFunction in case EP is located via custom attribute instead of [Extension.getId].
+ */
+fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint,
+                                          extensionId: String,
+                                          extensionIdFunction: (Extension) -> String?): ExtensionLocator {
+  return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, extensionId, extensionIdFunction)
 }
 
 // TODO consider converting to a stream-like entity to avoid IDEA-277738, EA-139648, etc.
@@ -74,9 +82,10 @@ internal inline fun processExtensionsByClassName(project: Project,
   }
 }
 
-internal open class ExtensionByExtensionPointLocator(private val project: Project,
-                                                     extensionPoint: ExtensionPoint,
-                                                     private val extensionId: String?) : ExtensionLocator() {
+internal class ExtensionByExtensionPointLocator(private val project: Project,
+                                                extensionPoint: ExtensionPoint,
+                                                private val extensionId: String?,
+                                                private val extensionIdFunction: (Extension) -> String? = { extension -> extension.id.stringValue }) : ExtensionLocator() {
   private val pointQualifiedName = extensionPoint.effectiveQualifiedName
 
   private fun processCandidates(processor: (XmlTag) -> Boolean) {
@@ -86,7 +95,7 @@ internal open class ExtensionByExtensionPointLocator(private val project: Projec
     processExtensionDeclarations(epNameToSearch, project, false /* not strict match */) { extension, tag ->
       val ep = extension.extensionPoint ?: return@processExtensionDeclarations true
       if (ep.effectiveQualifiedName == pointQualifiedName &&
-          (extensionId == null || extensionId == getExtensionIdAttribute(extension)?.stringValue)) {
+          (extensionId == null || extensionId == extensionIdFunction.invoke(extension))) {
         // stop after the first found candidate if ID is specified
         processor(tag) && extensionId == null
       }
@@ -94,13 +103,6 @@ internal open class ExtensionByExtensionPointLocator(private val project: Projec
         true
       }
     }
-  }
-
-  /**
-   * Override if EP does not use [Extension.getId].
-   */
-  protected open fun getExtensionIdAttribute(extension: Extension): GenericAttributeValue<String>? {
-    return extension.id
   }
 
   override fun findCandidates(): List<ExtensionCandidate> {

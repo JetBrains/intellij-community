@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
-import org.jetbrains.idea.devkit.util.ExtensionByExtensionPointLocator;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
@@ -109,13 +108,12 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
       candidates = ExtensionLocatorKt.locateExtensionsByExtensionPoint(extensionPointDomElement);
     }
     else {
-      candidates = new ExtensionByExtensionPointLocator(project, extensionPointDomElement, extensionPointId) {
-        @Nullable
-        @Override
-        public GenericAttributeValue<String> getExtensionIdAttribute(@NotNull Extension extension) {
-          return getNameElement(extension);
-        }
-      }.findCandidates();
+      candidates = ExtensionLocatorKt.
+        locateExtensionsByExtensionPointAndId(extensionPointDomElement, extensionPointId,
+                                              extension -> {
+                                                final GenericAttributeValue<String> nameElement = getNameElement(extension);
+                                                return nameElement != null ? nameElement.getStringValue() : null;
+                                              }).findCandidates();
     }
 
     final DomManager manager = DomManager.getDomManager(project);
