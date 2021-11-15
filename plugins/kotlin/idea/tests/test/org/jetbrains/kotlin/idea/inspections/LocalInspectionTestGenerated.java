@@ -8804,9 +8804,27 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableGenericConstructor2.kt");
             }
 
+            @TestMetadata("notApplicableInBinaryArgument.kt")
+            public void testNotApplicableInBinaryArgument() throws Exception {
+                runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableInBinaryArgument.kt");
+            }
+
+            @TestMetadata("notApplicableInNestedCallArgument.kt")
+            public void testNotApplicableInNestedCallArgument() throws Exception {
+                runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableInNestedCallArgument.kt");
+            }
+
             @TestMetadata("notApplicableOverload.kt")
             public void testNotApplicableOverload() throws Exception {
                 runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableOverload.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/redundantLambdaArrow")
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("notApplicableOverload2.kt")
@@ -8817,14 +8835,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("notApplicableOverload3.kt")
             public void testNotApplicableOverload3() throws Exception {
                 runTest("testData/inspectionsLocal/redundantLambdaArrow/notApplicableOverload3.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/inspectionsLocal/redundantLambdaArrow")
-        public static class TestBucket002 extends AbstractLocalInspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("notApplicableOverload5.kt")
