@@ -12,6 +12,9 @@ import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
 public class ActionToolbarBorder implements Border {
+
+  private static final int WIDTH = 1;
+
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     Graphics2D g2 = (Graphics2D)g.create();
@@ -20,8 +23,6 @@ public class ActionToolbarBorder implements Border {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
       Rectangle rect = new Rectangle(x, y, width, height);
-      JBInsets.removeFrom(rect, JBUI.insets(1));
-
       g2.setColor(JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
 
       float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
@@ -40,7 +41,7 @@ public class ActionToolbarBorder implements Border {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(2);
+    return JBUI.insets(WIDTH);
   }
 
   @Override
@@ -53,6 +54,6 @@ public class ActionToolbarBorder implements Border {
    * Default is {@code false}.
    */
   public static void setOutlined(ActionToolbar toolbar, boolean outlined) {
-    toolbar.getComponent().setBorder(outlined ? new ActionToolbarBorder() : JBUI.Borders.empty(2));
+    toolbar.getComponent().setBorder(outlined ? new ActionToolbarBorder() : JBUI.Borders.empty(WIDTH));
   }
 }
