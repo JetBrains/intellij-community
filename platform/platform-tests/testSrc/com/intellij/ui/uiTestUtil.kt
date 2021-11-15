@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.components.ActionLink
@@ -23,7 +24,6 @@ import com.intellij.util.io.write
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.ui.scale.TestScaleHelper
 import com.intellij.ui.scale.paint.ImageComparator
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
@@ -52,7 +52,7 @@ open class RequireHeadlessMode : ExternalResource() {
       // on TC headless is not enabled
     }
     else {
-      UIUtil.setHeadlessProperty(true)
+      UITestUtil.setHeadlessProperty(true)
       if (!GraphicsEnvironment.isHeadless()) {
         throw RuntimeException("must be headless")
       }

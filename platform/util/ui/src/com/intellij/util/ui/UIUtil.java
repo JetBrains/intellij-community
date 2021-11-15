@@ -3658,26 +3658,4 @@ public final class UIUtil {
     if (s.length() < 2) s = "0" + s;
     return s;
   }
-
-  public static void setHeadlessProperty(boolean isHeadless) {
-    System.setProperty("java.awt.headless", Boolean.toString(isHeadless));
-    // reset field value to let java.awt.GraphicsEnvironment.getHeadlessProperty re-read updated property
-    boolean set = ReflectionUtil.setField(GraphicsEnvironment.class, null, Boolean.class, "headless", null);
-    assert set;
-    set = ReflectionUtil.setField(Toolkit.class, null, Toolkit.class, "toolkit", null);
-    assert set;
-    assert GraphicsEnvironment.isHeadless() == isHeadless;
-  }
-
-  public static <E extends Throwable> void runWithHeadlessProperty(boolean propertyValue, @NotNull ThrowableRunnable<E> runnable) throws E {
-    boolean old = GraphicsEnvironment.isHeadless();
-    setHeadlessProperty(propertyValue);
-    try {
-      runnable.run();
-    }
-    finally {
-      setHeadlessProperty(old);
-    }
-  }
-
 }

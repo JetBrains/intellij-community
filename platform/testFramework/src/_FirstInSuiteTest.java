@@ -8,8 +8,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.UITestUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,7 +106,7 @@ public class _FirstInSuiteTest extends TestCase {
   }
 
   public void testTestsAreRunInHeadlessMode() {
-    UIUtil.setHeadlessProperty(true);
+    UITestUtil.setHeadlessProperty(true);
     assertTrue("Tests must be run in the headless mode for performance reasons but headless mode is off for some reason", GraphicsEnvironment.isHeadless());
   }
 }

@@ -577,7 +577,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   public void testStateForComponentIdentity() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      UIUtil.runWithHeadlessProperty(false, () -> {
+      UITestUtil.runWithHeadlessProperty(false, () -> {
         myWindow1 = new Frame();
         myWindow2 = new Frame();
         JPanel panel = new JPanel();
