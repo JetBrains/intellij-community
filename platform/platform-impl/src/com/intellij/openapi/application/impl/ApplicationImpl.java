@@ -619,6 +619,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           exitCode = Main.RESTART_FAILED;
         }
       }
+      else if (restart && Restarter.isRemoteDevRestartMode()) {
+        exitCode = Main.REMOTE_DEV_RESTART;
+      }
       IdeaLogger.dropFrequentExceptionsCaches();
       System.exit(exitCode);
     }
