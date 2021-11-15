@@ -10,17 +10,21 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.UiNotifyConnector
+import java.awt.BorderLayout
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 internal class DocumentationToolWindowUI(
   project: Project,
-  private val ui: DocumentationUI,
+  val ui: DocumentationUI,
   private val content: Content,
 ) : Disposable {
 
   val browser: DocumentationBrowser get() = ui.browser
 
-  val contentComponent: JComponent get() = ui.scrollPane
+  val contentComponent: JComponent = JPanel(BorderLayout()).also {
+    it.add(ui.scrollPane, BorderLayout.CENTER)
+  }
 
   val editorPane: DocumentationEditorPane get() = ui.editorPane
 
@@ -49,6 +53,7 @@ internal class DocumentationToolWindowUI(
   // - > reuse
   // - - > asterisk content tab updater
   // - > content tab updater (after tab is kept)
+  // - > search handler
   init {
     content.putUserData(TW_UI_KEY, this)
     Disposer.register(content, this)
@@ -57,6 +62,7 @@ internal class DocumentationToolWindowUI(
     reusable = updateContentTab(browser, content, asterisk = true).also {
       Disposer.register(this, it)
     }
+    Disposer.register(this, DocumentationSearchHandler(this))
   }
 
   override fun dispose() {
