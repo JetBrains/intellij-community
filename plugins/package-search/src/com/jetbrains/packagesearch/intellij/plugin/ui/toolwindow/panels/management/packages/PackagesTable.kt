@@ -93,7 +93,6 @@ internal class PackagesTable(
             TableUtil.scrollSelectionToVisible(this)
             updateAndRepaint()
             selectedPackageStateFlow.tryEmit(item.uiPackageModel)
-            PackageSearchEventsLogger.logPackageSelected(item is PackagesTableItem.InstalledPackage)
         } else {
             selectedPackageStateFlow.tryEmit(null)
         }
@@ -270,15 +269,8 @@ internal class PackagesTable(
             viewModel.knownRepositoriesInTargetModules
         )
 
-        // TODO save current selection and attempt to re-select
-        val previouslySelectedPackage = selectedPackageStateFlow.value?.packageModel?.identifier
         selectionModel.removeListSelectionListener(listSelectionListener)
         tableModel.items = viewModel.items
-
-        if (viewModel.items.isEmpty() || previouslySelectedPackage == null) {
-            selectionModel.addListSelectionListener(listSelectionListener)
-            return
-        }
 
         // TODO size columns
 
