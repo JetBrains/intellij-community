@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -627,8 +626,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     if (myParametersTable != null) {
       TableUtil.stopEditing(myParametersTable);
     }
-    String message = ActionUtil.underModalProgress(myProject, RefactoringBundle.message("changeSignature.validating.title"),
-                                                   () -> validateAndCommitData());
+    String message = validateAndCommitData();
     if (message != null) {
       if (message != EXIT_SILENTLY) {
         CommonRefactoringUtil.showErrorMessage(getTitle(), message, getHelpId(), myProject);

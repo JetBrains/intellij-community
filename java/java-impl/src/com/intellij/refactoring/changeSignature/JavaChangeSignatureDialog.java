@@ -10,6 +10,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -18,6 +19,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -612,8 +614,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
 
       if (item.parameter.oldParameterIndex < 0) {
-        String def = JavaCodeStyleManager.getInstance(myProject)
-          .qualifyClassReferences(item.defaultValueCodeFragment.copy()).getText().trim();
+        String def = WriteCommandAction.runWriteCommandAction(myProject,
+                                                              (Computable<String>)() -> JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText().trim());
         item.parameter.defaultValue = def;
         if (!(type instanceof PsiEllipsisType)) {
           try {
