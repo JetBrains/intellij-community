@@ -73,7 +73,8 @@ public class GradleContentRootContributorTest extends GradleImportingTestCase {
     String projectRootPath = myProjectRoot.getPath();
     List<Pair<String, ExternalSystemSourceType>> map = ContainerUtil.map(
       contentRoots,
-      it -> Pair.create(FileUtil.getRelativePath(projectRootPath, FileUtil.toSystemIndependentName(it.getPath()), '/'), it.getRootType()));
+      it -> Pair.create(FileUtil.getRelativePath(projectRootPath, FileUtil.toSystemIndependentName(it.getPath().toString()), '/'),
+                        it.getRootType()));
 
     assertSameElements(map, expected);
   }
