@@ -160,10 +160,11 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
   }
 
   private fun confirmDuplicates(project: Project, editor: Editor, duplicates: List<Duplicate>): List<Duplicate> {
+    if (duplicates.isEmpty()) return duplicates
     if (isSilentMode) return duplicates
+    val initialPosition = editor.caretModel.logicalPosition
     val confirmedDuplicates = mutableListOf<Duplicate>()
     duplicates.forEach { duplicate ->
-      val initialPosition = editor.caretModel.logicalPosition
       val highlighters = DuplicatesImpl.previewMatch(project, editor, textRangeOf(duplicate.candidate))
       try {
         val prompt = ReplacePromptDialog(false, JavaRefactoringBundle.message("process.duplicates.title"), project)
@@ -175,9 +176,9 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
         }
       } finally {
         highlighters.forEach { highlighter -> HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighter) }
-        editor.scrollingModel.scrollTo(initialPosition, ScrollType.MAKE_VISIBLE)
       }
     }
+    editor.scrollingModel.scrollTo(initialPosition, ScrollType.MAKE_VISIBLE)
     return confirmedDuplicates
   }
 
