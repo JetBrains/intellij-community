@@ -6,8 +6,10 @@ import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.internal.statistic.utils.platformPlugin
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
@@ -89,9 +91,11 @@ data class CommonFeedbackSystemInfoData(
     }
 
     private fun getRuntimeVersion() = SystemInfo.JAVA_RUNTIME_VERSION + SystemInfo.OS_ARCH
-    private fun getRegistryKeys(): List<String> = Registry.getAll().stream().filter { obj: RegistryValue -> obj.isChangedFromDefault }
-      .map { v: RegistryValue -> v.key + "=" + v.asString() }.toList()
-
+    private fun getRegistryKeys(): List<String> = Registry.getAll().stream().filter { value: RegistryValue ->
+      val pluginId: String? = value.pluginId
+      val pluginInfo = if (pluginId != null) getPluginInfoById(PluginId.getId(pluginId)) else platformPlugin
+      value.isChangedFromDefault && pluginInfo.isSafeToReport()
+    }.map { v: RegistryValue -> v.key + "=" + v.asString() }.toList()
 
     private fun getDisabledPlugins(): List<String> = getPluginsNamesWithVersion { p: IdeaPluginDescriptor -> !p.isEnabled }
 
