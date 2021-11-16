@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
@@ -201,6 +201,16 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ALIGN_MULTILINE_ANNOTATION_PARAMETERS",
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
+                                JavaBundle.message("wrapping.annotation.parameters"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "NEW_LINE_AFTER_LPAREN_IN_ANNOTATION",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                JavaBundle.message("wrapping.annotation.parameters"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "RPAREN_ON_NEW_LINE_IN_ANNOTATION",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 JavaBundle.message("wrapping.annotation.parameters"));
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,

@@ -140,6 +140,7 @@
       "method_parameters_wrap": "normal",
       "modifier_list_wrap": false,
       "names_count_to_use_import_on_demand": 3,
+      "new_line_after_lparen_in_annotation": false,
       "new_line_after_lparen_in_record_header": false,
       "packages_to_use_import_on_demand": [
         "java.awt.*",
@@ -163,6 +164,7 @@
       "resource_list_new_line_after_left_paren": false,
       "resource_list_right_paren_on_new_line": false,
       "resource_list_wrap": "off",
+      "rparen_on_new_line_in_annotation": false,
       "rparen_on_new_line_in_record_header": false,
       "smart_tabs": false,
       "space_after_closing_angle_bracket_in_type_argument": false,
