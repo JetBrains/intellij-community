@@ -166,6 +166,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         LOG.info("Trying to download JPS caches before build");
         // Try to download caches
         JpsOutputLoaderManager loaderManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), this, myProjectPath, myChannel, mySessionId);
+        //loaderManager.measureConnectionSpeed();
         loaderManager.load(true, false);
       }
 

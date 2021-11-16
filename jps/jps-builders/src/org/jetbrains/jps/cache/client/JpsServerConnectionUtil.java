@@ -1,29 +1,27 @@
-//package org.jetbrains.jps.cache.client;
-//
-//import com.intellij.execution.ExecutionException;
-//import com.intellij.execution.configurations.GeneralCommandLine;
-//import com.intellij.execution.process.ProcessOutput;
-//import com.intellij.execution.util.ExecUtil;
-//import com.intellij.openapi.diagnostic.Logger;
-//import com.intellij.openapi.progress.ProcessCanceledException;
-//import com.intellij.openapi.progress.ProgressIndicator;
-//import com.intellij.openapi.progress.util.ProgressWindow;
-//import com.intellij.openapi.project.Project;
-//import com.intellij.openapi.util.SystemInfo;
-//import com.intellij.openapi.util.io.FileUtil;
-//import com.intellij.openapi.util.text.StringUtil;
-//import com.intellij.util.io.HttpRequests;
-//import org.jetbrains.annotations.NotNull;
-//
-//import java.io.File;
-//import java.io.IOException;
-//import java.net.URLConnection;
-//import java.nio.charset.StandardCharsets;
-//import java.text.DecimalFormat;
-//import java.util.Base64;
-//import java.util.Map;
-//
-//import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
+package org.jetbrains.jps.cache.client;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.CountingGZIPInputStream;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.util.Base64;
+import java.util.Map;
 //
 ///**
 // * This class was introduced to detect internet connection problems from the client side.
@@ -37,44 +35,89 @@
 // *  4  212.48.195.38 (212.48.195.38)  30.396 ms  13.616 ms  9.258 ms
 // *  5  100.64.97.116 (100.64.97.116)  9.306 ms !X  8.332 ms !X  14.542 ms !X
 // */
-//public class JpsServerConnectionUtil {
-//  private static final Logger LOG = Logger.getInstance(JpsServerConnectionUtil.class);
-//  private static final String CDN_CACHE_HEADER = "X-Cache";
-//
-//  public static void measureConnectionSpeed(@NotNull Project project) {
-//    INSTANCE.execute(() -> {
-//      ProgressIndicator indicator = new ProgressWindow(true, project);
-//      indicator.setIndeterminate(false);
-//      indicator.setFraction(0.01);
-//      try {
-//        Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
-//        long start = System.currentTimeMillis();
-//        HttpRequests.request(calculateAddress())
-//          .tuner(tuner -> headers.forEach((k, v) -> tuner.addRequestProperty(k, v)))
-//          .connect(new HttpRequests.RequestProcessor<>() {
-//            @Override
-//            public File process(@NotNull HttpRequests.Request request) throws IOException {
-//              URLConnection connection = request.getConnection();
-//              int fileSize = connection.getContentLength();
-//              String header = connection.getHeaderField(CDN_CACHE_HEADER);
-//              File downloadedFile = request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
-//              long downloadTime = System.currentTimeMillis() - start;
-//              long bytesPerSecond = fileSize / downloadTime * 1000;
-//              if (header != null && header.startsWith("Hit")) {
-//                LOG.info("Speed of connection to CDN: " + StringUtil.formatFileSize(bytesPerSecond) + "/s; " + formatInternetSpeed(bytesPerSecond * 8));
-//              } else {
-//                LOG.info("Speed of connection to S3: " + StringUtil.formatFileSize(bytesPerSecond) + "/s; " + formatInternetSpeed(bytesPerSecond * 8));
-//              }
-//              FileUtil.delete(downloadedFile);
-//              return downloadedFile;
-//            }
-//          });
-//      }
-//      catch (ProcessCanceledException | IOException e) {
-//        LOG.warn("Failed to download file for measurement connection speed", e);
-//      }
-//    });
-//  }
+public class JpsServerConnectionUtil {
+  private static final Logger LOG = Logger.getInstance(JpsServerConnectionUtil.class);
+  private static final String CDN_CACHE_HEADER = "X-Cache";
+
+  public static void measureConnectionSpeed(@NotNull JpsNettyClient nettyClient) {
+    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(nettyClient);
+    String url = calculateAddress();
+    long start = System.currentTimeMillis();
+    try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+      HttpGet httpRequest = new HttpGet(url);
+      headers.forEach((k, v) -> httpRequest.setHeader(k, v));
+      HttpResponse response = client.execute(httpRequest);
+      HttpEntity responseEntity = response.getEntity();
+      if (response.getStatusLine().getStatusCode() == 200) {
+        long fileSize = responseEntity.getContentLength();
+        Header header = response.getFirstHeader(CDN_CACHE_HEADER);
+
+        File downloadedFile = saveToFile(FileUtil.createTempFile("download.", ".tmp").toPath(), responseEntity).toFile();
+        //File downloadedFile = request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
+        long downloadTime = System.currentTimeMillis() - start;
+        long bytesPerSecond = fileSize / downloadTime * 1000;
+
+        if (header != null && header.getValue().startsWith("Hit")) {
+          LOG.info("Speed of connection to CDN: " + StringUtil.formatFileSize(bytesPerSecond) + "/s; " + formatInternetSpeed(bytesPerSecond * 8));
+        }
+        else {
+          LOG.info("Speed of connection to S3: " + StringUtil.formatFileSize(bytesPerSecond) + "/s; " + formatInternetSpeed(bytesPerSecond * 8));
+        }
+        FileUtil.delete(downloadedFile);
+      } else {
+        String errorText = StreamUtil.readText(new InputStreamReader(responseEntity.getContent(), StandardCharsets.UTF_8));
+        LOG.warn("Request: " + url + " Error: " + response.getStatusLine().getStatusCode() + " body: " + errorText);
+      }
+    } catch (IOException e) {
+      LOG.warn("Failed to download file for measurement connection speed", e);
+    }
+  }
+
+  public static @NotNull Path saveToFile(@NotNull Path file, HttpEntity responseEntity) throws IOException {
+    NioFiles.createDirectories(file.getParent());
+
+    boolean deleteFile = true;
+    try (OutputStream out = Files.newOutputStream(file)) {
+      copyStreamContent(responseEntity.getContent(), out, responseEntity.getContentLength());
+      deleteFile = false;
+    }
+    finally {
+      if (deleteFile) {
+        Files.deleteIfExists(file);
+      }
+    }
+
+    return file;
+  }
+
+  private static long copyStreamContent(@NotNull InputStream inputStream,
+                                        @NotNull OutputStream outputStream,
+                                        long expectedContentLength) throws IOException, ProcessCanceledException {
+
+    CountingGZIPInputStream gzipStream = inputStream instanceof CountingGZIPInputStream ? (CountingGZIPInputStream)inputStream : null;
+    byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
+    int count;
+    long bytesWritten = 0;
+    long bytesRead = 0;
+    while ((count = inputStream.read(buffer)) > 0) {
+      outputStream.write(buffer, 0, count);
+      bytesWritten += count;
+      bytesRead = gzipStream != null ? gzipStream.getCompressedBytesRead() : bytesWritten;
+
+    }
+    if (gzipStream != null) {
+      // Amount of read bytes may have changed when 'inputStream.read(buffer)' returns -1
+      // E.g. reading GZIP trailer doesn't produce inflated stream data.
+      bytesRead = gzipStream.getCompressedBytesRead();
+    }
+
+    if (bytesRead < expectedContentLength) {
+      throw new IOException("Connection closed at byte " + bytesRead + ". Expected " + expectedContentLength + " bytes.");
+    }
+    return bytesWritten;
+  }
+
+
 //
 //  public static void checkDomainIsReachable(@NotNull String domain) {
 //    try {
@@ -114,15 +157,15 @@
 //    }
 //  }
 //
-//  private static @NotNull String formatInternetSpeed(long fileSize) {
-//    int rank = (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
-//    double value = fileSize / Math.pow(1000, rank);
-//    String[] units = {"Bit", "Kbit", "Mbit", "Gbit"};
-//    return new DecimalFormat("0.##").format(value) + units[rank] + "/s";
-//  }
-//
-//  private static @NotNull String calculateAddress() {
-//    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldC9FWEFNUExFLnR4dA==");
-//    return new String(decodedBytes, StandardCharsets.UTF_8);
-//  }
-//}
+  private static @NotNull String formatInternetSpeed(long fileSize) {
+    int rank = (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
+    double value = fileSize / Math.pow(1000, rank);
+    String[] units = {"Bit", "Kbit", "Mbit", "Gbit"};
+    return new DecimalFormat("0.##").format(value) + units[rank] + "/s";
+  }
+
+  private static @NotNull String calculateAddress() {
+    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldC9FWEFNUExFLnR4dA==");
+    return new String(decodedBytes, StandardCharsets.UTF_8);
+  }
+}

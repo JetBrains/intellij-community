@@ -14,6 +14,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.client.JpsNettyClient;
 import org.jetbrains.jps.cache.client.JpsServerClient;
+import org.jetbrains.jps.cache.client.JpsServerConnectionUtil;
 import org.jetbrains.jps.cache.git.GitCommitsIterator;
 import org.jetbrains.jps.cache.git.GitRepositoryUtil;
 import org.jetbrains.jps.cache.loader.JpsOutputLoader.LoaderStatus;
@@ -70,6 +71,10 @@ public class JpsOutputLoaderManager implements Disposable {
     // Configure build manager
     //BuildManager buildManager = BuildManager.getInstance();
     //if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
+  }
+
+  public void measureConnectionSpeed() {
+    JpsServerConnectionUtil.measureConnectionSpeed(myNettyClient);
   }
 
   public void load(boolean isForceUpdate, boolean verbose) {
