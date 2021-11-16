@@ -244,7 +244,7 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
 
   fun setRoot(rootColor: CommitDetailsPanel.RootColor?) {
     if (rootColor != null) {
-      icon = JBUI.scale(ColorIcon(ROOT_ICON_SIZE, rootColor.color))
+      icon = JBUIScale.scaleIcon(ColorIcon(ROOT_ICON_SIZE, rootColor.color))
       tooltipText = rootColor.root.path
     }
     else {
