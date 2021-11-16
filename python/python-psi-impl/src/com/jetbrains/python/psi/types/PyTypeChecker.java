@@ -1224,6 +1224,10 @@ public final class PyTypeChecker {
       }
       return substitute(genericType, new GenericSubstitutions(substitutions, Collections.emptyMap()), context);
     }
+    // An already parameterized type, don't override existing values for type parameters
+    else if (genericType instanceof PyCollectionType) {
+      return genericType;
+    }
     else if (genericType instanceof PyClassType) {
       PyClass cls = ((PyClassType)genericType).getPyClass();
       return new PyCollectionTypeImpl(cls, false, actualTypeParams);

@@ -1607,6 +1607,13 @@ public class PyTypingTest extends PyTestCase {
            "expr: Pair[int]");
   }
 
+  // PY-29257
+  public void testGenericAliasParametersCannotBeOverridden() {
+    doTest("list[int]",
+           "Alias = list[int]\n" +
+           "expr: Alias[str]");
+  }
+
   // PY-44974
   public void testBitwiseOrUnionIsInstance() {
     doTest("str | dict | int",
