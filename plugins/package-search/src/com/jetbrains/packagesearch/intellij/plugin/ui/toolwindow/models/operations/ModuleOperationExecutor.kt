@@ -3,6 +3,10 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operati
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
@@ -14,11 +18,14 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class ModuleOperationExecutor {
 
     /** This **MUST** run on EDT */
-    fun doOperation(operation: PackageSearchOperation<*>) = try {
+    suspend fun doOperation(operation: PackageSearchOperation<*>) = try {
         when (operation) {
             is PackageSearchOperation.Package.Install -> installPackage(operation)
             is PackageSearchOperation.Package.Remove -> removePackage(operation)
@@ -32,17 +39,21 @@ internal class ModuleOperationExecutor {
         PackageSearchOperationFailure(operation, e)
     }
 
-    private fun installPackage(operation: PackageSearchOperation.Package.Install) {
+    private suspend fun installPackage(operation: PackageSearchOperation.Package.Install) {
         val projectModule = operation.projectModule
         val operationProvider = ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
             ?: throw OperationException.unsupportedBuildSystem(projectModule)
 
         logDebug("ModuleOperationExecutor#installPackage()") { "Installing package ${operation.model.displayName} in ${projectModule.name}" }
 
-        operationProvider.addDependencyToModule(
-            operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model, operation.newVersion, operation.newScope),
-            module = projectModule
-        ).throwIfAnyFailures()
+        val operationMetadata = dependencyOperationMetadataFrom(
+            projectModule = projectModule,
+            dependency = operation.model,
+            newVersion = operation.newVersion,
+            newScope = operation.newScope
+        )
+
+        withEDT { operationProvider.addDependencyToModule(operationMetadata, projectModule).throwIfAnyFailures() }
 
         PackageSearchEventsLogger.logPackageInstalled(
             packageIdentifier = operation.model.coordinates.toIdentifier(),
@@ -54,17 +65,16 @@ internal class ModuleOperationExecutor {
 
     private fun UnifiedCoordinates.toIdentifier() = PackageIdentifier("$groupId:$artifactId")
 
-    private fun removePackage(operation: PackageSearchOperation.Package.Remove) {
+    private suspend fun removePackage(operation: PackageSearchOperation.Package.Remove) {
         val projectModule = operation.projectModule
         val operationProvider = ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
             ?: throw OperationException.unsupportedBuildSystem(projectModule)
 
         logDebug("ModuleOperationExecutor#removePackage()") { "Removing package ${operation.model.displayName} from ${projectModule.name}" }
 
-        operationProvider.removeDependencyFromModule(
-            operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model),
-            module = projectModule
-        ).throwIfAnyFailures()
+        val operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model)
+
+        withEDT { operationProvider.removeDependencyFromModule(operationMetadata, projectModule).throwIfAnyFailures() }
 
         PackageSearchEventsLogger.logPackageRemoved(
             packageIdentifier = operation.model.coordinates.toIdentifier(),
@@ -74,17 +84,23 @@ internal class ModuleOperationExecutor {
         logTrace("ModuleOperationExecutor#removePackage()") { "Package ${operation.model.displayName} removed from ${projectModule.name}" }
     }
 
-    private fun changePackage(operation: PackageSearchOperation.Package.ChangeInstalled) {
+    private suspend fun changePackage(operation: PackageSearchOperation.Package.ChangeInstalled) {
         val projectModule = operation.projectModule
-        val operationProvider = ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
-            ?: throw OperationException.unsupportedBuildSystem(projectModule)
+        val operationProvider = readAction {
+            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
+                ?: throw OperationException.unsupportedBuildSystem(projectModule)
+        }
 
         logDebug("ModuleOperationExecutor#changePackage()") { "Changing package ${operation.model.displayName} in ${projectModule.name}" }
 
-        operationProvider.updateDependencyInModule(
-            operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model, operation.newVersion, operation.newScope),
-            module = projectModule
-        ).throwIfAnyFailures()
+        val operationMetadata = dependencyOperationMetadataFrom(
+            projectModule = projectModule,
+            dependency = operation.model,
+            newVersion = operation.newVersion,
+            newScope = operation.newScope
+        )
+
+        withEDT { operationProvider.updateDependencyInModule(operationMetadata, projectModule).throwIfAnyFailures() }
 
         PackageSearchEventsLogger.logPackageUpdated(
             packageIdentifier = operation.model.coordinates.toIdentifier(),
@@ -110,29 +126,27 @@ internal class ModuleOperationExecutor {
         newScope = newScope?.scopeName.nullIfBlank() ?: dependency.scope.nullIfBlank()
     )
 
-    private fun installRepository(operation: PackageSearchOperation.Repository.Install) {
+    private suspend fun installRepository(operation: PackageSearchOperation.Repository.Install) {
         val projectModule = operation.projectModule
         val operationProvider = ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
             ?: throw OperationException.unsupportedBuildSystem(projectModule)
 
         logDebug("ModuleOperationExecutor#installRepository()") { "Installing repository ${operation.model.displayName} in ${projectModule.name}" }
 
-        operationProvider.addRepositoryToModule(operation.model, projectModule)
-            .throwIfAnyFailures()
+        withEDT { operationProvider.addRepositoryToModule(operation.model, projectModule).throwIfAnyFailures() }
 
         PackageSearchEventsLogger.logRepositoryAdded(operation.model)
         logTrace("ModuleOperationExecutor#installRepository()") { "Repository ${operation.model.displayName} installed in ${projectModule.name}" }
     }
 
-    private fun removeRepository(operation: PackageSearchOperation.Repository.Remove) {
+    private suspend fun removeRepository(operation: PackageSearchOperation.Repository.Remove) {
         val projectModule = operation.projectModule
         val operationProvider = ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
             ?: throw OperationException.unsupportedBuildSystem(projectModule)
 
         logDebug("ModuleOperationExecutor#removeRepository()") { "Removing repository ${operation.model.displayName} from ${projectModule.name}" }
 
-        operationProvider.removeRepositoryFromModule(operation.model, projectModule)
-            .throwIfAnyFailures()
+        withEDT { operationProvider.removeRepositoryFromModule(operation.model, projectModule).throwIfAnyFailures() }
 
         PackageSearchEventsLogger.logRepositoryRemoved(operation.model)
         logTrace("ModuleOperationExecutor#removeRepository()") { "Repository ${operation.model.displayName} removed from ${projectModule.name}" }
@@ -144,4 +158,7 @@ internal class ModuleOperationExecutor {
             size > 1 -> error("A single operation resulted in multiple failures")
         }
     }
+
+    private suspend inline fun <T> withEDT(noinline action: suspend CoroutineScope.() -> T) =
+        withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement(), action)
 }
