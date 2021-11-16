@@ -25,6 +25,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -1549,6 +1550,54 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  // PY-29257
+  public void testParameterizedTypeAliasPreservesOrderOfTypeParameters() {
+    doTest("dict[str, Any]",
+           "from typing import TypeVar\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "Alias = dict[T1, T2]\n" +
+           "expr: Alias[str]");
+
+    doTest("dict[str, Any]",
+           "from typing import TypeVar\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "Alias = dict[T2, T1]\n" +
+           "expr: Alias[str]");
+  }
+
+  // PY-29257
+  public void testGenericTypeAliasParameterizedWithExplicitAny() {
+    doTest("dict[Any, str]",
+           "from typing import TypeVar\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "Alias = dict[T1, T2]\n" +
+           "expr: Alias[Any, str]");
+  }
+
+  // PY-29257
+  public void testGenericTypeAliasParameterizedInTwoSteps() {
+    doTest("dict[int, str]",
+           "from typing import TypeVar\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "Alias1 = dict[T1, T2]\n" +
+           "Alias2 = Alias1[int, T2]\n" +
+           "expr: Alias2[str]");
+  }
+
+  // PY-44905
+  public void testGenericTypeAliasToAnnotated() {
+    doTest("int",
+           "from typing import Annotated, TypeVar\n" +
+           "marker = object()\n" +
+           "T = TypeVar(\"T\")\n" +
+           "Inject = Annotated[T, marker]\n" +
+           "expr: Inject[int]");
+  }
+
   // PY-44974
   public void testBitwiseOrUnionIsInstance() {
     doTest("str | dict | int",
@@ -1663,7 +1712,7 @@ public class PyTypingTest extends PyTestCase {
     assertFalse(PsiTreeUtil.hasErrorElements(injected));
   }
 
-  private void doTest(@NotNull String expectedType, @NotNull String text) {
+  private void doTest(@NotNull String expectedType, @Language("TEXT") @NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
