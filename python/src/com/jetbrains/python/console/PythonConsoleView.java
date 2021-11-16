@@ -504,7 +504,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       .setBorderColor(JBColor.background())
       .setCancelOnOtherWindowOpen(true)
       .createPopup();
-    ((TitlePanel)((AbstractPopup)myCommandQueue).getTitle()).getLabel().setForeground(JBColor.foreground());
+
+    var title = (TitlePanel)((AbstractPopup)myCommandQueue).getTitle();
+    title.getLabel().setForeground(JBColor.foreground());
+    title.setActive(true);
     ((AbstractPopup)myCommandQueue).addResizeListener(this::commandQueueWasResized, this);
 
     if (commandQueueDimension != null) {
