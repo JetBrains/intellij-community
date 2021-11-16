@@ -8722,6 +8722,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertToScope/convertToWith/package.kt");
             }
 
+            @TestMetadata("parameterExpression.kt")
+            public void testParameterExpression() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToWith/parameterExpression.kt");
+            }
+
             @TestMetadata("singleCall.kt")
             public void testSingleCall() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToWith/singleCall.kt");

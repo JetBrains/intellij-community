@@ -58,7 +58,8 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
     private fun KtExpression.tryGetExpressionToApply(referenceName: String): KtExpression? {
         val childOfBlock = PsiTreeUtil.findFirstParent(this) {
-            it.parent is KtBlockExpression
+            val parent = it.parent
+            parent is KtBlockExpression || parent is KtValueArgument
         } as? KtExpression ?: return null
 
         return if (childOfBlock is KtProperty || childOfBlock.isTarget(referenceName)) childOfBlock else null
@@ -249,7 +250,8 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
     }
 
     private fun KtExpression.prevProperty(): KtProperty? = PsiTreeUtil.findFirstParent(this) {
-        it.parent is KtBlockExpression
+        val parent = it.parent
+        parent is KtBlockExpression || parent is KtValueArgument
     }
         ?.siblings(forward = false, withItself = true)
         ?.firstOrNull { it is KtProperty && it.isLocal } as? KtProperty
