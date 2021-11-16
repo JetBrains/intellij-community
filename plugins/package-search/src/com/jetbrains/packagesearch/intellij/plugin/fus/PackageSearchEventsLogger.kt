@@ -95,7 +95,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             eventField2 = detailsVisibleField
         )
         private val searchRequestEvent = GROUP.registerEvent(
-            eventId = FUSGroupIds.SEARCH_QUERY_CHANGED,
+            eventId = FUSGroupIds.SEARCH_REQUEST,
             eventField1 = searchQueryLengthField
         )
         private val searchQueryClearEvent = GROUP.registerEvent(FUSGroupIds.SEARCH_QUERY_CLEAR)
