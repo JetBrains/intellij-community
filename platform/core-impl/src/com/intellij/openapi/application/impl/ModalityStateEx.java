@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,8 +63,12 @@ public final class ModalityStateEx extends ModalityState {
 
   void cancelAllEntities() {
     for (Object entity : myModalEntities) {
+      // DialogWrapperDialog is not accessible here
       if (entity instanceof Dialog) {
         ((Dialog)entity).setVisible(false);
+        if (entity instanceof Disposable) {
+          Disposer.dispose((Disposable)entity);
+        }
       }
       else if (entity instanceof ProgressIndicator) {
         ((ProgressIndicator)entity).cancel();

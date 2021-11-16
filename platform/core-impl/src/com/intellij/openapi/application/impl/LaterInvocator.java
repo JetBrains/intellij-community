@@ -294,14 +294,19 @@ public final class LaterInvocator {
     reincludeSkippedItemsAndRequestFlush();
   }
 
+  /**
+   * This method attempts to cancel all current modal entities.
+   * This may cause memory leaks from improperly closed/undisposed modal dialogs.
+   * Intended for use mostly in Remote Dev where forcefully leaving all modalities is better than alternatives.
+   */
   @ApiStatus.Internal
-  public static void cancelAllModals() {
+  public static void forceLeaveAllModals() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ourModalityStack.peek() != ModalityState.NON_MODAL) {
-      ModalityStateEx topLevelModal = ourModalityStack.peek();
-      topLevelModal.cancelAllEntities();
+    ModalityStateEx currentState = getCurrentModalityState();
+    if (currentState != ModalityState.NON_MODAL) {
+      currentState.cancelAllEntities();
       // let event queue pump once before trying to cancel next modal
-      invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> { cancelAllModals(); });
+      invokeLater(() -> { forceLeaveAllModals(); }, ModalityState.any());
     }
   }
 
