@@ -21,8 +21,7 @@ abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
     val systemId = getSystemId(e) ?: return
     val externalProjectPath = getExternalProjectPath(e)
     val dependency = getDependency(e)
-    val contributor = DependencyAnalyzerExtension.findContributor(project, systemId) ?: return
-    val tab = DependencyAnalyzerEditorTab(contributor)
+    val tab = DependencyAnalyzerEditorTab(project, systemId)
     if (externalProjectPath != null) {
       if (dependency != null) {
         tab.view.setSelectedDependency(externalProjectPath, dependency)

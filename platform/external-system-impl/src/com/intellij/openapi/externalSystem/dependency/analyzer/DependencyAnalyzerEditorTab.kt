@@ -2,13 +2,15 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.project.Project
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class DependencyAnalyzerEditorTab(contributor: DependencyContributor) : UIComponentEditorTab {
+class DependencyAnalyzerEditorTab(project: Project, systemId: ProjectSystemId) : UIComponentEditorTab {
 
-  val view = DependencyAnalyzerViewImpl(contributor, this)
+  val view = DependencyAnalyzerViewImpl(project, systemId, this)
 
   override val name: String = ExternalSystemBundle.message("external.system.dependency.analyzer.editor.tab.name")
 

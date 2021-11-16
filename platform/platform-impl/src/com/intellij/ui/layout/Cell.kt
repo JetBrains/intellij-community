@@ -11,10 +11,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
@@ -40,7 +39,6 @@ import java.awt.event.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
-import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
@@ -704,12 +702,23 @@ fun <T, C : ComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = a
       selectedItem = it
     }
   }
-  addItemListener {
-    if (it.stateChange == ItemEvent.SELECTED) {
-      mutex.lockOrSkip {
-        @Suppress("UNCHECKED_CAST")
-        property.set(it.item as T)
-      }
+  whenItemSelected {
+    mutex.lockOrSkip {
+      property.set(it)
+    }
+  }
+}
+
+fun <T, C : DropDownLink<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      selectedItem = property.get()
+    }
+  }
+  whenItemSelected {
+    mutex.lockOrSkip {
+      property.set(it)
     }
   }
 }
@@ -774,33 +783,15 @@ fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): 
       text = it
     }
   }
-  document.addDocumentListener(
-    object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        mutex.lockOrSkip {
-          property.set(text)
-        }
-      }
-    }
-  )
-}
-fun JTextComponent.bindIntProperty(property: ObservableClearableProperty<Int>) {
-  val mutex = AtomicBoolean()
-  property.afterChange {
+  whenTextModified {
     mutex.lockOrSkip {
-      text = it.toString()
+      property.set(text)
     }
   }
-  document.addDocumentListener(
-    object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        mutex.lockOrSkip {
-          property.set(text.toInt())
-        }
-      }
-    }
-  )
 }
+
+fun <C : JTextComponent> C.bindIntProperty(property: ObservableClearableProperty<Int>): C =
+  bind(property.transform({ it.toString() }, { it.toInt() }))
 
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
   val slider = JSlider()

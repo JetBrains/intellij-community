@@ -14,8 +14,8 @@ interface DependencyAnalyzerExtension {
     val EP_NAME = ExtensionPointName.create<DependencyAnalyzerExtension>("com.intellij.externalSystemDependencyAnalyzer")
 
     @JvmStatic
-    fun findContributor(project: Project, systemId: ProjectSystemId): DependencyContributor? {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.getContributor(project, systemId) }
+    fun getExtension(project: Project, systemId: ProjectSystemId): DependencyContributor {
+      return EP_NAME.extensionList.firstNotNullOf { it.getContributor(project, systemId) }
     }
   }
 }

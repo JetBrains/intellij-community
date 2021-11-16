@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.components.DropDownLink
+import java.awt.ItemSelectable
 import java.awt.event.*
 import javax.swing.InputMap
 import javax.swing.JComponent
@@ -63,10 +65,18 @@ fun JComponent.addKeyboardAction(keyStrokes: List<KeyStroke>, action: (ActionEve
 }
 
 fun <E> ComboBox<E>.whenItemSelected(listener: (E) -> Unit) {
-  addItemListener {
-    if (it.stateChange == ItemEvent.SELECTED) {
+  (this as ItemSelectable).whenItemSelected(listener)
+}
+
+fun <E> DropDownLink<E>.whenItemSelected(listener: (E) -> Unit) {
+  (this as ItemSelectable).whenItemSelected(listener)
+}
+
+fun <T> ItemSelectable.whenItemSelected(listener: (T) -> Unit) {
+  addItemListener { event ->
+    if (event.stateChange == ItemEvent.SELECTED) {
       @Suppress("UNCHECKED_CAST")
-      listener(it.item as E)
+      listener(event.item as T)
     }
   }
 }

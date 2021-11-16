@@ -11,6 +11,8 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContrib
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.DependencyGroup
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Omitted
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.VersionConflict
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
@@ -18,11 +20,14 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.ui.whenItemSelected
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
+import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.SimpleTree
@@ -44,10 +49,14 @@ import javax.swing.tree.TreePath
 import kotlin.collections.ArrayDeque
 
 class DependencyAnalyzerViewImpl(
-  private val contributor: DependencyContributor,
+  project: Project,
+  systemId: ProjectSystemId,
   parentDisposable: Disposable
 ) : DependencyAnalyzerView {
   override val component: JComponent
+
+  private val contributor = DependencyAnalyzerExtension.getExtension(project, systemId)
+  private val iconsProvider = ExternalSystemIconProvider.getExtension(systemId)
 
   private val propertyGraph = PropertyGraph()
 
@@ -61,7 +70,7 @@ class DependencyAnalyzerViewImpl(
 
   private val usagesTitleProperty = propertyGraph.graphProperty(::getUsagesTitle)
 
-  private val externalProjectsModel = CollectionComboBoxModel<String>()
+  private val externalProjectsModel = ArrayList<String>()
   private val scopesModel = CollectionComboBoxModel<Scope>()
   private val dependencyGroupsModel = CollectionListModel<DependencyGroupItem>()
   private val dependencyTreeModel = DefaultTreeModel(DefaultMutableTreeNode())
@@ -97,13 +106,13 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun updateExternalProjectsModel() {
-    externalProjectsModel.removeAll()
+    externalProjectsModel.clear()
     contributor.getExternalProjectPaths()
       .forEach { externalProjectsModel.add(it) }
 
     val externalProjectPath = externalProjectProperty.get()
     if (externalProjectPath == null || externalProjectPath !in externalProjectsModel) {
-      externalProjectProperty.set(externalProjectsModel.items.firstOrNull())
+      externalProjectProperty.set(externalProjectsModel.firstOrNull())
     }
   }
 
@@ -196,11 +205,8 @@ class DependencyAnalyzerViewImpl(
   }
 
   init {
-    @Suppress("HardCodedStringLiteral")
-    val externalProjectComboBox = ComboBox(externalProjectsModel)
+    val externalProjectSelector = ExternalProjectSelector(externalProjectsModel)
       .bind(externalProjectProperty)
-      .apply { selectedItem = externalProjectProperty.get() }
-      .apply { renderer = ExternalProjectRenderer() }
 
     scopesModel.add(Scope.Any)
     val searchDependencyIdTextField = JTextField()
@@ -238,7 +244,7 @@ class DependencyAnalyzerViewImpl(
     component = toolWindowPanel {
       toolbar = toolbarPanel {
         addToLeft(horizontalPanel(
-          externalProjectComboBox,
+          externalProjectSelector,
           searchDependencyIdTextField,
           horizontalPanel(
             searchDependencyScopeLabel,
@@ -296,7 +302,7 @@ class DependencyAnalyzerViewImpl(
 
   private fun label(text: @Nls String) =
     JLabel(text)
-      .apply { border = JBUI.Borders.empty(JBUI.scale(6)) }
+      .apply { border = JBUI.Borders.empty(6) }
 
   private fun label(property: ObservableClearableProperty<@Nls String>) =
     label(property.get())
@@ -309,7 +315,7 @@ class DependencyAnalyzerViewImpl(
   private fun toolbarPanel(configure: BorderLayoutPanel.() -> Unit) =
     BorderLayoutPanel()
       .apply { layout = BorderLayout() }
-      .apply { border = JBUI.Borders.empty(JBUI.scale(1), JBUI.scale(2)) }
+      .apply { border = JBUI.Borders.empty(1, 2) }
       .apply { withMinimumHeight(JBUI.scale(30)) }
       .apply { withPreferredHeight(JBUI.scale(30)) }
       .apply { configure() }
@@ -365,7 +371,6 @@ class DependencyAnalyzerViewImpl(
     action({ TreeUtil.collapseAll(tree, 0) }, update)
       .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.collapse") }
       .apply { templatePresentation.icon = AllIcons.Actions.Collapseall }
-
 
   private fun JTree.bind(property: ObservableClearableProperty<DependencyItem?>) = apply {
     val mutex = AtomicBoolean()
@@ -429,19 +434,55 @@ class DependencyAnalyzerViewImpl(
     )
   }
 
-  private inner class ExternalProjectRenderer : SimpleListCellRenderer<String>() {
-    override fun customize(
-      list: JList<out String>,
-      value: String?,
-      index: Int,
-      selected: Boolean,
-      hasFocus: Boolean
-    ) {
+  private inner class ExternalProjectSelector(items: List<String>) : JPanel() {
+    private val dropDownLink: ExternalProjectDropDownLink
+
+    fun bind(property: ObservableClearableProperty<String?>) =
+      apply { dropDownLink.bind(property) }
+
+    init {
+      dropDownLink = ExternalProjectDropDownLink(items)
+        .apply { border = JBUI.Borders.empty(6, 2, 6, 6) }
+        .apply { renderer.iconTextGap = JBUI.scale(4) }
+      val label = JLabel(iconsProvider.projectIcon)
+        .apply { border = JBUI.Borders.empty(6, 6, 6, 2) }
+        .apply { labelFor = dropDownLink }
+
+      layout = HorizontalLayout(0)
+      border = JBUI.Borders.empty()
+      add(label)
+      add(dropDownLink)
+    }
+  }
+
+  private inner class ExternalProjectDropDownLink(items: List<String>) : DropDownLink<String?>(null, items) {
+    val renderer = ExternalProjectRenderer()
+
+    override fun createRenderer() = renderer
+
+    override fun popupPoint() =
+      super.popupPoint()
+        .apply { x += insets.left }
+        .apply { x -= renderer.ipad.left }
+        .apply { x -= iconsProvider.projectIcon.iconWidth }
+        .apply { x -= renderer.iconTextGap }
+
+    override fun itemToString(item: String?): String = when (item) {
+      null -> ExternalSystemBundle.message("external.system.dependency.analyzer.projects.empty")
+      else -> contributor.getExternalProjectName(item)
+    }
+
+    init {
+      foreground = JBUI.CurrentTheme.Label.foreground()
+      whenItemSelected { text = itemToString(selectedItem) }
+    }
+  }
+
+  private inner class ExternalProjectRenderer : ColoredListCellRenderer<String?>() {
+    override fun customizeCellRenderer(list: JList<out String?>, value: String?, index: Int, selected: Boolean, hasFocus: Boolean) {
       if (value != null) {
-        text = contributor.getExternalProjectName(value)
-      }
-      else {
-        text = ExternalSystemBundle.message("external.system.dependency.analyzer.projects.empty")
+        icon = iconsProvider.projectIcon
+        append(contributor.getExternalProjectName(value))
       }
     }
   }
