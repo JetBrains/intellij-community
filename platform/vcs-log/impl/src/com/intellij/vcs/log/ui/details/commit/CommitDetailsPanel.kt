@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.details.commit
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -42,8 +43,8 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   private val hashAndAuthorPanel = HashAndAuthorPanel()
   private val signaturePanel = SignaturePanel()
   private val messagePanel = CommitMessagePanel(navigate)
-  private val branchesPanel = ReferencesPanel()
-  private val tagsPanel = ReferencesPanel()
+  private val branchesPanel = ReferencesPanel(Registry.intValue("vcs.log.max.branches.shown"))
+  private val tagsPanel = ReferencesPanel(Registry.intValue("vcs.log.max.tags.shown"))
   private val rootPanel = RootColorPanel(hashAndAuthorPanel)
   private val containingBranchesPanel = ContainingBranchesPanel()
 
