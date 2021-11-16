@@ -90,10 +90,9 @@ fun Module.collectKotlinAwareDestinationSourceRoots(): List<VirtualFile> {
 
 fun isUnderKotlinSourceRootTypes(psiFile: PsiFile?): Boolean {
     val ktFile = psiFile.safeAs<KtFile>() ?: return false
-    val file = ktFile.virtualFile ?: return false
-    if (file.fileSystem is NonPhysicalFileSystem) return false
+    val file = ktFile.virtualFile?.takeIf { it !is VirtualFileWindow && it.fileSystem !is NonPhysicalFileSystem } ?: return false
     val projectFileIndex = ProjectRootManager.getInstance(ktFile.project).fileIndex
-    return file !is VirtualFileWindow && projectFileIndex.isUnderSourceRootOfType(file, KOTLIN_AWARE_SOURCE_ROOT_TYPES)
+    return projectFileIndex.isUnderSourceRootOfType(file, KOTLIN_AWARE_SOURCE_ROOT_TYPES)
 }
 
 fun isOutsideSourceRootSet(psiFile: PsiFile?, sourceRootTypes: Set<JpsModuleSourceRootType<*>>): Boolean {
