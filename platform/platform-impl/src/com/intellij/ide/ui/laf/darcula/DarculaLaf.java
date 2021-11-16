@@ -249,9 +249,11 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   private void loadDefaultsFromJson(UIDefaults defaults, String prefix) {
     String filename = prefix + ".theme.json";
     try {
-      byte[] data = StartupUtil.getResourceAsBytes(filename, DarculaLaf.class.getClassLoader());
+      // it is important to use class loader of a current instance class (LaF in plugin)
+      ClassLoader classLoader = getClass().getClassLoader();
+      byte[] data = StartupUtil.getResourceAsBytes(filename, classLoader);
       assert data != null : "Can't load " + filename;
-      UITheme theme = UITheme.loadFromJson(data, "Darcula", getClass().getClassLoader(), Function.identity());
+      UITheme theme = UITheme.loadFromJson(data, "Darcula", classLoader, Function.identity());
       theme.applyProperties(defaults);
     }
     catch (IOException e) {
