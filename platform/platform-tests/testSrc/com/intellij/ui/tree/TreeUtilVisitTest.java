@@ -741,6 +741,15 @@ public final class TreeUtilVisitTest {
   }
 
   @Test
+  public void testCollectExpandedPathsWithInvisibleRootUnderInvisibleRoot() {
+    testCollectExpandedPaths(set("1", "2", "22", "3", "33", "333"), test -> {
+      TreePath root = test.getTree().getPathForRow(0); // Root
+      test.getTree().setRootVisible(false);
+      return TreeUtil.collectExpandedPaths(test.getTree(), root);
+    });
+  }
+
+  @Test
   public void testCollectExpandedPathsWithInvisibleRoot() {
     testCollectExpandedPaths(set("1", "2", "22", "3", "33", "333"), test -> {
       test.getTree().setRootVisible(false);

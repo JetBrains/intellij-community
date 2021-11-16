@@ -253,7 +253,11 @@ public final class TreeUtil {
     int count = tree.getRowCount();
     if (count == 0) return Collections.emptyList(); // tree is empty
     int row = tree.getRowForPath(root);
-    if (row < 0) return Collections.emptyList(); // root path is not visible
+    if (row < 0) {
+      return !tree.isRootVisible() && root.equals(getVisiblePathWithValidation(tree, 0, count).getParentPath())
+             ? collectExpandedObjects(tree, mapper) // collect expanded objects under a hidden root
+             : Collections.emptyList(); // root path is not visible
+    }
     if (!tree.isExpanded(row)) return Collections.emptyList(); // root path is not expanded
     List<T> list = new ArrayList<>(count);
     ContainerUtil.addIfNotNull(list, mapper.apply(root));
