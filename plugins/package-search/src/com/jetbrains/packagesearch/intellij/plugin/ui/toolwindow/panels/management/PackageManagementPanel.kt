@@ -11,7 +11,9 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.actions.ShowSettingsAction
 import com.jetbrains.packagesearch.intellij.plugin.actions.TogglePackageDetailsAction
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules.ModulesTree
@@ -34,6 +36,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -125,6 +128,11 @@ internal class PackageManagementPanel(
         project.packageSearchProjectService.moduleModelsStateFlow
             .onEach { data -> modulesTree.display(computeModuleTreeModel(data)) }
             .flowOn(Dispatchers.AppUI)
+            .launchIn(this)
+
+        packagesListPanel.selectedPackageStateFlow
+            .filterNotNull()
+            .onEach { PackageSearchEventsLogger.logPackageSelected(it is UiPackageModel.Installed) }
             .launchIn(this)
 
         combine(

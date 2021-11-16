@@ -51,6 +51,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
@@ -87,8 +88,12 @@ internal class PackagesListPanel(
 
     private val packagesTable = PackagesTable(project, operationExecutor, ::onSearchResultStateChanged)
 
-    val onlyStableStateFlow = MutableStateFlow(true)
-    val selectedPackageStateFlow = packagesTable.selectedPackageStateFlow
+    private val onlyStableMutableStateFlow = MutableStateFlow(true)
+    private val selectedPackageMutableStateFlow = packagesTable.selectedPackageStateFlow
+
+    val onlyStableStateFlow: StateFlow<Boolean> = onlyStableMutableStateFlow
+    val selectedPackageStateFlow: StateFlow<UiPackageModel<*>?> = selectedPackageMutableStateFlow
+
     private val onlyMultiplatformStateFlow = MutableStateFlow(false)
     private val searchQueryStateFlow = MutableStateFlow("")
     private val isSearchingStateFlow = MutableStateFlow(false)
@@ -361,7 +366,7 @@ internal class PackagesListPanel(
         }
 
         onlyStableCheckBox.addSelectionChangedListener { selected ->
-            onlyStableStateFlow.tryEmit(selected)
+            onlyStableMutableStateFlow.tryEmit(selected)
             PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.OnlyStable, selected)
         }
 
