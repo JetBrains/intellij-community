@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,5 +110,11 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
 
   private static boolean isNewWizard() {
     return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  }
+
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Override
+  public @NotNull String getDescription() {
+    return IdeBundle.message("general.module.type.description");
   }
 }
