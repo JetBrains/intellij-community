@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.frame
 import com.intellij.openapi.util.text.HtmlChunk
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
@@ -16,9 +17,9 @@ interface VcsCommitExternalStatusPresentation {
 
   interface Clickable : VcsCommitExternalStatusPresentation {
 
-    fun clickEnabled(e: MouseEvent): Boolean = true
+    fun clickEnabled(e: InputEvent?): Boolean = true
 
-    fun onClick(e: MouseEvent): Boolean
+    fun onClick(e: InputEvent?): Boolean
   }
 
   /**
