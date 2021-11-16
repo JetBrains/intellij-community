@@ -16,4 +16,5 @@
 .code-fence:hover .code-fence-highlighter-copy-button:hover .code-fence-highlighter-copy-button-icon {
   /*noinspection CssUnknownTarget*/
   content: url("copy-button-copy-icon-hovered.png");
+  cursor: pointer;
 }
