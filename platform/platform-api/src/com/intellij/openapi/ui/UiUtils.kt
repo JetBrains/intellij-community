@@ -1,12 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("UiUtils")
 
-package com.intellij.openapi.roots.ui
+package com.intellij.openapi.ui
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.DocumentAdapter
 import java.awt.event.*
 import javax.swing.InputMap
