@@ -55,7 +55,6 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
 
   private final String myName;
-  private final String myDisplayName;
   private boolean myIsSuite;
   private final String myLocationUrl;
   private final String myMetainfo;
@@ -87,28 +86,15 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   private TestDurationStrategy myDurationStrategyCached = null;
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
-    this(testName, testName, isSuite, locationUrl);
+    this(testName, isSuite, locationUrl, false);
   }
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, boolean preservePresentableName) {
     this(testName, isSuite, locationUrl, null, preservePresentableName);
   }
 
-  public SMTestProxy(String testName, String testDisplayName, boolean isSuite, @Nullable String locationUrl) {
-    this(testName, testDisplayName, isSuite, locationUrl, false);
-  }
-
-  public SMTestProxy(String testName, String testDisplayName, boolean isSuite, @Nullable String locationUrl, boolean preservePresentableName) {
-    this(testName, testDisplayName, isSuite, locationUrl, null, preservePresentableName);
-  }
-
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @Nullable String metainfo, boolean preservePresentableName) {
-    this(testName, testName, isSuite, locationUrl, metainfo, preservePresentableName);
-  }
-
-  public SMTestProxy(String testName, String testDisplayName, boolean isSuite, @Nullable String locationUrl, @Nullable String metainfo, boolean preservePresentableName) {
     myName = testName;
-    myDisplayName = testDisplayName;
     myIsSuite = isSuite;
     myLocationUrl = locationUrl;
     myMetainfo = metainfo;
@@ -765,9 +751,6 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   @NotNull
   public @NlsSafe String getPresentableName() {
-    if (!myIsSuite && myDisplayName != null)
-      return myDisplayName;
-
     if (myPresentableName == null) {
       if (myPreservePresentableName) {
         myPresentableName = TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
@@ -1009,7 +992,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     }
 
     public SMRootTestProxy(boolean preservePresentableName, @Nullable JComponent console) {
-      super("[root]", "[root]", true, null, preservePresentableName);
+      super("[root]", true, null, preservePresentableName);
       myConsole = console;
     }
 

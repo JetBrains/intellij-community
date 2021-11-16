@@ -28,10 +28,9 @@ public class BeforeTestEvent extends AbstractTestEvent {
     final String testId = eventXml.getTestId();
     final String parentTestId = eventXml.getTestParentId();
     final String name = eventXml.getTestName();
-    final String displayName = eventXml.getTestDisplayName();
     final String fqClassName = eventXml.getTestClassName();
 
-    doProcess(testId, parentTestId, name, displayName, fqClassName);
+    doProcess(testId, parentTestId, name, fqClassName);
   }
 
   @Override
@@ -39,14 +38,15 @@ public class BeforeTestEvent extends AbstractTestEvent {
     TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
     final String testId = testEvent.getEventId();
     final String parentTestId = testEvent.getParentEventId();
+    final String name = ObjectUtils.coalesce(testDescriptor.getDisplayName(), testDescriptor.getMethodName(), testId);
     final String fqClassName = testDescriptor.getClassName();
 
-    doProcess(testId, parentTestId, testDescriptor.getMethodName(), testDescriptor.getDisplayName(), fqClassName);
+    doProcess(testId, parentTestId, name, fqClassName);
   }
 
-  private void doProcess(String testId, String parentTestId, String name, String displayName, String fqClassName) {
+  private void doProcess(String testId, String parentTestId, String name, String fqClassName) {
     String locationUrl = findLocationUrl(name, fqClassName);
-    final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, displayName, false, locationUrl, fqClassName);
+    final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, false, locationUrl, fqClassName);
 
     testProxy.setStarted();
     testProxy.setLocator(getExecutionConsole().getUrlProvider());
