@@ -188,8 +188,7 @@ public class GitImpl extends GitImplBase {
       handler.setStderrSuppressed(false);
       handler.setUrl(url);
       handler.addParameters("--progress");
-      GitExecutableManager executableManager = GitExecutableManager.getInstance();
-      GitVersion version = executableManager.getVersion(executableManager.getExecutable((Project)null));
+      GitVersion version = GitExecutableManager.getInstance().getVersion(handler.getExecutable());
       if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(version) && AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
         handler.addParameters("--recurse-submodules");
       }
