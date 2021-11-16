@@ -13,7 +13,8 @@ import java.util.concurrent.Future;
 
 final class ExitStarter extends ApplicationStarterBase {
   private ExitStarter() {
-    super("exit", 0, 1);
+    // extra argument count (2) to allow for usage of remote-dev-server.sh exit /path/to/project --restart
+    super("exit", 0, 1, 2);
   }
 
   private static final String ourRestartParameter = "--restart";
@@ -29,15 +30,15 @@ final class ExitStarter extends ApplicationStarterBase {
   }
 
   @Override
-  protected boolean checkArguments(@NotNull List<String> args) {
-    return super.checkArguments(args) && (args.size() <= 1 || ourRestartParameter.equals(args.get(1)));
+  public boolean isHeadless() {
+    return true;
   }
 
   @NotNull
   @Override
   protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
     Application application = ApplicationManager.getApplication();
-    LaterInvocator.cancelAllModals();
+    LaterInvocator.forceLeaveAllModals();
     application.invokeLater(() -> {
       application.exit(true, true, args.stream().anyMatch(it -> ourRestartParameter.equals(it)));
     }, ModalityState.NON_MODAL);
