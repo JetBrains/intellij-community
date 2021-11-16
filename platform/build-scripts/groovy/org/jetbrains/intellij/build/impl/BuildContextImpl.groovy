@@ -459,6 +459,7 @@ final class BuildContextImpl extends BuildContext {
         '--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED',
         '--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED',
         '--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED',
+        '--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED',
         '--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED'
       ])
     }
