@@ -19,10 +19,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -72,13 +69,11 @@ public abstract class MethodBrowser extends BrowseModuleValueActionListener<JCom
   }
 
   private PsiClass getTestClass(String className) {
-    return ProgressManager.getInstance()
-      .run(new Task.WithResult<>(getProject(), ExecutionBundle.message("browse.method.dialog.looking.for.class"), true) {
-        @Override
-        protected PsiClass compute(@NotNull ProgressIndicator indicator) {
-          return ReadAction.nonBlocking(() -> getModuleSelector().findClass(className)).executeSynchronously();
-        }
-      });
+    final ConfigurationModuleSelector selector = getModuleSelector();
+    return ActionUtil.underModalProgress(getProject(),
+                                  ExecutionBundle.message("browse.method.dialog.looking.for.class"),
+                                  () -> selector.findClass(className)
+    );
   }
 
   public void installCompletion(EditorTextField field) {

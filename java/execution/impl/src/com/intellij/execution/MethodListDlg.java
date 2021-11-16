@@ -3,9 +3,7 @@ package com.intellij.execution;
 
 import com.intellij.ide.structureView.impl.StructureNodeRenderer;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -20,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -77,10 +74,29 @@ public class MethodListDlg extends DialogWrapper {
   private boolean createList(final PsiMethod@NotNull [] allMethods, final Condition<? super PsiMethod> filter) {
     if (allMethods.length == 0) return true;
 
-    final BuildMethodListTask task = new BuildMethodListTask(allMethods, filter, myListModel);
-    ProgressManager.getInstance().run(task);
+    final List<SmartPsiElementPointer<PsiMethod>> methodPointers = ContainerUtil.map(allMethods, SmartPointerManager::createPointer);
 
-    return !task.isCancelled();
+    final Runnable filterMethods = () -> {
+      ReadAction.nonBlocking(() -> performFiltering(methodPointers, filter))
+        .executeSynchronously();
+    };
+
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    return progressManager.runProcessWithProgressSynchronously(filterMethods,
+                                                               ExecutionBundle.message("browse.method.dialog.looking.for.methods"),
+                                                               true,
+                                                               allMethods[0].getProject());
+  }
+
+  private void performFiltering(@NotNull List<SmartPsiElementPointer<PsiMethod>> allMethods, @NotNull Condition<? super PsiMethod> filter) {
+    for (SmartPsiElementPointer<PsiMethod> methodPointer : allMethods) {
+      final PsiMethod method = methodPointer.dereference();
+      if (method == null) continue;
+
+      if (filter.value(method)) {
+        myListModel.add(method);
+      }
+    }
   }
 
   @Override
@@ -102,54 +118,5 @@ public class MethodListDlg extends DialogWrapper {
 
   public PsiMethod getSelected() {
     return myList.getSelectedValue();
-  }
-
-  private final static class BuildMethodListTask extends Task.Modal {
-    private final List<SmartPsiElementPointer<PsiMethod>> myList = new ArrayList<>();
-    private final PsiMethod@NotNull [] myAllMethods;
-    private final Condition<? super PsiMethod> myFilter;
-    private final SortedListModel<PsiMethod> myListModel;
-    private boolean cancelled = false;
-
-    private BuildMethodListTask(final PsiMethod@NotNull [] allMethods,
-                                final Condition<? super PsiMethod> filter,
-                                SortedListModel<PsiMethod> listModel) {
-      super(allMethods[0].getProject(), ExecutionBundle.message("browse.method.dialog.looking.for.methods"), true);
-      myAllMethods = allMethods;
-      myFilter = filter;
-      myListModel = listModel;
-    }
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      ReadAction.nonBlocking(this::filterMethods).executeSynchronously();
-    }
-
-    private void filterMethods() {
-      final List<SmartPsiElementPointer<PsiMethod>> methodPointers = ContainerUtil.map(myAllMethods, SmartPointerManager::createPointer);
-      for (SmartPsiElementPointer<PsiMethod> methodPointer : methodPointers) {
-        if (myFilter.value(methodPointer.getElement())) {
-          myList.add(methodPointer);
-        }
-      }
-    }
-
-    @Override
-    public void onSuccess() {
-      for (SmartPsiElementPointer<PsiMethod> e : myList) {
-        final PsiMethod dereference = e.dereference();
-        if (dereference == null) continue;
-        myListModel.add(dereference);
-      }
-    }
-
-    @Override
-    public void onCancel() {
-      cancelled = true;
-    }
-
-    private boolean isCancelled() {
-      return cancelled;
-    }
   }
 }
