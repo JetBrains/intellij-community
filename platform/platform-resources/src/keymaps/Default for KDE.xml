@@ -30,6 +30,9 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control 3"/>
   </action>
+  <action id="FindPrevWordAtCaret">
+    <keyboard-shortcut first-keystroke="shift control 3"/>
+  </action>
   <action id="GotoBookmark0"/>
   <action id="GotoBookmark1"/>
   <action id="GotoBookmark2"/>

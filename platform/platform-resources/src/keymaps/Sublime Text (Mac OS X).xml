@@ -171,6 +171,7 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="meta alt g"/>
   </action>
+  <action id="FindPrevWordAtCaret"/>
   <action id="Mvc.RunTarget"/>
   <!--END FIND-->
   <!--VIEW-->

@@ -531,6 +531,7 @@
           <action id="ToggleFindInSelection" class="com.intellij.find.editorHeaderActions.ToggleSelectionOnlyAction"/>
           <separator/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
+          <action id="FindPrevWordAtCaret" class="com.intellij.openapi.editor.actions.FindPrevWordAtCaretAction"/>
           <separator/>
           <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction">
             <synonym key="action.FindInPath.synonym1"/>

@@ -141,6 +141,7 @@ public interface IdeActions {
   String ACTION_FIND_NEXT = "FindNext";
   String ACTION_FIND_PREVIOUS = "FindPrevious";
   String ACTION_FIND_WORD_AT_CARET = "FindWordAtCaret";
+  String ACTION_FIND_PREV_WORD_AT_CARET = "FindPrevWordAtCaret";
   String ACTION_SELECT_NEXT_OCCURENCE = "SelectNextOccurrence";
   String ACTION_SELECT_ALL_OCCURRENCES = "SelectAllOccurrences";
   String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
