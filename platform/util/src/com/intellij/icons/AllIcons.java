@@ -262,7 +262,7 @@ public class AllIcons {
   }
 
   public static final class Debugger {
-    /** 16x16 */ public static final @NotNull Icon AddToWatch = load("debugger/addToWatch.svg", -6351347499396602123L, 2);
+    /** 16x16 */ public static final @NotNull Icon AddToWatch = load("debugger/addToWatch.svg", -1326715062232610899L, 2);
     /** 16x16 */ public static final @NotNull Icon AttachToProcess = load("debugger/attachToProcess.svg", -2177634035436873583L, 2);
     /** 16x16 */ public static final @NotNull Icon ClassLevelWatch = load("debugger/classLevelWatch.svg", -5890180211475556116L, 2);
     /** 16x16 */ public static final @NotNull Icon Console = load("debugger/console.svg", -5803233488332261187L, 2);

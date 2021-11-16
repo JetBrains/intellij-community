@@ -165,7 +165,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           @Override
           protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
             AnAction addToWatchesAction =
-              new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.Watch) {
+              new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.AddToWatch) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent e) {
                   myEvaluateComboBox.saveTextInHistory();
