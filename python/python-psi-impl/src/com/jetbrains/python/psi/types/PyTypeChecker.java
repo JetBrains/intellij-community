@@ -1219,12 +1219,8 @@ public final class PyTypeChecker {
     if (!typeParams.isEmpty()) {
       final List<PyGenericType> formalTypeParams = Lists.newArrayList(typeParams.typeVars);
       final Map<PyGenericType, PyType> substitutions = new HashMap<>();
-      for (int i = 0; i < formalTypeParams.size(); i++) {
-        final PyType indexType = ContainerUtil.getOrElse(actualTypeParams, i, null);
-        final PyGenericType typeParam = formalTypeParams.get(i);
-        if (indexType != null) {
-          substitutions.put(typeParam, indexType);
-        }
+      for (int i = 0; i < Math.min(formalTypeParams.size(), actualTypeParams.size()); i++) {
+        substitutions.put(formalTypeParams.get(i), actualTypeParams.get(i));
       }
       return substitute(genericType, new GenericSubstitutions(substitutions, Collections.emptyMap()), context);
     }
