@@ -4,13 +4,11 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.imports.canBeAddedToImport
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceImportAlias.KotlinIntroduceImportAliasHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
@@ -33,8 +31,6 @@ class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenc
     override fun applyTo(element: KtNameReferenceExpression, editor: Editor?) {
         if (editor == null) return
         val project = element.project
-        project.executeWriteCommand(KotlinBundle.message("intention.add.import.alias.group.name"), groupId = null) {
-            KotlinIntroduceImportAliasHandler.doRefactoring(project, editor, element)
-        }
+        KotlinIntroduceImportAliasHandler.doRefactoring(project, editor, element)
     }
 }
