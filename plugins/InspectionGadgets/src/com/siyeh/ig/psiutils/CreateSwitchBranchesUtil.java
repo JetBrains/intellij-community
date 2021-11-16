@@ -81,8 +81,7 @@ public final class CreateSwitchBranchesUtil {
       PsiSwitchBlock block = (PsiSwitchBlock)commentTracker.replaceAndRestoreComments(switchBlock, newStatementText.toString());
       return PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class);
     }
-    Map<String, String> prevToNext =
-      StreamEx.of(allNames).distinct().pairMap(Couple::of).toMap(c -> c.getFirst(), c -> c.getSecond());
+    Map<String, String> prevToNext = StreamEx.of(allNames).pairMap(Couple::of).toMap(c -> c.getFirst(), c -> c.getSecond());
     List<String> missingLabels = StreamEx.of(allNames).filter(missingNames::contains).toList();
     String nextLabel = getNextLabel(prevToNext, missingLabels);
     PsiElement bodyElement = body.getFirstBodyElement();
