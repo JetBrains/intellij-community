@@ -214,7 +214,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                         elementToSearch.name?.let { name ->
                             longTasks.add {
                                 // Check difference with default scope
-                                elementToSearchPointer.element?.let { elementToSearch ->
+                                runReadAction { elementToSearchPointer.element }?.let { elementToSearch ->
                                     queryParameters.optimizer.searchWord(
                                         name, effectiveSearchScope, UsageSearchContext.IN_CODE, true, elementToSearch, resultProcessor
                                     )
@@ -225,7 +225,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
                     classNameForCompanionObject?.let { name ->
                         longTasks.add {
-                            elementToSearchPointer.element?.let { elementToSearch ->
+                            runReadAction { elementToSearchPointer.element }?.let { elementToSearch ->
                                 queryParameters.optimizer.searchWord(
                                     name, effectiveSearchScope, UsageSearchContext.ANY, true, elementToSearch, resultProcessor
                                 )
