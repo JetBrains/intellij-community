@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil.findGradleModuleData
+import kotlin.io.path.Path
 
 class GradleContentRootContributor : ExternalSystemContentRootContributor {
   override fun isApplicable(systemId: String): Boolean = systemId == GradleConstants.SYSTEM_ID.id
@@ -23,7 +24,7 @@ class GradleContentRootContributor : ExternalSystemContentRootContributor {
     processContentRoots(module) { rootData ->
       for (sourceType in sourceTypes) {
         rootData.getPaths(sourceType).mapTo(this) {
-          ExternalSystemContentRootContributor.ExternalContentRoot(it.path, sourceType)
+          ExternalSystemContentRootContributor.ExternalContentRoot(Path(it.path), sourceType)
         }
       }
     }
