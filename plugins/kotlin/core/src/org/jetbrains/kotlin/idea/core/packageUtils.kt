@@ -38,10 +38,12 @@ import org.jetbrains.kotlin.idea.caches.project.SourceType
 import org.jetbrains.kotlin.idea.caches.project.sourceType
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
@@ -185,10 +187,14 @@ private fun Module.createSourceRootDirectory(nonGeneratedSourceFolders: List<Sou
 private fun Module.chooseSourceRootPath(allowedPaths: List<Path>, sourceFolderPaths: List<Path>?, contentEntryPaths: List<Path>): Path? {
     val externalContentRoots = findSourceRootPathByExternalProject(allowedPaths)
     if (!externalContentRoots.isNullOrEmpty()) {
-        val resultContentRoot = externalContentRoots.singleOrNull()
-            ?: ExternalContentRootChooser(project, externalContentRoots).showAndGetResult().firstOrNull()
+        externalContentRoots.singleOrNull()?.let { return it.path }
 
-        return resultContentRoot?.path
+        // jvmMain/java, jvmMain/kotlin case
+        if (externalContentRoots.size == 2 && externalContentRoots.any { it.path.name == "java" } && platform?.isJvm() == true) {
+            externalContentRoots.find { it.path.name == "kotlin" }?.let { return it.path }
+        }
+
+        return ExternalContentRootChooser(project, externalContentRoots).showAndGetResult().firstOrNull()?.path
     }
 
     return sourceFolderPaths?.singleOrNull() ?: chooseSourceRootPathHeuristically(contentEntryPaths)
@@ -257,7 +263,11 @@ private fun Module.findContentRootsByExternalProject(): Collection<ExternalSyste
         SourceType.TEST -> listOf(ExternalSystemSourceType.TEST)
     }
 
-    return ExternalSystemApiUtil.getExternalProjectContentRoots(this, sourceRootTypes)
+    val externalContentRoots = ExternalSystemApiUtil.getExternalProjectContentRoots(this, sourceRootTypes) ?: return null
+    val excludedPaths = ExternalSystemApiUtil.getExternalProjectContentRoots(this, ExternalSystemSourceType.EXCLUDED)
+    if (excludedPaths.isNullOrEmpty()) return externalContentRoots
+
+    return externalContentRoots.filter { contentRoot -> excludedPaths.none { contentRoot.path.startsWith(it.path) } }
 }
 
 private fun Module.chooseSourceRootPathHeuristically(contentEntries: List<Path>): Path {
