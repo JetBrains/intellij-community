@@ -50,7 +50,7 @@ internal class GitCommitSignatureStatusProvider : VcsCommitExternalStatusProvide
           GitCommitSignature.NoSignature -> EmptyIcon.ICON_16
         }
 
-      override val shortDescriptionText: String
+      override val text: String
         get() = when (signature) {
           is GitCommitSignature.Verified ->
             HtmlBuilder()

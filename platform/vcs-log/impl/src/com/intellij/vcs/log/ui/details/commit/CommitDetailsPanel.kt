@@ -96,7 +96,8 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
 
   fun setStatuses(statuses: List<VcsCommitExternalStatusPresentation>) {
     //TODO: show the rest of the statuses
-    signaturePanel.signature = statuses.find { it is VcsCommitExternalStatusPresentation.Signature }
+    signaturePanel.signature =
+      statuses.find { it is VcsCommitExternalStatusPresentation.Signature } as? VcsCommitExternalStatusPresentation.Signature
   }
 
   fun update() {
@@ -281,12 +282,12 @@ private class SignaturePanel : BorderLayoutPanel() {
     }.installOn(it)
   }
 
-  var signature: VcsCommitExternalStatusPresentation? by observable(null) { _, _, newValue ->
+  var signature: VcsCommitExternalStatusPresentation.Signature? by observable(null) { _, _, newValue ->
     isVisible = newValue != null
     label.apply {
       icon = newValue?.icon
-      text = newValue?.shortDescriptionText
-      toolTipText = newValue?.fullDescriptionHtml
+      text = newValue?.text
+      toolTipText = newValue?.description?.toString()
       cursor =
         if (newValue is VcsCommitExternalStatusPresentation.Clickable) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
         else Cursor.getDefaultCursor()

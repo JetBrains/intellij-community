@@ -103,7 +103,7 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
         //avoid unchecked cast by getting a value from the table model
         val presentation = getStatusPresentation(row) ?: return
         icon = presentation.icon
-        toolTipText = presentation.shortDescriptionText
+        toolTipText = presentation.text
       }
 
       override fun getCellController() = ClickController()
