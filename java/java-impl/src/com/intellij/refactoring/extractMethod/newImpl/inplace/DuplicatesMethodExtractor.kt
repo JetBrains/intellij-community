@@ -8,7 +8,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -163,8 +163,8 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     if (isSilentMode) return duplicates
     val confirmedDuplicates = mutableListOf<Duplicate>()
     duplicates.forEach { duplicate ->
-      val highlighters = ArrayList<RangeHighlighter>()
-      DuplicatesImpl.highlightMatch(project, editor, textRangeOf(duplicate.candidate), highlighters)
+      val initialPosition = editor.caretModel.logicalPosition
+      val highlighters = DuplicatesImpl.previewMatch(project, editor, textRangeOf(duplicate.candidate))
       try {
         val prompt = ReplacePromptDialog(false, JavaRefactoringBundle.message("process.duplicates.title"), project)
         prompt.show()
@@ -175,6 +175,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
         }
       } finally {
         highlighters.forEach { highlighter -> HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighter) }
+        editor.scrollingModel.scrollTo(initialPosition, ScrollType.MAKE_VISIBLE)
       }
     }
     return confirmedDuplicates
