@@ -2,9 +2,12 @@
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.ui.tree.FileNode
+import com.intellij.ide.bookmark.ui.tree.LineNode
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.DirectoryUrl
 import com.intellij.ide.projectView.impl.PsiFileUrl
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -54,6 +57,34 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     return StringUtil.naturalCompare(file1.presentableName, file2.presentableName)
   }
 
+  override fun prepareGroup(nodes: List<AbstractTreeNode<*>>): List<AbstractTreeNode<*>> {
+    nodes.forEach { (it as? FileNode)?.ungroup() } // clean all file groups if needed
+    val node = nodes.firstNotNullOfOrNull { it as? LineNode } ?: return nodes // nothing to group
+    if (node.bookmarksView?.groupLineBookmarks?.isSelected != true) return nodes // grouping disabled
+
+    val map = mutableMapOf<VirtualFile, FileNode?>()
+    nodes.forEach {
+      when (it) {
+        is LineNode -> map.putIfAbsent(it.virtualFile, null)
+        is FileNode -> map[it.virtualFile] = it
+      }
+    }
+    // create fake file nodes to group corresponding line nodes
+    map.mapNotNull { if (it.value == null) it.key else null }.forEach {
+      map[it] = FileNode(project, FileBookmarkImpl(this, it)).apply {
+        bookmarkGroup = node.bookmarkGroup
+        parent = node.parent
+      }
+    }
+    return nodes.mapNotNull {
+      when (it) {
+        is LineNode -> map[it.virtualFile]!!.grouped(it)
+        is FileNode -> it.grouped()
+        else -> it
+      }
+    }
+  }
+
   override fun createBookmark(map: Map<String, String>) = createBookmark(map["url"], StringUtil.parseInt(map["line"], -1))
 
   override fun createBookmark(context: Any?): FileBookmark? = when (context) {
@@ -97,7 +128,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
   }
 
   private fun createBookmark(path: TreePath): FileBookmark? {
-     val file = path.asVirtualFile ?: return null
+    val file = path.asVirtualFile ?: return null
     val parent = path.parentPath?.asVirtualFile ?: return null
     // see com.intellij.ide.projectView.impl.ClassesTreeStructureProvider
     return if (!parent.isDirectory || file.parent != parent) null else createBookmark(file)
