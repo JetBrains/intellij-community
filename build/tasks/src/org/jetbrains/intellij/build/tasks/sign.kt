@@ -3,6 +3,11 @@
 
 package org.jetbrains.intellij.build.tasks
 
+import com.jcraft.jsch.agentproxy.AgentProxy
+import com.jcraft.jsch.agentproxy.AgentProxyException
+import com.jcraft.jsch.agentproxy.Connector
+import com.jcraft.jsch.agentproxy.ConnectorFactory
+import com.jcraft.jsch.agentproxy.sshj.AuthAgent
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import net.schmizz.keepalive.KeepAliveProvider
@@ -10,6 +15,7 @@ import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
+import net.schmizz.sshj.userauth.method.AuthMethod
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
@@ -18,10 +24,8 @@ import org.apache.log4j.ConsoleAppender
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
-import org.jetbrains.intellij.build.io.NioFileDestination
-import org.jetbrains.intellij.build.io.NioFileSource
-import org.jetbrains.intellij.build.io.runAsync
-import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.*
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -301,6 +305,25 @@ private fun generateRemoteDirName(remoteDirPrefix: String): String {
   return "$remoteDirPrefix-$currentDateTimeString-${java.lang.Long.toUnsignedString(random.nextLong(), Character.MAX_RADIX)}"
 }
 
+@Throws(java.lang.Exception::class)
+private fun getAuthMethods(agent: AgentProxy): List<AuthMethod> {
+  val identities = agent.identities
+  System.getLogger("org.jetbrains.intellij.build.tasks.Sign")
+    .info("SSH-Agent identities: ${identities.joinToString { String(it.comment, StandardCharsets.UTF_8) }}")
+  return identities.map { AuthAgent(agent, it) }
+}
+
+private fun getAgentConnector(): Connector? {
+  try {
+    return ConnectorFactory.getDefault().createConnector()
+  }
+  catch (ignored: AgentProxyException) {
+    System.getLogger("org.jetbrains.intellij.build.tasks.Sign")
+      .warn("SSH-Agent connector creation failed: ${ignored.message}")
+  }
+  return null
+}
+
 private inline fun executeTask(host: String,
                                user: String,
                                password: String,
@@ -313,7 +336,13 @@ private inline fun executeTask(host: String,
   SSHClient(config).use { ssh ->
     ssh.addHostKeyVerifier(PromiscuousVerifier())
     ssh.connect(host)
-    ssh.authPassword(user, password)
+    val agentProxy = getAgentConnector()?.let { AgentProxy(it) }
+    if (agentProxy != null) {
+      ssh.auth(user, getAuthMethods(agentProxy))
+    }
+    else {
+      ssh.authPassword(user, password)
+    }
 
     ssh.newSFTPClient().use { sftp ->
       val remoteDir = generateRemoteDirName(remoteDirPrefix)

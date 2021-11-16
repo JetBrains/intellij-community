@@ -56,5 +56,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.immutableKeyValueStore" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
+    <orderEntry type="library" name="jsch-agent-proxy" level="project" />
+    <orderEntry type="library" name="jsch-agent-proxy-sshj" level="project" />
   </component>
 </module>
