@@ -126,8 +126,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   }
 
   fun setStatuses(statuses: List<VcsCommitExternalStatusPresentation>) {
-    signaturePanel.signature =
-      statuses.find { it is VcsCommitExternalStatusPresentation.Signature } as? VcsCommitExternalStatusPresentation.Signature
+    signaturePanel.signature = statuses.filterIsInstance(VcsCommitExternalStatusPresentation.Signature::class.java).firstOrNull()
 
     val nonSignaturesStatuses = statuses.filter { it !is VcsCommitExternalStatusPresentation.Signature }
 
