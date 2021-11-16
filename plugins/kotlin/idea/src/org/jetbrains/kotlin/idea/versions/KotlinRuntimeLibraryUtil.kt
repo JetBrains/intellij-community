@@ -125,11 +125,26 @@ enum class LibraryJarDescriptor(
 @NlsSafe
 fun bundledRuntimeVersion(): String = KotlinCompilerVersion.VERSION
 
+private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-(?:dev|release)".toRegex()
+
 /**
  * Bundled compiler version usually looks like: `1.5.0-release-759`.
  * `kotlinCompilerVersionShort` would return `1.5.0` in such case
  */
-fun kotlinCompilerVersionShort() = KotlinCompilerVersion.VERSION.substringBefore("-release")
+fun kotlinCompilerVersionShort(): String {
+    val parts = KOTLIN_COMPILER_VERSION_SEPARATOR.split(KotlinCompilerVersion.VERSION)
+    return parts.first()
+}
+
+private val KOTLIN_COMPILER_VERSION_PATTERN = "(\\d+)\\.(\\d+)(?:\\.(\\d+))?.*".toRegex()
+
+fun KotlinVersion.Companion.fromString(version: String): KotlinVersion? {
+    val (major, minor, patch) = KOTLIN_COMPILER_VERSION_PATTERN.matchEntire(version)?.destructured ?: return null
+    val majorValue = major.toIntOrNull() ?: return null
+    val minorValue = minor.toIntOrNull() ?: return null
+    val patchValue = patch.toIntOrNull() ?: 0
+    return KotlinVersion(majorValue, minorValue, patchValue)
+}
 
 data class BinaryVersionedFile<out T : BinaryVersion>(val file: VirtualFile, val version: T, val supportedVersion: T)
 
