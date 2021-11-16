@@ -153,7 +153,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
       myProject = project;
       class TerminateParsingException extends SAXException { }
       try (InputStream inputStream = new BufferedInputStream(new FileInputStream(VfsUtilCore.virtualToIoFile(myFile)))) {
-        SAXParserFactory factory = SAXParserFactory.newInstance();
+        SAXParserFactory factory = SAXParserFactory.newDefaultInstance();
         factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         factory.newSAXParser().parse(inputStream, new DefaultHandler() {
           boolean isConfigContent = false;

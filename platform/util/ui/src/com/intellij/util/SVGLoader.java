@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -16,6 +16,7 @@ import com.intellij.ui.svg.SvgCacheManager;
 import com.intellij.ui.svg.SvgDocumentFactoryKt;
 import com.intellij.ui.svg.SvgPrebuiltCacheManager;
 import com.intellij.ui.svg.SvgTranscoder;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.ImageUtil;
 import org.apache.batik.transcoder.TranscoderException;
 import org.jetbrains.annotations.ApiStatus;
@@ -43,10 +44,10 @@ public final class SVGLoader {
   private static final boolean USE_CACHE = Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"));
 
   private static SvgElementColorPatcherProvider ourColorPatcher;
-  private static SvgElementColorPatcherProvider ourSelectionColorPatcher;
-  private static SvgElementColorPatcherProvider ourContextColorPatcher;
+  private static SvgElementColorPatcherProvider selectionColorPatcher;
+  private static SvgElementColorPatcherProvider contextColorPatcher;
 
-  private static volatile boolean ourIsColorRedefinitionContext = false;
+  private static volatile boolean isColorRedefinitionContext;
 
   private static final class SvgCache {
     private static final SvgCacheManager persistentCache;
@@ -119,9 +120,8 @@ public final class SVGLoader {
                                                       float scale,
                                                       boolean isDark,
                                                       @NotNull ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
-    byte[] svgBytes = null;
-    byte[] theme ;
-    InputStream stream = null;
+    byte[] theme;
+    byte[] data = null;
 
     if (USE_CACHE && !isColorRedefinitionContext()) {
       @SuppressWarnings("DuplicatedCode")
@@ -149,23 +149,15 @@ public final class SVGLoader {
           }
         }
 
-        stream = ImageLoader.getResourceData(path, resourceClass, classLoader);
-        if (stream == null) {
+        data = ImageLoader.getResourceData(path, resourceClass, classLoader);
+        if (data == null) {
           return null;
         }
-        try {
-          svgBytes = stream.readAllBytes();
-        }
-        finally {
-          stream.close();
-        }
 
-        image = SvgCache.persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
+        image = SvgCache.persistentCache.loadFromCache(theme, data, scale, isDark, docSize);
         if (image != null) {
           return image;
         }
-
-        stream = new ByteArrayInputStream(svgBytes);
       }
 
       if (start != -1) {
@@ -176,13 +168,13 @@ public final class SVGLoader {
       theme = null;
     }
 
-    if (stream == null) {
-      stream = ImageLoader.getResourceData(path, resourceClass, classLoader);
-      if (stream == null) {
+    if (data == null) {
+      data = ImageLoader.getResourceData(path, resourceClass, classLoader);
+      if (data == null) {
         return null;
       }
     }
-    return loadAndCache(path, stream, scale, docSize, theme, svgBytes);
+    return loadAndCache(path, data, scale, docSize, theme);
   }
 
   @ApiStatus.Internal
@@ -196,7 +188,7 @@ public final class SVGLoader {
     }
 
     byte[] theme = null;
-    byte[] svgBytes = null;
+    byte[] data;
     Image image;
 
     if (USE_CACHE && !isColorRedefinitionContext()) {
@@ -210,32 +202,36 @@ public final class SVGLoader {
         }
       }
 
-      if (theme != null) {
-        svgBytes = stream.readAllBytes();
-        image = SvgCache.persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
+      if (theme == null) {
+        data = null;
+      }
+      else {
+        data = stream.readAllBytes();
+        image = SvgCache.persistentCache.loadFromCache(theme, data, scale, isDark, docSize);
         if (image != null) {
           return image;
         }
-        stream = new ByteArrayInputStream(svgBytes);
       }
 
       if (start != -1) {
         IconLoadMeasurer.svgCacheRead.end(start);
       }
     }
-    return loadAndCache(path, stream, scale, docSize, theme, svgBytes);
+    else {
+      data = stream.readAllBytes();
+    }
+    return loadAndCache(path, data, scale, docSize, theme);
   }
 
   private static @NotNull BufferedImage loadAndCache(@Nullable String path,
-                                                     @NotNull InputStream stream,
+                                                     byte[] data,
                                                      float scale,
                                                      @NotNull ImageLoader.Dimension2DDouble docSize,
-                                                     byte[] theme,
-                                                     byte[] svgBytes) throws IOException {
+                                                     byte[] theme) throws IOException {
     long decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled();
     BufferedImage bufferedImage;
     try {
-      bufferedImage = SvgTranscoder.createImage(scale, createDocument(path, stream), docSize);
+      bufferedImage = SvgTranscoder.createImage(scale, createDocument(path, data), docSize);
     }
     catch (TranscoderException e) {
       docSize.setSize(0, 0);
@@ -249,7 +245,7 @@ public final class SVGLoader {
     if (theme != null) {
       try {
         long cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled();
-        SvgCache.persistentCache.storeLoadedImage(theme, svgBytes, scale, bufferedImage, docSize);
+        SvgCache.persistentCache.storeLoadedImage(theme, data, scale, bufferedImage, docSize);
         IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart);
       }
       catch (Exception e) {
@@ -330,6 +326,12 @@ public final class SVGLoader {
     return document;
   }
 
+  private static @NotNull Document createDocument(@Nullable String url, byte[] data) {
+    Document document = SvgDocumentFactoryKt.createSvgDocument(url, data);
+    patchColors(url, document);
+    return document;
+  }
+
   private static void patchColors(@Nullable String url, @NotNull Document document) {
     SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
     if (colorPatcher != null) {
@@ -350,11 +352,11 @@ public final class SVGLoader {
   }
 
   public static void setContextColorPatcher(@Nullable SvgElementColorPatcherProvider provider) {
-    ourContextColorPatcher = provider;
+    contextColorPatcher = provider;
   }
 
   private static SvgElementColorPatcherProvider getColorPatcherProvider() {
-    return ourContextColorPatcher;
+    return contextColorPatcher;
   }
 
   @Nullable
@@ -428,27 +430,28 @@ public final class SVGLoader {
   }
 
   public static void setSelectionColorPatcherProvider(@Nullable SvgElementColorPatcherProvider colorPatcher) {
-    ourSelectionColorPatcher = colorPatcher;
+    selectionColorPatcher = colorPatcher;
     IconLoader.clearCache();
   }
 
   public static void setColorRedefinitionContext(boolean isColorRedefinitionContext) {
-    ourIsColorRedefinitionContext = isColorRedefinitionContext;
+    SVGLoader.isColorRedefinitionContext = isColorRedefinitionContext;
   }
 
   public static boolean isColorRedefinitionContext() {
-    return ourContextColorPatcher != null
-           && EventQueue.isDispatchThread()
-           && ourIsColorRedefinitionContext
+    return contextColorPatcher != null
+           && isColorRedefinitionContext
+           && EDT.isCurrentThreadEdt()
            && Registry.is("ide.patch.icons.on.selection", false);
   }
 
   public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
-    if (ourSelectionColorPatcher == null) {
+    if (selectionColorPatcher == null) {
       icon.paintIcon(c, g, x, y);
-    } else {
+    }
+    else {
       try {
-        setContextColorPatcher(ourSelectionColorPatcher);
+        setContextColorPatcher(selectionColorPatcher);
         setColorRedefinitionContext(true);
         icon.paintIcon(c, g, x, y);
       }

@@ -5,7 +5,6 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.IdeaLaf;
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +15,7 @@ import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Alarm;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.StartupUiUtil;
@@ -148,7 +148,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   private void patchStyledEditorKit(UIDefaults defaults) {
     String relativePath = getPrefix() + (JBUIScale.isUsrHiDPI() ? "@2x.css" : ".css");
     try {
-      byte[] dataBytes = StartupUtil.getResourceAsBytes(relativePath, DarculaLaf.class.getClassLoader());
+      byte[] dataBytes = ResourceUtil.getResourceAsBytes(relativePath, DarculaLaf.class.getClassLoader());
       if (dataBytes == null) {
         Logger.getInstance(DarculaLaf.class).error("Cannot find " + relativePath + " file");
         return;
@@ -251,8 +251,11 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     try {
       // it is important to use class loader of a current instance class (LaF in plugin)
       ClassLoader classLoader = getClass().getClassLoader();
-      byte[] data = StartupUtil.getResourceAsBytes(filename, classLoader);
-      assert data != null : "Can't load " + filename;
+      // macOS light theme uses theme file from core plugin
+      byte[] data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */ true);
+      if (data == null) {
+        throw new RuntimeException("Can't load " + filename);
+      }
       UITheme theme = UITheme.loadFromJson(data, "Darcula", classLoader, Function.identity());
       theme.applyProperties(defaults);
     }

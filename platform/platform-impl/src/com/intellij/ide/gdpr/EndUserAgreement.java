@@ -2,11 +2,11 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
@@ -153,7 +153,7 @@ public final class EndUserAgreement {
 
   private static @NotNull Document loadContent(String docName, String resourcePath) {
     try {
-      byte[] data = StartupUtil.getResourceAsBytes(resourcePath, EndUserAgreement.class.getClassLoader());
+      byte[] data = ResourceUtil.getResourceAsBytes(resourcePath, EndUserAgreement.class.getClassLoader());
       if (data != null) {
         return new Document(docName, new String(data, StandardCharsets.UTF_8));
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -16,7 +16,6 @@ import com.intellij.util.ImageLoader.Dimension2DDouble;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +26,6 @@ import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.List;
 
-@ApiStatus.Internal
 final class RasterizedImageDataLoader implements ImageDataLoader {
   private final WeakReference<ClassLoader> classLoaderRef;
   private final long cacheKey;
@@ -134,8 +132,8 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
       Image image;
       if (isSvg) {
-        image = SVGLoader
-          .loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark, originalUserSize);
+        image = SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark,
+                                                originalUserSize);
       }
       else {
         image = ImageLoader.loadPngFromClassResource(effectivePath, null, classLoader, imageScale, originalUserSize);
@@ -151,11 +149,11 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       if (image == null) {
         return null;
       }
-      return ImageLoader.convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, StartupUiUtil.isJreHiDPI(scaleContext), imageScale, isSvg,
-                          originalUserSize);
+      return ImageLoader.convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, StartupUiUtil.isJreHiDPI(scaleContext),
+                                      imageScale, isSvg);
     }
     catch (IOException e) {
-      Logger.getInstance(ImageLoader.class).debug(e);
+      Logger.getInstance(RasterizedImageDataLoader.class).debug(e);
       return null;
     }
   }

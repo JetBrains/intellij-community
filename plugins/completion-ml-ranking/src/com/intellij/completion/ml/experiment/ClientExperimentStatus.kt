@@ -4,12 +4,12 @@
 package com.intellij.completion.ml.experiment
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.idea.StartupUtil
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ResourceUtil
 import kotlinx.serialization.json.Json
 import java.util.*
 
@@ -23,7 +23,7 @@ class ClientExperimentStatus : ExperimentStatus {
           return ExperimentConfig.disabledExperiment()
         }
 
-        val data = StartupUtil.getResourceAsBytes("experiment.json", ClientExperimentStatus::class.java.classLoader)!!
+        val data = ResourceUtil.getResourceAsBytes("experiment.json", ClientExperimentStatus::class.java.classLoader)!!
         val experimentInfo = Json.Default.decodeFromString(ExperimentConfig.serializer(), data.toString(Charsets.UTF_8))
         checkExperimentGroups(experimentInfo)
         return experimentInfo

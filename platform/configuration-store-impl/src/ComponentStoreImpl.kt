@@ -14,17 +14,13 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.util.ArrayUtilRt
-import com.intellij.util.SmartList
-import com.intellij.util.SystemProperties
-import com.intellij.util.ThreeState
+import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.toArray
 import com.intellij.util.messages.MessageBus
@@ -493,9 +489,9 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   private fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
     val classLoader = component.javaClass.classLoader
-    val stream = classLoader.getResourceAsStream("$componentName.xml") ?: return null
+    val data = ResourceUtil.getResourceAsBytes("$componentName.xml", classLoader) ?: return null
     try {
-      val element = JDOMUtil.load(stream)
+      val element = JDOMUtil.load(data)
       getPathMacroManagerForDefaults()?.expandPaths(element)
       return deserializeState(element, stateClass, null)
     }

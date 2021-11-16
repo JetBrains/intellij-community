@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UndesirableClassUsage")
 
 package com.intellij.ui.svg
@@ -170,7 +170,7 @@ class SvgTranscoder private constructor(private var width: Float, private var he
                        "  <line x1=\"1\" y1=\"1\" x2=\"15\" y2=\"15\" stroke=\"red\" stroke-width=\"2\"/>\n" +
                        "  <line x1=\"1\" y1=\"15\" x2=\"15\" y2=\"1\" stroke=\"red\" stroke-width=\"2\"/>\n" +
                        "</svg>\n"
-    return createSvgDocument(null, fallbackIcon.byteInputStream()) as SVGDocument
+    return createSvgDocument(null, fallbackIcon.toByteArray()) as SVGDocument
   }
 
   override fun getTransform() = currentTransform!!

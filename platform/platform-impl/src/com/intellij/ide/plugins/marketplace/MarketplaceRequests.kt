@@ -30,7 +30,6 @@ import org.xml.sax.InputSource
 import org.xml.sax.SAXException
 import java.io.IOException
 import java.io.InputStream
-import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URLConnection
 import java.nio.file.Files
@@ -45,25 +44,22 @@ import javax.xml.parsers.SAXParserFactory
 private val LOG = logger<MarketplaceRequests>()
 private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
 
+private val objectMapper by lazy { ObjectMapper() }
+private val pluginManagerUrl by lazy(LazyThreadSafetyMode.PUBLICATION) { ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/') }
+private val compatibleUpdateUrl: String
+  get() = "${pluginManagerUrl}/api/search/compatibleUpdates"
+
 @ApiStatus.Internal
 class MarketplaceRequests : PluginInfoProvider {
   companion object {
-
-    private val objectMapper by lazy { ObjectMapper() }
-
-    private val PLUGIN_MANAGER_URL = ApplicationInfoImpl.getShadowInstanceImpl().pluginManagerUrl.trimEnd('/')
-
-    private val COMPATIBLE_UPDATE_URL = "${PLUGIN_MANAGER_URL}/api/search/compatibleUpdates"
-
     @JvmStatic
     fun getInstance(): MarketplaceRequests = PluginInfoProvider.getInstance() as MarketplaceRequests
 
     @JvmStatic
-    fun parsePluginList(reader: Reader): List<PluginNode> {
+    fun parsePluginList(input: InputStream): List<PluginNode> {
       try {
-        val parser = SAXParserFactory.newInstance().newSAXParser()
         val handler = RepositoryContentHandler()
-        parser.parse(InputSource(reader), handler)
+        SAXParserFactory.newDefaultInstance().newSAXParser().parse(InputSource(input), handler)
         return handler.pluginsList
       }
       catch (e: Exception) {
@@ -101,7 +97,7 @@ class MarketplaceRequests : PluginInfoProvider {
 
         val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
         return HttpRequests
-          .post(Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm(), HttpRequests.JSON_CONTENT_TYPE)
+          .post(Urls.newFromEncoded(compatibleUpdateUrl).toExternalForm(), HttpRequests.JSON_CONTENT_TYPE)
           .productNameAsUserAgent()
           .throwStatusCodeException(false)
           .connect {
@@ -128,7 +124,7 @@ class MarketplaceRequests : PluginInfoProvider {
       val updateMetadataFile = Paths.get(PathManager.getPluginTempPath(), "meta")
       return readOrUpdateFile(
         updateMetadataFile.resolve(ideCompatibleUpdate.externalUpdateId + ".json"),
-        "$PLUGIN_MANAGER_URL/files/${ideCompatibleUpdate.externalPluginId}/${ideCompatibleUpdate.externalUpdateId}/meta.json",
+        "$pluginManagerUrl/files/${ideCompatibleUpdate.externalPluginId}/${ideCompatibleUpdate.externalUpdateId}/meta.json",
         indicator,
         IdeBundle.message("progress.downloading.plugins.meta", xmlId)
       ) {
@@ -144,7 +140,7 @@ class MarketplaceRequests : PluginInfoProvider {
       url: String,
       indicator: ProgressIndicator?,
       @Nls indicatorMessage: String,
-      parser: (Reader) -> T
+      parser: (InputStream) -> T
     ): T {
       val eTag = if (file == null) null else loadETagForFile(file)
       return HttpRequests
@@ -160,7 +156,7 @@ class MarketplaceRequests : PluginInfoProvider {
             indicator?.checkCanceled()
             val connection = request.connection
             if (file != null && isNotModified(connection, file)) {
-              return@connect Files.newBufferedReader(file).use(parser)
+              return@connect Files.newInputStream(file).use(parser)
             }
 
             if (indicator != null) {
@@ -168,14 +164,14 @@ class MarketplaceRequests : PluginInfoProvider {
               indicator.text2 = indicatorMessage
             }
             if (file == null) {
-              return@connect request.reader.use(parser)
+              return@connect request.inputStream.use(parser)
             }
 
             synchronized(this) {
               request.saveToFile(file, indicator)
               connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
             }
-            return@connect Files.newBufferedReader(file).use(parser)
+            return@connect Files.newInputStream(file).use(parser)
           }
           catch (e: HttpRequests.HttpStatusException) {
             LOG.infoWithDebug("Cannot load data from ${url} (statusCode=${e.statusCode})", e)
@@ -194,22 +190,22 @@ class MarketplaceRequests : PluginInfoProvider {
 
   private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginsCompatibleBuild)
 
-  private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded("${PLUGIN_MANAGER_URL}/api/search/aggregation/organizations")
+  private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded("${pluginManagerUrl}/api/search/aggregation/organizations")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
   private val JETBRAINS_PLUGINS_URL = Urls.newFromEncoded(
-    "${PLUGIN_MANAGER_URL}/api/search/plugins?organization=JetBrains&max=1000"
+    "${pluginManagerUrl}/api/search/plugins?organization=JetBrains&max=1000"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
-  private val IDE_EXTENSIONS_URL = Urls.newFromEncoded("${PLUGIN_MANAGER_URL}/files/IDE/extensions.json")
+  private val IDE_EXTENSIONS_URL = Urls.newFromEncoded("${pluginManagerUrl}/files/IDE/extensions.json")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
   private fun createSearchUrl(query: String, count: Int): Url {
-    return Urls.newFromEncoded("$PLUGIN_MANAGER_URL/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count")
+    return Urls.newFromEncoded("$pluginManagerUrl/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count")
   }
 
   private fun createFeatureUrl(param: Map<String, String>): Url {
-    return Urls.newFromEncoded("${PLUGIN_MANAGER_URL}/feature/getImplementations").addParameters(param)
+    return Urls.newFromEncoded("${pluginManagerUrl}/feature/getImplementations").addParameters(param)
   }
 
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> {
@@ -252,8 +248,8 @@ class MarketplaceRequests : PluginInfoProvider {
   @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
     return readOrUpdateFile(
-      Paths.get(PathManager.getPluginTempPath(), FULL_PLUGINS_XML_IDS_FILENAME),
-      "${PLUGIN_MANAGER_URL}/files/$FULL_PLUGINS_XML_IDS_FILENAME",
+      Path.of(PathManager.getPluginTempPath(), FULL_PLUGINS_XML_IDS_FILENAME),
+      "${pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME",
       indicator,
       IdeBundle.message("progress.downloading.available.plugins"),
       ::parseXmlIds,
@@ -276,7 +272,7 @@ class MarketplaceRequests : PluginInfoProvider {
     val pluginXmlIdsFile = Paths.get(PathManager.getPluginTempPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     try {
       if (Files.size(pluginXmlIdsFile) > 0) {
-        return Files.newBufferedReader(pluginXmlIdsFile).use(::parseXmlIds)
+        return Files.newInputStream(pluginXmlIdsFile).use(::parseXmlIds)
       }
     }
     catch (ignore: IOException) {
@@ -318,7 +314,7 @@ class MarketplaceRequests : PluginInfoProvider {
     val brokenPlugins = try {
       readOrUpdateFile(
         Paths.get(PathManager.getPluginTempPath(), "brokenPlugins.json"),
-        "${PLUGIN_MANAGER_URL}/files/brokenPlugins.json",
+        "${pluginManagerUrl}/files/brokenPlugins.json",
         null,
         ""
       ) { objectMapper.readValue(it, object : TypeReference<List<MarketplaceBrokenPlugin>>() {}) }
@@ -354,7 +350,7 @@ class MarketplaceRequests : PluginInfoProvider {
     try {
       return HttpRequests
         .request(Urls.newFromEncoded(
-          "${PLUGIN_MANAGER_URL}/api/search/aggregation/tags"
+          "${pluginManagerUrl}/api/search/aggregation/tags"
         ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST)))
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
@@ -423,7 +419,7 @@ class MarketplaceRequests : PluginInfoProvider {
       val data = objectMapper.writeValueAsString(CompatibleUpdateForModuleRequest(module))
 
       return HttpRequests.post(
-        Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm(),
+        Urls.newFromEncoded(compatibleUpdateUrl).toExternalForm(),
         HttpRequests.JSON_CONTENT_TYPE,
       ).productNameAsUserAgent()
         .throwStatusCodeException(false)
@@ -499,8 +495,7 @@ class MarketplaceRequests : PluginInfoProvider {
     extensionsForIdes = objectMapper.readValue(stream, object : TypeReference<Map<String, List<String>>>() {})
   }
 
-  private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<Set<PluginId>>() {})
-
+  private fun parseXmlIds(input: InputStream) = objectMapper.readValue(input, object : TypeReference<Set<PluginId>>() {})
 }
 
 private fun loadETagForFile(file: Path): String {

@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,8 @@ public final class UIThemeProvider implements PluginAware {
 
   @ApiStatus.Internal
   public byte[] getThemeJson() throws IOException {
-    return StartupUtil.getResourceAsBytes(path.charAt(0) == '/' ? path.substring(1) : path, myPluginDescriptor.getClassLoader());
+    @NotNull String path1 = path.charAt(0) == '/' ? path.substring(1) : path;
+    return ResourceUtil.getResourceAsBytes(path1, myPluginDescriptor.getClassLoader());
   }
 
   public @Nullable UITheme createTheme() {

@@ -107,5 +107,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.remoteDev.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.feedback" scope="RUNTIME" />
+    <orderEntry type="library" name="aalto-xml" level="project" />
   </component>
 </module>

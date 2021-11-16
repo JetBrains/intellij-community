@@ -27,6 +27,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 @State(
@@ -541,24 +541,19 @@ public final class TemplateSettings implements PersistentStateComponent<Template
                                PluginInfo info) throws JDOMException {
     Element element;
     try {
-      InputStream stream;
+      byte[] data;
       if (defTemplate.startsWith("/")) {
-        stream = loader.getResourceAsStream(appendExt(defTemplate.substring(1)));
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate.substring(1)), loader);
       }
       else {
-        stream = loader.getResourceAsStream(appendExt(defTemplate));
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate), loader);
       }
-      if (stream == null) {
-        stream = loader.getResourceAsStream(appendExt("idea/" + defTemplate));
-        if (stream == null) {
-          LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
-          return;
-        }
-        else {
-          LOG.error("Do not rely on implicit `idea/` prefix: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
-        }
+      if (data == null) {
+        LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
+        return;
       }
-      element = JDOMUtil.load(stream);
+
+      element = JDOMUtil.load(data);
     }
     catch (IOException e) {
       LOG.error("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e);

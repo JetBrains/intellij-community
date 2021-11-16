@@ -196,7 +196,7 @@ public class AbstractBundle {
       }
 
       if (loader instanceof UrlClassLoader) {
-        byte[] data = ((UrlClassLoader)loader).getResourceAsBytes(resourceName);
+        byte[] data = ((UrlClassLoader)loader).getResourceAsBytes(resourceName, false);
         if (data == null) {
           return null;
         }

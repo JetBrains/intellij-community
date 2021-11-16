@@ -16,10 +16,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -435,6 +432,45 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   @Override
   public @Nullable URL findResource(@NotNull String name) {
     return doFindResource(name, Resource::getURL, ClassLoader::getResource);
+  }
+
+  @Override
+  public byte @Nullable [] getResourceAsBytes(@NotNull String name, boolean checkParents) throws IOException {
+    byte[] result = super.getResourceAsBytes(name, checkParents);
+    if (result != null) {
+      return result;
+    }
+
+    if (!checkParents) {
+      return null;
+    }
+
+    for (ClassLoader classloader : getAllParents()) {
+      if (classloader instanceof UrlClassLoader) {
+        Resource resource = ((UrlClassLoader)classloader).getClassPath().findResource(name);
+        if (resource != null) {
+          return resource.getBytes();
+        }
+      }
+      else {
+        InputStream input = classloader.getResourceAsStream(name);
+        if (input != null) {
+          try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int read;
+            byte[] data = new byte[16384];
+            while ((read = input.read(data, 0, data.length)) != -1) {
+              buffer.write(data, 0, read);
+            }
+            return buffer.toByteArray();
+          }
+          finally {
+            input.close();
+          }
+        }
+      }
+    }
+    return result;
   }
 
   @Override

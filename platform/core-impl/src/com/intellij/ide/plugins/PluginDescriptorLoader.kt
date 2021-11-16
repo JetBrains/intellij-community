@@ -416,7 +416,7 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
   else {
     val fileName = "${platformPrefix}Plugin.xml"
     if (classLoader is UrlClassLoader) {
-      classLoader.getResourceAsBytes("${PluginManagerCore.META_INF}$fileName")?.let {
+      classLoader.getResourceAsBytes("${PluginManagerCore.META_INF}$fileName", false)?.let {
         loadCoreProductPlugin(data = ByteArrayInputStream(it), context, pathResolver, useCoreClassLoader)
       }
     }

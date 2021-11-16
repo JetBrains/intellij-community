@@ -20,7 +20,7 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, va
     val path = PluginXmlPathResolver.toLoadPath(relativePath, base)
     val reader: XMLStreamReader2
     if (classLoader is UrlClassLoader) {
-      reader = createNonCoalescingXmlStreamReader(classLoader.getResourceAsBytes(path) ?: return false, dataLoader.toString())
+      reader = createNonCoalescingXmlStreamReader(classLoader.getResourceAsBytes(path, true) ?: return false, dataLoader.toString())
     }
     else {
       reader = createNonCoalescingXmlStreamReader(classLoader.getResourceAsStream(path) ?: return false, dataLoader.toString())
@@ -40,7 +40,7 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, va
                                  readInto: RawPluginDescriptor?): RawPluginDescriptor {
     var resource: ByteArray?
     if (classLoader is UrlClassLoader) {
-      resource = classLoader.getResourceAsBytes(path)
+      resource = classLoader.getResourceAsBytes(path, true)
     }
     else {
       classLoader.getResourceAsStream(path)?.let {
@@ -101,7 +101,7 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, va
 
   private fun getXmlReader(classLoader: ClassLoader, path: String, dataLoader: DataLoader): XMLStreamReader2? {
     if (classLoader is UrlClassLoader) {
-      return createNonCoalescingXmlStreamReader(classLoader.getResourceAsBytes(path) ?: return null, dataLoader.toString())
+      return createNonCoalescingXmlStreamReader(classLoader.getResourceAsBytes(path, true) ?: return null, dataLoader.toString())
     }
     else {
       return createNonCoalescingXmlStreamReader(classLoader.getResourceAsStream(path) ?: return null, dataLoader.toString())
