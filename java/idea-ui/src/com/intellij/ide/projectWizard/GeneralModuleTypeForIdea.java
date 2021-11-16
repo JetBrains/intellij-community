@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.GeneralModuleType;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -23,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +59,11 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
       @Override
       public boolean isAvailable() {
         return !isNewWizard();
+      }
+
+      @Override
+      public ModuleType<?> getModuleType() {
+        return GeneralModuleTypeForIdea.this;
       }
 
       @Override
@@ -106,5 +113,11 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
         return bounds == null ? new Point(x, 10) : new Point(x, (int)bounds.getCenterY());
       }
     };
+  }
+
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Override
+  public @NotNull String getDescription() {
+    return IdeBundle.message("general.module.type.description");
   }
 }
