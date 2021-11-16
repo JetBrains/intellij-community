@@ -16,7 +16,6 @@ internal object FUSGroupIds {
     const val REPOSITORY_USES_CUSTOM_URL = "repository_uses_custom_url"
     const val PACKAGE_IS_INSTALLED = "package_is_installed"
     const val TARGET_MODULES = "target_modules"
-    const val TARGET_MODULES_COUNT = "target_modules_count"
     const val TARGET_MODULES_MIXED_BUILD_SYSTEMS = "target_modules_mixed_build_systems"
 
     const val PREFERENCES_GRADLE_SCOPES_COUNT = "preferences_gradle_scopes_count"
