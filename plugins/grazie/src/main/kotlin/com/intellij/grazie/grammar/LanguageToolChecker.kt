@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.html.*
@@ -51,6 +52,7 @@ open class LanguageToolChecker : TextChecker() {
             null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
           matches.asSequence()
             .map { Problem(it, lang, extracted, this is TestChecker) }
+            .filterNot { isGitCherryPickedFrom(it.match, extracted) }
             .filterNot { isKnownLTBug(it.match, extracted) }
             .filterNot { extracted.hasUnknownFragmentsIn(it.patternRange) }
             .toList()
@@ -117,6 +119,17 @@ open class LanguageToolChecker : TextChecker() {
         .filter { r -> !r.isDictionaryBasedSpellingRule }
         .map { LanguageToolRule(lang, it) }
         .toList()
+    }
+
+    /**
+     * Git adds "cherry picked from", which doesn't seem entirely grammatical,
+     * but zillions of tools depend on this message, and it's unlikely to be changed.
+     * So we ignore this pattern in commit messages and literals (which might be used for parsing git output)
+     */
+    private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean {
+      return match.rule.id == "EN_COMPOUNDS" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
+             (text.domain == TextContent.TextDomain.LITERALS ||
+              text.domain == TextContent.TextDomain.PLAIN_TEXT && CommitMessage.isCommitMessage(text.containingFile))
     }
 
     private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
