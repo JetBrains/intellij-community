@@ -93,21 +93,22 @@ class RunToolbarComponentService(val project: Project) {
   }
 
   private fun terminated(env: ExecutionEnvironment) {
-    if (isRelevant(env)) {
       if (RunToolbarProcess.logNeeded) LOG.info(
         "removed: ${env.executor.id} ${env}, slot manager ${if (extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar")
       if (extraSlots.active) {
         extraSlots.processTerminated(env.executionId)
       }
-    }
   }
 
   private fun terminating(env: ExecutionEnvironment) {
-    if (isRelevant(env)) {
-      if (RunToolbarProcess.logNeeded) LOG.info(
-        "terminating: ${env.executor.id} ${env}, slot manager ${if (extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar")
-      if (extraSlots.active) {
+    if (RunToolbarProcess.logNeeded) LOG.info(
+      "terminating: ${env.executor.id} ${env}, slot manager ${if (extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar")
+    if (extraSlots.active) {
+      if (isRelevant(env)) {
         extraSlots.processTerminating(env)
+      }
+      else {
+        extraSlots.processTerminated(env.executionId)
       }
     }
   }
