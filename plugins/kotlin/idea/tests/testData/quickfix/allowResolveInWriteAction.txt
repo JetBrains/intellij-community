@@ -16,6 +16,7 @@ org.jetbrains.kotlin.idea.intentions.AddPropertyGetterIntention
 org.jetbrains.kotlin.idea.intentions.AddPropertySetterIntention
 org.jetbrains.kotlin.idea.intentions.ConvertPropertyInitializerToGetterIntention
 org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention
+org.jetbrains.kotlin.idea.intentions.IntroduceImportAliasIntention
 org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
 org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorIntention
 org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
