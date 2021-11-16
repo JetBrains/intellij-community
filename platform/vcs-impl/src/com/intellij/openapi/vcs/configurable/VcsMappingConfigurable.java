@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class VcsMappingConfigurable implements SearchableConfigurable {
-  private static final String ID = "project.propVCSSupport.Mappings";
+  private static final String ID = "project.propVCSSupport.DirectoryMappings";
   public static final String HELP_ID = "project.propVCSSupport.Mappings";
 
   private final Project myProject;
@@ -37,7 +37,7 @@ public class VcsMappingConfigurable implements SearchableConfigurable {
 
   @Override
   public @Nullable String getHelpTopic() {
-    return ID;
+    return HELP_ID;
   }
 
   @Override
