@@ -152,6 +152,8 @@ public final class Disposer {
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static Disposable get(@NotNull String key) {
+    String message = "this method is deprecated and going to be removed soon. Store and use your own Disposable instead";
+    Logger.getInstance(Disposer.class).error(message);
     return ourKeyDisposables.get(key);
   }
 
