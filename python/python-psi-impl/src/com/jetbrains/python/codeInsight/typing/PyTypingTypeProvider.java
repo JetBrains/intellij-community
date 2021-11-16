@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -1483,23 +1482,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           }
           return PyTupleType.create(element, indexTypes);
         }
-        final Set<PyGenericType> collectedGenerics = new LinkedHashSet<>();
-        PyTypeChecker.collectGenerics(operandType, context.getTypeContext(), collectedGenerics, new HashSet<>());
-        if (collectedGenerics.size() > 0) {
-          final List<PyGenericType> genericsList = Lists.newArrayList(collectedGenerics);
-          final Map<PyGenericType, PyType> substitutions = new HashMap<>();
-          for (int i = 0; i < genericsList.size(); i++) {
-            final PyType indexType = ContainerUtil.getOrElse(indexTypes, i, null);
-            final PyGenericType genericType = genericsList.get(i);
-            if (indexType != null) {
-              substitutions.put(genericType, indexType);
-            }
-          }
-          return PyTypeChecker.substitute(operandType, substitutions, context.getTypeContext());
-        }
-        else if (operandType instanceof PyClassType) {
-          PyClass cls = ((PyClassType)operandType).getPyClass();
-          return new PyCollectionTypeImpl(cls, false, indexTypes);
+        if (operandType != null) {
+          return PyTypeChecker.parameterizeType(operandType, indexTypes, context.getTypeContext());
         }
       }
     }
