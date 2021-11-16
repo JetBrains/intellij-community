@@ -1473,7 +1473,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (indexExpr != null) {
         final PyType operandType = Ref.deref(getType(operand, context));
         final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
-        if (operandType instanceof PyClassType && PyNames.TUPLE.equals(((PyClassType)operandType).getPyClass().getQualifiedName())) {
+        if (operandType instanceof PyClassType && !(operandType instanceof PyTupleType) &&
+            PyNames.TUPLE.equals(((PyClassType)operandType).getPyClass().getQualifiedName())) {
           if (indexExpr instanceof PyTupleExpression) {
             final PyExpression[] elements = ((PyTupleExpression)indexExpr).getElements();
             if (elements.length == 2 && isEllipsis(elements[1])) {

@@ -1598,6 +1598,15 @@ public class PyTypingTest extends PyTestCase {
            "expr: Inject[int]");
   }
 
+  // PY-29257
+  public void testGenericTypeAliasForTuple() {
+    doTest("tuple[int, int]",
+           "from typing import TypeVar\n" +
+           "T = TypeVar('T')\n" +
+           "Pair = tuple[T, T]\n" +
+           "expr: Pair[int]");
+  }
+
   // PY-44974
   public void testBitwiseOrUnionIsInstance() {
     doTest("str | dict | int",
