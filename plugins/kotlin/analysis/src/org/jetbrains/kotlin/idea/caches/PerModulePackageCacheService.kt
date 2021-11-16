@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.caches
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -84,7 +85,7 @@ class KotlinPackageContentModificationListener : StartupActivity {
                         }
                         .filter {
                             val vFile = it.file!!
-                            vFile.isDirectory || vFile.fileType == KotlinFileType.INSTANCE
+                            vFile.isDirectory || FileTypeRegistry.getInstance().isFileOfType(vFile, KotlinFileType.INSTANCE)
                         }
                         .filter {
                             // It expected that content change events will be duplicated with more precise PSI events and processed
@@ -186,7 +187,7 @@ class ImplicitPackagePrefixCache(private val project: Project) {
 
     private fun analyzeImplicitPackagePrefixes(sourceRoot: VirtualFile): MutableMap<FqName, MutableList<VirtualFile>> {
         val result = mutableMapOf<FqName, MutableList<VirtualFile>>()
-        val ktFiles = sourceRoot.children.filter { it.fileType == KotlinFileType.INSTANCE }
+        val ktFiles = sourceRoot.children.filter { FileTypeRegistry.getInstance().isFileOfType(it, KotlinFileType.INSTANCE) }
         for (ktFile in ktFiles) {
             result.addFile(ktFile)
         }

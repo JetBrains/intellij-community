@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -269,7 +270,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       GlobalSearchScope scope = new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(myProject)) {
         @Override
         public boolean contains(@NotNull VirtualFile file) {
-          return super.contains(file) && file.getFileType() != JavaFileType.INSTANCE;
+          return super.contains(file) && !FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE);
         }
       };
       PsiClass[] nickDeclarations = JavaPsiFacade.getInstance(myProject).findClasses(Jsr305Support.TYPE_QUALIFIER_NICKNAME, scope);

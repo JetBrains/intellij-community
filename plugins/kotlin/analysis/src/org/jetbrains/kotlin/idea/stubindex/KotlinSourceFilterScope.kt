@@ -42,7 +42,7 @@ class KotlinSourceFilterScope private constructor(
                     else -> {
                         val fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(file.name)
                         fileTypeByFileName == KotlinFileType.INSTANCE || fileTypeByFileName == FileTypes.UNKNOWN &&
-                                file.fileType == KotlinFileType.INSTANCE
+                                FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)
                     }
                 }
 

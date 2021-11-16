@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -247,7 +248,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
   private fun isSameFileTypeAsOpenedFile(item: PsiFileSystemItem, openedFile: VirtualFile?): Boolean? {
     val openedFileType = openedFile?.fileType ?: return null
-    return item.virtualFile.fileType == openedFileType
+    return FileTypeRegistry.getInstance().isFileOfType(item.virtualFile, openedFileType)
   }
 
   private fun getPredictionScore(item: PsiFileSystemItem): Double {

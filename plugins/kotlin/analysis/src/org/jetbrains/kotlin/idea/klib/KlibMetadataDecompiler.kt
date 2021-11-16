@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.klib
 
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.compiled.ClassFileDecompilers
@@ -48,7 +49,7 @@ abstract class KlibMetadataDecompiler<out V : BinaryVersion>(
 
     protected abstract fun doReadFile(file: VirtualFile): FileWithMetadata?
 
-    override fun accepts(file: VirtualFile) = file.fileType == fileType
+    override fun accepts(file: VirtualFile) = FileTypeRegistry.getInstance().isFileOfType(file, fileType)
 
     override fun getStubBuilder() = metadataStubBuilder
 
@@ -75,7 +76,7 @@ abstract class KlibMetadataDecompiler<out V : BinaryVersion>(
     }
 
     private fun buildDecompiledText(virtualFile: VirtualFile): DecompiledText {
-        assert(virtualFile.fileType == fileType) { "Unexpected file type ${virtualFile.fileType}" }
+        assert(FileTypeRegistry.getInstance().isFileOfType(virtualFile, fileType)) { "Unexpected file type ${virtualFile.fileType}" }
 
         return when (val file = readFileSafely(virtualFile)) {
             is FileWithMetadata.Incompatible -> createIncompatibleAbiVersionDecompiledText(expectedBinaryVersion(), file.version)

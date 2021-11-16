@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.ide.FileIconProvider;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,7 @@ final class GroovyFileIconProvider implements FileIconProvider {
   @Nullable
   @Override
   public Icon getIcon(@NotNull VirtualFile virtualFile, @Iconable.IconFlags int flags, @Nullable Project project) {
-    if (project == null || virtualFile.getFileType() != GroovyFileType.GROOVY_FILE_TYPE) return null;
+    if (project == null || !FileTypeRegistry.getInstance().isFileOfType(virtualFile, GroovyFileType.GROOVY_FILE_TYPE)) return null;
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     if (!(psiFile instanceof GroovyFile)) return null;
     final GroovyFile file = (GroovyFile)psiFile;

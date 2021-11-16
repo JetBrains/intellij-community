@@ -16,6 +16,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -80,7 +81,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull final VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (file.getFileType() != JavaClassFileType.INSTANCE) return null;
+    if (!FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) return null;
 
     final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
 

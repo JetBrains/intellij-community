@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -131,7 +132,7 @@ class LoadConfigurationAction : AnAction(
             ?.takeIf {
                 it !is LightVirtualFileBase
                         && it.isValid
-                        && it.fileType == KotlinFileType.INSTANCE
+                        && FileTypeRegistry.getInstance().isFileOfType(it, KotlinFileType.INSTANCE)
                         && isGradleKotlinScript(it)
             }
     }

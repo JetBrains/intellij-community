@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -38,7 +39,7 @@ class KotlinSetupEnvironmentNotificationProvider(private val myProject: Project)
     override fun getKey(): Key<EditorNotificationPanel> = KEY
 
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
-        if (file.fileType != KotlinFileType.INSTANCE) {
+        if (!FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)) {
             return null
         }
 

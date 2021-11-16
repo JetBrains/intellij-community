@@ -6,6 +6,7 @@ import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,7 +27,7 @@ class MarkdownTextEditorProvider: PsiAwareTextEditorProvider() {
     if (!super.accept(project, file)) {
       return false
     }
-    return file.fileType == MarkdownFileType.INSTANCE || shouldAcceptScratchFile(project, file)
+    return FileTypeRegistry.getInstance().isFileOfType(file, MarkdownFileType.INSTANCE) || shouldAcceptScratchFile(project, file)
   }
 
   private fun shouldAcceptScratchFile(project: Project, file: VirtualFile): Boolean {

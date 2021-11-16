@@ -8,6 +8,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,7 +34,7 @@ class GradleScriptNotificationProvider(private val project: Project) :
 
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
         if (!isGradleKotlinScript(file)) return null
-        if (file.fileType != KotlinFileType.INSTANCE) return null
+        if (!FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)) return null
 
         val standaloneScriptActions = GradleStandaloneScriptActionsManager.getInstance(project)
         val rootsManager = GradleBuildRootsManager.getInstance(project)

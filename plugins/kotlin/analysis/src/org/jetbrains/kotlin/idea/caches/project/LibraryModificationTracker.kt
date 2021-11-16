@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -90,7 +91,7 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
 
     // if library points to a jar, the jar does not pass isInLibraryClasses check, so we have to perform additional check for this case
     private fun isLibraryArchiveRoot(virtualFile: VirtualFile): Boolean {
-        if (virtualFile.fileType != ArchiveFileType.INSTANCE) return false
+        if (!FileTypeRegistry.getInstance().isFileOfType(virtualFile, ArchiveFileType.INSTANCE)) return false
 
         val archiveRoot = JarFileSystem.getInstance().getRootByLocal(virtualFile) ?: return false
         return projectFileIndex.isInLibraryClasses(archiveRoot)

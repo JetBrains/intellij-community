@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -215,7 +216,7 @@ public class Matcher {
       final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
 
       final ContentIterator ci = fileOrDir -> {
-        if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
+        if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && !FileTypeRegistry.getInstance().isFileOfType(fileOrDir, FileTypes.UNKNOWN)) {
           ++totalFilesToScan;
           scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir));
         }
