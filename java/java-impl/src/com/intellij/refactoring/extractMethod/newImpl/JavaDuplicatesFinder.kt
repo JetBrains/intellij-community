@@ -137,7 +137,8 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
   fun areEquivalent(pattern: PsiElement, candidate: PsiElement): Boolean {
     return when {
       pattern is PsiTypeElement && candidate is PsiTypeElement -> canBeReplaced(pattern.type, candidate.type)
-      pattern is PsiJavaReference && candidate is PsiJavaReference -> areElementsEquivalent(pattern.resolve(), candidate.resolve())
+      pattern is PsiJavaCodeReferenceElement && candidate is PsiJavaCodeReferenceElement ->
+        areElementsEquivalent(pattern.resolve(), candidate.resolve())
       pattern is PsiLiteralExpression && candidate is PsiLiteralExpression -> pattern.text == candidate.text
       pattern.node?.elementType == candidate.node?.elementType -> true
       else -> false
@@ -161,11 +162,16 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
   private fun canBeReplaced(pattern: PsiType?, candidate: PsiType?): Boolean {
     if (pattern == null || candidate == null) return false
     if (pattern is PsiDiamondType && candidate is PsiDiamondType) {
-      val patternTypes = pattern.resolveInferredTypes()?.inferredTypes ?: return false
-      val candidateTypes = candidate.resolveInferredTypes()?.inferredTypes ?: return false
+      val patternTypes = getInferredTypes(pattern) ?: return false
+      val candidateTypes = getInferredTypes(candidate) ?: return false
+      if (patternTypes.size != candidateTypes.size) return false
       return patternTypes.indices.all { i -> canBeReplaced(patternTypes[i], candidateTypes[i]) }
     }
     return pattern.isAssignableFrom(candidate)
+  }
+
+  private fun getInferredTypes(diamondType: PsiDiamondType): List<PsiType>? {
+    return diamondType.resolveInferredTypes()?.takeIf { resolveResult -> !resolveResult.failedToInfer() }?.inferredTypes
   }
 
   private fun isOvercomplicated(duplicate: Duplicate): Boolean {
