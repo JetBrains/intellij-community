@@ -16,21 +16,12 @@ internal fun computePackagesTableItems(
         }
 
         val items = packages.map { uiPackageModel ->
+            val scopes = (uiPackageModel.declaredScopes + uiPackageModel.userDefinedScopes)
+                .distinct()
+                .sorted()
             when (uiPackageModel) {
-                is UiPackageModel.Installed -> {
-                    val scopes = (uiPackageModel.declaredScopes + uiPackageModel.userDefinedScopes)
-                        .distinct()
-                        .sorted()
-
-                    PackagesTableItem.InstalledPackage(uiPackageModel, scopes)
-                }
-                is UiPackageModel.SearchResult -> {
-                    val scopes = (uiPackageModel.declaredScopes + uiPackageModel.userDefinedScopes)
-                        .distinct()
-                        .sorted()
-
-                    PackagesTableItem.InstallablePackage(uiPackageModel, scopes)
-                }
+                is UiPackageModel.Installed -> PackagesTableItem.InstalledPackage(uiPackageModel, scopes)
+                is UiPackageModel.SearchResult -> PackagesTableItem.InstallablePackage(uiPackageModel, scopes)
             }
         }
         PackagesTable.ViewModel.TableItems(items)

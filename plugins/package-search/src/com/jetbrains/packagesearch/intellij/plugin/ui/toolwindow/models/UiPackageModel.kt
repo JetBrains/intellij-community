@@ -120,22 +120,24 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
     coroutineScope: CoroutineScope
 ): UiPackageModel.SearchResult {
     val sortedVersions = getAvailableVersions(onlyStable).sortedDescending()
+    val selectedVersion = searchResultUiState?.selectedVersion ?: sortedVersions.first()
+    val selectedScope = searchResultUiState?.selectedScope ?: defaultScope
     return UiPackageModel.SearchResult(
         packageModel = this,
         declaredScopes = declaredScopes,
         userDefinedScopes = emptyList(),
         defaultVersion = sortedVersions.first(),
         defaultScope = defaultScope,
-        selectedVersion = searchResultUiState?.selectedVersion ?: NormalizedPackageVersion.Missing,
-        selectedScope = searchResultUiState?.selectedScope ?: defaultScope,
+        selectedVersion = selectedVersion,
+        selectedScope = selectedScope,
         mixedBuildSystemTargets = mixedBuildSystems,
         packageOperations = coroutineScope.computeActionsFor(
             packageModel = this,
             targetModules = targetModules,
             knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
             onlyStable = onlyStable,
-            selectedScope = searchResultUiState?.selectedScope ?: defaultScope,
-            selectedVersion = searchResultUiState?.selectedVersion ?: NormalizedPackageVersion.Missing
+            selectedScope = selectedScope,
+            selectedVersion = selectedVersion
         ),
         sortedVersions = sortedVersions
     )
