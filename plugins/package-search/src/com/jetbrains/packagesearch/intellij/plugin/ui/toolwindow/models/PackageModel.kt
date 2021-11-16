@@ -90,6 +90,8 @@ internal sealed class PackageModel(
             if (other !is Installed) return false
 
             if (usageInfo != other.usageInfo) return false
+            if (latestInstalledVersion != other.latestInstalledVersion) return false
+            if (declaredVersions != other.declaredVersions) return false
             if (searchableInfo != other.searchableInfo) return false
 
             return true
@@ -97,11 +99,15 @@ internal sealed class PackageModel(
 
         override fun hashCode(): Int {
             var result = usageInfo.hashCode()
+            result = 31 * result + latestInstalledVersion.hashCode()
+            result = 31 * result + declaredVersions.hashCode()
             result = 31 * result + searchableInfo.hashCode()
             return result
         }
 
-        override fun toString(): String = "Installed(usageInfo=$usageInfo, searchableInfo='$searchableInfo')"
+        override fun toString(): String =
+            "Installed(usageInfo=$usageInfo, latestInstalledVersion=$latestInstalledVersion, declaredVersions=$declaredVersions, " +
+                "searchableInfo='$searchableInfo')"
     }
 
     class SearchResult(
@@ -123,16 +129,19 @@ internal sealed class PackageModel(
             if (this === other) return true
             if (other !is SearchResult) return false
 
+            if (declaredVersions != other.declaredVersions) return false
             if (searchableInfo != other.searchableInfo) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            return searchableInfo.hashCode()
+            var result = declaredVersions.hashCode()
+            result = 31 * result + searchableInfo.hashCode()
+            return result
         }
 
-        override fun toString(): String = "SearchResult(searchableInfo='$searchableInfo')"
+        override fun toString(): String = "SearchResult(declaredVersions=$declaredVersions, searchableInfo='$searchableInfo')"
     }
 
     companion object {
