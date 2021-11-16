@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.content.ContentManager;
@@ -958,6 +959,15 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     @Override
     public void onProjectTrusted(@NotNull Project project) {
       getInstanceImpl(project).updateMappedVcsesImmediately();
+
+      ToolWindow vcsTw = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+      if (vcsTw != null) {
+        vcsTw.setAvailable(true);
+      }
+      ToolWindow commitTw = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT);
+      if (commitTw != null) {
+        commitTw.setAvailable(true);
+      }
     }
   }
 }
