@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.module.Module
+import java.nio.file.Path
 
 /**
  * Provides source root paths for applicable build systems.
@@ -16,5 +17,5 @@ interface ExternalSystemContentRootContributor {
    * @param path absolute or relative path to a directory
    * @param rootType source type of [path]
    */
-  data class ExternalContentRoot(val path: String, val rootType: ExternalSystemSourceType)
+  data class ExternalContentRoot(val path: Path, val rootType: ExternalSystemSourceType)
 }

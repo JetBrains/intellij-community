@@ -188,7 +188,7 @@ private fun Module.chooseSourceRootPath(allowedPaths: List<Path>, sourceFolderPa
         val resultContentRoot = externalContentRoots.singleOrNull()
             ?: ExternalContentRootChooser(project, externalContentRoots).showAndGetResult().firstOrNull()
 
-        return resultContentRoot?.nioPath
+        return resultContentRoot?.path
     }
 
     return sourceFolderPaths?.singleOrNull() ?: chooseSourceRootPathHeuristically(contentEntryPaths)
@@ -197,8 +197,7 @@ private fun Module.chooseSourceRootPath(allowedPaths: List<Path>, sourceFolderPa
 private fun Module.findSourceRootPathByExternalProject(
     allowedPaths: List<Path>,
 ): List<ExternalSystemContentRootContributor.ExternalContentRoot>? = findContentRootsByExternalProject()?.filter { externalContentRoot ->
-    val path = externalContentRoot.nioPath
-    allowedPaths.any { path.startsWith(it) }
+    allowedPaths.any { externalContentRoot.path.startsWith(it) }
 }
 
 private class ExternalContentRootChooser(project: Project, items: List<ExternalSystemContentRootContributor.ExternalContentRoot>) :
@@ -224,7 +223,7 @@ private class ExternalContentRootChooser(project: Project, items: List<ExternalS
     }
 
     override fun getItemText(item: ExternalSystemContentRootContributor.ExternalContentRoot): String =
-        projectPath?.relativize(item.nioPath)?.pathString ?: item.path
+        projectPath?.relativize(item.path)?.pathString ?: item.path.pathString
 
     override fun getItemIcon(item: ExternalSystemContentRootContributor.ExternalContentRoot): Icon = item.icon
 
@@ -234,8 +233,6 @@ private class ExternalContentRootChooser(project: Project, items: List<ExternalS
         else -> null
     }
 }
-
-val ExternalSystemContentRootContributor.ExternalContentRoot.nioPath: Path get() = Path(path)
 
 val ExternalSystemContentRootContributor.ExternalContentRoot.icon: Icon
     get() = when (rootType) {
