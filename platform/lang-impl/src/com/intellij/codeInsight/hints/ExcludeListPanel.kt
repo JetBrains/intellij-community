@@ -17,7 +17,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -63,23 +65,21 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
 
     return panel {
       row {
+        link(LangBundle.message("action.link.reset")) {
+          setLanguageExcludelistToDefault(language)
+        }.horizontalAlign(HorizontalAlign.RIGHT)
+      }
+      row {
+        cell(editorTextField)
+          .horizontalAlign(HorizontalAlign.FILL)
+      }.bottomGap(BottomGap.SMALL)
+      baseLanguageComment(provider)?.let {
         row {
-          right {
-            link(LangBundle.message("action.link.reset")) {
-              setLanguageExcludelistToDefault(language)
-            }
-          }
+          comment(it)
         }
-
-        row {
-          editorTextField(grow)
-        }
-        row {
-          baseLanguageComment(provider)?.also {
-            commentRow(it)
-          }
-          commentRow(getExcludeListExplanationHTML(language))
-        }
+      }
+      row {
+        comment(getExcludeListExplanationHTML(language))
       }
     }
   }

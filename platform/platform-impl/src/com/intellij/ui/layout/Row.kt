@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
@@ -71,6 +72,8 @@ interface RowBuilder : BaseBuilder {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun commentRow(@Nls text: String) {
     createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1, true))
   }
