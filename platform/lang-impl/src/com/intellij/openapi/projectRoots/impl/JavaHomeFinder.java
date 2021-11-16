@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,7 @@ import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,9 +38,9 @@ public abstract class JavaHomeFinder {
     }
 
     @NotNull
-    public Iterable<@NotNull Path> getFsRoots() {
+    public Collection<@NotNull Path> getFsRoots() {
       Iterable<Path> rootDirectories = FileSystems.getDefault().getRootDirectories();
-      return rootDirectories != null ? rootDirectories : Collections.emptyList();
+      return rootDirectories != null ? ContainerUtil.newArrayList(rootDirectories) : Collections.emptyList();
     }
 
     public String getPathSeparator() {

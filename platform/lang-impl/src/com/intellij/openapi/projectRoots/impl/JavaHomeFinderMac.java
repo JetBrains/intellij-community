@@ -21,7 +21,7 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
 
     registerFinder(() -> {
       Set<String> result = new TreeSet<>();
-      Iterable<@NotNull Path> roots = systemInfoProvider.getFsRoots();
+      Collection<@NotNull Path> roots = systemInfoProvider.getFsRoots();
       roots.forEach(root -> {
         result.addAll(scanAll(root.resolve(defaultJavaLocation), true));
       });
