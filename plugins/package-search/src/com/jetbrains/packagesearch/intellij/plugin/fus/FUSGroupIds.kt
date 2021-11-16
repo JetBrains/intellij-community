@@ -106,7 +106,7 @@ internal object FUSGroupIds {
     const val TARGET_MODULES_SELECTED = "target_modules_selected"
     const val DETAILS_LINK_CLICK = "details_link_click"
     const val TOGGLE = "toggle"
-    const val SEARCH_QUERY_CHANGED = "search_query_changed"
+    const val SEARCH_REQUEST = "search_request"
     const val SEARCH_QUERY_CLEAR = "search_query_clear"
     const val UPGRADE_ALL = "upgrade_all_event"
 

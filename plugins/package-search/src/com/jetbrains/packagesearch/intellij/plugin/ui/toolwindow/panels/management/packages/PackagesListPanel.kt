@@ -51,16 +51,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
@@ -239,6 +244,7 @@ internal class PackagesListPanel(
                     isSearchingStateFlow.emit(false)
                     model
                 }
+                .shareIn(project.lifecycleScope, SharingStarted.Lazily)
 
         combine(
             viewModelFlow,
@@ -324,6 +330,13 @@ internal class PackagesListPanel(
 
         project.lookAndFeelFlow.onEach { updateUiOnLafChange() }
             .launchIn(project.lifecycleScope)
+
+        searchResultsFlow.map { it.searchQuery }
+            .debounce(500)
+            .distinctUntilChanged()
+            .filterNot { it.isBlank() }
+            .onEach { PackageSearchEventsLogger.logSearchRequest(it) }
+            .launchIn(project.lifecycleScope)
     }
 
     private fun updateListEmptyState(targetModules: TargetModules) {
@@ -361,7 +374,6 @@ internal class PackagesListPanel(
         }
 
         searchTextField.addOnTextChangedListener { text ->
-            PackageSearchEventsLogger.logSearchRequest(text)
             searchQueryStateFlow.tryEmit(text)
         }
 
