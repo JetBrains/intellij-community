@@ -186,7 +186,11 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
-  fun testAvoidChangeSignatureForLocalRefs(){
+  fun testAvoidChangeSignatureForLocalRefsInPattern(){
+    doTest()
+  }
+
+  fun testAvoidChangeSignatureForLocalRefsInCandidate(){
     doTest()
   }
 
