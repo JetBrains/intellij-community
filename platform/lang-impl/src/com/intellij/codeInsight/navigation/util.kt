@@ -32,6 +32,17 @@ import java.util.regex.Pattern
 private val LOG: Logger = Logger.getInstance("#com.intellij.codeInsight.navigation")
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
+/**
+ * **DO NOT USE**
+ *
+ * This method is internal so that it can be re-used by the platform code in different modules.
+ *
+ * This method exists to abstract the computation of [TargetPresentation] by a generic [ItemPresentation].
+ *
+ * Plugins have access to their own classes, they should know how to provide the presentation by themselves.
+ * Instead of calling this method, plugins should [build their own presentation][TargetPresentation.builder].
+ * [fileStatusAttributes] and [fileLocation] should help with building.
+ */
 @ApiStatus.Internal
 fun targetPresentation(itemPresentation: ItemPresentation): TargetPresentation {
   return TargetPresentation
@@ -55,6 +66,20 @@ private fun ItemPresentation.getContainerText(): String? {
   return if (matcher.matches()) matcher.group(2) else locationString
 }
 
+/**
+ * **DO NOT USE**
+ *
+ * This method is internal so that it can be re-used by the platform code in different modules.
+ *
+ * This method exists to abstract the computation of [TargetPresentation] by a generic [PsiElement]
+ * following the previous incorrect assumptions and conventions, e.g. that a `PsiElement` has a name,
+ * or that the container text matches the `"(in ...)"` pattern, or that a `PsiElement` has a containing file.
+ * This presentation was also reused in various contexts incorrectly.
+ *
+ * Plugins have access to their own classes, they should know how to provide the presentation by themselves.
+ * Instead of calling this method, plugins should [build their own presentation][TargetPresentation.builder].
+ * [fileStatusAttributes] and [fileLocation] should help with building.
+ */
 @ApiStatus.Internal
 fun targetPresentation(element: PsiElement): TargetPresentation {
   val project = element.project
