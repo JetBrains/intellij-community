@@ -70,13 +70,13 @@ public final class EditorFragmentComponent extends JPanel {
         getWidthLimit(editor)
       );
 
-      Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
-      Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
-      int y1 = p1.y;
-      int y2 = p2.y;
+      int startVisualLine = editor.logicalToVisualPosition(new LogicalPosition(startLine, 0)).line;
+      int endVisualLine = editor.logicalToVisualPosition(new LogicalPosition(Math.max(endLine, startLine + 1), 0)).line;
+      int y1 = editor.visualLineToY(startVisualLine);
+      int y2 = editor.visualLineToY(endVisualLine);
       textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
       LOG.assertTrue(textImageHeight > 0,
-                     "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
+                     "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; y1:" + y1 + "; y2:" + y2);
 
       textImage = UIUtil.createImage(editor.getContentComponent(), textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
       Graphics textGraphics = textImage.getGraphics();
