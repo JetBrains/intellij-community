@@ -19,12 +19,12 @@ class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenc
     KotlinBundle.lazyMessage("introduce.import.alias")
 ) {
     override fun applicabilityRange(element: KtNameReferenceExpression): TextRange? {
-        if (element.parent is KtInstanceExpressionWithLabel) return null
-        if (element.mainReference.getImportAlias() != null) return null
+        if (element.parent is KtInstanceExpressionWithLabel || element.mainReference.getImportAlias() != null) return null
 
         val targets = element.resolveMainReferenceToDescriptors()
         if (targets.isEmpty() || targets.any { !it.canBeAddedToImport() }) return null
-        if (element.references.mapNotNull(PsiReference::resolve).isEmpty()) return null
+        // It is a workaround: KTIJ-20142 actual FE could not report ambiguous references for alias for a broken reference
+        if (element.mainReference.resolve() == null) return null
         return element.textRange
     }
 
