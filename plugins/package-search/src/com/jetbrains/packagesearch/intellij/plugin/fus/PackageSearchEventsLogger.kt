@@ -37,7 +37,6 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val repositoryUsesCustomUrlField = EventFields.Boolean(FUSGroupIds.REPOSITORY_USES_CUSTOM_URL)
         private val packageIsInstalledField = EventFields.Boolean(FUSGroupIds.PACKAGE_IS_INSTALLED)
         private val targetModulesField = EventFields.Enum<FUSGroupIds.TargetModulesType>(FUSGroupIds.TARGET_MODULES)
-        private val targetModulesCountField = EventFields.Int(FUSGroupIds.TARGET_MODULES_COUNT)
         private val targetModulesMixedBuildSystemsField = EventFields.Boolean(FUSGroupIds.TARGET_MODULES_MIXED_BUILD_SYSTEMS)
 
         internal val preferencesGradleScopeCountField = EventFields.Int(FUSGroupIds.PREFERENCES_GRADLE_SCOPES_COUNT)
@@ -84,8 +83,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val targetModulesSelectedEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.TARGET_MODULES_SELECTED,
             eventField1 = targetModulesField,
-            eventField2 = targetModulesCountField,
-            eventField3 = targetModulesMixedBuildSystemsField
+            eventField2 = targetModulesMixedBuildSystemsField
         )
         private val detailsLinkClickEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.DETAILS_LINK_CLICK,
@@ -171,7 +169,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         }
 
         fun logTargetModuleSelected(targetModules: TargetModules) = ifLoggingEnabled {
-            targetModulesSelectedEvent.log(FUSGroupIds.TargetModulesType.from(targetModules), targetModules.size, targetModules.isMixedBuildSystems)
+            targetModulesSelectedEvent.log(FUSGroupIds.TargetModulesType.from(targetModules), targetModules.isMixedBuildSystems)
         }
 
         fun logPackageSelected(isInstalled: Boolean) = ifLoggingEnabled {
