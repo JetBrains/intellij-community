@@ -73,8 +73,9 @@ public final class EditorFragmentComponent extends JPanel {
       int startVisualLine = editor.logicalToVisualPosition(new LogicalPosition(startLine, 0)).line;
       int endVisualLine = editor.logicalToVisualPosition(new LogicalPosition(Math.max(endLine, startLine + 1), 0)).line;
       int y1 = editor.visualLineToY(startVisualLine);
-      int y2 = editor.visualLineToY(endVisualLine);
-      textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
+      // as endLine is exclusive (not shown), we should also exclude block inlays associated with it
+      int y2 = editor.visualLineToY(endVisualLine) - EditorUtil.getInlaysHeight(editor, endVisualLine, true);
+      textImageHeight = y2 <= y1 ? editor.getLineHeight() : y2 - y1;
       LOG.assertTrue(textImageHeight > 0,
                      "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; y1:" + y1 + "; y2:" + y2);
 
