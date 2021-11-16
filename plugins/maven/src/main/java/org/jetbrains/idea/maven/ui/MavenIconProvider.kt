@@ -8,4 +8,6 @@ import javax.swing.Icon
 class MavenIconProvider : ExternalSystemIconProvider {
 
   override val reloadIcon: Icon = MavenIcons.MavenLoadChanges
+
+  override val projectIcon: Icon = MavenIcons.MavenProject
 }
