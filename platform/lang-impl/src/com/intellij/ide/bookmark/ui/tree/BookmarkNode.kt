@@ -22,6 +22,9 @@ import javax.swing.Icon
 
 abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : BackgroundSupplier, AbstractTreeNode<B>(project, bookmark) {
 
+  val bookmarksView
+    get() = parentRootNode?.value
+
   val bookmarkType
     get() = bookmarksManager?.getType(value)
 
