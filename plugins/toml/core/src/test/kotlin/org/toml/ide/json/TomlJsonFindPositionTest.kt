@@ -86,6 +86,80 @@ class TomlJsonFindPositionTest : TomlTestBase() {
         [[foo]]
     """, "/foo/1/bar")
 
+    fun `test nested tables in array`() = assertPosition("""
+        [[fruits]]
+        name = "apple"
+        
+        [fruits.physical]  # subtable
+        color = "red"
+        shape = "round"
+        
+        [[fruits.varieties]]  # nested array of tables
+        name = "red delicious"<caret>
+        
+        [[fruits.varieties]]
+        name = "granny smith"
+    """, "/fruits/0/varieties/0/name")
+
+    fun `test nested tables in array multiple`() = assertPosition("""
+        [[fruits]]
+          
+        [[fruits]]
+        name = "banana"
+          
+        [[fruits.varieties]]
+        name = "plantain"
+          
+        [[fruits]]
+        name = "apple"
+          
+        [fruits.physical]  # subtable
+        color = "red"
+        shape = "round"
+        
+        [[fruits.varieties]]  # nested array of tables
+        name = "red delicious"
+        
+        [[fruits.varieties]]
+        name = "granny smith"<caret>
+    """, "/fruits/2/varieties/1/name")
+
+    fun `test mixed at one level nested array tables`() = assertPosition("""
+        [fruits]
+        
+        [[fruits.foo]]
+        name = "foo_0"
+        
+        [[fruits.bar]]
+        name = "bar_0"
+        
+        [[fruits.foo]]
+        name = "foo_1"
+        
+        [[fruits.bar]]
+        name = "bar_1"<caret>
+    """, "/fruits/bar/1/name")
+
+    fun `test mixed nested array tables`() = assertPosition("""
+        [foo]
+        a = 0
+        
+        [[foo.bar]]
+        c = 0
+        
+        [[foo.baz]]
+        b = 0
+        
+        [[foo.bar.qux]]
+        d = 0
+        
+        [[foo.baz]]
+        b = 1
+        
+        [[foo.bar.qux]]
+        d = 1<caret>
+    """, "/foo/bar/0/qux/1/d")
+
     private fun assertPosition(@Language("TOML") code: String, expectedPosition: String) {
         myFixture.configureByText("example.toml", code.trimIndent())
         val caretOffset = myFixture.caretOffset - 1

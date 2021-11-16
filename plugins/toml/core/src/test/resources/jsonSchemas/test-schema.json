@@ -60,6 +60,44 @@
                     }
                 }
             }
+        },
+        "foo": {
+            "type": "object",
+            "properties": {
+                "bar": {
+                    "type": "array",
+                    "items": {
+                        "properties": {
+                            "qux": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "d": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            },
+                            "c": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "baz": {
+                    "type": "array",
+                    "items": {
+                        "properties": {
+                            "b": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "a": {
+                    "type": "integer"
+                }
+            }
         }
     },
     "$defs": {

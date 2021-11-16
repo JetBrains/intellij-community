@@ -52,4 +52,24 @@ class TomlJsonSchemaKeyCompletionTest : TomlJsonSchemaCompletionTestBase() {
     fun `test key segment completion`() = checkContainsCompletion(listOf("version", "features"), """
         target.'cfg(unix)'.dependencies.rocket.<caret>
     """)
+
+    fun `test mixed nested tables completion`() = checkContainsCompletion(listOf("d"), """
+        [foo]
+        a = 0
+        
+        [[foo.bar]]
+        c = 0
+        
+        [[foo.baz]]
+        b = 0
+        
+        [[foo.bar.qux]]
+        d = 0
+        
+        [[foo.baz]]
+        b = 1
+        
+        [[foo.bar.qux]]
+        <caret>
+    """)
 }
