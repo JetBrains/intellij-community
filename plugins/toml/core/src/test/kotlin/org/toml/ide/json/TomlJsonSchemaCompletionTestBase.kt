@@ -19,8 +19,14 @@ abstract class TomlJsonSchemaCompletionTestBase : TomlJsonSchemaTestBase() {
     }
 
     fun checkContainsCompletion(
-        variants: List<String>,
+        variants: Set<String>,
         @Language("TOML") code: String,
         render: LookupElement.() -> String = { lookupString }
     ) = completionFixture.checkContainsCompletion(variants, code, render)
+
+    fun checkNotContainsCompletion(
+        variants: Set<String>,
+        @Language("TOML") code: String,
+        render: LookupElement.() -> String = { lookupString }
+    ) = completionFixture.checkNotContainsCompletion(variants, code, render)
 }
