@@ -14,9 +14,8 @@ class KotlinJpsClasspathProviderTest : LightPlatformTestCase() {
 
         val jars = inst.classPath
 
-        assertEquals(3, jars.size)
+        assertEquals(2, jars.size)
         assertTrue(jars[0], File(jars[0]!!).name.startsWith("kotlin-reflect"))
         assertTrue(jars[1], File(jars[1]!!).name.startsWith("kotlin-compiler-for-ide") || File(jars[1]!!).name == "kotlin-plugin.jar")
-        assertTrue(jars[2], File(jars[2]!!).name == "intellij.platform.core")
     }
 }
