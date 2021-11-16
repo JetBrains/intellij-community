@@ -639,13 +639,20 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.add(new RemoveShortcutAction(shortcut, selectedKeymap, actionId));
     }
 
-    Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
-    for (final String abbreviation : abbreviations) {
+    for (final String abbreviation : AbbreviationManager.getInstance().getAbbreviations(actionId)) {
       group.addAction(new RemoveAbbreviationAction(abbreviation, actionId));
     }
 
-    if (myManager.canResetActionInKeymap(selectedKeymap, actionId) || shortcuts.length + abbreviations.size() > 2) {
+    boolean separator = true;
+    if (shortcuts.length > 2) {
       group.add(new Separator());
+      group.add(new RemoveAllShortcuts(selectedKeymap, actionId));
+      separator = false;
+    }
+    if (myManager.canResetActionInKeymap(selectedKeymap, actionId)) {
+      if (separator) {
+        group.add(new Separator());
+      }
       group.add(new ResetShortcutsAction(selectedKeymap, actionId));
     }
     return group;
@@ -961,19 +968,25 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-      if (myManager.canResetActionInKeymap(mySelectedKeymap, myActionId)) {
-        myManager.resetActionInKeymap(mySelectedKeymap, myActionId);
-      }
-      else {
-        if (mySelectedKeymap.getShortcuts(myActionId).length > 0) {
-          myManager.getMutableKeymap(mySelectedKeymap).removeAllActionShortcuts(myActionId);
-          currentKeymapChanged();
-        }
-      }
-
-      AbbreviationManager.getInstance().removeAllAbbreviations(myActionId);
-
+      myManager.resetActionInKeymap(mySelectedKeymap, myActionId);
       repaintLists();
+    }
+  }
+
+  private class RemoveAllShortcuts extends DumbAwareAction {
+    private final Keymap mySelectedKeymap;
+    private final String myActionId;
+
+    private RemoveAllShortcuts(Keymap selectedKeymap, @NotNull String actionId) {
+      super(IdeBundle.messagePointer("action.text.remove.all.shortcuts"));
+      mySelectedKeymap = selectedKeymap;
+      myActionId = actionId;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent event) {
+      myManager.getMutableKeymap(mySelectedKeymap).removeAllActionShortcuts(myActionId);
+      currentKeymapChanged();
     }
   }
 }
