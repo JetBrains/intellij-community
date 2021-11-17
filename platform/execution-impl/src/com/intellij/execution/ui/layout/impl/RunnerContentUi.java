@@ -32,7 +32,10 @@ import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.TwoSideComponent;
@@ -553,7 +556,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       size = JBUI.size(200, 200);
     }
 
-    DockableGrid content = new DockableGrid(null, null, size, Arrays.asList(contents), window);
+    DockableGrid content = new DockableGrid(null, new Presentation(), size, Arrays.asList(contents), window);
     if (target != null) {
       target.add(content, null);
     }
