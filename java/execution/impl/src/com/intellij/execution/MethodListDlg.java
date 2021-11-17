@@ -2,6 +2,7 @@
 package com.intellij.execution;
 
 import com.intellij.ide.structureView.impl.StructureNodeRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -77,8 +78,12 @@ public class MethodListDlg extends DialogWrapper {
     final List<SmartPsiElementPointer<PsiMethod>> methodPointers = ContainerUtil.map(allMethods, SmartPointerManager::createPointer);
 
     final Runnable filterMethods = () -> {
-      ReadAction.nonBlocking(() -> performFiltering(methodPointers, filter))
-        .executeSynchronously();
+      final List<SmartPsiElementPointer<PsiMethod>> methods = ReadAction.compute(() -> ContainerUtil.filter(methodPointers, e -> filter.value(e.getElement())));
+      ApplicationManager.getApplication().invokeLater(
+        () -> methods.stream()
+          .map(e -> e.dereference())
+          .forEach(myListModel::add)
+      );
     };
 
     final ProgressManager progressManager = ProgressManager.getInstance();
@@ -86,17 +91,6 @@ public class MethodListDlg extends DialogWrapper {
                                                                ExecutionBundle.message("browse.method.dialog.looking.for.methods"),
                                                                true,
                                                                allMethods[0].getProject());
-  }
-
-  private void performFiltering(@NotNull List<SmartPsiElementPointer<PsiMethod>> allMethods, @NotNull Condition<? super PsiMethod> filter) {
-    for (SmartPsiElementPointer<PsiMethod> methodPointer : allMethods) {
-      final PsiMethod method = methodPointer.dereference();
-      if (method == null) continue;
-
-      if (filter.value(method)) {
-        myListModel.add(method);
-      }
-    }
   }
 
   @Override
