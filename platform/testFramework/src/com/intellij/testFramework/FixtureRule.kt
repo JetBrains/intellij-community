@@ -38,6 +38,10 @@ import com.intellij.util.throwIfNotEmpty
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -73,6 +77,20 @@ open class ApplicationRule : TestRule {
 
   protected open fun after() {
   }
+}
+
+open class ApplicationExtension : BeforeAllCallback, AfterAllCallback {
+  companion object {
+    init {
+      Logger.setFactory(TestLoggerFactory::class.java)
+    }
+  }
+
+  override fun beforeAll(context: ExtensionContext?) {
+     TestApplicationManager.getInstance()
+  }
+
+  override fun afterAll(context: ExtensionContext?) {}
 }
 
 /**
@@ -446,8 +464,7 @@ fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: Temporar
   }
 }
 
-
-class DisposableRule : ExternalResource() {
+abstract class AbstractDisposableRule {
   private var _disposable = lazy { Disposer.newDisposable() }
 
   val disposable: Disposable
@@ -463,10 +480,32 @@ class DisposableRule : ExternalResource() {
     })
   }
 
-  override fun after() {
+  internal fun after() {
     if (_disposable.isInitialized()) {
       Disposer.dispose(_disposable.value)
     }
+  }
+}
+
+class DisposableRule : AbstractDisposableRule(), TestRule {
+  override fun apply(base: Statement, description: Description): Statement {
+    return object : Statement() {
+      @Throws(Throwable::class)
+      override fun evaluate() {
+        try {
+          base.evaluate()
+        }
+        finally {
+          after()
+        }
+      }
+    }
+  }
+}
+
+class DisposableExtension : AbstractDisposableRule(), AfterEachCallback {
+  override fun afterEach(context: ExtensionContext?) {
+    after()
   }
 }
 

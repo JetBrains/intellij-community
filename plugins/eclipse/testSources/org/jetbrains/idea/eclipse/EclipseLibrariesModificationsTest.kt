@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,17 +9,14 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.io.copy
-import org.junit.Assume.assumeTrue
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestName
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.div
@@ -27,12 +24,12 @@ import kotlin.io.path.div
 @ExperimentalPathApi
 class EclipseLibrariesModificationsTest {
   @JvmField
-  @Rule
-  val tempDirectory = TempDirectory()
+  @RegisterExtension
+  val tempDirectory = TempDirectoryExtension()
 
   @JvmField
-  @Rule
-  val testName = TestName()
+  @RegisterExtension
+  val testName = TestNameExtension()
 
   @Test
   fun testReplacedWithVariables() {
@@ -190,7 +187,7 @@ class EclipseLibrariesModificationsTest {
 
   companion object {
     @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
+    @RegisterExtension
+    val appRule = ApplicationExtension()
   }
 }

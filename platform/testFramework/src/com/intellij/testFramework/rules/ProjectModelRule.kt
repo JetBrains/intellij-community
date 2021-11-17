@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
 import com.intellij.facet.Facet
@@ -24,51 +24,45 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.*
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.nio.file.Path
 
-class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
-  val baseProjectDir = TempDirectory()
-  private val disposableRule = DisposableRule()
+abstract class AbstractProjectModelRule<T, D>(private val forceEnableWorkspaceModel: Boolean = false,
+                                        val baseProjectDir: T,
+                                        val disposableRule: D) where T : AbstractTempDirectory, 
+                                                                     D : AbstractDisposableRule {
 
   lateinit var project: Project
   lateinit var projectRootDir: Path
   lateinit var filePointerTracker: VirtualFilePointerTracker
 
-  private val projectResource = object : ExternalResource() {
-    override fun before() {
-      projectRootDir = baseProjectDir.root.toPath()
-      if (forceEnableWorkspaceModel) {
-        WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
-          project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
-        }
-      }
-      else {
+  internal fun before() {
+    projectRootDir = baseProjectDir.root.toPath()
+    if (forceEnableWorkspaceModel) {
+      WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
         project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
       }
-      filePointerTracker = VirtualFilePointerTracker()
     }
-
-    override fun after() {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      filePointerTracker.assertPointersAreDisposed()
+    else {
+      project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
     }
+    filePointerTracker = VirtualFilePointerTracker()
   }
 
-  private val ruleChain = RuleChain(baseProjectDir, projectResource, disposableRule)
-
-  override fun apply(base: Statement, description: Description): Statement {
-    return ruleChain.apply(base, description)
+  internal fun after() {
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+    filePointerTracker.assertPointersAreDisposed()
   }
 
   fun createModule(name: String = "module"): Module {
@@ -177,7 +171,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     runWriteActionAndWait { moduleManager.disposeModule(module) }
   }
 
-  fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C): F {
+  fun <F : Facet<C>, C : FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C): F {
     val facetManager = FacetManager.getInstance(module)
     val model = facetManager.createModifiableModel()
     val facet = facetManager.createFacet(type, type.defaultFacetName, configuration, null)
@@ -201,4 +195,41 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
 
   val projectLibraryTable: LibraryTable
     get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+}
+
+class ProjectModelRule(forceEnableWorkspaceModel: Boolean = false)
+  : AbstractProjectModelRule<TempDirectory, DisposableRule>(forceEnableWorkspaceModel, TempDirectory(), DisposableRule()), TestRule {
+
+  private val projectResource = object : ExternalResource() {
+    override fun before() {
+      this@ProjectModelRule.before()
+    }
+
+    override fun after() {
+      this@ProjectModelRule.after()
+    }
+  }
+
+  private val ruleChain = RuleChain(baseProjectDir, projectResource, disposableRule)
+
+  override fun apply(base: Statement, description: Description): Statement {
+    return ruleChain.apply(base, description)
+  }
+}
+
+class ProjectModelExtension(forceEnableWorkspaceModel: Boolean = false)
+  : AbstractProjectModelRule<TempDirectoryExtension, DisposableExtension>(forceEnableWorkspaceModel, TempDirectoryExtension(), DisposableExtension()), BeforeEachCallback, AfterEachCallback {
+
+  override fun beforeEach(context: ExtensionContext?) {
+    if (context != null) {
+      baseProjectDir.beforeEach(context)
+      before()
+    }
+  }
+
+  override fun afterEach(context: ExtensionContext?) {
+    baseProjectDir.after()
+    after()
+    disposableRule.after()
+  }
 }

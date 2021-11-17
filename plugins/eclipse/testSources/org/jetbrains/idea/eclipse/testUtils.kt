@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.application.PathMacros
@@ -14,10 +14,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.loadProject
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
@@ -27,14 +26,14 @@ internal val eclipseTestDataRoot: Path
   get() = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData")
 
 internal fun checkLoadSaveRoundTrip(testDataDirs: List<Path>,
-                                    tempDirectory: TempDirectory,
+                                    tempDirectory: TempDirectoryExtension,
                                     setupPathVariables: Boolean = false,
                                     imlFilePaths: List<Pair<String, String>>) {
   loadEditSaveAndCheck(testDataDirs, tempDirectory, setupPathVariables, imlFilePaths, ::forceSave, {})
 }
 
 internal fun checkEmlFileGeneration(testDataDirs: List<Path>,
-                                    tempDirectory: TempDirectory,
+                                    tempDirectory: TempDirectoryExtension,
                                     imlFilePaths: List<Pair<String, String>>,
                                     edit: (Project) -> Unit = {},
                                     updateExpectedDir: (Path) -> Unit = {}) {
@@ -43,7 +42,7 @@ internal fun checkEmlFileGeneration(testDataDirs: List<Path>,
 }
 
 internal fun checkConvertToStandardStorage(testDataDirs: List<Path>,
-                                           tempDirectory: TempDirectory,
+                                           tempDirectory: TempDirectoryExtension,
                                            expectedIml: Path,
                                            setupPathVariables: Boolean,
                                            imlFilePaths: List<Pair<String, String>>) {
@@ -62,7 +61,7 @@ internal fun checkConvertToStandardStorage(testDataDirs: List<Path>,
 
 
 internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
-                                  tempDirectory: TempDirectory,
+                                  tempDirectory: TempDirectoryExtension,
                                   setupPathVariables: Boolean = false,
                                   imlFilePaths: List<Pair<String, String>>,
                                   edit: (Project) -> Unit,
