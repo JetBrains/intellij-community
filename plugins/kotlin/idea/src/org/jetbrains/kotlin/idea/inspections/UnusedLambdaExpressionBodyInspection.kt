@@ -15,13 +15,16 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.tower.NewVariableAsFunctionResolvedCallImpl
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
@@ -66,15 +69,16 @@ class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
                 return
             }
 
-            function.equalsToken?.apply {
-                // TODO: This should be done by formatter but there is no rule for this now
-                if (prevSibling.isSpace() && nextSibling.isSpace()) {
-                    prevSibling.delete()
+            function.equalsToken?.let { token ->
+                val newBlockBody = KtPsiFactory(project).createBlock("")
+                val lambdaBody = function.bodyExpression?.safeAs<KtLambdaExpression>()?.bodyExpression?.allChildren
+                if (lambdaBody?.isEmpty == false) {
+                    newBlockBody.addRangeAfter(lambdaBody.first, lambdaBody.last, newBlockBody.lBrace)
                 }
-                delete()
+
+                function.bodyExpression?.delete()
+                token.replace(newBlockBody)
             }
         }
-
-        private fun PsiElement.isSpace() = text == " "
     }
 }
