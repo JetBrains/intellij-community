@@ -10,8 +10,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,7 +23,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.Functions;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -156,14 +157,6 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
-    return processHandler.runProcess(timeout);
-  }
-
-  private @NotNull ProcessOutput executeOnWsl(@NotNull GeneralCommandLine commandLine,
-                                              @NotNull WSLCommandLineOptions options,
-                                              int timeout) throws ExecutionException {
-    patchCommandLine(commandLine, null, options);
-    CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
     return processHandler.runProcess(timeout);
   }
 
@@ -695,7 +688,8 @@ public class WSLDistribution {
       .setExecuteCommandInInteractiveShell(true)
       .setExecuteCommandInLoginShell(true)
       .setShellPath(getShellPath());
-    return executeInShellAndGetCommandOnlyStdout(new GeneralCommandLine("printenv", name), options, DEFAULT_TIMEOUT, true);
+    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name), options, DEFAULT_TIMEOUT,
+                                                              true);
   }
 
   public @NlsSafe @NotNull String getShellPath() {
@@ -704,73 +698,7 @@ public class WSLDistribution {
 
   private @NlsSafe @Nullable String readShellPath() {
     WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true);
-    return executeInShellAndGetCommandOnlyStdout(new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT, true);
-  }
-
-  @NotNull ProcessOutput executeInShellAndGetCommandOnlyStdout(@NotNull GeneralCommandLine commandLine,
-                                                               @NotNull WSLCommandLineOptions options,
-                                                               int timeout) throws ExecutionException {
-    if (!options.isExecuteCommandInShell()) {
-      throw new AssertionError("Execution in shell is expected");
-    }
-    // When command is executed in interactive/login shell, the result stdout may contain additional output
-    // produced by shell configuration files, for example, "Message Of The Day".
-    // Let's print some unique message before executing the command to know where command output begins in the result output.
-    String prefixText = "intellij: executing command...";
-    options.addInitCommand("echo " + CommandLineUtil.posixQuote(prefixText));
-    if (options.isExecuteCommandInInteractiveShell()) {
-      // Disable oh-my-zsh auto update on shell initialization
-      commandLine.getEnvironment().put(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE, "true");
-      options.setPassEnvVarsUsingInterop(true);
-    }
-    ProcessOutput output = executeOnWsl(commandLine, options, timeout);
-    String stdout = output.getStdout();
-    String markerText = prefixText + LineSeparator.LF.getSeparatorString();
-    int index = stdout.indexOf(markerText);
-    if (index < 0) {
-      Application application = ApplicationManager.getApplication();
-      if (application == null || application.isInternal() || application.isUnitTestMode()) {
-        LOG.error("Cannot find '" + prefixText + "' in stdout: " + output);
-      }
-      else {
-        LOG.info("Cannot find '" + prefixText + "' in stdout");
-      }
-      return output;
-    }
-    return new ProcessOutput(stdout.substring(index + markerText.length()),
-                             output.getStderr(),
-                             output.getExitCode(),
-                             output.isTimeout(),
-                             output.isCancelled());
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  @Nullable String executeInShellAndGetCommandOnlyStdout(@NotNull GeneralCommandLine commandLine,
-                                                         @NotNull WSLCommandLineOptions options,
-                                                         int timeout,
-                                                         boolean expectOneLineStdout) {
-    try {
-      ProcessOutput output = executeInShellAndGetCommandOnlyStdout(commandLine, options, timeout);
-      String stdout = output.getStdout();
-      if (!output.isTimeout() && output.getExitCode() == 0) {
-        return expectOneLineStdout ? expectOneLineOutput(commandLine, stdout) : stdout;
-      }
-      LOG.info("Failed to execute " + commandLine + " for " + getMsId() + ": " +
-               "exitCode=" + output.getExitCode() + ", timeout=" + output.isTimeout() +
-               ", stdout=" + stdout + ", stderr=" + output.getStderr());
-    }
-    catch (ExecutionException e) {
-      LOG.info("Failed to execute " + commandLine + " for " + getMsId(), e);
-    }
-    return null;
-  }
-
-  private @NotNull String expectOneLineOutput(@NotNull GeneralCommandLine commandLine, @NotNull String stdout) {
-    String converted = StringUtil.convertLineSeparators(stdout, LineSeparator.LF.getSeparatorString());
-    List<String> lines = StringUtil.split(converted, LineSeparator.LF.getSeparatorString(), true, true);
-    if (lines.size() != 1) {
-      LOG.info("One line stdout expected: " + getMsId() + ", command=" + commandLine + ", stdout=" + stdout + ", lines=" + lines.size());
-    }
-    return StringUtil.notNullize(ContainerUtil.getFirstItem(lines), stdout);
+    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT,
+                                                              true);
   }
 }
