@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -14,8 +12,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-
-import java.util.List;
+import com.intellij.ui.UIBundle;
 
 /**
  * @author Dmitry Avdeev
@@ -24,9 +21,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
   public void testCreateProject() throws Exception {
     Project project = createProject(step -> {
       if (step instanceof ProjectTypeStep) {
-        assertTrue(((ProjectTypeStep)step).setSelectedTemplate(JavaModuleType.JAVA_GROUP, null));
-        List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-        assertEquals(steps.toString(), 3, steps.size());
+        assertTrue(((ProjectTypeStep)step).setSelectedTemplate(UIBundle.message("label.project.wizard.project.generator.name"), null));
       }
     });
     assertNotNull(project);
