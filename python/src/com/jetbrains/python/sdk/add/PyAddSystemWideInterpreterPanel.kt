@@ -97,7 +97,10 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
   override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
     if (targetEnvironmentConfiguration == null) {
       // this is the local machine case
-      return installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context)
+      return when (val sdk = installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context)) {
+        is PyDetectedSdk -> sdk.setup(existingSdks)
+        else -> sdk
+      }
     }
     else {
       val interpreterPath = sdkComboBox.selectedSdk?.homePath!!
