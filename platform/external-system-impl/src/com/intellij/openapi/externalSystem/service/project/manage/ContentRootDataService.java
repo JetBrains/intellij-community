@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -255,8 +256,15 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
                                                   @NotNull Module module,
                                                   @NotNull JpsModuleSourceRootType<?> sourceRootType,
                                                   boolean createEmptyContentRootDirectories) {
-
     String path = sourceRoot.getPath();
+    if (SystemInfo.isWindows) {
+      if (!path.isEmpty() && StringUtil.isWhiteSpace(path.charAt(path.length() - 1))) {
+        LOG.warn("Source root ending with a space found. Such directories is not properly supported by JDK on Windows, see https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8190546. " +
+                 "The source root will not be added: '" + path + "'");
+        return;
+      }
+    }
+
     if (createEmptyContentRootDirectories) {
       createEmptyDirectory(path);
     }
