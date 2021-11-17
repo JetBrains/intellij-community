@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.MutablePackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -54,6 +55,7 @@ import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.refactoring.getUsageContext
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveUsage
 import org.jetbrains.kotlin.idea.refactoring.pullUp.renderForConflicts
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.search.and
 import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -140,11 +142,11 @@ class MoveConflictChecker(
         }
     }
 
-    private fun DeclarationDescriptor.isVisibleIn(where: DeclarationDescriptor): Boolean {
+    private fun DeclarationDescriptor.isVisibleIn(where: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings): Boolean {
         return when {
             this !is DeclarationDescriptorWithVisibility -> true
-            !DescriptorVisibilities.isVisibleIgnoringReceiver(this, where) -> false
-            this is ConstructorDescriptor -> DescriptorVisibilities.isVisibleIgnoringReceiver(containingDeclaration, where)
+            !DescriptorVisibilityUtils.isVisibleIgnoringReceiver(this, where, languageVersionSettings) -> false
+            this is ConstructorDescriptor -> DescriptorVisibilityUtils.isVisibleIgnoringReceiver(containingDeclaration, where, languageVersionSettings)
             else -> true
         }
     }
@@ -412,11 +414,14 @@ class MoveConflictChecker(
                 is PsiMember -> container.getJavaMemberDescriptor()
                 else -> null
             } ?: continue
+
+            val languageVersionSettings = referencedElement.getResolutionFacade().getLanguageVersionSettings()
+
             val actualVisibility = if (referencingDescriptor.isJavaDescriptor) referencedDescriptor.visibilityAsViewedFromJava() else null
             val originalDescriptorToCheck = referencedDescriptor.wrap(newVisibility = actualVisibility) ?: referencedDescriptor
             val newDescriptorToCheck = referencedDescriptor.asPredicted(targetContainer, actualVisibility) ?: continue
 
-            if (originalDescriptorToCheck.isVisibleIn(referencingDescriptor) && !newDescriptorToCheck.isVisibleIn(referencingDescriptor)) {
+            if (originalDescriptorToCheck.isVisibleIn(referencingDescriptor, languageVersionSettings) && !newDescriptorToCheck.isVisibleIn(referencingDescriptor, languageVersionSettings)) {
                 val message = KotlinBundle.message(
                     "text.0.uses.1.which.will.be.inaccessible.after.move",
                     render(container),
@@ -457,7 +462,7 @@ class MoveConflictChecker(
             return referrerDescriptor.targetAwareContainingDescriptor()?.let { isProtectedVisible(it) } ?: false
         }
 
-        fun DeclarationDescriptorWithVisibility.isVisibleFrom(ref: PsiReference): Boolean {
+        fun DeclarationDescriptorWithVisibility.isVisibleFrom(ref: PsiReference, languageVersionSettings: LanguageVersionSettings): Boolean {
             val targetVisibility = visibility.normalize()
             if (targetVisibility == DescriptorVisibilities.PUBLIC) return true
 
@@ -468,15 +473,16 @@ class MoveConflictChecker(
                 referrerDescriptor.unsubstitutedPrimaryConstructor?.let { referrerDescriptor = it }
             }
 
-            if (!isVisibleIn(referrerDescriptor)) return true
+            if (!isVisibleIn(referrerDescriptor, languageVersionSettings)) return true
 
             return when (targetVisibility) {
                 DescriptorVisibilities.PROTECTED -> isProtectedVisible(referrerDescriptor)
-                else -> isVisibleIn(targetContainer)
+                else -> isVisibleIn(targetContainer, languageVersionSettings)
             }
         }
 
         for (declaration in elementsToMove - doNotGoIn) {
+            val languageVersionSettings = declaration.getResolutionFacade().getLanguageVersionSettings()
             declaration.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
                 refExpr.references
                     .forEach { ref ->
@@ -489,9 +495,9 @@ class MoveConflictChecker(
                             else -> null
                         } as? DeclarationDescriptorWithVisibility ?: return@forEach
 
-                        var isVisible = targetDescriptor.isVisibleFrom(ref)
+                        var isVisible = targetDescriptor.isVisibleFrom(ref, languageVersionSettings)
                         if (isVisible && targetDescriptor is ConstructorDescriptor) {
-                            isVisible = targetDescriptor.containingDeclaration.isVisibleFrom(ref)
+                            isVisible = targetDescriptor.containingDeclaration.isVisibleFrom(ref, languageVersionSettings)
                         }
 
                         if (!isVisible) {

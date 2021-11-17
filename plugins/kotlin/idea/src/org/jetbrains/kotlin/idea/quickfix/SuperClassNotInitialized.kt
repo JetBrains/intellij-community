@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
@@ -53,7 +55,8 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
         val containingPackage = superClass.classId?.packageFqName
         val inSamePackage = containingPackage != null && containingPackage == classDescriptor.classId?.packageFqName
         val constructors = superClass.constructors.filter {
-            it.isVisible(classDescriptor) && (superClass.modality != Modality.SEALED || inSamePackage && classDescriptor.visibility != DescriptorVisibilities.LOCAL)
+            it.isVisible(classDescriptor, delegator.getResolutionFacade().getLanguageVersionSettings()) &&
+                    (superClass.modality != Modality.SEALED || inSamePackage && classDescriptor.visibility != DescriptorVisibilities.LOCAL)
         }
         if (constructors.isEmpty() && (!superClass.isExpect || superClass.kind != ClassKind.CLASS)) {
             return emptyList() // no accessible constructor
