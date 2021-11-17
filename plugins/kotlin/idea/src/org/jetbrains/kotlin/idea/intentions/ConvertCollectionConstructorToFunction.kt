@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -39,7 +38,7 @@ class ConvertCollectionConstructorToFunction : SelfTargetingIntention<KtCallExpr
         val fq = element.resolveToCall()?.resultingDescriptor?.fqNameSafe?.asString() ?: return
         val toCall = functionMap[fq] ?: return
         val callee = element.calleeExpression ?: return
-        callee.replace(KtPsiFactory(element).createIdentifier(toCall))
+        callee.replace(KtPsiFactory(element).createExpression(toCall))
         element.getQualifiedExpressionForSelector()?.replace(element)
     }
 }
