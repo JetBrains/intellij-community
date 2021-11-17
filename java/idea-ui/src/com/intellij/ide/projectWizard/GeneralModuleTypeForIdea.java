@@ -84,18 +84,18 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
         ApplicationManager.getApplication().invokeLater(() -> {
           JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
           String shortcutText = KeymapUtil.getShortcutText(IdeActions.ACTION_NEW_ELEMENT);
-          Disposable disposable = Disposer.newDisposable();
-          ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+          GotItTooltip tooltip =
+            new GotItTooltip("empty.project.create.file", IdeBundle.message("to.create.new.file.tooltip", shortcutText), project)
+              .withPosition(Balloon.Position.atRight);
+          ApplicationManager.getApplication().getMessageBus().connect(tooltip).subscribe(AnActionListener.TOPIC, new AnActionListener() {
                                                                                               @Override
                                                                                               public void afterActionPerformed(@NotNull AnAction action,
                                                                                                                                @NotNull AnActionEvent event,
                                                                                                                                @NotNull AnActionResult result) {
-                                                                                                Disposer.dispose(disposable);
+                                                                                                Disposer.dispose(tooltip);
                                                                                               }
                                                                                             });
-          new GotItTooltip("empty.project.create.file", IdeBundle.message("to.create.new.file.tooltip", shortcutText), disposable)
-            .withPosition(Balloon.Position.atRight)
-            .show(tree, (component, balloon) -> getPoint(tree));
+          tooltip.show(tree, (component, balloon) -> getPoint(tree));
         });
       }
 
