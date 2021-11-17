@@ -466,7 +466,6 @@
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction">
           <synonym text="Restart"/>
         </action>
-        <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
         <separator/>
         <group id="ExportImportGroup" popup="true">
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
@@ -867,6 +866,8 @@
 
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
+
+    <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
 
     <group id="MainToolBar">
       <reference ref="OpenFile"/>
