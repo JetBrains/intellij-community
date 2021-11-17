@@ -3,7 +3,7 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:toString) -> USimpleNameReferenceExpression (identifier = toString) -> PsiMethod:toString: toString
 UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A(val str: String) {
@@ -27,7 +27,7 @@ UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(re
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = println) -> Kotlin_Light_Method: println
 UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     USuperExpression (label = null) -> USimpleNameReferenceExpression (identifier = super) -> Kotlin_Light_Class:open class A(val str: String) {

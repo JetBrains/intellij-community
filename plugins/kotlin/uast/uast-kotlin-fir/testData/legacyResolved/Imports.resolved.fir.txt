@@ -32,9 +32,9 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ko
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = collections) -> PsiPackage:kotlin.collections: collections
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = emptyList) -> FUN: emptyList
 UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PROPERTY: SIZE_BYTES
-UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> OBJECT_DECLARATION: Companion
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> FirLightClassForDecompiledFacade:kotlin.jvm.internal.IntCompanionObject: IntCompanionObject
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:Integer: Integer
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:kotlin: kotlin
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Companion) -> OBJECT_DECLARATION: Companion
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Companion) -> FirLightClassForDecompiledFacade:kotlin.jvm.internal.IntCompanionObject: IntCompanionObject
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = SIZE_BYTES) -> PROPERTY: SIZE_BYTES

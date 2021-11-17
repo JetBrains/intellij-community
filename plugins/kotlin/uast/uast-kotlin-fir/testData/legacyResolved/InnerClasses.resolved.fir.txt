@@ -3,4 +3,4 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
 UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
 UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Value_Parameter: b
-UReturnExpression -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
+UReturnExpression -> USimpleNameReferenceExpression (identifier = Unit) -> FirLightClassForDecompiledFacade:kotlin.Unit: Unit

@@ -1,5 +1,5 @@
-UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> PRIMARY_CONSTRUCTOR: Suppress
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = println) -> FUN: println
+UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> FirLightClassForDecompiledFacade:kotlin.Suppress: Suppress
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = println) -> Kotlin_Light_Method: println
 UTypeReferenceExpression (name = kotlin.SinceKotlin) -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:kotlin: kotlin
-UTypeReferenceExpression (name = kotlin.SinceKotlin) -> USimpleNameReferenceExpression (identifier = SinceKotlin) -> PRIMARY_CONSTRUCTOR: SinceKotlin
+UTypeReferenceExpression (name = kotlin.SinceKotlin) -> USimpleNameReferenceExpression (identifier = SinceKotlin) -> FirLightClassForDecompiledFacade:kotlin.SinceKotlin: SinceKotlin
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String

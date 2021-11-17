@@ -6,5 +6,5 @@ UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = t
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = length) -> PROPERTY: length
 UTypeReferenceExpression (name = MyReceiverAnnotation) -> USimpleNameReferenceExpression (identifier = MyReceiverAnnotation) -> Kotlin_Light_Class:annotation class MyReceiverAnnotation(val name: String = ""): MyReceiverAnnotation
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-UTypeReferenceExpression (name = kotlin.text.Regex) -> USimpleNameReferenceExpression (identifier = Regex) -> CLASS: Regex
+UTypeReferenceExpression (name = kotlin.text.Regex) -> USimpleNameReferenceExpression (identifier = Regex) -> FirLightClassForDecompiledFacade:kotlin.text.Regex: Regex
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toRegex) -> FUN: toRegex

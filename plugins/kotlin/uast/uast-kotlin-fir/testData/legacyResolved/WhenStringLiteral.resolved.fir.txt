@@ -1,2 +1,2 @@
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = readLine) -> FUN: readLine
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = readLine) -> Kotlin_Light_Method: readLine
 USwitchExpression -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Method: getA

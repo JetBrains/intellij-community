@@ -5,6 +5,7 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.impl.light.LightParameter
 import com.intellij.psi.impl.light.LightTypeParameterBuilder
@@ -73,14 +74,18 @@ interface UastResolveEverythingTestBase : UastPluginSelection, UastFileCompariso
         // NB: Except for class, all other kinds' name is redundant, hence captured by regex and removed.
         private val REGEXES: Map<Regex, String> = mapOf(
             Regex("^FirLight.*Class.*Symbol:") to "$TAG_CLASS:",
+            Regex("^FirLightClassForDecompiledDeclaration.+:.+$") to TAG_CLASS,
 
             Regex("^FirLightConstructorForSymbol:.+$") to TAG_METHOD,
             Regex("^FirLight.*Method.*Symbol:.+$") to TAG_METHOD,
+            Regex("^FirLightMethodForDecompiledDeclaration.+:.+$") to TAG_METHOD,
+
             Regex("^KtUltraLightMethodForSourceDeclaration:.+$") to TAG_METHOD,
             Regex("^LightMethodBuilder:.+$") to TAG_METHOD,
 
             Regex("^KtLightField:.+$") to TAG_VARIABLE,
             Regex("^LightVariableBuilder:.+$") to TAG_VARIABLE,
+            Regex("^FirLightFieldForDecompiledDeclaration.+:.+$") to TAG_VARIABLE,
 
             Regex("^Fir Light Parameter .+$") to TAG_VALUE_PARAMETER,
 

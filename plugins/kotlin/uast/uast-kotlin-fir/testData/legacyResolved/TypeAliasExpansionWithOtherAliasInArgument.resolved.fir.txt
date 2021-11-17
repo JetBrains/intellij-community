@@ -2,10 +2,10 @@ UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpres
 UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> PsiClass:Map: Map
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> PsiClass:String: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
-UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
-UTypeReferenceExpression (name = kotlin.jvm.functions.Function1<? super java.util.Map<java.lang.String,? extends java.lang.Integer>,? extends kotlin.Unit>) -> USimpleNameReferenceExpression (identifier = My) -> TYPEALIAS: My
-UTypeReferenceExpression (name = kotlin.jvm.functions.Function1<? super java.util.Map<java.lang.String,? extends java.lang.Integer>,? extends kotlin.Unit>) -> USimpleNameReferenceExpression (identifier = My) -> TYPEALIAS: My
-UTypeReferenceExpression (name = kotlin.jvm.functions.Function1<? super java.util.Map<java.lang.String,? extends java.lang.Integer>,? extends kotlin.Unit>) -> USimpleNameReferenceExpression (identifier = My) -> TYPEALIAS: My
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> FirLightClassForDecompiledFacade:kotlin.Unit: Unit
+UTypeReferenceExpression (name = kotlin.jvm.functions.Function1<? super java.util.Map<java.lang.String,? extends java.lang.Integer>,? extends kotlin.Unit>) -> USimpleNameReferenceExpression (identifier = My) -> FirLightClassForDecompiledFacade:kotlin.jvm.functions.Function1: Function1
+UTypeReferenceExpression (name = kotlin.jvm.functions.Function1<? super java.util.Map<java.lang.String,? extends java.lang.Integer>,? extends kotlin.Unit>) -> USimpleNameReferenceExpression (identifier = My) -> FirLightClassForDecompiledFacade:kotlin.jvm.functions.Function1: Function1
+UTypeReferenceExpression (name = kotlin.jvm.functions.Function1<? super java.util.Map<java.lang.String,? extends java.lang.Integer>,? extends kotlin.Unit>) -> USimpleNameReferenceExpression (identifier = My) -> FirLightClassForDecompiledFacade:kotlin.jvm.functions.Function1: Function1
 UTypeReferenceExpression (name = java.util.Map<java.lang.String,? extends java.lang.Integer>) -> USimpleNameReferenceExpression (identifier = Map) -> PsiClass:Map: Map
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = A) -> PsiClass:String: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer

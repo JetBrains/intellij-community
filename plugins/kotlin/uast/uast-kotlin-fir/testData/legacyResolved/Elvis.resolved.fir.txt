@@ -7,4 +7,4 @@ UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpres
     UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
     UIfExpression -> UQualifiedReferenceExpression -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: bar
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:toString) -> USimpleNameReferenceExpression (identifier = toString) -> PsiMethod:toString: toString

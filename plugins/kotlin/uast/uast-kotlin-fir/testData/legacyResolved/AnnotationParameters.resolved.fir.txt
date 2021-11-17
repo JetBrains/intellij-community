@@ -16,7 +16,7 @@ UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UTypeReferenceExpression (name = IntRange) -> USimpleNameReferenceExpression (identifier = IntRange) -> Kotlin_Light_Class:annotation class IntRange(val from: Long, val to: Long): IntRange
 UTypeReferenceExpression (name = SuppressLint) -> USimpleNameReferenceExpression (identifier = SuppressLint) -> Kotlin_Light_Class:annotation class SuppressLint(vararg val value: String): SuppressLint
-UReturnExpression -> USimpleNameReferenceExpression (identifier = Unit) -> OBJECT_DECLARATION: Unit
+UReturnExpression -> USimpleNameReferenceExpression (identifier = Unit) -> FirLightClassForDecompiledFacade:kotlin.Unit: Unit
 UTypeReferenceExpression (name = RequiresPermission) -> USimpleNameReferenceExpression (identifier = RequiresPermission) -> Kotlin_Light_Class:annotation class RequiresPermission(val anyOf: IntArray): RequiresPermission
 null -> USimpleNameReferenceExpression (identifier = anyOf) -> Kotlin_Light_Method: anyOf
 UNamedExpression (name = anyOf) -> UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) -> null:

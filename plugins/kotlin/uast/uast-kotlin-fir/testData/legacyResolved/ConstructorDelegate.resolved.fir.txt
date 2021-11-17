@@ -2,8 +2,8 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> Kotlin_Light_Class:interface Base {
     fun print()
 }: Base
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = print) -> FUN: print
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Value_Parameter: x
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = print) -> Kotlin_Light_Method: print
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Value_Parameter: x
 UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> Kotlin_Light_Class:interface Base {
     fun print()
 }: Base
