@@ -268,7 +268,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   }
 
   companion object {
-    const val ID = "Settings.Markdown.Project"
+    const val ID = "Settings.Markdown"
 
     private fun presentSplitLayout(splitLayout: Boolean?): @Nls String {
       return when (splitLayout) {
