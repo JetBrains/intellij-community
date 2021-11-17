@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -59,7 +59,7 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
   @Override
   protected void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
-    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, getVarIndexes(owner));
+    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, getVarIndexes(owner, false));
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
     final List<DefinitionMap> dfaResult = engine.performDFAWithTimeout();

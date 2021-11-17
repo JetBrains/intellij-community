@@ -43,15 +43,15 @@ final class InferenceCache {
   //private final SharedVariableInferenceCache mySharedVariableInferenceCache;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
   /**
-   * Instructions outside any cycle. The DFA has straightforward direction of these instructions, so it is safe
-   * to apply additional optimizations on this flow
+   * Instructions outside any cycle. The DFA has straightforward direction considering these instructions, so it is safe
+   * to apply certain optimizations on this flow
    */
   private final Set<Instruction> simpleInstructions;
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
     myScope = scope;
-    myFlow = scope.getControlFlow();
-    myVarIndexes = lazyPub(() -> getVarIndexes(myScope));
+    myFlow = TypeInferenceHelper.getLargeControlFlow(scope);
+    myVarIndexes = lazyPub(() -> getVarIndexes(myScope, true));
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     //noinspection unchecked

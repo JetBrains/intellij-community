@@ -468,12 +468,13 @@ public final class ControlFlowUtils {
     private @NotNull List<GrStatement> getCollectedStatements() {
       return collector;
     }
-  }@NotNull
+  }
+
+  @NotNull
   public static List<GrStatement> collectReturns(Instruction @NotNull [] flow, @NotNull GroovyPsiElement element, final boolean allExitPoints) {
-    Instruction[] subFlow = ControlFlowBuilder.extractSubFlow(flow, element);
-    boolean[] visited = new boolean[subFlow.length];
+    boolean[] visited = new boolean[flow.length];
     var collector = new ExitPointCollector(allExitPoints ? MaybeReturnInstruction.class : null, GrReturnStatement.class);
-    visitAllExitPointsInner(subFlow[subFlow.length - 1], subFlow[0], visited, collector);
+    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, collector);
     return collector.getCollectedStatements();
   }
 
@@ -678,9 +679,9 @@ public final class ControlFlowUtils {
 
   private static boolean visitAllExitPointsInner(Instruction last, Instruction first, boolean[] visited, ExitPointVisitor visitor) {
     if (first == last) return true;
-    //var shift = first.num();
+    var shift = first.num();
     if (last instanceof AfterCallInstruction) {
-      visited[last.num()] = true;
+      visited[last.num() - shift] = true;
       return visitAllExitPointsInner(((AfterCallInstruction)last).myCall, first, visited, visitor);
     }
 
@@ -688,7 +689,7 @@ public final class ControlFlowUtils {
       return visitor.visitExitPoint(last, (GrExpression)last.getElement());
     }
     else if (last instanceof IfEndInstruction) {
-      visited[last.num()] = true;
+      visited[last.num() - shift] = true;
       for (Instruction instruction : last.allPredecessors()) {
         if (!visitAllExitPointsInner(instruction, first, visited, visitor)) return false;
       }
@@ -714,9 +715,9 @@ public final class ControlFlowUtils {
 
       return visitor.visitExitPoint(last, returnValue);
     }
-    visited[last.num()] = true;
+    visited[last.num() - shift] = true;
     for (Instruction pred : last.allPredecessors()) {
-      if (!visited[pred.num()]) {
+      if (!visited[pred.num() - shift]) {
         if (!visitAllExitPointsInner(pred, first, visited, visitor)) return false;
       }
     }

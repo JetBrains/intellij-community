@@ -430,7 +430,9 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   private static Instruction @NotNull [] getFlow(@NotNull PsiElement element) {
-    return ControlFlowBuilder.buildSmallControlFlow((GroovyPsiElement)element);
+    return element instanceof GrControlFlowOwner
+           ? ((GrControlFlowOwner)element).getControlFlow()
+           : ControlFlowBuilder.buildControlFlow((GroovyPsiElement)element);
   }
 
 

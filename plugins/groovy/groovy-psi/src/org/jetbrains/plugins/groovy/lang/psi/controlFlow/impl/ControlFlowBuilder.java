@@ -12,12 +12,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -59,6 +60,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private final Deque<InstructionImpl> myProcessingStack = new ArrayDeque<>();
   private GroovyPsiElement myScope;
   private final Deque<GrFunctionalExpression> myFunctionalScopeStack = new ArrayDeque<>();
+
+  private final boolean isLargeFlow;
 
   /**
    * stack of current catch blocks
@@ -88,8 +91,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private int myInstructionNumber;
   private final GrControlFlowPolicy myPolicy;
 
-  private ControlFlowBuilder(GrControlFlowPolicy policy) {
+  private ControlFlowBuilder(GrControlFlowPolicy policy, boolean isLargeFlow) {
     myPolicy = policy;
+    this.isLargeFlow = isLargeFlow;
   }
 
   @Override
@@ -147,37 +151,17 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     return buildControlFlow(scope, GrResolverPolicy.getInstance());
   }
 
+  /**
+   * Large control flow includes all functional blocks without skipping. It is an experimental feature, aiming to improve performance of the
+   * type DFA.
+   */
+  @ApiStatus.Experimental
+  public static @NotNull Instruction @NotNull [] buildLargeControlFlow(@NotNull GroovyPsiElement scope) {
+    return new ControlFlowBuilder(GrResolverPolicy.getInstance(), true).doBuildLargeControlFlow(scope);
+  }
+
   public static @NotNull Instruction @NotNull [] buildControlFlow(@NotNull GroovyPsiElement scope, @NotNull GrControlFlowPolicy policy) {
-    return new ControlFlowBuilder(policy).doBuildLargeControlFlow(scope);
-  }
-
-  public static @NotNull Instruction @NotNull [] extractSubFlow(Instruction[] mainFlow, GroovyPsiElement scope) {
-    if (ControlFlowUtils.getTopmostOwner(scope) == scope) {
-      return mainFlow;
-    }
-    var flowOwner = PsiTreeUtil.getParentOfType(scope, GrControlFlowOwner.class, false);
-    List<Instruction> subFlow = new ArrayList<>();
-    for (Instruction instruction : mainFlow) {
-      if (instruction.getElement() == flowOwner && subFlow.isEmpty()) {
-        subFlow.add(instruction);
-      }
-      else if (instruction instanceof FunctionalBlockEndInstruction &&
-               (((FunctionalBlockEndInstruction)instruction).getStartNode()).getElement() == flowOwner) {
-        return subFlow.toArray(Instruction.EMPTY_ARRAY);
-      }
-      else if (!subFlow.isEmpty()) {
-        subFlow.add(instruction);
-      }
-    }
-    if (subFlow.isEmpty()) {
-      return mainFlow;
-    } else {
-      return subFlow.toArray(Instruction.EMPTY_ARRAY);
-    }
-  }
-
-  public static Instruction[] buildSmallControlFlow(GroovyPsiElement scope) {
-    return new ControlFlowBuilder(GrResolverPolicy.getInstance()).doBuildControlFlow(scope);
+    return new ControlFlowBuilder(policy, false).doBuildControlFlow(scope);
   }
 
   private Instruction[] doBuildLargeControlFlow(GroovyPsiElement scope) {
@@ -278,21 +262,39 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
     GrLambdaBody body = expression.getBody();
     if (body == null) return;
-    addFunctionalExpressionParameters(expression);
-    super.visitLambdaBody(body);
+    if (isLargeFlow) {
+      addFunctionalExpressionParameters(expression);
+      super.visitLambdaBody(body);
+    } else {
+      ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(body.getControlFlow(), false);
+      addReadFromNestedControlFlow(expression, reads);
+    }
   }
 
   @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
-    FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(closure);
-    myFunctionalScopeStack.add(closure);
-    addNode(startClosure);
-    addFunctionalExpressionParameters(closure);
-    addControlFlowInstructions(closure);
-    InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);
-    addNode(endClosure);
-    checkPending(closure, endClosure);
-    myFunctionalScopeStack.pop();
+    if (isLargeFlow) {
+      FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(closure);
+      myFunctionalScopeStack.add(closure);
+      addNode(startClosure);
+      addFunctionalExpressionParameters(closure);
+      addControlFlowInstructions(closure);
+      InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);
+      addNode(endClosure);
+      checkPending(closure, endClosure);
+      myFunctionalScopeStack.pop();
+    } else {
+      //do not go inside closures except gstring injections
+      if (closure.getParent() instanceof GrStringInjection) {
+        addFunctionalExpressionParameters(closure);
+
+        super.visitClosure(closure);
+        return;
+      }
+
+      ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(closure.getControlFlow(), false);
+      addReadFromNestedControlFlow(closure, reads);
+    }
   }
 
   private void addReadFromNestedControlFlow(@NotNull PsiElement anchor, ReadWriteVariableInstruction @NotNull [] reads) {

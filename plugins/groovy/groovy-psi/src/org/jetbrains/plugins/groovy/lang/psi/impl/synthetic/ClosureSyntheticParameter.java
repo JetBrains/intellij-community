@@ -38,6 +38,12 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   }
 
   @Override
+  public PsiElement getParent() {
+    GrClosableBlock closure = myClosure.getElement();
+    return closure == null ? null : closure.getParameterList();
+  }
+
+  @Override
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException {
     if (!newName.equals(getName())) {
       GrParameter parameter = GroovyPsiElementFactory.getInstance(getProject()).createParameter(newName, (String)null, null);

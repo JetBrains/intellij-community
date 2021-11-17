@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
@@ -90,6 +89,8 @@ public final class ReachingDefinitionsCollector {
       }
     }
 
+    addClosureUsages(imap, omap, first, last, flowOwner);
+
     return new FragmentVariableInfos() {
       @Override
       public VariableInfo[] getInputVariableNames() {
@@ -128,13 +129,11 @@ public final class ReachingDefinitionsCollector {
                                                 @NotNull GrControlFlowOwner flowOwner) {
     GrVariable variable = resolveToLocalVariable(element, descriptor.getName());
     if (variable == null) return false;
-    var subFlowOwner = PsiTreeUtil.getParentOfType(variable, GrControlFlowOwner.class);
-    if (variable instanceof GrParameter && (subFlowOwner != null && PsiTreeUtil.isAncestor(flowOwner, subFlowOwner, false))) return false;
     return !PsiImplUtilKt.isDeclaredIn(variable, flowOwner);
   }
 
   private static @NotNull Int2ObjectMap<int[]> inferDfaResult(@NotNull GrControlFlowOwner owner, Instruction @NotNull [] flow) {
-    Object2IntMap<VariableDescriptor> varIndexes = UtilKt.getVarIndexes(owner);
+    Object2IntMap<VariableDescriptor> varIndexes = UtilKt.getVarIndexes(owner, false);
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
