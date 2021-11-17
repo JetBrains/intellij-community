@@ -514,16 +514,15 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected BaseRefactoringProcessor createRefactoringProcessor() {
     final List<ParameterInfoImpl> parameters = getParameters();
-    return new ChangeSignatureProcessor(myProject,
-                                        getMethod(),
-                                        isGenerateDelegate(),
-                                        getVisibility(),
-                                        getMethodName(),
-                                        getReturnType(),
-                                        parameters.toArray(new ParameterInfoImpl[0]),
-                                        getExceptions(),
-                                        myMethodsToPropagateParameters,
-                                        myMethodsToPropagateExceptions);
+
+    return ActionUtil.underModalProgress(
+      myProject,
+      JavaRefactoringBundle.message("changeSignature.processing.changes.title"),
+      () -> new ChangeSignatureProcessor(
+        myProject, getMethod(), isGenerateDelegate(), getVisibility(), getMethodName(), getReturnType(),
+        parameters.toArray(new ParameterInfoImpl[0]), getExceptions(), myMethodsToPropagateParameters, myMethodsToPropagateExceptions
+      )
+    );
   }
 
   private PsiMethod getMethod() {
