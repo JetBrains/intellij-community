@@ -211,7 +211,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       return found == null ? new LightFilePointer(url) : new LightFilePointer(found);
     }
 
-    if (!(fileSystem instanceof VirtualFilePointerCapableFileSystem)) {
+    if (!(fileSystem instanceof VirtualFilePointerCapableFileSystem) || file != null && !(file instanceof VirtualFileSystemEntry)) {
       // we are unable to track alien file systems for now
       VirtualFile found = file == null ? VirtualFileManager.getInstance().findFileByUrl(url) : file;
       // if file is null, this pointer will never be alive
