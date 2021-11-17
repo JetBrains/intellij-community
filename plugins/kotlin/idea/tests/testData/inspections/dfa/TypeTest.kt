@@ -8,7 +8,7 @@ fun unrelatedTypes(obj : Any) {
 fun nullableTypes(obj : Any?) {
     if (obj is X?) {
         if (obj is Y?) {
-            if (<warning descr="Condition is always true">obj == null</warning>) { }
+            if (<warning descr="Condition 'obj == null' is always true">obj == null</warning>) { }
         }
     }
 }
@@ -27,12 +27,12 @@ fun reactOnSuppression() {
 class Cls {
     fun testThis() {
         val obj : Any = this
-        if (<warning descr="Condition is always true">obj is Cls</warning>) {}
+        if (<warning descr="Condition 'obj is Cls' is always true">obj is Cls</warning>) {}
     }
 }
 fun exactClass(x2 : X) {
     val x = X()
-    if (<warning descr="Condition is always false">x is XX</warning>) { }
+    if (<warning descr="Condition 'x is XX' is always false">x is XX</warning>) { }
     if (x2 is XX) {}
 }
 
