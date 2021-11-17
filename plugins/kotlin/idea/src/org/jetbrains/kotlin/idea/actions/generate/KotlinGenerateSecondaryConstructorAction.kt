@@ -14,9 +14,11 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
@@ -54,7 +56,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
         val project = klass.project
         val superClassDescriptor = classDescriptor.getSuperClassNotAny() ?: return emptyList()
         val candidates = superClassDescriptor.constructors
-            .filter { it.isVisible(classDescriptor) }
+            .filter { it.isVisible(classDescriptor, klass.getResolutionFacade().getLanguageVersionSettings()) }
             .map { DescriptorMemberChooserObject(DescriptorToSourceUtilsIde.getAnyDeclaration(project, it) ?: klass, it) }
         if (isUnitTestMode() || candidates.size <= 1) return candidates
 

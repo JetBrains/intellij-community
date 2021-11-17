@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
@@ -93,6 +94,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         private val actionRunningMode: ActionRunningMode
     ) {
         private val resolutionFacade = file.getResolutionFacade()
+        private val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
 
         private fun isAlreadyImported(target: DeclarationDescriptor, topLevelScope: LexicalScope, targetFqName: FqName): Boolean {
             val name = target.name
@@ -227,7 +229,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             fun isVisible(descriptor: DeclarationDescriptor): Boolean {
                 if (descriptor !is DeclarationDescriptorWithVisibility) return true
                 val visibility = descriptor.visibility
-                return !visibility.mustCheckInImports() || DescriptorVisibilities.isVisibleIgnoringReceiver(descriptor, filePackage)
+                return !visibility.mustCheckInImports() || DescriptorVisibilityUtils.isVisibleIgnoringReceiver(descriptor, filePackage, languageVersionSettings)
             }
 
             val kindFilter = DescriptorKindFilter.ALL.withoutKinds(DescriptorKindFilter.PACKAGES_MASK)
