@@ -20,7 +20,7 @@ class WslTargetWizardModel(override val project: Project,
     languageConfigForIntrospection = languageConfigForIntrospection?.getRuntimeType()?.createDefaultConfig()
   }
 
-  fun save() {
+  override fun save() {
     subject.distribution = distribution
     subject.displayName = guessName()
   }
