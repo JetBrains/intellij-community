@@ -34,11 +34,12 @@ import java.util.List;
 
 public final class Restarter {
   private static final String DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY = "restarter.do.not.lock.install.folder";
+  private static final String SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR = "IDEA_RESTART_VIA_EXIT_CODE";
 
   private Restarter() { }
 
   public static boolean isSupported() {
-    return ourRestartSupported.getValue() && !ourIsRemoteDevRestartMode;
+    return ourRestartSupported.getValue();
   }
 
   private static final NullableLazyValue<File> ourStarter = NullableLazyValue.createValue(() -> {
@@ -63,7 +64,22 @@ public final class Restarter {
   private static final NotNullLazyValue<Boolean> ourRestartSupported = NotNullLazyValue.atomicLazy(() -> {
     String problem;
 
-    if (SystemInfo.isWindows) {
+    String restartExitCode = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
+    if (restartExitCode != null) {
+      try {
+        int code = Integer.parseInt(restartExitCode);
+        if (code >= 0 && code <= 255) {
+          return true;
+        }
+        else {
+          problem = "Requested exit code out of range (" + code + ")";
+        }
+      }
+      catch (NumberFormatException ex) {
+        problem = SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR + " contains a value that can't be parsed as an integer (" + restartExitCode + ")";
+      }
+    }
+    else if (SystemInfo.isWindows) {
       if (!JnaLoader.isLoaded()) {
         problem = "JNA not loaded";
       }
@@ -114,19 +130,19 @@ public final class Restarter {
     return restarter != null && Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
   }
 
-  private static boolean ourIsRemoteDevRestartMode = false;
-
-  public static void setRemoteDevRestartMode() {
-    ourIsRemoteDevRestartMode = true;
-  }
-
-  public static boolean isRemoteDevRestartMode() {
-    return ourIsRemoteDevRestartMode;
-  }
-
   public static void scheduleRestart(boolean elevate, String @NotNull ... beforeRestart) throws IOException {
-    if (ourIsRemoteDevRestartMode) {
-        throw new IOException("Cannot restart application: remote dev mode requires exit(17) to be called for restart.");
+    String exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
+    if (exitCodeVariable != null) {
+      if (beforeRestart.length > 0) {
+        throw new IOException("Cannot restart application: specific exit code restart mode does not support executing additional commands");
+      }
+      try {
+        int code = Integer.parseInt(exitCodeVariable);
+        System.exit(code);
+      }
+      catch (NumberFormatException ex) {
+        throw new IOException("Cannot restart application: can't parse required exit code", ex);
+      }
     }
     else if (SystemInfo.isWindows) {
       restartOnWindows(elevate, beforeRestart);

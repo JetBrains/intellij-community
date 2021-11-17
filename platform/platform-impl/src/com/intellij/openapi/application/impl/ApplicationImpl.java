@@ -617,6 +617,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         return;
       }
 
+      IdeaLogger.dropFrequentExceptionsCaches();
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
@@ -628,10 +629,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           exitCode = Main.RESTART_FAILED;
         }
       }
-      else if (restart && Restarter.isRemoteDevRestartMode()) {
-        exitCode = Main.REMOTE_DEV_RESTART;
-      }
-      IdeaLogger.dropFrequentExceptionsCaches();
       System.exit(exitCode);
     }
     finally {
