@@ -350,7 +350,6 @@ class B implements AnnotationBuilder {
   }
 
   @Override
-  @SuppressWarnings("removal")
   public Annotation createAnnotation() {
     PluginException.reportDeprecatedUsage("AnnotationBuilder#createAnnotation", "Use `#create()` instead");
     if (range == null) {
