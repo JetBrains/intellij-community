@@ -166,6 +166,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testAddMethodBodyFromInsideAnnotation() { doTest(); }
   public void testArrayInitializerRBracket() { doTest(); }
   public void testArrayInitializerRBrace() { doTest(); }
+  public void testMultiArrayInitializerRBrace() { doTest(); }
   public void testArrayInitializerSeveralLines() { doTest(); }
   public void testReturnInLambda() { doTest(); }
   public void testSemicolonAfterLambda() { doTest(); }

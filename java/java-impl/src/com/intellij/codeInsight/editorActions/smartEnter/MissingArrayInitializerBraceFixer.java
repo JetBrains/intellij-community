@@ -16,10 +16,9 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiArrayInitializerExpression;
-import com.intellij.psi.PsiArrayInitializerMemberValue;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -27,10 +26,10 @@ public class MissingArrayInitializerBraceFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiArrayInitializerExpression || psiElement instanceof PsiArrayInitializerMemberValue)) return;
-    if (!psiElement.getText().endsWith("}")) {
-      PsiErrorElement err = ContainerUtil.findInstance(psiElement.getChildren(), PsiErrorElement.class);
-      int endOffset = (err != null ? err : psiElement).getTextRange().getEndOffset();
-      editor.getDocument().insertString(endOffset, "}");
-    }
+    PsiElement deepestVisibleLast = PsiTreeUtil.getDeepestVisibleLast(psiElement);
+    if (PsiUtil.isJavaToken(deepestVisibleLast, JavaTokenType.RBRACE) && deepestVisibleLast.getParent() == psiElement) return;
+    PsiErrorElement err = ContainerUtil.findInstance(psiElement.getChildren(), PsiErrorElement.class);
+    int endOffset = (err != null ? err : psiElement).getTextRange().getEndOffset();
+    editor.getDocument().insertString(endOffset, "}");
   }
 }
