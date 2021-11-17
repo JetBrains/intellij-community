@@ -223,7 +223,7 @@
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
 
-    <action id="Vcs.ShowMoreActions" class="git4idea.actions.GitQuickActionsToolbarPopup" icon="AllIcons.Actions.More">
+    <action id="Vcs.Toolbar.ShowMoreActions" class="git4idea.actions.GitQuickActionsToolbarPopup">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
     </action>
 

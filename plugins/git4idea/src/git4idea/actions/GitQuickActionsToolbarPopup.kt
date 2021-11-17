@@ -4,10 +4,7 @@ package git4idea.actions
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.icons.AllIcons
 import com.intellij.ide.navigationToolbar.experimental.NewToolbarPaneListener
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
@@ -18,6 +15,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepositoryManager
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Insets
@@ -27,10 +25,6 @@ import javax.swing.JComponent
  * Git implementation of the quick popup action
  */
 internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
-  init {
-    templatePresentation.text = GitBundle.message("action.Vcs.ShowMoreActions.text")
-  }
-
   private class MyActionButtonWithText(action: AnAction,
                                        presentation: Presentation,
                                        place: String,
@@ -59,6 +53,10 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
   }
 
   override fun update(e: AnActionEvent) {
+    if (e.place != ActionPlaces.MAIN_TOOLBAR) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     val project = e.project
     val presentation = e.presentation
     val repo = project?.let { GitBranchUtil.getCurrentRepository(it) }
@@ -70,7 +68,7 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
       var icon = AllIcons.Actions.More
       if (icon.iconWidth < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width) {
         icon = IconUtil.toSize(icon, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width,
-          ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
+                               ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
       }
       presentation.putClientProperty(KEY_ICON_WITH_TEXT, false)
       presentation.icon = icon

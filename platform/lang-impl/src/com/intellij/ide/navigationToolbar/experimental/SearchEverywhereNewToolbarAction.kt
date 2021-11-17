@@ -48,6 +48,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   private var clearPosition = false
 
   override fun update(event: AnActionEvent) {
+    if (event.place != ActionPlaces.MAIN_TOOLBAR) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
     event.presentation.text = if (!showHotkey()) {
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
