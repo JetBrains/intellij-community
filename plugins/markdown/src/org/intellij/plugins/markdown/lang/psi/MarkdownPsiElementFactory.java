@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.psi;
 
 import com.intellij.openapi.project.Project;
@@ -9,7 +9,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public final class MarkdownPsiElementFactory {
   private MarkdownPsiElementFactory() { }
@@ -145,6 +143,9 @@ public final class MarkdownPsiElementFactory {
   @NotNull
   public static MarkdownTableSeparatorRow createTableSeparatorRow(@NotNull Project project, @NotNull String text) {
     final var columnsCount = StringUtil.countChars(text, '|') - 1;
+    if (columnsCount < 1) {
+      throw new IllegalArgumentException("Passed separator text should be valid and contain at least one column.\n Text passed: [" + text + "]");
+    }
     final var builder = new StringBuilder();
     builder.append("|");
     for (var column = 0; column < columnsCount; column += 1) {
