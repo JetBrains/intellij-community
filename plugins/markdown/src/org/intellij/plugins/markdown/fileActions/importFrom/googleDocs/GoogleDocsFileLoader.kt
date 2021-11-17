@@ -5,7 +5,7 @@ import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.json.JsonFactory
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -104,7 +104,7 @@ class GoogleDocsFileLoader {
   companion object {
     private const val mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
-    private val jsonFactory: JsonFactory get() = JacksonFactory.getDefaultInstance()
+    private val jsonFactory: JsonFactory get() = GsonFactory.getDefaultInstance()
     private val LOG = logger<GoogleDocsFileLoader>()
   }
 }
