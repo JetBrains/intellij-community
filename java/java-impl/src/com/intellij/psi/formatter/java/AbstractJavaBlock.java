@@ -13,7 +13,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
-import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
@@ -53,7 +52,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected Alignment myReservedAlignment;
   protected Alignment myReservedAlignment2;
 
-  private final JavaWrapManager myWrapManager;
   private Map<IElementType, Wrap> myPreferredWraps;
   private AbstractJavaBlock myParentBlock;
 
@@ -89,7 +87,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               @NotNull JavaCodeStyleSettings javaSettings,
                               @NotNull FormattingMode formattingMode)
   {
-    this(node, wrap, indent, settings, javaSettings, JavaWrapManager.INSTANCE, AlignmentStrategy.wrap(alignment), formattingMode);
+    this(node, wrap, indent, settings, javaSettings, AlignmentStrategy.wrap(alignment), formattingMode);
   }
 
   protected AbstractJavaBlock(@NotNull final ASTNode node,
@@ -100,7 +98,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               @NotNull JavaCodeStyleSettings javaSettings,
                               @NotNull FormattingMode formattingMode)
   {
-    this(node, wrap, indent, settings, javaSettings, JavaWrapManager.INSTANCE, alignmentStrategy, formattingMode);
+    this(node, wrap, indent, settings, javaSettings, alignmentStrategy, formattingMode);
   }
 
   private AbstractJavaBlock(@NotNull ASTNode ignored,
@@ -112,7 +110,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myJavaSettings = javaSettings;
     myIndentSettings = commonSettings.getIndentOptions();
     myIndent = null;
-    myWrapManager = JavaWrapManager.INSTANCE;
     myAlignmentStrategy = AlignmentStrategy.getNullStrategy();
     myFormattingMode = formattingMode;
   }
@@ -122,7 +119,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               final Indent indent,
                               @NotNull final CommonCodeStyleSettings settings,
                               @NotNull JavaCodeStyleSettings javaSettings,
-                              final JavaWrapManager wrapManager,
                               @NotNull final AlignmentStrategy alignmentStrategy,
                               @NotNull final FormattingMode formattingMode) {
     super(node, wrap, createBlockAlignment(alignmentStrategy, node));
@@ -130,7 +126,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myJavaSettings = javaSettings;
     myIndentSettings = settings.getIndentOptions();
     myIndent = indent;
-    myWrapManager = wrapManager;
     myAlignmentStrategy = alignmentStrategy;
     myFormattingMode = formattingMode;
   }
@@ -414,7 +409,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   protected Wrap createChildWrap() {
     //when detecting indent we do not care about wraps
-    return isBuildIndentsOnly() ? null : myWrapManager.createChildBlockWrap(this, getSettings(), this);
+    return isBuildIndentsOnly() ? null : JavaFormatterUtil.createDefaultWrap(this, getSettings(), this);
   }
 
   @Nullable
@@ -924,7 +919,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   protected Wrap arrangeChildWrap(final ASTNode child, Wrap defaultWrap) {
     //when detecting indent we do not care about wraps
-    return isBuildIndentsOnly() ? null : myWrapManager.arrangeChildWrap(child, myNode, mySettings, myJavaSettings, defaultWrap, this);
+    return isBuildIndentsOnly() ? null : JavaFormatterUtil.arrangeChildWrap(child, myNode, mySettings, myJavaSettings, defaultWrap, this);
   }
 
   @NotNull
