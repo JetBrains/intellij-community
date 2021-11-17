@@ -110,16 +110,25 @@ interface Row {
                  maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
-  /**
-   * Adds [component] wrapped by [viewComponent] (usually scroll pane). Use it only for custom specific components,
-   * all standard components like label, button, checkbox etc are covered by [Row] factory methods
-   */
+  @Deprecated("Use cell(component: T) and scrollCell(component: T) instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
+
+  /**
+   * Adds [component]. Use this method only for custom specific components, all standard components like label, button,
+   * checkbox etc are covered by [Row] factory methods
+   */
+  fun <T : JComponent> cell(component: T): Cell<T>
 
   /**
    * Adds an empty cell in the grid
    */
   fun cell()
+
+  /**
+   * Adds [component] wrapped by [JBScrollPane]
+   */
+  fun <T : JComponent> scrollCell(component: T): Cell<T>
 
   /**
    * Adds a reserved cell in layout which can be populated by content later

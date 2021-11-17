@@ -97,8 +97,16 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component, viewComponent, null)
   }
 
+  override fun <T : JComponent> cell(component: T): CellImpl<T> {
+    return cell(component, component, null)
+  }
+
   override fun cell() {
     cells.add(null)
+  }
+
+  override fun <T : JComponent> scrollCell(component: T): CellImpl<T> {
+    return cell(component, JBScrollPane(component), null)
   }
 
   fun cell(cell: CellBaseImpl<*>) {

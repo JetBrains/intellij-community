@@ -142,6 +142,8 @@ abstract class Row : Cell(), RowBuilder {
   }
 
   @PublishedApi
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   internal abstract fun alignRight()
 
   abstract fun largeGapAfter()

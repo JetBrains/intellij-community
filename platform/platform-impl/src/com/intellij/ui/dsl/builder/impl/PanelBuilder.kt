@@ -3,23 +3,22 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.*
-import javax.swing.text.JTextComponent
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JToggleButton
 import kotlin.math.min
 
+/**
+ * [JPanel] descendants that should use default vertical gaps around similar to other standard components like labels, text fields etc
+ */
 private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
-  AbstractButton::class,
-  JComboBox::class,
-  JLabel::class,
-  JSpinner::class,
-  JTextComponent::class,
-  SeparatorComponent::class,
   TextFieldWithBrowseButton::class,
   TitledSeparator::class
 )
@@ -141,7 +140,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
               labelCell(it, cell)
             }
             else {
-              warn("Unsupported labeled component: ${cell.component.javaClass.simpleName}")
+              warn("Unsupported labeled component: ${cell.component.javaClass.name}")
             }
           }
         }
@@ -244,13 +243,15 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   }
 
   /**
-   * Returns default top and bottom gap for [component]
+   * Returns default top and bottom gap for [component]. All non [JPanel] components or
+   * [DEFAULT_VERTICAL_GAP_COMPONENTS] have default vertical gap, zero otherwise
    */
   private fun getDefaultVerticalGap(component: JComponent): Int {
-    return if (DEFAULT_VERTICAL_GAP_COMPONENTS.any { clazz ->
-        clazz.isInstance(component)
-      }) dialogPanelConfig.spacing.verticalComponentGap
-    else 0
+    val noDefaultVerticalGap = component is JPanel
+                               && component.getClientProperty(ToolbarDecorator.DECORATOR_KEY) == null
+                               && !DEFAULT_VERTICAL_GAP_COMPONENTS.any { clazz -> clazz.isInstance(component) }
+
+    return if (noDefaultVerticalGap) 0 else dialogPanelConfig.spacing.verticalComponentGap
   }
 
   private fun getMaxColumnsCount(): Int {

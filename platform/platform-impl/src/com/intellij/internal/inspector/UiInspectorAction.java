@@ -1803,8 +1803,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
 
     private void addLayoutProperties(@NotNull Container component) {
-      String prefix = "  ";
-
       LayoutManager layout = component.getLayout();
       if (layout instanceof GridBagLayout) {
         GridBagLayout bagLayout = (GridBagLayout)layout;
@@ -1812,13 +1810,13 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
         myProperties.add(new PropertyBean("GridBagLayout constraints",
                                           String.format("defaultConstraints - %s", toString(defaultConstraints))));
-        if (bagLayout.columnWidths != null) myProperties.add(new PropertyBean(prefix + "columnWidths", Arrays.toString(bagLayout.columnWidths)));
-        if (bagLayout.rowHeights != null) myProperties.add(new PropertyBean(prefix + "rowHeights", Arrays.toString(bagLayout.rowHeights)));
-        if (bagLayout.columnWeights != null) myProperties.add(new PropertyBean(prefix + "columnWeights", Arrays.toString(bagLayout.columnWeights)));
-        if (bagLayout.rowWeights != null) myProperties.add(new PropertyBean(prefix + "rowWeights", Arrays.toString(bagLayout.rowWeights)));
+        if (bagLayout.columnWidths != null) addSubValue("columnWidths", Arrays.toString(bagLayout.columnWidths));
+        if (bagLayout.rowHeights != null) addSubValue("rowHeights", Arrays.toString(bagLayout.rowHeights));
+        if (bagLayout.columnWeights != null) addSubValue("columnWeights", Arrays.toString(bagLayout.columnWeights));
+        if (bagLayout.rowWeights != null) addSubValue("rowWeights", Arrays.toString(bagLayout.rowWeights));
 
         for (Component child : component.getComponents()) {
-          myProperties.add(new PropertyBean(prefix + getComponentName(child), toString(bagLayout.getConstraints(child))));
+          addSubValue(getComponentName(child), toString(bagLayout.getConstraints(child)));
         }
       }
       else if (layout instanceof BorderLayout) {
@@ -1828,7 +1826,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
                                           String.format("hgap - %s, vgap - %s", borderLayout.getHgap(), borderLayout.getVgap())));
 
         for (Component child : component.getComponents()) {
-          myProperties.add(new PropertyBean(prefix + getComponentName(child), borderLayout.getConstraints(child)));
+          addSubValue(getComponentName(child), borderLayout.getConstraints(child));
         }
       }
       else if (layout instanceof CardLayout) {
@@ -1850,7 +1848,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           for (Object card : vector) {
             String cardName = ReflectionUtil.getField(card.getClass(), card, String.class, "name");
             Component child = ReflectionUtil.getField(card.getClass(), card, Component.class, "comp");
-            myProperties.add(new PropertyBean(prefix + getComponentName(child), cardName));
+            addSubValue(getComponentName(child), cardName);
           }
         }
       }
@@ -1882,7 +1880,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
 
         for (Component child : component.getComponents()) {
-          myProperties.add(new PropertyBean(prefix + getComponentName(child), migLayout.getComponentConstraints(child)));
+          addSubValue(getComponentName(child), migLayout.getComponentConstraints(child));
         }
       }
       else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
@@ -1891,6 +1889,14 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         addMigLayoutLayoutConstraints(migLayout.getLayoutConstraints());
         addMigLayoutAxisConstraints("MigLayout column constraints", migLayout.getColumnConstraints());
         addMigLayoutAxisConstraints("MigLayout row constraints", migLayout.getRowConstraints());
+      }
+      else if (layout instanceof GridLayout) {
+        Grid grid = ((GridLayout) layout).getRootGrid();
+        myProperties.add(new PropertyBean("GridLayout", null));
+        addSubValue("resizableColumns", grid.getResizableColumns());
+        addSubValue("columnsGaps", grid.getColumnsGaps());
+        addSubValue("resizableRows", grid.getResizableRows());
+        addSubValue("rowsGaps", grid.getRowsGaps());
       }
     }
 

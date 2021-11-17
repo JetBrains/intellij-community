@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
@@ -101,7 +100,7 @@ private class UiDslShowcaseDialog(val project: Project?) :
       if (annotation.scrollbar) {
         row {
           dialogPanel.border = JBEmptyBorder(10)
-          cell(dialogPanel, JBScrollPane(dialogPanel))
+          scrollCell(dialogPanel)
             .horizontalAlign(HorizontalAlign.FILL)
             .verticalAlign(VerticalAlign.FILL)
             .resizableColumn()
