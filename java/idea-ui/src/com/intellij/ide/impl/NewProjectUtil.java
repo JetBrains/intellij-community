@@ -169,11 +169,6 @@ public final class NewProjectUtil {
         return projectToClose;
       }
 
-      Sdk jdk = wizard.getNewProjectJdk();
-      if (jdk != null) {
-        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> JavaSdkUtil.applyJdkToProject(newProject, jdk)), null, null);
-      }
-
       String compileOutput = wizard.getNewCompileOutput();
       setCompilerOutputPath(newProject, compileOutput);
 
@@ -188,6 +183,11 @@ public final class NewProjectUtil {
         }
 
         projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
+      }
+
+      Sdk jdk = wizard.getNewProjectJdk();
+      if (jdk != null) {
+        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> JavaSdkUtil.applyJdkToProject(newProject, jdk)), null, null);
       }
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
