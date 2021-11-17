@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -87,6 +88,6 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
         val parameter = functionLiteral.valueParameters.singleOrNull()
 
-        return factory.createExpressionByPattern("for($0 in $1){ $2 }", parameter ?: "it", loopRange, body)
+        return factory.createExpressionByPattern("for($0 in $1){ $2 }", parameter ?: "it", loopRange, body.allChildren)
     }
 }
