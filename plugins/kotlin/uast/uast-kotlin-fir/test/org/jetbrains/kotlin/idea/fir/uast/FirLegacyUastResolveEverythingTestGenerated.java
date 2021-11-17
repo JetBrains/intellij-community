@@ -88,6 +88,11 @@ public class FirLegacyUastResolveEverythingTestGenerated extends AbstractFirLega
         runTest("../uast-kotlin/testData/CycleInTypeParameters.kt");
     }
 
+    @TestMetadata("DataClassInheritsAbstractClassWithEquals.kt")
+    public void testDataClassInheritsAbstractClassWithEquals() throws Exception {
+        runTest("../uast-kotlin/testData/DataClassInheritsAbstractClassWithEquals.kt");
+    }
+
     @TestMetadata("DefaultImpls.kt")
     public void testDefaultImpls() throws Exception {
         runTest("../uast-kotlin/testData/DefaultImpls.kt");
