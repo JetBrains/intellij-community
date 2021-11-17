@@ -39,6 +39,9 @@ val OUTPUT_LISTENER: Topic<OutputListener> = Topic.create("OutputAdded", OutputL
 val EditorCustomElementRenderer.notebookInlayOutputComponent: JComponent?
   get() = castSafelyTo<JComponent>()?.components?.firstOrNull()?.castSafelyTo<SurroundingComponent>()
 
+val EditorCustomElementRenderer.notebookCellOutputComponents: List<JComponent>?
+  get() = notebookInlayOutputComponent?.components?.firstOrNull()?.castSafelyTo<JComponent>()?.components?.map { it as JComponent }
+
 /**
  * Shows outputs for intervals using [NotebookOutputDataKeyExtractor] and [NotebookOutputComponentFactory].
  */
