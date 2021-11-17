@@ -46,6 +46,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -227,6 +228,7 @@ public final class FindUsagesManager {
                                PsiFile scopeFile,
                                FileEditor fileEditor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    UsageViewStatisticsCollector.logSearchStarted(myProject);
     boolean singleFile = scopeFile != null;
 
     clearFindingNextUsageInFile();
