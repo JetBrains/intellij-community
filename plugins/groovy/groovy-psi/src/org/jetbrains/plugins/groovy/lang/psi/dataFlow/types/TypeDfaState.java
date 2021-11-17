@@ -69,6 +69,9 @@ class TypeDfaState {
         myVarTypes.put(descriptor, dfaType.addFlushingType(t1.getFlushingType(), manager));
       }
     }
+    if (!another.myPreviousClosureState.isEmpty()) {
+      this.myPreviousClosureState = another.myPreviousClosureState;
+    }
     myProhibitedCachingVars.or(another.myProhibitedCachingVars);
   }
 

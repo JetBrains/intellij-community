@@ -39,8 +39,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
 
   @Override
   public PsiElement getParent() {
-    GrClosableBlock closure = myClosure.getElement();
-    return closure == null ? null : closure.getParameterList();
+    return myClosure.getElement();
   }
 
   @Override

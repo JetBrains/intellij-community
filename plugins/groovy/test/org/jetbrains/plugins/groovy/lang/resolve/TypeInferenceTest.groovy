@@ -1593,7 +1593,7 @@ def foo() {
 ''', "java.io.Serializable"
   }
 
-  void 'test CS with shared variables'() {
+  void '_test CS with shared variables'() {
     doTest '''
   @groovy.transform.CompileStatic
   def foo() {
@@ -1605,7 +1605,7 @@ def foo() {
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test infer LUB for shared variables'() {
+  void '_test infer LUB for shared variables'() {
     doTest '''
   class A{}
   class B extends A{}
@@ -1623,7 +1623,7 @@ def foo() {
 ''', "A"
   }
 
-  void 'test flow typing should not work for shared variables'() {
+  void '_test flow typing should not work for shared variables'() {
     doTest '''
   class A{}
   class B extends A{}
@@ -1641,7 +1641,7 @@ def foo() {
 ''', "A"
   }
 
-  void 'test cyclic dependency for shared variables'() {
+  void '_test cyclic dependency for shared variables'() {
     allowNestedContext(2, testRootDisposable)
     doTest '''
   class A{}
@@ -1665,7 +1665,7 @@ def foo() {
   }
 
 
-  void 'test non-shared variable depends on shared one'() {
+  void '_test non-shared variable depends on shared one'() {
     allowNestedContextOnce(testRootDisposable)
     doTest '''
   class A{}
@@ -1684,7 +1684,7 @@ def foo() {
 ''', "B"
   }
 
-  void 'test assignment to shared variable inside closure'() {
+  void '_test assignment to shared variable inside closure'() {
     doTest '''
   class A{}
   class B extends A{}
@@ -1700,7 +1700,7 @@ def foo() {
 ''', "A"
   }
 
-  void 'test assignment to shared variable inside closure with access from closure'() {
+  void '_test assignment to shared variable inside closure with access from closure'() {
     doTest '''
   class A{}
   class B extends A{}
@@ -1718,7 +1718,7 @@ def foo() {
 ''', "A"
   }
 
-  void 'test dependency on shared variable with assignment inside closure'() {
+  void '_test dependency on shared variable with assignment inside closure'() {
     allowNestedContextOnce(testRootDisposable)
     doTest '''
   class A{}
@@ -1750,7 +1750,7 @@ def foo() {
   }''', JAVA_LANG_INTEGER
   }
 
-  void '_test assignment inside dangling closure flushes subsequent types'() {
+  void 'test assignment inside dangling closure flushes subsequent types'() {
     doTest '''
 class A {}
 class B extends A {}
@@ -1767,7 +1767,7 @@ def foo() {
   }
 
   // This behavior is not hard to implement, but it is unlikely to appear
-  void '_test assignment inside dangling closure affects unrelated flow'() {
+  void 'test assignment inside dangling closure affects unrelated flow'() {
     doTest '''
 class A {}
 class B extends A {}
@@ -1859,7 +1859,7 @@ def foo() {
 }''', "A"
   }
 
-  void '_test assignment in nested dangling closure'() {
+  void 'test assignment in nested dangling closure'() {
     doTest '''
 class A {}
 class B extends A {}
@@ -1877,7 +1877,7 @@ def foo() {
 }''', "A"
   }
 
-  void '_test assignment in nested dangling closure 2'() {
+  void 'test assignment in nested dangling closure 2'() {
     doTest '''
 class A {}
 class B extends A {}
@@ -1925,7 +1925,7 @@ for (def i = 0; i < 10; i++) {
   }
 
   void 'test cycle with unknown closure'() {
-    allowNestedContext(1, testRootDisposable)
+    //allowNestedContext(2, testRootDisposable)
     doTest '''
 static  bar(Closure cl) {}
 
@@ -1937,7 +1937,7 @@ static def foo() {
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test no SOE in operator usage with shared variable'() {
+  void '_test no SOE in operator usage with shared variable'() {
     allowNestedContextOnce(testRootDisposable)
     doTest '''
 @groovy.transform.CompileStatic
@@ -2015,5 +2015,24 @@ protected void onLoadConfig (Map configSection) {
     if (configSection.presetMode != null)
       setPresetMode(p<caret>resetMode)
 }""", null
+  }
+
+  void 'test soe with large flow'() {
+    RecursionManager.disableAssertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+    allowNestedContext(4, testRootDisposable)
+    doTest """
+static _getTreeData() {
+    def filterData  = []
+    for (EcmQueryMaskStructureNode node: childNodes) {
+        def currentNodeFilter = null
+        filterData.e<caret>ach { filter ->
+            currentNodeFilter = filter
+        };
+        nodePerformance["getChildValues"] = prepareChildNodes(filterData, currentNodeFilter)
+    }
+
+}
+""", "java.util.ArrayList"
   }
 }

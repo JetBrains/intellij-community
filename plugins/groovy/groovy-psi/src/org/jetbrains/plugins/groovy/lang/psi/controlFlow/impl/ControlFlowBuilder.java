@@ -335,8 +335,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         }
         checkPending(continueStatement, instruction);
       }
+      interruptFlow();
     }
-    interruptFlow();
   }
 
   @Override

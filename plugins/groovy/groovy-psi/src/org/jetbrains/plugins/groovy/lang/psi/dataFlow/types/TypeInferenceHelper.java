@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -91,7 +91,7 @@ public final class TypeInferenceHelper {
 
   @Nullable
   public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
-    final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
+    final GrControlFlowOwner scope = ControlFlowUtils.getTopmostOwner(refExpr);
     if (scope == null) return null;
 
     final GroovyReference rValueReference = refExpr.getRValueReference();
@@ -101,12 +101,11 @@ public final class TypeInferenceHelper {
     final VariableDescriptor descriptor = createDescriptor(refExpr);
     if (descriptor == null) return null;
 
-    final ReadWriteVariableInstruction rwInstruction = ControlFlowUtils.findRWInstruction(refExpr, scope.getControlFlow());
+    final ReadWriteVariableInstruction rwInstruction = ControlFlowUtils.findRWInstruction(refExpr, getLargeControlFlow(scope));
     if (rwInstruction == null) return null;
 
     final InferenceCache cache = getInferenceCache(scope);
-    final PsiType sharedType = getSharedVariableType(descriptor);
-    return sharedType != null ? sharedType : cache.getInferredType(descriptor, rwInstruction, mixinOnly);
+    return cache.getInferredType(descriptor, rwInstruction, mixinOnly);
   }
 
   @Nullable
@@ -118,7 +117,7 @@ public final class TypeInferenceHelper {
   @Nullable
   public static PsiType getVariableTypeInContext(@Nullable PsiElement context, @NotNull GrVariable variable) {
     if (context == null) return variable.getType();
-    final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(context);
+    final GrControlFlowOwner scope = ControlFlowUtils.getTopmostOwner(ControlFlowUtils.findControlFlowOwner(context));
     if (scope == null) return null;
 
     final Instruction nearest = ControlFlowUtils.findNearestInstruction(context, scope.getControlFlow());
@@ -127,10 +126,6 @@ public final class TypeInferenceHelper {
 
     final InferenceCache cache = getInferenceCache(scope);
     final VariableDescriptor descriptor = createDescriptor(variable);
-    final PsiType sharedType = getSharedVariableType(descriptor);
-    if (sharedType != null) {
-      return sharedType;
-    }
     final PsiType inferredType = cache.getInferredType(descriptor, nearest, mixinOnly);
     return inferredType != null ? inferredType : variable.getType();
   }
@@ -141,31 +136,14 @@ public final class TypeInferenceHelper {
 
   @NotNull
   static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
+    if (ControlFlowUtils.getTopmostOwner(scope) != scope) {
+      assert false;
+    }
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
   }
 
-  static boolean isSharedVariable(@NotNull VariableDescriptor descriptor) {
-    SharedVariableInferenceCache cache = getSharedVariableCache(descriptor);
-    return cache != null && cache.getSharedVariableDescriptors().contains(descriptor);
-  }
-
-  private static @Nullable PsiType getSharedVariableType(@NotNull VariableDescriptor descriptor) {
-    SharedVariableInferenceCache cache = getSharedVariableCache(descriptor);
-    return cache == null ? null : cache.getSharedVariableType(descriptor);
-  }
-
-  private static @Nullable SharedVariableInferenceCache getSharedVariableCache(@NotNull VariableDescriptor descriptor) {
-    if (descriptor instanceof ResolvedVariableDescriptor) {
-      GrControlFlowOwner trueOwner = ControlFlowUtils.findControlFlowOwner(((ResolvedVariableDescriptor)descriptor).getVariable());
-      if (trueOwner == null) {
-        return null;
-      }
-      return getInferenceCache(trueOwner).getSharedVariableInferenceCache();
-    }
-    else {
-      // this is definitely not a local variable
-      return null;
-    }
+  public static Instruction[] getLargeControlFlow(@NotNull final GrControlFlowOwner scope) {
+    return CachedValuesManager.getCachedValue(scope, () -> Result.create(ControlFlowBuilder.buildLargeControlFlow(scope), scope));
   }
 
   @Nullable
