@@ -4,6 +4,9 @@
 		<module>CDROM</module>
 		<module>DLFCN</module>
 		<module>TYPES</module>
+		<module>__hello__</module>
+		<module>__phello__</module>
+		<module>__phello__.spam</module>
 		<module>_abc</module>
 		<module>_aix_support</module>
 		<module>_asyncio</module>
@@ -59,7 +62,9 @@
 		<module>_testmultiphase</module>
 		<module>_thread</module>
 		<module>_tkinter</module>
+		<module>_tokenize</module>
 		<module>_tracemalloc</module>
+		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_weakrefset</module>
 		<module>_winapi</module>
@@ -321,6 +326,8 @@
 		<module>importlib._bootstrap</module>
 		<module>importlib._bootstrap_external</module>
 		<module>importlib._common</module>
+		<module>importlib._itertools</module>
+		<module>importlib._legacy</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.metadata</module>
@@ -332,6 +339,7 @@
 		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>importlib.resources</module>
+		<module>importlib.simple</module>
 		<module>importlib.util</module>
 		<module>ipaddress</module>
 		<module>json.tests.test_check_circular</module>
@@ -796,6 +804,7 @@
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>BaseExceptionGroup</func>
 		<func>BlockingIOError</func>
 		<func>BrokenPipeError</func>
 		<func>ChildProcessError</func>
@@ -804,6 +813,7 @@
 		<func>ConnectionRefusedError</func>
 		<func>ConnectionResetError</func>
 		<func>EncodingWarning</func>
+		<func>ExceptionGroup</func>
 		<func>FileExistsError</func>
 		<func>FileNotFoundError</func>
 		<func>InterruptedError</func>
@@ -828,6 +838,9 @@
 		<func>memoryview</func>
 	</python>
 	<python version="2.7">
+		<module>__hello__</module>
+		<module>__phello__</module>
+		<module>__phello__.spam</module>
 		<module>_abc</module>
 		<module>_aix_support</module>
 		<module>_asyncio</module>
@@ -879,7 +892,9 @@
 		<module>_testmultiphase</module>
 		<module>_thread</module>
 		<module>_tkinter</module>
+		<module>_tokenize</module>
 		<module>_tracemalloc</module>
+		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_winapi</module>
 		<module>_xxsubinterpreters</module>
@@ -1083,6 +1098,8 @@
 		<module>importlib._bootstrap</module>
 		<module>importlib._bootstrap_external</module>
 		<module>importlib._common</module>
+		<module>importlib._itertools</module>
+		<module>importlib._legacy</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.metadata</module>
@@ -1094,6 +1111,7 @@
 		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>importlib.resources</module>
+		<module>importlib.simple</module>
 		<module>importlib.util</module>
 		<module>ipaddress</module>
 		<module>lib2to3.fixes.fix_callable</module>
@@ -1222,6 +1240,7 @@
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>BaseExceptionGroup</func>
 		<func>BlockingIOError</func>
 		<func>BrokenPipeError</func>
 		<func>ChildProcessError</func>
@@ -1230,6 +1249,7 @@
 		<func>ConnectionRefusedError</func>
 		<func>ConnectionResetError</func>
 		<func>EncodingWarning</func>
+		<func>ExceptionGroup</func>
 		<func>FileExistsError</func>
 		<func>FileNotFoundError</func>
 		<func>InterruptedError</func>
@@ -1286,7 +1306,10 @@
 		<module>_LWPCookieJar</module>
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
+		<module>__hello__</module>
 		<module>__main__</module>
+		<module>__phello__</module>
+		<module>__phello__.spam</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
 		<module>_dbm</module>
@@ -1296,6 +1319,8 @@
 		<module>_peg_parser</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_tokenize</module>
+		<module>_typing</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.test_utils</module>
@@ -1457,6 +1482,9 @@
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
 		<module>ihooks</module>
+		<module>importlib._itertools</module>
+		<module>importlib._legacy</module>
+		<module>importlib.simple</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -1827,7 +1855,634 @@
 		<module>whichdb</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
+		<func>BaseExceptionGroup</func>
+		<func>ExceptionGroup</func>
 		<func>StandardError</func>
+		<func>apply</func>
+		<func>basestring</func>
+		<func>buffer</func>
+		<func>cmp</func>
+		<func>coerce</func>
+		<func>execfile</func>
+		<func>file</func>
+		<func>intern</func>
+		<func>long</func>
+		<func>raw_input</func>
+		<func>reduce</func>
+		<func>reload</func>
+		<func>unichr</func>
+		<func>unicode</func>
+		<func>xrange</func>
+	</python>
+	<python version="3.11">
+		<module>BaseHTTPServer</module>
+		<module>Bastion</module>
+		<module>CDROM</module>
+		<module>CGIHTTPServer</module>
+		<module>Canvas</module>
+		<module>ConfigParser</module>
+		<module>Cookie</module>
+		<module>DLFCN</module>
+		<module>Dialog</module>
+		<module>DocXMLRPCServer</module>
+		<module>FileDialog</module>
+		<module>FixTk</module>
+		<module>HTMLParser</module>
+		<module>IN</module>
+		<module>MimeWriter</module>
+		<module>Queue</module>
+		<module>ScrolledText</module>
+		<module>SimpleDialog</module>
+		<module>SimpleHTTPServer</module>
+		<module>SimpleXMLRPCServer</module>
+		<module>SocketServer</module>
+		<module>StringIO</module>
+		<module>TYPES</module>
+		<module>Tix</module>
+		<module>Tkconstants</module>
+		<module>Tkdnd</module>
+		<module>Tkinter</module>
+		<module>UserDict</module>
+		<module>UserList</module>
+		<module>UserString</module>
+		<module>_LWPCookieJar</module>
+		<module>_MozillaCookieJar</module>
+		<module>__builtin__</module>
+		<module>__main__</module>
+		<module>__phello__.foo</module>
+		<module>_abcoll</module>
+		<module>_bootlocale</module>
+		<module>_bytesio</module>
+		<module>_dbm</module>
+		<module>_dummy_thread</module>
+		<module>_fileio</module>
+		<module>_hotshot</module>
+		<module>_msi</module>
+		<module>_overlapped</module>
+		<module>_peg_parser</module>
+		<module>_sysconfigdata</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_winapi</module>
+		<module>anydbm</module>
+		<module>asyncio.compat</module>
+		<module>asyncio.test_utils</module>
+		<module>audiodev</module>
+		<module>binhex</module>
+		<module>bsddb</module>
+		<module>bsddb.db</module>
+		<module>bsddb.dbobj</module>
+		<module>bsddb.dbrecio</module>
+		<module>bsddb.dbshelve</module>
+		<module>bsddb.dbtables</module>
+		<module>bsddb.dbutils</module>
+		<module>bsddb.test</module>
+		<module>bsddb.test.test_all</module>
+		<module>bsddb.test.test_associate</module>
+		<module>bsddb.test.test_basics</module>
+		<module>bsddb.test.test_compare</module>
+		<module>bsddb.test.test_compat</module>
+		<module>bsddb.test.test_cursor_pget_bug</module>
+		<module>bsddb.test.test_db</module>
+		<module>bsddb.test.test_dbenv</module>
+		<module>bsddb.test.test_dbobj</module>
+		<module>bsddb.test.test_dbshelve</module>
+		<module>bsddb.test.test_dbtables</module>
+		<module>bsddb.test.test_distributed_transactions</module>
+		<module>bsddb.test.test_early_close</module>
+		<module>bsddb.test.test_fileid</module>
+		<module>bsddb.test.test_get_none</module>
+		<module>bsddb.test.test_join</module>
+		<module>bsddb.test.test_lock</module>
+		<module>bsddb.test.test_misc</module>
+		<module>bsddb.test.test_pickle</module>
+		<module>bsddb.test.test_queue</module>
+		<module>bsddb.test.test_recno</module>
+		<module>bsddb.test.test_replication</module>
+		<module>bsddb.test.test_sequence</module>
+		<module>bsddb.test.test_thread</module>
+		<module>cPickle</module>
+		<module>cStringIO</module>
+		<module>collections.__main__</module>
+		<module>commands</module>
+		<module>compiler</module>
+		<module>compiler.ast</module>
+		<module>compiler.consts</module>
+		<module>compiler.future</module>
+		<module>compiler.misc</module>
+		<module>compiler.pyassem</module>
+		<module>compiler.pycodegen</module>
+		<module>compiler.symbols</module>
+		<module>compiler.syntax</module>
+		<module>compiler.transformer</module>
+		<module>compiler.visitor</module>
+		<module>cookielib</module>
+		<module>copy_reg</module>
+		<module>ctypes.test.runtests</module>
+		<module>ctypes.test.test_errcheck</module>
+		<module>ctypes.test.test_integers</module>
+		<module>curses.wrapper</module>
+		<module>dbhash</module>
+		<module>dircache</module>
+		<module>distutils.command.bdist_msi</module>
+		<module>distutils.command.bdist_wininst</module>
+		<module>distutils.emxccompiler</module>
+		<module>distutils.mwerkscompiler</module>
+		<module>distutils.tests.setuptools_build_ext</module>
+		<module>distutils.tests.setuptools_extension</module>
+		<module>distutils.tests.test_bdist_msi</module>
+		<module>distutils.tests.test_bdist_wininst</module>
+		<module>distutils.tests.test_ccompiler</module>
+		<module>dumbdbm</module>
+		<module>dummy_thread</module>
+		<module>dummy_threading</module>
+		<module>email.test</module>
+		<module>email.test.test_email</module>
+		<module>email.test.test_email_codecs</module>
+		<module>email.test.test_email_codecs_renamed</module>
+		<module>email.test.test_email_renamed</module>
+		<module>email.test.test_email_torture</module>
+		<module>encodings.cp65001</module>
+		<module>encodings.mac_centeuro</module>
+		<module>encodings.string_escape</module>
+		<module>encodings.unicode_internal</module>
+		<module>ensurepip._bundled</module>
+		<module>exceptions</module>
+		<module>formatter</module>
+		<module>fpformat</module>
+		<module>future_builtins</module>
+		<module>gdbm</module>
+		<module>hotshot</module>
+		<module>hotshot.log</module>
+		<module>hotshot.stats</module>
+		<module>hotshot.stones</module>
+		<module>htmlentitydefs</module>
+		<module>htmllib</module>
+		<module>httplib</module>
+		<module>idlelib.AutoComplete</module>
+		<module>idlelib.AutoCompleteWindow</module>
+		<module>idlelib.AutoExpand</module>
+		<module>idlelib.Bindings</module>
+		<module>idlelib.CallTipWindow</module>
+		<module>idlelib.CallTips</module>
+		<module>idlelib.ClassBrowser</module>
+		<module>idlelib.CodeContext</module>
+		<module>idlelib.ColorDelegator</module>
+		<module>idlelib.Debugger</module>
+		<module>idlelib.Delegator</module>
+		<module>idlelib.EditorWindow</module>
+		<module>idlelib.FileList</module>
+		<module>idlelib.FormatParagraph</module>
+		<module>idlelib.GrepDialog</module>
+		<module>idlelib.HyperParser</module>
+		<module>idlelib.IOBinding</module>
+		<module>idlelib.IdleHistory</module>
+		<module>idlelib.MultiCall</module>
+		<module>idlelib.MultiStatusBar</module>
+		<module>idlelib.ObjectBrowser</module>
+		<module>idlelib.OutputWindow</module>
+		<module>idlelib.ParenMatch</module>
+		<module>idlelib.PathBrowser</module>
+		<module>idlelib.Percolator</module>
+		<module>idlelib.PyParse</module>
+		<module>idlelib.PyShell</module>
+		<module>idlelib.RemoteDebugger</module>
+		<module>idlelib.RemoteObjectBrowser</module>
+		<module>idlelib.ReplaceDialog</module>
+		<module>idlelib.RstripExtension</module>
+		<module>idlelib.ScriptBinding</module>
+		<module>idlelib.ScrolledList</module>
+		<module>idlelib.SearchDialog</module>
+		<module>idlelib.SearchDialogBase</module>
+		<module>idlelib.SearchEngine</module>
+		<module>idlelib.StackViewer</module>
+		<module>idlelib.ToolTip</module>
+		<module>idlelib.TreeWidget</module>
+		<module>idlelib.UndoDelegator</module>
+		<module>idlelib.WidgetRedirector</module>
+		<module>idlelib.WindowList</module>
+		<module>idlelib.ZoomHeight</module>
+		<module>idlelib._pyclbr</module>
+		<module>idlelib.aboutDialog</module>
+		<module>idlelib.configDialog</module>
+		<module>idlelib.configHandler</module>
+		<module>idlelib.configHelpSourceEdit</module>
+		<module>idlelib.configSectionNameDialog</module>
+		<module>idlelib.dynOptionMenuWidget</module>
+		<module>idlelib.idle_test.test_calltips</module>
+		<module>idlelib.idle_test.test_config_help</module>
+		<module>idlelib.idle_test.test_config_name</module>
+		<module>idlelib.idle_test.test_formatparagraph</module>
+		<module>idlelib.idle_test.test_helpabout</module>
+		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
+		<module>idlelib.idle_test.test_paragraph</module>
+		<module>idlelib.idle_test.test_replacedialog</module>
+		<module>idlelib.idle_test.test_rstrip</module>
+		<module>idlelib.idle_test.test_searchdialog</module>
+		<module>idlelib.idle_test.test_searchdialogbase</module>
+		<module>idlelib.idle_test.test_undodelegator</module>
+		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idlever</module>
+		<module>idlelib.keybindingDialog</module>
+		<module>idlelib.macosxSupport</module>
+		<module>idlelib.paragraph</module>
+		<module>idlelib.rstrip</module>
+		<module>idlelib.tabbedpages</module>
+		<module>idlelib.testcode</module>
+		<module>idlelib.textView</module>
+		<module>ihooks</module>
+		<module>imputil</module>
+		<module>json.tests</module>
+		<module>json.tests.test_check_circular</module>
+		<module>json.tests.test_decode</module>
+		<module>json.tests.test_default</module>
+		<module>json.tests.test_dump</module>
+		<module>json.tests.test_encode_basestring_ascii</module>
+		<module>json.tests.test_fail</module>
+		<module>json.tests.test_float</module>
+		<module>json.tests.test_indent</module>
+		<module>json.tests.test_pass1</module>
+		<module>json.tests.test_pass2</module>
+		<module>json.tests.test_pass3</module>
+		<module>json.tests.test_recursion</module>
+		<module>json.tests.test_scanstring</module>
+		<module>json.tests.test_separators</module>
+		<module>json.tests.test_speedups</module>
+		<module>json.tests.test_tool</module>
+		<module>json.tests.test_unicode</module>
+		<module>lib2to3.fixes.fix_callable</module>
+		<module>linuxaudiodev</module>
+		<module>macpath</module>
+		<module>macurl2path</module>
+		<module>markupbase</module>
+		<module>md5</module>
+		<module>mhlib</module>
+		<module>mimetools</module>
+		<module>mimify</module>
+		<module>msilib</module>
+		<module>msilib.schema</module>
+		<module>msilib.sequence</module>
+		<module>msilib.text</module>
+		<module>msvcrt</module>
+		<module>multifile</module>
+		<module>multiprocessing.forking</module>
+		<module>multiprocessing.semaphore_tracker</module>
+		<module>mutex</module>
+		<module>new</module>
+		<module>nt</module>
+		<module>os2emxpath</module>
+		<module>parser</module>
+		<module>pip</module>
+		<module>pip.__main__</module>
+		<module>pip._internal</module>
+		<module>pip._internal.build_env</module>
+		<module>pip._internal.cache</module>
+		<module>pip._internal.cli</module>
+		<module>pip._internal.cli.autocompletion</module>
+		<module>pip._internal.cli.base_command</module>
+		<module>pip._internal.cli.cmdoptions</module>
+		<module>pip._internal.cli.main_parser</module>
+		<module>pip._internal.cli.parser</module>
+		<module>pip._internal.cli.status_codes</module>
+		<module>pip._internal.commands</module>
+		<module>pip._internal.commands.check</module>
+		<module>pip._internal.commands.completion</module>
+		<module>pip._internal.commands.configuration</module>
+		<module>pip._internal.commands.download</module>
+		<module>pip._internal.commands.freeze</module>
+		<module>pip._internal.commands.hash</module>
+		<module>pip._internal.commands.help</module>
+		<module>pip._internal.commands.install</module>
+		<module>pip._internal.commands.list</module>
+		<module>pip._internal.commands.search</module>
+		<module>pip._internal.commands.show</module>
+		<module>pip._internal.commands.uninstall</module>
+		<module>pip._internal.commands.wheel</module>
+		<module>pip._internal.configuration</module>
+		<module>pip._internal.download</module>
+		<module>pip._internal.exceptions</module>
+		<module>pip._internal.index</module>
+		<module>pip._internal.locations</module>
+		<module>pip._internal.models</module>
+		<module>pip._internal.models.candidate</module>
+		<module>pip._internal.models.format_control</module>
+		<module>pip._internal.models.index</module>
+		<module>pip._internal.models.link</module>
+		<module>pip._internal.operations</module>
+		<module>pip._internal.operations.check</module>
+		<module>pip._internal.operations.freeze</module>
+		<module>pip._internal.operations.prepare</module>
+		<module>pip._internal.pep425tags</module>
+		<module>pip._internal.pyproject</module>
+		<module>pip._internal.req</module>
+		<module>pip._internal.req.constructors</module>
+		<module>pip._internal.req.req_file</module>
+		<module>pip._internal.req.req_install</module>
+		<module>pip._internal.req.req_set</module>
+		<module>pip._internal.req.req_tracker</module>
+		<module>pip._internal.req.req_uninstall</module>
+		<module>pip._internal.resolve</module>
+		<module>pip._internal.utils</module>
+		<module>pip._internal.utils.appdirs</module>
+		<module>pip._internal.utils.compat</module>
+		<module>pip._internal.utils.deprecation</module>
+		<module>pip._internal.utils.encoding</module>
+		<module>pip._internal.utils.filesystem</module>
+		<module>pip._internal.utils.glibc</module>
+		<module>pip._internal.utils.hashes</module>
+		<module>pip._internal.utils.logging</module>
+		<module>pip._internal.utils.misc</module>
+		<module>pip._internal.utils.models</module>
+		<module>pip._internal.utils.outdated</module>
+		<module>pip._internal.utils.packaging</module>
+		<module>pip._internal.utils.setuptools_build</module>
+		<module>pip._internal.utils.temp_dir</module>
+		<module>pip._internal.utils.typing</module>
+		<module>pip._internal.utils.ui</module>
+		<module>pip._internal.vcs</module>
+		<module>pip._internal.vcs.bazaar</module>
+		<module>pip._internal.vcs.git</module>
+		<module>pip._internal.vcs.mercurial</module>
+		<module>pip._internal.vcs.subversion</module>
+		<module>pip._internal.wheel</module>
+		<module>pip._vendor</module>
+		<module>pip._vendor.appdirs</module>
+		<module>pip._vendor.cachecontrol</module>
+		<module>pip._vendor.cachecontrol._cmd</module>
+		<module>pip._vendor.cachecontrol.adapter</module>
+		<module>pip._vendor.cachecontrol.cache</module>
+		<module>pip._vendor.cachecontrol.caches</module>
+		<module>pip._vendor.cachecontrol.caches.file_cache</module>
+		<module>pip._vendor.cachecontrol.caches.redis_cache</module>
+		<module>pip._vendor.cachecontrol.compat</module>
+		<module>pip._vendor.cachecontrol.controller</module>
+		<module>pip._vendor.cachecontrol.filewrapper</module>
+		<module>pip._vendor.cachecontrol.heuristics</module>
+		<module>pip._vendor.cachecontrol.serialize</module>
+		<module>pip._vendor.cachecontrol.wrapper</module>
+		<module>pip._vendor.certifi</module>
+		<module>pip._vendor.certifi.__main__</module>
+		<module>pip._vendor.certifi.core</module>
+		<module>pip._vendor.chardet</module>
+		<module>pip._vendor.chardet.big5freq</module>
+		<module>pip._vendor.chardet.big5prober</module>
+		<module>pip._vendor.chardet.chardistribution</module>
+		<module>pip._vendor.chardet.charsetgroupprober</module>
+		<module>pip._vendor.chardet.charsetprober</module>
+		<module>pip._vendor.chardet.cli</module>
+		<module>pip._vendor.chardet.cli.chardetect</module>
+		<module>pip._vendor.chardet.codingstatemachine</module>
+		<module>pip._vendor.chardet.compat</module>
+		<module>pip._vendor.chardet.cp949prober</module>
+		<module>pip._vendor.chardet.enums</module>
+		<module>pip._vendor.chardet.escprober</module>
+		<module>pip._vendor.chardet.escsm</module>
+		<module>pip._vendor.chardet.eucjpprober</module>
+		<module>pip._vendor.chardet.euckrfreq</module>
+		<module>pip._vendor.chardet.euckrprober</module>
+		<module>pip._vendor.chardet.euctwfreq</module>
+		<module>pip._vendor.chardet.euctwprober</module>
+		<module>pip._vendor.chardet.gb2312freq</module>
+		<module>pip._vendor.chardet.gb2312prober</module>
+		<module>pip._vendor.chardet.hebrewprober</module>
+		<module>pip._vendor.chardet.jisfreq</module>
+		<module>pip._vendor.chardet.jpcntx</module>
+		<module>pip._vendor.chardet.langbulgarianmodel</module>
+		<module>pip._vendor.chardet.langcyrillicmodel</module>
+		<module>pip._vendor.chardet.langgreekmodel</module>
+		<module>pip._vendor.chardet.langhebrewmodel</module>
+		<module>pip._vendor.chardet.langhungarianmodel</module>
+		<module>pip._vendor.chardet.langthaimodel</module>
+		<module>pip._vendor.chardet.langturkishmodel</module>
+		<module>pip._vendor.chardet.latin1prober</module>
+		<module>pip._vendor.chardet.mbcharsetprober</module>
+		<module>pip._vendor.chardet.mbcsgroupprober</module>
+		<module>pip._vendor.chardet.mbcssm</module>
+		<module>pip._vendor.chardet.sbcharsetprober</module>
+		<module>pip._vendor.chardet.sbcsgroupprober</module>
+		<module>pip._vendor.chardet.sjisprober</module>
+		<module>pip._vendor.chardet.universaldetector</module>
+		<module>pip._vendor.chardet.utf8prober</module>
+		<module>pip._vendor.chardet.version</module>
+		<module>pip._vendor.colorama</module>
+		<module>pip._vendor.colorama.ansi</module>
+		<module>pip._vendor.colorama.ansitowin32</module>
+		<module>pip._vendor.colorama.initialise</module>
+		<module>pip._vendor.colorama.win32</module>
+		<module>pip._vendor.colorama.winterm</module>
+		<module>pip._vendor.distlib</module>
+		<module>pip._vendor.distlib._backport</module>
+		<module>pip._vendor.distlib._backport.misc</module>
+		<module>pip._vendor.distlib._backport.shutil</module>
+		<module>pip._vendor.distlib._backport.sysconfig</module>
+		<module>pip._vendor.distlib._backport.tarfile</module>
+		<module>pip._vendor.distlib.compat</module>
+		<module>pip._vendor.distlib.database</module>
+		<module>pip._vendor.distlib.index</module>
+		<module>pip._vendor.distlib.locators</module>
+		<module>pip._vendor.distlib.manifest</module>
+		<module>pip._vendor.distlib.markers</module>
+		<module>pip._vendor.distlib.metadata</module>
+		<module>pip._vendor.distlib.resources</module>
+		<module>pip._vendor.distlib.scripts</module>
+		<module>pip._vendor.distlib.util</module>
+		<module>pip._vendor.distlib.version</module>
+		<module>pip._vendor.distlib.wheel</module>
+		<module>pip._vendor.distro</module>
+		<module>pip._vendor.html5lib</module>
+		<module>pip._vendor.html5lib._ihatexml</module>
+		<module>pip._vendor.html5lib._inputstream</module>
+		<module>pip._vendor.html5lib._tokenizer</module>
+		<module>pip._vendor.html5lib._trie</module>
+		<module>pip._vendor.html5lib._trie._base</module>
+		<module>pip._vendor.html5lib._trie.datrie</module>
+		<module>pip._vendor.html5lib._trie.py</module>
+		<module>pip._vendor.html5lib._utils</module>
+		<module>pip._vendor.html5lib.constants</module>
+		<module>pip._vendor.html5lib.filters</module>
+		<module>pip._vendor.html5lib.filters.alphabeticalattributes</module>
+		<module>pip._vendor.html5lib.filters.base</module>
+		<module>pip._vendor.html5lib.filters.inject_meta_charset</module>
+		<module>pip._vendor.html5lib.filters.lint</module>
+		<module>pip._vendor.html5lib.filters.optionaltags</module>
+		<module>pip._vendor.html5lib.filters.sanitizer</module>
+		<module>pip._vendor.html5lib.filters.whitespace</module>
+		<module>pip._vendor.html5lib.html5parser</module>
+		<module>pip._vendor.html5lib.serializer</module>
+		<module>pip._vendor.html5lib.treeadapters</module>
+		<module>pip._vendor.html5lib.treeadapters.genshi</module>
+		<module>pip._vendor.html5lib.treeadapters.sax</module>
+		<module>pip._vendor.html5lib.treebuilders</module>
+		<module>pip._vendor.html5lib.treebuilders.base</module>
+		<module>pip._vendor.html5lib.treebuilders.dom</module>
+		<module>pip._vendor.html5lib.treebuilders.etree</module>
+		<module>pip._vendor.html5lib.treebuilders.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers</module>
+		<module>pip._vendor.html5lib.treewalkers.base</module>
+		<module>pip._vendor.html5lib.treewalkers.dom</module>
+		<module>pip._vendor.html5lib.treewalkers.etree</module>
+		<module>pip._vendor.html5lib.treewalkers.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers.genshi</module>
+		<module>pip._vendor.idna</module>
+		<module>pip._vendor.idna.codec</module>
+		<module>pip._vendor.idna.compat</module>
+		<module>pip._vendor.idna.core</module>
+		<module>pip._vendor.idna.idnadata</module>
+		<module>pip._vendor.idna.intranges</module>
+		<module>pip._vendor.idna.package_data</module>
+		<module>pip._vendor.idna.uts46data</module>
+		<module>pip._vendor.ipaddress</module>
+		<module>pip._vendor.lockfile</module>
+		<module>pip._vendor.lockfile.linklockfile</module>
+		<module>pip._vendor.lockfile.mkdirlockfile</module>
+		<module>pip._vendor.lockfile.pidlockfile</module>
+		<module>pip._vendor.lockfile.sqlitelockfile</module>
+		<module>pip._vendor.lockfile.symlinklockfile</module>
+		<module>pip._vendor.msgpack</module>
+		<module>pip._vendor.msgpack._version</module>
+		<module>pip._vendor.msgpack.exceptions</module>
+		<module>pip._vendor.msgpack.fallback</module>
+		<module>pip._vendor.packaging</module>
+		<module>pip._vendor.packaging.__about__</module>
+		<module>pip._vendor.packaging._compat</module>
+		<module>pip._vendor.packaging._structures</module>
+		<module>pip._vendor.packaging.markers</module>
+		<module>pip._vendor.packaging.requirements</module>
+		<module>pip._vendor.packaging.specifiers</module>
+		<module>pip._vendor.packaging.utils</module>
+		<module>pip._vendor.packaging.version</module>
+		<module>pip._vendor.pep517</module>
+		<module>pip._vendor.pep517._in_process</module>
+		<module>pip._vendor.pep517.build</module>
+		<module>pip._vendor.pep517.check</module>
+		<module>pip._vendor.pep517.colorlog</module>
+		<module>pip._vendor.pep517.compat</module>
+		<module>pip._vendor.pep517.envbuild</module>
+		<module>pip._vendor.pep517.wrappers</module>
+		<module>pip._vendor.pkg_resources</module>
+		<module>pip._vendor.pkg_resources.py31compat</module>
+		<module>pip._vendor.progress</module>
+		<module>pip._vendor.progress.bar</module>
+		<module>pip._vendor.progress.counter</module>
+		<module>pip._vendor.progress.helpers</module>
+		<module>pip._vendor.progress.spinner</module>
+		<module>pip._vendor.pyparsing</module>
+		<module>pip._vendor.pytoml</module>
+		<module>pip._vendor.pytoml.core</module>
+		<module>pip._vendor.pytoml.parser</module>
+		<module>pip._vendor.pytoml.test</module>
+		<module>pip._vendor.pytoml.utils</module>
+		<module>pip._vendor.pytoml.writer</module>
+		<module>pip._vendor.requests</module>
+		<module>pip._vendor.requests.__version__</module>
+		<module>pip._vendor.requests._internal_utils</module>
+		<module>pip._vendor.requests.adapters</module>
+		<module>pip._vendor.requests.api</module>
+		<module>pip._vendor.requests.auth</module>
+		<module>pip._vendor.requests.certs</module>
+		<module>pip._vendor.requests.compat</module>
+		<module>pip._vendor.requests.cookies</module>
+		<module>pip._vendor.requests.exceptions</module>
+		<module>pip._vendor.requests.help</module>
+		<module>pip._vendor.requests.hooks</module>
+		<module>pip._vendor.requests.models</module>
+		<module>pip._vendor.requests.packages</module>
+		<module>pip._vendor.requests.sessions</module>
+		<module>pip._vendor.requests.status_codes</module>
+		<module>pip._vendor.requests.structures</module>
+		<module>pip._vendor.requests.utils</module>
+		<module>pip._vendor.retrying</module>
+		<module>pip._vendor.six</module>
+		<module>pip._vendor.urllib3</module>
+		<module>pip._vendor.urllib3._collections</module>
+		<module>pip._vendor.urllib3.connection</module>
+		<module>pip._vendor.urllib3.connectionpool</module>
+		<module>pip._vendor.urllib3.contrib</module>
+		<module>pip._vendor.urllib3.contrib._appengine_environ</module>
+		<module>pip._vendor.urllib3.contrib._securetransport</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.bindings</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.low_level</module>
+		<module>pip._vendor.urllib3.contrib.appengine</module>
+		<module>pip._vendor.urllib3.contrib.ntlmpool</module>
+		<module>pip._vendor.urllib3.contrib.pyopenssl</module>
+		<module>pip._vendor.urllib3.contrib.securetransport</module>
+		<module>pip._vendor.urllib3.contrib.socks</module>
+		<module>pip._vendor.urllib3.exceptions</module>
+		<module>pip._vendor.urllib3.fields</module>
+		<module>pip._vendor.urllib3.filepost</module>
+		<module>pip._vendor.urllib3.packages</module>
+		<module>pip._vendor.urllib3.packages.backports</module>
+		<module>pip._vendor.urllib3.packages.backports.makefile</module>
+		<module>pip._vendor.urllib3.packages.six</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname._implementation</module>
+		<module>pip._vendor.urllib3.poolmanager</module>
+		<module>pip._vendor.urllib3.request</module>
+		<module>pip._vendor.urllib3.response</module>
+		<module>pip._vendor.urllib3.util</module>
+		<module>pip._vendor.urllib3.util.connection</module>
+		<module>pip._vendor.urllib3.util.queue</module>
+		<module>pip._vendor.urllib3.util.request</module>
+		<module>pip._vendor.urllib3.util.response</module>
+		<module>pip._vendor.urllib3.util.retry</module>
+		<module>pip._vendor.urllib3.util.ssl_</module>
+		<module>pip._vendor.urllib3.util.timeout</module>
+		<module>pip._vendor.urllib3.util.url</module>
+		<module>pip._vendor.urllib3.util.wait</module>
+		<module>pip._vendor.webencodings</module>
+		<module>pip._vendor.webencodings.labels</module>
+		<module>pip._vendor.webencodings.mklabels</module>
+		<module>pip._vendor.webencodings.tests</module>
+		<module>pip._vendor.webencodings.x_user_defined</module>
+		<module>popen2</module>
+		<module>posixfile</module>
+		<module>pydoc_topics</module>
+		<module>repr</module>
+		<module>rexec</module>
+		<module>rfc822</module>
+		<module>robotparser</module>
+		<module>sets</module>
+		<module>sgmllib</module>
+		<module>sha</module>
+		<module>sqlite3.test</module>
+		<module>sqlite3.test.backup</module>
+		<module>sqlite3.test.dbapi</module>
+		<module>sqlite3.test.dump</module>
+		<module>sqlite3.test.factory</module>
+		<module>sqlite3.test.hooks</module>
+		<module>sqlite3.test.py25tests</module>
+		<module>sqlite3.test.regression</module>
+		<module>sqlite3.test.transactions</module>
+		<module>sqlite3.test.types</module>
+		<module>sqlite3.test.userfunctions</module>
+		<module>sre</module>
+		<module>statvfs</module>
+		<module>stringold</module>
+		<module>strop</module>
+		<module>sunaudio</module>
+		<module>symbol</module>
+		<module>thread</module>
+		<module>tkColorChooser</module>
+		<module>tkCommonDialog</module>
+		<module>tkFileDialog</module>
+		<module>tkFont</module>
+		<module>tkMessageBox</module>
+		<module>tkSimpleDialog</module>
+		<module>tkinter.test.runtktests</module>
+		<module>tkinter.test.test_ttk.test_functions</module>
+		<module>toaiff</module>
+		<module>ttk</module>
+		<module>turtledemo.wikipedia</module>
+		<module>urllib2</module>
+		<module>urlparse</module>
+		<module>user</module>
+		<module>whichdb</module>
+		<module>winreg</module>
+		<module>winsound</module>
+		<module>xmllib</module>
+		<module>xmlrpclib</module>
+		<func>StandardError</func>
+		<func>WindowsError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>buffer</func>
@@ -1874,7 +2529,10 @@
 		<module>_LWPCookieJar</module>
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
+		<module>__hello__</module>
 		<module>__main__</module>
+		<module>__phello__</module>
+		<module>__phello__.spam</module>
 		<module>_abc</module>
 		<module>_abcoll</module>
 		<module>_aix_support</module>
@@ -1898,6 +2556,8 @@
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testinternalcapi</module>
 		<module>_tkinter</module>
+		<module>_tokenize</module>
+		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_winapi</module>
 		<module>_xxsubinterpreters</module>
@@ -2107,6 +2767,8 @@
 		<module>importlib._abc</module>
 		<module>importlib._adapters</module>
 		<module>importlib._common</module>
+		<module>importlib._itertools</module>
+		<module>importlib._legacy</module>
 		<module>importlib.metadata</module>
 		<module>importlib.metadata._adapters</module>
 		<module>importlib.metadata._collections</module>
@@ -2116,6 +2778,7 @@
 		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>importlib.resources</module>
+		<module>importlib.simple</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -2506,7 +3169,9 @@
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>BaseExceptionGroup</func>
 		<func>EncodingWarning</func>
+		<func>ExceptionGroup</func>
 		<func>ModuleNotFoundError</func>
 		<func>StandardError</func>
 		<func>WindowsError</func>
@@ -2563,7 +3228,10 @@
 		<module>_LWPCookieJar</module>
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
+		<module>__hello__</module>
 		<module>__main__</module>
+		<module>__phello__</module>
+		<module>__phello__.spam</module>
 		<module>_abc</module>
 		<module>_abcoll</module>
 		<module>_aix_support</module>
@@ -2584,6 +3252,8 @@
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_testinternalcapi</module>
 		<module>_tkinter</module>
+		<module>_tokenize</module>
+		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_winapi</module>
 		<module>_xxsubinterpreters</module>
@@ -2761,6 +3431,8 @@
 		<module>importlib._abc</module>
 		<module>importlib._adapters</module>
 		<module>importlib._common</module>
+		<module>importlib._itertools</module>
+		<module>importlib._legacy</module>
 		<module>importlib.metadata</module>
 		<module>importlib.metadata._adapters</module>
 		<module>importlib.metadata._collections</module>
@@ -2770,6 +3442,7 @@
 		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>importlib.resources</module>
+		<module>importlib.simple</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -3159,7 +3832,9 @@
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>BaseExceptionGroup</func>
 		<func>EncodingWarning</func>
+		<func>ExceptionGroup</func>
 		<func>StandardError</func>
 		<func>WindowsError</func>
 		<func>aiter</func>
@@ -3215,7 +3890,10 @@
 		<module>_LWPCookieJar</module>
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
+		<module>__hello__</module>
 		<module>__main__</module>
+		<module>__phello__</module>
+		<module>__phello__.spam</module>
 		<module>_abcoll</module>
 		<module>_aix_support</module>
 		<module>_bootsubprocess</module>
@@ -3230,6 +3908,8 @@
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_testinternalcapi</module>
+		<module>_tokenize</module>
+		<module>_typing</module>
 		<module>_winapi</module>
 		<module>_xxsubinterpreters</module>
 		<module>_zoneinfo</module>
@@ -3399,6 +4079,8 @@
 		<module>importlib._abc</module>
 		<module>importlib._adapters</module>
 		<module>importlib._common</module>
+		<module>importlib._itertools</module>
+		<module>importlib._legacy</module>
 		<module>importlib.metadata</module>
 		<module>importlib.metadata._adapters</module>
 		<module>importlib.metadata._collections</module>
@@ -3407,6 +4089,7 @@
 		<module>importlib.metadata._meta</module>
 		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
+		<module>importlib.simple</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -3795,7 +4478,9 @@
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>BaseExceptionGroup</func>
 		<func>EncodingWarning</func>
+		<func>ExceptionGroup</func>
 		<func>StandardError</func>
 		<func>WindowsError</func>
 		<func>aiter</func>
@@ -3850,7 +4535,10 @@
 		<module>_LWPCookieJar</module>
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
+		<module>__hello__</module>
 		<module>__main__</module>
+		<module>__phello__</module>
+		<module>__phello__.spam</module>
 		<module>_abcoll</module>
 		<module>_aix_support</module>
 		<module>_bootsubprocess</module>
@@ -3862,6 +4550,8 @@
 		<module>_peg_parser</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_tokenize</module>
+		<module>_typing</module>
 		<module>_winapi</module>
 		<module>_zoneinfo</module>
 		<module>anydbm</module>
@@ -4031,6 +4721,8 @@
 		<module>importlib._abc</module>
 		<module>importlib._adapters</module>
 		<module>importlib._common</module>
+		<module>importlib._itertools</module>
+		<module>importlib._legacy</module>
 		<module>importlib.metadata._adapters</module>
 		<module>importlib.metadata._collections</module>
 		<module>importlib.metadata._functools</module>
@@ -4038,6 +4730,7 @@
 		<module>importlib.metadata._meta</module>
 		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
+		<module>importlib.simple</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -4421,7 +5114,9 @@
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>BaseExceptionGroup</func>
 		<func>EncodingWarning</func>
+		<func>ExceptionGroup</func>
 		<func>StandardError</func>
 		<func>WindowsError</func>
 		<func>aiter</func>
@@ -4476,7 +5171,10 @@
 		<module>_LWPCookieJar</module>
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
+		<module>__hello__</module>
 		<module>__main__</module>
+		<module>__phello__</module>
+		<module>__phello__.spam</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
 		<module>_dbm</module>
@@ -4485,6 +5183,8 @@
 		<module>_hotshot</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_tokenize</module>
+		<module>_typing</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.mixins</module>
@@ -4650,6 +5350,8 @@
 		<module>ihooks</module>
 		<module>importlib._abc</module>
 		<module>importlib._adapters</module>
+		<module>importlib._itertools</module>
+		<module>importlib._legacy</module>
 		<module>importlib.metadata._adapters</module>
 		<module>importlib.metadata._collections</module>
 		<module>importlib.metadata._functools</module>
@@ -4657,6 +5359,7 @@
 		<module>importlib.metadata._meta</module>
 		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
+		<module>importlib.simple</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -5027,7 +5730,9 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<module>xxlimited_35</module>
+		<func>BaseExceptionGroup</func>
 		<func>EncodingWarning</func>
+		<func>ExceptionGroup</func>
 		<func>StandardError</func>
 		<func>aiter</func>
 		<func>anext</func>

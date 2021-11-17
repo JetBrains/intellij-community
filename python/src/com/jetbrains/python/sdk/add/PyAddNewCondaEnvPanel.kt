@@ -79,6 +79,7 @@ open class PyAddNewCondaEnvPanel(
 
     val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS
       .asReversed()
+      .filter { it < LanguageLevel.PYTHON311 }
       .map { it.toPythonVersion() }
 
     languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {
