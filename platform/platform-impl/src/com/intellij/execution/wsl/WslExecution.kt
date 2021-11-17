@@ -7,6 +7,7 @@ import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.wsl.WSLUtil.LOG
 import com.intellij.openapi.application.ApplicationManager
@@ -14,11 +15,14 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
+import java.util.function.Consumer
 
+@JvmOverloads
 @Throws(ExecutionException::class)
 fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCommandLine,
                                                           options: WSLCommandLineOptions,
-                                                          timeout: Int): ProcessOutput {
+                                                          timeout: Int,
+                                                          processHandlerCustomizer: Consumer<ProcessHandler> = Consumer {}): ProcessOutput {
   if (!options.isExecuteCommandInShell) {
     throw AssertionError("Execution in shell is expected")
   }
@@ -32,7 +36,7 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
     commandLine.environment[EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE] = "true"
     options.isPassEnvVarsUsingInterop = true
   }
-  val output: ProcessOutput = executeOnWsl(commandLine, options, timeout)
+  val output: ProcessOutput = executeOnWsl(commandLine, options, timeout, processHandlerCustomizer)
   val stdout = output.stdout
   val markerText = prefixText + LineSeparator.LF.separatorString
   val index = stdout.indexOf(markerText)
@@ -84,8 +88,10 @@ private fun WSLDistribution.expectOneLineOutput(commandLine: GeneralCommandLine,
 @Throws(ExecutionException::class)
 private fun WSLDistribution.executeOnWsl(commandLine: GeneralCommandLine,
                                          options: WSLCommandLineOptions,
-                                         timeout: Int): ProcessOutput {
+                                         timeout: Int,
+                                         processHandlerCustomizer: Consumer<ProcessHandler>): ProcessOutput {
   patchCommandLine<GeneralCommandLine>(commandLine, null, options)
   val processHandler = CapturingProcessHandler(commandLine)
+  processHandlerCustomizer.accept(processHandler)
   return processHandler.runProcess(timeout)
 }

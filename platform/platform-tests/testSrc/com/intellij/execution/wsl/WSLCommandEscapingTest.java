@@ -277,7 +277,7 @@ public final class WSLCommandEscapingTest extends WslTestBase {
     GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(envs);
     ProcessOutput output;
     if (options.isExecuteCommandInShell()) {
-      output = wsl.executeInShellAndGetCommandOnlyStdout(commandLine, options, 10_000);
+      output = WslExecution.executeInShellAndGetCommandOnlyStdout(wsl, commandLine, options, 10_000);
     }
     else {
       wsl.patchCommandLine(commandLine, null, options);
