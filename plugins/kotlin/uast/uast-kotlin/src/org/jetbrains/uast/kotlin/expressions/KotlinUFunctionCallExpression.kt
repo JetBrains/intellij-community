@@ -50,7 +50,7 @@ class KotlinUFunctionCallExpression(
         }
 
         when (val calleeExpression = sourcePsi.calleeExpression) {
-            null -> null
+            null, is KtArrayAccessExpression -> null
             is KtNameReferenceExpression ->
                 KotlinUIdentifier(calleeExpression.getReferencedNameElement(), this)
             is KtConstructorDelegationReferenceExpression ->

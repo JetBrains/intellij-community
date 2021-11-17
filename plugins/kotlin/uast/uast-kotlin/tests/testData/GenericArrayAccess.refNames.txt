@@ -1,0 +1,4 @@
+List -> USimpleNameReferenceExpression (identifier = List) from KtNameReferenceExpression
+String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
+a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression
+String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
