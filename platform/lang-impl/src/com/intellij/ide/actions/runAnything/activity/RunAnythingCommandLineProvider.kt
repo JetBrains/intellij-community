@@ -3,9 +3,7 @@ package com.intellij.ide.actions.runAnything.activity
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.util.execution.ParametersListUtil
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 abstract class RunAnythingCommandLineProvider : RunAnythingNotifiableProvider<String>() {
 
   open fun getHelpCommandAliases(): List<String> = emptyList()
