@@ -173,7 +173,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     fun logModuleStarted(module: IftModule) {
-      moduleStartedEvent.log(module.name, courseLanguage())
+      moduleStartedEvent.log(module.id, courseLanguage())
     }
 
     fun logWelcomeScreenPanelExpanded() {
