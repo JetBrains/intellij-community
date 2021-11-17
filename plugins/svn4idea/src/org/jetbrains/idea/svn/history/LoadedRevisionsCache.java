@@ -120,7 +120,9 @@ public final class LoadedRevisionsCache implements Disposable {
       consistent = true;
     }
 
-    myMap.put(location, bindToBunch);
+    if (bindToBunch != null) {
+      myMap.put(location, bindToBunch);
+    }
     return bindToBunch;
   }
 

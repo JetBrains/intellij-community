@@ -645,7 +645,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     S map(T t) {
       if (reverse == null) reverse = ContainerUtil.createWeakMap();
       S s = mapInner.fun(t);
-      if (s != null) {
+      if (s != null && t != null) {
         reverse.put(s, t);
       }
       return s;
