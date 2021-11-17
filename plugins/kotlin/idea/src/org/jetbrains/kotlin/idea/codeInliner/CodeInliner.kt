@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineAnonymousFunctio
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -200,10 +201,11 @@ class CodeInliner<TCallElement : KtElement>(
         lexicalScope: LexicalScope,
         endOfScope: Int,
     ) {
-        val validator = CollectingNameValidator { !it.nameHasConflictsInScope(lexicalScope) }
+        val languageVersionSettings =  declarations.first().getResolutionFacade().getLanguageVersionSettings()
+        val validator = CollectingNameValidator { !it.nameHasConflictsInScope(lexicalScope, languageVersionSettings) }
         for (declaration in declarations) {
             val oldName = declaration.name
-            if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope)) {
+            if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope, languageVersionSettings)) {
                 val newName = KotlinNameSuggester.suggestNameByName(oldName, validator)
                 for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
                     if (reference.element.startOffset < endOfScope) {
