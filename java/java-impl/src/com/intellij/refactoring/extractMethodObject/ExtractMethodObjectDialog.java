@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -278,7 +278,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   }
 
   private JComponent createParametersPanel() {
-    return new ParameterTablePanel(myProject, myInputVariables, myElementsToExtract) {
+    final ParameterTablePanel panel = new ParameterTablePanel(myProject, myInputVariables, myElementsToExtract) {
       @Override
       protected void updateSignature() {
         updateVarargsEnabled();
@@ -300,6 +300,8 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
         return ExtractMethodObjectDialog.this.isUsedAfter(variable);
       }
     };
+    panel.setMinimumSize(new Dimension(100, 75));
+    return panel;
   }
 
   protected boolean isUsedAfter(PsiVariable variable) {
