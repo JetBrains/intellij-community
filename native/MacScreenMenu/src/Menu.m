@@ -115,14 +115,23 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeCreateMenu
 /*
  * Class:     com_intellij_ui_mac_screenmenu_Menu
  * Method:    nativeSetTitle
- * Signature: (JLjava/lang/String;)V
+ * Signature: (JLjava/lang/String;Z)V
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_Menu_nativeSetTitle
-(JNIEnv *env, jobject peer, jlong menu, jstring label)
+(JNIEnv *env, jobject peer, jlong menuObj, jstring label, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
-    [((Menu *)menu) setTitle:JavaStringToNSString(env, label)];
+    __strong NSString *theText = JavaStringToNSString(env, label);
+    __strong Menu * menu = (Menu *)menuObj;
+    dispatch_block_t block = ^{
+        [menu setTitle:theText];
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
     JNI_COCOA_EXIT();
 }
 
@@ -202,7 +211,7 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
         }
     };
 
-    if (onAppKit)
+    if (onAppKit && ![NSThread isMainThread])
         dispatch_async(dispatch_get_main_queue(), block);
     else
         block();
@@ -279,7 +288,7 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefillMainMenu
         free(newItemsPtrs);
     };
 
-    if (onAppKit)
+    if (onAppKit && ![NSThread isMainThread])
         dispatch_async(dispatch_get_main_queue(), block);
     else
         block();

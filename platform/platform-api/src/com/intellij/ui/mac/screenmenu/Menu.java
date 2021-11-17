@@ -1,16 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.screenmenu;
 
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,18 +43,17 @@ public class Menu extends MenuItem {
     this.myComponent = component;
   }
 
-  public void setTitle(String label) {
-    ensureNativePeer();
-    nativeSetTitle(nativePeer,label);
+  @Override
+  public void propertyChange(PropertyChangeEvent e) {
+    @NonNls String propertyName = e.getPropertyName();
+    if (Presentation.PROP_TEXT.equals(propertyName) || Presentation.PROP_DESCRIPTION.equals(propertyName)) {
+      setTitle(presentation.getText());
+    }
   }
 
-  // If item was created but wasn't added into any parent menu then can be invoked from any thread.
-  public void addItem(@NotNull MenuItem menuItem, boolean onAppKit) {
-    myItems.add(menuItem);
-
+  public void setTitle(String label) {
     ensureNativePeer();
-    menuItem.ensureNativePeer();
-    nativeAddItem(nativePeer, menuItem.nativePeer, onAppKit);
+    nativeSetTitle(nativePeer, label, isInHierarchy);
   }
 
   @SuppressWarnings("SSBasedInspection")
@@ -75,10 +77,7 @@ public class Menu extends MenuItem {
   synchronized
   public void dispose() {
     disposeChildren(0);
-    if (nativePeer != 0) {
-      nativeDispose(nativePeer);
-      nativePeer = 0;
-    }
+    super.dispose();
   }
 
   public void beginFill() {
@@ -104,6 +103,7 @@ public class Menu extends MenuItem {
         newItemsPeers[c] = menuItem.nativePeer;
         //System.err.printf("\t0x%X\n", newItemsPeers[c]);
         myItems.add(menuItem);
+        menuItem.isInHierarchy = true;
       } else {
         newItemsPeers[c] = 0;
       }
@@ -127,7 +127,14 @@ public class Menu extends MenuItem {
     if (actionDelegate != null) {
       if (USE_STUB) {
         // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty and we can't fill it later)
-        addItem(new MenuItem(), false/*already on AppKit thread*/);
+        MenuItem stub = new MenuItem();
+        myItems.add(stub);
+        stub.isInHierarchy = true;
+
+        ensureNativePeer();
+        stub.ensureNativePeer();
+        nativeAddItem(nativePeer, stub.nativePeer, false/*already on AppKit thread*/);
+
         ApplicationManager.getApplication().invokeLater(()->{
           actionDelegate.run();
           endFill(true);
@@ -158,7 +165,7 @@ public class Menu extends MenuItem {
   private native long nativeCreateMenu();
 
   // If menu was created but wasn't added into any parent menu then all setters can be invoked from any thread.
-  private native void nativeSetTitle(long menuPtr, String title);
+  private native void nativeSetTitle(long menuPtr, String title, boolean onAppKit);
   private native void nativeAddItem(long menuPtr, long itemPtr/*MenuItem OR Menu*/, boolean onAppKit);
 
   // Refill menu
