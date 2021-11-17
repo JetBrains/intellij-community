@@ -20,7 +20,7 @@ import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpointBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.*;
@@ -136,7 +136,8 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
                 KotlinFunctionBreakpoint.this.myIsStatic = methodIsStatic;
 
                 if (psiClass != null) {
-                    KotlinFunctionBreakpoint.this.getProperties().myClassPattern = psiClass.getQualifiedName();
+                    KotlinFunctionBreakpoint.this.getProperties().myClassPattern =
+                            ReadAction.compute(() -> psiClass.getQualifiedName());
                 }
                 if (methodIsStatic) {
                     KotlinFunctionBreakpoint.this.setInstanceFiltersEnabled(false);
