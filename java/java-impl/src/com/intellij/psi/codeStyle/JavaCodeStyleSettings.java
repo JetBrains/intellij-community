@@ -149,6 +149,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
    */
   public boolean SPACE_WITHIN_RECORD_HEADER = false;
 
+  @WrapConstant
+  public int MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  public boolean ALIGN_TYPES_IN_MULTI_CATCH = true;
+
 
   // region JavaDoc
   @Property(externalName = "doc_enable_formatting")

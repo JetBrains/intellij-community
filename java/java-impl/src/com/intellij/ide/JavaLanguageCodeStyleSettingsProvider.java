@@ -240,6 +240,12 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "RPAREN_ON_NEW_LINE_IN_RECORD_HEADER",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 recordComponentsGroup);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "MULTI_CATCH_TYPES_WRAP",
+                                JavaBundle.message("wrapping.multi.catch.types"),
+                                ApplicationBundle.message("wrapping.try.statement"),
+                                getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();

@@ -409,7 +409,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   protected Wrap createChildWrap() {
     //when detecting indent we do not care about wraps
-    return isBuildIndentsOnly() ? null : JavaFormatterUtil.createDefaultWrap(this, getSettings(), this);
+    return isBuildIndentsOnly() ? null : JavaFormatterUtil.createDefaultWrap(this, mySettings, myJavaSettings, this);
   }
 
   @Nullable
@@ -453,6 +453,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         defaultAlignment = myAlignment;
       }
       return createAlignment(mySettings.ALIGN_MULTILINE_BINARY_OPERATION, defaultAlignment);
+    }
+    if (JavaFormatterUtil.isTopLevelTypeInCatchSection(nodeType, myNode)) {
+      return createAlignment(myJavaSettings.ALIGN_TYPES_IN_MULTI_CATCH, null);
     }
     if (isTextBlock(myNode.getPsi())) {
         return createAlignment(myJavaSettings.ALIGN_MULTILINE_TEXT_BLOCKS,null);
@@ -514,6 +517,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return processChild(result, child, alignmentStrategy, defaultWrap, childIndent, -1);
   }
 
+  /**
+   * Creates blocks for nodes starting from child.
+   * @param result mutable list of child blocks
+   * @param child current child to create block for
+   * @param defaultWrap default wrap returned by {@link AbstractJavaBlock#createChildWrap() }
+   * @return next node to handle
+   */
   @Nullable
   protected ASTNode processChild(@NotNull final List<Block> result,
                                  @NotNull ASTNode child,
@@ -581,6 +591,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
         child = myNode.getLastChildNode();
         result.addAll(newlyCreated);
+      }
+      else if (childType == JavaTokenType.OR && nodeType == JavaElementType.TYPE) {
+        // by default in "Foo | Bar | Baz" each child will have same (default) wrap, but we need to distinguish types and "|"
+        Wrap wrap = Wrap.createWrap(WrapType.NONE, false);
+        result.add(new SimpleJavaBlock(child, wrap, alignmentStrategy, childIndent, mySettings, myJavaSettings, myFormattingMode));
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARENTH_EXPRESSION) {
         child = processParenthesisBlock(result, child,

@@ -122,6 +122,8 @@ public final class JavaFormatterUtil {
   /**
    * Creates {@link Wrap wrap} to be used with the children blocks of the given block.
    *
+   * It is important that single instance of wrap will be used for all children which use default wrap.
+   *
    * @param block                 target block which sub-blocks should use wrap created by the current method
    * @param settings              code formatting settings to consider during wrap construction
    * @param reservedWrapsProvider reserved {@code 'element type -> wrap instance'} mappings provider. <b>Note:</b> this
@@ -130,9 +132,13 @@ public final class JavaFormatterUtil {
    * @return wrap to use for the sub-blocks of the given block
    */
   @Nullable
-  static Wrap createDefaultWrap(ASTBlock block, CommonCodeStyleSettings settings, ReservedWrapsProvider reservedWrapsProvider) {
+  static Wrap createDefaultWrap(ASTBlock block,
+                                CommonCodeStyleSettings settings,
+                                JavaCodeStyleSettings javaSettings,
+                                ReservedWrapsProvider reservedWrapsProvider) {
     ASTNode node = block.getNode();
     Wrap wrap = block.getWrap();
+    if (node == null) return null;
     final IElementType nodeType = node.getElementType();
     if (nodeType == JavaElementType.EXTENDS_LIST ||
         nodeType == JavaElementType.IMPLEMENTS_LIST ||
@@ -174,9 +180,20 @@ public final class JavaFormatterUtil {
     else if (isAssignment(node)) {
       return Wrap.createWrap(settings.ASSIGNMENT_WRAP, true);
     }
+    else if (isTopLevelTypeInCatchSection(nodeType, node)) {
+      return Wrap.createWrap(javaSettings.MULTI_CATCH_TYPES_WRAP, false);
+    }
     else {
       return null;
     }
+  }
+
+  static boolean isTopLevelTypeInCatchSection(@NotNull IElementType nodeType, ASTNode node) {
+    if (nodeType != JavaElementType.TYPE) return false;
+    ASTNode parent = node.getTreeParent();
+    if (parent == null || parent.getElementType() != JavaElementType.PARAMETER) return false;
+    ASTNode grandParent = parent.getTreeParent();
+    return grandParent != null && grandParent.getElementType() == JavaElementType.CATCH_SECTION;
   }
 
   /**
