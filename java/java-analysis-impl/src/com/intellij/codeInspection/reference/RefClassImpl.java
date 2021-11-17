@@ -50,6 +50,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   RefClassImpl(UClass uClass, PsiElement psi, RefManager manager) {
     super(uClass, psi, manager);
     myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(psi));
+
+    setInterface(uClass.isInterface());
+    setAbstract(uClass.getJavaPsi().hasModifier(JvmModifier.ABSTRACT));
+    setAnonymous(uClass.getName() == null);
   }
 
   @Override
@@ -94,13 +98,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
     if (!myManager.isDeclarationsFound()) return;
 
-    PsiClass javaPsi = uClass.getJavaPsi();
-    setAbstract(javaPsi.hasModifier(JvmModifier.ABSTRACT));
-    setAnonymous(uClass.getName() == null);
-
     setIsLocal(!isAnonymous() && parent != null && !(parent instanceof UClass));
-
-    setInterface(uClass.isInterface());
 
     initializeSuperReferences(uClass);
 
@@ -172,7 +170,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (!utilityClass) {
       setApplet(getRefJavaManager().getApplet() != null && JvmInheritanceUtil.isInheritor(uClass, getRefJavaManager().getAppletQName()));
       if (!isApplet()) {
-        setServlet(JvmInheritanceUtil.isInheritor(javaPsi, getRefJavaManager().getServletQName()));
+        setServlet(JvmInheritanceUtil.isInheritor(uClass.getJavaPsi(), getRefJavaManager().getServletQName()));
       }
       if (!isApplet() && !isServlet()) {
         PsiElement psi = uClass.getSourcePsi();
