@@ -22,8 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.webcore.packaging.PackageManagementService;
-import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import org.jetbrains.annotations.Nls;
@@ -188,13 +186,10 @@ public final class PyPackageManagerUI {
                                                       NotificationType.INFORMATION, null));
       }
       else {
-        final List<Pair<String, String>> requirements = this instanceof InstallTask && ((InstallTask)this).myRequirements != null
-                                                        ? ContainerUtil.flatMap(((InstallTask)this).myRequirements,
-                                                                                req -> ContainerUtil.map(req.getInstallOptions(),
-                                                                                                         option -> Pair.create(option,
-                                                                                                                               req.getName()))
-        )
-                                                        : null;
+        final List<Pair<String, String>> requirements =
+          this instanceof InstallTask && ((InstallTask)this).myRequirements != null ? ContainerUtil.flatMap(
+            ((InstallTask)this).myRequirements,
+            req -> ContainerUtil.map(req.getInstallOptions(), option -> Pair.create(option, req.getName()))) : null;
         final List<String> packageManagerArguments = exceptions.stream()
           .flatMap(e -> (e instanceof PyExecutionException) ? ((PyExecutionException)e).getArgs().stream() : null)
           .collect(Collectors.toList());
