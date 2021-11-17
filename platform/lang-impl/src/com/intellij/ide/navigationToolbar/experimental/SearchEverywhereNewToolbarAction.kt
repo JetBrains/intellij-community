@@ -56,6 +56,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   var seManager: SearchEverywhereManager? = null
 
   override fun update(event: AnActionEvent) {
+    if (event.place != ActionPlaces.MAIN_TOOLBAR) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
     val project = event.project ?: return
     if (seManager == null) {
       seManager = SearchEverywhereManager.getInstance(project)
@@ -148,6 +152,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
       override fun paint(g: Graphics?) {
         if (!checkIfEnoughSpace()) return
+        if (preferredSize.width < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width) return
         foreground = DISABLED_TEXT_COLOR
         background = searchFieldBackground()
         super.paint(g)

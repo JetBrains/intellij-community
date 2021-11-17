@@ -32,6 +32,7 @@ import java.beans.PropertyChangeListener;
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
   private static final int TEXT_ARROW_SPACE = 1;
+  private static final int BUTTONS_GAP = 4;
 
   private int myHorizontalTextPosition = SwingConstants.TRAILING;
   private int myHorizontalTextAlignment = SwingConstants.CENTER;
@@ -138,7 +139,7 @@ public class ActionButtonWithText extends ActionButton {
     int y2 = Math.max(iconR.y + iconR.height, textR.y + textR.height);
     Dimension rv = new Dimension(x2 - x1 + dx, y2 - y1 + dy);
 
-    rv.width += Math.max(basicSize.width - rv.width, 0);
+    rv.width += 2 * JBUI.scale(BUTTONS_GAP);
     if (shallPaintDownArrow()) {
       rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
     }

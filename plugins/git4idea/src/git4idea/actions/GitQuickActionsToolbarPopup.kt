@@ -3,10 +3,7 @@ package git4idea.actions
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -47,11 +44,16 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return MyActionButtonWithText(this, presentation, place)
+    return MyActionButtonWithText(this, presentation.apply { text = "" }, place)
   }
 
   override fun update(e: AnActionEvent) {
+    if (e.place !== ActionPlaces.MAIN_TOOLBAR) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     e.project ?: return
+    templatePresentation.text = ""
     val presentation = e.presentation
     val instance = GitQuickActionsToolbarService.getInstance(e.project!!)
     if (!instance.gitMappingUpdated) {
@@ -75,7 +77,7 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
       ""
     }
     else {
-      GitBundle.message("toolbar.vcs.show.more.actions") + " "
+      GitBundle.message("action.Vcs.Toolbar.ShowMoreActions.text") + " "
     }
   }
 
