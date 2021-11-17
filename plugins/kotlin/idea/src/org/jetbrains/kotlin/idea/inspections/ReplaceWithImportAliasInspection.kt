@@ -50,7 +50,14 @@ class ReplaceWithImportAliasInspection : AbstractKotlinInspection() {
             val expression = descriptor.psiElement as? KtNameReferenceExpression ?: return
             val aliasNameIdentifier = aliasNameIdentifierPointer.element ?: return
             expression.getIdentifier()?.replace(aliasNameIdentifier.copy())
-            expression.getQualifiedElement().replace(expression.parent.safeAs<KtCallExpression>() ?: expression)
+            expression.getQualifiedElement().let { element ->
+                if (element is KtUserType) {
+                    element.referenceExpression?.replace(expression)
+                    element.deleteQualifier()
+                } else {
+                    element.replace(expression.parent.safeAs<KtCallExpression>() ?: expression)
+                }
+            }
         }
     }
 }
