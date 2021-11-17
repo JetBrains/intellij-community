@@ -1,15 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.JavaModuleType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -90,17 +84,6 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
     assertEquals(version.getMaxLanguageLevel(), extension.getLanguageLevel());
-  }
-
-  public void testCommandLineApp() throws Exception {
-    Project project = createProjectFromTemplate(JavaModuleType.JAVA_GROUP, "Command Line App", null);
-    List<RunConfiguration> configurations = RunManager.getInstance(project).getAllConfigurationsList();
-    assertEquals(1, configurations.size());
-    ApplicationConfiguration configuration = (ApplicationConfiguration)configurations.get(0);
-    Module module = ModuleManager.getInstance(project).getModules()[0];
-    assertEquals(module, configuration.getConfigurationModule().getModule());
-    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
-    assertEquals(configuration, settings.getConfiguration());
   }
 
   private static void setProjectSdk(final Project project, final Sdk jdk17) {
