@@ -3,7 +3,7 @@ package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
+import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.openapi.Disposable
@@ -84,7 +84,7 @@ internal class DocumentationToolWindowUpdater(
       return
     }
     val request = readAction {
-      dataContext.getData(DOCUMENTATION_TARGETS)?.singleOrNull()?.documentationRequest()
+      documentationTargets(dataContext).singleOrNull()?.documentationRequest()
     }
     if (request != null) {
       browser.resetBrowser(request)
