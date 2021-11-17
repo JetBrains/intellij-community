@@ -6,7 +6,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class ChangeToFunctionInvocationFix(element: KtExpression) : KotlinQuickFixAction<KtExpression>(element) {
     override fun getFamilyName() = KotlinBundle.message("fix.change.to.function.invocation")
@@ -26,9 +29,9 @@ class ChangeToFunctionInvocationFix(element: KtExpression) : KotlinQuickFixActio
             } else {
                 nextLiteralStringEntry.delete()
             }
-            element.replace(KtPsiFactory(file).createExpressionByPattern("$0$1", element, parentheses))
+            element.replace(KtPsiFactory(file).createExpression("${element.text}$parentheses"))
         } else {
-            element.replace(KtPsiFactory(file).createExpressionByPattern("$0()", element))
+            element.replace(KtPsiFactory(file).createExpression("${element.text}()"))
         }
     }
 
