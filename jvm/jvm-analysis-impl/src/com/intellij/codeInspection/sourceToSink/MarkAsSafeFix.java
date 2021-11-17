@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.lang.jvm.JvmMethod;
@@ -60,7 +59,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
 
   public static void markAsSafe(@NotNull Project project, @NotNull PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null || !FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
+    if (psiFile == null || !psiFile.isWritable()) return;
     JvmMethod jvmMethod = ObjectUtils.tryCast(element, JvmMethod.class);
     if (jvmMethod != null) {
       JvmType returnType = jvmMethod.getReturnType();
