@@ -11,11 +11,9 @@ import com.intellij.find.usages.api.SearchTarget
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.PopupTitle
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.ui.list.createTargetPopup
 import com.intellij.usages.UsageTarget
@@ -23,15 +21,8 @@ import org.jetbrains.annotations.ApiStatus
 
 /* This file contains weird logic so Symbols will work with PsiElements and UsageTargets. */
 
-private val TARGET_VARIANTS: DataKey<List<TargetVariant>> = DataKey.create("search.target.variants")
-
 internal fun allTargets(dataContext: DataContext): List<TargetVariant> {
-  if (Registry.`is`("ide.find.usages.data.rule")) {
-    return dataContext.getData(TARGET_VARIANTS) ?: emptyList()
-  }
-  else {
-    return targetVariants(dataContext::getData)
-  }
+  return targetVariants(dataContext)
 }
 
 internal interface UsageVariantHandler {
