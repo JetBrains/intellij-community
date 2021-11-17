@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import com.intellij.psi.PsiElement;
@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
@@ -89,8 +90,6 @@ public final class ReachingDefinitionsCollector {
       }
     }
 
-    addClosureUsages(imap, omap, first, last, flowOwner);
-
     return new FragmentVariableInfos() {
       @Override
       public VariableInfo[] getInputVariableNames() {
@@ -129,6 +128,8 @@ public final class ReachingDefinitionsCollector {
                                                 @NotNull GrControlFlowOwner flowOwner) {
     GrVariable variable = resolveToLocalVariable(element, descriptor.getName());
     if (variable == null) return false;
+    var subFlowOwner = PsiTreeUtil.getParentOfType(variable, GrControlFlowOwner.class);
+    if (variable instanceof GrParameter && (subFlowOwner != null && PsiTreeUtil.isAncestor(flowOwner, subFlowOwner, false))) return false;
     return !PsiImplUtilKt.isDeclaredIn(variable, flowOwner);
   }
 
