@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.*
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -25,8 +27,8 @@ import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import java.util.*
 
-fun DeclarationDescriptorWithVisibility.isVisible(from: DeclarationDescriptor): Boolean {
-    return isVisible(from, null)
+fun DeclarationDescriptorWithVisibility.isVisible(from: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings): Boolean {
+    return isVisible(from, null, languageVersionSettings = languageVersionSettings)
 }
 
 fun DeclarationDescriptorWithVisibility.isVisible(
@@ -37,16 +39,17 @@ fun DeclarationDescriptorWithVisibility.isVisible(
 ): Boolean {
     val resolutionScope = context.getResolutionScope(bindingContext, resolutionFacade)
     val from = resolutionScope.ownerDescriptor
-    return isVisible(from, receiverExpression, bindingContext, resolutionScope)
+    return isVisible(from, receiverExpression, bindingContext, resolutionScope, resolutionFacade.getLanguageVersionSettings())
 }
 
 private fun DeclarationDescriptorWithVisibility.isVisible(
     from: DeclarationDescriptor,
     receiverExpression: KtExpression?,
     bindingContext: BindingContext? = null,
-    resolutionScope: LexicalScope? = null
+    resolutionScope: LexicalScope? = null,
+    languageVersionSettings: LanguageVersionSettings
 ): Boolean {
-    if (DescriptorVisibilities.isVisibleWithAnyReceiver(this, from)) return true
+    if (DescriptorVisibilityUtils.isVisibleWithAnyReceiver(this, from, languageVersionSettings)) return true
 
     if (bindingContext == null || resolutionScope == null) return false
 
@@ -54,10 +57,10 @@ private fun DeclarationDescriptorWithVisibility.isVisible(
     if (receiverExpression != null && !isExtension) {
         val receiverType = bindingContext.getType(receiverExpression) ?: return false
         val explicitReceiver = ExpressionReceiver.create(receiverExpression, receiverType, bindingContext)
-        return DescriptorVisibilities.isVisible(explicitReceiver, this, from)
+        return DescriptorVisibilityUtils.isVisible(explicitReceiver, this, from, languageVersionSettings)
     } else {
         return resolutionScope.getImplicitReceiversHierarchy().any {
-            DescriptorVisibilities.isVisible(it.value, this, from)
+            DescriptorVisibilityUtils.isVisible(it.value, this, from, languageVersionSettings)
         }
     }
 }
