@@ -146,7 +146,12 @@ fun Call.resolveCandidates(
 
     if (filterOutByVisibility) {
         candidates = candidates.filter {
-            DescriptorVisibilities.isVisible(it.getDispatchReceiverWithSmartCast(), it.resultingDescriptor, inDescriptor)
+            DescriptorVisibilityUtils.isVisible(
+                it.getDispatchReceiverWithSmartCast(),
+                it.resultingDescriptor,
+                inDescriptor,
+                resolutionFacade.getLanguageVersionSettings()
+            )
         }
     }
 

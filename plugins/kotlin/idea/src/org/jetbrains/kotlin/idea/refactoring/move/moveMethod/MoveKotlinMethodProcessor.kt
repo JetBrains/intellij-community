@@ -16,10 +16,8 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
-import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.core.setVisibility
@@ -28,6 +26,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinMoveTar
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -130,11 +129,11 @@ class MoveKotlinMethodProcessor(
             return factory.createExpression(receiverText)
         }
 
-        fun escalateTargetVariableVisibilityIfNeeded(where: DeclarationDescriptor?) {
+        fun escalateTargetVariableVisibilityIfNeeded(where: DeclarationDescriptor?, languageVersionSettings: LanguageVersionSettings) {
             if (where == null || targetVariableIsMethodParameter()) return
             val targetDescriptor = targetVariable.resolveToDescriptorIfAny() as? DeclarationDescriptorWithVisibility
                 ?: return
-            if (!DescriptorVisibilities.isVisibleIgnoringReceiver(targetDescriptor, where) && method.manager.isInProject(targetVariable)) {
+            if (!DescriptorVisibilityUtils.isVisibleIgnoringReceiver(targetDescriptor, where, languageVersionSettings) && method.manager.isInProject(targetVariable)) {
                 targetVariable.setVisibility(KtTokens.PUBLIC_KEYWORD)
             }
         }
@@ -143,7 +142,10 @@ class MoveKotlinMethodProcessor(
             when (expression) {
                 is KtNameReferenceExpression -> {
                     val callExpression = expression.parent as? KtCallExpression ?: return
-                    escalateTargetVariableVisibilityIfNeeded(callExpression.containingNonLocalDeclaration()?.resolveToDescriptorIfAny())
+                    escalateTargetVariableVisibilityIfNeeded(
+                        callExpression.containingNonLocalDeclaration()?.resolveToDescriptorIfAny(),
+                        callExpression.getResolutionFacade().getLanguageVersionSettings()
+                    )
 
                     val oldReceiver = callExpression.getQualifiedExpressionForSelector()?.receiverExpression
                         ?: expression.getImplicitReceiver()
