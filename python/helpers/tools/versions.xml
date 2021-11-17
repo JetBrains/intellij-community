@@ -83,6 +83,7 @@
 		<module>asyncio.futures</module>
 		<module>asyncio.locks</module>
 		<module>asyncio.log</module>
+		<module>asyncio.mixins</module>
 		<module>asyncio.proactor_events</module>
 		<module>asyncio.protocols</module>
 		<module>asyncio.queues</module>
@@ -281,6 +282,8 @@
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.idle_test.test_window</module>
 		<module>idlelib.idle_test.test_zoomheight</module>
+		<module>idlelib.idle_test.test_zzdummy</module>
+		<module>idlelib.idle_test.tkinter_testing_utils</module>
 		<module>idlelib.iomenu</module>
 		<module>idlelib.macosx</module>
 		<module>idlelib.mainmenu</module>
@@ -314,12 +317,19 @@
 		<module>idlelib.zzdummy</module>
 		<module>importlib</module>
 		<module>importlib._abc</module>
+		<module>importlib._adapters</module>
 		<module>importlib._bootstrap</module>
 		<module>importlib._bootstrap_external</module>
 		<module>importlib._common</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.metadata</module>
+		<module>importlib.metadata._adapters</module>
+		<module>importlib.metadata._collections</module>
+		<module>importlib.metadata._functools</module>
+		<module>importlib.metadata._itertools</module>
+		<module>importlib.metadata._meta</module>
+		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>importlib.resources</module>
 		<module>importlib.util</module>
@@ -681,11 +691,14 @@
 		<module>tkinter.test.runtktests</module>
 		<module>tkinter.test.support</module>
 		<module>tkinter.test.test_tkinter</module>
+		<module>tkinter.test.test_tkinter.test_colorchooser</module>
 		<module>tkinter.test.test_tkinter.test_font</module>
 		<module>tkinter.test.test_tkinter.test_geometry_managers</module>
 		<module>tkinter.test.test_tkinter.test_images</module>
 		<module>tkinter.test.test_tkinter.test_loadtk</module>
+		<module>tkinter.test.test_tkinter.test_messagebox</module>
 		<module>tkinter.test.test_tkinter.test_misc</module>
+		<module>tkinter.test.test_tkinter.test_simpledialog</module>
 		<module>tkinter.test.test_tkinter.test_text</module>
 		<module>tkinter.test.test_tkinter.test_variables</module>
 		<module>tkinter.test.test_tkinter.test_widgets</module>
@@ -777,6 +790,7 @@
 		<module>xmlrpc.client</module>
 		<module>xmlrpc.server</module>
 		<module>xxlimited</module>
+		<module>xxlimited_35</module>
 		<module>zipapp</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
@@ -789,6 +803,7 @@
 		<func>ConnectionError</func>
 		<func>ConnectionRefusedError</func>
 		<func>ConnectionResetError</func>
+		<func>EncodingWarning</func>
 		<func>FileExistsError</func>
 		<func>FileNotFoundError</func>
 		<func>InterruptedError</func>
@@ -805,6 +820,8 @@
 		<func>__build_class__</func>
 		<func>__loader__</func>
 		<func>__spec__</func>
+		<func>aiter</func>
+		<func>anext</func>
 		<func>ascii</func>
 		<func>breakpoint</func>
 		<func>exec</func>
@@ -883,6 +900,7 @@
 		<module>asyncio.futures</module>
 		<module>asyncio.locks</module>
 		<module>asyncio.log</module>
+		<module>asyncio.mixins</module>
 		<module>asyncio.proactor_events</module>
 		<module>asyncio.protocols</module>
 		<module>asyncio.queues</module>
@@ -1026,6 +1044,8 @@
 		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_window</module>
 		<module>idlelib.idle_test.test_zoomheight</module>
+		<module>idlelib.idle_test.test_zzdummy</module>
+		<module>idlelib.idle_test.tkinter_testing_utils</module>
 		<module>idlelib.iomenu</module>
 		<module>idlelib.macosx</module>
 		<module>idlelib.mainmenu</module>
@@ -1059,12 +1079,19 @@
 		<module>idlelib.zoomheight</module>
 		<module>idlelib.zzdummy</module>
 		<module>importlib._abc</module>
+		<module>importlib._adapters</module>
 		<module>importlib._bootstrap</module>
 		<module>importlib._bootstrap_external</module>
 		<module>importlib._common</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.metadata</module>
+		<module>importlib.metadata._adapters</module>
+		<module>importlib.metadata._collections</module>
+		<module>importlib.metadata._functools</module>
+		<module>importlib.metadata._itertools</module>
+		<module>importlib.metadata._meta</module>
+		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>importlib.resources</module>
 		<module>importlib.util</module>
@@ -1115,11 +1142,14 @@
 		<module>tkinter.test.runtktests</module>
 		<module>tkinter.test.support</module>
 		<module>tkinter.test.test_tkinter</module>
+		<module>tkinter.test.test_tkinter.test_colorchooser</module>
 		<module>tkinter.test.test_tkinter.test_font</module>
 		<module>tkinter.test.test_tkinter.test_geometry_managers</module>
 		<module>tkinter.test.test_tkinter.test_images</module>
 		<module>tkinter.test.test_tkinter.test_loadtk</module>
+		<module>tkinter.test.test_tkinter.test_messagebox</module>
 		<module>tkinter.test.test_tkinter.test_misc</module>
+		<module>tkinter.test.test_tkinter.test_simpledialog</module>
 		<module>tkinter.test.test_tkinter.test_text</module>
 		<module>tkinter.test.test_tkinter.test_variables</module>
 		<module>tkinter.test.test_tkinter.test_widgets</module>
@@ -1186,6 +1216,7 @@
 		<module>xmlrpc.client</module>
 		<module>xmlrpc.server</module>
 		<module>xxlimited</module>
+		<module>xxlimited_35</module>
 		<module>zipapp</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
@@ -1198,6 +1229,7 @@
 		<func>ConnectionError</func>
 		<func>ConnectionRefusedError</func>
 		<func>ConnectionResetError</func>
+		<func>EncodingWarning</func>
 		<func>FileExistsError</func>
 		<func>FileNotFoundError</func>
 		<func>InterruptedError</func>
@@ -1214,6 +1246,8 @@
 		<func>__build_class__</func>
 		<func>__loader__</func>
 		<func>__spec__</func>
+		<func>aiter</func>
+		<func>anext</func>
 		<func>ascii</func>
 		<func>breakpoint</func>
 		<func>exec</func>
@@ -1255,27 +1289,13 @@
 		<module>__main__</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
-		<module>_crypt</module>
-		<module>_ctypes_test</module>
-		<module>_curses</module>
-		<module>_curses_panel</module>
 		<module>_dbm</module>
 		<module>_dummy_thread</module>
 		<module>_fileio</module>
-		<module>_gdbm</module>
 		<module>_hotshot</module>
 		<module>_peg_parser</module>
-		<module>_posixshmem</module>
-		<module>_posixsubprocess</module>
 		<module>_sysconfigdata</module>
-		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
-		<module>_testbuffer</module>
-		<module>_testcapi</module>
-		<module>_testimportmultiple</module>
-		<module>_testinternalcapi</module>
-		<module>_testmultiphase</module>
-		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.test_utils</module>
@@ -1354,11 +1374,9 @@
 		<module>encodings.string_escape</module>
 		<module>encodings.unicode_internal</module>
 		<module>exceptions</module>
-		<module>fcntl</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
 		<module>gdbm</module>
-		<module>grp</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -1472,9 +1490,7 @@
 		<module>multiprocessing.semaphore_tracker</module>
 		<module>mutex</module>
 		<module>new</module>
-		<module>nis</module>
 		<module>os2emxpath</module>
-		<module>ossaudiodev</module>
 		<module>parser</module>
 		<module>pip</module>
 		<module>pip.__main__</module>
@@ -1779,20 +1795,15 @@
 		<module>pip._vendor.webencodings.tests</module>
 		<module>pip._vendor.webencodings.x_user_defined</module>
 		<module>popen2</module>
-		<module>posix</module>
 		<module>posixfile</module>
-		<module>pwd</module>
 		<module>pydoc_topics</module>
-		<module>readline</module>
 		<module>repr</module>
-		<module>resource</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
-		<module>spwd</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
 		<module>statvfs</module>
@@ -1800,9 +1811,6 @@
 		<module>strop</module>
 		<module>sunaudio</module>
 		<module>symbol</module>
-		<module>syslog</module>
-		<module>termios</module>
-		<module>test</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
@@ -1819,7 +1827,6 @@
 		<module>whichdb</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<module>xxlimited</module>
 		<func>StandardError</func>
 		<func>apply</func>
 		<func>basestring</func>
@@ -1902,6 +1909,7 @@
 		<module>asyncio.base_tasks</module>
 		<module>asyncio.exceptions</module>
 		<module>asyncio.format_helpers</module>
+		<module>asyncio.mixins</module>
 		<module>asyncio.runners</module>
 		<module>asyncio.staggered</module>
 		<module>asyncio.threads</module>
@@ -2061,6 +2069,8 @@
 		<module>idlelib.idle_test.test_undo</module>
 		<module>idlelib.idle_test.test_window</module>
 		<module>idlelib.idle_test.test_zoomheight</module>
+		<module>idlelib.idle_test.test_zzdummy</module>
+		<module>idlelib.idle_test.tkinter_testing_utils</module>
 		<module>idlelib.iomenu</module>
 		<module>idlelib.macosx</module>
 		<module>idlelib.mainmenu</module>
@@ -2095,8 +2105,15 @@
 		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
 		<module>importlib._abc</module>
+		<module>importlib._adapters</module>
 		<module>importlib._common</module>
 		<module>importlib.metadata</module>
+		<module>importlib.metadata._adapters</module>
+		<module>importlib.metadata._collections</module>
+		<module>importlib.metadata._functools</module>
+		<module>importlib.metadata._itertools</module>
+		<module>importlib.metadata._meta</module>
+		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>importlib.resources</module>
 		<module>imputil</module>
@@ -2465,6 +2482,9 @@
 		<module>tkFont</module>
 		<module>tkMessageBox</module>
 		<module>tkSimpleDialog</module>
+		<module>tkinter.test.test_tkinter.test_colorchooser</module>
+		<module>tkinter.test.test_tkinter.test_messagebox</module>
+		<module>tkinter.test.test_tkinter.test_simpledialog</module>
 		<module>toaiff</module>
 		<module>ttk</module>
 		<module>turtledemo.rosette</module>
@@ -2481,13 +2501,17 @@
 		<module>winsound</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
+		<module>xxlimited_35</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>EncodingWarning</func>
 		<func>ModuleNotFoundError</func>
 		<func>StandardError</func>
 		<func>WindowsError</func>
+		<func>aiter</func>
+		<func>anext</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>breakpoint</func>
@@ -2569,6 +2593,7 @@
 		<module>asyncio.__main__</module>
 		<module>asyncio.exceptions</module>
 		<module>asyncio.format_helpers</module>
+		<module>asyncio.mixins</module>
 		<module>asyncio.runners</module>
 		<module>asyncio.staggered</module>
 		<module>asyncio.threads</module>
@@ -2723,6 +2748,8 @@
 		<module>idlelib.idle_test.test_sidebar</module>
 		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.test_zzdummy</module>
+		<module>idlelib.idle_test.tkinter_testing_utils</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
 		<module>idlelib.macosxSupport</module>
@@ -2732,8 +2759,15 @@
 		<module>idlelib.textView</module>
 		<module>ihooks</module>
 		<module>importlib._abc</module>
+		<module>importlib._adapters</module>
 		<module>importlib._common</module>
 		<module>importlib.metadata</module>
+		<module>importlib.metadata._adapters</module>
+		<module>importlib.metadata._collections</module>
+		<module>importlib.metadata._functools</module>
+		<module>importlib.metadata._itertools</module>
+		<module>importlib.metadata._meta</module>
+		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>importlib.resources</module>
 		<module>imputil</module>
@@ -3101,6 +3135,9 @@
 		<module>tkFont</module>
 		<module>tkMessageBox</module>
 		<module>tkSimpleDialog</module>
+		<module>tkinter.test.test_tkinter.test_colorchooser</module>
+		<module>tkinter.test.test_tkinter.test_messagebox</module>
+		<module>tkinter.test.test_tkinter.test_simpledialog</module>
 		<module>toaiff</module>
 		<module>ttk</module>
 		<module>turtledemo.wikipedia</module>
@@ -3117,12 +3154,16 @@
 		<module>winsound</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
+		<module>xxlimited_35</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>EncodingWarning</func>
 		<func>StandardError</func>
 		<func>WindowsError</func>
+		<func>aiter</func>
+		<func>anext</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>breakpoint</func>
@@ -3181,7 +3222,6 @@
 		<module>_bytesio</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
-		<module>_lzma</module>
 		<module>_msi</module>
 		<module>_overlapped</module>
 		<module>_peg_parser</module>
@@ -3190,7 +3230,6 @@
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_testinternalcapi</module>
-		<module>_tkinter</module>
 		<module>_winapi</module>
 		<module>_xxsubinterpreters</module>
 		<module>_zoneinfo</module>
@@ -3198,6 +3237,7 @@
 		<module>asyncio.__main__</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.exceptions</module>
+		<module>asyncio.mixins</module>
 		<module>asyncio.staggered</module>
 		<module>asyncio.test_utils</module>
 		<module>asyncio.threads</module>
@@ -3335,11 +3375,9 @@
 		<module>idlelib.configHelpSourceEdit</module>
 		<module>idlelib.configSectionNameDialog</module>
 		<module>idlelib.dynOptionMenuWidget</module>
-		<module>idlelib.format</module>
 		<module>idlelib.idle_test.test_calltips</module>
 		<module>idlelib.idle_test.test_config_help</module>
 		<module>idlelib.idle_test.test_config_name</module>
-		<module>idlelib.idle_test.test_format</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_helpabout</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
@@ -3347,20 +3385,27 @@
 		<module>idlelib.idle_test.test_replacedialog</module>
 		<module>idlelib.idle_test.test_searchdialog</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
-		<module>idlelib.idle_test.test_sidebar</module>
 		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.test_zzdummy</module>
+		<module>idlelib.idle_test.tkinter_testing_utils</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
 		<module>idlelib.macosxSupport</module>
-		<module>idlelib.sidebar</module>
 		<module>idlelib.tabbedpages</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
 		<module>ihooks</module>
 		<module>importlib._abc</module>
+		<module>importlib._adapters</module>
 		<module>importlib._common</module>
 		<module>importlib.metadata</module>
+		<module>importlib.metadata._adapters</module>
+		<module>importlib.metadata._collections</module>
+		<module>importlib.metadata._functools</module>
+		<module>importlib.metadata._itertools</module>
+		<module>importlib.metadata._meta</module>
+		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>imputil</module>
 		<module>json.tests</module>
@@ -3727,6 +3772,9 @@
 		<module>tkFont</module>
 		<module>tkMessageBox</module>
 		<module>tkSimpleDialog</module>
+		<module>tkinter.test.test_tkinter.test_colorchooser</module>
+		<module>tkinter.test.test_tkinter.test_messagebox</module>
+		<module>tkinter.test.test_tkinter.test_simpledialog</module>
 		<module>toaiff</module>
 		<module>ttk</module>
 		<module>turtledemo.wikipedia</module>
@@ -3742,12 +3790,16 @@
 		<module>winsound</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
+		<module>xxlimited_35</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>EncodingWarning</func>
 		<func>StandardError</func>
 		<func>WindowsError</func>
+		<func>aiter</func>
+		<func>anext</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>buffer</func>
@@ -3805,17 +3857,16 @@
 		<module>_bytesio</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
-		<module>_lzma</module>
 		<module>_msi</module>
 		<module>_overlapped</module>
 		<module>_peg_parser</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
-		<module>_tkinter</module>
 		<module>_winapi</module>
 		<module>_zoneinfo</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
+		<module>asyncio.mixins</module>
 		<module>asyncio.test_utils</module>
 		<module>asyncio.threads</module>
 		<module>audiodev</module>
@@ -3967,6 +4018,7 @@
 		<module>idlelib.idle_test.test_searchdialogbase</module>
 		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.tkinter_testing_utils</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
 		<module>idlelib.macosxSupport</module>
@@ -3977,7 +4029,14 @@
 		<module>idlelib.textView</module>
 		<module>ihooks</module>
 		<module>importlib._abc</module>
+		<module>importlib._adapters</module>
 		<module>importlib._common</module>
+		<module>importlib.metadata._adapters</module>
+		<module>importlib.metadata._collections</module>
+		<module>importlib.metadata._functools</module>
+		<module>importlib.metadata._itertools</module>
+		<module>importlib.metadata._meta</module>
+		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>imputil</module>
 		<module>json.tests</module>
@@ -4344,6 +4403,7 @@
 		<module>tkFont</module>
 		<module>tkMessageBox</module>
 		<module>tkSimpleDialog</module>
+		<module>tkinter.test.test_tkinter.test_messagebox</module>
 		<module>toaiff</module>
 		<module>ttk</module>
 		<module>turtledemo.wikipedia</module>
@@ -4356,12 +4416,16 @@
 		<module>winsound</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
+		<module>xxlimited_35</module>
 		<module>zoneinfo</module>
 		<module>zoneinfo._common</module>
 		<module>zoneinfo._tzpath</module>
 		<module>zoneinfo._zoneinfo</module>
+		<func>EncodingWarning</func>
 		<func>StandardError</func>
 		<func>WindowsError</func>
+		<func>aiter</func>
+		<func>anext</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>buffer</func>
@@ -4415,28 +4479,15 @@
 		<module>__main__</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
-		<module>_crypt</module>
-		<module>_ctypes_test</module>
-		<module>_curses</module>
-		<module>_curses_panel</module>
 		<module>_dbm</module>
 		<module>_dummy_thread</module>
 		<module>_fileio</module>
-		<module>_gdbm</module>
 		<module>_hotshot</module>
-		<module>_posixshmem</module>
-		<module>_posixsubprocess</module>
 		<module>_sysconfigdata</module>
-		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
-		<module>_testbuffer</module>
-		<module>_testcapi</module>
-		<module>_testimportmultiple</module>
-		<module>_testinternalcapi</module>
-		<module>_testmultiphase</module>
-		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
+		<module>asyncio.mixins</module>
 		<module>asyncio.test_utils</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
@@ -4513,11 +4564,9 @@
 		<module>encodings.string_escape</module>
 		<module>encodings.unicode_internal</module>
 		<module>exceptions</module>
-		<module>fcntl</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
 		<module>gdbm</module>
-		<module>grp</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -4589,6 +4638,7 @@
 		<module>idlelib.idle_test.test_searchdialogbase</module>
 		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.tkinter_testing_utils</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
 		<module>idlelib.macosxSupport</module>
@@ -4599,6 +4649,13 @@
 		<module>idlelib.textView</module>
 		<module>ihooks</module>
 		<module>importlib._abc</module>
+		<module>importlib._adapters</module>
+		<module>importlib.metadata._adapters</module>
+		<module>importlib.metadata._collections</module>
+		<module>importlib.metadata._functools</module>
+		<module>importlib.metadata._itertools</module>
+		<module>importlib.metadata._meta</module>
+		<module>importlib.metadata._text</module>
 		<module>importlib.readers</module>
 		<module>imputil</module>
 		<module>json.tests</module>
@@ -4633,9 +4690,7 @@
 		<module>multiprocessing.semaphore_tracker</module>
 		<module>mutex</module>
 		<module>new</module>
-		<module>nis</module>
 		<module>os2emxpath</module>
-		<module>ossaudiodev</module>
 		<module>pip</module>
 		<module>pip.__main__</module>
 		<module>pip._internal</module>
@@ -4939,29 +4994,21 @@
 		<module>pip._vendor.webencodings.tests</module>
 		<module>pip._vendor.webencodings.x_user_defined</module>
 		<module>popen2</module>
-		<module>posix</module>
 		<module>posixfile</module>
-		<module>pwd</module>
 		<module>pydoc_topics</module>
-		<module>readline</module>
 		<module>repr</module>
-		<module>resource</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
-		<module>spwd</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
 		<module>statvfs</module>
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
-		<module>syslog</module>
-		<module>termios</module>
-		<module>test</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
@@ -4969,6 +5016,7 @@
 		<module>tkFont</module>
 		<module>tkMessageBox</module>
 		<module>tkSimpleDialog</module>
+		<module>tkinter.test.test_tkinter.test_messagebox</module>
 		<module>toaiff</module>
 		<module>ttk</module>
 		<module>turtledemo.wikipedia</module>
@@ -4978,8 +5026,11 @@
 		<module>whichdb</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<module>xxlimited</module>
+		<module>xxlimited_35</module>
+		<func>EncodingWarning</func>
 		<func>StandardError</func>
+		<func>aiter</func>
+		<func>anext</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>buffer</func>
