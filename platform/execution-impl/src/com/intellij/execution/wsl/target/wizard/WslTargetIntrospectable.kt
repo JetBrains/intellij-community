@@ -49,7 +49,7 @@ class WslTargetIntrospectable(val distribution: WSLDistribution, val console: Co
     }
     val commandLine = GeneralCommandLine(cmd).withRedirectErrorStream(true)
     val output = if (executeCommandInShell) {
-      distribution.executeInShellAndGetCommandOnlyStdout(commandLine, options, 0,
+      distribution.executeInShellAndGetCommandOnlyStdout(commandLine, options, 10_000,
                                                          Consumer<ProcessHandler> { console.attachToProcess(it) })
     }
     else {
