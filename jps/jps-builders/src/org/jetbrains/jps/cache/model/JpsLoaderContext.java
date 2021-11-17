@@ -1,16 +1,12 @@
 package org.jetbrains.jps.cache.model;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
-import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
-import org.jetbrains.jps.api.CmdlineProtoUtil;
-import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.client.JpsNettyClient;
 
 import java.util.Map;
-import java.util.UUID;
 
 public final class JpsLoaderContext {
   private final String commitId;
@@ -36,10 +32,6 @@ public final class JpsLoaderContext {
   @NotNull
   public String getCommitId() {
     return commitId;
-  }
-
-  public void sendMainStatusMessage(@NotNull String message) {
-    nettyClient.sendMainStatusMessage(message);
   }
 
   public void sendDescriptionStatusMessage(@NotNull String message) {

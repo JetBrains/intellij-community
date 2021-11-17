@@ -88,7 +88,7 @@ public class JpsOutputLoaderManager implements Disposable {
         myMetadataLoader.dropCurrentProjectMetadata();
         File outDir = new File(myBuildOutDir);
         if (outDir.exists()) {
-          myNettyClient.sendMainStatusMessage(JpsBuildBundle.message("progress.text.clean.output.directories"));
+          myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.clean.output.directories"));
           FileUtil.delete(outDir);
         }
         LOG.info("Compilation output folder empty");
@@ -141,7 +141,7 @@ public class JpsOutputLoaderManager implements Disposable {
     if (availableCommitsForRemote == null) {
       String message = JpsBuildBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
       LOG.warn(message);
-      myNettyClient.sendMainStatusMessage(message);
+      myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
 
@@ -155,13 +155,13 @@ public class JpsOutputLoaderManager implements Disposable {
     if (!availableCommitsForRemote.contains(commitId)) {
       String message = JpsBuildBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
       LOG.warn(message);
-      myNettyClient.sendMainStatusMessage(message);
+      myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
     if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
       String message = JpsBuildBundle.message("notification.content.system.contains.up.to.date.caches");
       LOG.info(message);
-      myNettyClient.sendMainStatusMessage(message);
+      myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
     return Pair.create(commitId, commitsBehind);
@@ -169,7 +169,7 @@ public class JpsOutputLoaderManager implements Disposable {
 
   private void startLoadingForCommit(@NotNull String commitId) {
     long startTime = System.nanoTime();
-    myNettyClient.sendMainStatusMessage(JpsBuildBundle.message("progress.text.fetching.cache.for.commit", commitId));
+    myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.fetching.cache.for.commit", commitId));
 
     // Loading metadata for commit
     Map<String, Map<String, BuildTargetState>> commitSourcesState = myMetadataLoader.loadMetadataForCommit(myNettyClient, commitId);
@@ -201,7 +201,7 @@ public class JpsOutputLoaderManager implements Disposable {
           onFail();
           getLoaders().forEach(loader -> loader.rollback());
           //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
-          myNettyClient.sendMainStatusMessage(JpsBuildBundle.message("progress.text.rolling.back.downloaded.caches"));
+          myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.rolling.back.downloaded.caches"));
         }
       }).handle((result, ex) -> handleExceptions(result, ex)).get();
     }
@@ -298,7 +298,7 @@ public class JpsOutputLoaderManager implements Disposable {
 
   private CompletableFuture<Void> applyChanges(LoaderStatus loaderStatus, JpsOutputLoader<?> loader) {
     if (loaderStatus == LoaderStatus.FAILED) {
-      myNettyClient.sendMainStatusMessage(JpsBuildBundle.message("progress.text.rolling.back"));
+      myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.rolling.back"));
       return CompletableFuture.runAsync(() -> loader.rollback(), INSTANCE);
     }
     return CompletableFuture.runAsync(() -> loader.apply(), INSTANCE);
@@ -340,7 +340,7 @@ public class JpsOutputLoaderManager implements Disposable {
       }
       getLoaders().forEach(loader -> loader.rollback());
       //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
-      myNettyClient.sendMainStatusMessage(JpsBuildBundle.message("progress.text.rolling.back.downloaded.caches"));
+      myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.rolling.back.downloaded.caches"));
     }
     return result;
   }

@@ -59,7 +59,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     myOldModulesPaths = null;
     myTmpFolderToModuleName = null;
 
-    myContext.sendMainStatusMessage(JpsBuildBundle.message("progress.text.calculating.affected.modules"));
+    myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.calculating.affected.modules"));
     List<AffectedModule> affectedModules = calculateAffectedModules(myContext.getCurrentSourcesState(),
                                                                     myContext.getCommitSourcesState(), true);
     //downloadProgressManager.finished(this);
@@ -83,7 +83,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     try {
       // Extracting results
       long start = System.currentTimeMillis();
-      myContext.sendMainStatusMessage(JpsBuildBundle.message("progress.text.extracting.downloaded.results"));
+      myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.extracting.downloaded.results"));
       List<Future<?>> futureList = ContainerUtil.map(outputLoadResults, loadResult ->
         EXECUTOR_SERVICE.submit(new UnzipOutputTask(result, loadResult, myContext)));
       for (Future<?> future : futureList) {
@@ -125,7 +125,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       return;
     }
 
-    myContext.sendMainStatusMessage(JpsBuildBundle.message("progress.text.applying.jps.caches"));
+    myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.applying.jps.caches"));
     ContainerUtil.map(myTmpFolderToModuleName.entrySet(),
                       entry -> EXECUTOR_SERVICE.submit(() -> {
                         String moduleName = entry.getValue();
@@ -340,7 +340,8 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       File outPath = affectedModule.getOutPath();
       try {
         context.checkCanceled();
-        context.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.details.extracting.compilation.outputs.for.module", affectedModule.getName()));
+        int expectedDownloads = context.getTotalExpectedDownloads();
+        context.getNettyClient().sendDescriptionStatusMessage(JpsBuildBundle.message("progress.details.extracting.compilation.outputs.for.module", affectedModule.getName()), expectedDownloads);
         LOG.debug("Downloaded JPS compiled module from: " + loadResult.getDownloadUrl());
         File tmpFolder = new File(outPath.getParent(), outPath.getName() + "_tmp");
         File zipFile = loadResult.getZipFile();

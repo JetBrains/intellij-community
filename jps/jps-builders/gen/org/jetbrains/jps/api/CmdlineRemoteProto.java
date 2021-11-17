@@ -11638,34 +11638,17 @@ public final class CmdlineRemoteProto {
           com.google.protobuf.MessageLiteOrBuilder {
 
         /**
-         * <code>optional string main_text = 1;</code>
-         * @return Whether the mainText field is set.
-         */
-        boolean hasMainText();
-        /**
-         * <code>optional string main_text = 1;</code>
-         * @return The mainText.
-         */
-        java.lang.String getMainText();
-        /**
-         * <code>optional string main_text = 1;</code>
-         * @return The bytes for mainText.
-         */
-        com.google.protobuf.ByteString
-            getMainTextBytes();
-
-        /**
-         * <code>optional string description_text = 2;</code>
+         * <code>required string description_text = 2;</code>
          * @return Whether the descriptionText field is set.
          */
         boolean hasDescriptionText();
         /**
-         * <code>optional string description_text = 2;</code>
+         * <code>required string description_text = 2;</code>
          * @return The descriptionText.
          */
         java.lang.String getDescriptionText();
         /**
-         * <code>optional string description_text = 2;</code>
+         * <code>required string description_text = 2;</code>
          * @return The bytes for descriptionText.
          */
         com.google.protobuf.ByteString
@@ -11691,76 +11674,21 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage)
           CacheDownloadMessageOrBuilder {
         private CacheDownloadMessage() {
-          mainText_ = "";
           descriptionText_ = "";
         }
         private int bitField0_;
-        public static final int MAIN_TEXT_FIELD_NUMBER = 1;
-        private java.lang.String mainText_;
-        /**
-         * <code>optional string main_text = 1;</code>
-         * @return Whether the mainText field is set.
-         */
-        @java.lang.Override
-        public boolean hasMainText() {
-          return ((bitField0_ & 0x00000001) != 0);
-        }
-        /**
-         * <code>optional string main_text = 1;</code>
-         * @return The mainText.
-         */
-        @java.lang.Override
-        public java.lang.String getMainText() {
-          return mainText_;
-        }
-        /**
-         * <code>optional string main_text = 1;</code>
-         * @return The bytes for mainText.
-         */
-        @java.lang.Override
-        public com.google.protobuf.ByteString
-            getMainTextBytes() {
-          return com.google.protobuf.ByteString.copyFromUtf8(mainText_);
-        }
-        /**
-         * <code>optional string main_text = 1;</code>
-         * @param value The mainText to set.
-         */
-        private void setMainText(
-            java.lang.String value) {
-          value.getClass();
-  bitField0_ |= 0x00000001;
-          mainText_ = value;
-        }
-        /**
-         * <code>optional string main_text = 1;</code>
-         */
-        private void clearMainText() {
-          bitField0_ = (bitField0_ & ~0x00000001);
-          mainText_ = getDefaultInstance().getMainText();
-        }
-        /**
-         * <code>optional string main_text = 1;</code>
-         * @param value The bytes for mainText to set.
-         */
-        private void setMainTextBytes(
-            com.google.protobuf.ByteString value) {
-          mainText_ = value.toStringUtf8();
-          bitField0_ |= 0x00000001;
-        }
-
         public static final int DESCRIPTION_TEXT_FIELD_NUMBER = 2;
         private java.lang.String descriptionText_;
         /**
-         * <code>optional string description_text = 2;</code>
+         * <code>required string description_text = 2;</code>
          * @return Whether the descriptionText field is set.
          */
         @java.lang.Override
         public boolean hasDescriptionText() {
-          return ((bitField0_ & 0x00000002) != 0);
+          return ((bitField0_ & 0x00000001) != 0);
         }
         /**
-         * <code>optional string description_text = 2;</code>
+         * <code>required string description_text = 2;</code>
          * @return The descriptionText.
          */
         @java.lang.Override
@@ -11768,7 +11696,7 @@ public final class CmdlineRemoteProto {
           return descriptionText_;
         }
         /**
-         * <code>optional string description_text = 2;</code>
+         * <code>required string description_text = 2;</code>
          * @return The bytes for descriptionText.
          */
         @java.lang.Override
@@ -11777,30 +11705,30 @@ public final class CmdlineRemoteProto {
           return com.google.protobuf.ByteString.copyFromUtf8(descriptionText_);
         }
         /**
-         * <code>optional string description_text = 2;</code>
+         * <code>required string description_text = 2;</code>
          * @param value The descriptionText to set.
          */
         private void setDescriptionText(
             java.lang.String value) {
           value.getClass();
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000001;
           descriptionText_ = value;
         }
         /**
-         * <code>optional string description_text = 2;</code>
+         * <code>required string description_text = 2;</code>
          */
         private void clearDescriptionText() {
-          bitField0_ = (bitField0_ & ~0x00000002);
+          bitField0_ = (bitField0_ & ~0x00000001);
           descriptionText_ = getDefaultInstance().getDescriptionText();
         }
         /**
-         * <code>optional string description_text = 2;</code>
+         * <code>required string description_text = 2;</code>
          * @param value The bytes for descriptionText to set.
          */
         private void setDescriptionTextBytes(
             com.google.protobuf.ByteString value) {
           descriptionText_ = value.toStringUtf8();
-          bitField0_ |= 0x00000002;
+          bitField0_ |= 0x00000001;
         }
 
         public static final int DONE_FIELD_NUMBER = 9;
@@ -11811,7 +11739,7 @@ public final class CmdlineRemoteProto {
          */
         @java.lang.Override
         public boolean hasDone() {
-          return ((bitField0_ & 0x00000004) != 0);
+          return ((bitField0_ & 0x00000002) != 0);
         }
         /**
          * <code>optional float done = 9;</code>
@@ -11826,14 +11754,14 @@ public final class CmdlineRemoteProto {
          * @param value The done to set.
          */
         private void setDone(float value) {
-          bitField0_ |= 0x00000004;
+          bitField0_ |= 0x00000002;
           done_ = value;
         }
         /**
          * <code>optional float done = 9;</code>
          */
         private void clearDone() {
-          bitField0_ = (bitField0_ & ~0x00000004);
+          bitField0_ = (bitField0_ & ~0x00000002);
           done_ = 0F;
         }
 
@@ -11933,64 +11861,7 @@ public final class CmdlineRemoteProto {
 
 
           /**
-           * <code>optional string main_text = 1;</code>
-           * @return Whether the mainText field is set.
-           */
-          @java.lang.Override
-          public boolean hasMainText() {
-            return instance.hasMainText();
-          }
-          /**
-           * <code>optional string main_text = 1;</code>
-           * @return The mainText.
-           */
-          @java.lang.Override
-          public java.lang.String getMainText() {
-            return instance.getMainText();
-          }
-          /**
-           * <code>optional string main_text = 1;</code>
-           * @return The bytes for mainText.
-           */
-          @java.lang.Override
-          public com.google.protobuf.ByteString
-              getMainTextBytes() {
-            return instance.getMainTextBytes();
-          }
-          /**
-           * <code>optional string main_text = 1;</code>
-           * @param value The mainText to set.
-           * @return This builder for chaining.
-           */
-          public Builder setMainText(
-              java.lang.String value) {
-            copyOnWrite();
-            instance.setMainText(value);
-            return this;
-          }
-          /**
-           * <code>optional string main_text = 1;</code>
-           * @return This builder for chaining.
-           */
-          public Builder clearMainText() {
-            copyOnWrite();
-            instance.clearMainText();
-            return this;
-          }
-          /**
-           * <code>optional string main_text = 1;</code>
-           * @param value The bytes for mainText to set.
-           * @return This builder for chaining.
-           */
-          public Builder setMainTextBytes(
-              com.google.protobuf.ByteString value) {
-            copyOnWrite();
-            instance.setMainTextBytes(value);
-            return this;
-          }
-
-          /**
-           * <code>optional string description_text = 2;</code>
+           * <code>required string description_text = 2;</code>
            * @return Whether the descriptionText field is set.
            */
           @java.lang.Override
@@ -11998,7 +11869,7 @@ public final class CmdlineRemoteProto {
             return instance.hasDescriptionText();
           }
           /**
-           * <code>optional string description_text = 2;</code>
+           * <code>required string description_text = 2;</code>
            * @return The descriptionText.
            */
           @java.lang.Override
@@ -12006,7 +11877,7 @@ public final class CmdlineRemoteProto {
             return instance.getDescriptionText();
           }
           /**
-           * <code>optional string description_text = 2;</code>
+           * <code>required string description_text = 2;</code>
            * @return The bytes for descriptionText.
            */
           @java.lang.Override
@@ -12015,7 +11886,7 @@ public final class CmdlineRemoteProto {
             return instance.getDescriptionTextBytes();
           }
           /**
-           * <code>optional string description_text = 2;</code>
+           * <code>required string description_text = 2;</code>
            * @param value The descriptionText to set.
            * @return This builder for chaining.
            */
@@ -12026,7 +11897,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string description_text = 2;</code>
+           * <code>required string description_text = 2;</code>
            * @return This builder for chaining.
            */
           public Builder clearDescriptionText() {
@@ -12035,7 +11906,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string description_text = 2;</code>
+           * <code>required string description_text = 2;</code>
            * @param value The bytes for descriptionText to set.
            * @return This builder for chaining.
            */
@@ -12084,6 +11955,7 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CacheDownloadMessage)
         }
+        private byte memoizedIsInitialized = 2;
         @java.lang.Override
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
@@ -12099,13 +11971,12 @@ public final class CmdlineRemoteProto {
             case BUILD_MESSAGE_INFO: {
                 java.lang.Object[] objects = new java.lang.Object[] {
                   "bitField0_",
-                  "mainText_",
                   "descriptionText_",
                   "done_",
                 };
                 java.lang.String info =
-                    "\u0001\u0003\u0000\u0001\u0001\t\u0003\u0000\u0000\u0000\u0001\u1008\u0000\u0002" +
-                    "\u1008\u0001\t\u1001\u0002";
+                    "\u0001\u0002\u0000\u0001\u0002\t\u0002\u0000\u0000\u0001\u0002\u1508\u0000\t\u1001" +
+                    "\u0001";
                 return newMessageInfo(DEFAULT_INSTANCE, info, objects);
             }
             // fall through
@@ -12128,9 +11999,10 @@ public final class CmdlineRemoteProto {
               return parser;
           }
           case GET_MEMOIZED_IS_INITIALIZED: {
-            return (byte) 1;
+            return memoizedIsInitialized;
           }
           case SET_MEMOIZED_IS_INITIALIZED: {
+            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
             return null;
           }
           }
@@ -13135,8 +13007,8 @@ public final class CmdlineRemoteProto {
                 "commitMessage_",
               };
               java.lang.String info =
-                  "\u0001\u0006\u0000\u0001\u0001\u0006\u0006\u0000\u0000\u0005\u0001\u150c\u0000\u0002" +
-                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003\u0005\u1009\u0004\u0006\u1409\u0005" +
+                  "\u0001\u0006\u0000\u0001\u0001\u0006\u0006\u0000\u0000\u0006\u0001\u150c\u0000\u0002" +
+                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003\u0005\u1409\u0004\u0006\u1409\u0005" +
                   "";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }

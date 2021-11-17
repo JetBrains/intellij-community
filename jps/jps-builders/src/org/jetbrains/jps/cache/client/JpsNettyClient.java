@@ -3,7 +3,6 @@ package org.jetbrains.jps.cache.client;
 
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 
 import java.util.UUID;
@@ -20,20 +19,17 @@ public class JpsNettyClient {
     this.currentDownloadsCount = new AtomicInteger();
   }
 
-  public void sendMainStatusMessage(@NotNull String message) {
-    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessage(message)));
-  }
-
   public void sendDescriptionStatusMessage(@NotNull String message) {
-    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessage2(message)));
+    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessage(message)));
   }
 
   public void sendDescriptionStatusMessage(@NotNull String message, int expectedDownloads) {
     int currentDownloads = currentDownloadsCount.incrementAndGet();
     if (expectedDownloads == 0) {
-      channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessage2(message)));
+      channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessage(message)));
     } else {
-      channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessageWithProgress(message, (float)currentDownloads / expectedDownloads)));
+      int doubleExpectedDownloads = expectedDownloads * 2;
+      channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessageWithProgress(message, (float)currentDownloads / doubleExpectedDownloads)));
     }
   }
 

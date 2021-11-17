@@ -175,8 +175,7 @@ message Message {
     }
 
     message CacheDownloadMessage {
-      optional string main_text = 1;
-      optional string description_text = 2;
+      required string description_text = 2;
       optional float  done = 9;
     }
 

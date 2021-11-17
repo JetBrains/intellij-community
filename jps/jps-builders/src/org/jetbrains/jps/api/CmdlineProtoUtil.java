@@ -172,15 +172,6 @@ public final class CmdlineProtoUtil {
 
   public static BuilderMessage createCacheDownloadMessage(String text) {
     BuilderMessage.CacheDownloadMessage.Builder cacheDownloadMessageBuilder = BuilderMessage.CacheDownloadMessage.newBuilder();
-    cacheDownloadMessageBuilder.setMainText(text);
-    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
-    newBuilder.setType(BuilderMessage.Type.CACHE_DOWNLOAD_MESSAGE);
-    newBuilder.setCacheDownloadMessage(cacheDownloadMessageBuilder.build());
-    return newBuilder.build();
-  }
-
-  public static BuilderMessage createCacheDownloadMessage2(String text) {
-    BuilderMessage.CacheDownloadMessage.Builder cacheDownloadMessageBuilder = BuilderMessage.CacheDownloadMessage.newBuilder();
     cacheDownloadMessageBuilder.setDescriptionText(text);
     BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
     newBuilder.setType(BuilderMessage.Type.CACHE_DOWNLOAD_MESSAGE);

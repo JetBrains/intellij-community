@@ -49,7 +49,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
     File tmpFolder = new File(myBuildCacheFolder.getParentFile(), "tmp");
     try {
       // Start extracting after download
-      myContext.sendMainStatusMessage(JpsBuildBundle.message("progress.text.extracting.downloaded.results"));
+      myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.extracting.downloaded.results"));
       myContext.checkCanceled();
       //subTaskIndicator.setText2(JpsCacheBundle.message("progress.details.extracting.project.caches"));
       long start = System.currentTimeMillis();
@@ -89,9 +89,9 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
     File newTimestampFolder = new File(myTmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
     if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
 
-    myContext.sendMainStatusMessage(JpsBuildBundle.message("progress.text.applying.jps.caches"));
+    myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.applying.jps.caches"));
     if (myBuildCacheFolder != null) {
-      myContext.sendMainStatusMessage(JpsBuildBundle.message("progress.details.applying.downloaded.caches"));
+      myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.details.applying.downloaded.caches"));
       // Copy timestamp old folder to new cache dir
       File timestamps = new File(myBuildCacheFolder, TIMESTAMPS_FOLDER_NAME);
       if (timestamps.exists()) {

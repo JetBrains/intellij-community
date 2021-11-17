@@ -1,14 +1,11 @@
 package org.jetbrains.jps.cache.client;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.CountingGZIPInputStream;
 import org.apache.http.Header;
@@ -22,12 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.model.DownloadableFileUrl;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
-import org.jetbrains.jps.cache.ui.SegmentedProgressIndicatorManager;
 
 import java.io.*;
-import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -70,7 +63,7 @@ class JpsCachesDownloader {
       } else {
         expectedDownloads = 0;
       }
-      myNettyClient.sendMainStatusMessage(JpsBuildBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
+      myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
       long start = System.currentTimeMillis();
       List<Future<Void>> results = new ArrayList<>();
       final AtomicLong totalSize = new AtomicLong();
