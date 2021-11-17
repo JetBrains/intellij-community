@@ -246,6 +246,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 JavaBundle.message("wrapping.multi.catch.types"),
                                 ApplicationBundle.message("wrapping.try.statement"),
                                 getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_TYPES_IN_MULTI_CATCH",
+                                JavaBundle.message("align.types.in.multi.catch"),
+                                ApplicationBundle.message("wrapping.try.statement"));
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
