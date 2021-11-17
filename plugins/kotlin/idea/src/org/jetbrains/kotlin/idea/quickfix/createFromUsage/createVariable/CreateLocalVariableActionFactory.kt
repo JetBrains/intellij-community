@@ -35,8 +35,7 @@ object CreateLocalVariableActionFactory : KotlinSingleIntentionActionFactory() {
         var element: PsiElement = refExpr
         while (true) {
             when (val parent = element.parent) {
-                null -> return null
-                is KtAnnotationEntry -> return null
+                null, is KtAnnotationEntry -> return null
                 is KtBlockExpression -> return parent
                 is KtDeclarationWithBody -> {
                     if (parent.bodyExpression == element) return parent
