@@ -647,14 +647,14 @@ public class RefManagerImpl extends RefManager {
         }
         return null;
       }),
-      element -> ReadAction.run(() -> {
+      element -> {
         element.initialize();
         element.setInitialized(true);
         for (RefManagerExtension<?> each : myExtensions.values()) {
           each.onEntityInitialized(element, elem);
         }
         fireNodeInitialized(element);
-      }));
+      });
   }
 
   private RefManagerExtension<?> getExtension(final Language language) {
@@ -694,11 +694,9 @@ public class RefManagerImpl extends RefManager {
   private @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
                                                                     @NotNull NullableFactory<? extends T> factory,
                                                                     @Nullable Consumer<? super T> whenCached) {
-
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked
     T result = (T)myRefTable.get(psiAnchor);
-
     if (result != null) return result;
 
     if (!isValidPointForReference()) {
@@ -706,20 +704,20 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
 
-    result = factory.create();
-    if (result == null) return null;
+    T newElement = factory.create();
+    if (newElement == null) return null;
 
     myCachedSortedRefs = null;
-    RefElement prev = myRefTable.putIfAbsent(psiAnchor, result);
+    RefElement prev = myRefTable.putIfAbsent(psiAnchor, newElement);
     if (prev != null) {
       //noinspection unchecked
-      result = (T)prev;
+      return (T)prev;
     }
-    else if (whenCached != null) {
-      whenCached.consume(result);
+    if (whenCached != null) {
+      ReadAction.nonBlocking(() -> whenCached.consume(newElement)).executeSynchronously();
     }
 
-    return result;
+    return newElement;
   }
 
   @Override

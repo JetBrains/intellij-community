@@ -531,9 +531,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
-    updateTree(() -> ReadAction.run(() -> {
+    updateTree(() -> {
       if (!isDisposed()) {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
         final AnalysisUIOptions uiOptions = myGlobalInspectionContext.getUIOptions();
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(wrapper);
 
@@ -564,7 +563,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           }, 200);
         }
       }
-    }));
+    });
   }
 
   public void update() {
