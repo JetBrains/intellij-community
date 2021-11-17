@@ -691,12 +691,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
   @NotNull
   private static AbstractPopup createUsagePopup(@NotNull UsageViewImpl usageView,
-                                          @NotNull JTable table,
-                                          @NotNull Runnable itemChoseCallback,
-                                          @NotNull Consumer<AbstractPopup> tableResizer,
-                                          @NotNull TitlePanel statusPanel,
-                                          @NotNull ShowUsagesParameters parameters,
-                                          @NotNull ShowUsagesActionHandler actionHandler) {
+                                                @NotNull JTable table,
+                                                @NotNull Runnable itemChoseCallback,
+                                                @NotNull Consumer<AbstractPopup> tableResizer,
+                                                @NotNull TitlePanel statusPanel,
+                                                @NotNull ShowUsagesParameters parameters,
+                                                @NotNull ShowUsagesActionHandler actionHandler) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = parameters.project;
     String title = actionHandler.getPresentation().getSearchTargetString();
@@ -1341,6 +1341,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     private final Project project;
     private final Runnable cancelAction;
     private final Runnable showDialogAction;
+
     private SettingsAction(@NotNull Project project, @NotNull Runnable cancelAction, @NotNull Runnable showDialogAction) {
       super(FindBundle.message("show.usages.settings.tooltip"), null, AllIcons.General.GearPlain);
       this.project = project;

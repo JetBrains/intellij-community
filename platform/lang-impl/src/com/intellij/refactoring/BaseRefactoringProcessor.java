@@ -198,7 +198,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     final Runnable findUsagesRunnable = () -> {
       try {
-        UsageViewStatisticsCollector.logSearchStarted(myProject);
         refUsages.set(ReadAction.compute(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
