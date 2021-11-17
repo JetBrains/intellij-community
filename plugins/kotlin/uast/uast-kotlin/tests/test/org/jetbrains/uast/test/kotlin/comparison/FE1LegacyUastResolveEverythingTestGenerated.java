@@ -88,6 +88,11 @@ public class FE1LegacyUastResolveEverythingTestGenerated extends AbstractFE1Lega
         runTest("testData/CycleInTypeParameters.kt");
     }
 
+    @TestMetadata("DataClassInheritsAbstractClassWithEquals.kt")
+    public void testDataClassInheritsAbstractClassWithEquals() throws Exception {
+        runTest("testData/DataClassInheritsAbstractClassWithEquals.kt");
+    }
+
     @TestMetadata("DefaultImpls.kt")
     public void testDefaultImpls() throws Exception {
         runTest("testData/DefaultImpls.kt");
