@@ -64,35 +64,23 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     myToggleable = action instanceof Toggleable;
     myInsideCheckedGroup = insideCheckedGroup;
     myUseDarkIcons = useDarkIcons;
+    final ActionTransmitter actionTransmitter = new ActionTransmitter();
+    addActionListener(actionTransmitter);
+    setBorderPainted(false);
+
     myScreenMenuItemPeer = screenMenuItemPeer;
     if (myScreenMenuItemPeer != null) {
       myScreenMenuItemPeer.setActionDelegate(()-> {
-        // Called on AppKit when menu opening
+        // Called on AppKit when user activates menu item
         if (isToggleable()) {
           myToggled = !myToggled;
           myScreenMenuItemPeer.setState(myToggled);
         }
-
         ApplicationManager.getApplication().invokeLater(()->{
-          IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
-
-          focusManager.runOnOwnContext(myContext, () -> {
-            AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
-            final AnActionEvent event = new AnActionEvent(
-              currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
-              myContext, myPlace, myPresentation, ActionManager.getInstance(), 0, true, false
-            );
-            AnAction menuItemAction = myAction.getAction();
-            if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
-              ActionUtil.performActionDumbAwareWithCallbacks(menuItemAction, event);
-            }
-          });
+          actionTransmitter.performAction(0);
         });//invokeLater
       });//setActionDelegate
     }
-
-    addActionListener(new ActionTransmitter());
-    setBorderPainted(false);
 
     updateUI();
     init();
@@ -279,9 +267,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private final class ActionTransmitter implements ActionListener {
-
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
+    void performAction(int modifiers) {
       IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
       String id = ActionManager.getInstance().getId(myAction.getAction());
       if (id != null) {
@@ -292,13 +278,18 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
         final AnActionEvent event = new AnActionEvent(
           currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
-          myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers(), true, false
+          myContext, myPlace, myPresentation, ActionManager.getInstance(), modifiers, true, false
         );
         AnAction menuItemAction = myAction.getAction();
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
           ActionUtil.performActionDumbAwareWithCallbacks(menuItemAction, event);
         }
       });
+    }
+
+    @Override
+    public void actionPerformed(@NotNull ActionEvent e) {
+      performAction(e.getModifiers());
     }
   }
 }

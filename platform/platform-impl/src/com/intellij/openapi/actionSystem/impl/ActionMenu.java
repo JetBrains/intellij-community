@@ -74,9 +74,7 @@ public final class ActionMenu extends JBMenu {
     if (myScreenMenuPeer != null) {
       myScreenMenuPeer.setOnOpen(() -> fillMenu(), this);
       myScreenMenuPeer.setOnClose(() -> setSelected(false), this);
-
-      // update from presentation
-      myScreenMenuPeer.setEnabled(myPresentation.isEnabled());
+      myScreenMenuPeer.listenPresentationChanges(myPresentation);
     }
 
     updateUI();
