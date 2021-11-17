@@ -2,7 +2,10 @@
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.providers.FileBookmarkImpl
+import com.intellij.ide.bookmark.providers.LineBookmarkImpl
 import com.intellij.ide.dnd.*
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Rectangle
@@ -16,11 +19,28 @@ internal class DragAndDropHandler(val view: BookmarksView) : DnDTargetChecker, D
     val nodes = view.selectedNodes ?: return null
     if (info.isMove) {
       val bookmarks = nodes.mapNotNull { it.bookmarkOccurrence }
-      if (bookmarks.size == nodes.size) return DnDDragStartBean(AttachedBookmarks(bookmarks))
-      if (bookmarks.isNotEmpty()) return null
+      if (bookmarks.isNotEmpty()) {
+        if (bookmarks.size != nodes.size) return null // not only bookmarks are selected
+        if (view.groupLineBookmarks.isSelected) {
+          val count = bookmarks.count { it.bookmark is LineBookmarkImpl }
+          if (count > 0) {
+            val set = mutableSetOf<VirtualFile>()
+            bookmarks.forEach { if (it.bookmark is LineBookmarkImpl) set.add(it.bookmark.file) }
+            if (count < bookmarks.size) {
+              bookmarks.forEach { if (it.bookmark is FileBookmarkImpl) set.remove(it.bookmark.file) }
+              if (set.size != 0) return null // do not drag line bookmarks without corresponding file bookmark
+              return DnDDragStartBean(AttachedBookmarks(bookmarks.filter { it.bookmark !is LineBookmarkImpl }))
+            }
+            if (set.size != 1) return null // do not drag line bookmarks with different file grouping
+          }
+        }
+        return DnDDragStartBean(AttachedBookmarks(bookmarks))
+      }
       val groups = nodes.mapNotNull { it.value as? BookmarkGroup }
-      if (groups.size == nodes.size) return DnDDragStartBean(AttachedBookmarkGroups(groups))
-      if (groups.isNotEmpty()) return null
+      if (groups.isNotEmpty()) {
+        if (groups.size != nodes.size) return null // not only groups are selected
+        return DnDDragStartBean(AttachedBookmarkGroups(groups))
+      }
     }
     return null
   }
