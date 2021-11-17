@@ -38,7 +38,11 @@ public final class Disposer {
   @Contract(pure = true, value = "->new")
   public static Disposable newDisposable() {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
-    return newDisposable("newDisposable");
+    //noinspection Convert2Lambda
+    return new Disposable() {
+      @Override
+      public void dispose() { }
+    };
   }
 
   /**
@@ -61,8 +65,8 @@ public final class Disposer {
   }
 
   /**
-   * @return new {@link Disposable} instance with the given name which is visible in its {@link Disposable#toString()}.
-   * Please be aware of increased memory consumption due to storing this name inside the object instance.
+   * @return new {@link Disposable} instance which tracks its own invalidation.
+   * Please be aware of increased memory consumption due to storing extra flag for tracking invalidation.
    */
   @NotNull
   @Contract(pure = true, value = "->new")
@@ -167,7 +171,7 @@ public final class Disposer {
    *     return isDisposed;
    *   }
    * }}</pre> or</li>
-   * <li>Use {@link #newCheckedDisposable()} (but be aware of increased memory consumption)</li>
+   * <li>Use {@link #newCheckedDisposable()} (but be aware of increased memory consumption due to storing extra flag for tracking invalidation)</li>
    */
   @Deprecated
   public static boolean isDisposed(@NotNull Disposable disposable) {
