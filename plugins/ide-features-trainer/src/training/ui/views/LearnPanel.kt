@@ -194,6 +194,12 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
           if (!StatisticBase.isLearnProjectCloseLogged) {
             StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
           }
+          LessonManager.instance.stopLesson()
+          val langSupport = LangManager.getInstance().getLangSupport()
+          langSupport?.onboardingFeedbackData?.let {
+            showOnboardingLessonFeedbackForm(learnToolWindow.project, it)
+            langSupport.onboardingFeedbackData = null
+          }
           CloseProjectWindowHelper().windowClosing(learnToolWindow.project)
         }
       })

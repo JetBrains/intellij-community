@@ -7,6 +7,13 @@ import com.intellij.feedback.createFeedbackAgreementComponent
 import com.intellij.feedback.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.submitGeneralFeedback
+import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.internal.statistic.local.ActionsLocalSummary
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
@@ -19,11 +26,12 @@ import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.IndentedIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToJsonElement
-import org.jetbrains.io.JsonObjectBuilder
-import org.jetbrains.io.json
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.*
 import training.FeaturesTrainerIcons
+import training.dsl.LessonUtil
+import training.util.OnboardingFeedbackData
+import training.util.iftNotificationGroup
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
@@ -34,7 +42,21 @@ import javax.swing.*
 private const val FEEDBACK_CONTENT_WIDTH = 500
 private const val SUB_OFFSET = 20
 
-fun showFeedbackForm(project: Project?) {
+
+fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData?) {
+  val notification = iftNotificationGroup.createNotification("Share feedback about creating the onboarding tour",
+                                                             "This will help us improve learning experience in ${LessonUtil.productName}",
+                                                             NotificationType.INFORMATION)
+  notification.addAction(object : NotificationAction("Leave feedback") {
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      showOnboardingLessonFeedbackForm(project, onboardingFeedbackData)
+      notification.expire()
+    }
+  })
+  notification.notify(project)
+}
+
+fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: OnboardingFeedbackData?) {
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
   fun feedbackTextArea(fieldName: String, optionalText: String, width: Int): JComponent {
@@ -44,7 +66,7 @@ fun showFeedbackForm(project: Project?) {
     jTextPane.emptyText.text = optionalText
 
     saver.add {
-      fieldName to jTextPane.text
+      put(fieldName, jTextPane.text)
     }
 
     val scrollPane = JBScrollPane(jTextPane)
@@ -55,7 +77,7 @@ fun showFeedbackForm(project: Project?) {
   fun feedbackOption(fieldName: String, @NlsContexts.Label text: String): FeedbackOption {
     val result = FeedbackOption(text)
     saver.add {
-      fieldName to result.isChosen
+      put(fieldName, result.isChosen)
     }
     return result
   }
@@ -83,10 +105,12 @@ fun showFeedbackForm(project: Project?) {
 
   val systemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
 
-  val agreement = createFeedbackAgreementComponent(project) {
-    // TODO: add specific information, like Python interpreters
-    showFeedbackSystemInfoDialog(project, systemInfoData)
-  }
+  val recentProjectsNumber = RecentProjectsManagerBase.instanceEx.getRecentPaths().size
+  val actionsNumber = service<ActionsLocalSummary>().getActionsStats().keys.size
+
+  val agreement = createOnboardingAgreementComponent(project, systemInfoData, onboardingFeedbackData,
+                                                     recentProjectsNumber,
+                                                     actionsNumber)
 
   val technicalIssuesOption = feedbackOption("technical_issues","Technical issues")
   val unusefulOption = feedbackOption("useless","Tour wasn't useful for me")
@@ -130,16 +154,82 @@ fun showFeedbackForm(project: Project?) {
   installSubPanelLogic(unusefulOption, usefulPanel, wholePanel, dialog)
 
   if (dialog.showAndGet()) {
-    val collectedData = StringBuilder().json {
+    val jsonConverter = Json { }
+
+    val collectedData = buildJsonObject {
       for (function in saver) {
         function()
       }
-      "system_info" to Json { }.encodeToJsonElement(systemInfoData)
-    }.toString()
-    submitGeneralFeedback(project, "Onboarding Lesson Feedback", "",
-                          "Onboarding Lesson Feedback", collectedData)
+      put("system_info", jsonConverter.encodeToJsonElement(systemInfoData))
+      if (onboardingFeedbackData != null) {
+        onboardingFeedbackData.addAdditionalSystemData.invoke(this)
+        put("lesson_end_info", jsonConverter.encodeToJsonElement(onboardingFeedbackData.lessonEndInfo))
+        put("used_actions", actionsNumber)
+        put("recent_projects", recentProjectsNumber)
+      }
+    }
+
+    if (onboardingFeedbackData != null) {
+      submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, "",
+                            onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData))
+    }
   }
 }
+
+private fun createOnboardingAgreementComponent(project: Project?,
+                                               systemInfoData: CommonFeedbackSystemInfoData,
+                                               onboardingFeedbackData: OnboardingFeedbackData?,
+                                               recentProjectsNumber: Int,
+                                               actionsNumber: Int) =
+  createFeedbackAgreementComponent(project) {
+    // TODO: add specific information, like Python interpreters
+    showFeedbackSystemInfoDialog(project, systemInfoData) {
+      if (onboardingFeedbackData != null) {
+        onboardingFeedbackData.addRowsForUserAgreement.invoke(this)
+        val lessonEndInfo = onboardingFeedbackData.lessonEndInfo
+        row {
+          cell {
+            label("Recent projects number:")
+          }
+          cell {
+            label(recentProjectsNumber.toString())
+          }
+        }
+        row {
+          cell {
+            label("Different IDE actions used:")
+          }
+          cell {
+            label(actionsNumber.toString())
+          }
+        }
+        row {
+          cell {
+            label("Lesson completed:")
+          }
+          cell {
+            label(lessonEndInfo.lessonPassed.toString())
+          }
+        }
+        row {
+          cell {
+            label("The visual step on end:")
+          }
+          cell {
+            label(lessonEndInfo.currentVisualIndex.toString())
+          }
+        }
+        row {
+          cell {
+            label("The technical index on end:")
+          }
+          cell {
+            label(lessonEndInfo.currentTaskIndex.toString())
+          }
+        }
+      }
+    }
+  }
 
 private fun createLikenessPanel(saver: MutableList<JsonObjectBuilder.() -> Unit>): NonOpaquePanel {
   val votePanel = NonOpaquePanel()
