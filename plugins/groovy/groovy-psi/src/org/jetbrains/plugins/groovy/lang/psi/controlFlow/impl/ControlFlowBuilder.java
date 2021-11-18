@@ -61,7 +61,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private GroovyPsiElement myScope;
   private final Deque<GrFunctionalExpression> myFunctionalScopeStack = new ArrayDeque<>();
 
-  private final boolean isLargeFlow;
+  private final boolean isFlatFlow;
 
   /**
    * stack of current catch blocks
@@ -93,7 +93,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private ControlFlowBuilder(GrControlFlowPolicy policy, boolean isFlatFlow) {
     myPolicy = policy;
-    this.isLargeFlow = isFlatFlow;
+    this.isFlatFlow = isFlatFlow;
   }
 
   @Override
@@ -262,9 +262,20 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
     GrLambdaBody body = expression.getBody();
     if (body == null) return;
-    if (isLargeFlow) {
+    if (isFlatFlow) {
+      FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(expression);
+      myFunctionalScopeStack.add(expression);
+      addNode(startClosure);
       addFunctionalExpressionParameters(expression);
-      super.visitLambdaBody(body);
+      if (body instanceof GrBlockLambdaBody) {
+        addControlFlowInstructions((GrStatementOwner)body);
+      } else {
+        super.visitLambdaBody(body);
+      }
+      InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);
+      addNode(endClosure);
+      checkPending(expression, endClosure);
+      myFunctionalScopeStack.pop();
     } else {
       ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(body.getControlFlow(), false);
       addReadFromNestedControlFlow(expression, reads);
@@ -273,7 +284,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
-    if (isLargeFlow) {
+    if (isFlatFlow) {
       FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(closure);
       myFunctionalScopeStack.add(closure);
       addNode(startClosure);
