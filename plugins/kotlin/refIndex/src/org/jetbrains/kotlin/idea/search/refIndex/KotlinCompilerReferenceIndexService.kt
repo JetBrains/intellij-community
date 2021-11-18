@@ -17,6 +17,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
@@ -200,13 +202,31 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         withDirtyScopeUnderWriteLock { upToDateCheckFinished(modules) }
     }
 
-    fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? = element.takeIf(this::isServiceEnabledFor)?.let {
-        CachedValuesManager.getCachedValue(element) {
-            CachedValueProvider.Result.create(
-                buildScopeWithReferences(referentFiles(element), element),
-                PsiModificationTracker.MODIFICATION_COUNT,
-                this,
-            )
+    private fun <T> runActionSafe(actionName: String, action: () -> T): T? = try {
+        action()
+    } catch (e: Throwable) {
+        if (e is ControlFlowException) throw e
+
+        try {
+            LOG.error("an exception during $actionName calculation", e)
+        } finally {
+            withWriteLock { closeStorage() }
+        }
+
+        null
+    }
+
+    fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? {
+        if (!isServiceEnabledFor(element)) return null
+
+        return runActionSafe("scope with code references") {
+            CachedValuesManager.getCachedValue(element) {
+                CachedValueProvider.Result.create(
+                    buildScopeWithReferences(referentFiles(element), element),
+                    PsiModificationTracker.MODIFICATION_COUNT,
+                    this,
+                )
+            }
         }
     }
 
@@ -403,6 +423,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         fun getInstanceIfEnable(project: Project): KotlinCompilerReferenceIndexService? = if (isEnabled) get(project) else null
         const val SETTINGS_ID: String = "kotlin.compiler.ref.index"
         val isEnabled: Boolean get() = AdvancedSettings.getBoolean(SETTINGS_ID)
+        private val LOG = logger<KotlinCompilerReferenceIndexService>()
     }
 
     class InitializationActivity : StartupActivity.DumbAware {
