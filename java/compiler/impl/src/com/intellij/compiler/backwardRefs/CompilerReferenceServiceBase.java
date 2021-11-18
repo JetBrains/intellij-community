@@ -40,7 +40,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -456,17 +455,22 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  public @NotNull SearchId @Nullable [] getDirectInheritorsNames(@NotNull Function<? super @NotNull NameEnumerator, ? extends @Nullable CompilerRef> compilerRefFunction) {
+  @FunctionalInterface
+  public interface CompilerRefProvider {
+    @Nullable CompilerRef provide(@NotNull NameEnumerator nameEnumerator) throws IOException;
+  }
+
+  public @NotNull SearchId @Nullable [] getDirectInheritorsNames(@NotNull CompilerRefProvider compilerRefFunction) {
     if (!myReadDataLock.tryLock()) return null;
     try {
       if (myReader == null) return null;
       try {
-        CompilerRef hierarchyElement = compilerRefFunction.fun(myReader.getNameEnumerator());
+        CompilerRef hierarchyElement = compilerRefFunction.provide(myReader.getNameEnumerator());
         if (hierarchyElement == null) return null;
         return myReader.getDirectInheritorsNames(hierarchyElement);
       }
-      catch (StorageException e) {
-        throw new RuntimeException(e);
+      catch (RuntimeException | StorageException | IOException e) {
+        return onException(e, "direct inheritors names");
       }
     }
     finally {
