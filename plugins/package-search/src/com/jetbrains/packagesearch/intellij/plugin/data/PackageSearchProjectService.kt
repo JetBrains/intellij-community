@@ -17,7 +17,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectD
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
-import com.jetbrains.packagesearch.intellij.plugin.util.coroutineModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.util.coroutineModuleTransformers
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
@@ -85,9 +85,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     private val operationExecutedChannel = Channel<List<ProjectModule>>()
 
-    private val json = Json {
-        prettyPrint = true
-    }
+    private val json = Json { prettyPrint = true }
 
     private val cacheDirectory = project.getProjectDataPath("pkgs/installedDependencies")
         .also { if (!it.exists()) Files.createDirectories(it) }
@@ -117,7 +115,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
                 async { readAction { transformer.transformModules(project, modules) } }
             }
 
-            val coroutinesModulesTransformations = project.coroutineModuleTransformer
+            val coroutinesModulesTransformations = project.coroutineModuleTransformers
                 .map { async { it.transformModules(project, modules) } }
                 .awaitAll()
                 .flatten()

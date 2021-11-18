@@ -112,7 +112,7 @@ internal val Project.dumbService: DumbService
 internal val Project.moduleTransformers: List<ModuleTransformer>
     get() = ModuleTransformer.extensionPointName.extensions(this).toList()
 
-internal val Project.coroutineModuleTransformer: List<CoroutineModuleTransformer>
+internal val Project.coroutineModuleTransformers: List<CoroutineModuleTransformer>
     get() = CoroutineModuleTransformer.extensionPointName.extensions(this).toList()
 
 internal val Project.lookAndFeelFlow
