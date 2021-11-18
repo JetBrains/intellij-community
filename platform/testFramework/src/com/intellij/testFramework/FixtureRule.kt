@@ -86,11 +86,11 @@ open class ApplicationExtension : BeforeAllCallback, AfterAllCallback {
     }
   }
 
-  override fun beforeAll(context: ExtensionContext?) {
+  override fun beforeAll(context: ExtensionContext) {
      TestApplicationManager.getInstance()
   }
 
-  override fun afterAll(context: ExtensionContext?) {}
+  override fun afterAll(context: ExtensionContext) {}
 }
 
 /**
@@ -108,44 +108,16 @@ class ProjectTrackingRule : TestRule {
   }
 }
 
-/**
- * Encouraged using as a ClassRule to avoid project creating for each test.
- * Project created on request, so, could be used as a bare (only application).
- */
-class ProjectRule(private val runPostStartUpActivities: Boolean = false,
-                  private val preloadServices: Boolean = false,
-                  private val projectDescriptor: LightProjectDescriptor? = null) : ApplicationRule() {
-  companion object {
-    @JvmStatic
-    fun withoutRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = false)
-    @JvmStatic
-    fun withRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = true)
-
-    /**
-     * Think twice before use. And then do not use. To support old code.
-     */
-    @ApiStatus.Internal
-    fun createStandalone(): ProjectRule {
-      val result = ProjectRule()
-      result.before(Description.EMPTY)
-      return result
-    }
-  }
-
-  private var sharedProject: ProjectEx? = null
-  private var testClassName: String? = null
-  var virtualFilePointerTracker: VirtualFilePointerTracker? =null
+class ProjectObject(private val runPostStartUpActivities: Boolean = false,
+                    private val preloadServices: Boolean = false,
+                    private val projectDescriptor: LightProjectDescriptor? = null) {
+  internal var sharedProject: ProjectEx? = null
+  internal var testClassName: String? = null
+  var virtualFilePointerTracker: VirtualFilePointerTracker? = null
   var libraryTracker: LibraryTableTracker? = null
   var projectTracker: AccessToken? = null
 
-  override fun before(description: Description) {
-    super.before(description)
-
-    testClassName = sanitizeFileName(description.className.substringAfterLast('.'))
-    projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
-  }
-
-  private fun createProject(): ProjectEx {
+  internal fun createProject(): ProjectEx {
     val projectFile = TemporaryDirectory.generateTemporaryPath("project_${testClassName}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
     val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities).copy(preloadServices = preloadServices)
     val project = (ProjectManager.getInstance() as TestProjectManager).openProject(projectFile, options) as ProjectEx
@@ -154,9 +126,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
     return project
   }
 
-  override fun after() {
-    val l = mutableListOf<Throwable>()
-    l.catchAndStoreExceptions { super.after() }
+  internal fun catchAndRethrow(l: MutableList<Throwable>) {
     l.catchAndStoreExceptions { sharedProject?.let { PlatformTestUtil.forceCloseProjectWithoutSaving(it) } }
     l.catchAndStoreExceptions { projectTracker?.finish() }
     l.catchAndStoreExceptions { virtualFilePointerTracker?.assertPointersAreDisposed() }
@@ -166,14 +136,6 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
       sharedModule = null
     }
     throwIfNotEmpty(l)
-  }
-
-  /**
-   * Think twice before use. And then do not use. To support old code.
-   */
-  @ApiStatus.Internal
-  fun close() {
-    after()
   }
 
   val projectIfOpened: ProjectEx?
@@ -209,6 +171,86 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
       }
       return result!!
     }
+}
+
+class ProjectRule(private val runPostStartUpActivities: Boolean = false,
+                  preloadServices: Boolean = false,
+                  projectDescriptor: LightProjectDescriptor? = null) : ApplicationRule() {
+  companion object {
+    @JvmStatic
+    fun withoutRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = false)
+    @JvmStatic
+    fun withRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = true)
+
+    /**
+     * Think twice before use. And then do not use. To support old code.
+     */
+    @ApiStatus.Internal
+    fun createStandalone(): ProjectRule {
+      val result = ProjectRule()
+      result.before(Description.EMPTY)
+      return result
+    }
+  }
+
+  private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, projectDescriptor)
+  
+  override fun before(description: Description) {
+    super.before(description)
+
+    projectObject.testClassName = sanitizeFileName(description.className.substringAfterLast('.'))
+    projectObject.projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
+  }
+
+  override fun after() {
+    val l = mutableListOf<Throwable>()
+    l.catchAndStoreExceptions { super.after() }
+    projectObject.catchAndRethrow(l)
+  }
+
+  /**
+   * Think twice before use. And then do not use. To support old code.
+   */
+  @ApiStatus.Internal
+  fun close() {
+    after()
+  }
+
+  val projectIfOpened: ProjectEx?
+    get() = projectObject.projectIfOpened
+  val project: ProjectEx
+    get() = projectObject.project
+  val module: Module
+    get() = projectObject.module
+}
+
+/**
+ * Encouraged using on static fields to avoid project creating for each test.
+ * Project created on request, so, could be used as a bare (only application).
+ */
+class ProjectExtension(runPostStartUpActivities: Boolean = false,
+                       preloadServices: Boolean = false,
+                       projectDescriptor: LightProjectDescriptor? = null) : ApplicationExtension() {
+  private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, projectDescriptor)
+  
+  override fun beforeAll(context: ExtensionContext) {
+    super.beforeAll(context)
+    projectObject.testClassName = sanitizeFileName(context.testClass.map { it.simpleName }.orElse(context.displayName).substringAfterLast('.'))
+    projectObject.projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    val l = mutableListOf<Throwable>()
+    l.catchAndStoreExceptions { super.afterAll(context) }
+    projectObject.catchAndRethrow(l)
+  }
+
+  val projectIfOpened: ProjectEx?
+    get() = projectObject.sharedProject
+  val project: ProjectEx
+    get() = projectObject.project
+  val module: Module
+    get() = projectObject.module
 }
 
 /**
@@ -464,7 +506,7 @@ fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: Temporar
   }
 }
 
-abstract class AbstractDisposableRule {
+class DisposableRule : ExternalResource(), AfterEachCallback {
   private var _disposable = lazy { Disposer.newDisposable() }
 
   val disposable: Disposable
@@ -480,30 +522,12 @@ abstract class AbstractDisposableRule {
     })
   }
 
-  internal fun after() {
+  public override fun after() {
     if (_disposable.isInitialized()) {
       Disposer.dispose(_disposable.value)
     }
   }
-}
-
-class DisposableRule : AbstractDisposableRule(), TestRule {
-  override fun apply(base: Statement, description: Description): Statement {
-    return object : Statement() {
-      @Throws(Throwable::class)
-      override fun evaluate() {
-        try {
-          base.evaluate()
-        }
-        finally {
-          after()
-        }
-      }
-    }
-  }
-}
-
-class DisposableExtension : AbstractDisposableRule(), AfterEachCallback {
+  
   override fun afterEach(context: ExtensionContext?) {
     after()
   }

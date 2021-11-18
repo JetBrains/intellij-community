@@ -5,7 +5,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.io.copy
 import org.junit.jupiter.api.Test
@@ -18,7 +18,7 @@ import kotlin.io.path.div
 class EclipseEmlTest {
   @JvmField
   @RegisterExtension
-  val tempDirectory = TempDirectoryExtension()
+  val tempDirectory = TempDirectory()
 
   @JvmField
   @RegisterExtension

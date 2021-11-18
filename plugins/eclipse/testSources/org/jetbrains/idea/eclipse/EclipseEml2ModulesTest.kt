@@ -2,7 +2,7 @@
 package org.jetbrains.idea.eclipse
 
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.rules.TestNameExtension
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 class EclipseEml2ModulesTest {
   @JvmField
   @RegisterExtension
-  val tempDirectory = TempDirectoryExtension()
+  val tempDirectory = TempDirectory()
 
   @JvmField
   @RegisterExtension

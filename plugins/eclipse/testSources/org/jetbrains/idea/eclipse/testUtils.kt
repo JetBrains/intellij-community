@@ -14,7 +14,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.loadProject
-import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
@@ -26,14 +26,14 @@ internal val eclipseTestDataRoot: Path
   get() = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData")
 
 internal fun checkLoadSaveRoundTrip(testDataDirs: List<Path>,
-                                    tempDirectory: TempDirectoryExtension,
+                                    tempDirectory: TempDirectory,
                                     setupPathVariables: Boolean = false,
                                     imlFilePaths: List<Pair<String, String>>) {
   loadEditSaveAndCheck(testDataDirs, tempDirectory, setupPathVariables, imlFilePaths, ::forceSave, {})
 }
 
 internal fun checkEmlFileGeneration(testDataDirs: List<Path>,
-                                    tempDirectory: TempDirectoryExtension,
+                                    tempDirectory: TempDirectory,
                                     imlFilePaths: List<Pair<String, String>>,
                                     edit: (Project) -> Unit = {},
                                     updateExpectedDir: (Path) -> Unit = {}) {
@@ -42,7 +42,7 @@ internal fun checkEmlFileGeneration(testDataDirs: List<Path>,
 }
 
 internal fun checkConvertToStandardStorage(testDataDirs: List<Path>,
-                                           tempDirectory: TempDirectoryExtension,
+                                           tempDirectory: TempDirectory,
                                            expectedIml: Path,
                                            setupPathVariables: Boolean,
                                            imlFilePaths: List<Pair<String, String>>) {
@@ -61,7 +61,7 @@ internal fun checkConvertToStandardStorage(testDataDirs: List<Path>,
 
 
 internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
-                                  tempDirectory: TempDirectoryExtension,
+                                  tempDirectory: TempDirectory,
                                   setupPathVariables: Boolean = false,
                                   imlFilePaths: List<Pair<String, String>>,
                                   edit: (Project) -> Unit,

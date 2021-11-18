@@ -43,11 +43,16 @@ class InMemoryFsExtension(private val windows: Boolean = false) : BeforeEachCall
 
   val root: Path
     get() {
+      return fs.getPath("/")
+    }
+  
+  val fs: FileSystem
+    get() {
       if (_fs == null) {
         _fs = (if (windows) MemoryFileSystemBuilder.newWindows().setCurrentWorkingDirectory("C:\\")
                else MemoryFileSystemBuilder.newLinux().setCurrentWorkingDirectory("/")).build(sanitizedName)
       }
-      return _fs!!.getPath("/")
+      return _fs!!
     }
 
   override fun beforeEach(context: ExtensionContext) {

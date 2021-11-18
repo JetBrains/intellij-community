@@ -2,7 +2,7 @@
 package org.jetbrains.idea.eclipse
 
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.PathUtil
 import org.junit.jupiter.api.Test
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 class EclipseClasspathTest {
   @JvmField
   @RegisterExtension
-  val tempDirectory = TempDirectoryExtension()
+  val tempDirectory = TempDirectory()
 
   @JvmField
   @RegisterExtension

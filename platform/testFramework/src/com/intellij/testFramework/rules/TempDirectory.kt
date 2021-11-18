@@ -15,7 +15,7 @@ import com.intellij.util.io.zipFile
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.rules.TestRule
+import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.io.File
@@ -27,36 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * An improved variant of [org.junit.rules.TemporaryFolder] with lazy init, no symlinks in a temporary directory path, better directory name,
  * and more convenient [newFile], [newDirectory] methods.
  */
-class TempDirectory : TestRule, AbstractTempDirectory()  {
-  override fun apply(base: Statement, description: Description): Statement {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName.take(30), true), true)
-    return object : Statement() {
-      @Throws(Throwable::class)
-      override fun evaluate() {
-        try {
-          base.evaluate()
-        }
-        finally {
-          after()
-        }
-      }
-    }
-  }
-}
-
-class TempDirectoryExtension : BeforeEachCallback, AfterEachCallback, AbstractTempDirectory() {
-
-  override fun beforeEach(context: ExtensionContext) {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(context.displayName.take(30), true), true)
-  }
-
-  override fun afterEach(context: ExtensionContext) {
-    after()
-  }
-}
-
-abstract class AbstractTempDirectory {
-  internal var myName: String? = null
+class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback {
+  private var myName: String? = null
   private val myNextDirNameSuffix = AtomicInteger()
   private var myRoot: File? = null
   private var myVirtualFileRoot: VirtualFile? = null
@@ -83,7 +55,16 @@ abstract class AbstractTempDirectory {
       return myVirtualFileRoot!!
     }
 
-  internal fun after() {
+  override fun apply(base: Statement, description: Description): Statement {
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName.take(30), true), true)
+    return super.apply(base, description)
+  }
+
+  override fun beforeEach(context: ExtensionContext) {
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(context.displayName.take(30), true), true)
+  }
+  
+  public override fun after() {
     val path = myRoot?.toPath()
     val vfsDir = myVirtualFileRoot
 
@@ -96,6 +77,10 @@ abstract class AbstractTempDirectory {
       { if (vfsDir != null) VfsTestUtil.deleteFile(vfsDir) },
       { if (path != null) FileUtil.delete(path) }
     ).run()
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    after()
   }
 
   /**

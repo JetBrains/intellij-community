@@ -3,7 +3,7 @@ package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.rules.TestNameExtension
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -14,7 +14,7 @@ import kotlin.io.path.div
 class EclipseClasspath2ModulesTest {
   @JvmField
   @RegisterExtension
-  val tempDirectory = TempDirectoryExtension()
+  val tempDirectory = TempDirectory()
 
   @JvmField
   @RegisterExtension
