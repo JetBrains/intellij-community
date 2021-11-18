@@ -109,9 +109,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
     }
 
-    List<String> additionalJvmArgs = buildContext.additionalJvmArguments
-    if (!bootClassPath.isEmpty()) additionalJvmArgs += "-Xbootclasspath/a:\$BOOT_CLASS_PATH"
-
     Path vmOptionsPath = distBinDir.resolve("${buildContext.productProperties.baseFileName}64.vmoptions")
     if (!Files.exists(vmOptionsPath)) {
       throw new IllegalStateException("File '$vmOptionsPath' should be already generated at this point")
