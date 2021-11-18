@@ -42,7 +42,7 @@ import java.awt.event.KeyEvent
 import javax.swing.*
 
 @ApiStatus.Internal
-internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
+internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        private val panelContext: PanelContext,
                        private val parent: PanelImpl,
                        val firstCellLabel: Boolean,

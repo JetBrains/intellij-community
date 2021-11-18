@@ -75,27 +75,26 @@ interface Panel : CellBase<Panel> {
   fun panel(init: Panel.() -> Unit): Panel
 
   /**
-   * See [RowsRange]
+   * @see [RowsRange]
    */
   fun rowsRange(init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds panel with independent grid, title and some vertical space above and below the group.
-   * Grouped radio buttons and checkboxes should use [Panel.buttonGroup] method, which uses different title gaps
+   * Adds panel with independent grid, title and some vertical space above (except the group in the parents first row)
+   * and below (except the group in the parents last row) the group.
+   * Grouped radio buttons and checkboxes should use [Panel.buttonGroup] method, which uses different title gaps.
+   * To change gaps around the group use [Row.topGap] and [Row.bottomGap] for the method result
    *
    * @param indent true if left indent is needed
-   * @param topGroupGap if specified forces enabling (useful for first group in panel) or disabling standard gap above the group
-   * @param bottomGroupGap if specified forces enabling (useful for last group in panel) or disabling standard gap below the group
    */
   fun group(@NlsContexts.BorderTitle title: String? = null,
             indent: Boolean = true,
-            topGroupGap: Boolean? = null,
-            bottomGroupGap: Boolean? = null,
-            init: Panel.() -> Unit): Panel
+            init: Panel.() -> Unit): Row
 
   /**
    * Similar to [Panel.group] but uses the same grid as the parent.
-   * See [RowsRange]
+   *
+   * @see [RowsRange]
    */
   fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null,
                      indent: Boolean = true,
@@ -104,17 +103,15 @@ interface Panel : CellBase<Panel> {
                      init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds collapsible panel with independent grid, title and some vertical space above and below the group.
+   * Adds collapsible panel with independent grid, title and some vertical space above (except the group in the parents first row)
+   * and below (except the group in the parents last row) the group.
+   * To change gaps around the group use [Row.topGap] and [Row.bottomGap] for the method result
    *
    * @param indent true if left indent is needed
-   * @param topGroupGap if specified forces enabling (useful for first group in panel) or disabling standard gap above the group
-   * @param bottomGroupGap if specified forces enabling (useful for last group in panel) or disabling standard gap below the group
    */
   fun collapsibleGroup(@NlsContexts.BorderTitle title: String,
                        indent: Boolean = true,
-                       topGroupGap: Boolean? = null,
-                       bottomGroupGap: Boolean? = null,
-                       init: Panel.() -> Unit): CollapsiblePanel
+                       init: Panel.() -> Unit): CollapsibleRow
 
   /**
    * See documentation of overloaded buttonGroup method

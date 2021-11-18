@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
+import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -93,7 +94,12 @@ interface Row {
   fun layout(rowLayout: RowLayout): Row
 
   /**
-   * The row becomes resizable and occupies all free space. For several resizable rows extra free space is divided between rows equally
+   * Marks the row as resizable: the row occupies all extra space in parent (for example in [Panel.group] or [Panel.panel])
+   * and changes size together with parent. When resizable is needed in whole [DialogPanel] all row parents should be marked
+   * as [resizableRow] as well. It's possible to have several resizable rows, which means extra space is shared between them.
+   * Note that vertical size and placement of components in the row are managed by [Cell.verticalAlign]
+   *
+   * @see [Grid.resizableRows]
    */
   fun resizableRow(): Row
 

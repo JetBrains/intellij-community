@@ -2,6 +2,8 @@
 package com.intellij.internal.ui.uiDslTestAction
 
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -89,9 +91,10 @@ internal class GroupsPanel {
 
     row("separator") {}
 
-    group("Group, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
-            row("Row with label") {}
-          }
+    group("Group, indent = false, no gaps", indent = false) {
+      row("Row with label") {}
+    }.topGap(TopGap.NONE)
+      .bottomGap(BottomGap.NONE)
 
     row("separator") {}
 
@@ -101,9 +104,10 @@ internal class GroupsPanel {
 
     row("separator") {}
 
-    collapsibleGroup("CollapsibleGroup, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
-            row("Row with label") {}
-          }
+    collapsibleGroup("CollapsibleGroup, indent = false, no gaps", indent = false) {
+      row("Row with label") {}
+    }.topGap(TopGap.NONE)
+      .bottomGap(BottomGap.NONE)
 
     row("separator") {}
 

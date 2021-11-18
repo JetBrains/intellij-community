@@ -96,9 +96,9 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
             .columns(COLUMNS_MEDIUM)
         }.topGap(TopGap.SMALL)
       }
-      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.advanced.settings.title"), topGroupGap = true) {
+      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.advanced.settings.title")) {
         setupAdvancedSettingsUI(this)
-      }
+      }.topGap(TopGap.MEDIUM)
     }
   }
 

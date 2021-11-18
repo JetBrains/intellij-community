@@ -66,10 +66,10 @@ interface CellBase<out T : CellBase<T>> {
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
   /**
-   * Marks column of the cell as resizable: the column occupies all extra space in panel and changes size together with panel.
+   * Marks column of the cell as resizable: the column occupies all extra space in parent and changes size together with parent.
    * It's possible to have several resizable columns, which means extra space is shared between them.
    * There is no need to set resizable for cells in different rows but in the same column: it has no additional effect.
-   * Note that size and placement of component in columns are managed by [horizontalAlign]
+   * Note that horizontal size and placement of component in columns are managed by [horizontalAlign]
    *
    * @see [Grid.resizableColumns]
    */
