@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.containers.generateRecursiveSequence
+import com.intellij.util.indexing.StorageException
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.backwardRefs.CompilerRef
@@ -57,6 +58,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -207,7 +209,9 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         try {
             LOG.error("an exception during $actionName calculation", e)
         } finally {
-            withWriteLock { closeStorage() }
+            if (e is IOException || e is StorageException) {
+                withWriteLock { closeStorage() }
+            }
         }
 
         null
