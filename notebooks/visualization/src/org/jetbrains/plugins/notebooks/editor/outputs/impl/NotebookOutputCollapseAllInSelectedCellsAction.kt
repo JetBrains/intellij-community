@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.util.castSafelyTo
+import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.plugins.notebooks.editor.*
 import org.jetbrains.plugins.notebooks.editor.outputs.NotebookOutputInlayController
 import java.awt.event.MouseEvent
@@ -31,10 +32,32 @@ internal class NotebookOutputCollapseAllAction private constructor() : ToggleAct
 
   private fun allCollapsingComponents(e: AnActionEvent): Sequence<CollapsingComponent> {
     val inlayManager = e.notebookCellInlayManager ?: return emptySequence()
-    return NotebookCellLines.get(inlayManager.editor).intervals.asSequence()
-      .filter { it.type == NotebookCellLines.CellType.CODE }
-      .mapNotNull { getCollapsingComponents(inlayManager.editor, it) }
-      .flatMap { it }
+    return getCollapsingComponents(inlayManager.editor, NotebookCellLines.get(inlayManager.editor).intervals)
+  }
+}
+
+// same as Collapse All Action, but collapse outputs of selected cells
+internal class NotebookOutputCollapseAllInSelectedCellsAction private constructor() : ToggleAction(), DumbAware {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabledAndVisible = e.notebookEditor != null
+  }
+
+  override fun isSelected(e: AnActionEvent): Boolean =
+    !getSelectedCollapsingComponents(e).any { it.isSeen }
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    markScrollingPositionBeforeOutputCollapseToggle(e)
+
+    for(component in getSelectedCollapsingComponents(e)) {
+      component.isSeen = !state
+    }
+  }
+
+  private fun getSelectedCollapsingComponents(e: AnActionEvent): Sequence<CollapsingComponent> {
+    val inlayManager = e.notebookCellInlayManager ?: return emptySequence()
+    val selectedCells = inlayManager.editor.cellSelectionModel?.selectedCells ?: return emptySequence()
+    return getCollapsingComponents(inlayManager.editor, selectedCells)
   }
 }
 
@@ -91,6 +114,12 @@ private fun getCollapsingComponents(editor: Editor, interval: NotebookCellLines.
     ?.filterIsInstance<NotebookOutputInlayController>()
     ?.firstOrNull()
     ?.collapsingComponents
+
+private fun getCollapsingComponents(editor: Editor, intervals: Iterable<NotebookCellLines.Interval>): Sequence<CollapsingComponent> =
+  intervals.asSequence()
+    .filter { it.type == NotebookCellLines.CellType.CODE }
+    .mapNotNull { getCollapsingComponents(editor, it) }
+    .flatMap { it }
 
 private val AnActionEvent.notebookCellInlayManager: NotebookCellInlayManager?
   get() = getData(PlatformDataKeys.EDITOR)?.let(NotebookCellInlayManager.Companion::get)
