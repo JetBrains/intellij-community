@@ -89,6 +89,17 @@ class ProductModulesLayout {
     }
   }
 
+  void appendPlatformCustomizer(BiConsumer<PlatformLayout, BuildContext> customizer) {
+    BiConsumer<PlatformLayout, BuildContext> prev = platformLayoutCustomizer
+    platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+      @Override
+      void accept(PlatformLayout layout, BuildContext context) {
+        prev.accept(layout, context)
+        customizer.accept(layout, context)
+      }
+    }
+  }
+
   /**
    * Names of the modules which classpath will be used to build searchable options index <br>
    * //todo[nik] get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index

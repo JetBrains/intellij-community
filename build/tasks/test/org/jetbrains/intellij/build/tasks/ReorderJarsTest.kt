@@ -6,6 +6,9 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.Murmur3_32Hash
 import com.intellij.util.io.inputStream
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.io.RW_CREATE_NEW
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ForkJoinTask
 import java.util.zip.ZipEntry
 import kotlin.random.Random
 
@@ -116,4 +120,18 @@ class ReorderJarsTest {
       assertThat(entries.first().name).isEqualTo("META-INF/plugin.xml")
     }
   }
+}
+
+private fun doReorderJars(sourceToNames: Map<Path, List<String>>, sourceDir: Path, targetDir: Path) {
+  ForkJoinTask.invokeAll(sourceToNames.mapNotNull { (jarFile, orderedNames) ->
+    if (Files.notExists(jarFile)) {
+      Span.current().addEvent("cannot find jar", Attributes.of(AttributeKey.stringKey("file"), sourceDir.relativize(jarFile).toString()))
+      return@mapNotNull null
+    }
+
+    task(tracer.spanBuilder("reorder jar")
+           .setAttribute("file", sourceDir.relativize(jarFile).toString())) {
+      reorderJar(jarFile, orderedNames, if (targetDir == sourceDir) jarFile else targetDir.resolve(sourceDir.relativize(jarFile)))
+    }
+  })
 }

@@ -219,36 +219,40 @@ final class DistributionJARsBuilder {
     Set<PluginLayout> pluginLayouts = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
 
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
-    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask = buildHelper.createTask(spanBuilder("build platform lib"), {
-      List<ForkJoinTask<?>> tasks = new ArrayList<>()
-      ForkJoinTask<?> task = StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context)
-      if (task != null) {
-        tasks.add(task)
-      }
+    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask =
+      buildHelper.createTask(spanBuilder("build platform lib"), new Supplier<List<DistributionFileEntry>>() {
+        @Override
+        List<DistributionFileEntry> get() {
+          List<ForkJoinTask<?>> tasks = new ArrayList<>()
+          ForkJoinTask<?> task = StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context)
+          if (task != null) {
+            tasks.add(task)
+          }
 
-      ForkJoinTask.invokeAll(Arrays.asList(
-        StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
-        buildHelper.createTask(spanBuilder("write patched app info")) {
-          Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
-          String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-          byte[] result = buildHelper.setAppInfo.invokeWithArguments(moduleOutDir.resolve(relativePath),
-                                                                     context.applicationInfo?.getAppInfoXml()) as byte[]
-          moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
-          return null
-        },
-        ).findAll { it != null })
+          ForkJoinTask.invokeAll(Arrays.asList(
+            StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
+            buildHelper.createTask(spanBuilder("write patched app info")) {
+              Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
+              String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
+              byte[] result = buildHelper.setAppInfo.invokeWithArguments(moduleOutDir.resolve(relativePath),
+                                                                         context.applicationInfo?.getAppInfoXml()) as byte[]
+              moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
+              return null
+            },
+            ).findAll { it != null })
 
-      List<DistributionFileEntry> result = buildLib(moduleOutputPatcher, platform, context)
-      if (!isUpdateFromSources) {
-        scramble(context)
-      }
+          List<DistributionFileEntry> result = buildLib(moduleOutputPatcher, platform, context)
+          if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
+            scramble(context)
+          }
 
-      context.bootClassPathJarNames = (List<String>)buildHelper.generateClasspath
-        .invokeWithArguments(context.paths.distAllDir,
-                             context.productProperties.productLayout.mainJarName,
-                             context.productProperties.isAntRequired ? context.paths.communityHomeDir.resolve("lib/ant/lib") : null)
-      return result
-    })
+          context.bootClassPathJarNames = (List<String>)buildHelper.generateClasspath
+            .invokeWithArguments(context.paths.distAllDir,
+                                 context.productProperties.productLayout.mainJarName,
+                                 context.productProperties.isAntRequired ? context.paths.communityHomeDir.resolve("lib/ant/lib") : null)
+          return result
+        }
+      })
     List<DistributionFileEntry> entries = ForkJoinTask.invokeAll(Arrays.asList(
       buildPlatformTask,
       createBuildBundledPluginTask(pluginLayouts, buildPlatformTask, context),
@@ -299,22 +303,22 @@ final class DistributionJARsBuilder {
   }
 
   private static void scramble(BuildContext context) {
-    if (!context.productProperties.scrambleMainJar) {
-      return
-    }
-
     JarPackager.pack(Map.of("internalUtilities.jar", List.of("intellij.tools.internalUtilities")),
                      context.paths.buildOutputDir.resolve("internal"),
                      context)
 
-    if (context.proprietaryBuildTools.scrambleTool == null) {
+    ScrambleTool tool = context.proprietaryBuildTools.scrambleTool
+    if (tool == null) {
       Span.current().addEvent("skip scrambling because `scrambleTool` isn't defined")
     }
     else {
-      context.proprietaryBuildTools.scrambleTool.scramble(context.productProperties.productLayout.mainJarName, context)
+      tool.scramble(context.productProperties.productLayout.mainJarName, context)
     }
 
-    packInternalUtilities(context)
+    // e.g. JetBrainsGateway doesn't have a main jar with license code
+    if (Files.exists(context.paths.distAllDir.resolve("lib/${context.productProperties.productLayout.mainJarName}"))) {
+      packInternalUtilities(context)
+    }
   }
 
   @SuppressWarnings("GrUnresolvedAccess")
@@ -544,7 +548,7 @@ final class DistributionJARsBuilder {
       List<String> modulesToBeScrambled = context.proprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled
       ProductModulesLayout productLayout = context.productProperties.productLayout
       for (jarName in platform.moduleJars.keySet()) {
-        if (jarName != productLayout.mainJarName) {
+        if (jarName != productLayout.mainJarName && jarName != PlatformModules.PRODUCT_JAR) {
           Collection<String> notScrambled = platform.moduleJars.get(jarName).intersect(modulesToBeScrambled)
           if (!notScrambled.isEmpty()) {
             context.messages.error("Module '${notScrambled.first()}' is included into $jarName which is not scrambled.")

@@ -139,8 +139,11 @@ final class JarPackager {
     if (libraryToMerge.isEmpty()) {
       libSources = null
     }
+    else if (isRootDir) {
+      libSources = packager.filesToSourceWithMappings(outputDir.resolve(BaseLayout.APP_JAR), libraryToMerge)
+    }
     else {
-      boolean isSeparateUberJar = isRootDir || actualModuleJars.size() != 1
+      boolean isSeparateUberJar = actualModuleJars.size() != 1
       Path uberJarFile = outputDir.resolve(isSeparateUberJar ? "3rd-party.jar" : actualModuleJars.keySet().first())
       libSources = packager.filesToSourceWithMappings(uberJarFile, libraryToMerge)
       if (isSeparateUberJar) {
@@ -156,7 +159,7 @@ final class JarPackager {
       String jarPath = entry.key
       Path jarFile = outputDir.resolve(entry.key)
       List sourceList = new ArrayList()
-      if (libSources != null) {
+      if (libSources != null && (!isRootDir || jarPath == BaseLayout.APP_JAR)) {
         sourceList.addAll(libSources)
         libSources = null
       }

@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -24,8 +26,7 @@ import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -275,26 +276,15 @@ internal fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
 }
 
 private fun generateJarAccessLog(outFile: Path) {
-  val classLoader = StartUpPerformanceReporter::class.java.classLoader
-  @Suppress("UNCHECKED_CAST")
-  val itemsFromBootstrap = MethodHandles.lookup()
-    .findStatic(classLoader::class.java, "getLoadedClasses", MethodType.methodType(Collection::class.java))
-    .invokeExact() as Collection<Map.Entry<String, Path>>
-  val itemsFromCore = ClassPath.getLoadedClasses()
-  val items = LinkedHashSet<Map.Entry<String, Path>>(itemsFromBootstrap.size + itemsFromCore.size)
-  items.addAll(itemsFromBootstrap)
-  items.addAll(itemsFromCore)
-
   val homeDir = Path.of(PathManager.getHomePath())
-
   val builder = StringBuilder()
-  for (item in items) {
+  for (item in ClassPath.getLoadedClasses()) {
     val source = item.value
     if (!source.startsWith(homeDir)) {
       continue
     }
 
-    builder.append(item.key).append(':').append(homeDir.relativize(source))
+    builder.append(item.key).append(':').append(homeDir.relativize(source).toString().replace(File.separatorChar, '/'))
     builder.append('\n')
   }
   Files.createDirectories(outFile.parent)

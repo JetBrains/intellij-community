@@ -131,7 +131,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
 
-    productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.java.ide.resources")
+    productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.java.ide.resources")
 
     productLayout.platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
       @Override

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull
  */
 @CompileStatic
 abstract class BaseLayout {
-  public static final String PLATFORM_JAR = "platform-impl.jar"
+  public static final String APP_JAR = "app.jar"
 
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   final MultiMap<String, String> moduleJars = MultiMap.createLinkedSet()

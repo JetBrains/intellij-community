@@ -38,8 +38,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,13 +87,7 @@ public final class ClasspathBootstrap {
   private static final String EXTERNAL_JAVAC_MODULE_NAME = "intellij.platform.jps.build.javac.rt.rpc";
   private static final String EXTERNAL_JAVAC_JAR_NAME = "jps-javac-rt-rpc.jar";
 
-  private static final Set<String> BANNED_JARS = new HashSet<>(2);
-
-  static {
-    String libPath = PathManager.getLibPath();
-    BANNED_JARS.add(libPath + "/3rd-party.jar");
-    BANNED_JARS.add(libPath + "/platform-impl.jar");
-  }
+  private static final String BANNED_JAR = PathManager.getLibPath() + "/app.jar";
 
   private static void addToClassPath(Class<?> aClass, Set<String> result) {
     String path = PathManager.getJarPathForClass(aClass);
@@ -102,7 +95,7 @@ public final class ClasspathBootstrap {
       return;
     }
 
-    if (result.add(path) && BANNED_JARS.contains(path)) {
+    if (result.add(path) && path == BANNED_JAR) {
       LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + PathUtilRt.getFileName(path) + " is added to build process classpath");
     }
   }

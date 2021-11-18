@@ -659,7 +659,6 @@ idea.fatal.error.notification=disabled
 
     checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile")
     checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests")
-    checkModules(properties.additionalModulesRequiredForScrambling, "productProperties.additionalModulesRequiredForScrambling")
 
     def winCustomizer = buildContext.windowsDistributionCustomizer
     checkPaths([winCustomizer?.icoPath], "productProperties.windowsCustomizer.icoPath")
