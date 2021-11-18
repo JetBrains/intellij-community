@@ -30,6 +30,12 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
           CodeStyleSettingsCustomizable.OptionAnchor.AFTER,
           "WRAP_ON_TYPING"
         )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS.name,
+          MarkdownBundle.message("markdown.style.settings.line.breaks.inside.text.blocks"),
+          CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_KEEP
+        )
       }
       SettingsType.BLANK_LINES_SETTINGS -> {
         consumer.showCustomOption(

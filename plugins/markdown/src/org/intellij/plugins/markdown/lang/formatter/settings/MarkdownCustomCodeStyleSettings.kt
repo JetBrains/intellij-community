@@ -44,4 +44,7 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
 
   @JvmField
   var WRAP_TEXT_IF_LONG = false
+
+  @JvmField
+  var KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = true
 }
