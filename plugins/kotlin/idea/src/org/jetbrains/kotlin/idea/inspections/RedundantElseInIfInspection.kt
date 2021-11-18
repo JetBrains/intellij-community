@@ -62,16 +62,18 @@ private class RemoveRedundantElseFix : LocalQuickFix {
         val lastThenEndLine = elseKeyword.getPrevSiblingIgnoringWhitespaceAndComments()?.takeIf {
             it is KtContainerNodeForControlStructureBody && it.node.elementType == KtNodeTypes.THEN
         }?.getLineNumber(start = false)
-        val elseStartLine = ((elseExpression as? KtBlockExpression)?.statements?.firstOrNull() ?: elseExpression).getLineNumber()
-        if (elseKeywordLineNumber == lastThenEndLine && elseKeywordLineNumber == elseStartLine) {
+
+        val elseStartLine = (elseExpression as? KtBlockExpression)?.statements?.firstOrNull()?.getLineNumber()
+        if (elseStartLine == null || elseKeywordLineNumber == lastThenEndLine && elseKeywordLineNumber == elseStartLine) {
             parent.addAfter(KtPsiFactory(ifExpression).createNewLine(), ifExpression)
         }
-        elseExpression.delete()
+
+        elseExpression.parent.delete()
         elseKeyword.delete()
 
         ifExpression.containingFile.adjustLineIndent(
             ifExpression.endOffset,
-            (added.getNextSiblingIgnoringWhitespace() ?: added.parent).endOffset
+            (added.getNextSiblingIgnoringWhitespace() ?: added.parent).endOffset,
         )
     }
 }
