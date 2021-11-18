@@ -119,7 +119,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   }
 
   @ApiStatus.Experimental
-  public void selectTab(WelcomeScreenTab tab) {
+  public void selectTab(@NotNull WelcomeScreenTab tab) {
     TreeNode targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find((node) -> {
       if (node instanceof DefaultMutableTreeNode) {
         var currentTab = ((DefaultMutableTreeNode)node).getUserObject();
