@@ -63,6 +63,7 @@
             <dependency maven-id="org.apache.httpcomponents:httpcore" />
             <dependency maven-id="org.apache.httpcomponents:httpclient" />
             <dependency maven-id="com.google.code.findbugs:jsr305" />
+            <dependency maven-id="com.google.j2objc:j2objc-annotations" />
           </exclude>
         </properties>
         <CLASSES>
@@ -71,7 +72,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/google/oauth-client/google-oauth-client/1.31.5/google-oauth-client-1.31.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client-gson/1.39.2/google-http-client-gson-1.39.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client/1.39.2/google-http-client-1.39.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/1.3/j2objc-annotations-1.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/opencensus/opencensus-api/0.28.0/opencensus-api-0.28.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0.jar!/" />
@@ -83,7 +83,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/google/oauth-client/google-oauth-client/1.31.5/google-oauth-client-1.31.5-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client-gson/1.39.2/google-http-client-gson-1.39.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client/1.39.2/google-http-client-1.39.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/1.3/j2objc-annotations-1.3-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/opencensus/opencensus-api/0.28.0/opencensus-api-0.28.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0-sources.jar!/" />
