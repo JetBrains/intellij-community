@@ -16,7 +16,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.mvstore.MVMap
 import org.jetbrains.mvstore.MVStore
-import org.jetbrains.mvstore.type.LongDataType
+import org.jetbrains.mvstore.type.IntDataType
 import java.awt.image.BufferedImage
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -57,7 +57,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
 
   private val totalFiles = AtomicLong(0)
 
-  private val collisionGuard = ConcurrentHashMap<Long, FileInfo>()
+  private val collisionGuard = ConcurrentHashMap<Int, FileInfo>()
 
   companion object {
     @JvmStatic
@@ -114,17 +114,18 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
   fun compileIcons(dbFile: Path, dirs: List<Path>) {
     val storeBuilder = MVStore.Builder()
       .autoCommitBufferSize(128_1024)
+      .keysPerPage(257)
       .backgroundExceptionHandler { e, _ -> throw e }
       // fast lz4 - 14 MB, high compression - 9 MB, so, we use high even if it consumes a lot of CPU (anyway, performed in parallel)
       .compressionLevel(2)
     val store = storeBuilder.truncateAndOpen(dbFile)
     try {
-      val mapBuilder = MVMap.Builder<Long, ImageValue>()
-      mapBuilder.keyType(LongDataType.INSTANCE)
+      val mapBuilder = MVMap.Builder<Int, ImageValue>()
+      mapBuilder.keyType(IntDataType.INSTANCE)
       mapBuilder.valueType(ImageValue.ImageValueSerializer())
 
-      val scaleToMap = ConcurrentHashMap<Float, MVMap<Long, ImageValue>>(scales.size * 2, 0.75f, 2)
-      val getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Long, ImageValue> = { k, isDark ->
+      val scaleToMap = ConcurrentHashMap<Float, MVMap<Int, ImageValue>>(scales.size * 2, 0.75f, 2)
+      val getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Int, ImageValue> = { k, isDark ->
         SvgCacheManager.getMap(k, isDark, scaleToMap, store, mapBuilder)
       }
 
@@ -153,7 +154,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
                          rootDir: Path,
                          level: Int,
                          rootRobotData: IconRobotsData,
-                         getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
+                         getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Int, ImageValue>) {
     val stream = try {
       Files.newDirectoryStream(dir)
     }
@@ -209,7 +210,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
   }
 
   private fun processImage(variants: List<Path>,
-                           getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Long, ImageValue>,
+                           getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Int, ImageValue>,
                            // just to reuse
                            dimension: ImageLoader.Dimension2DDouble) {
     //println("$id: ${variants.joinToString { rootDir.relativize(it).toString() }}")
@@ -231,7 +232,6 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     // key is the same for all variants
     val light1xBytes = light1xData.toByteArray()
     val imageKey = getImageKey(light1xBytes, light1x.fileName.toString())
-
     if (checkCollision(imageKey, light1x, light1xBytes)) {
       return
     }
@@ -251,7 +251,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     }
   }
 
-  private fun checkCollision(imageKey: Long, file: Path, fileNormalizedData: ByteArray): Boolean {
+  private fun checkCollision(imageKey: Int, file: Path, fileNormalizedData: ByteArray): Boolean {
     val duplicate = collisionGuard.putIfAbsent(imageKey, FileInfo(file))
     if (duplicate == null) {
       return false
@@ -276,11 +276,11 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
   }
 }
 
-private fun addEntry(map: MutableMap<Long, ImageValue>,
+private fun addEntry(map: MutableMap<Int, ImageValue>,
                      image: BufferedImage,
                      dimension: ImageLoader.Dimension2DDouble,
                      file: Path,
-                     imageKey: Long) {
+                     imageKey: Int) {
   val newValue = SvgCacheManager.writeImage(image, dimension)
   //println("put ${(map as MVMap).id} $file : $imageKey")
   val oldValue = map.putIfAbsent(imageKey, newValue)

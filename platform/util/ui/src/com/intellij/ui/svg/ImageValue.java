@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.svg;
 
 import io.netty.buffer.ByteBuf;
@@ -60,7 +60,7 @@ public final class ImageValue {
     public int getMemory(ImageValue obj) {
       return Float.BYTES * 2 +
              DataUtil.VAR_INT_MAX_SIZE * 2 +
-             obj.data.length;
+             obj.data.length + 1;
     }
 
     @Override
@@ -70,19 +70,68 @@ public final class ImageValue {
 
     @Override
     public void write(ByteBuf buf, ImageValue obj) {
-      buf.writeFloat(obj.width);
-      buf.writeFloat(obj.height);
-      IntBitPacker.writeVar(buf, obj.actualWidth);
-      IntBitPacker.writeVar(buf, obj.actualHeight);
+      if (obj.width == obj.actualWidth && obj.height == obj.actualHeight) {
+        if (obj.height == obj.width) {
+          if (obj.actualWidth < 254) {
+            buf.writeByte(obj.actualWidth);
+          }
+          else {
+            buf.writeByte(255);
+            IntBitPacker.writeVar(buf, obj.actualWidth);
+          }
+        }
+        else {
+          buf.writeByte(254);
+          IntBitPacker.writeVar(buf, obj.actualWidth);
+          IntBitPacker.writeVar(buf, obj.actualHeight);
+        }
+      }
+      else {
+        buf.writeByte(0);
+        buf.writeFloat(obj.width);
+        buf.writeFloat(obj.height);
+        IntBitPacker.writeVar(buf, obj.actualWidth);
+        IntBitPacker.writeVar(buf, obj.actualHeight);
+      }
       buf.writeBytes(obj.data);
     }
 
     @Override
     public ImageValue read(ByteBuf buf) {
-      float width = buf.readFloat();
-      float height = buf.readFloat();
-      int actualWidth = IntBitPacker.readVar(buf);
-      int actualHeight = IntBitPacker.readVar(buf);
+      float width;
+      float height;
+      int actualWidth;
+      int actualHeight;
+
+      short format = buf.readUnsignedByte();
+      if (format == 255) {
+        actualWidth = IntBitPacker.readVar(buf);
+        //noinspection SuspiciousNameCombination
+        actualHeight = actualWidth;
+
+        width = actualWidth;
+        //noinspection SuspiciousNameCombination
+        height = actualWidth;
+      }
+      else if (format == 254) {
+        actualWidth = IntBitPacker.readVar(buf);
+        actualHeight = IntBitPacker.readVar(buf);
+
+        width = actualWidth;
+        height = actualHeight;
+      }
+      else if (format != 0) {
+        actualWidth = format;
+        actualHeight = format;
+        width = format;
+        height = format;
+      }
+      else {
+        width = buf.readFloat();
+        height = buf.readFloat();
+        actualWidth = IntBitPacker.readVar(buf);
+        actualHeight = IntBitPacker.readVar(buf);
+      }
 
       int length = actualWidth * actualHeight * 4;
       byte[] data = ByteBufUtil.getBytes(buf, buf.readerIndex(), length);

@@ -250,14 +250,7 @@ public final class UITheme {
           @Override
           public @Nullable SVGLoader.SvgElementColorPatcher forPath(@Nullable String path) {
             PaletteScope scope = paletteScopeManager.getScopeByPath(path);
-            if (scope == null) {
-              return null;
-            }
-
-            byte[] digest = scope.digest();
-            Map<String, String> newPalette = scope.newPalette;
-            Map<String, Integer> alphas = scope.alphas;
-            return SVGLoader.newPatcher(digest, newPalette, alphas);
+            return scope == null ? null : SVGLoader.newPatcher(scope.digest(), scope.newPalette, scope.alphas);
           }
         };
       }
@@ -268,7 +261,9 @@ public final class UITheme {
 
   private static void initializeNamedColors(UITheme theme) {
     Map<String, Object> map = theme.colors;
-    if (map == null) return;
+    if (map == null) {
+      return;
+    }
 
     Set<String> namedColors = map.keySet();
     for (String key : namedColors) {
@@ -662,7 +657,7 @@ public final class UITheme {
         return hash;
       }
 
-      MessageDigest hasher = DigestUtil.sha256();
+      MessageDigest hasher = DigestUtil.sha512();
       // order is significant
       if (!newPalette.isEmpty()) {
         for (Map.Entry<String, String> e : new TreeMap<>(newPalette).entrySet()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Iconable;
@@ -42,7 +42,7 @@ public interface IconManager {
    * Path must be specified without a leading slash, in a format for {@link ClassLoader#getResourceAsStream(String)}
    */
   @ApiStatus.Internal
-  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags);
+  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int flags);
 
   default @NotNull Icon createEmptyIcon(@NotNull Icon icon) {
     return icon;
@@ -117,7 +117,7 @@ final class DummyIconManager implements IconManager {
   }
 
   @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags) {
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int flags) {
     return new DummyIcon(path);
   }
 

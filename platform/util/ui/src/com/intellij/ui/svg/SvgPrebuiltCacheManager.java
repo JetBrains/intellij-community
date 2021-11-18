@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.svg;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.mvstore.MVMap;
 import org.jetbrains.mvstore.MVStore;
-import org.jetbrains.mvstore.type.LongDataType;
+import org.jetbrains.mvstore.type.IntDataType;
 
 import java.awt.*;
 import java.io.IOException;
@@ -20,26 +20,24 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApiStatus.Internal
 public final class SvgPrebuiltCacheManager {
   private final MVStore store;
-  private final Map<Float, MVMap<Long, ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
-  private final MVMap.Builder<Long, ImageValue> mapBuilder;
+  private final Map<Float, MVMap<Integer, ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
+  private final MVMap.Builder<Integer, ImageValue> mapBuilder;
 
   public SvgPrebuiltCacheManager(@NotNull Path dbFile) throws IOException {
     MVStore.Builder storeBuilder = new MVStore.Builder()
       .readOnly()
       .backgroundExceptionHandler((e, store) -> {
         SvgCacheManager.getLogger().error("Icon cache error (db=" + store.getFileStore() + ")", e);
-      })
-      .autoCommitDelay(60_000)
-      .compressHigh();
+      });
     store = storeBuilder.open(dbFile);
 
-    MVMap.Builder<Long, ImageValue> mapBuilder = new MVMap.Builder<>();
-    mapBuilder.keyType(LongDataType.INSTANCE);
+    MVMap.Builder<Integer, ImageValue> mapBuilder = new MVMap.Builder<>();
+    mapBuilder.keyType(IntDataType.INSTANCE);
     mapBuilder.valueType(new ImageValue.ImageValueSerializer());
     this.mapBuilder = mapBuilder;
   }
 
-  public @Nullable Image loadFromCache(long key,
+  public @Nullable Image loadFromCache(int key,
                                        float scale,
                                        boolean isDark,
                                        @NotNull ImageLoader.Dimension2DDouble docSize) {

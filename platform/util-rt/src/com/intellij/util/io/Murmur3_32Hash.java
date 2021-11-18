@@ -15,6 +15,8 @@ package com.intellij.util.io;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
 /**
@@ -59,6 +61,7 @@ public final class Murmur3_32Hash {
     return fMix(h1, 8);
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   public int hashUnencodedChars(CharSequence input) {
     int h1 = seed;
 
@@ -129,7 +132,7 @@ public final class Murmur3_32Hash {
         int codePoint = Character.codePointAt(input, i);
         if (codePoint == c) {
           // not a valid code point; let the JDK handle invalid Unicode
-          byte[] bytes = input.toString().getBytes(Charset.forName("UTF-8") );
+          byte[] bytes = input.toString().getBytes(Charset.forName("UTF-8"));
           return hashBytes(bytes, 0, bytes.length);
         }
         i++;
@@ -248,5 +251,123 @@ public final class Murmur3_32Hash {
     }
     // end < start
     return "end index (" + end + ") must not be less than start index (" + start + ")";
+  }
+
+  public static final class Murmur3_32Hasher {
+    private int h1;
+    private long buffer;
+    private int shift;
+    private int length;
+    private boolean isDone;
+
+    public Murmur3_32Hasher(int seed) {
+      this.h1 = seed;
+      this.length = 0;
+      isDone = false;
+    }
+
+    private void update(int nBytes, long update) {
+      // 1 <= nBytes <= 4
+      buffer |= (update & 0xFFFFFFFFL) << shift;
+      shift += nBytes * 8;
+      length += nBytes;
+
+      if (shift >= 32) {
+        h1 = mixH1(h1, mixK1((int)buffer));
+        buffer >>>= 32;
+        shift -= 32;
+      }
+    }
+
+    public void putByte(byte b) {
+      update(1, b & 0xFF);
+    }
+
+    public void putBytes(byte[] bytes, int off, int len) {
+      checkPositionIndexes(off, off + len, bytes.length);
+      int i;
+      for (i = 0; i + 4 <= len; i += 4) {
+        update(4, getIntLittleEndian(bytes, off + i));
+      }
+      for (; i < len; i++) {
+        putByte(bytes[off + i]);
+      }
+    }
+
+    public void putBytes(ByteBuffer buffer) {
+      ByteOrder bo = buffer.order();
+      buffer.order(ByteOrder.LITTLE_ENDIAN);
+      while (buffer.remaining() >= 4) {
+        putInt(buffer.getInt());
+      }
+      while (buffer.hasRemaining()) {
+        putByte(buffer.get());
+      }
+      buffer.order(bo);
+    }
+
+    public void putInt(int i) {
+      update(4, i);
+    }
+
+    public void putLong(long l) {
+      update(4, (int)l);
+      update(4, l >>> 32);
+    }
+
+    public void putChar(char c) {
+      update(2, c);
+    }
+
+    public void putString(CharSequence input) {
+      int utf16Length = input.length();
+      int i = 0;
+
+      // This loop optimizes for pure ASCII.
+      while (i + 4 <= utf16Length) {
+        char c0 = input.charAt(i);
+        char c1 = input.charAt(i + 1);
+        char c2 = input.charAt(i + 2);
+        char c3 = input.charAt(i + 3);
+        if (c0 < 0x80 && c1 < 0x80 && c2 < 0x80 && c3 < 0x80) {
+          update(4, c0 | (c1 << 8) | (c2 << 16) | (c3 << 24));
+          i += 4;
+        }
+        else {
+          break;
+        }
+      }
+
+      for (; i < utf16Length; i++) {
+        char c = input.charAt(i);
+        if (c < 0x80) {
+          update(1, c);
+        }
+        else if (c < 0x800) {
+          update(2, charToTwoUtf8Bytes(c));
+        }
+        else if (c < Character.MIN_SURROGATE || c > Character.MAX_SURROGATE) {
+          update(3, charToThreeUtf8Bytes(c));
+        }
+        else {
+          int codePoint = Character.codePointAt(input, i);
+          if (codePoint == c) {
+            // fall back to JDK getBytes instead of trying to handle invalid surrogates ourselves
+            byte[] bytes = input.subSequence(i, utf16Length).toString().getBytes(Charset.forName("UTF-8"));
+            putBytes(bytes, 0, bytes.length);
+            return;
+          }
+          i++;
+          update(4, codePointToFourUtf8Bytes(codePoint));
+        }
+      }
+    }
+
+    public int hash() {
+      assert !isDone;
+      isDone = true;
+      h1 ^= mixK1((int)buffer);
+      return fMix(h1, length);
+    }
   }
 }

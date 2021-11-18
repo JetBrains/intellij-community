@@ -80,7 +80,7 @@ public final class SVGLoader {
 
       SvgCacheManager cache;
       try {
-        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v3.db")) : null;
+        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v4.db")) : null;
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoader.class).error(e);
@@ -116,30 +116,30 @@ public final class SVGLoader {
   public static @Nullable Image loadFromClassResource(@Nullable Class<?> resourceClass,
                                                       @Nullable ClassLoader classLoader,
                                                       @NotNull String path,
-                                                      long rasterizedCacheKey,
+                                                      int rasterizedCacheKey,
                                                       float scale,
                                                       boolean isDark,
                                                       @NotNull ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
-    byte[] theme;
+    byte[] themeDigest;
     byte[] data = null;
 
     if (USE_CACHE && !isColorRedefinitionContext()) {
       @SuppressWarnings("DuplicatedCode")
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
-      theme = DEFAULT_THEME;
+      themeDigest = DEFAULT_THEME;
 
       SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
       if (colorPatcher != null) {
         SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
         if (subPatcher != null) {
-          theme = subPatcher.digest();
+          themeDigest = subPatcher.digest();
         }
       }
 
-      if (theme != null) {
+      if (themeDigest != null) {
         Image image;
-        if (theme == DEFAULT_THEME && rasterizedCacheKey != 0) {
+        if (themeDigest == DEFAULT_THEME && rasterizedCacheKey != 0) {
           SvgPrebuiltCacheManager cache = SvgCache.prebuiltPersistentCache;
           if (cache != null) {
             image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
@@ -154,7 +154,7 @@ public final class SVGLoader {
           return null;
         }
 
-        image = SvgCache.persistentCache.loadFromCache(theme, data, scale, isDark, docSize);
+        image = SvgCache.persistentCache.loadFromCache(themeDigest, data, scale, isDark, docSize);
         if (image != null) {
           return image;
         }
@@ -165,7 +165,7 @@ public final class SVGLoader {
       }
     }
     else {
-      theme = null;
+      themeDigest = null;
     }
 
     if (data == null) {
@@ -174,7 +174,7 @@ public final class SVGLoader {
         return null;
       }
     }
-    return loadAndCache(path, data, scale, docSize, theme);
+    return loadAndCache(path, data, scale, docSize, themeDigest);
   }
 
   @ApiStatus.Internal
@@ -187,27 +187,27 @@ public final class SVGLoader {
       docSize = new ImageLoader.Dimension2DDouble(0, 0);
     }
 
-    byte[] theme = null;
+    byte[] themeDigest = null;
     byte[] data;
     Image image;
 
     if (USE_CACHE && !isColorRedefinitionContext()) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-      theme = DEFAULT_THEME;
+      themeDigest = DEFAULT_THEME;
       SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
       if (colorPatcher != null) {
         SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
         if (subPatcher != null) {
-          theme = subPatcher.digest();
+          themeDigest = subPatcher.digest();
         }
       }
 
-      if (theme == null) {
+      if (themeDigest == null) {
         data = null;
       }
       else {
         data = stream.readAllBytes();
-        image = SvgCache.persistentCache.loadFromCache(theme, data, scale, isDark, docSize);
+        image = SvgCache.persistentCache.loadFromCache(themeDigest, data, scale, isDark, docSize);
         if (image != null) {
           return image;
         }
@@ -220,14 +220,14 @@ public final class SVGLoader {
     else {
       data = stream.readAllBytes();
     }
-    return loadAndCache(path, data, scale, docSize, theme);
+    return loadAndCache(path, data, scale, docSize, themeDigest);
   }
 
   private static @NotNull BufferedImage loadAndCache(@Nullable String path,
                                                      byte[] data,
                                                      float scale,
                                                      @NotNull ImageLoader.Dimension2DDouble docSize,
-                                                     byte[] theme) throws IOException {
+                                                     byte[] themeDigest) throws IOException {
     long decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled();
     BufferedImage bufferedImage;
     try {
@@ -242,10 +242,10 @@ public final class SVGLoader {
       IconLoadMeasurer.svgDecoding.end(decodingStart);
     }
 
-    if (theme != null) {
+    if (themeDigest != null) {
       try {
         long cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled();
-        SvgCache.persistentCache.storeLoadedImage(theme, data, scale, bufferedImage, docSize);
+        SvgCache.persistentCache.storeLoadedImage(themeDigest, data, scale, bufferedImage, docSize);
         IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart);
       }
       catch (Exception e) {

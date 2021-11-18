@@ -3,17 +3,16 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.ui.svg.SvgTranscoder
 import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.diff.Diff
+import com.intellij.util.io.Murmur3_32Hash
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.readXmlAsModel
-import net.jpountz.xxhash.XXHashFactory
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -280,7 +279,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     }
     result.append(" class ").append(info.className).append(" {\n")
     if (info.customLoad) {
-      append(result, "private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {", 1)
+      append(result, "private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {", 1)
       append(result, "return $iconLoaderCode.loadRasterizedIcon(path, ${info.className}.class.getClassLoader(), cacheKey, flags);", 2)
       append(result, "}", 1)
 
@@ -438,7 +437,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     }
 
     var javaDoc: String
-    var key: Long
+    var key: Int
     try {
       val loadedImage: BufferedImage
       if (file.toString().endsWith(".svg")) {
@@ -467,7 +466,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     val relativePath = rootPrefix + rootDir.relativize(imageFile).systemIndependentPath
     assert(relativePath.startsWith("/"))
     append(result, "${javaDoc}public static final @NotNull Icon $iconName = " +
-                   "$method(\"${relativePath.removePrefix("/")}\", ${key}L, ${image.getFlags()});", level)
+                   "$method(\"${relativePath.removePrefix("/")}\", $key, ${image.getFlags()});", level)
 
     val oldName = deprecatedIconFieldNameMap.get(iconName)
     if (oldName != null) {
@@ -634,16 +633,14 @@ private fun capitalize(name: String): String {
 }
 
 private const val iconLoaderCode = "IconManager.getInstance()"
-private val hashFactory: XXHashFactory = XXHashFactory.fastestJavaInstance()
 
 // grid-layout.svg duplicates grid-view.svg, but grid-layout_dark.svg differs from grid-view_dark.svg
 // so, add filename to image id to support such scenario
-internal fun getImageKey(fileData: ByteArray, fileName: String): Long {
-  val h = hashFactory.newStreamingHash64(SvgCacheManager.HASH_SEED)
-  h.update(fileData, 0, fileData.size)
-  val nameBytes = fileName.toByteArray()
-  h.update(nameBytes, 0, nameBytes.size)
-  return h.value
+internal fun getImageKey(fileData: ByteArray, fileName: String): Int {
+  val h = Murmur3_32Hash.Murmur3_32Hasher(0)
+  h.putBytes(fileData, 0, fileData.size)
+  h.putString(fileName)
+  return h.hash()
 }
 
 // remove line separators to unify line separators (\n vs \r\n), trim lines

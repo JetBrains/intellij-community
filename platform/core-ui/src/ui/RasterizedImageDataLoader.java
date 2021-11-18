@@ -28,11 +28,11 @@ import java.util.List;
 
 final class RasterizedImageDataLoader implements ImageDataLoader {
   private final WeakReference<ClassLoader> classLoaderRef;
-  private final long cacheKey;
+  private final int cacheKey;
   private final int imageFlags;
   private final String path;
 
-  RasterizedImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int imageFlags) {
+  RasterizedImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int imageFlags) {
     this.path = path;
     classLoaderRef = new WeakReference<>(classLoader);
     this.cacheKey = cacheKey;
@@ -85,7 +85,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
                                                @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
                                                @NotNull ScaleContext scaleContext,
                                                boolean isUpScaleNeeded,
-                                               long rasterizedCacheKey,
+                                                int rasterizedCacheKey,
                                                @MagicConstant(flagsFromClass = ImageDescriptor.class) int imageFlags) {
     long loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled();
 

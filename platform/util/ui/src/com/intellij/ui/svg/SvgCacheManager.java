@@ -26,9 +26,9 @@ import java.util.function.BiConsumer;
 @SuppressWarnings("UndesirableClassUsage")
 @ApiStatus.Internal
 public final class SvgCacheManager {
-  public static final long HASH_SEED = 0x9747b28c;
+  private static final long HASH_SEED = 0x9747b28c;
   private static final int[] B_OFFS = new int[]{3, 2, 1, 0};
-  private static final int IMAGE_KEY_SIZE = Integer.BYTES + Long.BYTES;
+  private static final int IMAGE_KEY_SIZE = Long.BYTES + 3;
 
   private static final ComponentColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8, 8, 8, 8}, true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
 
@@ -57,7 +57,7 @@ public final class SvgCacheManager {
     MVStore.Builder storeBuilder = new MVStore.Builder()
       .backgroundExceptionHandler(storeErrorHandler)
       .autoCommitDelay(60_000)
-      .compressHigh();
+      .compressionLevel(1);
     store = storeBuilder.openOrNewOnIoError(dbFile, true, e -> {
       getLogger().debug("Cannot open icon cache database", e);
     });
@@ -92,34 +92,37 @@ public final class SvgCacheManager {
     store.triggerAutoSave();
   }
 
-  private static byte[] getCacheKey(byte @NotNull [] theme, byte @NotNull [] imageBytes) {
+  private static byte[] getCacheKey(byte @NotNull [] themeDigest, byte @NotNull [] imageBytes) {
     XXHashFactory hashFactory = XXHashFactory.fastestJavaInstance();
     long contentDigest;
-    if (theme.length == 0) {
+    if (themeDigest.length == 0) {
       contentDigest = hashFactory.hash64().hash(imageBytes, 0, imageBytes.length, HASH_SEED);
     }
     else {
       StreamingXXHash64 hasher = hashFactory.newStreamingHash64(HASH_SEED);
       // hash content to ensure that value is not reused if outdated
-      hasher.update(theme, 0, theme.length);
+      hasher.update(themeDigest, 0, themeDigest.length);
       hasher.update(imageBytes, 0, imageBytes.length);
       contentDigest = hasher.getValue();
       hasher.close();
     }
 
     ByteBuffer buffer = ByteBuffer.allocate(IMAGE_KEY_SIZE);
-    // add content size to key to reduce chance of hash collision
-    buffer.putInt(imageBytes.length);
+    // add content size to key to reduce chance of hash collision (write as medium int)
+    buffer.put((byte)(imageBytes.length >>> 16));
+    buffer.put((byte)(imageBytes.length >>> 8));
+    buffer.put((byte)imageBytes.length);
+
     buffer.putLong(contentDigest);
     return buffer.array();
   }
 
-  public @Nullable Image loadFromCache(byte @NotNull [] theme,
+  public @Nullable Image loadFromCache(byte @NotNull [] themeDigest,
                                        byte @NotNull [] imageBytes,
                                        float scale,
                                        boolean isDark,
                                        @NotNull ImageLoader.Dimension2DDouble docSize) {
-    byte[] key = getCacheKey(theme, imageBytes);
+    byte[] key = getCacheKey(themeDigest, imageBytes);
     MVMap<byte[], ImageValue> map = getMap(scale, isDark, scaleToMap, store, mapBuilder);
     try {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
@@ -145,12 +148,12 @@ public final class SvgCacheManager {
     }
   }
 
-  public void storeLoadedImage(byte @NotNull [] theme,
+  public void storeLoadedImage(byte @NotNull [] themeDigest,
                                byte @NotNull [] imageBytes,
                                float scale,
                                @NotNull BufferedImage image,
                                @NotNull ImageLoader.Dimension2DDouble size) {
-    byte[] key = getCacheKey(theme, imageBytes);
+    byte[] key = getCacheKey(themeDigest, imageBytes);
     getMap(scale, false, scaleToMap, store, mapBuilder).put(key, writeImage(image, size));
   }
 
