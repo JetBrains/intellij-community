@@ -290,7 +290,7 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     
     for (callInfo in regularArgs) {
       val inlay = when {
-        isErroneousArg(callInfo) || isArgWithComment(callInfo) -> null
+        shouldHideArgument(callInfo) -> null
         shouldShowHintsForExpression(callInfo.argument) -> inlayInfo(callInfo)
         !callInfo.isAssignable(substitutor) -> inlayInfo(callInfo, showOnlyIfExistedBefore = true)
         else -> null
@@ -312,10 +312,13 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     }
 
     return regularArgs
-      .filterNot { isErroneousArg(it) || isArgWithComment(it) }
+      .filterNot { shouldHideArgument(it) }
       .filter { duplicated.contains(it.parameter.typeText()) && it.argument.text != it.parameter.name }
       .map { inlayInfo(it) }
   }
+
+  private fun shouldHideArgument(callInfo: CallArgumentInfo) =
+    isErroneousArg(callInfo) || isArgWithComment(callInfo) || argIfNamedHasSameNameAsParameter(callInfo)
 
   private fun isErroneousArg(arg : CallArgumentInfo): Boolean {
     return arg.argument is PsiEmptyExpressionImpl || arg.argument.prevSibling is PsiEmptyExpressionImpl
@@ -323,6 +326,15 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
 
   private fun isArgWithComment(arg : CallArgumentInfo): Boolean {
     return hasComment(arg.argument, PsiElement::getNextSibling) || hasComment(arg.argument, PsiElement::getPrevSibling)
+  }
+
+  private fun argIfNamedHasSameNameAsParameter(arg : CallArgumentInfo): Boolean {
+    val argName = when (val argExpr = arg.argument) {
+      is PsiReferenceExpression -> argExpr.referenceName
+      is PsiMethodCallExpression -> argExpr.methodExpression.referenceName
+      else -> null
+    } ?: return false
+    return argName == arg.parameter.name
   }
 
   private fun hasComment(e: PsiElement, next: (PsiElement) -> PsiElement?) : Boolean {

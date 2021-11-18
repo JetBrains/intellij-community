@@ -1206,6 +1206,30 @@ class C {
     }
   }
 
+
+  fun `test same argument and parameter names`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
+    check("""
+class A {
+    static class ClassA {
+        static String getName() {
+            return "Asd";
+        }
+    }
+
+    static void testHints(ClassA entity, String name) {
+
+    }
+
+    public static void main(String[] args) {
+        ClassA entity = new ClassA();
+        testHints(entity, <hint text="name:"/>ClassA.getName());
+    }
+}
+""")
+  }
+
   fun getHints(): List<String> {
     val document = myFixture.getDocument(myFixture.file)
     val manager = ParameterHintsPresentationManager.getInstance()
