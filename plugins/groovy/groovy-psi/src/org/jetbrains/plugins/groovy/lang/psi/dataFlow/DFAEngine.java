@@ -92,6 +92,9 @@ public final class DFAEngine<E> {
   }
 
   private E join(List<? extends E> states) {
+    if (states.size() == 0) {
+      return mySemilattice.initial();
+    }
     if (states.size() == 1) {
       return states.get(0);
     }

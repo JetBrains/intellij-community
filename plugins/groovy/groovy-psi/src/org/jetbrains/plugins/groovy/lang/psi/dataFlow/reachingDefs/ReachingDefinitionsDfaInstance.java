@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -23,15 +23,23 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
   }
 
   @Override
-  public void fun(@NotNull DefinitionMap m, @NotNull Instruction instruction) {
+  public DefinitionMap fun(@NotNull DefinitionMap m, @NotNull Instruction instruction) {
     if (instruction instanceof ReadWriteVariableInstruction) {
       final ReadWriteVariableInstruction varInsn = (ReadWriteVariableInstruction)instruction;
       final VariableDescriptor descriptor = varInsn.getDescriptor();
       assert myVarToIndexMap.containsKey(descriptor) : descriptor + "; " + Arrays.asList(myFlow).contains(instruction);
       final int varIndex = myVarToIndexMap.getInt(descriptor);
       if (varInsn.isWrite()) {
-        m.registerDef(varIndex, varInsn);
+        // todo: shallow copying
+        DefinitionMap newMap = new DefinitionMap();
+        newMap.mergeFrom(m);
+        newMap.registerDef(varIndex, varInsn);
+        return newMap;
+      } else {
+        return m;
       }
+    } else {
+      return m;
     }
   }
 }
