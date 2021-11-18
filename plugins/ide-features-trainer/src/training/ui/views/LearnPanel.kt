@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.course.Lesson
@@ -199,6 +200,12 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
         override fun mouseClicked(e: MouseEvent) {
           if (!StatisticBase.isLearnProjectCloseLogged) {
             StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
+          }
+          LessonManager.instance.stopLesson()
+          val langSupport = LangManager.getInstance().getLangSupport()
+          langSupport?.onboardingFeedbackData?.let {
+            showOnboardingLessonFeedbackForm(learnToolWindow.project, it)
+            langSupport.onboardingFeedbackData = null
           }
           CloseProjectWindowHelper().windowClosing(learnToolWindow.project)
         }

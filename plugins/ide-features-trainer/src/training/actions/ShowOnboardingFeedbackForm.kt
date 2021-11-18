@@ -3,11 +3,11 @@ package training.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import training.ui.showFeedbackForm
+import training.ui.showOnboardingLessonFeedbackForm
 
 private class ShowOnboardingFeedbackForm : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    showFeedbackForm(e.project)
+    showOnboardingLessonFeedbackForm(e.project, null)
   }
 
   override fun update(e: AnActionEvent) {
