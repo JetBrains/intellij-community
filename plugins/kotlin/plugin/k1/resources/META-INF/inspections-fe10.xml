@@ -1227,6 +1227,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      level="WARNING"
+                     runForWholeFile="true"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.receiver.parameter.display.name" bundle="messages.KotlinBundle"/>
 

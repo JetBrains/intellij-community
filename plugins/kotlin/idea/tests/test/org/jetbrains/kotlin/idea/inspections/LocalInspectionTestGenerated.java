@@ -16567,6 +16567,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testSameSignatureDifferentScope() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/sameSignatureDifferentScope.kt");
         }
+
+        @TestMetadata("usedWithCallExpressionReceiver.kt")
+        public void testUsedWithCallExpressionReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/usedWithCallExpressionReceiver.kt");
+        }
+
+        @TestMetadata("usedWithQualifiedExpressionReceiver.kt")
+        public void testUsedWithQualifiedExpressionReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/usedWithQualifiedExpressionReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
