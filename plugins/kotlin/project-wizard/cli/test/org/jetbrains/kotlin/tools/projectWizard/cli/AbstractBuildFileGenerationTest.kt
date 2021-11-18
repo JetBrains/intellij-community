@@ -47,7 +47,14 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
             if (testParameters.keepKotlinVersion) {
                 fileContent
             } else {
-                fileContent.replace(KotlinVersionProviderTestWizardService.TEST_KOTLIN_VERSION.toString(), KOTLIN_VERSION_PLACEHOLDER)
+                val pathString = path.toString()
+                when {
+                    pathString.endsWith("pom.xml") ->
+                        fileContent.replaceKotlinVersion(MAVEN_KOTLIN_VERSION_REPLACE_REGEX, KOTLIN_VERSION_PLACEHOLDER)
+                    pathString.endsWith("build.gradle") || path.endsWith("build.gradle.kts") ->
+                        fileContent.replaceKotlinVersion(GRADLE_KOTLIN_VERSION_REPLACE_REGEX, KOTLIN_VERSION_PLACEHOLDER)
+                    else -> fileContent.replace(ACTUAL_KOTLIN_VERSION_STRING, KOTLIN_VERSION_PLACEHOLDER)
+                }
             }.also { it.replaceAllTo(
                 listOf(Repositories.JETBRAINS_KOTLIN_DEV.url),
                 KOTLIN_REPO_PLACEHOLDER
@@ -65,6 +72,14 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
         private const val EXPECTED_DIRECTORY_NAME = "expected"
         private const val KOTLIN_VERSION_PLACEHOLDER = "KOTLIN_VERSION"
         private const val KOTLIN_REPO_PLACEHOLDER = "KOTLIN_REPO"
+
+        private val ACTUAL_KOTLIN_VERSION_STRING = KotlinVersionProviderTestWizardService.TEST_KOTLIN_VERSION.toString()
+
+        private val MAVEN_KOTLIN_VERSION_REPLACE_REGEX =
+            "(<artifactId>kotlin[^<]*</artifactId>[^<]*<version>)$ACTUAL_KOTLIN_VERSION_STRING(</version>)".toRegex()
+
+        private val GRADLE_KOTLIN_VERSION_REPLACE_REGEX =
+            "(kotlin.+version\\s+['\"]|kotlin-gradle-plugin:)$ACTUAL_KOTLIN_VERSION_STRING(['\"])".toRegex()
     }
 }
 
@@ -72,3 +87,7 @@ private fun String.replaceAllTo(oldValues: Collection<String>, newValue: String)
     oldValues.fold(this) { state, oldValue ->
         state.replace(oldValue, newValue)
     }
+
+private fun String.replaceKotlinVersion(pattern: Regex, placeholder: String): String {
+    return replace(pattern) { "${it.groupValues[1]}$placeholder${it.groupValues[2]}"}
+}
