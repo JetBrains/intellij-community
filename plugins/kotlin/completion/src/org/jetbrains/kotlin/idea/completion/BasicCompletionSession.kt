@@ -268,7 +268,7 @@ class BasicCompletionSession(
             ) {
                 //TODO: move this code somewhere else?
                 val packageNames = PackageIndexUtil.getSubPackageFqNames(FqName.ROOT, searchScope, project, prefixMatcher.asNameFilter())
-                    .toMutableSet()
+                    .toHashSet()
 
                 if (TargetPlatformDetector.getPlatform(parameters.originalFile as KtFile).isJvm()) {
                     JavaPsiFacade.getInstance(project).findPackage("")?.getSubPackages(searchScope)?.forEach { psiPackage ->
@@ -428,7 +428,7 @@ class BasicCompletionSession(
                     includeJavaClassesNotToBeUsed = configuration.javaClassesNotToBeUsed,
                 ).collect({ descriptors += it }, { descriptors.addIfNotNull(it.resolveToDescriptor(resolutionFacade)) })
 
-                val foundDescriptors = mutableSetOf<DeclarationDescriptor>()
+                val foundDescriptors = HashSet<DeclarationDescriptor>()
                 val classifiers = descriptors.asSequence().filter {
                     it.kind == ClassKind.OBJECT ||
                             it.kind == ClassKind.ENUM_CLASS ||

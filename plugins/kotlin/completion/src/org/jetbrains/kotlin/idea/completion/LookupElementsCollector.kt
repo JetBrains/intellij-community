@@ -39,14 +39,14 @@ class LookupElementsCollector(
     private val resultSet = resultSet.withPrefixMatcher(prefixMatcher).withRelevanceSorter(sorter)
 
     private val postProcessors = ArrayList<(LookupElement) -> LookupElement>()
-    private val processedCallables = mutableSetOf<CallableDescriptor>()
+    private val processedCallables = HashSet<CallableDescriptor>()
 
     var isResultEmpty: Boolean = true
         private set
 
 
     fun flushToResultSet() {
-        if (!elements.isEmpty()) {
+        if (elements.isNotEmpty()) {
             onFlush()
 
             resultSet.addAllElements(elements)
@@ -92,7 +92,9 @@ class LookupElementsCollector(
     }
 
     fun addElement(element: LookupElement, notImported: Boolean = false) {
-        if (!prefixMatcher.prefixMatches(element)) return
+        if (!prefixMatcher.prefixMatches(element)) {
+            return
+        }
         if (!allowExpectDeclarations) {
             val descriptor = (element.`object` as? DeclarationLookupObject)?.descriptor
             if ((descriptor as? MemberDescriptor)?.isExpect == true) return

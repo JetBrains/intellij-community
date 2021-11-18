@@ -36,11 +36,11 @@ abstract class AbstractStringStubIndexExtension<Psi: PsiElement>(protected val v
 
         // collect all keys, collect all values those fulfill filter into a single collection, process values after that
 
-        val allKeys = mutableSetOf<String>()
+        val allKeys = HashSet<String>()
         if (!processAllKeys(project, CancelableCollectFilterProcessor(allKeys, filter))) return
 
         if (allKeys.isNotEmpty()) {
-            val values = mutableSetOf<Psi>()
+            val values = HashSet<Psi>(allKeys.size)
             val collectProcessor = Processors.cancelableCollectProcessor(values)
             allKeys.forEach { s ->
                 if (!stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)) return

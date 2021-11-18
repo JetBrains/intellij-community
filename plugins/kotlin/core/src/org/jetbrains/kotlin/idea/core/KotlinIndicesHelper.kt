@@ -219,7 +219,7 @@ class KotlinIndicesHelper(
         val receiverTypeNames = collectAllNamesOfTypes(receiverTypes)
 
         val callType = callTypeAndReceiver.callType
-        val processed = mutableSetOf<CallableDescriptor>()
+        val processed = HashSet<CallableDescriptor>()
 
         val declarationProcessor = Processor<KtCallableDeclaration> { callableDeclaration ->
             // Check that function or property with the given qualified name can be resolved in given scope and called on given receiver
