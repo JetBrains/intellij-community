@@ -6,7 +6,9 @@ import org.jetbrains.annotations.NonBlockingExecutor
 import java.lang.Thread
 
 suspend fun testFunction() {
-    @BlockingExecutor
+    // no warnings, type is annotated with @BlockingExecutor
+    withContext(CustomDispatcher()) { Thread.sleep(0) }
+
     val ctx = getContext()
     // no warnings with @BlockingContext annotation on ctx object
     withContext(ctx) { Thread.sleep(1) }
@@ -23,13 +25,18 @@ suspend fun testFunction() {
     }
 }
 
-@BlockingExecutor
-fun getContext(): CoroutineContext = TODO()
+fun getContext(): @BlockingExecutor CoroutineContext = TODO()
 
 fun getNonBlockingContext(): CoroutineContext = TODO()
 
-@NonBlockingExecutor
-fun getExplicitlyNonBlockingContext(): CoroutineContext = TODO()
+fun getExplicitlyNonBlockingContext(): @NonBlockingExecutor CoroutineContext = TODO()
+
+@BlockingExecutor
+class CustomDispatcher: CoroutineContext {
+    override fun <R> fold(initial: R, operation: (R, CoroutineContext.Element) -> R): R = TODO()
+    override fun <E : CoroutineContext.Element> get(key: CoroutineContext.Key<E>): E? = TODO()
+    override fun minusKey(key: CoroutineContext.Key<*>): CoroutineContext = TODO()
+}
 
 suspend fun <T> withContext(
     context: CoroutineContext,
