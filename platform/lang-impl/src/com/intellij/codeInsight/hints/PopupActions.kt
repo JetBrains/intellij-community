@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -43,8 +42,8 @@ class ShowSettingsWithAddedPattern : AnAction(), UpdateInBackground {
   }
 
   override fun update(e: AnActionEvent) {
-    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+    val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
     
     val offset = editor.caretModel.offset
     val info = getHintInfoFromProvider(offset, file, editor)
@@ -72,8 +71,8 @@ class ShowParameterHintsSettings : AnAction(), UpdateInBackground {
 }
 
 fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String?) {
-  val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-  val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+  val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
+  val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
   val fileLanguage = file.language
   InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
@@ -268,7 +267,7 @@ class ToggleInlineHintsAction : AnAction(), UpdateInBackground {
       return
     }
 
-    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
     val isHintsShownNow = isParameterHintsEnabledForLanguage(file.language)
     e.presentation.text = if (isHintsShownNow)
       CodeInsightBundle.message("inlay.hints.disable.action.text")
@@ -278,7 +277,7 @@ class ToggleInlineHintsAction : AnAction(), UpdateInBackground {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
     val language = file.language
     val before = isParameterHintsEnabledForLanguage(language)
     setShowParameterHintsForLanguage(!before, language)
@@ -327,5 +326,3 @@ private fun getHintInfoFromProvider(offset: Int, file: PsiFile, editor: Editor):
 }
 
 fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
-
-private fun String.capitalizeFirstLetter() = StringUtil.capitalize(this)
