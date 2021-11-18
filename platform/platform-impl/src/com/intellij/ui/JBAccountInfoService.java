@@ -12,21 +12,21 @@ public interface JBAccountInfoService {
 
   final class JBAData {
     @NotNull
-    public final String userId;
+    public final String id;
     @Nullable
     public final String loginName;
     @Nullable
-    public final String userEmail;
+    public final String email;
 
     public JBAData(@NotNull String userId, @Nullable String loginName, @Nullable String email) {
-      this.userId = userId;
+      this.id = userId;
       this.loginName = loginName;
-      userEmail = email;
+      this.email = email;
     }
   }
 
   @Nullable
-  JBAccountInfoService.JBAData getUserId();
+  JBAccountInfoService.JBAData getUserData();
 
   void invokeJBALogin(@Nullable Consumer<String> userIdConsumer, @Nullable Runnable onFailure);
 
