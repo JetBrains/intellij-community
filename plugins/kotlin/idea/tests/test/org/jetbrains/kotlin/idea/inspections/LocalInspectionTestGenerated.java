@@ -5376,6 +5376,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("body.kt")
+            public void testBody() throws Exception {
+                runTest("testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/body.kt");
+            }
+
             @TestMetadata("function.kt")
             public void testFunction() throws Exception {
                 runTest("testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/function.kt");
