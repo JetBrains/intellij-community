@@ -19,7 +19,8 @@ import java.util.List;
 
 /**
  * Context aware VCS actions quick list.
- * May be customized using {@link com.intellij.openapi.vcs.actions.VcsQuickListContentProvider} extension point.
+ * <p>
+ * Can be customized using {@link com.intellij.openapi.vcs.actions.VcsQuickListContentProvider} extension point.
  */
 public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements DumbAware {
   public VcsQuickListPopupAction() {
