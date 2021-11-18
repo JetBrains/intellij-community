@@ -24,8 +24,8 @@ import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeS
  * [MarkdownFormattingBlock]
  *
  * As a source of inspiration following styleguides were used:
- * * https://github.com/google/styleguide/blob/gh-pages/docguide/style.md
- * * https://github.com/arcticicestudio/styleguide-markdown
+ * * [Google Markdown code style](https://github.com/google/styleguide/blob/gh-pages/docguide/style.md)
+ * * [The Arctic Ice Studio Markdown code style](https://github.com/arcticicestudio/styleguide-markdown)
  */
 internal object MarkdownSpacingBuilder {
   fun get(settings: CodeStyleSettings): SpacingBuilder {
