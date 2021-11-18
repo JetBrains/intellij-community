@@ -176,6 +176,7 @@ public class DirectoryChooser extends DialogWrapper {
       myTabbedPaneWrapper.addTab(LangBundle.message("tab.title.by.class"), myByClassPanel.getPanel());
     }
     myTabbedPaneWrapper.addTab(LangBundle.message("tab.title.by.file"), myByFilePanel.getPanel());
+    myTabbedPaneWrapper.addChangeListener(e -> enableButtons());
     return myTabbedPaneWrapper.getComponent();
   }
 
@@ -504,7 +505,9 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
   private void enableButtons() {
-    setOKActionEnabled(myView.getSelectedItem() != null);
+    JComponent selectedTab = myTabbedPaneWrapper.getSelectedComponent();
+    setOKActionEnabled(selectedTab != null && 
+                       (selectedTab == myByFilePanel.getPanel() || myByClassPanel != null && selectedTab == myByClassPanel.getPanel() || myView.getSelectedItem() != null));
   }
 
   @Nullable
