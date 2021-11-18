@@ -291,8 +291,14 @@ private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boole
   if (editor is EditorWindow || editor is ImaginaryEditor) return false
   
   val offset = editor.caretModel.offset
-  val element = file.findElementAt(offset)
-  
+  val elementToRight = file.findElementAt(offset)
+  if (hasHints(elementToRight, offset, editor)) return true
+  return offset > 0 && hasHints(file.findElementAt(offset - 1), offset, editor)
+}
+
+private fun hasHints(element: PsiElement?,
+                     offset: Int,
+                     editor: Editor): Boolean {
   val startOffset = element?.textRange?.startOffset ?: offset
   val endOffset = element?.textRange?.endOffset ?: offset
   
@@ -315,12 +321,23 @@ private fun refreshAllOpenEditors() {
 
 
 private fun getHintInfoFromProvider(offset: Int, file: PsiFile, editor: Editor): HintInfo? {
-  val element = file.findElementAt(offset) ?: return null
+  val element = file.findElementAt(offset)
+  val infoForElementToRight = getInfoForElement(file, element, editor)
+  if (infoForElementToRight != null) return infoForElementToRight
+  if (offset == 0) return null
+  return getInfoForElement(file, file.findElementAt(offset - 1), editor)
+}
+
+private fun getInfoForElement(file: PsiFile,
+                              element: PsiElement?,
+                              editor: Editor): HintInfo? {
   val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
 
-  val method = PsiTreeUtil.findFirstParent(element) { it is PsiFile
-                                                      // hint owned by element
-                                                      || (provider.getHintInfo(it, file)?.isOwnedByPsiElement(it, editor) ?: false)}
+  val method = PsiTreeUtil.findFirstParent(element) {
+    it is PsiFile
+    // hint owned by element
+    || (provider.getHintInfo(it, file)?.isOwnedByPsiElement(it, editor) ?: false)
+  }
   if (method == null || method is PsiFile) return null
   return provider.getHintInfo(method, file)
 }
