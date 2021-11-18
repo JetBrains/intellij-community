@@ -163,8 +163,10 @@
       <action id="DeleteMnemonicFromBookmark" class="com.intellij.ide.bookmark.actions.DeleteBookmarkTypeAction"/>
       <action id="ShowBookmarks" class="com.intellij.ide.bookmark.actions.ShowLineBookmarksAction"/>
       <action id="ShowTypeBookmarks" class="com.intellij.ide.bookmark.actions.ShowTypeBookmarksAction"/>
-      <action id="GotoNextBookmark" class="com.intellij.ide.bookmark.actions.NextBookmarkAction"/>
-      <action id="GotoPreviousBookmark" class="com.intellij.ide.bookmark.actions.PreviousBookmarkAction"/>
+      <action id="GotoNextBookmark" icon="AllIcons.Actions.NextOccurence"
+              class="com.intellij.ide.bookmark.actions.NextBookmarkAction"/>
+      <action id="GotoPreviousBookmark" icon="AllIcons.Actions.PreviousOccurence"
+              class="com.intellij.ide.bookmark.actions.PreviousBookmarkAction"/>
 
       <group id="Bookmarks.Goto" popup="true">
         <action id="GotoBookmark0" class="com.intellij.ide.bookmark.actions.GotoBookmark0Action"/>
@@ -308,6 +310,10 @@
 
     <group id="EditBookmarksGroup" popup="true">
       <reference ref="popup@BookmarkContextMenu"/>
+      <separator/>
+      <reference ref="GotoPreviousBookmark"/>
+      <reference ref="GotoNextBookmark"/>
+      <separator/>
       <reference ref="ShowBookmarks"/>
       <reference ref="ShowTypeBookmarks"/>
       <separator/>
