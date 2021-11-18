@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.ExternalProject
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
@@ -18,9 +19,8 @@ import java.awt.Component
 import javax.swing.*
 
 internal class ExternalProjectSelector(
-  property: ObservableClearableProperty<String?>,
-  externalProjects: List<String>,
-  private val dependencyContributor: DependencyContributor,
+  property: ObservableClearableProperty<ExternalProject?>,
+  externalProjects: List<ExternalProject>,
   private val iconProvider: ExternalSystemIconProvider
 ) : JPanel() {
   init {
@@ -36,8 +36,8 @@ internal class ExternalProjectSelector(
     add(dropDownLink)
   }
 
-  private fun createPopup(externalProject: List<String>, onChange: (String) -> Unit): JBPopup {
-    val content = ExternalProjectPopupContent(externalProject)
+  private fun createPopup(externalProjects: List<ExternalProject>, onChange: (ExternalProject) -> Unit): JBPopup {
+    val content = ExternalProjectPopupContent(externalProjects)
       .apply { whenMousePressed { onChange(selectedValue) } }
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content, null)
@@ -45,7 +45,7 @@ internal class ExternalProjectSelector(
       .apply { content.whenMousePressed(::closeOk) }
   }
 
-  private inner class ExternalProjectPopupContent(externalProject: List<String>) : JBList<String>() {
+  private inner class ExternalProjectPopupContent(externalProject: List<ExternalProject>) : JBList<ExternalProject>() {
     init {
       model = createDefaultListModel(externalProject)
       border = emptyListBorder()
@@ -56,17 +56,17 @@ internal class ExternalProjectSelector(
     }
   }
 
-  private inner class ExternalProjectRenderer : ListCellRenderer<String?> {
+  private inner class ExternalProjectRenderer : ListCellRenderer<ExternalProject?> {
     override fun getListCellRendererComponent(
-      list: JList<out String?>,
-      value: String?,
+      list: JList<out ExternalProject?>,
+      value: ExternalProject?,
       index: Int,
       isSelected: Boolean,
       cellHasFocus: Boolean
     ): Component {
       return JLabel()
         .apply { if (value != null) icon = iconProvider.projectIcon }
-        .apply { if (value != null) text = dependencyContributor.getExternalProjectName(value) }
+        .apply { if (value != null) text = value.title }
         .apply { border = emptyListCellBorder(list, index) }
         .apply { iconTextGap = JBUI.scale(ICON_TEXT_GAP) }
         .apply { background = if (isSelected) list.selectionBackground else list.background }
@@ -78,13 +78,12 @@ internal class ExternalProjectSelector(
   }
 
   private inner class ExternalProjectDropDownLink(
-    property: ObservableClearableProperty<String?>,
-    externalProjects: List<String>,
-  ) : DropDownLink<String?>(
+    property: ObservableClearableProperty<ExternalProject?>,
+    externalProjects: List<ExternalProject>,
+  ) : DropDownLink<ExternalProject?>(
     property.get(),
     { createPopup(externalProjects, it::selectedItem.setter) }
   ) {
-
     override fun popupPoint() =
       super.popupPoint()
         .apply { x += insets.left }
@@ -92,9 +91,9 @@ internal class ExternalProjectSelector(
         .apply { x -= iconProvider.projectIcon.iconWidth }
         .apply { x -= JBUI.scale(ICON_TEXT_GAP) }
 
-    override fun itemToString(item: String?): String = when (item) {
+    override fun itemToString(item: ExternalProject?): String = when (item) {
       null -> ExternalSystemBundle.message("external.system.dependency.analyzer.projects.empty")
-      else -> dependencyContributor.getExternalProjectName(item)
+      else -> item.title
     }
 
     init {

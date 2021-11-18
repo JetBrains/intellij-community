@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Scope
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -20,7 +21,6 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.apache.commons.lang.StringUtils
-import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.*
 
@@ -44,7 +44,7 @@ private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<ScopePro
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
   private val anyScopeProperty = propertyGraph.graphProperty(::suggestAnyScopeState)
-  private val scopeProperties = scopes.map { ScopeProperty.Just(it.name, propertyGraph.graphProperty { it.isSelected }) }
+  private val scopeProperties = scopes.map { ScopeProperty.Just(it.scope, propertyGraph.graphProperty { it.isSelected }) }
 
   private fun suggestAnyScopeState(): ThreeStateCheckBox.State {
     return when {
@@ -65,13 +65,13 @@ private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<ScopePro
   fun afterChange(listener: (List<ScopeItem>) -> Unit) {
     for (scope in scopeProperties) {
       scope.property.afterChange {
-        listener(scopeProperties.map { ScopeItem(it.name, it.property.get()) })
+        listener(scopeProperties.map { ScopeItem(it.scope, it.property.get()) })
       }
     }
   }
 
   init {
-    val anyScope = ScopeProperty.Any(ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any"), anyScopeProperty)
+    val anyScope = ScopeProperty.Any(anyScopeProperty)
     model = createDefaultListModel(listOf(anyScope) + scopeProperties)
     border = emptyListBorder()
     cellRenderer = SearchScopePropertyRenderer()
@@ -117,12 +117,12 @@ private class SearchScopePropertyRenderer : ListCellRenderer<ScopeProperty> {
   ): Component {
     val checkBox = when (value) {
       is ScopeProperty.Any ->
-        ThreeStateCheckBox(value.name)
+        ThreeStateCheckBox(ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any"))
           .apply { isThirdStateEnabled = false }
           .apply { state = value.property.get() }
           .bind(value.property)
       is ScopeProperty.Just ->
-        JCheckBox(value.name)
+        JCheckBox(value.scope.title)
           .apply { this@apply.isSelected = value.property.get() }
           .bind(value.property)
     }
@@ -151,7 +151,7 @@ private class SearchScopeDropDownLink(
       item.all { it.isSelected } -> ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any")
       !item.any { it.isSelected } -> ExternalSystemBundle.message("external.system.dependency.analyzer.scope.none")
       else -> {
-        val scopes = item.filter { it.isSelected }.map { it.name }
+        val scopes = item.filter { it.isSelected }.map { it.scope.title }
         StringUtils.abbreviate(NlsMessages.formatNarrowAndList(scopes), 30)
       }
     }
@@ -165,13 +165,11 @@ private class SearchScopeDropDownLink(
 }
 
 internal class ScopeItem(
-  val name: @Nls String,
+  val scope: Scope,
   val isSelected: Boolean
 )
 
-private sealed class ScopeProperty(
-  val name: @Nls String
-) {
-  class Any(name: @Nls String, val property: GraphProperty<ThreeStateCheckBox.State>) : ScopeProperty(name)
-  class Just(name: @Nls String, val property: GraphProperty<Boolean>) : ScopeProperty(name)
+private sealed interface ScopeProperty {
+  class Any(val property: GraphProperty<ThreeStateCheckBox.State>) : ScopeProperty
+  class Just(val scope: Scope, val property: GraphProperty<Boolean>) : ScopeProperty
 }

@@ -2,26 +2,29 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
 
 interface DependencyContributor {
 
   fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable)
 
-  fun getExternalProjectPaths(): List<String>
+  fun getExternalProjects(): List<ExternalProject>
 
-  fun getExternalProjectName(externalProjectPath: String): @NlsContexts.Label String
+  fun getDependencyScopes(externalProjectPath: String): List<Scope>
 
   fun getDependencyGroups(externalProjectPath: String): List<DependencyGroup>
 
-  fun getDependencyScopes(externalProjectPath: String): List<@NlsSafe String>
-
-  fun getDependencyScope(externalProjectPath: String, dependency: Dependency): @NlsSafe String
-
   fun getInspectionResult(externalProjectPath: String, dependency: Dependency): List<InspectionResult>
 
-  data class Dependency(val data: Data, val usage: Dependency?) {
+  data class ExternalProject(val path: String, val title: @Nls String) {
+    override fun toString() = title
+  }
+
+  data class Scope(val id: String, val name: @Nls String, val title: @Nls String) {
+    override fun toString() = id
+  }
+
+  data class Dependency(val data: Data, val scope: Scope, val usage: Dependency?) {
 
     override fun toString() = "$data -> $usage"
 

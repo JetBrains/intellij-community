@@ -6,8 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.DependencyGroup
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Omitted
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.VersionConflict
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -61,7 +60,7 @@ class DependencyAnalyzerViewImpl(
 
   private val usagesTitleProperty = propertyGraph.graphProperty(::getUsagesTitle)
 
-  private val externalProjectListModel = ArrayList<String>()
+  private val externalProjectListModel = ArrayList<ExternalProject>()
   private val dependencyGroupListModel = CollectionListModel<DependencyGroupItem>()
   private val dependencyTreeModel = DefaultTreeModel(DefaultMutableTreeNode())
   private val usagesTreeModel = DefaultTreeModel(DefaultMutableTreeNode())
@@ -76,6 +75,14 @@ class DependencyAnalyzerViewImpl(
   override fun setSelectedDependency(externalProjectPath: String, dependency: Dependency) {
     setSelectedExternalProject(externalProjectPath)
     dependencyProperty.set(dependency.data)
+  }
+
+  private fun getExternalProjects(): List<ExternalProject> {
+    return externalProjectListModel
+  }
+
+  private fun findExternalProject(externalProjectPath: String?): ExternalProject? {
+    return getExternalProjects().find { it.path == externalProjectPath }
   }
 
   private fun getDependencies(): List<DependencyItem> {
@@ -97,23 +104,23 @@ class DependencyAnalyzerViewImpl(
 
   private fun updateExternalProjectsModel() {
     externalProjectListModel.clear()
-    dependencyContributor.getExternalProjectPaths()
+    dependencyContributor.getExternalProjects()
       .forEach { externalProjectListModel.add(it) }
 
-    val oldExternalProjectPath = externalProjectProperty.get()
-    val externalProjectPath = externalProjectListModel.find { it == oldExternalProjectPath }
-                              ?: externalProjectListModel.firstOrNull()
-    externalProjectProperty.set(externalProjectPath)
+    val externalProjectPath = externalProjectProperty.get()
+    val externalProject = externalProjectListModel.find { it.path == externalProjectPath }
+                          ?: externalProjectListModel.firstOrNull()
+    externalProjectProperty.set(externalProject?.path)
   }
 
   private fun updateScopesModel() {
     val scopes = externalProjectProperty.get()
-      ?.let(dependencyContributor::getDependencyScopes)
-      ?: emptyList()
+                   ?.let(dependencyContributor::getDependencyScopes)
+                 ?: emptyList()
     val scopesIndex = searchScopeProperty.get()
-      .associate { it.name to it.isSelected }
+      .associate { it.scope.id to it.isSelected }
     val isAny = scopesIndex.all { it.value }
-    searchScopeProperty.set(scopes.map { ScopeItem(it, scopesIndex[it] ?: isAny) })
+    searchScopeProperty.set(scopes.map { ScopeItem(it, scopesIndex[it.id] ?: isAny) })
   }
 
   private fun updateDependencyModel() {
@@ -190,9 +197,8 @@ class DependencyAnalyzerViewImpl(
 
   init {
     val externalProjectSelector = ExternalProjectSelector(
-      externalProjectProperty,
+      externalProjectProperty.transform(::findExternalProject) { it?.path },
       externalProjectListModel,
-      dependencyContributor,
       iconsProvider
     )
     val searchDataField = JTextField().bind(searchDataProperty)
@@ -429,7 +435,7 @@ class DependencyAnalyzerViewImpl(
     val group: DependencyGroupItem,
     val dependency: Dependency
   ) {
-    val scope by lazy { dependencyContributor.getDependencyScope(externalProjectPath, dependency) }
+    val scope by lazy { dependency.scope }
     val inspectionResult by lazy { dependencyContributor.getInspectionResult(externalProjectPath, dependency) }
 
     override fun toString() = dependency.toString()
