@@ -101,7 +101,6 @@ class TypeDfaState {
     myVarTypes.put(descriptor, type);
     if (type != null && !myPreviousClosureState.isEmpty()) {
       var topFrame = myPreviousClosureState.getHead();
-      assert topFrame != null;
       if (topFrame.getStartState().containsVariable(descriptor)) {
         topFrame.addReassignment(descriptor, type);
       }

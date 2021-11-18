@@ -1750,43 +1750,6 @@ def foo() {
   }''', JAVA_LANG_INTEGER
   }
 
-  void 'test assignment inside dangling closure flushes subsequent types'() {
-    doTest '''
-class A {}
-class B extends A {}
-class C extends A {}
-
-def foo() {
-  def x = 1
-  def cl = {
-    x = new B()
-  }
-  x = new C()
-  <caret>x
-}''', "A"
-  }
-
-  // This behavior is not hard to implement, but it is unlikely to appear
-  void 'test assignment inside dangling closure affects unrelated flow'() {
-    doTest '''
-class A {}
-class B extends A {}
-class C extends A {}
-
-def foo() {
-  def x = 1
-  if (false) {
-    def cl = {
-      x = new B()
-    }
-  }
-  if (false) {
-    x = new C()
-    <caret>x
-  }
-}''', "A"
-  }
-
   void 'test assignment inside dangling closure does not change type in parallel flow'() {
     doTest '''
 class A {}
@@ -1853,24 +1816,6 @@ def foo() {
   def cl = {
     x = new A()
     x = new C()
-  }
-  x = new B()
-  <caret>x  
-}''', "A"
-  }
-
-  void 'test assignment in nested dangling closure'() {
-    doTest '''
-class A {}
-class B extends A {}
-class C extends A {}
-
-def foo() {
-  def x = 1
-  def cl = {
-    def cl = {
-      x = new C()
-    }
   }
   x = new B()
   <caret>x  

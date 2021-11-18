@@ -109,21 +109,21 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (hasNoChanges(currentClosureFrame.getStartState(), state)) {
       return;
     }
-    // todo: more accurate handling of flushing type
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
     if (kind.equals(InvocationKind.IN_PLACE_ONCE)) {
+      // plain inlining
       return;
     }
     switch (kind) {
       case IN_PLACE_UNKNOWN:
-        List<VariableDescriptor> descriptors = new ArrayList<>();
+        List<VariableDescriptor> localDescriptors = new ArrayList<>();
         for (var descriptor : state.getVarTypes().keySet()) {
           if (!currentClosureFrame.getStartState().containsVariable(descriptor)) {
-            descriptors.add(descriptor);
+            localDescriptors.add(descriptor);
           }
         }
-        for (var descr : descriptors) {
-          state.removeBinding(descr, myFlowInfo.getVarIndexes());
+        for (var descr : localDescriptors) {
+          state.getVarTypes().remove(descr);
         }
         state.joinState(currentClosureFrame.getStartState(), myManager, myFlowInfo.getVarIndexes());
         break;
