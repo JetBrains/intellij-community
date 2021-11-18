@@ -30,7 +30,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final DFAFlowInfo myFlowInfo;
   private final InferenceCache myCache;
   private final PsiManager myManager;
-  private final InitialTypeProvider myTypeProvider;
+  private final InitialTypeProvider myInitialTypeProvider;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull DFAFlowInfo flowInfo,
@@ -41,11 +41,14 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     myManager = manager;
     myFlowInfo = flowInfo;
     myCache = cache;
-    myTypeProvider = typeProvider;
+    myInitialTypeProvider = typeProvider;
   }
 
   @Override
   public void fun(@NotNull final TypeDfaState state, @NotNull final Instruction instruction) {
+    if (instruction.num() == 0) {
+      handleStartInstruction(state);
+    }
     if (instruction instanceof ReadWriteVariableInstruction) {
       handleReadWriteVariable(state, (ReadWriteVariableInstruction)instruction);
     }
@@ -59,7 +62,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       handleNegation(state, (NegatingGotoInstruction)instruction);
     }
     else if (instruction instanceof FunctionalBlockBeginInstruction) {
-      handleStartFunctionalExpression(state, (FunctionalBlockBeginInstruction)instruction);
+      handleStartFunctionalExpression(state);
     }
     else if (instruction instanceof FunctionalBlockEndInstruction) {
       handleFunctionalExpression(state, (FunctionalBlockEndInstruction)instruction);
@@ -67,7 +70,16 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     myCache.publishDescriptor(state, instruction);
   }
 
-  private void handleStartFunctionalExpression(TypeDfaState state, FunctionalBlockBeginInstruction instruction) {
+  private void handleStartInstruction(TypeDfaState state) {
+    for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
+      PsiType initialType = myInitialTypeProvider.initialType(descriptor);
+      if (initialType != null) {
+        state.putType(descriptor, DFAType.create(initialType));
+      }
+    }
+  }
+
+  private static void handleStartFunctionalExpression(TypeDfaState state) {
     state.addClosureState(state);
   }
 
@@ -173,16 +185,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         }
       );
     }
-    else if (myFlowInfo.getInterestingDescriptors().contains(descriptor)){
-      DFAType type = state.getVariableType(descriptor);
-      if (type == null) {
-        DFAType thisInitialType = myTypeProvider.initialType(descriptor);
-        if (thisInitialType != null) {
-          // todo: implement as flushing type
-          updateVariableType(state, instruction, descriptor, () -> thisInitialType);
-        }
-      }
-    }
   }
 
   private void handleArguments(TypeDfaState state, ArgumentsInstruction instruction) {
@@ -227,7 +229,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       return;
     }
     else {
-      state.restoreBinding(descriptor,myFlowInfo.getVarIndexes());
+      state.restoreBinding(descriptor, myFlowInfo.getVarIndexes());
     }
 
     DFAType type = myCache.getCachedInferredType(descriptor, instruction);
