@@ -233,12 +233,17 @@ public final class ActionMenu extends JBMenu {
 
   @Override
   protected void processMouseEvent(MouseEvent e) {
-    boolean suppressSelectionRequest = false;
+    boolean shouldCancelIgnoringOfNextSelectionRequest = false;
 
     if (mySubElementSelector != null) {
-      if ((e.getID() == MouseEvent.MOUSE_PRESSED) || (e.getID() == MouseEvent.MOUSE_ENTERED)) {
-        mySubElementSelector.ignoreNextSelectionRequest();
-        suppressSelectionRequest = true;
+      switch (e.getID()) {
+        case MouseEvent.MOUSE_PRESSED:
+          mySubElementSelector.ignoreNextSelectionRequest();
+          shouldCancelIgnoringOfNextSelectionRequest = true;
+          break;
+        case MouseEvent.MOUSE_ENTERED:
+          mySubElementSelector.ignoreNextSelectionRequest(getDelay() * 2);
+          break;
       }
     }
 
@@ -246,7 +251,7 @@ public final class ActionMenu extends JBMenu {
       super.processMouseEvent(e);
     }
     finally {
-      if (suppressSelectionRequest) {
+      if (shouldCancelIgnoringOfNextSelectionRequest) {
         mySubElementSelector.cancelIgnoringOfNextSelectionRequest();
       }
     }
@@ -493,25 +498,54 @@ public final class ActionMenu extends JBMenu {
 
       myOwner = owner;
       myShouldIgnoreNextSelectionRequest = false;
+      myShouldIgnoreNextSelectionRequestSinceTimestamp = -1;
+      myShouldIgnoreNextSelectionRequestTimeoutMs = -1;
       myCurrentRequestId = -1;
     }
 
     @RequiresEdt
-    void ignoreNextSelectionRequest() {
+    void ignoreNextSelectionRequest(int timeoutMs) {
       myShouldIgnoreNextSelectionRequest = true;
+      myShouldIgnoreNextSelectionRequestTimeoutMs = timeoutMs;
+      if (timeoutMs >= 0) {
+        myShouldIgnoreNextSelectionRequestSinceTimestamp = System.currentTimeMillis();
+      }
+      else {
+        myShouldIgnoreNextSelectionRequestSinceTimestamp = -1;
+      }
+    }
+
+    @RequiresEdt
+    void ignoreNextSelectionRequest() {
+      ignoreNextSelectionRequest(-1);
     }
 
     @RequiresEdt
     void cancelIgnoringOfNextSelectionRequest() {
       myShouldIgnoreNextSelectionRequest = false;
+      myShouldIgnoreNextSelectionRequestSinceTimestamp = -1;
+      myShouldIgnoreNextSelectionRequestTimeoutMs = -1;
     }
 
     @RequiresEdt
     void selectSubElementIfNecessary() {
-      final boolean shouldIgnoreNextSelectionRequest = myShouldIgnoreNextSelectionRequest;
+      final boolean shouldIgnoreThisSelectionRequest;
+      if (myShouldIgnoreNextSelectionRequest) {
+        if (myShouldIgnoreNextSelectionRequestTimeoutMs >= 0) {
+          shouldIgnoreThisSelectionRequest =
+            ( (System.currentTimeMillis() - myShouldIgnoreNextSelectionRequestSinceTimestamp) <= myShouldIgnoreNextSelectionRequestTimeoutMs );
+        }
+        else {
+          shouldIgnoreThisSelectionRequest = true;
+        }
+      }
+      else {
+        shouldIgnoreThisSelectionRequest = false;
+      }
+
       cancelIgnoringOfNextSelectionRequest();
 
-      if (shouldIgnoreNextSelectionRequest) {
+      if (shouldIgnoreThisSelectionRequest) {
         return;
       }
 
@@ -527,6 +561,8 @@ public final class ActionMenu extends JBMenu {
 
     private final @NotNull ActionMenu myOwner;
     private boolean myShouldIgnoreNextSelectionRequest;
+    private long myShouldIgnoreNextSelectionRequestSinceTimestamp;
+    private int myShouldIgnoreNextSelectionRequestTimeoutMs;
     private int myCurrentRequestId;
 
 
