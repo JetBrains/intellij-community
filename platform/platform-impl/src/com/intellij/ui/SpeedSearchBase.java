@@ -548,7 +548,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           return;
         }
         UIEventLogger.IncrementalSearchKeyTyped.log(myComponent.getClass());
-        if (myProcessKeyEventAlarm.isDisposed()) return;
+        if (myProcessKeyEventAlarm == null || myProcessKeyEventAlarm.isDisposed()) return;
 
         myProcessKeyEventAlarm.cancelAllRequests();
         myProcessKeyEventAlarm.addRequest(() -> updateSelection(findElement(s)), 300L);
