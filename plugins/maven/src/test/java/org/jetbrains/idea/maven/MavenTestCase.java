@@ -146,6 +146,9 @@ public abstract class MavenTestCase extends UsefulTestCase {
         if (t.getMessage().contains("The network name cannot be found") && message.contains("Couldn't read shelf information")) {
           return false;
         }
+        if ("JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category)) {
+          return false;
+        }
         return super.processError(category, message, t, details);
       }
     }, () -> super.runBare(testRunnable));
@@ -374,7 +377,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   private static String createSettingsXmlContent(String content) {
     return "<settings>" +
            content +
-           "</settings>";
+           "</settings>\r\n";
   }
 
   protected void restoreSettingsFile() throws IOException {

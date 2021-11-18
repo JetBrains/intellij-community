@@ -131,30 +131,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     return true;
   }
 
-  @Nullable
-  public static Sdk suggestProjectSdk(@NotNull Project project) {
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    ProjectRootManager defaultProjectManager = ProjectRootManager.getInstance(defaultProject);
-    Sdk defaultProjectSdk = defaultProjectManager.getProjectSdk();
-    if (defaultProjectSdk != null) return null;
-    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    SdkType sdkType = ExternalSystemJdkUtil.getJavaSdkType();
-    return projectJdkTable.getSdksOfType(sdkType).stream()
-      .filter(it -> it.getHomePath() != null && JdkUtil.checkForJre(it.getHomePath()))
-      .filter(it -> MavenWslUtil.tryGetWslDistributionForPath(it.getHomePath()) == MavenWslUtil.tryGetWslDistribution(project))
-      .max(sdkType.versionComparator())
-      .orElse(null);
-  }
 
-  private static void setupProjectSdk(@NotNull Project project) {
-    if (ProjectRootManager.getInstance(project).getProjectSdk() == null) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Sdk projectSdk = suggestProjectSdk(project);
-        if (projectSdk == null) return;
-        JavaSdkUtil.applyJdkToProject(project, projectSdk);
-      });
-    }
-  }
 
   @Override
   public List<Module> commit(Project project,
@@ -170,7 +147,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       FileDocumentManager.getInstance().saveAllDocuments();
     }
 
-    setupProjectSdk(project);
+    MavenUtil.setupProjectSdk(project);
 
     if (!setupProjectImport(project)) {
       LOG.debug(String.format("Cannot import project for %s", project.toString()));

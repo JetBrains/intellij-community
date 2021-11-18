@@ -139,7 +139,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @TestOnly
-  public void setProgressListener(SyncViewManager testViewManager){
+  public void setProgressListener(SyncViewManager testViewManager) {
     myProgressListener = testViewManager;
   }
 
@@ -155,7 +155,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   public void loadState(@NotNull MavenProjectsManagerState state) {
     myState = state;
     if (isInitialized()) {
-      applyStateToTree();
+      applyStateToTree(myProjectsTree, this);
       scheduleUpdateAllProjects(false);
     }
   }
@@ -215,7 +215,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     StartupManager startupManager = StartupManager.getInstance(myProject);
     if (startupManager.postStartupActivityPassed()) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
-    } else {
+    }
+    else {
       startupManager.registerStartupActivity(runnable);
     }
   }
@@ -319,7 +320,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
     if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
     myMavenProjectResolver = new MavenProjectResolver(myProjectsTree);
-    applyStateToTree();
+    applyStateToTree(myProjectsTree, this);
     myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
   }
 
@@ -329,12 +330,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
   }
 
-  private void applyStateToTree() {
-    MavenWorkspaceSettings settings = getWorkspaceSettings();
+  public static void applyStateToTree(MavenProjectsTree tree, MavenProjectsManager manager) {
+    MavenWorkspaceSettings settings = manager.getWorkspaceSettings();
     MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(settings.enabledProfiles, settings.disabledProfiles);
-    myProjectsTree.resetManagedFilesPathsAndProfiles(myState.originalFiles, explicitProfiles);
-    myProjectsTree.setIgnoredFilesPaths(new ArrayList<>(myState.ignoredFiles));
-    myProjectsTree.setIgnoredFilesPatterns(myState.ignoredPathMasks);
+    tree.resetManagedFilesPathsAndProfiles(manager.myState.originalFiles, explicitProfiles);
+    tree.setIgnoredFilesPaths(new ArrayList<>(manager.myState.ignoredFiles));
+    tree.setIgnoredFilesPatterns(manager.myState.ignoredPathMasks);
   }
 
   @Override
@@ -356,12 +357,14 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
-  private Path getProjectsTreeFile() {
+  @ApiStatus.Internal
+  public Path getProjectsTreeFile() {
     return getProjectsTreesDir().resolve(myProject.getLocationHash()).resolve("tree.dat");
   }
 
   @NotNull
-  private static Path getProjectsTreesDir() {
+  @ApiStatus.Internal
+  public static Path getProjectsTreesDir() {
     return MavenUtil.getPluginSystemDir("Projects");
   }
 
@@ -378,7 +381,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor);
 
-    myImportingQueue = new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
+    myImportingQueue =
+      new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeModalAware(myProject);
@@ -415,7 +419,9 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private void listenForProjectsTreeChanges() {
     myProjectsTree.addListener(new MavenProjectsTree.Listener() {
       @Override
-      public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
+      public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored,
+                                              @NotNull List<MavenProject> unignored,
+                                              boolean fromImport) {
         if (!fromImport) scheduleImport();
       }
 
@@ -542,7 +548,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       if (MavenUtil.isMavenUnitTestModeEnabled()) {
         PathKt.delete(getProjectsTreesDir());
       }
-    } finally {
+    }
+    finally {
       initLock.unlock();
     }
   }
@@ -815,6 +822,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree;
   }
 
+  @ApiStatus.Internal
+  public void setProjectsTree(MavenProjectsTree newTree) {
+    myProjectsTree = newTree;
+  }
+
   private void scheduleUpdateAllProjects(boolean forceImportAndResolve) {
     doScheduleUpdateProjects(null, false, forceImportAndResolve);
   }
@@ -908,7 +920,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         myPostProcessor.waitForCompletion();
       }
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        MavenProgressIndicator.MavenProgressTracker mavenProgressTracker = myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
+        MavenProgressIndicator.MavenProgressTracker mavenProgressTracker =
+          myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
         if (mavenProgressTracker != null) {
           mavenProgressTracker.waitForProgressCompletion();
         }
@@ -926,7 +939,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         toResolve = new LinkedHashSet<>(myProjectsToResolve);
         myProjectsToResolve.clear();
       }
-      if(toResolve.isEmpty()) {
+      if (toResolve.isEmpty()) {
         result.setResult(Collections.emptyList());
         fireProjectImportCompleted();
         return;
@@ -983,8 +996,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                                                          MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
                                                          VirtualFile virtualFile = mavenProject.getFile();
                                                          File projectFile = MavenWslUtil.resolveWslAware(myProject,
-                                                                                                         () -> new File(virtualFile.getPath()),
-                                                                                                         wsl -> MavenWslUtil.getWslFile(wsl,new File(virtualFile.getPath())));
+                                                                                                         () -> new File(
+                                                                                                           virtualFile.getPath()),
+                                                                                                         wsl -> MavenWslUtil.getWslFile(wsl,
+                                                                                                                                        new File(
+                                                                                                                                          virtualFile.getPath())));
                                                          String res =
                                                            embedder
                                                              .evaluateEffectivePom(projectFile, profiles.getEnabledProfiles(),
@@ -1210,7 +1226,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public List<Module> importProjects() {
-      return importProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject));
+    return importProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject));
   }
 
 
@@ -1283,12 +1299,14 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenProjectImporter projectImporter = importer.get();
     List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.getCreatedModules();
     if (!projectsToImportWithChanges.isEmpty()) {
-      myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImportWithChanges.keySet(), createdModules);
+      myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
+        .importFinished(projectsToImportWithChanges.keySet(), createdModules);
     }
     return createdModules;
   }
 
-  private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
+  @ApiStatus.Internal
+  public Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
     Map<VirtualFile, Module> result = new HashMap<>();
     for (Module each : modelsProvider.getModules()) {
       VirtualFile f = findPomFile(each, modelsProvider);
@@ -1386,6 +1404,4 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       manager.runWhenFullyOpen(() -> consumer.accept(manager));
     }
   }
-
-
 }

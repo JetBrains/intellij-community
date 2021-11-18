@@ -41,6 +41,10 @@ import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.importing.MavenImportManagerFlow;
+import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
+import org.jetbrains.idea.maven.project.importing.MavenReadContext;
+import org.jetbrains.idea.maven.project.importing.MavenResolvedContext;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -60,6 +64,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
+  private boolean isNewImportingProcess = true;
 
   @Override
   protected void setUp() throws Exception {
@@ -421,9 +426,28 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
+    if(isNewImportingProcess) {
+      importViaNewFlow(files, failOnReadingError, Collections.emptyList(), profiles);
+    }
     doImportProjects(files, failOnReadingError, Collections.emptyList(), profiles);
   }
 
+
+  protected final void importViaNewFlow(final List<VirtualFile> files, boolean failOnReadingError,
+                                  List<String> disabledProfiles, String... profiles) {
+
+    MavenImportManagerFlow flow = new MavenImportManagerFlow();
+    MavenInitialImportContext initialImportContext =
+      flow.prepareNewImport(myProject, getMavenProgressIndicator(), files, getMavenGeneralSettings(), getMavenImporterSettings());
+    MavenReadContext readContext = flow.readMavenFiles(initialImportContext);
+    if(failOnReadingError) {
+      assertFalse("Failed to import Maven project: " + readContext.collectProblems(), readContext.hasReadingProblems());
+    }
+
+    MavenResolvedContext resolvedContext = flow.resolveDependencies(readContext);
+    flow.commitToWorkspaceModel(resolvedContext);
+
+  }
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError,
                                   List<String> disabledProfiles, String... profiles) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
