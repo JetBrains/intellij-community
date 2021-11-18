@@ -263,6 +263,11 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     fun getToolWindowFor(project: Project, tabName: String): ToolWindow? =
       ToolWindowManager.getInstance(project).getToolWindow(getToolWindowIdFor(project, tabName))
 
+    /**
+     * Specified tab order in toolwindow.
+     *
+     * @see ChangesViewContentManager.TabOrderWeight
+     */
     @JvmField
     val ORDER_WEIGHT_KEY = Key.create<Int>("ChangesView.ContentOrderWeight")
 
