@@ -14825,6 +14825,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testWithArrow() throws Exception {
             runTest("testData/inspectionsLocal/unusedLambdaExpressionBody/withArrow.kt");
         }
+
+        @TestMetadata("withBody.kt")
+        public void testWithBody() throws Exception {
+            runTest("testData/inspectionsLocal/unusedLambdaExpressionBody/withBody.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
