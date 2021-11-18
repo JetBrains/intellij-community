@@ -24,8 +24,6 @@ import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.util.TipDialog
 import com.intellij.idea.IdeaLogger
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationGroupManager
@@ -1370,10 +1368,5 @@ private fun reportOperationToFus(
   descriptor: IdeaPluginDescriptorImpl,
   eventId: String,
 ) {
-  @Suppress("DEPRECATION")
-  FUCounterUsageLogger.getInstance().logEvent(
-    "plugins.dynamic",
-    eventId,
-    FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(descriptor)),
-  )
+    PluginsDynamicCollector.log(eventId, getPluginInfoByDescriptor(descriptor))
 }
