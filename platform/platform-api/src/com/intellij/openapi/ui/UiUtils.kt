@@ -105,3 +105,11 @@ fun JComponent.whenFirstFocusGained(listener: () -> Unit) {
     }
   })
 }
+
+fun JComponent.whenMousePressed(listener: (MouseEvent) -> Unit) {
+  addMouseListener(object : MouseAdapter() {
+    override fun mousePressed(e: MouseEvent) {
+      listener(e)
+    }
+  })
+}

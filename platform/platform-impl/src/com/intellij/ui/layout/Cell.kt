@@ -29,6 +29,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.lockOrSkip
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -768,6 +769,25 @@ fun <C : JCheckBox> C.bind(property: ObservableClearableProperty<Boolean>): C = 
   addItemListener {
     mutex.lockOrSkip {
       property.set(isSelected)
+    }
+  }
+}
+
+fun <C : ThreeStateCheckBox> C.bind(property: ObservableClearableProperty<ThreeStateCheckBox.State>): C = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      state = it
+    }
+  }
+  property.afterReset {
+    mutex.lockOrSkip {
+      state = property.get()
+    }
+  }
+  addItemListener {
+    mutex.lockOrSkip {
+      property.set(state)
     }
   }
 }
