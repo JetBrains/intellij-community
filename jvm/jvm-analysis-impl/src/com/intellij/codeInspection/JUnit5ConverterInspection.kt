@@ -166,12 +166,11 @@ class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::cl
               if (uElement == null) {
                 val simpleExpr = element.getUastParentOfType<USimpleNameReferenceExpression>()
                 val uFactory = simpleExpr?.getUastElementFactory(project) ?: continue
-                simpleExpr.replace(uFactory.createSimpleReference(shortName, element)!!)?.sourcePsi ?: continue
+                simpleExpr.replace(uFactory.createSimpleReference(shortName, element)!!)
                 continue
               }
-              val uFactory = uElement.getUastElementFactory(project) ?: continue
-              val qualifiedExpression = uFactory.createQualifiedReference(newQName, element) ?: continue
-              uElement.replace(qualifiedExpression)?.sourcePsi ?: continue
+              val qualifiedExpression = uElement.getUastElementFactory(project)?.createQualifiedReference(newQName, element) ?: continue
+              uElement.replace(qualifiedExpression)
             }
           }
         }
