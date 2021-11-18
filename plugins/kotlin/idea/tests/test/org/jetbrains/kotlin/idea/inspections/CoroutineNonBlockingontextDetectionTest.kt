@@ -15,29 +15,24 @@ import org.jetbrains.kotlin.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
+private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+    listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
+) {
+    override fun configureModule(module: Module, model: ModifiableRootModel) {
+        super.configureModule(module, model)
+        MavenDependencyUtil.addFromMaven(model, "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+        MavenDependencyUtil.addFromMaven(model, "org.jetbrains:annotations:23.0.0")
+    }
+}
+
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
 class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
-        listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
-    ) {
-        override fun configureModule(module: Module, model: ModifiableRootModel) {
-            super.configureModule(module, model)
-            MavenDependencyUtil.addFromMaven(model, "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
-        }
-    }
+    override fun getProjectDescriptor(): LightProjectDescriptor = ktProjectDescriptor
 
     override fun setUp() {
         super.setUp()
-        myFixture.addFileToProject(
-            "org/jetbrains/annotations/BlockingContext.java",
-            """package org.jetbrains.annotations; public @interface BlockingExecutor {}"""
-        )
-        myFixture.addFileToProject(
-            "org/jetbrains/annotations/NonBlockingContext.java",
-            """package org.jetbrains.annotations; public @interface NonBlockingExecutor {}"""
-        )
         myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection::class.java)
     }
 

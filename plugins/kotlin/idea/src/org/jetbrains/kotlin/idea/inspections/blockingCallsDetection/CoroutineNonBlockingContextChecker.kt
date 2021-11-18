@@ -16,10 +16,7 @@ import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.isOverridableOrOverrides
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.receiverValue
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.BLOCKING_EXECUTOR_ANNOTATION
@@ -175,17 +172,26 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     private fun DeclarationDescriptor?.isBlockFriendlyDispatcher(): ContextType {
         if (this == null) return Unsure
 
-        val hasBlockingAnnotation = annotations.hasAnnotation(FqName(BLOCKING_EXECUTOR_ANNOTATION))
-        if (hasBlockingAnnotation) return Blocking
+        val returnTypeDescriptor = this.castSafelyTo<CallableDescriptor>()?.returnType
+        val typeConstructor = returnTypeDescriptor?.constructor?.declarationDescriptor
 
-        val hasNonBlockingAnnotation = annotations.hasAnnotation(FqName(NONBLOCKING_EXECUTOR_ANNOTATION))
-        if (hasNonBlockingAnnotation) return NonBlocking.INSTANCE
+        if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, BLOCKING_EXECUTOR_ANNOTATION)) return Blocking
+        if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, NONBLOCKING_EXECUTOR_ANNOTATION)) return NonBlocking.INSTANCE
 
         val fqnOrNull = fqNameOrNull()?.asString() ?: return NonBlocking.INSTANCE
         return when(fqnOrNull) {
             IO_DISPATCHER_FQN -> Blocking
             MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NonBlocking.INSTANCE
             else -> Unsure
+        }
+    }
+
+    private fun isTypeOrUsageAnnotatedWith(type: KotlinType?, typeConstructor: ClassifierDescriptor?, annotationFqn: String): Boolean {
+        val fqName = FqName(annotationFqn)
+        return when {
+            type?.annotations?.hasAnnotation(fqName) == true -> true
+            typeConstructor?.annotations?.hasAnnotation(fqName) == true -> true
+            else -> false
         }
     }
 
