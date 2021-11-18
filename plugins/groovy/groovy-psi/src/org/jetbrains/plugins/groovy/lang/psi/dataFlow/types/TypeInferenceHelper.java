@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil.isFlatDFAAllowed;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.checkNestedContext;
 import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCompileStatic;
@@ -91,7 +92,7 @@ public final class TypeInferenceHelper {
 
   @Nullable
   public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
-    final GrControlFlowOwner scope = ControlFlowUtils.getTopmostOwner(refExpr);
+    final GrControlFlowOwner scope = isFlatDFAAllowed() ? ControlFlowUtils.getTopmostOwner(refExpr) : ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
     final GroovyReference rValueReference = refExpr.getRValueReference();
@@ -101,7 +102,7 @@ public final class TypeInferenceHelper {
     final VariableDescriptor descriptor = createDescriptor(refExpr);
     if (descriptor == null) return null;
 
-    final ReadWriteVariableInstruction rwInstruction = ControlFlowUtils.findRWInstruction(refExpr, getLargeControlFlow(scope));
+    final ReadWriteVariableInstruction rwInstruction = ControlFlowUtils.findRWInstruction(refExpr, getFlatControlFlow(scope));
     if (rwInstruction == null) return null;
 
     final InferenceCache cache = getInferenceCache(scope);
@@ -117,7 +118,8 @@ public final class TypeInferenceHelper {
   @Nullable
   public static PsiType getVariableTypeInContext(@Nullable PsiElement context, @NotNull GrVariable variable) {
     if (context == null) return variable.getType();
-    final GrControlFlowOwner scope = ControlFlowUtils.getTopmostOwner(ControlFlowUtils.findControlFlowOwner(context));
+    final GrControlFlowOwner scope = isFlatDFAAllowed() ? ControlFlowUtils.getTopmostOwner(ControlFlowUtils.findControlFlowOwner(context))
+                                                        : ControlFlowUtils.findControlFlowOwner(context);
     if (scope == null) return null;
 
     final Instruction nearest = ControlFlowUtils.findNearestInstruction(context, scope.getControlFlow());
@@ -136,14 +138,18 @@ public final class TypeInferenceHelper {
 
   @NotNull
   static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
-    if (ControlFlowUtils.getTopmostOwner(scope) != scope) {
+    if (isFlatDFAAllowed() && ControlFlowUtils.getTopmostOwner(scope) != scope) {
       assert false;
     }
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
   }
 
-  public static Instruction[] getLargeControlFlow(@NotNull final GrControlFlowOwner scope) {
-    return CachedValuesManager.getCachedValue(scope, () -> Result.create(ControlFlowBuilder.buildLargeControlFlow(scope), scope));
+  public static Instruction[] getFlatControlFlow(@NotNull final GrControlFlowOwner scope) {
+    if (isFlatDFAAllowed()) {
+      return CachedValuesManager.getCachedValue(scope, () -> Result.create(ControlFlowBuilder.buildFlatControlFlow(scope), scope));
+    } else {
+      return scope.getControlFlow();
+    }
   }
 
   @Nullable

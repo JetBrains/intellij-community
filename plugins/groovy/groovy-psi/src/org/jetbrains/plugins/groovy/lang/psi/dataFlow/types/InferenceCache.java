@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -40,7 +41,6 @@ final class InferenceCache {
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
   private final AtomicReference<Map<VariableDescriptor, DFAType>>[] myVarTypes;
-  //private final SharedVariableInferenceCache mySharedVariableInferenceCache;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
   /**
    * Instructions outside any cycle. The DFA has straightforward direction considering these instructions, so it is safe
@@ -50,8 +50,8 @@ final class InferenceCache {
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
     myScope = scope;
-    myFlow = TypeInferenceHelper.getLargeControlFlow(scope);
-    myVarIndexes = lazyPub(() -> getVarIndexes(myScope, true));
+    myFlow = TypeInferenceHelper.getFlatControlFlow(scope);
+    myVarIndexes = lazyPub(() -> getVarIndexes(myScope, FunctionalExpressionFlowUtil.isFlatDFAAllowed()));
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     //noinspection unchecked
@@ -128,16 +128,12 @@ final class InferenceCache {
     Map<Pair<Instruction, VariableDescriptor>, Collection<Pair<Instruction, VariableDescriptor>>> interesting = new LinkedHashMap<>();
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptor));
-    Set<Instruction> dependentOnSharedVariables = new LinkedHashSet<>();
 
     while (!queue.isEmpty()) {
       Pair<Instruction, VariableDescriptor> pair = queue.removeFirst();
       if (!interesting.containsKey(pair)) {
         Set<Pair<Instruction, VariableDescriptor>> dependencies = findDependencies(definitionMaps, pair.first, pair.second);
         interesting.put(pair, dependencies);
-        if (dependencies.stream().anyMatch(it -> false)) {
-          dependentOnSharedVariables.add(pair.first);
-        }
         dependencies.forEach(queue::addLast);
       }
     }
@@ -154,7 +150,6 @@ final class InferenceCache {
     return new DFAFlowInfo(interestingInstructions,
                            acyclicInstructions,
                            interestingDescriptors,
-                           dependentOnSharedVariables,
                            myVarIndexes.getValue());
   }
 
@@ -189,10 +184,6 @@ final class InferenceCache {
       myVarTypes[index].getAndUpdate(oldState -> TypesSemilattice.mergeForCaching(oldState, dfaResult.get(index), myVarIndexes.getValue()));
     }
   }
-
-  //@NotNull SharedVariableInferenceCache getSharedVariableInferenceCache() {
-  //  return mySharedVariableInferenceCache;
-  //}
 
   private boolean isDescriptorAvailable(@NotNull VariableDescriptor descriptor) {
     return myVarIndexes.getValue().containsKey(descriptor);

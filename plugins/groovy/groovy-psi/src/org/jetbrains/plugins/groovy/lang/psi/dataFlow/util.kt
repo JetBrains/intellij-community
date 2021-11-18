@@ -39,7 +39,7 @@ internal fun GrControlFlowOwner.getVarIndexes(large : Boolean): Object2IntMap<Va
 private fun doGetVarIndexes(owner: GrControlFlowOwner, isLarge : Boolean): Object2IntMap<VariableDescriptor> {
   val result = Object2IntOpenHashMap<VariableDescriptor>()
   var num = 1
-  val flow = if (isLarge) TypeInferenceHelper.getLargeControlFlow(owner) else owner.controlFlow
+  val flow = if (isLarge) TypeInferenceHelper.getFlatControlFlow(owner) else owner.controlFlow
   for (instruction in flow) {
     if (instruction !is ReadWriteVariableInstruction) continue
     val descriptor = instruction.descriptor

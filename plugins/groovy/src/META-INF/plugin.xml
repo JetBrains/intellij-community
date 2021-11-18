@@ -355,8 +355,8 @@
                  description="Allows to collect method usages for more precise type inference"/>
     <registryKey key="groovy.use.explicitly.typed.closure.in.inference" defaultValue="true"
                  description="Enable type inference with using info from explicitly typed closures"/>
-    <registryKey key="groovy.process.nested.dfa" defaultValue="true"
-                 description="Allows to run nested DFA inside the outer one"/>
+    <registryKey key="groovy.flat.dfa" defaultValue="true"
+                 description="Merges all control flows graphs in method"/>
 
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizardUsageCollector"/>
 

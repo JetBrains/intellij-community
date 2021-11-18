@@ -134,9 +134,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
           VariableDescriptor descriptor = newBinding.getKey();
           List<DFAType> assignments = newBinding.getValue();
           PsiType upperBoundByWrites =
-            TypesUtil
-              .getLeastUpperBound(assignments.stream().map(dfaType -> dfaType.getResultType(myManager)).filter(it -> it != null).toArray(PsiType[]::new),
-                                  myManager);
+            TypesUtil.getLeastUpperBound(assignments.stream().map(dfaType -> dfaType.getResultType(myManager)).filter(it -> it != null).toArray(PsiType[]::new), myManager);
           DFAType existingType = initialState.getVariableType(descriptor);
           if (existingType == null) existingType = DFAType.create(null);
           DFAType flushedType = existingType.addFlushingType(upperBoundByWrites, myManager);
@@ -234,7 +232,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
     DFAType type = myCache.getCachedInferredType(descriptor, instruction);
     if (type == null) {
-      if (myFlowInfo.getAcyclicInstructions().contains(instruction) && !myFlowInfo.getDependentOnSharedVariables().contains(instruction)) {
+      if (myFlowInfo.getAcyclicInstructions().contains(instruction)) {
         type = computation.compute();
       }
       else {

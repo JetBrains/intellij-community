@@ -141,5 +141,5 @@ private fun InvocationKind.weakenIfUsesSafeNavigation(call: GrMethodCall): Invoc
 }
 
 
-internal const val GROOVY_PROCESS_NESTED_DFA = "groovy.process.nested.dfa"
-internal fun isNestedFlowProcessingAllowed(): Boolean = Registry.`is`(GROOVY_PROCESS_NESTED_DFA, false)
+internal const val GROOVY_FLAT_DFA = "groovy.flat.dfa"
+internal fun isFlatDFAAllowed(): Boolean = Registry.`is`(GROOVY_FLAT_DFA, false)

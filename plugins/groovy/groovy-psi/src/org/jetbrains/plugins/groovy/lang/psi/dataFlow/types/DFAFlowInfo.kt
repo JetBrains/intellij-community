@@ -8,6 +8,5 @@ internal data class DFAFlowInfo(
   val interestingInstructions: Set<Instruction>,
   val acyclicInstructions: Set<Instruction>,
   val interestingDescriptors: Set<VariableDescriptor>,
-  val dependentOnSharedVariables: Set<Instruction>,
   val varIndexes: Map<VariableDescriptor, Int>,
 )

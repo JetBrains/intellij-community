@@ -91,9 +91,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private int myInstructionNumber;
   private final GrControlFlowPolicy myPolicy;
 
-  private ControlFlowBuilder(GrControlFlowPolicy policy, boolean isLargeFlow) {
+  private ControlFlowBuilder(GrControlFlowPolicy policy, boolean isFlatFlow) {
     myPolicy = policy;
-    this.isLargeFlow = isLargeFlow;
+    this.isLargeFlow = isFlatFlow;
   }
 
   @Override
@@ -152,19 +152,19 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   /**
-   * Large control flow includes all functional blocks without skipping. It is an experimental feature, aiming to improve performance of the
+   * Flat control flow includes all functional blocks without skipping. It is an experimental feature, aiming to improve performance of the
    * type DFA.
    */
   @ApiStatus.Experimental
-  public static @NotNull Instruction @NotNull [] buildLargeControlFlow(@NotNull GroovyPsiElement scope) {
-    return new ControlFlowBuilder(GrResolverPolicy.getInstance(), true).doBuildLargeControlFlow(scope);
+  public static @NotNull Instruction @NotNull [] buildFlatControlFlow(@NotNull GroovyPsiElement scope) {
+    return new ControlFlowBuilder(GrResolverPolicy.getInstance(), true).doBuildFlatControlFlow(scope);
   }
 
   public static @NotNull Instruction @NotNull [] buildControlFlow(@NotNull GroovyPsiElement scope, @NotNull GrControlFlowPolicy policy) {
     return new ControlFlowBuilder(policy, false).doBuildControlFlow(scope);
   }
 
-  private Instruction[] doBuildLargeControlFlow(GroovyPsiElement scope) {
+  private Instruction[] doBuildFlatControlFlow(GroovyPsiElement scope) {
     var topOwner = ControlFlowUtils.getTopmostOwner(scope);
     if (topOwner == null) {
       return Instruction.EMPTY_ARRAY;
