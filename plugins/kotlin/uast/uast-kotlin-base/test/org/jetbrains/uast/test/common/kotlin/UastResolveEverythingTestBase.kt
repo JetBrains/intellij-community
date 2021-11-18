@@ -4,8 +4,7 @@
  */
 package org.jetbrains.uast.test.common.kotlin
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.impl.light.LightParameter
 import com.intellij.psi.impl.light.LightTypeParameterBuilder
@@ -52,14 +51,20 @@ interface UastResolveEverythingTestBase : UastPluginSelection, UastFileCompariso
     companion object {
         private val PsiElement?.needsDifferentRender: Boolean
             get() = this is KtLightElement<*, *> ||
+                    this is PsiClass ||
+                    this is PsiMethod ||
+                    this is PsiField ||
                     this is LightMethodBuilder ||
                     this is LightVariableBuilder ||
                     this is LightParameter ||
                     this is LightTypeParameterBuilder
 
         private const val TAG_CLASS = "Kotlin_Light_Class"
+        private const val TAG_CLASS_DECOMPILED = "Decompiled_Class"
         private const val TAG_METHOD = "Kotlin_Light_Method"
+        private const val TAG_METHOD_DECOMPILED = "Decompiled_Method"
         private const val TAG_VARIABLE = "Kotlin_Light_Variable"
+        private const val TAG_VARIABLE_DECOMPILED = "Decompiled_Variable"
         private const val TAG_VALUE_PARAMETER = "Kotlin_Light_Value_Parameter"
         private const val TAG_TYPE_PARAMETER = "Kotlin_Light_Type_Parameter"
 
@@ -74,18 +79,26 @@ interface UastResolveEverythingTestBase : UastPluginSelection, UastFileCompariso
         // NB: Except for class, all other kinds' name is redundant, hence captured by regex and removed.
         private val REGEXES: Map<Regex, String> = mapOf(
             Regex("^FirLight.*Class.*Symbol:") to "$TAG_CLASS:",
-            Regex("^FirLightClassForDecompiledDeclaration.+:.+$") to TAG_CLASS,
+
+            Regex("^FirLightClassForDecompiledFacade:.+$") to TAG_CLASS_DECOMPILED,
+            Regex("^FirLight.*ClassForDecompiled.+ of .+:.+$") to TAG_CLASS_DECOMPILED,
+            Regex("^PsiClass:.+$") to TAG_CLASS_DECOMPILED,
 
             Regex("^FirLightConstructorForSymbol:.+$") to TAG_METHOD,
             Regex("^FirLight.*Method.*Symbol:.+$") to TAG_METHOD,
-            Regex("^FirLightMethodForDecompiledDeclaration.+:.+$") to TAG_METHOD,
 
             Regex("^KtUltraLightMethodForSourceDeclaration:.+$") to TAG_METHOD,
             Regex("^LightMethodBuilder:.+$") to TAG_METHOD,
 
+            Regex("^FirLightMethodForDecompiledDeclaration of .+:.+$") to TAG_METHOD_DECOMPILED,
+            Regex("^PsiMethod:.+$") to TAG_METHOD_DECOMPILED,
+
             Regex("^KtLightField:.+$") to TAG_VARIABLE,
             Regex("^LightVariableBuilder:.+$") to TAG_VARIABLE,
-            Regex("^FirLightFieldForDecompiledDeclaration.+:.+$") to TAG_VARIABLE,
+
+            Regex("^FirLightFieldForDecompiledDeclaration of .+:.+$") to TAG_VARIABLE_DECOMPILED,
+            Regex("^FirLightEnumEntryForDecompiledDeclaration.+:.+$") to TAG_VARIABLE_DECOMPILED,
+            Regex("^PsiField:.+$") to TAG_VARIABLE_DECOMPILED,
 
             Regex("^Fir Light Parameter .+$") to TAG_VALUE_PARAMETER,
 

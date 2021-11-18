@@ -1,30 +1,30 @@
-UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiMethod:currentThread: currentThread
-UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:Thread: Thread
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> Decompiled_Method: currentThread
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: Thread
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> PsiClass:Thread: Thread
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = currentThread) -> PsiMethod:currentThread: currentThread
-UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiField:NORM_PRIORITY: NORM_PRIORITY
-UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:Thread: Thread
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> Decompiled_Class: Thread
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = currentThread) -> Decompiled_Method: currentThread
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> Decompiled_Variable: NORM_PRIORITY
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: Thread
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> PsiClass:Thread: Thread
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = NORM_PRIORITY) -> PsiField:NORM_PRIORITY: NORM_PRIORITY
-UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiClass:UncaughtExceptionHandler: UncaughtExceptionHandler
-UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:Thread: Thread
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> Decompiled_Class: Thread
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = NORM_PRIORITY) -> Decompiled_Variable: NORM_PRIORITY
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> Decompiled_Class: UncaughtExceptionHandler
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: Thread
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> PsiClass:Thread: Thread
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = UncaughtExceptionHandler) -> PsiClass:UncaughtExceptionHandler: UncaughtExceptionHandler
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> Decompiled_Class: Thread
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = UncaughtExceptionHandler) -> Decompiled_Class: UncaughtExceptionHandler
 UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> null: null
-UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:Thread: Thread
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: Thread
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> PsiClass:Thread: Thread
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> Decompiled_Class: Thread
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = sleep) -> null: null
 UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> FUN: emptyList
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:kotlin.collections: collections
@@ -32,9 +32,9 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ko
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = collections) -> PsiPackage:kotlin.collections: collections
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = emptyList) -> FUN: emptyList
 UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PROPERTY: SIZE_BYTES
-UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> FirLightClassForDecompiledFacade:kotlin.jvm.internal.IntCompanionObject: IntCompanionObject
-UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:Integer: Integer
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: IntCompanionObject
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: Integer
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:kotlin: kotlin
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Companion) -> FirLightClassForDecompiledFacade:kotlin.jvm.internal.IntCompanionObject: IntCompanionObject
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Companion) -> Decompiled_Class: IntCompanionObject
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = SIZE_BYTES) -> PROPERTY: SIZE_BYTES

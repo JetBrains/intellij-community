@@ -1,9 +1,9 @@
 null -> UQualifiedReferenceExpression -> PsiPackage:test.pkg: pkg
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = test) -> PsiPackage:test: test
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = pkg) -> PsiPackage:test.pkg: pkg
-UTypeReferenceExpression (name = kotlin.Deprecated) -> USimpleNameReferenceExpression (identifier = Deprecated) -> FirLightClassForDecompiledFacade:kotlin.Deprecated: Deprecated
+UTypeReferenceExpression (name = kotlin.Deprecated) -> USimpleNameReferenceExpression (identifier = Deprecated) -> Decompiled_Class: Deprecated
 null -> USimpleNameReferenceExpression (identifier = level) -> null: null
-UNamedExpression (name = level) -> UQualifiedReferenceExpression -> FirLightEnumEntryForDecompiledDeclaration of FirLightClassForDecompiledFacade:kotlin.DeprecationLevel: HIDDEN
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = DeprecationLevel) -> FirLightClassForDecompiledFacade:kotlin.DeprecationLevel: DeprecationLevel
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = HIDDEN) -> FirLightEnumEntryForDecompiledDeclaration of FirLightClassForDecompiledFacade:kotlin.DeprecationLevel: HIDDEN
+UNamedExpression (name = level) -> UQualifiedReferenceExpression -> Decompiled_Variable: HIDDEN
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = DeprecationLevel) -> Decompiled_Class: DeprecationLevel
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = HIDDEN) -> Decompiled_Variable: HIDDEN
 null -> USimpleNameReferenceExpression (identifier = message) -> null: null

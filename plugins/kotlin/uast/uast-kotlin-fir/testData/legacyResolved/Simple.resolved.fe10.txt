@@ -1,2 +1,0 @@
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:println) -> USimpleNameReferenceExpression (identifier = println) -> PsiMethod:println: println
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String

@@ -1,21 +1,21 @@
-UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiClass:Stream: Stream
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> Decompiled_Class: Stream
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util.stream: stream
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util: util
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = util) -> PsiPackage:java.util: util
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = stream) -> PsiPackage:java.util.stream: stream
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Stream) -> PsiClass:Stream: Stream
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Stream) -> Decompiled_Class: Stream
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Stream) -> PsiClass:Stream: Stream
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:empty) -> USimpleNameReferenceExpression (identifier = empty) -> PsiMethod:empty: empty
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Stream) -> Decompiled_Class: Stream
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = empty) -> Decompiled_Method: empty
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> null: null
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:filter) -> USimpleNameReferenceExpression (identifier = filter) -> PsiMethod:filter: filter
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = filter) -> Decompiled_Method: filter
         UReturnExpression -> UQualifiedReferenceExpression -> null: null
         UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> FUNCTION_LITERAL: <anonymous>
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isEmpty) -> FUN: isEmpty
-UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> FirLightClassForDecompiledFacade:kotlin.Unit: Unit
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = selectItemFunction) -> Kotlin_Light_Value_Parameter: selectItemFunction
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> Decompiled_Class: Unit
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = selectItemFunction) -> Kotlin_Light_Value_Parameter: selectItemFunction
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = Local) -> null: null
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Variable: baz
-    UWhileExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> Kotlin_Light_Method:
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Variable: baz
+    UWhileExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> Decompiled_Method:

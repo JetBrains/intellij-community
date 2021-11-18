@@ -1,25 +1,25 @@
-UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> FirLightClassForDecompiledFacade:kotlin.Suppress: Suppress
+UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: foo
-    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> FirLightClassForDecompiledFacade:kotlin.Suppress: Suppress
-    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> FirLightClassForDecompiledFacade:kotlin.Suppress: Suppress
-    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> FirLightClassForDecompiledFacade:kotlin.Suppress: Suppress
+    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
+    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
+    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Variable: b
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
-    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> FirLightClassForDecompiledFacade:kotlin.Suppress: Suppress
+    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
     UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
-    UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> PsiMethod:compareTo: compareTo
+    UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> Decompiled_Method: compareTo
     UIfExpression -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UIfExpression -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
     ULocalVariable (name = varae507364) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
-    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> FirLightClassForDecompiledFacade:kotlin.Suppress: Suppress
+    UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
     ULocalVariable (name = varae507364) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
     UIfExpression -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
-UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> FirLightClassForDecompiledFacade:kotlin.Suppress: Suppress
+UTypeReferenceExpression (name = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Kotlin_Light_Value_Parameter: str
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = isBlank) -> FUN: isBlank
