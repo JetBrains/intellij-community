@@ -161,6 +161,7 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
                         "{'id': '0'," +
                                 "'uri': 'http://localhost/'}"
                                 .replaceAll("'", "\""));
+              System.out.println("{ bad_json: 123 }".replaceAll("'", "\""));
           }
       }
     """)
