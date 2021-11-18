@@ -194,7 +194,7 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
         }
 
         fun addTypeAnnotation(editor: Editor?, declaration: KtCallableDeclaration, exprType: KotlinType) {
-            if (editor != null && declaration.isPhysical) {
+            if (editor != null) {
                 addTypeAnnotationWithTemplate(editor, declaration, exprType)
             } else {
                 declaration.setType(exprType)
