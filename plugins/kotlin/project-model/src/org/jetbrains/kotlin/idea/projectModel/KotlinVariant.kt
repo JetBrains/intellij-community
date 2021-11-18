@@ -3,8 +3,9 @@ package org.jetbrains.kotlin.idea.projectModel
 
 import java.io.Serializable
 
-typealias KotlinKPMAttributeKeyId = Long
-typealias KotlinKPMAttributeValueId = Long
+//TODO use mapping to Long keys
+typealias KotlinKPMAttributeKeyId = String
+typealias KotlinKPMAttributeValueId = String
 typealias KotlinKPMVariantAttributesMap = Map<KotlinKPMAttributeKeyId, KotlinKPMAttributeValueId>
 
 interface KotlinVariantData : Serializable {
@@ -12,4 +13,4 @@ interface KotlinVariantData : Serializable {
     val compilationOutputs: KotlinCompilationOutput?
 }
 
-typealias KotlinVariant = Pair</* Name of corresponding fragment */ String, KotlinVariantData>
+typealias KotlinVariant = Pair<KotlinFragment, KotlinVariantData>

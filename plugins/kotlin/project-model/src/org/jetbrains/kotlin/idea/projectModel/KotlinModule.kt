@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.projectModel
 
 import java.io.Serializable
 
-interface KotlinModuleIdentifier : Serializable {
+sealed interface KotlinModuleIdentifier : Serializable {
     val moduleClassifier: String?
 }
 
@@ -18,10 +18,10 @@ interface KotlinMavenModuleIdentifier : KotlinModuleIdentifier {
 }
 
 
-interface KotlinModule {
+ interface KotlinModule : Serializable {
     val moduleIdentifier: KotlinModuleIdentifier
-    var fragments: List<KotlinFragment>
-    var variants: List<KotlinVariant>
+    var fragments: Collection<KotlinFragment>
+    var variants: Collection<KotlinVariant>
 
     companion object {
         const val MAIN_MODULE_NAME = "main"
