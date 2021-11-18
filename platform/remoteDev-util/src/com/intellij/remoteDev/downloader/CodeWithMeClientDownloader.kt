@@ -30,6 +30,7 @@ import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifier
 import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifierLogger
 import com.jetbrains.infra.pgpVerifier.Sha256ChecksumSignatureVerifier
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.fire
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.WinBase
 import com.sun.jna.platform.win32.WinNT
@@ -556,6 +557,7 @@ object CodeWithMeClientDownloader {
 
         processHandler.addProcessListener(listener)
         processHandler.startNotify()
+        config.clientLaunched.fire()
 
         lifetime.onTerminationOrNow {
           processHandler.process.children().forEach {

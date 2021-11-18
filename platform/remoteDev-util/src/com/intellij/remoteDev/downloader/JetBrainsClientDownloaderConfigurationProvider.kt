@@ -11,12 +11,11 @@ import com.intellij.util.io.inputStream
 import com.intellij.util.io.isFile
 import com.intellij.util.io.size
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.Signal
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
 import org.jetbrains.annotations.ApiStatus
-import java.net.Inet4Address
-import java.net.InetSocketAddress
-import java.net.URI
+import java.net.*
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -36,6 +35,7 @@ interface JetBrainsClientDownloaderConfigurationProvider {
   val verifySignature: Boolean
 
   fun patchVmOptions(vmOptionsFile: Path)
+  val clientLaunched: Signal<Unit>
 }
 
 @ApiStatus.Experimental
@@ -48,6 +48,7 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override val verifySignature: Boolean = true
 
   override fun patchVmOptions(vmOptionsFile: Path) { }
+  override val clientLaunched: Signal<Unit> = Signal()
 }
 
 @ApiStatus.Experimental
@@ -56,6 +57,10 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   var guestConfigFolder: Path? =  null
   var guestSystemFolder: Path? = null
   var guestLogFolder: Path? = null
+
+  var isDebugEnabled = false
+  var debugSuspendOnStart = false
+  var debugPort = -1
 
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) {
     x11DisplayForClient?.let {
@@ -70,10 +75,22 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override var clientCachesDir: Path = Files.createTempDirectory("")
   override var verifySignature: Boolean = true
 
+  override val clientLaunched: Signal<Unit> = Signal()
   override fun patchVmOptions(vmOptionsFile: Path) {
     thisLogger().info("Patching $vmOptionsFile")
 
     val traceCategories = listOf("#com.jetbrains.rdserver.joinLinks", "#com.jetbrains.rd.platform.codeWithMe.network")
+
+    val debugOptions = run {
+      if (isDebugEnabled) {
+        val suspendOnStart = if (debugSuspendOnStart) "y" else "n"
+
+        // changed in Java 9, now we have to use *: to listen on all interfaces
+          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$debugPort"
+      }
+      else ""
+    }
+
     val testVmOptions = listOf(
       "-Djb.consents.confirmation.enabled=false", // hz
       "-Djb.privacy.policy.text=\"<!--999.999-->\"", // EULA
@@ -90,7 +107,8 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
       "-Didea.config.path=${guestConfigFolder!!.absolutePathString()}",
       "-Didea.system.path=${guestSystemFolder!!.absolutePathString()}",
       "-Didea.log.path=${guestLogFolder!!.absolutePathString()}",
-      "-Didea.log.trace.categories=${traceCategories.joinToString(",")}").joinToString(separator = "\n", prefix = "\n")
+      "-Didea.log.trace.categories=${traceCategories.joinToString(",")}",
+      debugOptions).joinToString(separator = "\n", prefix = "\n")
 
     require(vmOptionsFile.isFile() && vmOptionsFile.exists())
 
