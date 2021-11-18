@@ -11,12 +11,12 @@ import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.client.JpsNettyClient;
 import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.client.JpsServerConnectionUtil;
 import org.jetbrains.jps.cache.git.GitCommitsIterator;
-import org.jetbrains.jps.cache.git.GitRepositoryUtil;
 import org.jetbrains.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
@@ -36,7 +36,7 @@ import static org.jetbrains.jps.cache.JpsCachesPluginUtil.INTELLIJ_REPO_NAME;
 
 public class JpsOutputLoaderManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
-  private static final double SEGMENT_SIZE = 0.33;
+  private static final int COMMITS_COUNT_THRESHOLD = 150;
   private final AtomicBoolean hasRunningTask;
   //private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
   private List<JpsOutputLoader<?>> myJpsOutputLoadersLoaders;
@@ -98,6 +98,12 @@ public class JpsOutputLoaderManager implements Disposable {
     hasRunningTask.set(false);
   }
 
+  public void saveLatestBuiltCommitId(@NotNull CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status) {
+    if (status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED ||
+        status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.ERRORS ) return;
+    myNettyClient.saveLatestBuiltCommit();
+  }
+
   //public void load(boolean isForceUpdate, boolean verbose) {
   //  Task.Backgroundable task = new Task.Backgroundable(myProject, JpsCacheBundle.message("progress.title.updating.compiler.caches")) {
   //    @Override
@@ -132,11 +138,12 @@ public class JpsOutputLoaderManager implements Disposable {
   private Pair<String, Integer> getNearestCommit(boolean isForceUpdate, boolean verbose) {
     Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myNettyClient);
 
-    String previousCommitId = GitRepositoryUtil.getLatestDownloadedCommit(myNettyClient);
-    //String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
+    //String latestDownloadedCommit = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
     //List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
 
     GitCommitsIterator commitsIterator = new GitCommitsIterator(myNettyClient, INTELLIJ_REPO_NAME);
+    String latestDownloadedCommit = commitsIterator.getLatestDownloadedCommit();
+    String latestBuiltCommit = commitsIterator.getLatestBuiltRemoteMasterCommit();
     Set<String> availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
     if (availableCommitsForRemote == null) {
       String message = JpsBuildBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
@@ -145,26 +152,49 @@ public class JpsOutputLoaderManager implements Disposable {
       return null;
     }
 
-    String commitId = "";
     int commitsBehind = 0;
-    while (commitsIterator.hasNext() && !availableCommitsForRemote.contains(commitId)) {
-      commitId = commitsIterator.next();
-      commitsBehind++;
+    int commitsCountBetweenCompilation = 0;
+    String commitToDownload = "";
+    boolean latestBuiltCommitFound = false;
+    while (commitsIterator.hasNext()) {
+      String commitId = commitsIterator.next();
+      if (commitId.equals(latestBuiltCommit) && !latestBuiltCommitFound) {
+        latestBuiltCommitFound = true;
+      }
+      if (!latestBuiltCommitFound) {
+        commitsCountBetweenCompilation++;
+      }
+      if (availableCommitsForRemote.contains(commitId) && commitToDownload.isEmpty()) {
+        commitToDownload = commitId;
+      }
+      if (commitToDownload.isEmpty()) {
+        commitsBehind++;
+      }
+
+      if (latestBuiltCommitFound && !commitToDownload.isEmpty()) break;
     }
 
-    if (!availableCommitsForRemote.contains(commitId)) {
+    if (!availableCommitsForRemote.contains(commitToDownload)) {
       String message = JpsBuildBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
       LOG.warn(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
-    if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
+    LOG.info("Commits count between latest success compilation and current commit: " + latestBuiltCommitFound +
+             ". Detected commit to download: " + commitToDownload);
+    if (commitsCountBetweenCompilation < COMMITS_COUNT_THRESHOLD) {
+      String message = JpsBuildBundle.message("notification.content.commits.count.threshold");
+      LOG.info(message);
+      myNettyClient.sendDescriptionStatusMessage(message);
+      return null;
+    }
+    if (commitToDownload.equals(latestDownloadedCommit) && !isForceUpdate) {
       String message = JpsBuildBundle.message("notification.content.system.contains.up.to.date.caches");
       LOG.info(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
-    return Pair.create(commitId, commitsBehind);
+    return Pair.create(commitToDownload, commitsBehind);
   }
 
   private void startLoadingForCommit(@NotNull String commitId) {

@@ -71,6 +71,8 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final BuildType myBuildType;
   private final List<TargetTypeBuildScope> myScopes;
   private final boolean myLoadUnloadedModules;
+  @Nullable
+  private JpsOutputLoaderManager myCacheLoadManager;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -164,10 +166,9 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       if (ProjectStamps.PORTABLE_CACHES && myBuildType == BuildType.BUILD) {
         LOG.info("Trying to download JPS caches before build");
-        // Try to download caches
-        JpsOutputLoaderManager loaderManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), this, myProjectPath, myChannel, mySessionId);
+        myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), this, myProjectPath, myChannel, mySessionId);
         //loaderManager.measureConnectionSpeed();
-        loaderManager.load(true, false);
+        myCacheLoadManager.load(true, false);
       }
 
       runBuild(new MessageHandler() {
@@ -636,6 +637,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         else if (!doneSomething){
           status = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UP_TO_DATE;
         }
+        if (myCacheLoadManager != null) myCacheLoadManager.saveLatestBuiltCommitId(status);
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createBuildCompletedEvent("build completed", status));
       }
     }

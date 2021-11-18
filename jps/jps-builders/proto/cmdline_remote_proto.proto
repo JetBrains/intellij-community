@@ -36,7 +36,6 @@ message Message {
       CONSTANT_SEARCH_RESULT = 4;
       AUTHENTICATION_TOKEN = 5;
       REPOSITORY_COMMITS_RESULT = 6;
-      LATEST_DOWNLOADED_COMMIT_RESULT = 7;
     }
 
     message FSEvent {
@@ -84,10 +83,8 @@ message Message {
 
     message RepositoryCommitsResult {
       repeated string commit = 1;
-    }
-
-    message LatestDownloadedCommitResult {
-      required string commit = 1;
+      required string latest_built_master_commit = 2;
+      required string latest_download_commit = 3;
     }
 
     required Type type = 1;
@@ -96,7 +93,6 @@ message Message {
     optional ConstantSearchResult constant_search_result = 4;
     optional RequestParams request_params = 5;
     optional RepositoryCommitsResult repository_commits_result = 6;
-    optional LatestDownloadedCommitResult latest_downloaded_commit = 7;
   }
 
   message BuilderMessage {
@@ -108,8 +104,8 @@ message Message {
       AUTH_TOKEN_REQUEST = 5;
       CACHE_DOWNLOAD_MESSAGE = 6;
       REPOSITORY_COMMITS_REQUEST = 7;
-      LATEST_DOWNLOADED_COMMIT_MESSAGE = 8;
-      LATEST_DOWNLOADED_COMMIT_REQUEST = 9;
+      SAVE_LATEST_DOWNLOADED_COMMIT_MESSAGE = 8;
+      SAVE_LATEST_BUILT_COMMIT_MESSAGE = 9;
     }
 
     message BuildEvent {

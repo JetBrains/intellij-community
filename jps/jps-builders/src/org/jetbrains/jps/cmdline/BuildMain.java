@@ -251,13 +251,9 @@ public final class BuildMain {
           case REPOSITORY_COMMITS_RESULT: {
             CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult repositoryCommitsResult = controllerMessage.getRepositoryCommitsResult();
             LOG.info("Got repository commits: " + repositoryCommitsResult.getCommitList());
-            GitCommitsIterator.setRepositoryCommits(repositoryCommitsResult.getCommitList());
-            return;
-          }
-          case LATEST_DOWNLOADED_COMMIT_RESULT: {
-            CmdlineRemoteProto.Message.ControllerMessage.LatestDownloadedCommitResult latestDownloadedCommit = controllerMessage.getLatestDownloadedCommit();
-            LOG.info("Got latest downloaded commit: " + latestDownloadedCommit.getCommit());
-            GitRepositoryUtil.setLatestDownloadedCommit(latestDownloadedCommit.getCommit());
+            GitCommitsIterator.setRepositoryCommits(repositoryCommitsResult.getCommitList(),
+                                                    repositoryCommitsResult.getLatestBuiltMasterCommit(),
+                                                    repositoryCommitsResult.getLatestDownloadCommit());
             return;
           }
           case CONSTANT_SEARCH_RESULT: {

@@ -60,25 +60,4 @@ public final class GitRepositoryUtil {
     String[] splittedRemoteUrl = remoteUrl.split("/");
     return splittedRemoteUrl[splittedRemoteUrl.length - 1];
   }
-
-  public static @NotNull String getLatestDownloadedCommit(@NotNull JpsNettyClient nettyClient) {
-    synchronized (myLock) {
-      try {
-        // TODO:: FIX awaiting
-        nettyClient.requestLatestDownloadCommitMessage();
-        myLock.wait();
-      }
-      catch (InterruptedException e) {
-        LOG.warn("Can't request latest downloaded commit", e);
-      }
-    }
-    return latestDownloadedCommit;
-  }
-
-  public static void setLatestDownloadedCommit(@NotNull String latestDownloadedCommit) {
-    synchronized (myLock) {
-      GitRepositoryUtil.latestDownloadedCommit = latestDownloadedCommit;
-      myLock.notify();
-    }
-  }
 }

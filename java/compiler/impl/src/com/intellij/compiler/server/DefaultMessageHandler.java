@@ -65,17 +65,25 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         break;
       case REPOSITORY_COMMITS_REQUEST:
         CmdlineRemoteProto.Message.BuilderMessage.CommitMessage latestCommitMessage = msg.getCommitMessage();
-        List<String> repositoryCommits = GitRepositoryUtil.fetchRepositoryCommits(myProject, latestCommitMessage.getCommit());
-        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRepositoryCommitsMessage(repositoryCommits)));
+        String latestCommit = latestCommitMessage.getCommit();
+        List<String> repositoryCommits = GitRepositoryUtil.fetchRepositoryCommits(myProject, latestCommit);
+        String latestDownloadedCommit = "";
+        String nearestRemoteMasterCommit = "";
+        if (latestCommit.isEmpty()) {
+          nearestRemoteMasterCommit = GitRepositoryUtil.getLatestBuiltMasterCommitId();
+          latestDownloadedCommit = GitRepositoryUtil.getLatestDownloadedCommit();
+        }
+        CmdlineRemoteProto.Message.ControllerMessage message = CmdlineProtoUtil.createRepositoryCommitsMessage(repositoryCommits,
+                                                                                                               nearestRemoteMasterCommit,
+                                                                                                               latestDownloadedCommit);
+        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, message));
         break;
-      case LATEST_DOWNLOADED_COMMIT_MESSAGE:
+      case SAVE_LATEST_DOWNLOADED_COMMIT_MESSAGE:
         CmdlineRemoteProto.Message.BuilderMessage.CommitMessage latestDownloadedCommitMessage = msg.getCommitMessage();
         GitRepositoryUtil.saveLatestDownloadedCommit(latestDownloadedCommitMessage.getCommit());
         break;
-      case LATEST_DOWNLOADED_COMMIT_REQUEST:
-        String latestDownloadedCommit = GitRepositoryUtil.getLatestDownloadedCommit();
-        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId,
-                                                         CmdlineProtoUtil.createLatestDownloadCommitResponse(latestDownloadedCommit)));
+      case SAVE_LATEST_BUILT_COMMIT_MESSAGE:
+        GitRepositoryUtil.saveLatestBuiltMasterCommit(myProject);
         break;
       case CONSTANT_SEARCH_TASK:
         // ignored, because the functionality is deprecated

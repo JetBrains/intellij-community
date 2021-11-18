@@ -16,6 +16,8 @@ public class GitCommitsIterator implements Iterator<String> {
   private static final int MAX_FETCH_SIZE = 1000;
   private final JpsNettyClient myNettyClient;
   private static List<String> repositoryCommits;
+  private static String latestBuiltRemoteMasterCommit = "";
+  private static String latestDownloadedCommit = "";
   private static int fetchedCount;
   private int currentPosition;
   private String remote;
@@ -25,6 +27,14 @@ public class GitCommitsIterator implements Iterator<String> {
     fetchedCount = 0;
     remote = remoteUrl;
     fetchOldCommits();
+  }
+
+  public @NotNull String getLatestBuiltRemoteMasterCommit() {
+    return latestBuiltRemoteMasterCommit;
+  }
+
+  public @NotNull String getLatestDownloadedCommit() {
+    return latestDownloadedCommit;
   }
 
   @Override
@@ -75,10 +85,12 @@ public class GitCommitsIterator implements Iterator<String> {
     }
   }
 
-  public static void setRepositoryCommits(List<String> commits) {
+  public static void setRepositoryCommits(List<String> commits, String latestRemoteMasterCommit, String downloadedCommit) {
     synchronized (myLock) {
       repositoryCommits = commits;
       fetchedCount += repositoryCommits.size();
+      if (!downloadedCommit.isEmpty()) latestDownloadedCommit = downloadedCommit;
+      if (!latestRemoteMasterCommit.isEmpty()) latestBuiltRemoteMasterCommit = latestRemoteMasterCommit;
       myLock.notify();
     }
   }

@@ -34,11 +34,7 @@ public class JpsNettyClient {
   }
 
   public void sendLatestDownloadCommitMessage(@NotNull String latestDownloadCommit) {
-    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createLatestDownloadCommitMessage(latestDownloadCommit)));
-  }
-
-  public void requestLatestDownloadCommitMessage() {
-    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createLatestDownloadCommitRequest()));
+    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createSaveLatestDownloadCommitMessage(latestDownloadCommit)));
   }
 
   public void requestRepositoryCommits(@NotNull String latestCommit) {
@@ -47,5 +43,9 @@ public class JpsNettyClient {
 
   public void requestAuthToken() {
     channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createAuthTokenRequest()));
+  }
+
+  public void saveLatestBuiltCommit() {
+    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createSaveLatestBuiltCommitMessage()));
   }
 }

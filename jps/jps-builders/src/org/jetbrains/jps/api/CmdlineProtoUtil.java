@@ -139,35 +139,26 @@ public final class CmdlineProtoUtil {
     return newBuilder.build();
   }
 
-  public static BuilderMessage createLatestDownloadCommitMessage(@NotNull String latestDownloadCommit) {
+  public static BuilderMessage createSaveLatestDownloadCommitMessage(@NotNull String latestDownloadCommit) {
     BuilderMessage.CommitMessage.Builder requestCommitsBuilder = BuilderMessage.CommitMessage.newBuilder();
     requestCommitsBuilder.setCommit(latestDownloadCommit);
     BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
-    newBuilder.setType(BuilderMessage.Type.LATEST_DOWNLOADED_COMMIT_MESSAGE);
+    newBuilder.setType(BuilderMessage.Type.SAVE_LATEST_DOWNLOADED_COMMIT_MESSAGE);
     newBuilder.setCommitMessage(requestCommitsBuilder.build());
     return newBuilder.build();
   }
 
-  public static BuilderMessage createLatestDownloadCommitRequest() {
-    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
-    newBuilder.setType(BuilderMessage.Type.LATEST_DOWNLOADED_COMMIT_REQUEST);
-    return newBuilder.build();
-  }
-
-  public static CmdlineRemoteProto.Message.ControllerMessage createLatestDownloadCommitResponse(@NotNull String commit) {
-    CmdlineRemoteProto.Message.ControllerMessage.LatestDownloadedCommitResult latestDownloadedCommitResult =
-      CmdlineRemoteProto.Message.ControllerMessage.LatestDownloadedCommitResult.newBuilder().setCommit(commit).build();
-    return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
-      .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.LATEST_DOWNLOADED_COMMIT_RESULT)
-      .setLatestDownloadedCommit(latestDownloadedCommitResult).build();
-  }
-
-  public static CmdlineRemoteProto.Message.ControllerMessage createRepositoryCommitsMessage(@NotNull List<String> commits) {
-    CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult repositoryCommitsResult =
-      CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.newBuilder().addAllCommit(commits).build();
+  public static CmdlineRemoteProto.Message.ControllerMessage createRepositoryCommitsMessage(@NotNull List<String> commits,
+                                                                                            @NotNull String nearestRemoteMasterCommit,
+                                                                                            @NotNull String latestDownloadedCommit) {
+    CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.Builder repositoryCommitsResult =
+      CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.newBuilder();
+    repositoryCommitsResult.addAllCommit(commits);
+    repositoryCommitsResult.setLatestDownloadCommit(latestDownloadedCommit);
+    repositoryCommitsResult.setLatestBuiltMasterCommit(nearestRemoteMasterCommit);
     return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
       .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.REPOSITORY_COMMITS_RESULT)
-      .setRepositoryCommitsResult(repositoryCommitsResult).build();
+      .setRepositoryCommitsResult(repositoryCommitsResult.build()).build();
   }
 
   public static BuilderMessage createCacheDownloadMessage(String text) {
@@ -310,6 +301,10 @@ public final class CmdlineProtoUtil {
 
   public static BuilderMessage createAuthTokenRequest() {
     return BuilderMessage.newBuilder().setType(BuilderMessage.Type.AUTH_TOKEN_REQUEST).build();
+  }
+
+  public static BuilderMessage createSaveLatestBuiltCommitMessage() {
+    return BuilderMessage.newBuilder().setType(BuilderMessage.Type.SAVE_LATEST_BUILT_COMMIT_MESSAGE).build();
   }
 
   public static CmdlineRemoteProto.Message toMessage(UUID sessionId, BuilderMessage builderMessage) {
