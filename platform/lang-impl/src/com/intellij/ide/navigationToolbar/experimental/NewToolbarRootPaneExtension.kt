@@ -118,6 +118,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
 
   override fun uiSettingsChanged(settings: UISettings) {
     logger.info("Show old main toolbar: ${settings.showMainToolbar}; show old navigation bar: ${settings.showNavigationBar}")
+    logger.info("Show new main toolbar: ${ToolbarSettings.Instance.isVisible}")
 
     val toolbarSettings = ToolbarSettings.Instance
     myPanel.isEnabled = toolbarSettings.isEnabled
