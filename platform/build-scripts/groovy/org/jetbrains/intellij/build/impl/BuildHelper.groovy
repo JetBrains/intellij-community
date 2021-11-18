@@ -519,8 +519,7 @@ final class BuildHelper {
       .parent(new ClassLoader() {
         @Override
         Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-          // todo exclude blockmap lib from jps bootstrap
-          if (name.startsWith("com.jetbrains.plugin.blockmap.")) {
+          if (name.startsWith("com.intellij.")) {
             return null
           }
           return parent.loadClass(name)
