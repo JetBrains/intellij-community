@@ -38,6 +38,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
   constructor(checkDefaultLocations: Boolean,
               forceEmbeddedJava: Boolean,
               registeredJdks: Boolean,
+              wslJdks: Boolean,
               systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider) {
     if (registeredJdks) {
       /** Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]). */
@@ -51,9 +52,11 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       }
     }
     registerFinder(this::guessPossibleLocations)
-    for (distro in WslDistributionManager.getInstance().installedDistributions) {
-      val wslFinder = JavaHomeFinderWsl(distro)
-      registerFinder { wslFinder.findExistingJdks() }
+    if (wslJdks) {
+      for (distro in WslDistributionManager.getInstance().installedDistributions) {
+        val wslFinder = JavaHomeFinderWsl(distro)
+        registerFinder { wslFinder.findExistingJdks() }
+      }
     }
   }
 

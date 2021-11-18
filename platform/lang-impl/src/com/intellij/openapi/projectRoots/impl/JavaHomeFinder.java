@@ -86,7 +86,7 @@ public abstract class JavaHomeFinder {
 
     boolean checkDefaultLocations = true;
     if (SystemInfo.isWindows) {
-      return new JavaHomeFinderWindows(checkDefaultLocations, forceEmbeddedJava, true, systemInfoProvider);
+      return new JavaHomeFinderWindows(checkDefaultLocations, forceEmbeddedJava, true, true, systemInfoProvider);
     }
     if (SystemInfo.isMac) {
       return new JavaHomeFinderMac(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider);
