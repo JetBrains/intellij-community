@@ -7,6 +7,7 @@ import com.intellij.java.ift.lesson.basic.JavaSelectLesson
 import com.intellij.java.ift.lesson.basic.JavaSurroundAndUnwrapLesson
 import com.intellij.java.ift.lesson.completion.*
 import com.intellij.java.ift.lesson.navigation.*
+import com.intellij.java.ift.lesson.refactorings.JavaExtractMethodCocktailSortLesson
 import com.intellij.java.ift.lesson.refactorings.JavaRefactoringMenuLesson
 import com.intellij.java.ift.lesson.refactorings.JavaRenameLesson
 import com.intellij.java.ift.lesson.run.JavaDebugLesson
@@ -81,7 +82,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
       listOf(
         JavaRenameLesson(),
         ExtractVariableFromBubbleLesson(ls("ExtractVariable.java.sample")),
-        //JavaExtractMethodCocktailSortLesson(), // Need to hide this lesson because of IDEA-262587
+        JavaExtractMethodCocktailSortLesson(),
         JavaRefactoringMenuLesson(),
       )
     },
