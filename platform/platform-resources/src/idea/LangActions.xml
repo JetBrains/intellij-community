@@ -724,6 +724,7 @@
         <group id="CustomActions"/>
       </group>
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
+        <reference id="TinySpacer"/>
         <reference id="BigSpacer"/>
         <reference id="RunToolbarWidgetAction"/>
         <reference id="SmallSpacer"/>
