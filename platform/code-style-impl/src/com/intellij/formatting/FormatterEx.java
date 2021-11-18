@@ -9,6 +9,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class FormatterEx implements Formatter {
 
   public static FormatterEx getInstance() {
@@ -32,6 +34,11 @@ public abstract class FormatterEx implements Formatter {
                                        final CommonCodeStyleSettings.IndentOptions indentOptions,
                                        final int offset,
                                        final TextRange affectedRange);
+
+  @Nullable
+  public abstract List<String> getLineIndents(final FormattingModel psiBasedFormattingModel,
+                                              final CodeStyleSettings settings,
+                                              final CommonCodeStyleSettings.IndentOptions indentOptions);
 
 
   public abstract void adjustLineIndentsForRange(final FormattingModel model,

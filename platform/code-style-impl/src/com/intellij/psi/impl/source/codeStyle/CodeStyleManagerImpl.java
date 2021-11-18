@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class CodeStyleManagerImpl extends CodeStyleManager implements FormattingModeAwareIndentAdjuster {
   private static final Logger LOG = Logger.getInstance(CodeStyleManagerImpl.class);
@@ -317,6 +318,22 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
         return FormatterEx.getInstanceEx().getLineIndent(myModel, mySettings, myIndentOptions, offset, mySignificantRange);
       }
     }.perform(file, offset, null, null);
+  }
+
+  @Override
+  @NotNull
+  public List<String> getLineIndents(@NotNull PsiFile file) {
+    return new CodeStyleManagerRunnable<List<String>>(this, FormattingMode.ADJUST_INDENT) {
+      @Override
+      protected boolean useDocumentBaseFormattingModel() {
+        return false;
+      }
+
+      @Override
+      protected List<String> doPerform(int offset, TextRange range) {
+        return FormatterEx.getInstanceEx().getLineIndents(myModel, mySettings, myIndentOptions);
+      }
+    }.perform(file, 0, null, null);
   }
 
   @Override
