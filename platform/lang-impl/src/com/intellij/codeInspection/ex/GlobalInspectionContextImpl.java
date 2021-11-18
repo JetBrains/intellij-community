@@ -615,8 +615,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                               @NotNull List<? extends Tools> globalTools,
                               boolean isOfflineInspections) {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || isOfflineInspections, "Must not run under read action, too unresponsive");
-    List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest = new ArrayList<>();
+    buildRefGraphIfNeeded(globalTools);
 
+    List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest = new ArrayList<>();
     SearchScope initialSearchScope = ReadAction.compute(scope::toSearchScope);
     boolean canBeExternalUsages = !(scope.getScopeType() == AnalysisScope.PROJECT && scope.isIncludeTestSource());
     InspectListener eventPublisher = getEventPublisher();
@@ -632,19 +633,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
         InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
         try {
-          if (tool.isGraphNeeded()) {
-            try {
-              reportWhenActivityFinished(
-                eventPublisher,
-                InspectListener.ActivityKind.REFERENCE_SEARCH,
-                getProject(),
-                () -> ((RefManagerImpl)getRefManager()).findAllDeclarations());
-            }
-            catch (Throwable e) {
-              getStdJobDescriptors().BUILD_GRAPH.setDoneAmount(0);
-              throw e;
-            }
-          }
           ThrowableRunnable<RuntimeException> runnable = () -> {
             reportWhenInspectionFinished(
               eventPublisher,
@@ -684,6 +672,33 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       getProject(),
       () -> processPostRunActivities(needRepeatSearchRequest));
     addProblemsToView(globalTools);
+  }
+
+  private void buildRefGraphIfNeeded(List<? extends Tools> globalTools) {
+    for (Tools tools : globalTools) {
+      for (ScopeToolState state : tools.getTools()) {
+        if (!state.isEnabled()) continue;
+        NamedScope stateScope = state.getScope(getProject());
+        if (stateScope == null) continue;
+
+        InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
+        GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
+        if (tool.isGraphNeeded()) {
+          try {
+            reportWhenActivityFinished(
+              getEventPublisher(),
+              InspectListener.ActivityKind.REFERENCE_SEARCH,
+              getProject(),
+              () -> ((RefManagerImpl)getRefManager()).findAllDeclarations());
+          }
+          catch (Throwable e) {
+            getStdJobDescriptors().BUILD_GRAPH.setDoneAmount(0);
+            throw e;
+          }
+          return;
+        }
+      }
+    }
   }
 
   // todo move the logic to appropriate place if it's needed
