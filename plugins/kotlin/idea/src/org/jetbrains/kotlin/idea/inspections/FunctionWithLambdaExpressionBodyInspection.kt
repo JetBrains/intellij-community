@@ -56,7 +56,7 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
             )
             holder.registerProblem(
                 lambda,
-                KotlinBundle.message("function.with.and.inferred.return.type"),
+                KotlinBundle.message("inspection.function.with.lambda.expression.body.display.name"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 *fixes.toTypedArray()
             )

@@ -68,7 +68,7 @@ class RedundantWithInspection : AbstractKotlinInspection() {
                 }
                 holder.registerProblem(
                     callee,
-                    KotlinBundle.message("redundant.with.call"),
+                    KotlinBundle.message("inspection.redundant.with.display.name"),
                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     quickfix
                 )
