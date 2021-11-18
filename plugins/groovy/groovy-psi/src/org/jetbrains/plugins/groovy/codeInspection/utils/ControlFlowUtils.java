@@ -862,12 +862,14 @@ public final class ControlFlowUtils {
   @NotNull
   public static List<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 
+    BitSet neutral = new BitSet(flow.length);
+
     final Semilattice<BitSet> sem = new Semilattice<>() {
 
       @NotNull
       @Override
       public BitSet initial() {
-        return new BitSet(flow.length);
+        return neutral;
       }
 
       @NotNull
@@ -883,24 +885,24 @@ public final class ControlFlowUtils {
 
     DfaInstance<BitSet> dfa = new DfaInstance<>() {
       @Override
-      public void fun(@NotNull BitSet bitSet, @NotNull Instruction instruction) {
-        if (!(instruction instanceof ReadWriteVariableInstruction)) return;
-        if (!((ReadWriteVariableInstruction)instruction).isWrite()) return;
+      public BitSet fun(@NotNull BitSet bitSet, @NotNull Instruction instruction) {
+        if (!(instruction instanceof ReadWriteVariableInstruction)) return bitSet;
+        if (!((ReadWriteVariableInstruction)instruction).isWrite()) return bitSet;
 
         final PsiElement element = instruction.getElement();
-        if (element instanceof GrVariable && element != var) return;
+        if (element instanceof GrVariable && element != var) return bitSet;
         if (element instanceof GrReferenceExpression) {
           final GrReferenceExpression ref = (GrReferenceExpression)element;
           if (ref.isQualified() || ref.resolve() != var) {
-            return;
+            return bitSet;
           }
         }
         if (!((ReadWriteVariableInstruction)instruction).getDescriptor().equals(createDescriptor(var))) {
-          return;
+          return bitSet;
         }
-
-        bitSet.clear();
-        bitSet.set(instruction.num());
+        BitSet newResult = new BitSet(flow.length);
+        newResult.set(instruction.num());
+        return newResult;
       }
     };
 

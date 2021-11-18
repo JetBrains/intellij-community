@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -18,12 +18,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.revers
  */
 public final class DFAEngine<E> {
   private final Instruction[] myFlow;
-  private final DfaInstance<? super E> myDfa;
+  private final DfaInstance<E> myDfa;
   private final Semilattice<E> mySemilattice;
 
   private WorkCounter myCounter = null;
 
-  public DFAEngine(Instruction @NotNull [] flow, @NotNull DfaInstance<? super E> dfa, @NotNull Semilattice<E> semilattice) {
+  public DFAEngine(Instruction @NotNull [] flow, @NotNull DfaInstance<E> dfa, @NotNull Semilattice<E> semilattice) {
     myFlow = flow;
     myDfa = dfa;
     mySemilattice = semilattice;
@@ -78,8 +78,8 @@ public final class DFAEngine<E> {
       final Instruction curr = myFlow[num];
       final E oldE = info.get(num);                      // saved outbound state
       final List<E> ins = getPrevInfos(curr, info, env); // states from all inbound edges
-      final E newE = mySemilattice.join(ins);            // inbound state
-      myDfa.fun(newE, curr);                             // newly modified outbound state
+      final E jointE = join(ins);                        // inbound state
+      final E newE = myDfa.fun(jointE, curr);            // newly modified outbound state
       if (!mySemilattice.eq(newE, oldE)) {               // if outbound state changed
         info.set(num, newE);                             // save new state
         for (Instruction next : getNext(curr, env)) {
@@ -89,6 +89,13 @@ public final class DFAEngine<E> {
     }
 
     return info;
+  }
+
+  private E join(List<? extends E> states) {
+    if (states.size() == 1) {
+      return states.get(0);
+    }
+    return mySemilattice.join(states);
   }
 
   private int @NotNull [] getFlowOrder() {
@@ -104,7 +111,9 @@ public final class DFAEngine<E> {
   private List<E> getPrevInfos(@NotNull Instruction instruction, @NotNull List<E> info, @NotNull CallEnvironment env) {
     List<E> prevInfos = new ArrayList<>();
     for (Instruction i : getPrevious(instruction, env)) {
-      prevInfos.add(info.get(i.num()));
+      if (info.get(i.num()) != mySemilattice.initial()) {
+        prevInfos.add(info.get(i.num()));
+      }
     }
     return prevInfos;
   }

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
@@ -66,19 +67,22 @@ public final class InvalidWriteAccessSearcher {
 
   private static class MyDFAInstance implements DfaInstance<MyData> {
     @Override
-    public void fun(@NotNull MyData e, @NotNull Instruction instruction) {
+    public MyData fun(@NotNull MyData e, @NotNull Instruction instruction) {
       if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)instruction).isWrite()) {
-        e.add(((ReadWriteVariableInstruction)instruction).getDescriptor());
+        return e.add(((ReadWriteVariableInstruction)instruction).getDescriptor());
+      } else {
+        return e;
       }
     }
   }
 
   private static class MySemilattice implements Semilattice<MyData> {
+    private static final MyData NEUTRAL = new MyData();
 
     @NotNull
     @Override
     public MyData initial() {
-      return new MyData();
+      return NEUTRAL;
     }
 
     @NotNull
@@ -89,10 +93,12 @@ public final class InvalidWriteAccessSearcher {
   }
 
   private static class MyData {
-    private final Set<VariableDescriptor> myInitialized = new HashSet<>();
-    private final Set<VariableDescriptor> myOverInitialized = new HashSet<>();
+    private final @Unmodifiable Set<VariableDescriptor> myInitialized;
+    private final @Unmodifiable Set<VariableDescriptor> myOverInitialized;
 
+    @SuppressWarnings("ConstantConditions")
     MyData(List<? extends MyData> ins) {
+      this(new HashSet<>(), new HashSet<>());
       for (MyData data : ins) {
         myInitialized.addAll(data.myInitialized);
         myOverInitialized.addAll(data.myOverInitialized);
@@ -100,11 +106,28 @@ public final class InvalidWriteAccessSearcher {
     }
 
     MyData() {
+      this(Set.of(), Set.of());
     }
 
-    public void add(VariableDescriptor var) {
-      if (!myInitialized.add(var)) {
-        myOverInitialized.add(var);
+    MyData(Set<VariableDescriptor> initialized, Set<VariableDescriptor> overInitialized) {
+      myInitialized = initialized;
+      myOverInitialized = overInitialized;
+    }
+
+    public MyData add(VariableDescriptor var) {
+      if (myInitialized.contains(var)) {
+        Set<VariableDescriptor> newOverInitialized;
+        if (myOverInitialized.contains(var)) {
+          newOverInitialized = myOverInitialized;
+        } else {
+          newOverInitialized = new HashSet<>(myOverInitialized);
+          newOverInitialized.add(var);
+        }
+        return new MyData(myInitialized, newOverInitialized);
+      } else {
+        HashSet<VariableDescriptor> newInitialized = new HashSet<>(myInitialized);
+        newInitialized.add(var);
+        return new MyData(newInitialized, myOverInitialized);
       }
     }
 
