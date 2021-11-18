@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.core.unquote
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getResolvableApproximations
 import org.jetbrains.kotlin.psi.*
@@ -210,7 +210,7 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
             override fun templateFinished(template: Template, brokenOff: Boolean) {
                 val typeRef = declaration.typeReference
                 if (typeRef != null && typeRef.isValid) {
-                    runWriteAction {
+                    runWriteActionIfPhysical(typeRef) {
                         ShortenReferences.DEFAULT.process(typeRef)
                         if (iterator != null && editor != null) addTypeAnnotationWithTemplate(editor, iterator)
                     }
