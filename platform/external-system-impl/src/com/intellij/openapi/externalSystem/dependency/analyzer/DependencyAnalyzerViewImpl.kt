@@ -49,7 +49,7 @@ class DependencyAnalyzerViewImpl(
   private val dependencyContributor = DependencyAnalyzerExtension.getExtension(project, systemId)
   private val iconsProvider = ExternalSystemIconProvider.getExtension(systemId)
 
-  private val propertyGraph = PropertyGraph()
+  private val propertyGraph = PropertyGraph(isBlockPropagation = false)
 
   private val externalProjectProperty = propertyGraph.graphProperty<String?> { null }
   private val searchDataProperty = propertyGraph.graphProperty { "" }
@@ -100,24 +100,20 @@ class DependencyAnalyzerViewImpl(
     dependencyContributor.getExternalProjectPaths()
       .forEach { externalProjectListModel.add(it) }
 
-    val externalProjectPath = externalProjectProperty.get()
-    if (externalProjectPath == null || externalProjectPath !in externalProjectListModel) {
-      externalProjectProperty.set(externalProjectListModel.firstOrNull())
-    }
+    val oldExternalProjectPath = externalProjectProperty.get()
+    val externalProjectPath = externalProjectListModel.find { it == oldExternalProjectPath }
+                              ?: externalProjectListModel.firstOrNull()
+    externalProjectProperty.set(externalProjectPath)
   }
 
   private fun updateScopesModel() {
-    val scopes = ArrayList<@NlsSafe String>()
-    val externalProjectPath = externalProjectProperty.get()
-    if (externalProjectPath != null) {
-      dependencyContributor.getDependencyScopes(externalProjectPath)
-        .also { scopes.addAll(it) }
-    }
-
-    val selectedScopes = searchScopeProperty.get()
-    if (scopes != selectedScopes.map { it.name }) {
-      searchScopeProperty.set(scopes.map { ScopeItem(it, true) })
-    }
+    val scopes = externalProjectProperty.get()
+      ?.let(dependencyContributor::getDependencyScopes)
+      ?: emptyList()
+    val scopesIndex = searchScopeProperty.get()
+      .associate { it.name to it.isSelected }
+    val isAny = scopesIndex.all { it.value }
+    searchScopeProperty.set(scopes.map { ScopeItem(it, scopesIndex[it] ?: isAny) })
   }
 
   private fun updateDependencyModel() {
@@ -132,11 +128,10 @@ class DependencyAnalyzerViewImpl(
     val dependencies = getDependencies()
     dependencyTreeModel.setRoot(buildTree(dependencies))
 
-    val dependency = findDependencyItem(dependencyProperty.get())
-    if (dependency == null) {
-      val item = dependencies.firstOrNull()
-      dependencyProperty.set(item?.dependency?.data)
-    }
+    val dependencyData = dependencyProperty.get()
+    val dependencyItem = dependencies.find { it.dependency.data == dependencyData }
+                         ?: dependencies.firstOrNull()
+    dependencyProperty.set(dependencyItem?.dependency?.data)
   }
 
   private fun updateUsagesModel() {

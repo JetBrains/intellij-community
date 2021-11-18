@@ -91,7 +91,15 @@ abstract class DummyDependencyContributor(private val project: Project) : Depend
   }
 
   override fun getDependencyScopes(externalProjectPath: String): List<String> {
-    return listOf("compile", "runtime", "provided", "test", "system", "import")
+    return listOf(
+      "compile",
+      "runtime",
+      "provided",
+      "test",
+      "system",
+      "import",
+      "scope" + LocalTimeCounter.currentTime()
+    )
   }
 
   override fun getDependencyScope(externalProjectPath: String, dependency: Dependency): String {
