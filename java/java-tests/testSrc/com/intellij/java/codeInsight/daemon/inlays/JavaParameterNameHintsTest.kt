@@ -1224,7 +1224,7 @@ class A {
 
     public static void main(String[] args) {
         ClassA entity = new ClassA();
-        testHints(entity, <hint text="name:"/>ClassA.getName());
+        testHints(entity, ClassA.getName());
     }
 }
 """)
