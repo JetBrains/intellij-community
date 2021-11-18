@@ -2,11 +2,19 @@
 package org.jetbrains.kotlin.idea.projectModel
 
 import java.io.File
+import java.io.Serializable
 
-interface KotlinFragment : KotlinComponent {
+interface KotlinFragmentResolvedDependency : Serializable {
+    val dependencyIdentifier: String
+}
+
+interface KotlinFragment : Serializable {
+    val fragmentName: String
+    val isTestFragment: Boolean
     val moduleIdentifier: KotlinModuleIdentifier
     val languageSettings: KotlinLanguageSettings?
     val directRefinesFragments: Collection<KotlinFragment>
+    val resolvedDependencies: Collection<KotlinFragmentResolvedDependency>
     val sourceDirs: Set<File>
     val resourceDirs: Set<File>
 }

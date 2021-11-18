@@ -118,14 +118,12 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTarget> {
                         }
                     } ?: listOf(it)
                 }
-                return testTasks.filter { it.enabled }.mapNotNull {
+                return testTasks.filter { it.enabled }.map {
                     val name = it.name
-                    it["getCompilation"]?.let { compilation ->
-                        val compilationName = compilation["getCompilationName"]
-                            ?.toString()
-                            ?: KotlinCompilation.TEST_COMPILATION_NAME
-                        KotlinTestRunTaskImpl(name, compilationName)
-                    }
+                    val compilationName = it["getCompilation"]?.let { compilation ->
+                        compilation["getCompilationName"]?.toString()
+                    } ?: KotlinCompilation.TEST_COMPILATION_NAME
+                    KotlinTestRunTaskImpl(name, compilationName)
                 }.toList()
             }
             return emptyList()

@@ -20,7 +20,9 @@ operator fun Any?.get(methodName: String, vararg params: Any): Any? {
 
 operator fun Any?.get(methodName: String, paramTypes: List<Class<*>>, params: List<Any?>): Any? {
     if (this == null) return null
-    return this::class.java.getMethodOrNull(methodName, *paramTypes.toTypedArray())?.invoke(this, *params.toTypedArray())
+    return this::class.java.getMethodOrNull(methodName, *paramTypes.toTypedArray())
+        ?.apply { trySetAccessible() }
+        ?.invoke(this, *params.toTypedArray())
 }
 
 fun Project.getTarget(): Named? = project.extensions.findByName("kotlin")?.let { kotlinExt ->
