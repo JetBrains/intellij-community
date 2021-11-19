@@ -52,7 +52,7 @@ internal fun KtAnalysisSession.filterCandidate(
     if (receiver != null && candidateSymbol is KtCallableSymbol) {
         // Filter out candidates with wrong receiver
         val receiverType = receiver.getKtType() ?: error("Receiver should have a KtType")
-        val candidateReceiverType = candidateSymbol.receiverType?.type
+        val candidateReceiverType = candidateSymbol.receiverType
         if (candidateReceiverType != null && receiverType.isNotSubTypeOf(candidateReceiverType)) return false
     }
 

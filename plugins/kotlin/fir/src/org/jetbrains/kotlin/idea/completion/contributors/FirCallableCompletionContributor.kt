@@ -234,7 +234,7 @@ internal open class FirCallableCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
     ): Sequence<Pair<KtCallableSymbol, KtExtensionApplicabilityResult>> =
         scope.getCallableSymbols(scopeNameFilter)
-            .filter { it.isExtension || it is KtVariableLikeSymbol && (it.annotatedType.type as? KtFunctionalType)?.hasReceiver == true }
+            .filter { it.isExtension || it is KtVariableLikeSymbol && (it.returnType as? KtFunctionalType)?.hasReceiver == true }
             .filter { with(visibilityChecker) { isVisible(it) } }
             .filter { filter(it) }
             .mapNotNull { callable ->
@@ -332,7 +332,7 @@ private class TypeNamesProvider(private val indexHelper: HLIndexHelper) {
 
         val superTypes = (type.classSymbol as? KtClassOrObjectSymbol)?.superTypes
         superTypes?.forEach { superType ->
-            result += findAllNames(superType.type)
+            result += findAllNames(superType)
         }
 
         return result

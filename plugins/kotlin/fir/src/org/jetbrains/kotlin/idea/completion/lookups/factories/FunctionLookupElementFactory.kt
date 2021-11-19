@@ -41,7 +41,7 @@ internal class FunctionLookupElementFactory {
         )
 
         val builder = LookupElementBuilder.create(lookupObject, symbol.name.asString())
-            .withTypeText(substitutor.substituteOrSelf(symbol.annotatedType.type).render(TYPE_RENDERING_OPTIONS))
+            .withTypeText(substitutor.substituteOrSelf(symbol.returnType).render(TYPE_RENDERING_OPTIONS))
             .withTailText(getTailText(symbol, substitutor))
             .let { withSymbolInfo(symbol, it) }
 

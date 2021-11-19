@@ -146,7 +146,7 @@ private fun KtAnalysisSession.generateFunction(
     bodyType: BodyType,
     isOverride: Boolean,
 ): KtCallableDeclaration {
-    val returnType = symbol.annotatedType.type
+    val returnType = symbol.returnType
     val returnsUnit = returnType.isUnit
 
     val body = if (bodyType != BodyType.NO_BODY) {
@@ -168,7 +168,7 @@ private fun KtAnalysisSession.generateProperty(
     bodyType: BodyType,
     isOverride: Boolean,
 ): KtCallableDeclaration {
-    val returnType = symbol.annotatedType.type
+    val returnType = symbol.returnType
     val returnsNotUnit = !returnType.isUnit
 
     val body =
@@ -203,7 +203,7 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
                 project,
                 templateKind,
                 symbol.name.asString(),
-                symbol.annotatedType.type.render(),
+                symbol.returnType.render(),
                 null
             )
         }

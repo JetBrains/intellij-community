@@ -60,7 +60,7 @@ internal object CallableWeigher {
         val actualExplicitReceiverType = context.explicitReceiver?.getKtType()
         val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
 
-        val expectedExtensionReceiverType = symbol.receiverType?.type?.let { substitutor.substituteOrSelf(it) }
+        val expectedExtensionReceiverType = symbol.receiverType?.let { substitutor.substituteOrSelf(it) }
         val weightBasedOnExtensionReceiver = expectedExtensionReceiverType?.let { receiverType ->
             // If a symbol expects an extension receiver, then either
             //   * the call site explicitly specifies the extension receiver , or
@@ -136,7 +136,7 @@ internal object CallableWeigher {
 
     private fun KtAnalysisSession.isExtensionCallOnTypeParameterReceiver(symbol: KtCallableSymbol): Boolean {
         val originalSymbol = symbol.originalOverriddenSymbol
-        val receiverParameterType = originalSymbol?.receiverType?.type as? KtTypeParameterType ?: return false
+        val receiverParameterType = originalSymbol?.receiverType as? KtTypeParameterType ?: return false
         val parameterTypeOwner = receiverParameterType.symbol.getContainingSymbol() ?: return false
         return parameterTypeOwner == originalSymbol
     }
