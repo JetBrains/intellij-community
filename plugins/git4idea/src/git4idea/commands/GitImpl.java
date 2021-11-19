@@ -29,7 +29,6 @@ import git4idea.GitContentRevision;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableManager;
-import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.push.GitPushParams;
 import git4idea.rebase.GitHandlerRebaseEditorManager;
@@ -183,14 +182,12 @@ public class GitImpl extends GitImplBase {
   public GitCommandResult clone(@NotNull final Project project, @NotNull final File parentDirectory, @NotNull final String url,
                                 @NotNull final String clonedDirectoryName, final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
-      GitLineHandler handler = new GitLineHandler(null, parentDirectory, GitCommand.CLONE);
+      GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
       handler.setSilent(false);
       handler.setStderrSuppressed(false);
       handler.setUrl(url);
       handler.addParameters("--progress");
-      GitExecutableManager executableManager = GitExecutableManager.getInstance();
-      GitVersion version = executableManager.getVersion(executableManager.getExecutable((Project)null));
-      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(version) && AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
+      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project) && AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
         handler.addParameters("--recurse-submodules");
       }
       handler.addParameters(url);
