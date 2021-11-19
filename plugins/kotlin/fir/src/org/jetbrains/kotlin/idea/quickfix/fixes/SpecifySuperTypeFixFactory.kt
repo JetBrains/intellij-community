@@ -11,6 +11,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtClassType
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
@@ -20,6 +23,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.shortenReferences
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.renderer.render
 
 object SpecifySuperTypeFixFactory {
 
@@ -67,8 +71,6 @@ object SpecifySuperTypeFixFactory {
         }
     }
 
-    private val longNameWithoutTypeArgs = KtTypeRendererOptions.DEFAULT.copy(renderTypeArguments = false)
-    private val shortNameWithoutTypeArgs = KtTypeRendererOptions.SHORT_NAMES.copy(renderTypeArguments = false)
     val ambiguousSuper = diagnosticFixFactory(KtFirDiagnostic.AmbiguousSuper::class, applicator) { diagnostic ->
         val candidates = diagnostic.candidates.toMutableSmartList()
         // TODO: the following logic would become unnecessary if feature https://youtrack.jetbrains.com/issue/KT-49314 is accepted because
@@ -79,8 +81,14 @@ object SpecifySuperTypeFixFactory {
             }
         }
         if (candidates.isEmpty()) return@diagnosticFixFactory listOf()
-        listOf(diagnostic.psi withInput Input(candidates.map {
-            TypeStringWithoutArgs(it.render(longNameWithoutTypeArgs), it.render(shortNameWithoutTypeArgs))
-        }))
+        val superTypes = candidates.mapNotNull { superType ->
+            when (superType) {
+                is KtClassErrorType ->  null
+                is KtNonErrorClassType ->
+                    TypeStringWithoutArgs(superType.classId.asSingleFqName().render(), superType.classId.shortClassName.render())
+                else -> error("Expected KtClassType but ${superType::class} was found")
+            }
+        }
+        listOf(diagnostic.psi withInput Input(superTypes))
     }
 }

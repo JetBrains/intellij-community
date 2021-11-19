@@ -47,7 +47,7 @@ internal class VariableLookupElementFactory {
         substitutor: KtSubstitutor,
         insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
     ): LookupElementBuilder {
-        val symbolType = substitutor.substituteOrSelf(symbol.annotatedType.type)
+        val symbolType = substitutor.substituteOrSelf(symbol.returnType)
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
                 val functionalType = symbolType as KtFunctionalType

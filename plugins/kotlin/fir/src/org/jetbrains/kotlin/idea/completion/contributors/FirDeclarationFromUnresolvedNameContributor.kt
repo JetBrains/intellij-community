@@ -89,7 +89,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
                 else -> {
                     // If there is no explicit receiver at call-site, we check if any implicit receiver at call-site matches the extension
                     // receiver type for the current declared symbol
-                    val extensionReceiverType = symbol.receiverType?.type ?: return true
+                    val extensionReceiverType = symbol.receiverType ?: return true
                     getImplicitReceiverTypesAtPosition(unresolvedRef).any { it isSubTypeOf extensionReceiverType }
                 }
             }
@@ -109,9 +109,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     }
 
     private fun KtAnalysisSession.getReceiverType(symbol: KtCallableSymbol): KtType? {
-        return symbol.receiverType?.type ?: (symbol as? KtPossibleMemberSymbol)?.getDispatchReceiverType()
+        return symbol.receiverType ?: (symbol as? KtPossibleMemberSymbol)?.getDispatchReceiverType()
     }
-
 
     private fun PsiElement.getCurrentDeclarationAtCaret(): KtNamedDeclaration? {
         return when (val parent = parent) {
