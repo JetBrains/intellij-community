@@ -14,22 +14,24 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
-internal class PsiElementDocumentationTarget private constructor(
+@VisibleForTesting
+class PsiElementDocumentationTarget private constructor(
   val targetElement: PsiElement,
   private val sourceElement: PsiElement?,
   private val pointer: PsiElementDocumentationTargetPointer,
 ) : DocumentationTarget {
 
-  constructor(
+  internal constructor(
     project: Project,
     targetElement: PsiElement,
   ) : this(
     project, targetElement, sourceElement = null, anchor = null
   )
 
-  constructor(
+  internal constructor(
     project: Project,
     targetElement: PsiElement,
     sourceElement: PsiElement?,

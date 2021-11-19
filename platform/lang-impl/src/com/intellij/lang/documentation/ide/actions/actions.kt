@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ui.accessibility.ScreenReader
+import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.JComponent
 
 @JvmField
@@ -51,7 +52,8 @@ internal fun registerBackForwardActions(component: JComponent) {
   ), component)
 }
 
-internal fun documentationTargets(dc: DataContext): List<DocumentationTarget> {
+@VisibleForTesting
+fun documentationTargets(dc: DataContext): List<DocumentationTarget> {
   val contextTargets = dc.getData(DOCUMENTATION_TARGETS)
   if (contextTargets != null) {
     return contextTargets
