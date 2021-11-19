@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Since DFA in Groovy is immutable, it relies heavily on referential equality. Please note this to make more performant algorithm.
+ * Since DFA in Groovy is immutable, it relies heavily on referential equality. Please note this to make a more performant implementation.
  */
 public interface Semilattice<E> {
 

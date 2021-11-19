@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class ReachingDefinitionsSemilattice implements Semilattice<DefinitionMap> {
 
-  private final DefinitionMap NEUTRAL = new DefinitionMap();
+  private static final DefinitionMap NEUTRAL = new DefinitionMap();
 
   @Override
   @NotNull

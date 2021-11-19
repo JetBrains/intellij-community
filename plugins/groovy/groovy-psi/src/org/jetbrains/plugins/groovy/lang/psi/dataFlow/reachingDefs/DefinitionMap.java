@@ -50,6 +50,21 @@ public final class DefinitionMap {
     }
   }
 
+  public void mergeDefs(DefinitionMap other) {
+    for (Int2ObjectMap.Entry<IntSet> entry : other.myMap.int2ObjectEntrySet()) {
+      int varIndex = entry.getIntKey();
+      IntSet otherDefs = entry.getValue();
+      IntSet myDefs = myMap.get(varIndex);
+      if (myDefs == null) {
+        myDefs = new IntArraySet(otherDefs);
+        myMap.put(varIndex, myDefs);
+      }
+      else {
+        myDefs.addAll(otherDefs);
+      }
+    }
+  }
+
   public int @Nullable [] getDefinitions(int varIndex) {
     IntSet defs = myMap.get(varIndex);
     return defs == null ? null : defs.toIntArray();
@@ -77,6 +92,9 @@ public final class DefinitionMap {
 
   public @NotNull DefinitionMap getHeadDefinitionMap() {
     var head = myPreviousClosureContext.getHead();
+    if (head == null) {
+      int x = 1;
+    }
     assert head != null;
     return head;
   }
