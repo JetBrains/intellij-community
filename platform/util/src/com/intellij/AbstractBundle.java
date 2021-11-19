@@ -196,7 +196,8 @@ public class AbstractBundle {
       }
 
       if (loader instanceof UrlClassLoader) {
-        byte[] data = ((UrlClassLoader)loader).getResourceAsBytes(resourceName, false);
+        // checkParents - https://youtrack.jetbrains.com/issue/IDEA-282831
+        byte[] data = ((UrlClassLoader)loader).getResourceAsBytes(resourceName, true);
         if (data == null) {
           return null;
         }
