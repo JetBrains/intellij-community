@@ -123,7 +123,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     TreeNode targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find((node) -> {
       if (node instanceof DefaultMutableTreeNode) {
         var currentTab = ((DefaultMutableTreeNode)node).getUserObject();
-        if (currentTab instanceof WelcomeScreenTab && currentTab == tab) {
+        if (currentTab == tab) {
           return true;
         }
       }
