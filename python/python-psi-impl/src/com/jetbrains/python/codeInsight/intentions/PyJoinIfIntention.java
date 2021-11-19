@@ -10,8 +10,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,15 +81,24 @@ public class PyJoinIfIntention extends PyBaseIntentionAction {
     if (outerCondition == null || innerCondition == null) return;
 
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    StringBuilder replacementText = new StringBuilder(outerCondition.getText() + " and ");
-    if (innerCondition instanceof PyBinaryExpression && ((PyBinaryExpression)innerCondition).getOperator() == PyTokenTypes.OR_KEYWORD) {
+    LanguageLevel pyVersion = LanguageLevel.forElement(file);
+    PyBinaryExpression fakeAndExpression = (PyBinaryExpression)elementGenerator.createExpressionFromText(pyVersion, "foo and bar");
+    StringBuilder replacementText = new StringBuilder();
+    if (PyReplaceExpressionUtil.isNeedParenthesis(fakeAndExpression.getLeftExpression(), outerCondition)) {
+      replacementText.append("(").append(outerCondition.getText()).append(")");
+    }
+    else {
+      replacementText.append(outerCondition.getText());
+    }
+    replacementText.append(" and ");
+    if (PyReplaceExpressionUtil.isNeedParenthesis(fakeAndExpression.getLeftExpression(), innerCondition)) {
       replacementText.append("(").append(innerCondition.getText()).append(")");
     }
     else {
       replacementText.append(innerCondition.getText());
     }
 
-    PyExpression newCondition = elementGenerator.createExpressionFromText(LanguageLevel.forElement(file), replacementText.toString());
+    PyExpression newCondition = elementGenerator.createExpressionFromText(pyVersion, replacementText.toString());
     outerCondition.replace(newCondition);
 
     PyStatementList innerStatementList = innerIfStatement.getIfPart().getStatementList();
