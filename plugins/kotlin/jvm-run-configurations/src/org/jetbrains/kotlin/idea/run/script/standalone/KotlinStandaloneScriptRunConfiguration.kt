@@ -26,7 +26,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
@@ -96,11 +96,11 @@ class KotlinStandaloneScriptRunConfiguration(
         JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this)
 
         if (filePath.isNullOrEmpty()) {
-            runtimeConfigurationWarning(KotlinJvmBundle.message("file.was.not.specified"))
+            runtimeConfigurationWarning(KotlinRunConfigurationsBundle.message("file.was.not.specified"))
         }
         val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
         if (virtualFile == null || virtualFile.isDirectory) {
-            runtimeConfigurationWarning(KotlinJvmBundle.message("could.not.find.script.file.0", filePath.toString()))
+            runtimeConfigurationWarning(KotlinRunConfigurationsBundle.message("could.not.find.script.file.0", filePath.toString()))
         }
     }
 
@@ -153,9 +153,11 @@ private class ScriptCommandLineState(
     override fun createJavaParameters(): JavaParameters {
         val params = commonParameters()
 
-        val filePath = configuration.filePath ?: throw CantRunException(KotlinJvmBundle.message("dialog.message.script.file.was.not.specified"))
-        val scriptVFile =
-            LocalFileSystem.getInstance().findFileByIoFile(File(filePath)) ?: throw CantRunException(KotlinJvmBundle.message("dialog.message.script.file.was.not.found.in.project"))
+        val filePath = configuration.filePath
+            ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.specified"))
+
+        val scriptVFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
+                ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
         params.classPath.add(KotlinArtifacts.instance.kotlinCompiler)
 

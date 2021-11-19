@@ -1011,6 +1011,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/util/kotlin.jvm-debugger.util.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/util/kotlin.jvm-debugger.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/kotlin.jvm-decompiler.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/kotlin.jvm-decompiler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-run-configurations/kotlin.jvm-run-configurations.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-run-configurations/kotlin.jvm-run-configurations.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/line-indent-provider/kotlin.line-indent-provider.iml" filepath="$PROJECT_DIR$/plugins/kotlin/line-indent-provider/kotlin.line-indent-provider.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/maven/kotlin.maven.iml" filepath="$PROJECT_DIR$/plugins/kotlin/maven/kotlin.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/maven/tests/kotlin.maven.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/maven/tests/kotlin.maven.tests.iml" />
