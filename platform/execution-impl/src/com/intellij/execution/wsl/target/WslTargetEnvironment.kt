@@ -108,6 +108,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     }
     generalCommandLine.environment.putAll(commandLine.environmentVariables)
     request.wslOptions.remoteWorkingDirectory = commandLine.workingDirectory
+    generalCommandLine.withRedirectErrorStream(commandLine.isRedirectErrorStream)
     distribution.patchCommandLine(generalCommandLine, null, request.wslOptions)
     return generalCommandLine.createProcess()
   }
