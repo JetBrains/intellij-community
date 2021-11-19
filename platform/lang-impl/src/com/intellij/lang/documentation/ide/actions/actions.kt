@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.wm.impl.content.BaseLabel
@@ -54,6 +55,15 @@ internal fun registerBackForwardActions(component: JComponent) {
 
 @VisibleForTesting
 fun documentationTargets(dc: DataContext): List<DocumentationTarget> {
+  try {
+    return documentationTargetsInner(dc)
+  }
+  catch (ignored: IndexNotReadyException) {
+    return emptyList()
+  }
+}
+
+private fun documentationTargetsInner(dc: DataContext): List<DocumentationTarget> {
   val contextTargets = dc.getData(DOCUMENTATION_TARGETS)
   if (contextTargets != null) {
     return contextTargets
