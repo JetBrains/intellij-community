@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ui.accessibility.ScreenReader
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.JComponent
 
@@ -72,7 +73,7 @@ private fun documentationTargetsInner(dc: DataContext): List<DocumentationTarget
                 ?: return emptyList()
   val editor = dc.getData(CommonDataKeys.EDITOR)
   if (editor != null) {
-    val editorTargets = targetsFromEditor(project, editor)
+    val editorTargets = targetsFromEditor(project, editor, editor.caretModel.offset)
     if (editorTargets != null) {
       return editorTargets
     }
@@ -91,7 +92,8 @@ private fun documentationTargetsInner(dc: DataContext): List<DocumentationTarget
   return emptyList()
 }
 
-private fun targetsFromEditor(project: Project, editor: Editor): List<DocumentationTarget>? {
+@ApiStatus.Internal
+fun targetsFromEditor(project: Project, editor: Editor, offset: Int): List<DocumentationTarget>? {
   val file = PsiUtilBase.getPsiFileInEditor(editor, project)
              ?: return null
   val ideTargetProvider = IdeDocumentationTargetProvider.getInstance(project)
@@ -103,7 +105,7 @@ private fun targetsFromEditor(project: Project, editor: Editor): List<Documentat
                  ?: return null
     return listOf(target)
   }
-  return ideTargetProvider.documentationTargets(editor, file, editor.caretModel.offset).takeIf {
+  return ideTargetProvider.documentationTargets(editor, file, offset).takeIf {
     it.isNotEmpty()
   }
 }
