@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getChildrenToAnalyze
@@ -90,7 +89,7 @@ private fun collectConflicts(
             checkClashWithSuperDeclaration(member, memberDescriptor, conflicts)
             checkAccidentalOverrides(member, memberDescriptor, conflicts)
             checkInnerClassToInterface(member, memberDescriptor, conflicts)
-            checkVisibility(memberInfo, memberDescriptor, conflicts)
+            checkVisibility(memberInfo, memberDescriptor, conflicts, resolutionFacade.getLanguageVersionSettings())
         }
     }
     checkVisibilityInAbstractedMembers(memberInfos, pullUpData.resolutionFacade, conflicts)
@@ -263,7 +262,8 @@ private fun KotlinPullUpData.checkInnerClassToInterface(
 private fun KotlinPullUpData.checkVisibility(
     memberInfo: KotlinMemberInfo,
     memberDescriptor: DeclarationDescriptor,
-    conflicts: MultiMap<PsiElement, String>
+    conflicts: MultiMap<PsiElement, String>,
+    languageVersionSettings: LanguageVersionSettings
 ) {
     fun reportConflictIfAny(targetDescriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) {
         if (targetDescriptor in memberDescriptors.values) return
@@ -281,7 +281,6 @@ private fun KotlinPullUpData.checkVisibility(
     }
 
     val member = memberInfo.member
-    val languageVersionSettings = member.getResolutionFacade().getLanguageVersionSettings()
     val childrenToCheck = memberInfo.getChildrenToAnalyze()
     if (memberInfo.isToAbstract && member is KtCallableDeclaration) {
         if (member.typeReference == null) {
