@@ -52,9 +52,11 @@ class DependencyAnalyzerViewImpl(
   private val dependencyScopeFilterProperty = propertyGraph.graphProperty { emptyList<ScopeItem>() }
   private val showDependencyWarningsProperty = propertyGraph.graphProperty { false }
   private val showDependencyGroupIdProperty = propertyGraph.graphProperty { false }
+    .bindWithBooleanStorage(SHOW_GROUP_ID_PROPERTY)
 
   private val dependencyDataProperty = propertyGraph.graphProperty<Dependency.Data?> { null }
   private val showDependencyTreeProperty = propertyGraph.graphProperty { false }
+    .bindWithBooleanStorage(SHOW_AS_TREE_PROPERTY)
 
   private val usagesTitleProperty = propertyGraph.graphProperty(::getUsagesTitle)
 
@@ -476,5 +478,7 @@ class DependencyAnalyzerViewImpl(
 
   companion object {
     private val SEARCH_HISTORY_PROPERTY = DependencyAnalyzerView::class.java.name + ".search"
+    private val SHOW_GROUP_ID_PROPERTY = DependencyAnalyzerView::class.java.name + ".showGroupId"
+    private val SHOW_AS_TREE_PROPERTY = DependencyAnalyzerView::class.java.name + ".showAsTree"
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.ui.layout
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UINumericRange
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -693,6 +694,22 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
         renderer(this, value, index, selected)
       }
     }
+  }
+}
+
+fun <P : ObservableClearableProperty<Boolean>> P.bindWithBooleanStorage(propertyName: String): P = apply {
+  transform({ it.toString() }, { it.toBoolean() })
+    .bindWithStorage(propertyName)
+}
+
+fun <P : ObservableClearableProperty<String>> P.bindWithStorage(propertyName: String): P = apply {
+  val properties = PropertiesComponent.getInstance()
+  val value = properties.getValue(propertyName)
+  if (value != null) {
+    set(value)
+  }
+  afterChange {
+    properties.setValue(propertyName, it)
   }
 }
 
