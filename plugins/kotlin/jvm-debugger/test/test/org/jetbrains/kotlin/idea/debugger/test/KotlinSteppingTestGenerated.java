@@ -1201,6 +1201,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/ktij15642.kt");
         }
 
+        @TestMetadata("lambdaBreakpoints.kt")
+        public void testLambdaBreakpoints() throws Exception {
+            runTest("testData/stepping/custom/lambdaBreakpoints.kt");
+        }
+
         @TestMetadata("manyFilesWithInlineCalls1.kt")
         public void testManyFilesWithInlineCalls1() throws Exception {
             runTest("testData/stepping/custom/manyFilesWithInlineCalls1.kt");
