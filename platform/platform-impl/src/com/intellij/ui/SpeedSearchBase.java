@@ -548,6 +548,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           return;
         }
         UIEventLogger.IncrementalSearchKeyTyped.log(myComponent.getClass());
+        if (mySearchPopup != null) {
+          mySearchPopup.setSize(mySearchPopup.getPreferredSize());
+          mySearchPopup.validate();
+        }
+
         if (myProcessKeyEventAlarm == null || myProcessKeyEventAlarm.isDisposed()) return;
 
         myProcessKeyEventAlarm.cancelAllRequests();
@@ -566,10 +571,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
       else {
         mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
-      }
-      if (mySearchPopup != null) {
-        mySearchPopup.setSize(mySearchPopup.getPreferredSize());
-        mySearchPopup.validate();
       }
 
       fireStateChanged();
