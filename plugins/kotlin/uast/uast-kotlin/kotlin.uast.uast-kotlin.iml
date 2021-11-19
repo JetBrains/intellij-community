@@ -17,6 +17,7 @@
     <orderEntry type="library" name="javaslang" level="project" />
     <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="RUNTIME" />
   </component>
 </module>

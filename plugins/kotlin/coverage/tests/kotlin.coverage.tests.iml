@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.coverage" />
   </component>
 </module>
