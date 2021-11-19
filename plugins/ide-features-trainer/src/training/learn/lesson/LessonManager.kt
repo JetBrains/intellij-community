@@ -93,11 +93,6 @@ class LessonManager {
     stopLesson()
     currentLesson = cLesson
     learnPanel.reinitMe(cLesson)
-
-    learnPanel.setLessonName(cLesson.name)
-    val module = cLesson.module
-    val moduleName = module.name
-    learnPanel.setModuleName(moduleName)
     if (cLesson.existedFile == null) {
       clearEditor(editor)
     }
