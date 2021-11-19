@@ -653,6 +653,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
                       null;
       myNodeIcon.setIcon(nodeIcon);
 
+      if (configurable instanceof ConfigurableLabelProvider) {
+        String label = ((ConfigurableLabelProvider)configurable).getLabel();
+        if (label != null) {
+          myTextLabel.append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
+          myTextLabel.append(label, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
+        }
+      }
+
       if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
         ConfigurableWrapper wrapper = configurable instanceof ConfigurableWrapper ?
                                       ((ConfigurableWrapper)configurable) :
