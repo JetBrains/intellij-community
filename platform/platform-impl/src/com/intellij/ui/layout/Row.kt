@@ -136,6 +136,8 @@ abstract class Row : Cell(), RowBuilder {
   /**
    * Specifies the right alignment for the component if the cell is larger than the component plus its gaps.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   inline fun right(init: Row.() -> Unit) {
     alignRight()
     init()
