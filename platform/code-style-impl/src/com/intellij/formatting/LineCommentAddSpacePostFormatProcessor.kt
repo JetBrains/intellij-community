@@ -2,7 +2,6 @@
 package com.intellij.formatting
 
 import com.intellij.lang.Commenter
-import com.intellij.lang.Language
 import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -25,7 +24,7 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
     }
 
     val commenter = LanguageCommenters.INSTANCE.forLanguage(language) ?: return rangeToReformat
-    val languageCodeStyleSettingsProvider = findLanguageCodeStyleProviderUsingBaseLanguage(language) ?: return rangeToReformat
+    val languageCodeStyleSettingsProvider = CodeStyleSettingsService.getLanguageCodeStyleProviderUsingBaseLanguage(language) ?: return rangeToReformat
 
     val commentFinder = SingleLineCommentFinder(rangeToReformat, languageCodeStyleSettingsProvider, commenter)
     source.accept(commentFinder)
@@ -45,22 +44,6 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
     documentManager.commitDocument(document)
 
     return rangeToReformat.grown(commentOffsets.size)
-  }
-
-  companion object {
-    private fun findLanguageCodeStyleProviderUsingBaseLanguage(language: Language): LanguageCodeStyleProvider? {
-      var currLang: Language? = language
-      while (currLang != null) {
-        val curr = codeStyleProviderForLanguage(currLang)
-        if (curr != null) return curr
-        currLang = currLang.baseLanguage
-      }
-      return null
-    }
-
-    private fun codeStyleProviderForLanguage(language: Language): LanguageCodeStyleProvider? {
-      return CodeStyleSettingsService.getInstance().languageCodeStyleProviders.firstOrNull { it.language == language }
-    }
   }
 
 }

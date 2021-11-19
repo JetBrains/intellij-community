@@ -26,7 +26,7 @@ public class KeptLineFeedsCollector {
   }
 
   public static void setup(@NotNull PsiFile psiFile) {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(psiFile.getLanguage());
+    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProviderUsingBaseLanguage(psiFile.getLanguage());
     if (provider != null && provider.usesCommonKeepLineBreaks() && CodeStyle.getLanguageSettings(psiFile).KEEP_LINE_BREAKS) {
       THREAD_LOCAL.set(new KeptLineFeedsCollector(psiFile));
     }
