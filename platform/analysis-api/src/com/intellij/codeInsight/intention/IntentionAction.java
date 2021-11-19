@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -102,7 +103,10 @@ public interface IntentionAction extends FileModifier {
    * @param editor editor. Could be a simplified headless Editor implementation that lacks some features.
    * @param file non-physical file to apply
    * @return true if the action was applied successfully to the non-physical file.
+   * @deprecated do not call or override this method: this API will be changed.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated
   default boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
     if (!startInWriteAction()) return false;
     var copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
