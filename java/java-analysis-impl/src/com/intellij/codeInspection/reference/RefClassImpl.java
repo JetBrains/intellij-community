@@ -109,7 +109,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
     for (UField uField : uFields) {
       final RefElement field = getRefManager().getReference(uField.getSourcePsi());
-      if (field != null) addChild(field);
+      if (field instanceof RefField) addChild(field);
     }
     RefMethod varargConstructor = null;
     for (UMethod uMethod : uMethods) {
