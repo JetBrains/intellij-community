@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class PluginsDynamicCollector extends CounterUsagesCollector {
-  public static final EventLogGroup GROUP = new EventLogGroup("plugins.dynamic", 1);
+  public static final EventLogGroup GROUP = new EventLogGroup("plugins.dynamic", 2);
   public static final EventId1<PluginInfo> LOAD_EVENT = GROUP.registerEvent("load", EventFields.PluginInfo);
   public static final EventId1<PluginInfo> UNLOAD_SUCCESS_EVENT = GROUP.registerEvent("unload.success", EventFields.PluginInfo);
   public static final EventId1<PluginInfo> UNLOAD_FAIL_EVENT = GROUP.registerEvent("unload.fail", EventFields.PluginInfo);
