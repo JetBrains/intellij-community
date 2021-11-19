@@ -13789,6 +13789,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/dontChangeFunctionReturnTypeToErrorType.kt");
                 }
 
+                @TestMetadata("inIf.kt")
+                public void testInIf() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/inIf.kt");
+                }
+
+                @TestMetadata("inWhen.kt")
+                public void testInWhen() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/inWhen.kt");
+                }
+
                 @TestMetadata("literalPropertyWithGetter.kt")
                 public void testLiteralPropertyWithGetter() throws Exception {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter.kt");
