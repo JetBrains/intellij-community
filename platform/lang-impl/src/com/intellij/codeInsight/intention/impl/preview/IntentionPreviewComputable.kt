@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import java.io.IOException
 import java.util.concurrent.Callable
@@ -112,6 +113,7 @@ internal class IntentionPreviewComputable(private val project: Project,
           action.invoke(project, editorCopy, psiFileCopy)
         }
       }
+      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(psiFileCopy.viewProvider)
       ProgressManager.checkCanceled()
     }
     finally {
