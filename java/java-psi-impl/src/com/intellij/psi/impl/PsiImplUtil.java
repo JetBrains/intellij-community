@@ -402,6 +402,15 @@ public final class PsiImplUtil {
           return containingClass.getUseScope();
         }
       }
+      final PsiClass containingClass = member.getContainingClass();
+      if (containingClass != null) {
+        final PsiModifierList classModifierList = containingClass.getModifierList();
+        if (classModifierList != null && classModifierList.hasModifierProperty(PsiModifier.FINAL)) {
+          if (PsiUtil.getAccessLevel(classModifierList) < accessLevel) {
+            return containingClass.getUseScope();
+          }
+        }
+      }
       return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
     }
     if (accessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
