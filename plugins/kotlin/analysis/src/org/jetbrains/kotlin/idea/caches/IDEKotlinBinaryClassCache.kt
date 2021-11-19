@@ -13,10 +13,6 @@ import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.name.ClassId
-import com.intellij.model.ModelBranch
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.Computable
-import org.jetbrains.kotlin.load.kotlin.VirtualFileKotlinClass
 
 class IDEKotlinBinaryClassCache {
     class KotlinBinaryClassHeaderData(
@@ -56,16 +52,7 @@ class IDEKotlinBinaryClassCache {
         file: VirtualFile,
         fileContent: ByteArray?
     ): KotlinJvmBinaryClass? {
-        val binaryClassResult = if (ModelBranch.getFileBranch(file) != null) {
-            ApplicationManager.getApplication().runReadAction(Computable {
-                @Suppress("DEPRECATION")
-                VirtualFileKotlinClass.create(file, fileContent)
-            })
-        } else {
-            KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, fileContent)
-        }
-
-        val kotlinBinaryClass = binaryClassResult?.toKotlinJvmBinaryClass()
+        val kotlinBinaryClass = KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, fileContent)?.toKotlinJvmBinaryClass()
 
         val isKotlinBinaryClass = kotlinBinaryClass != null
         if (file is VirtualFileWithId) {
