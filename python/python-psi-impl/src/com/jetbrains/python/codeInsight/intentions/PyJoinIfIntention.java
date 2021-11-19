@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * User: catherine
@@ -46,22 +49,19 @@ public class PyJoinIfIntention extends PyBaseIntentionAction {
       return false;
     }
 
-    PyIfStatement expression =
-      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
+    PyIfStatement expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
 
     PyIfStatement outer = getIfStatement(expression);
     if (outer != null) {
       if (outer.getElsePart() != null || outer.getElifParts().length > 0) return false;
       PyStatement firstStatement = getFirstStatement(outer);
       PyStatementList outerStList = outer.getIfPart().getStatementList();
-      if (outerStList != null && outerStList.getStatements().length != 1) return false;
+      if (outerStList.getStatements().length != 1) return false;
       if (firstStatement instanceof PyIfStatement) {
         final PyIfStatement inner = (PyIfStatement)firstStatement;
         if (inner.getElsePart() != null || inner.getElifParts().length > 0) return false;
         PyStatementList stList = inner.getIfPart().getStatementList();
-        if (stList != null)
-          if (stList.getStatements().length != 0)
-            return true;
+        if (stList.getStatements().length != 0) return true;
       }
     }
     return false;
@@ -69,70 +69,54 @@ public class PyJoinIfIntention extends PyBaseIntentionAction {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyIfStatement expression =
-          PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
-    PyIfStatement ifStatement = getIfStatement(expression);
+    PyIfStatement expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
+    PyIfStatement outerIfStatement = getIfStatement(expression);
+    if (outerIfStatement == null) return;
 
-    PyStatement firstStatement = getFirstStatement(ifStatement);
-    if (ifStatement == null) return;
-    if (firstStatement instanceof PyIfStatement) {
-      PyExpression condition = ((PyIfStatement)firstStatement).getIfPart().getCondition();
-      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyExpression ifCondition = ifStatement.getIfPart().getCondition();
-      if (ifCondition == null || condition == null) return;
-      StringBuilder replacementText = new StringBuilder(ifCondition.getText() + " and ");
-      if (condition instanceof PyBinaryExpression && ((PyBinaryExpression)condition).getOperator() == PyTokenTypes.OR_KEYWORD) {
-        replacementText.append("(").append(condition.getText()).append(")");
-      } else
-        replacementText.append(condition.getText());
+    PyIfStatement innerIfStatement = as(getFirstStatement(outerIfStatement), PyIfStatement.class);
+    if (innerIfStatement == null) return;
 
-      PyExpression newCondition = elementGenerator.createExpressionFromText(LanguageLevel.forElement(file), replacementText.toString());
-      ifCondition.replace(newCondition);
+    PyExpression innerCondition = innerIfStatement.getIfPart().getCondition();
+    PyExpression outerCondition = outerIfStatement.getIfPart().getCondition();
+    if (outerCondition == null || innerCondition == null) return;
 
-      PyStatementList stList = ((PyIfStatement)firstStatement).getIfPart().getStatementList();
-      PyStatementList ifStatementList = ifStatement.getIfPart().getStatementList();
-      if (ifStatementList == null || stList == null) return;
-      List<PsiComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(ifStatement.getIfPart(), PsiComment.class);
-      comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(((PyIfStatement)firstStatement).getIfPart(), PsiComment.class));
-      comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(ifStatementList, PsiComment.class));
-      comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(stList, PsiComment.class));
-
-      for (PsiElement comm : comments) {
-        ifStatement.getIfPart().addBefore(comm, ifStatementList);
-        comm.delete();
-      }
-      ifStatementList.replace(stList);
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    StringBuilder replacementText = new StringBuilder(outerCondition.getText() + " and ");
+    if (innerCondition instanceof PyBinaryExpression && ((PyBinaryExpression)innerCondition).getOperator() == PyTokenTypes.OR_KEYWORD) {
+      replacementText.append("(").append(innerCondition.getText()).append(")");
     }
+    else {
+      replacementText.append(innerCondition.getText());
+    }
+
+    PyExpression newCondition = elementGenerator.createExpressionFromText(LanguageLevel.forElement(file), replacementText.toString());
+    outerCondition.replace(newCondition);
+
+    PyStatementList innerStatementList = innerIfStatement.getIfPart().getStatementList();
+    PyStatementList outerStatementList = outerIfStatement.getIfPart().getStatementList();
+    List<PsiComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(outerIfStatement.getIfPart(), PsiComment.class);
+    comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(innerIfStatement.getIfPart(), PsiComment.class));
+    comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(outerStatementList, PsiComment.class));
+    comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(innerStatementList, PsiComment.class));
+
+    for (PsiElement comm : comments) {
+      outerIfStatement.getIfPart().addBefore(comm, outerStatementList);
+      comm.delete();
+    }
+    outerStatementList.replace(innerStatementList);
   }
 
   @Nullable
-  private static PyStatement getFirstStatement(PyIfStatement ifStatement) {
-    PyStatement firstStatement = null;
-    if (ifStatement != null) {
-      PyStatementList stList = ifStatement.getIfPart().getStatementList();
-      if (stList != null) {
-        if (stList.getStatements().length != 0) {
-          firstStatement = stList.getStatements()[0];
-        }
-      }
-    }
-    return firstStatement;
+  private static PyStatement getFirstStatement(@NotNull PyIfStatement ifStatement) {
+    PyStatementList stList = ifStatement.getIfPart().getStatementList();
+    return ArrayUtil.getFirstElement(stList.getStatements());
   }
 
   @Nullable
-  private static PyIfStatement getIfStatement(PyIfStatement expression) {
-    while (expression != null) {
-      PyStatementList stList = expression.getIfPart().getStatementList();
-      if (stList != null) {
-        if (stList.getStatements().length != 0) {
-          PyStatement firstStatement = stList.getStatements()[0];
-          if (firstStatement instanceof PyIfStatement) {
-            break;
-          }
-        }
-      }
-      expression = PsiTreeUtil.getParentOfType(expression, PyIfStatement.class);
+  private static PyIfStatement getIfStatement(@Nullable PyIfStatement ifStatement) {
+    while (ifStatement != null && !(getFirstStatement(ifStatement) instanceof PyIfStatement)) {
+      ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PyIfStatement.class);
     }
-    return expression;
+    return ifStatement;
   }
 }
