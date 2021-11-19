@@ -4,8 +4,6 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="inheritedJdk" />
-    <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
