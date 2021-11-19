@@ -27,6 +27,12 @@ public final class Cancellation {
     return job != null && job.isCancelled();
   }
 
+  public static void checkCancelled() {
+    if (isCancelled()) {
+      throw new JobCanceledException();
+    }
+  }
+
   /**
    * Makes {@link #isCancelled()} delegate to the passed {@code job} until the returned token is not closed.
    */
