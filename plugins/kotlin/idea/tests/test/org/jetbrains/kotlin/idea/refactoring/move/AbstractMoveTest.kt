@@ -223,7 +223,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                     AutocreatingSingleSourceRootMoveDestination(packageWrapper, rootDir.findFileByRelativePath(it)!!)
                 } ?: MultipleRootsMoveDestination(packageWrapper)
                 val targetDir = moveDestination.getTargetIfExists(mainFile)
-                KotlinMoveTargetForDeferredFile(FqName(packageName), targetDir) {
+                KotlinMoveTargetForDeferredFile(FqName(packageName), targetDir.virtualFile) {
                     createKotlinFile(guessNewFileName(elementsToMove)!!, moveDestination.getTargetDirectory(mainFile))
                 }
             } ?: config.getString("targetFile").let { filePath ->
