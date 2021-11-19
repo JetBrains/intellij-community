@@ -85,18 +85,10 @@ internal fun <T> cardPanel(property: ObservableClearableProperty<T>, createPanel
     override fun create(ui: T) = createPanel(ui)
 
     init {
-      selectAndRequestFocus(property.get())
-      property.afterChange { selectAndRequestFocus(it) }
+      select(property.get(), true)
+      property.afterChange { select(it, true) }
     }
   }
-
-private fun <T> CardLayoutPanel<T, T, JComponent>.selectAndRequestFocus(key: T) {
-  select(key, true)
-    .doWhenDone {
-      getValue(key, true)
-        .requestFocus()
-    }
-}
 
 internal fun JComponent.actionToolbarPanel(vararg actions: AnAction): JComponent {
   val actionManager = ActionManager.getInstance()

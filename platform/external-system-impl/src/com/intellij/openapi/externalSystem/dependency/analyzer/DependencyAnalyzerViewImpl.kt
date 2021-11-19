@@ -267,13 +267,12 @@ class DependencyAnalyzerViewImpl(
               collapseDependencyTreeAction
             ))
           }
-          setContent(ScrollPaneFactory.createScrollPane(
-            cardPanel(showDependencyTreeProperty) { showDependencyTree ->
-              when (showDependencyTree) {
-                true -> dependencyTree
-                else -> dependencyList
-              }
-            }, true))
+          setContent(cardPanel(showDependencyTreeProperty) { showDependencyTree ->
+            when (showDependencyTree) {
+              true -> ScrollPaneFactory.createScrollPane(dependencyTree, true)
+              else -> ScrollPaneFactory.createScrollPane(dependencyList, true)
+            }
+          })
         },
         toolWindowPanel {
           toolbar = toolbarPanel {
