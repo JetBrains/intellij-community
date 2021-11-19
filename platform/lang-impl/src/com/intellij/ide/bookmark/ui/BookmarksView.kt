@@ -194,6 +194,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
         .setBeanProvider(handler::createBean)
         .setDropHandlerWithResult(handler)
         .setTargetChecker(handler)
+        .enableAsNativeTarget()
         .install()
     }
 

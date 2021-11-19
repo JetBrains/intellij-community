@@ -17,8 +17,11 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.Invoker
+import java.io.File
 
 @State(name = "BookmarksManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentStateComponentWithModificationTracker<ManagerState> {
@@ -371,6 +374,31 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     if (!above) index++
     allGroups.addAll(index, set)
     set.forEach { notifier.groupAdded(it) }
+    return true
+  }
+
+  fun canDragAddInto(group: BookmarkGroup, files: List<File>): Boolean = synchronized(notifier) {
+    if (!contains(group)) return false
+    val set = files.mapTo(mutableSetOf()) { it.systemIndependentPath }
+    return !group.getBookmarks().any { it is FileBookmarkImpl && set.contains(it.file.path) }
+  }
+
+  fun dragAddInto(group: BookmarkGroup, files: List<File>) = synchronized(notifier) {
+    canDragAddInto(group, files) && dragAdd(group as Group, files) { 0 }
+  }
+
+  fun dragAdd(above: Boolean, occurrence: BookmarkOccurrence, files: List<File>) = synchronized(notifier) {
+    canDragAddInto(occurrence.group, files) && dragAdd(occurrence.group as Group, files) {
+      val index = it.indexWithGrouping(occurrence.bookmark)
+      if (index < 0 || above) index else index + 1
+    }
+  }
+
+  private fun dragAdd(group: Group, files: List<File>, indexSupplier: (Group) -> Int): Boolean {
+    val provider = LineBookmarkProvider.find(project) ?: return false
+    val bookmarks = files.mapNotNull { provider.createBookmark(VfsUtil.findFileByIoFile(it, true)) }.ifEmpty { return false }
+    val index = indexSupplier(group).coerceAtLeast(0)
+    bookmarks.forEach { group.add(it, BookmarkType.DEFAULT, null, index) }
     return true
   }
 
