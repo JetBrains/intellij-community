@@ -73,7 +73,7 @@ class GradleScriptNotificationProvider(private val project: Project) :
                                 text(KotlinIdeaGradleBundle.message("notification.gradle.legacy.firstLoad"))
                                 toolTipText = contextHelp
                             } else {
-                                text(KotlinIdeaCoreBundle.message("notification.text.script.configuration.has.been.changed"))
+                                text(KotlinIdeaGradleBundle.message("notification.text.script.configuration.has.been.changed"))
                             }
 
                             createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.load.script.configuration")) {
@@ -137,7 +137,7 @@ class GradleScriptNotificationProvider(private val project: Project) :
                     text(
                         KotlinIdeaGradleBundle.message("notification.standalone.text") +
                                 ". " +
-                                KotlinIdeaCoreBundle.message("notification.text.script.configuration.has.been.changed")
+                                KotlinIdeaGradleBundle.message("notification.text.script.configuration.has.been.changed")
                     )
 
                     createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.load.script.configuration")) {
