@@ -1564,7 +1564,7 @@ public final class Mappings {
               if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
                 break;
               }
-              final Set<AnnotationsChangeTracker.Recompile> actions = extension.methodAnnotationsChanged(myContext, m, d.annotations(), d.parameterAnnotations());
+              final Set<AnnotationsChangeTracker.Recompile> actions = extension.methodAnnotationsChanged(myContext, (ProtoMethodEntity)m, d.annotations(), d.parameterAnnotations());
               if (actions.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
                 debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting method usages");
               }
@@ -1828,7 +1828,7 @@ public final class Mappings {
               if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
                 break;
               }
-              final Set<AnnotationsChangeTracker.Recompile> res = extension.fieldAnnotationsChanged(myContext, field, d.annotations());
+              final Set<AnnotationsChangeTracker.Recompile> res = extension.fieldAnnotationsChanged(myContext, (ProtoFieldEntity)field, d.annotations());
               if (res.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
                 debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting field usages");
               }
