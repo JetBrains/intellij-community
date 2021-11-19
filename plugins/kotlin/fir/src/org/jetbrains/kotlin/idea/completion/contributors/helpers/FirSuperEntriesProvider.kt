@@ -21,7 +21,7 @@ internal object FirSuperEntriesProvider {
         val containingClass = context.getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
         val containingClassSymbol = containingClass.getClassOrObjectSymbol()
         return containingClassSymbol.superTypes.mapNotNull { superType ->
-            val classType = superType.type as? KtNonErrorClassType ?: return@mapNotNull null
+            val classType = superType as? KtNonErrorClassType ?: return@mapNotNull null
             classType.classSymbol as? KtNamedClassOrObjectSymbol
         }
     }

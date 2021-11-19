@@ -40,7 +40,7 @@ class HLSpecifyExplicitTypeForCallableDeclarationIntention :
         fun KtAnalysisSession.getTypeInfo(declaration: KtCallableDeclaration): CallableReturnTypeUpdaterApplicator.TypeInfo {
             val declarationType = declaration.getReturnKtType()
             val overriddenTypes = (declaration.getSymbol() as? KtCallableSymbol)?.getDirectlyOverriddenSymbols()
-                ?.map { it.annotatedType.type }
+                ?.map { it.returnType }
                 ?.distinct()
                 ?: emptyList()
             val cannotBeNull = overriddenTypes.any { !it.canBeNull }

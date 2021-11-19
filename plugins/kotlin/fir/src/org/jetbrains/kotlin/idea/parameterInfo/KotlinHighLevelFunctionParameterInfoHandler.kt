@@ -11,6 +11,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
@@ -256,7 +257,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 append(": ")
             }
 
-            val unsubstitutedType = parameter.annotatedType.type
+            val unsubstitutedType = parameter.returnType
             val substitutedType = substitutor.substituteOrSelf(unsubstitutedType)
             val typeToRender = substitutedType.takeUnless { it is KtClassErrorType } ?: unsubstitutedType
             append(typeToRender.render(KtTypeRendererOptions.SHORT_NAMES))
@@ -306,7 +307,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             if (parameterForArgument == setValueParameter) continue
 
             val argumentType = argument.getKtType() ?: error("Argument should have a KtType")
-            val substitutedParameterType = substitutor.substituteOrSelf(parameterForArgument.annotatedType.type)
+            val substitutedParameterType = substitutor.substituteOrSelf(parameterForArgument.returnType)
             if (argumentType.isNotSubTypeOf(substitutedParameterType)) {
                 return true
             }
