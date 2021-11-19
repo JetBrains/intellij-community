@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.Disposable;
@@ -209,9 +209,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
 
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return myEditor;
-      }
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
       }
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         return myFile.isValid() ? myFile : null;  // fix for SCR 40329
