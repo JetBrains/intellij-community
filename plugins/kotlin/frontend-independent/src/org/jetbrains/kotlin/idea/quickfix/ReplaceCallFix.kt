@@ -2,22 +2,17 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 abstract class ReplaceCallFix(
     expression: KtQualifiedExpression,
@@ -109,27 +104,6 @@ class ReplaceWithDotCallFix(
         repeat(callChainCount) {
             val parent = replaced.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression ?: return
             replaced = replace(parent, project, editor) ?: return
-        }
-    }
-
-    companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
-        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val qualifiedExpression = psiElement.getParentOfType<KtSafeQualifiedExpression>(strict = false)
-                ?: return emptyList()
-
-            var parent = qualifiedExpression.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
-            var callChainCount = 0
-            if (parent != null) {
-                val bindingContext = qualifiedExpression.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
-                while (parent is KtQualifiedExpression) {
-                    val compilerReports = bindingContext.diagnostics.forElement(parent.operationTokenNode as PsiElement)
-                    if (compilerReports.none { it.factory == Errors.UNNECESSARY_SAFE_CALL }) break
-                    callChainCount++
-                    parent = parent.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
-                }
-            }
-
-            return listOf(ReplaceWithDotCallFix(qualifiedExpression, callChainCount))
         }
     }
 }

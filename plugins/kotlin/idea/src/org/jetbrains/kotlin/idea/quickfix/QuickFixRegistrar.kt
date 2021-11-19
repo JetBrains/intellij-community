@@ -236,7 +236,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         SENSELESS_COMPARISON.registerFactory(SimplifyComparisonFix)
 
-        UNNECESSARY_SAFE_CALL.registerFactory(ReplaceWithDotCallFix)
+        UNNECESSARY_SAFE_CALL.registerFactory(Fe10ReplaceWithDotCallFixFactory)
         UNSAFE_CALL.registerFactory(ReplaceWithSafeCallFixFactory)
 
         UNSAFE_CALL.registerFactory(SurroundWithNullCheckFix)
