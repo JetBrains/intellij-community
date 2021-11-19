@@ -11,18 +11,15 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.util.application
-import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Graphics
-import java.util.*
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -81,7 +78,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
 
   override fun getKey() = NEW_TOOLBAR_KEY
 
-  private fun reinitAndPaintAll() {
+  private fun reinitAndDoLayout() {
     ActivityTracker.getInstance().inc()
 
     myPanel.removeAll()
@@ -109,9 +106,11 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
         myPanel.add(toolbar as JComponent, layoutConstrains)
       }
     }
+  }
 
-    myPanel.revalidate()
-    myPanel.repaint()
+  private fun reinitAndPaintAll() {
+    reinitAndDoLayout()
+    repaint()
   }
 
   override fun getComponent(): JComponent = myPanel
@@ -124,14 +123,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
     myPanel.isEnabled = toolbarSettings.isEnabled
     myPanel.isVisible = myPanel.isEnabled && toolbarSettings.isVisible && !settings.presentationMode
 
-    reinitAndPaintAll()
-    updateStatusBar()
-  }
-
-  private fun updateStatusBar() {
-    for (project in ProjectManager.getInstance().openProjects) {
-      project.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
-    }
+    repaint()
   }
 
   override fun copy() = NewToolbarRootPaneExtension(myProject)
@@ -144,21 +136,25 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
    * Here goes only the logic that updates the central panel when it gets customized from the UI
    */
   override fun revalidate() {
+    if (myProject.isDisposed) {
+      logger.warn("Project '$myProject' disposal has already been initiated.")
+      return
+    }
+
     if (ToolbarSettings.Instance.isEnabled && ToolbarSettings.Instance.isVisible) {
+      myProject.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
+      reinitAndDoLayout()
+
       val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? CenterToolbarGroup ?: return
       val toolBar = ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
       toolBar.targetComponent = null
       toolBar.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
       myPanel.add(toolBar as JComponent, BorderLayout.CENTER)
     }
+  }
 
-
-    try {
-      myProject.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
-    }catch (e: AlreadyDisposedException){
-      //do nothing
-    }catch (e: Throwable){
-      //do nothing
-    }
+  private fun repaint() {
+    myPanel.revalidate()
+    myPanel.repaint()
   }
 }
