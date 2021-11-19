@@ -5,18 +5,25 @@ import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.CodeStyleConfigurable;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.*;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_VALUES;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
 
-public class PyLanguageCodeStyleSettingsProvider extends PyLanguageCodeStyleSettingsProviderBase {
+public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+  @NotNull
+  @Override
+  public Language getLanguage() {
+    return PythonLanguage.getInstance();
+  }
+
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) return SPACING_SETTINGS_PREVIEW;
@@ -140,6 +147,26 @@ public class PyLanguageCodeStyleSettingsProvider extends PyLanguageCodeStyleSett
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
     return new SmartIndentOptionsEditor();
+  }
+
+  @Override
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings,
+                                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
+    indentOptions.INDENT_SIZE = 4;
+    commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    // Don't set it to 2 -- this setting is used implicitly in a lot of methods related to spacing,
+    // e.g. in SpacingBuilder#blankLines(), and can lead to unexpected side-effects in formatter's
+    // behavior
+    commonSettings.KEEP_BLANK_LINES_IN_CODE = 1;
+    commonSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  }
+
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new PyCodeStyleSettings(settings);
   }
 
   @NotNull
