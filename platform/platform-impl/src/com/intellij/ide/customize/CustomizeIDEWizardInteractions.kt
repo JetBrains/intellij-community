@@ -58,7 +58,7 @@ internal class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListe
         val pluginInfo = if (interaction.pluginDescriptor != null)
           getPluginInfoByDescriptorWithFeaturedPlugins(interaction.pluginDescriptor, featuredPluginsProvider)
         else
-          null;
+          null
 
         CustomizeWizardCollector.logEvent(interaction.type.toString(), interaction.timestamp, pluginInfo, interaction.groupId)
       }
