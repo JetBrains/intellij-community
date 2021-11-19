@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,7 +54,10 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * @param project current project
    * @param previewDescriptor problem descriptor which refers to the non-physical file copy where the fix should be applied
    * @return true if the fix was successfully applied to the copy; false otherwise
+   * @deprecated do not call or override this method: this API will be changed.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated
   default boolean applyFixForPreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     if (!startInWriteAction()) return false;
     PsiElement element = previewDescriptor.getStartElement();
