@@ -33,7 +33,7 @@ abstract class AbstractKotlinLambdasHintsProvider :
                 }
             }
 
-            testProvider("KotlinLambdasHintsProvider.kt", fileContents, this, settings)
+            testProvider("KotlinLambdasHintsProvider.kt", fileContents, this, settings, true)
         }
     }
 
