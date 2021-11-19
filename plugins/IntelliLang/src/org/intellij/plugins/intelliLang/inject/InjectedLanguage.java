@@ -111,7 +111,12 @@ public final class InjectedLanguage {
       registeredLanguages = new ArrayList<>(Language.getRegisteredLanguages());
       for (Language language : registeredLanguages) {
         if (LanguageUtil.isInjectableLanguage(language)) {
-          ourLanguageCache.put(language.getID(), language);
+          String languageID = language.getID();
+          ourLanguageCache.put(languageID, language);
+          String lowerCase = languageID.toLowerCase(Locale.ROOT);
+          if (!lowerCase.equals(languageID)) {
+            ourLanguageCache.put(lowerCase, language);
+          }
         }
       }
     } while (Language.getRegisteredLanguages().size() != registeredLanguages.size());

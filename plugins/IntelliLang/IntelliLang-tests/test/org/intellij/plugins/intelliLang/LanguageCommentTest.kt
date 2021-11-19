@@ -25,6 +25,19 @@ class LanguageCommentTest : AbstractLanguageInjectionTestCase() {
     assertContainsElements(completionVariants, "java", "xml", "yaml")
   }
   
+  fun testJavaScriptLowerCaseInjected() {
+    myFixture.configureByText("Foo.java", """
+      class Foo {
+          void bar() {
+              // language=jshelllanguage
+              String text = "function foo(){}";
+          }
+      }
+    """)
+
+    injectionTestFixture.assertInjectedContent("function foo(){}")
+  }
+  
   fun testJavaLanguageWordCompletion() {
     myFixture.configureByText("Foo.java", """
       class Foo {
