@@ -433,7 +433,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
            opType == DIV || opType == FLOORDIV || opType == PERC || opType == EXP || opType == MINUS;
   }
 
-  private static int getExpressionPriority(PyElement expr) {
+  private static int getExpressionPriority(@NotNull PyElement expr) {
     int priority = 0;
     if (expr instanceof PyReferenceExpression ||
         expr instanceof PySubscriptionExpression ||
@@ -459,6 +459,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     }
     else if (expr instanceof PyConditionalExpression) priority = 14;
     else if (expr instanceof PyLambdaExpression) priority = 15;
+    else if (expr instanceof PyAssignmentExpression) priority = 16;
 
     return -priority;
   }
