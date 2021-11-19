@@ -22,10 +22,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.FormBuilder
-import com.intellij.util.ui.IndentedIcon
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import training.FeaturesTrainerIcons
@@ -59,18 +56,21 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
 fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: OnboardingFeedbackData?) {
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
-  fun feedbackTextArea(fieldName: String, optionalText: String, width: Int): JComponent {
+  fun feedbackTextArea(fieldName: String, optionalText: String, width: Int, height: Int): JComponent {
     val jTextPane = JBTextArea()
     jTextPane.lineWrap = true
     jTextPane.wrapStyleWord = true
     jTextPane.emptyText.text = optionalText
+    jTextPane.emptyText.setFont(JBFont.regular())
+    jTextPane.border = JBEmptyBorder(3, 5, 3, 5)
+    jTextPane.font = JBFont.regular()
 
     saver.add {
       put(fieldName, jTextPane.text)
     }
 
     val scrollPane = JBScrollPane(jTextPane)
-    scrollPane.preferredSize = Dimension(width, 100)
+    scrollPane.preferredSize = Dimension(width, height)
     return scrollPane
   }
 
@@ -82,9 +82,9 @@ fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: 
     return result
   }
 
-  val freeForm = feedbackTextArea("overall_experience", "Optional", FEEDBACK_CONTENT_WIDTH)
+  val freeForm = feedbackTextArea("overall_experience", "Optional", FEEDBACK_CONTENT_WIDTH, 100)
 
-  val technicalIssuesArea = feedbackTextArea("other_issues","Some other issues?", FEEDBACK_CONTENT_WIDTH - SUB_OFFSET)
+  val technicalIssuesArea = feedbackTextArea("other_issues", "Some other issues?", FEEDBACK_CONTENT_WIDTH - SUB_OFFSET, 65)
 
   val technicalIssuesPanel = FormBuilder.createFormBuilder()
     .addComponent(feedbackOption("cannot_pass", "Cannot pass task"))
