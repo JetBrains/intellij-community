@@ -19,8 +19,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.datavis.r.inlays.components.*
 import org.intellij.datavis.r.ui.UiCustomizer
-import org.jetbrains.plugins.notebooks.editor.NotebookIntervalPointer
-import org.jetbrains.plugins.notebooks.editor.notebookAppearance
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
+import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Graphics
