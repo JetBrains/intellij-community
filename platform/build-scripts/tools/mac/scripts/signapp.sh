@@ -124,7 +124,9 @@ if [ "$NOTARIZE" = "yes" ]; then
   FAKE_ROOT="$(pwd)/fake-root"
   mkdir -p "$FAKE_ROOT"
   echo "Notarization will use fake root: $FAKE_ROOT"
+  set +x
   retry "Notarization" 3 ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME" "$BUNDLE_ID" "$FAKE_ROOT"
+  set -x
   rm -rf "$FAKE_ROOT"
 
   log "Stapling..."

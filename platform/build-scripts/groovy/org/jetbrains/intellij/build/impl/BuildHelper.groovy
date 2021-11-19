@@ -5,7 +5,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.XmlDomReader
 import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -511,22 +510,21 @@ final class BuildHelper {
   }
 
   @NotNull
-  static UrlClassLoader createClassLoader(@NotNull List<Path> classPathFiles) {
+  static URLClassLoader createClassLoader(@NotNull List<Path> classPathFiles) {
     // don't use index - avoid saving to output (reproducible builds)
     // not ClassLoader.getSystemClassLoader() to reuse OpenTelemetry
     ClassLoader parent = BuildHelper.class.getClassLoader()
-    return UrlClassLoader.build()
-      .parent(new ClassLoader() {
-        @Override
-        Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-          if (name.startsWith("com.intellij.")) {
-            return null
-          }
-          return parent.loadClass(name)
+    // our UrlClassLoader loads com.intellij.util.lang. from app classloader - that's not a desired behaviour
+    URL[] urls = classPathFiles.collect { it.toUri().toURL() }.toArray(new URL[0])
+    return new URLClassLoader(urls, new ClassLoader() {
+      @Override
+      Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        if (name.startsWith("com.intellij.")) {
+          return null
         }
-      })
-      .files(classPathFiles)
-      .get()
+        return parent.loadClass(name)
+      }
+    })
   }
 
   static List<Path> buildClasspathForModule(JpsModule helperModule, CompilationContext context) {

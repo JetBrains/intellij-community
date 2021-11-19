@@ -116,41 +116,78 @@ public final class ImmutableZipFile implements Closeable {
 
   private static @NotNull ImmutableZipFile populateFromCentralDirectory(@NotNull ByteBuffer buffer, int fileSize) throws IOException {
     // https://en.wikipedia.org/wiki/ZIP_(file_format)
-    int offset =  readEndSignature(buffer, fileSize);
-    int entryCount = buffer.getShort(offset + 10) & 0xffff;
-    int centralDirSize = buffer.getInt(offset + 12);
-    int centralDirPosition = buffer.getInt(offset + 16);
+    int offset = fileSize - MIN_EOCD_SIZE;
 
-    int commentSize = buffer.getShort(offset + 20);
-    if (commentSize == 9) {
-      int commentVersion = buffer.get(offset + 22);
-      if (commentVersion == 1) {
-        int pos = buffer.position();
+    boolean finished = false;
 
-        entryCount = buffer.getInt(offset + 23);
-        buffer.position(buffer.getInt(offset + 27));
-        IntBuffer intBuffer = buffer.asIntBuffer();
-
-        int[] sizes = new int[entryCount];
-        int[] dataOffsets = new int[entryCount];
-        int[] indexes = new int[entryCount];
-        intBuffer.get(sizes);
-        intBuffer.get(dataOffsets);
-        intBuffer.get(indexes);
-
-        buffer.position(pos);
-
-        ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
-
-        int entrySetLength = entryCount * 2 /* expand factor */;
-        ImmutableZipEntry[] entrySet = new ImmutableZipEntry[entrySetLength];
-
-        //long start = System.currentTimeMillis();
-        readCentralDirectoryUsingExtraMetadata(buffer, centralDirPosition, centralDirSize, entrySet, entries, sizes, dataOffsets, indexes);
-        //System.out.print("optimized read took " + (System.currentTimeMillis() - start) + " ms");
-        buffer.clear();
-        return new ImmutableZipFile(entrySet, entries, buffer, fileSize);
+    // first, EOCD
+    for (; offset >= 0; offset--) {
+      if (buffer.getInt(offset) == 0x6054B50) {
+        finished = true;
+        break;
       }
+    }
+    if (!finished) {
+      throw new ZipException("Archive is not a ZIP archive");
+    }
+
+    boolean isZip64 = true;
+    if (buffer.getInt(offset - 20) == 0x07064b50) {
+      offset = (int)buffer.getLong(offset - (20 - 8));
+      assert buffer.getInt(offset) == 0x06064b50;
+    }
+    else {
+      isZip64 = false;
+    }
+
+    int entryCount;
+    int centralDirSize;
+    int centralDirPosition;
+    int commentSize;
+    int commentVersion;
+    if (isZip64) {
+      entryCount = (int)buffer.getLong(offset + 32);
+      centralDirSize = (int)buffer.getLong(offset + 40);
+      centralDirPosition = (int)buffer.getLong(offset + 48);
+
+      commentSize = (int)(buffer.getLong(offset + 4) + 12) - 56;
+      commentVersion = commentSize == 9 ? buffer.get(offset + 22) : 0;
+    }
+    else {
+      entryCount = buffer.getShort(offset + 10) & 0xffff;
+      centralDirSize = buffer.getInt(offset + 12);
+      centralDirPosition = buffer.getInt(offset + 16);
+
+      commentSize = buffer.getShort(offset + 20);
+      commentVersion = commentSize == 9 ? buffer.get(offset + 56) : 0;
+    }
+
+    if (commentVersion == 1) {
+      int pos = buffer.position();
+
+      entryCount = buffer.getInt(offset + 23);
+      buffer.position(buffer.getInt(offset + 27));
+      IntBuffer intBuffer = buffer.asIntBuffer();
+
+      int[] sizes = new int[entryCount];
+      int[] dataOffsets = new int[entryCount];
+      int[] indexes = new int[entryCount];
+      intBuffer.get(sizes);
+      intBuffer.get(dataOffsets);
+      intBuffer.get(indexes);
+
+      buffer.position(pos);
+
+      ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
+
+      int entrySetLength = entryCount * 2 /* expand factor */;
+      ImmutableZipEntry[] entrySet = new ImmutableZipEntry[entrySetLength];
+
+      //long start = System.currentTimeMillis();
+      readCentralDirectoryUsingExtraMetadata(buffer, centralDirPosition, centralDirSize, entrySet, entries, sizes, dataOffsets, indexes);
+      //System.out.print("optimized read took " + (System.currentTimeMillis() - start) + " ms");
+      buffer.clear();
+      return new ImmutableZipFile(entrySet, entries, buffer, fileSize);
     }
 
     // ensure table is even length
@@ -298,16 +335,6 @@ public final class ImmutableZipFile implements Closeable {
       entrySet[entrySetIndex] = entry;
       entries[entryIndex++] = entry;
     }
-  }
-
-  private static int readEndSignature(@NotNull ByteBuffer buffer, int fileSize) throws IOException {
-    for (int offset = fileSize - MIN_EOCD_SIZE; offset >= 0; offset--) {
-      if (buffer.getInt(offset) == 101010256) {
-        return offset;
-      }
-    }
-
-    throw new ZipException("Archive is not a ZIP archive");
   }
 
   // returns index at which element is present; or if absent, (-i - 1) where i is location where element should be inserted
