@@ -738,7 +738,7 @@ class MoveConflictChecker(
 
             val targetModule = moveTarget.getTargetModule(project) ?: return null
             val targetPackage = moveTarget.getTargetPackage() ?: return null
-            val targetDir = moveTarget.targetFile?.takeIf { it.isDirectory } ?: moveTarget.targetFile?.parent
+            val targetDir = moveTarget.targetFileOrDir?.takeIf { it.isDirectory } ?: moveTarget.targetFileOrDir?.parent
 
             val className = classToMove.nameAsSafeName.asString()
 
