@@ -37,6 +37,6 @@
     <orderEntry type="module" module-name="kotlin.refIndex.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" scope="TEST" />
   </component>
 </module>
