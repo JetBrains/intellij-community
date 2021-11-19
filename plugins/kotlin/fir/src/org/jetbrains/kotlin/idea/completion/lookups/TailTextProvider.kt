@@ -19,7 +19,7 @@ internal object TailTextProvider {
                 append(renderFunctionParameters(symbol, substitutor))
             }
         }
-        symbol.receiverType?.type?.let { receiverType ->
+        symbol.receiverType?.let { receiverType ->
             val renderedType = receiverType.render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
             append(KotlinIdeaCompletionBundle.message("presentation.tail.for.0", renderedType))
         }
@@ -27,7 +27,7 @@ internal object TailTextProvider {
 
     fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionSymbol): Boolean {
         val singleParam = symbol.valueParameters.singleOrNull()
-        return singleParam != null && !singleParam.hasDefaultValue && singleParam.annotatedType.type is KtFunctionalType
+        return singleParam != null && !singleParam.hasDefaultValue && singleParam.returnType is KtFunctionalType
     }
 
     fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionalType): Boolean {

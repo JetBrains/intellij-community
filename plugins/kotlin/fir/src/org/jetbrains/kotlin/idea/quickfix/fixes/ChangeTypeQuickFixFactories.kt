@@ -163,7 +163,7 @@ object ChangeTypeQuickFixFactories {
     private fun KtAnalysisSession.createChangeOverriddenFunctionQuickFix(
         callable: KtCallableSymbol
     ): HLApplicatorTargetWithInput<KtCallableDeclaration, Input>? {
-        val type = callable.annotatedType.type
+        val type = callable.returnType
         val singleNonMatchingOverriddenFunction = findSingleNonMatchingOverriddenFunction(callable, type) ?: return null
         val singleMatchingOverriddenFunctionPsi = singleNonMatchingOverriddenFunction.psiSafe<KtCallableDeclaration>() ?: return null
         val changeToTypeInfo = createTypeInfo(type)
@@ -178,7 +178,7 @@ object ChangeTypeQuickFixFactories {
         val overriddenSymbols = callable.getDirectlyOverriddenSymbols()
         return overriddenSymbols
             .singleOrNull { overridden ->
-                !type.isSubTypeOf(overridden.annotatedType.type)
+                !type.isSubTypeOf(overridden.returnType)
             }
     }
 
@@ -189,7 +189,7 @@ object ChangeTypeQuickFixFactories {
     private fun KtAnalysisSession.findLowerBoundOfOverriddenCallablesReturnTypes(symbol: KtCallableSymbol): KtType? {
         var lowestType: KtType? = null
         for (overridden in symbol.getDirectlyOverriddenSymbols()) {
-            val overriddenType = overridden.annotatedType.type
+            val overriddenType = overridden.returnType
             when {
                 lowestType == null || overriddenType isSubTypeOf lowestType -> {
                     lowestType = overriddenType
