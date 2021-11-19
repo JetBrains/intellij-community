@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlin-gradle-plugin-model" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-model:1.4.32" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-model:1.6.0" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.4.32/kotlin-gradle-plugin-model-1.4.32.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.6.0/kotlin-gradle-plugin-model-1.6.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.4.32/kotlin-gradle-plugin-model-1.4.32-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.6.0/kotlin-gradle-plugin-model-1.6.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
