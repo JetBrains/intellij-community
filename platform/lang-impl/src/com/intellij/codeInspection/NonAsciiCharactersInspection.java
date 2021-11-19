@@ -48,12 +48,9 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     return "NonAsciiCharacters";
   }
 
-
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (!isFileWorthIt(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new PsiElementVisitor() {
       @Override
@@ -67,7 +64,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
             String text = element.getText();
             if (identifier == element || text.equals(identifier.getText())) {
               if (CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME) {
-                checkAscii(element, text, holder, "an identifier");
+                checkAscii(element, text, holder);
               }
               if (CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME) {
                 checkSameLanguage(element, text, holder);
@@ -77,13 +74,13 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
         }
         if (CHECK_FOR_NOT_ASCII_COMMENT) {
           if (element instanceof PsiComment) {
-            checkAsciiRange(element, element.getText(), holder, "a comment");
+            checkAsciiRange(element, element.getText(), holder, Kind.COMMENT);
           }
         }
         if (element instanceof PsiLiteralValue) {
           String text = element.getText();
           if (CHECK_FOR_NOT_ASCII_STRING_LITERAL) {
-            checkAsciiRange(element, text, holder, "a string literal");
+            checkAsciiRange(element, text, holder, Kind.LITERAL);
           }
           if (CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING) {
             checkSameLanguage(element, text, holder);
@@ -107,13 +104,10 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
               .mapToObj(b -> StringUtil.toUpperCase(Integer.toString(b & 0x00ff, 16)))
               .collect(Collectors.joining());
             Charset charsetFromBOM = CharsetToolkit.guessFromBOM(bom);
-            holder.registerProblem(file,
-                                   LangBundle.message("inspection.message.file.contains.bom", hex, charsetFromBOM == null
-                                                                                                   ? ""
-                                                                                                   : LangBundle.message(
-                                                                                                     "inspection.message.charset.signature",
-                                                                                                     charsetFromBOM.displayName())),
-                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            final String signature = charsetFromBOM == null
+                                     ? ""
+                                     : LangBundle.message("inspection.message.charset.signature", charsetFromBOM.displayName());
+            holder.registerProblem(file, LangBundle.message("inspection.message.file.contains.bom", hex, signature));
           }
         }
       }
@@ -133,9 +127,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
   }
 
 
-  private static void checkSameLanguage(@NotNull PsiElement element,
-                                        @NotNull String text,
-                                        @NotNull ProblemsHolder holder) {
+  private static void checkSameLanguage(@NotNull PsiElement element, @NotNull String text, @NotNull ProblemsHolder holder) {
     Set<Character.UnicodeScript> scripts = text.codePoints()
       .mapToObj(Character.UnicodeScript::of)
       .filter(script -> !script.equals(Character.UnicodeScript.COMMON))
@@ -148,18 +140,16 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     }
   }
 
-  private static void checkAscii(@NotNull PsiElement element,
-                                 @NotNull String text,
-                                 @NotNull ProblemsHolder holder,
-                                 @NotNull String where) {
+  private static void checkAscii(@NotNull PsiElement element, @NotNull String text, @NotNull ProblemsHolder holder) {
     if (!IOUtil.isAscii(text)) {
-      holder.registerProblem(element, LangBundle.message("inspection.message.non.ascii.characters.in", where), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      holder.registerProblem(element, LangBundle.message("inspection.message.non.ascii.characters.in", Kind.IDENTIFIER.ordinal()));
     }
   }
+
   private static void checkAsciiRange(@NotNull PsiElement element,
                                       @NotNull String text,
                                       @NotNull ProblemsHolder holder,
-                                      @NotNull String where) {
+                                      @NotNull Kind kind) {
     int errorCount = 0;
     int start = -1;
     for (int i = 0; i <= text.length(); i++) {
@@ -167,8 +157,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
       if (i == text.length() || c<128) {
         if (start != -1) {
           TextRange range = new TextRange(start, i);
-          String message = LangBundle.message("inspection.message.non.ascii.characters.in", where);
-          holder.registerProblem(element, range, message);
+          holder.registerProblem(element, range, LangBundle.message("inspection.message.non.ascii.characters.in", kind.ordinal()));
           start = -1;
           //do not report too many errors
           if (errorCount++ > 200) break;
@@ -184,5 +173,9 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     return new NonAsciiCharactersInspectionFormUi(this).getPanel();
+  }
+
+  private enum Kind {
+    IDENTIFIER, COMMENT, LITERAL
   }
 }
