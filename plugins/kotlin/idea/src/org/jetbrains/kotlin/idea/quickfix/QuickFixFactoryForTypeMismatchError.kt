@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
+import org.jetbrains.kotlin.idea.intentions.branches
 import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
 import org.jetbrains.kotlin.resolve.calls.callUtil.*
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstant
@@ -198,14 +200,23 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         else
             PsiTreeUtil.getParentOfType(diagnosticElement, KtFunction::class.java, true)
         if (function is KtFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function, diagnosticElement)) {
-            val returnExpressions = function.collectDescendantsOfType<KtReturnExpression> {
-                it.getStrictParentOfType<KtFunction>() == function || it.getTargetFunction(context) == function
-            }
-            val returnType = if (returnExpressions.size > 1) {
-                val returnTypes = returnExpressions.mapNotNull { it.returnedExpression?.getType(context) }
-                if (returnTypes.isNotEmpty()) CommonSupertypes.commonSupertype(returnTypes) else expressionType
+            val functionDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, function]
+            val returnedExpressions = function
+                .collectDescendantsOfType<KtReturnExpression> { it.getTargetFunctionDescriptor(context) == functionDescriptor }
+                .map { it.returnedExpression }
+                .plus(function.bodyExpression.takeUnless { it is KtBlockExpression })
+                .mapNotNull { KtPsiUtil.deparenthesize(it) }
+            val returnType = if (returnedExpressions.singleOrNull() == diagnosticElement) {
+               expressionType
             } else {
-                expressionType
+                val returnTypes = returnedExpressions.flatMap {
+                    when (it) {
+                        is KtIfExpression -> it.branches
+                        is KtWhenExpression -> it.entries.map { entry -> entry.expression }
+                        else -> listOf(it)
+                    }
+                }.mapNotNull { it?.getType(context) }.ifEmpty { listOf(expressionType) }
+                returnTypes.singleOrNull() ?: CommonSupertypes.commonSupertype(returnTypes)
             }
             addChangeTypeFix(function, returnType, ChangeCallableReturnTypeFix::ForEnclosing)
         }

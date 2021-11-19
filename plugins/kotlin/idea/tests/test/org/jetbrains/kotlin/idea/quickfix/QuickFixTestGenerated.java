@@ -14131,6 +14131,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/dontChangeFunctionReturnTypeToErrorType.kt");
                 }
 
+                @TestMetadata("inIf.kt")
+                public void testInIf() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/inIf.kt");
+                }
+
+                @TestMetadata("inWhen.kt")
+                public void testInWhen() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/inWhen.kt");
+                }
+
                 @TestMetadata("literalPropertyWithGetter.kt")
                 public void testLiteralPropertyWithGetter() throws Exception {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter.kt");
@@ -14144,6 +14154,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 @TestMetadata("multiFakeOverrideForOperatorConvention.kt")
                 public void testMultiFakeOverrideForOperatorConvention() throws Exception {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiFakeOverrideForOperatorConvention.kt");
+                }
+
+                @TestMetadata("nestedWhenExpression.kt")
+                public void testNestedWhenExpression() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/nestedWhenExpression.kt");
                 }
 
                 @TestMetadata("nonLocalReturnRuntime.kt")
