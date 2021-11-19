@@ -22,6 +22,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
   private final PsiManager myManager;
   private final Map<VariableDescriptor, Integer> varIndexes;
 
+  private static final TypeDfaState NEUTRAL = new TypeDfaState();
 
   public TypesSemilattice(@NotNull PsiManager manager,
                           Map<VariableDescriptor, Integer> varIndexes) {
@@ -32,39 +33,34 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
   @Override
   @NotNull
   public TypeDfaState initial() {
-    return new TypeDfaState();
+    return NEUTRAL;
   }
 
   @NotNull
   @Override
   public TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {
-    if (ins.isEmpty()) return initial();
-
-    TypeDfaState result = new TypeDfaState(ins.get(0));
-    if (ins.size() == 1) {
-      return result;
-    }
+    TypeDfaState result = ins.get(0);
 
     for (int i = 1; i < ins.size(); i++) {
-      result.joinState(ins.get(i), myManager, varIndexes);
+      result = result.withMerged(ins.get(i), myManager, varIndexes);
     }
     return result;
   }
 
   @Override
   public boolean eq(@NotNull TypeDfaState e1, @NotNull TypeDfaState e2) {
-    return e1.contentsEqual(e2);
+    return e1 == e2 || e1.contentsEqual(e2);
   }
 
   public static Map<VariableDescriptor, DFAType> mergeForCaching(Map<VariableDescriptor, DFAType> cached,
                                                                  TypeDfaState another,
                                                                  Map<VariableDescriptor, Integer> varIndexes) {
-    if (another.getVarTypes().isEmpty()) {
+    if (another.getRawVarTypes().isEmpty()) {
       return cached;
     }
 
     List<Map.Entry<VariableDescriptor, DFAType>> newTypes = new SmartList<>();
-    for (Map.Entry<VariableDescriptor, DFAType> candidateEntry : another.getVarTypes().entrySet()) {
+    for (Map.Entry<VariableDescriptor, DFAType> candidateEntry : another.getRawVarTypes().entrySet()) {
       var descriptor = candidateEntry.getKey();
       if (another.getProhibitedCachingVars().get(varIndexes.getOrDefault(descriptor, 0)) ||
           (cached.containsKey(descriptor) && checkDfaStatesConsistency(cached, candidateEntry))) {

@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 class TypeDfaState {
   private final Map<VariableDescriptor, DFAType> myVarTypes;
@@ -37,17 +38,23 @@ class TypeDfaState {
     myPreviousClosureState = FList.emptyList();
   }
 
-  TypeDfaState(TypeDfaState another) {
-    myVarTypes = new HashMap<>(another.myVarTypes);
-    myProhibitedCachingVars = BitSet.valueOf(another.myProhibitedCachingVars.toLongArray());
-    myPreviousClosureState = another.myPreviousClosureState;
+  //private TypeDfaState(TypeDfaState another) {
+  //  myVarTypes = another.myVarTypes;
+  //  myProhibitedCachingVars = BitSet.valueOf(another.myProhibitedCachingVars.toLongArray());
+  //  myPreviousClosureState = another.myPreviousClosureState;
+  //}
+
+  private TypeDfaState(Map<VariableDescriptor, DFAType> varTypes, BitSet prohibitedCachingVars, FList<ClosureFrame> frame) {
+    myVarTypes = varTypes;
+    myProhibitedCachingVars = prohibitedCachingVars;
+    myPreviousClosureState = frame;
   }
 
-  Map<VariableDescriptor, DFAType> getVarTypes() {
+  Map<VariableDescriptor, DFAType> getRawVarTypes() {
     return myVarTypes;
   }
 
-  void joinState(TypeDfaState another, PsiManager manager, Map<VariableDescriptor, Integer> varIndexes) {
+  private void joinState(TypeDfaState another, PsiManager manager, Map<VariableDescriptor, Integer> varIndexes) {
     myVarTypes.keySet().removeIf(var -> another.myProhibitedCachingVars.get(varIndexes.get(var)));
     for (Map.Entry<VariableDescriptor, DFAType> entry : another.myVarTypes.entrySet()) {
       final VariableDescriptor descriptor = entry.getKey();
@@ -75,6 +82,28 @@ class TypeDfaState {
     myProhibitedCachingVars.or(another.myProhibitedCachingVars);
   }
 
+  public TypeDfaState withMerged(TypeDfaState another, PsiManager manager, Map<VariableDescriptor, Integer> varIndexes) {
+    Map<VariableDescriptor, DFAType> newMap = new HashMap<>();
+    Stream.concat(another.myVarTypes.entrySet().stream(), this.myVarTypes.entrySet().stream()).forEach(entry -> {
+      VariableDescriptor descriptor = entry.getKey();
+      if (shouldBeIgnored(descriptor, varIndexes) || another.shouldBeIgnored(descriptor, varIndexes)) {
+        return;
+      }
+      DFAType candidate = entry.getValue();
+      DFAType existing = newMap.get(descriptor);
+      if (existing == null) {
+        newMap.put(descriptor, candidate);
+      } else if (candidate != existing) {
+        newMap.put(descriptor, DFAType.create(candidate, existing, manager));
+      }
+      // todo: flushings
+    });
+    FList<ClosureFrame> frame = this.myPreviousClosureState.isEmpty() ? another.myPreviousClosureState : myPreviousClosureState;
+    BitSet prohibited = ((BitSet)myProhibitedCachingVars.clone());
+    prohibited.or(another.myProhibitedCachingVars);
+    return new TypeDfaState(newMap, prohibited, frame);
+  }
+
   boolean contentsEqual(TypeDfaState another) {
     return myVarTypes.equals(another.myVarTypes) &&
            myProhibitedCachingVars.equals(another.myProhibitedCachingVars) &&
@@ -82,22 +111,19 @@ class TypeDfaState {
   }
 
   @Nullable
-  DFAType getVariableType(VariableDescriptor descriptor) {
-    return myVarTypes.get(descriptor);
+  DFAType getVariableType(VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
+    int index = varIndexes.getOrDefault(descriptor, 0);
+    return index == 0 || !myProhibitedCachingVars.get(index) ? myVarTypes.get(descriptor) : null;
   }
 
-  @Contract("_ -> new")
+  @Contract("_, _ -> new")
   @NotNull
-  DFAType getOrCreateVariableType(VariableDescriptor descriptor) {
-    DFAType result = getVariableType(descriptor);
+  DFAType getOrCreateVariableType(VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
+    DFAType result = getVariableType(descriptor, varIndexes);
     return result == null ? DFAType.create(null) : result.copy();
   }
 
-  Map<VariableDescriptor, DFAType> getBindings() {
-    return new HashMap<>(myVarTypes);
-  }
-
-  void putType(VariableDescriptor descriptor, @Nullable DFAType type) {
+  private void putType(VariableDescriptor descriptor, @Nullable DFAType type) {
     myVarTypes.put(descriptor, type);
     if (type != null && !myPreviousClosureState.isEmpty()) {
       var topFrame = myPreviousClosureState.getHead();
@@ -107,14 +133,14 @@ class TypeDfaState {
     }
   }
 
-  void addClosureState(@NotNull TypeDfaState state) {
-    myPreviousClosureState = myPreviousClosureState.prepend(new ClosureFrame(state));
-  }
-
   @Nullable ClosureFrame popTopClosureFrame() {
     var head = myPreviousClosureState.getHead();
     myPreviousClosureState = myPreviousClosureState.getTail();
     return head;
+  }
+
+  private boolean shouldBeIgnored(@NotNull VariableDescriptor descriptor, @NotNull Map<VariableDescriptor, Integer> map) {
+    return map.containsKey(descriptor) && myProhibitedCachingVars.get(map.get(descriptor));
   }
 
   @Override
@@ -133,12 +159,35 @@ class TypeDfaState {
     myVarTypes.remove(descriptor);
   }
 
+  @Contract("_, _ -> new")
+  public TypeDfaState withRemovedBinding(@NotNull VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
+    BitSet newProhibitedVars = (BitSet)myProhibitedCachingVars.clone();
+    newProhibitedVars.set(varIndexes.getOrDefault(descriptor, 0));
+    return new TypeDfaState(myVarTypes, newProhibitedVars, myPreviousClosureState);
+  }
+
+  @Contract("_, _, _ -> new")
+  public TypeDfaState withNewType(@NotNull VariableDescriptor descriptor, DFAType type, Map<VariableDescriptor, Integer> varIndexes) {
+    BitSet newProhibitedVars = (BitSet)myProhibitedCachingVars.clone();
+    newProhibitedVars.set(varIndexes.getOrDefault(descriptor, 0), false);
+    Map<VariableDescriptor, DFAType> newTypes = new HashMap<>(myVarTypes);
+    newTypes.put(descriptor, type);
+    return new TypeDfaState(newTypes, newProhibitedVars, myPreviousClosureState);
+  }
+
+  @Contract("_ -> new")
+  public TypeDfaState withNewClosureState(@NotNull TypeDfaState state) {
+    return new TypeDfaState(myVarTypes, myProhibitedCachingVars, myPreviousClosureState.prepend(new ClosureFrame(state)));
+  }
+
+  @Contract("_ -> new")
+  public TypeDfaState withNewMap(@NotNull Map<VariableDescriptor, DFAType> types) {
+    return new TypeDfaState(types, myProhibitedCachingVars, myPreviousClosureState);
+  }
+
   BitSet getProhibitedCachingVars() {
     return myProhibitedCachingVars;
   }
 
-  public void restoreBinding(@NotNull VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
-    myProhibitedCachingVars.set(varIndexes.getOrDefault(descriptor, 0), false);
-  }
 }
 
