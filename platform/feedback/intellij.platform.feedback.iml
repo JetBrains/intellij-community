@@ -7,6 +7,8 @@
           <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend" />
         </compilerSettings>
         <compilerArguments>
+          <option name="languageVersion" value="1.5" />
+          <option name="apiVersion" value="1.5" />
           <option name="pluginClasspaths">
             <array>
               <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />

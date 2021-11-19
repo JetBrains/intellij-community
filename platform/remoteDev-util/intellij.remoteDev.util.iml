@@ -7,6 +7,8 @@
           <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend -Xopt-in=kotlin.io.path.ExperimentalPathApi -Xopt-in=kotlin.RequiresOptIn -Xopt-in=com.intellij.openapi.util.IntellijInternalApi" />
         </compilerSettings>
         <compilerArguments>
+          <option name="languageVersion" value="1.5" />
+          <option name="apiVersion" value="1.5" />
           <option name="pluginClasspaths">
             <array>
               <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-949/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-949.jar" />
