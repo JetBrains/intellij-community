@@ -102,7 +102,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     }
 
     private val expressions = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(KtFirDiagnostic.UnnecessarySafeCall::class, ReplaceWithDotCallFix)
+        registerApplicator(ReplaceWithDotCallFixFactory.replaceWithDotCallFactory)
         registerPsiQuickFixes(KtFirDiagnostic.UnnecessaryNotNullAssertion::class, RemoveExclExclCallFix)
         registerPsiQuickFixes(KtFirDiagnostic.UselessElvis::class, RemoveUselessElvisFix)
         registerPsiQuickFixes(KtFirDiagnostic.UselessElvisRightIsNull::class, RemoveUselessElvisFix)
