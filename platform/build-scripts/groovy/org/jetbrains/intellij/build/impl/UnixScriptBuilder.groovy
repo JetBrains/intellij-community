@@ -1,20 +1,25 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
 
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 
+@CompileStatic
 final class UnixScriptBuilder {
-  private static String makePathsVar(String variableName, List<String> jarNames) {
+  private static final String REMOTE_DEV_SCRIPT_FILE_NAME = "remote-dev-server.sh"
+
+  private static String makePathsVar(String variableName, @NotNull List<String> jarNames) {
     if (jarNames.isEmpty()) {
       return ""
     }
+
     String classPath = "$variableName=\"\$IDE_HOME/lib/${jarNames[0]}\"\n"
     if (jarNames.size() == 1) {
       return classPath
@@ -22,26 +27,24 @@ final class UnixScriptBuilder {
     return classPath + String.join("", jarNames[1..-1].collect { "$variableName=\"\$$variableName:\$IDE_HOME/lib/${it}\"\n" })
   }
 
-  static void generateScripts(@NotNull BuildContext buildContext,
+  static void generateScripts(@NotNull BuildContext context,
                               @NotNull List<String> extraJarNames,
                               @NotNull Path distBinDir,
-                              OsFamily osFamily) {
-    String baseName = buildContext.productProperties.baseFileName
-    String scriptName = "${baseName}.sh"
-    String fullName = buildContext.applicationInfo.productName
-    String vmOptionsFileName = baseName
-
-    String bootClassPath = makePathsVar("BOOT_CLASS_PATH", buildContext.xBootClassPathJarNames)
+                              @NotNull OsFamily osFamily) {
     String classPathVarName = "CLASSPATH"
-    String classPath = makePathsVar(classPathVarName, buildContext.bootClassPathJarNames + extraJarNames)
-    if (buildContext.productProperties.toolsJarRequired) {
+    String classPath = makePathsVar(classPathVarName, context.bootClassPathJarNames + extraJarNames)
+    if (context.productProperties.toolsJarRequired) {
       classPath += "$classPathVarName=\"\$$classPathVarName:\$JDK/lib/tools.jar\"\n"
     }
 
-    List<String> additionalJvmArgs = buildContext.additionalJvmArguments
+    String additionalJvmArgs = String.join(" ", context.additionalJvmArguments)
+    String bootClassPath = makePathsVar("BOOT_CLASS_PATH", context.xBootClassPathJarNames)
     if (!bootClassPath.isEmpty()) {
-      additionalJvmArgs += "-Xbootclasspath/a:\$BOOT_CLASS_PATH"
+      //noinspection SpellCheckingInspection
+      additionalJvmArgs += " -Xbootclasspath/a:\$BOOT_CLASS_PATH"
     }
+
+    String baseName = context.productProperties.baseFileName
 
     Path vmOptionsPath
     switch (osFamily) {
@@ -55,61 +58,71 @@ final class UnixScriptBuilder {
         throw new IllegalStateException("Unknown OsFamily")
     }
 
-    if (!Files.exists(vmOptionsPath)) {
-      throw new IllegalStateException("File '$vmOptionsPath' should be already generated at this point")
+    String defaultXmxParameter
+    try {
+      defaultXmxParameter = Files.readAllLines(vmOptionsPath).find { it.startsWith("-Xmx") }
+    }
+    catch (NoSuchFileException e) {
+      throw new IllegalStateException("File '$vmOptionsPath' should be already generated at this point", e)
     }
 
-    String defaultXmxParameter = Files.readAllLines(vmOptionsPath).find { it.startsWith("-Xmx") }
     if (defaultXmxParameter == null) {
       throw new IllegalStateException("-Xmx was not found in '$vmOptionsPath'")
     }
 
-    boolean isRemoteDevEnabled = buildContext.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+    boolean isRemoteDevEnabled = context.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
 
-    buildContext.ant.copy(todir: distBinDir.toString()) {
-      switch (osFamily) {
-        case OsFamily.LINUX:
-          fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts") {
-            if (!isRemoteDevEnabled) {
-              exclude(name: "remote-dev-server.sh")
-            }
-          }
-          break
-        case OsFamily.MACOS:
-          if (isRemoteDevEnabled) {
-            fileset(file: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts/remote-dev-server.sh")
-          }
-          break
-        default:
-          throw new IllegalStateException("Unknown OsFamily")
-      }
-      filterset(begintoken: "__", endtoken: "__") {
-        filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
-        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
-        filter(token: "product_code", value: buildContext.applicationInfo.productCode)
-        filter(token: "vm_options", value: vmOptionsFileName)
-        filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: additionalJvmArgs.join(' '))
-        filter(token: "ide_default_xmx", value: defaultXmxParameter.strip())
-        filter(token: "class_path", value: bootClassPath + classPath)
-        switch (osFamily) {
-          case OsFamily.LINUX:
-            filter(token: "script_name", value: scriptName)
-            break
-          case OsFamily.MACOS:
-            filter(token: "script_name", value: baseName)
-            break
-          default:
-            throw new IllegalStateException("Unknown OsFamily")
-        }
-      }
-    }
+    Files.createDirectories(distBinDir)
+    Path sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
 
     if (osFamily == OsFamily.LINUX) {
-      Files.move(distBinDir.resolve("executable-template.sh"), distBinDir.resolve(scriptName), StandardCopyOption.REPLACE_EXISTING)
-      BuildTasksImpl.copyInspectScript(buildContext, distBinDir)
+      String scriptName = baseName + ".sh"
+      Files.newDirectoryStream(sourceScriptDir).withCloseable {
+        for (Path file : it) {
+          String fileName = file.fileName.toString()
+          if (!isRemoteDevEnabled && fileName == REMOTE_DEV_SCRIPT_FILE_NAME) {
+            continue
+          }
+
+          Path target = distBinDir.resolve(fileName == "executable-template.sh" ? scriptName : fileName)
+          copyScript(file, target, baseName, additionalJvmArgs, defaultXmxParameter, bootClassPath, classPath, scriptName, context)
+        }
+      }
+      BuildTasksImpl.copyInspectScript(context, distBinDir)
     }
-    buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.sh", eol: "unix")
+    else if (osFamily == OsFamily.MACOS) {
+      copyScript(sourceScriptDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME), distBinDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
+                 baseName, additionalJvmArgs, defaultXmxParameter, bootClassPath, classPath, baseName, context)
+    }
+    else {
+      throw new IllegalStateException("Unsupported OsFamily: $osFamily")
+    }
+  }
+
+  private static void copyScript(Path sourceFile,
+                                 Path targetFile,
+                                 String vmOptionsFileName,
+                                 String additionalJvmArgs,
+                                 String defaultXmxParameter,
+                                 String bootClassPath,
+                                 String classPath,
+    String scriptName,
+                                 BuildContext context) {
+    String fullName = context.applicationInfo.productName
+
+    Files.writeString(targetFile, BuildUtils.replaceAll(
+      StringUtilRt.convertLineSeparators(Files.readString(sourceFile)),
+      "__",
+      "product_full", fullName,
+      "product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo),
+      "product_vendor", context.applicationInfo.shortCompanyName,
+      "product_code", context.applicationInfo.productCode,
+      "vm_options", vmOptionsFileName,
+      "system_selector", context.systemSelector,
+      "ide_jvm_args", additionalJvmArgs,
+      "ide_default_xmx", defaultXmxParameter.strip(),
+      "class_path", bootClassPath + classPath,
+      "script_name", scriptName,
+      ))
   }
 }

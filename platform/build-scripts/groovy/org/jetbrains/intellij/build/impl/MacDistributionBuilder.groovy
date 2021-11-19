@@ -85,7 +85,6 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     doCopyExtraFiles(macDistDir, arch, true)
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   private void doCopyExtraFiles(Path macDistDir, JvmArchitecture arch, boolean copyDistFiles) {
     //noinspection SpellCheckingInspection
     List<String> platformProperties = new ArrayList<String>(Arrays.asList(
@@ -120,7 +119,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       customizer.copyAdditionalFiles(buildContext, macDistDir, arch)
     }
 
-    UnixScriptBuilder.generateScripts(buildContext, new ArrayList<String>(), macDistDir.resolve("bin"), OsFamily.MACOS)
+    UnixScriptBuilder.generateScripts(buildContext, Collections.<String>emptyList(), macDistDir.resolve("bin"), OsFamily.MACOS)
   }
 
   @Override
@@ -308,7 +307,8 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     List<String> additionalJvmArgs = context.additionalJvmArguments
     if (!bootClassPath.isEmpty()) {
       additionalJvmArgs = new ArrayList<>(additionalJvmArgs)
-      additionalJvmArgs.add("-Xbootclasspath/a:$bootClassPath".toString())
+      //noinspection SpellCheckingInspection
+      additionalJvmArgs.add("-Xbootclasspath/a:" + bootClassPath)
     }
     List<List<String>> propsAndOpts = additionalJvmArgs.split { it.startsWith('-D') }
     List<String> launcherProperties = propsAndOpts[0], launcherVmOptions = propsAndOpts[1]
@@ -321,7 +321,9 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String vmPropertiesXml = propertiesToXml(launcherProperties, ['idea.executable': context.productProperties.baseFileName])
 
     String archString = '<key>LSArchitecturePriority</key>\n    <array>\n'
-    macCustomizer.architectures.each {archString += '      <string>' + it + '</string>\n' }
+    for (String it in macCustomizer.architectures) {
+      archString += '      <string>' + it + '</string>\n'
+    }
     archString += '    </array>'
 
     List<String> urlSchemes = macCustomizer.urlSchemes
@@ -420,17 +422,17 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                                                                       "../bin/${executable}.vmoptions", OsFamily.MACOS)
   }
 
-  @CompileStatic
   private static String optionsToXml(List<String> options) {
     StringBuilder buff = new StringBuilder()
-    options.each { buff.append('        <string>').append(it).append('</string>\n') }
+    for (String it in options) {
+      buff.append('        <string>').append(it).append('</string>\n')
+    }
     return buff.toString().trim()
   }
 
-  @CompileStatic
   private static String propertiesToXml(List<String> properties, Map<String, String> moreProperties) {
     StringBuilder buff = new StringBuilder()
-    properties.each { it ->
+    for (String it in properties) {
       int p = it.indexOf('=')
       buff.append('        <key>').append(it.substring(2, p)).append('</key>\n')
       buff.append('        <string>').append(it.substring(p + 1)).append('</string>\n')
