@@ -59,6 +59,11 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return
     }
 
+    if (!project.isTrusted()) {
+      // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
+      return
+    }
+
     val module = getModule(moduleRef, project) ?: return
     val extension = findExtension(module)
     val lifetime = extension?.let { suppressTipAndInspectionsFor(module, it) }
@@ -105,15 +110,10 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     guardIndicator(indicator) {
       val detectedAssociatedEnvironments = detectAssociatedEnvironments(module, existingSdks, context)
 
-      val envToSuggest = if (project.isTrusted()) {
-        detectedAssociatedEnvironments.firstOrNull()
-      }
-      else {
-        detectedAssociatedEnvironments.firstOrNull { !it.isLocatedInsideModule(module) }
-      }
+      val envToSuggest = detectedAssociatedEnvironments.firstOrNull()
 
-      envToSuggest to detectedAssociatedEnvironments.filter { it.isLocatedInsideModule(module) }
-    }.let {
+      envToSuggest?.let { it to detectedAssociatedEnvironments.drop(1).filter { it.isLocatedInsideModule(module) } }
+    }?.let {
       val innerEnvs = it.second
       if (innerEnvs.isNotEmpty()) {
         runInEdt { innerEnvs.forEach { module.excludeInnerVirtualEnv(it) } }
@@ -121,26 +121,17 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
       val detectedAssociatedEnv = it.first
 
-      if (detectedAssociatedEnv == null) {
-        if (innerEnvs.isNotEmpty()) {
-          // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
-          LOGGER.info("Inner virtual environment has not been configured since project is not trusted")
-          return
-        }
-      }
-      else {
-        LOGGER.debug { "Detected virtual environment related to the project: $detectedAssociatedEnv" }
-        val newSdk = detectedAssociatedEnv.setupAssociated(existingSdks, module.basePath) ?: return
-        LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
+      LOGGER.debug { "Detected virtual environment related to the project: $detectedAssociatedEnv" }
+      val newSdk = detectedAssociatedEnv.setupAssociated(existingSdks, module.basePath) ?: return
+      LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 
-        runInEdt {
-          SdkConfigurationUtil.addSdk(newSdk)
-          newSdk.associateWithModule(module, null)
-          setReadyToUseSdk(project, module, newSdk)
-        }
-
-        return
+      runInEdt {
+        SdkConfigurationUtil.addSdk(newSdk)
+        newSdk.associateWithModule(module, null)
+        setReadyToUseSdk(project, module, newSdk)
       }
+
+      return
     }
 
     if (indicator.isCanceled) return
