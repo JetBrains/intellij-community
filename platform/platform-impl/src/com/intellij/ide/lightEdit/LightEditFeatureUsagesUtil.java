@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class LightEditFeatureUsagesUtil extends CounterUsagesCollector {
 
-  public static final EventLogGroup GROUP = new EventLogGroup("light.edit", 2);
-
+  public static final EventLogGroup GROUP = new EventLogGroup("light.edit", 3);
   private static final EventId1<OpenPlace> OPEN_FILE_EVENT_ID =
     GROUP.registerEvent("open.file", EventFields.Enum("open_place", OpenPlace.class));
   private final static EventId1<Boolean> AUTO_SAVE_MODE_EVENT_ID = GROUP.registerEvent("autosave.mode", EventFields.Boolean("enabled"));
