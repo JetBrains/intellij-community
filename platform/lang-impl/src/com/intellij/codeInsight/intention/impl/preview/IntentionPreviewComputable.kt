@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
@@ -31,32 +32,28 @@ import java.util.concurrent.Callable
 internal class IntentionPreviewComputable(private val project: Project,
                                           private val action: IntentionAction,
                                           private val originalFile: PsiFile,
-                                          private val originalEditor: Editor) : Callable<IntentionPreviewContent> {
-  override fun call(): IntentionPreviewContent {
+                                          private val originalEditor: Editor) : Callable<IntentionPreviewInfo> {
+  override fun call(): IntentionPreviewInfo {
     val diffContent = tryCreateDiffContent()
     if (diffContent != null) {
       return diffContent
     }
-    val descriptionContent = tryCreateDescriptionContent()
-    if (descriptionContent != null) {
-      return descriptionContent
-    }
-    return IntentionPreviewEmptyResult
+    return tryCreateFallbackDescriptionContent()
   }
 
-  private fun tryCreateDescriptionContent(): IntentionPreviewHtmlResult? {
+  private fun tryCreateFallbackDescriptionContent(): IntentionPreviewInfo {
     val originalAction = IntentionActionDelegate.unwrap(action)
     val actionMetaData = IntentionManagerSettings.getInstance().metaData.singleOrNull {
       md -> IntentionActionDelegate.unwrap(md.action) === originalAction
-    } ?: return null
+    } ?: return IntentionPreviewInfo.EMPTY
     return try {
-      IntentionPreviewHtmlResult(actionMetaData.description.text.replace(HTML_COMMENT_REGEX, ""))
+      IntentionPreviewInfo.Html(actionMetaData.description.text.replace(HTML_COMMENT_REGEX, ""))
     } catch(ex: IOException) {
-      null
+      IntentionPreviewInfo.EMPTY
     }
   }
 
-  private fun tryCreateDiffContent(): IntentionPreviewDiffResult? {
+  private fun tryCreateDiffContent(): IntentionPreviewInfo? {
     try {
       return generatePreview()
     }
@@ -72,7 +69,7 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
   }
 
-  fun generatePreview(): IntentionPreviewDiffResult? {
+  fun generatePreview(): IntentionPreviewInfo? {
     val origPair = ShowIntentionActionsHandler.chooseFileForAction(originalFile, originalEditor, action) ?: return null
     val origFile: PsiFile
     val caretOffset: Int
@@ -170,8 +167,4 @@ internal class IntentionPreviewComputable(private val project: Project,
   }
 }
 
-internal sealed interface IntentionPreviewContent
-
-internal data class IntentionPreviewDiffResult(val psiFile: PsiFile, val origFile: PsiFile, val lineFragments: List<LineFragment>): IntentionPreviewContent
-internal data class IntentionPreviewHtmlResult(val html: String): IntentionPreviewContent
-internal object IntentionPreviewEmptyResult : IntentionPreviewContent
+internal data class IntentionPreviewDiffResult(val psiFile: PsiFile, val origFile: PsiFile, val lineFragments: List<LineFragment>): IntentionPreviewInfo
