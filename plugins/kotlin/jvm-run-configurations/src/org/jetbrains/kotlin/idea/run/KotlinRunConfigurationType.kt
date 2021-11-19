@@ -8,7 +8,7 @@ import com.intellij.execution.configurations.SimpleConfigurationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyValue
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.KotlinJvmBundle.message
+import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle.message
 
 class KotlinRunConfigurationType : SimpleConfigurationType(
     "JetRunConfigurationType",

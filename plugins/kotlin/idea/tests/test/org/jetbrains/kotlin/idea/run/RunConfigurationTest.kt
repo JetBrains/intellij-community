@@ -296,12 +296,14 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     }
                 }
 
+                val foundMainContainer = EntryPointContainerFinder.find(function)
+
                 if (isMainFunction) {
                     createConfigurationFromMain(project, function.fqName?.asString()!!).checkConfiguration()
 
                     assertNotNull(
                         "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                        KotlinMainFunctionLocatingService.getEntryPointContainer(function),
+                        foundMainContainer,
                     )
                 } else {
                     try {
@@ -315,12 +317,12 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     if (text.startsWith("// entryPointExists")) {
                         assertNotNull(
                             "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                            KotlinMainFunctionLocatingService.getEntryPointContainer(function),
+                            foundMainContainer,
                         )
                     } else {
                         assertNull(
                             "Kotlin configuration producer shouldn't produce configuration for ${function.fqName?.asString()}",
-                            KotlinMainFunctionLocatingService.getEntryPointContainer(function),
+                            foundMainContainer,
                         )
                     }
                 }

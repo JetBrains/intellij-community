@@ -77,6 +77,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting-support" exported="" />
     <orderEntry type="module" module-name="kotlin.project-model" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />

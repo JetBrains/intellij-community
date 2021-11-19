@@ -19,7 +19,6 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -45,7 +44,7 @@ import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
-import org.jetbrains.kotlin.idea.KotlinJvmBundle.message
+import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle.message
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getStartClassFqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
@@ -230,7 +229,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     private fun updateMainClassName(element: PsiElement) {
-        val container = KotlinMainFunctionLocatingService.getEntryPointContainer(element) ?: return
+        val container = EntryPointContainerFinder.find(element) ?: return
         val name = getStartClassFqName(container)
         if (name != null) {
             runClass = name
@@ -365,7 +364,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                         // Array<String>
                         valueParameter?.typeReference?.typeElement?.run {
                             // to handle `Array` or `Array?`
-                            safeAs<KtUserType>() ?: safeAs<KtNullableType>()?.innerType.safeAs()
+                            safeAs<KtUserType>() ?: safeAs<KtNullableType>()?.innerType.safeAs<KtUserType>()
                         }?.run {
                             referencedName == "Array" &&
                                     typeArgumentList?.arguments?.singleOrNull()?.run {
@@ -468,7 +467,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 return true
             }
 
-            return service<KotlinMainFunctionLocatingService>().hasMain(mainFunCandidates)
+            return KotlinMainFunctionLocatingService.getInstance().hasMain(mainFunCandidates)
         }
 
     }
