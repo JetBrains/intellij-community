@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.TemplateState
@@ -30,9 +31,9 @@ class ChangePackageIntention : SelfTargetingOffsetIndependentIntention<KtPackage
 
     override fun isApplicableTo(element: KtPackageDirective) = element.packageNameExpression != null
 
-    override fun invokeForPreview(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
         // Rename template only intention: no reasonable preview possible
-        return false
+        return IntentionPreviewInfo.EMPTY
     }
 
     override fun applyTo(element: KtPackageDirective, editor: Editor?) {

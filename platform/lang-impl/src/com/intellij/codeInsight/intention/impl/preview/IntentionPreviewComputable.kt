@@ -90,39 +90,34 @@ internal class IntentionPreviewComputable(private val project: Project,
     try {
       originalEditor.document.setReadOnly(true)
       ProgressManager.checkCanceled()
-      if (!action.invokeForPreview(project, editorCopy, psiFileCopy)) {
-        if (!action.startInWriteAction() || action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) {
-          return null
-        }
-        val method = try {
-          IntentionActionDelegate.unwrap(action).javaClass
-            .getMethod("invokeForPreview", Project::class.java, Editor::class.java, PsiFile::class.java)
-        }
-        catch (_: NoSuchMethodException) { null }
-        catch (_: SecurityException) { null }
-        if (method != null && method.declaringClass == IntentionAction::class.java) {
-          // Use fallback algorithm only if invokeForPreview is not explicitly overridden
-          // in this case, the absence of diff could be intended, thus should not be logged as error
-          val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
-          val unwrapped = IntentionActionDelegate.unwrap(action)
-          val actionClass = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.qualifiedName
-          LOG.error("Intention preview fallback is used for action $actionClass|${action.familyName}")
-          action.invoke(project, editorCopy, psiFileCopy)
-        }
+      var result = action.generatePreview(project, editorCopy, psiFileCopy)
+      if (result == IntentionPreviewInfo.FALLBACK_DIFF) {
+        if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return null
+        // Use fallback algorithm only if invokeForPreview is not explicitly overridden
+        // in this case, the absence of diff could be intended, thus should not be logged as error
+        val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
+        val unwrapped = IntentionActionDelegate.unwrap(action)
+        val actionClass = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.qualifiedName
+        LOG.error("Intention preview fallback is used for action $actionClass|${action.familyName}")
+        action.invoke(project, editorCopy, psiFileCopy)
+        result = IntentionPreviewInfo.DIFF
       }
-      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(psiFileCopy.viewProvider)
       ProgressManager.checkCanceled()
+      return when (result) {
+        IntentionPreviewInfo.DIFF -> {
+          PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(psiFileCopy.viewProvider)
+          IntentionPreviewDiffResult(
+            psiFileCopy, origFile,
+            ComparisonManager.getInstance().compareLines(
+              origFile.text, editorCopy.document.text, ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE))
+        }
+        IntentionPreviewInfo.EMPTY -> null
+        else -> result
+      }
     }
     finally {
       originalEditor.document.setReadOnly(!writable)
     }
-
-    return IntentionPreviewDiffResult(
-      psiFileCopy,
-      origFile,
-      ComparisonManager.getInstance().compareLines(origFile.text, editorCopy.document.text, ComparisonPolicy.TRIM_WHITESPACES,
-                                                   DumbProgressIndicator.INSTANCE)
-    )
   }
 
   private fun mapInjectedOffsetToUnescaped(injectedFile: PsiFile, injectedOffset: Int): Int {

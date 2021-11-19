@@ -23,6 +23,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.ParameterClassMember;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
@@ -167,9 +168,11 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
   }
 
   @Override
-  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
     invoke(project, editor, file);
-    return true;
+    return IntentionPreviewInfo.DIFF;
   }
 
   public static void startTemplate(@NotNull Project project,

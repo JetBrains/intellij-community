@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -67,5 +68,37 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
     if (fix == null || fix.getElementToMakeWritable(file) != file) return false;
     fix.applyFix(project, previewDescriptor);
     return true;
+  }
+
+  /**
+   * Generate preview for this fix. This method is called outside write action,
+   * even if {@link #startInWriteAction()} returns true. It's not allowed to modify
+   * any physical PSI or spawn any actions in other threads within this method. 
+   * <p>
+   * There are several possibilities to make the preview:
+   * <ul>
+   *   <li>Apply changes to file referred from {@code previewDescriptor}, then return {@link IntentionPreviewInfo#DIFF}. The
+   *   file referred from {@code previewDescriptor} is a non-physical copy of the original file.</li>
+   *   <li>Return {@link IntentionPreviewInfo.Html} object to display custom HTML</li>
+   *   <li>Return {@link IntentionPreviewInfo#EMPTY} to generate no preview at all</li>
+   * </ul>
+   * <p>
+   * Default implementation calls {@link #getFileModifierForPreview(PsiFile)} and {@link #applyFix(Project, CommonProblemDescriptor)}
+   * on the result. This might fail if the original quick-fix is not prepared for preview. In this case,
+   * overriding {@code getFileModifierForPreview} or {@code generatePreview} is desired.
+   *
+   * @param project current project
+   * @param previewDescriptor problem descriptor which refers to the non-physical file copy where the fix should be applied
+   * @return true if the fix was successfully applied to the copy; false otherwise
+   */
+  default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    if (!startInWriteAction()) return IntentionPreviewInfo.EMPTY;
+    PsiElement element = previewDescriptor.getStartElement();
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    PsiFile file = element.getContainingFile();
+    LocalQuickFix fix = ObjectUtils.tryCast(getFileModifierForPreview(file), LocalQuickFix.class);
+    if (fix == null || fix.getElementToMakeWritable(file) != file) return IntentionPreviewInfo.EMPTY;
+    fix.applyFix(project, previewDescriptor);
+    return IntentionPreviewInfo.DIFF;
   }
 }

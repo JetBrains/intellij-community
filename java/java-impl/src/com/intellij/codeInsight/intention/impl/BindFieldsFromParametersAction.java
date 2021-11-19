@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -117,9 +118,11 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   }
 
   @Override
-  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
     invoke(project, editor, file, false);
-    return true;
+    return IntentionPreviewInfo.DIFF;
   }
 
   private static void invoke(Project project, Editor editor, PsiFile file, boolean isInteractive) {

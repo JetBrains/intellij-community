@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -80,10 +81,9 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
     }
 
     @Override
-    public boolean applyFixForPreview(@NotNull Project project,
-                                      @NotNull ProblemDescriptor previewDescriptor) {
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
       performFix(previewDescriptor);
-      return true;
+      return IntentionPreviewInfo.DIFF;
     }
 
     private static void performFix(ProblemDescriptor descriptor) {
