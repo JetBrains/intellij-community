@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.build;
 import com.intellij.build.BuildViewManager;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
@@ -14,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -21,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -146,20 +149,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
                              @NotNull ProjectTaskContext context,
                              ProjectTask @NotNull ... tasks) {
     AsyncPromise<Result> resultPromise = new AsyncPromise<>();
-    MultiMap<String, String> buildTasksMap = MultiMap.createLinkedSet();
-    MultiMap<String, String> cleanTasksMap = MultiMap.createLinkedSet();
-    MultiMap<String, String> initScripts = MultiMap.createLinkedSet();
-    MultiMap<String, VersionSpecificInitScript> versionedInitScripts = MultiMap.createLinkedSet();
-
-    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(Arrays.asList(tasks));
-
-    List<Module> modulesToBuild = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), buildTasksMap, initScripts);
-    List<Module> modulesOfResourcesToBuild = addModulesBuildTasks(taskMap.get(ModuleResourcesBuildTask.class), buildTasksMap, initScripts);
-    // TODO there should be 'gradle' way to build files instead of related modules entirely
-    List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
-    addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap, versionedInitScripts);
-
-    Set<String> rootPaths = buildTasksMap.keySet();
+    TasksExecutionSettingsBuilder executionSettingsBuilder = new TasksExecutionSettingsBuilder(project, tasks);
+    Set<String> rootPaths = executionSettingsBuilder.getRootPaths();
     if (rootPaths.isEmpty()) {
       LOG.warn("Nothing will be run for: " + Arrays.toString(tasks));
       resultPromise.setResult(TaskRunnerResults.SUCCESS);
@@ -189,9 +180,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
             try {
               if (GradleImprovedHotswapDetection.isEnabled()) {
                 GradleImprovedHotswapDetection.processInitScriptOutput(context, outputPathsFile);
-              } else {
-                Set<String> affectedRoots = getAffectedOutputRoots(
-                  outputPathsFile, context, modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
+              }
+              else {
+                Set<String> affectedRoots = getAffectedOutputRoots(outputPathsFile, context, executionSettingsBuilder);
                 if (!affectedRoots.isEmpty()) {
                   if (context.isCollectionOfGeneratedFilesEnabled()) {
                     context.addDirtyOutputPathsProvider(() -> affectedRoots);
@@ -218,38 +209,13 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       }
     };
 
-    String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
     for (String rootProjectPath : rootPaths) {
-      Collection<String> buildTasks = buildTasksMap.get(rootProjectPath);
-      Collection<String> cleanTasks = cleanTasksMap.get(rootProjectPath);
-      if (buildTasks.isEmpty() && cleanTasks.isEmpty()) {
+      if (!executionSettingsBuilder.containsTasksToExecuteFor(rootProjectPath)) {
         taskCallback.onSuccess();
         LOG.warn("Nothing will be run for: " + Arrays.toString(tasks) + " at '" + rootProjectPath + "'");
         continue;
       }
 
-      ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
-
-      File projectFile = new File(rootProjectPath);
-      final String projectName;
-      if (projectFile.isFile()) {
-        projectName = projectFile.getParentFile().getName();
-      }
-      else {
-        projectName = projectFile.getName();
-      }
-      String executionName = GradleBundle.message("gradle.execution.name.build.project.", projectName);
-      settings.setExecutionName(executionName);
-      settings.setExternalProjectPath(rootProjectPath);
-      settings.setTaskNames(ContainerUtil.collect(ContainerUtil.concat(cleanTasks, buildTasks).iterator()));
-      settings.setVmOptions(gradleVmOptions);
-      settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
-
-      UserDataHolderBase userData = new UserDataHolderBase();
-      userData.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager.class);
-
-      Collection<String> scripts = initScripts.getModifiable(rootProjectPath);
-      Collection<VersionSpecificInitScript> versionSpecificInitScripts = versionedInitScripts.getModifiable(rootProjectPath);
       if (outputPathsFile != null && context.isCollectionOfGeneratedFilesEnabled()) {
         String outputFilePath = FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath());
         GradleVersion v68 = GradleVersion.version("6.8");
@@ -260,20 +226,24 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         if (GradleImprovedHotswapDetection.isEnabled()) {
           initScript = GradleImprovedHotswapDetection.getInitScript(outputPathsFile);
           initScriptUsingService = GradleImprovedHotswapDetection.getInitScriptUsingService(outputPathsFile);
-        } else {
+        }
+        else {
           initScript = String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath);
           initScriptUsingService = String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath);
         }
 
         var simple = new VersionSpecificInitScript(initScript, "ijpathcollect", v -> v.compareTo(v68) < 0);
         var services = new VersionSpecificInitScript(initScriptUsingService, "ijpathcollect", v -> v.compareTo(v68) >= 0);
-        versionSpecificInitScripts.add(simple);
-        versionSpecificInitScripts.add(services);
+        executionSettingsBuilder.addInitScripts(rootProjectPath, simple, services);
       }
-      userData.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, versionSpecificInitScripts);
 
-      userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, join(scripts, System.lineSeparator()));
-      userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, executionName);
+      ExternalSystemTaskExecutionSettings settings = executionSettingsBuilder.build(rootProjectPath);
+      UserDataHolderBase userData = new UserDataHolderBase();
+      userData.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager.class);
+      userData.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY,
+                           executionSettingsBuilder.getVersionedInitScripts(rootProjectPath));
+      userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, join(executionSettingsBuilder.getInitScripts(rootProjectPath), System.lineSeparator()));
+      userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, settings.getExecutionName());
 
       ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
                                  taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
@@ -298,9 +268,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
   @NotNull
   private static Set<String> getAffectedOutputRoots(@Nullable File outputPathsFile,
                                                     @NotNull ProjectTaskContext context,
-                                                    @NotNull List<Module> modulesToBuild,
-                                                    @NotNull List<Module> modulesOfResourcesToBuild,
-                                                    @NotNull List<Module> modulesOfFiles) {
+                                                    @NotNull TasksExecutionSettingsBuilder executionSettingsBuilder) {
     Set<String> affectedRoots = null;
     if (outputPathsFile != null && context.isCollectionOfGeneratedFilesEnabled()) {
       try {
@@ -313,7 +281,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       }
     }
     if (affectedRoots == null) {
-      final List<Module> affectedModules = ContainerUtil.concat(modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
+      List<Module> affectedModules = executionSettingsBuilder.getAffectedModules();
       affectedRoots = ContainerUtil.newHashSet(CompilerPaths.getOutputPaths(affectedModules.toArray(Module.EMPTY_ARRAY)));
     }
     return affectedRoots;
@@ -364,6 +332,38 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       }
     }
     return null;
+  }
+
+  @Override
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
+    ExecutionEnvironment environment = super.createExecutionEnvironment(project, tasks);
+    if (environment != null) {
+      return environment;
+    }
+    TasksExecutionSettingsBuilder executionSettingsBuilder = new TasksExecutionSettingsBuilder(project, tasks);
+    Set<String> rootPaths = executionSettingsBuilder.getRootPaths();
+    if (rootPaths.size() != 1) {
+      return null;
+    }
+    String rootProjectPath = rootPaths.iterator().next();
+    ExternalSystemTaskExecutionSettings settings = executionSettingsBuilder.build(rootProjectPath);
+
+    environment =
+      ExternalSystemUtil.createExecutionEnvironment(project, GradleConstants.SYSTEM_ID, settings, DefaultRunExecutor.EXECUTOR_ID);
+    if (environment == null) {
+      LOG.warn("Execution environment for " + GradleConstants.SYSTEM_ID + " is null");
+      return null;
+    }
+
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
+    assert runnerAndConfigurationSettings != null;
+    ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
+    runConfiguration.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY,
+                                 executionSettingsBuilder.getVersionedInitScripts(rootProjectPath));
+    String initScript = join(executionSettingsBuilder.getInitScripts(rootProjectPath), System.lineSeparator());
+    runConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
+    runConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, settings.getExecutionName());
+    return environment;
   }
 
   @Override
@@ -498,6 +498,79 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
           );
         }
       }
+    }
+  }
+
+  private static class TasksExecutionSettingsBuilder {
+    private final MultiMap<String, String> buildTasksMap = MultiMap.createLinkedSet();
+    private final MultiMap<String, String> cleanTasksMap = MultiMap.createLinkedSet();
+    private final MultiMap<String, String> initScripts = MultiMap.createLinkedSet();
+    private final MultiMap<String, VersionSpecificInitScript> versionedInitScripts = MultiMap.createLinkedSet();
+
+    private final List<Module> modulesToBuild;
+    private final List<Module> modulesOfResourcesToBuild;
+    private final List<Module> modulesOfFiles;
+
+    private final String gradleVmOptions;
+
+    private TasksExecutionSettingsBuilder(@NotNull Project project, ProjectTask @NotNull ... tasks) {
+      gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
+      Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(Arrays.asList(tasks));
+      modulesToBuild = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), buildTasksMap, initScripts);
+      modulesOfResourcesToBuild = addModulesBuildTasks(taskMap.get(ModuleResourcesBuildTask.class), buildTasksMap, initScripts);
+      modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
+      addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap, versionedInitScripts);
+    }
+
+    private Iterable<String> getTasksToExecute(String rootProjectPath) {
+      Collection<String> buildTasks = buildTasksMap.get(rootProjectPath);
+      Collection<String> cleanTasks = cleanTasksMap.get(rootProjectPath);
+      return ContainerUtil.concat(cleanTasks, buildTasks);
+    }
+
+    Set<String> getRootPaths() {
+      return buildTasksMap.keySet();
+    }
+
+    List<Module> getAffectedModules() {
+      return ContainerUtil.concat(modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
+    }
+
+    public void addInitScripts(String rootProjectPath, VersionSpecificInitScript... initScript) {
+      Collection<VersionSpecificInitScript> versionSpecificInitScripts = versionedInitScripts.getModifiable(rootProjectPath);
+      Collections.addAll(versionSpecificInitScripts, initScript);
+    }
+
+    public Collection<VersionSpecificInitScript> getVersionedInitScripts(String rootProjectPath) {
+      return versionedInitScripts.get(rootProjectPath);
+    }
+
+    public Collection<String> getInitScripts(String rootProjectPath) {
+      return initScripts.get(rootProjectPath);
+    }
+
+    public boolean containsTasksToExecuteFor(String rootProjectPath) {
+      return getTasksToExecute(rootProjectPath).iterator().hasNext();
+    }
+
+    public ExternalSystemTaskExecutionSettings build(String rootProjectPath) {
+      ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
+      File projectFile = new File(rootProjectPath);
+      final String projectName;
+      if (projectFile.isFile()) {
+        projectName = projectFile.getParentFile().getName();
+      }
+      else {
+        projectName = projectFile.getName();
+      }
+      String executionName = GradleBundle.message("gradle.execution.name.build.project.", projectName);
+      settings.setExecutionName(executionName);
+      settings.setExternalProjectPath(rootProjectPath);
+      List<@NlsSafe String> taskNames = ContainerUtil.collect(getTasksToExecute(rootProjectPath).iterator());
+      settings.setTaskNames(taskNames);
+      settings.setVmOptions(gradleVmOptions);
+      settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
+      return settings;
     }
   }
 }
