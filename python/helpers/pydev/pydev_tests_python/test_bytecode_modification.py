@@ -5,10 +5,11 @@ from io import StringIO
 from types import CodeType
 import pytest
 
-from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
+from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code, add_jump_instruction
 from opcode import EXTENDED_ARG
 
 TRACE_MESSAGE = "Trace called"
+
 
 def tracing():
     print(TRACE_MESSAGE)
@@ -89,11 +90,11 @@ class TestInsertCode(unittest.TestCase):
             if op1 in LOAD_OPCODES:
                 # When comparing arguments of the load operations we shouldn't rely only on arguments themselves,
                 # because their order may change. It's better to compare the actual values instead.
-                self.comapre_load_args(of, code1, code2, op1, arg1, arg2)
+                self.compare_load_args(of, code1, code2, op1, arg1, arg2)
             elif arg1 != arg2:
                 self.assertEquals(arg1, arg2, "Different arguments at offset {}".format(of))
 
-    def comapre_load_args(self, offset, code1, code2, opcode, arg1, arg2):
+    def compare_load_args(self, offset, code1, code2, opcode, arg1, arg2):
         err_msg = "Different arguments at offset {}".format(offset)
         if opcode == dis.opmap['LOAD_ATTR']:
             assert code1.co_names[arg1] == code2.co_names[arg2], err_msg
@@ -599,3 +600,34 @@ class TestInsertCode(unittest.TestCase):
 
         finally:
             sys.stdout = self.original_stdout
+
+    def test_add_jump_instruction(self):
+        def foo():
+            a = 1
+            b = 2
+            return a + b
+
+        new_code_list = add_jump_instruction(0, foo.__code__)
+        assert new_code_list[-1] == 0
+        assert new_code_list[-2] == dis.opmap['POP_JUMP_IF_TRUE']
+
+        new_code_list = add_jump_instruction(42, foo.__code__)
+        assert new_code_list[-1] == 42
+        assert new_code_list[-2] == dis.opmap['POP_JUMP_IF_TRUE']
+
+        new_code_list = add_jump_instruction(257, foo.__code__)
+        assert new_code_list[-1] == 1
+        assert new_code_list[-2] == dis.opmap['POP_JUMP_IF_TRUE']
+        assert new_code_list[-3] == 1
+        assert new_code_list[-4] == EXTENDED_ARG
+
+        new_code_list = add_jump_instruction(65602, foo.__code__)
+        assert new_code_list[-1] == 66
+        assert new_code_list[-2] == dis.opmap['POP_JUMP_IF_TRUE']
+        assert new_code_list[-3] == 0
+        assert new_code_list[-4] == EXTENDED_ARG
+        assert new_code_list[-5] == 1
+        assert new_code_list[-6] == EXTENDED_ARG
+
+        with(pytest.raises(RuntimeError)):
+            add_jump_instruction(4294967296, foo.__code__)

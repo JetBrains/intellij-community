@@ -164,7 +164,7 @@ def _unpack_opargs(code, inserted_code_list, current_index):
             extended_arg = (arg << 8) if op == EXTENDED_ARG else 0
         else:
             arg = None
-        yield (i, op, arg)
+        yield i, op, arg
 
 
 def _update_label_offsets(code_obj, breakpoint_offset, breakpoint_code_list):
@@ -240,13 +240,29 @@ def add_jump_instruction(jump_arg, code_to_insert):
     (we could only return the return and possibly the load of the 'None' before the
     return -- not done yet because it needs work to fix all related tests).
     """
-    extended_arg_list = []
-    if jump_arg > MAX_BYTE:
-        extended_arg_list += [EXTENDED_ARG, jump_arg >> 8]
-        jump_arg = jump_arg & MAX_BYTE
+    buffer = [opmap['POP_JUMP_IF_TRUE'], jump_arg & MAX_BYTE]
 
-    # remove 'RETURN_VALUE' instruction and add 'POP_JUMP_IF_TRUE' with (if needed) 'EXTENDED_ARG'
-    return list(code_to_insert.co_code[:-RETURN_VALUE_SIZE]) + extended_arg_list + [opmap['POP_JUMP_IF_TRUE'], jump_arg]
+    jump_arg >>= 8
+    numbers_of_extended_args = 0
+    while jump_arg > 0:
+        buffer += [EXTENDED_ARG, jump_arg & MAX_BYTE]
+        jump_arg >>= 8
+        numbers_of_extended_args += 1
+
+    if numbers_of_extended_args > 3:
+        raise RuntimeError("At most 3 prefixal EXTENDED_ARG are allowed, {} generated. "
+                           "The passed `jump_arg` was {}"
+                           .format(numbers_of_extended_args, jump_arg))
+
+    op_list, arg_list = buffer[0::2], buffer[1::2]
+    jump_instruction_list = []
+    for op, arg in reversed(list(zip(op_list, arg_list))):
+        jump_instruction_list.append(op)
+        jump_instruction_list.append(arg)
+
+    # Remove 'RETURN_VALUE' instruction and add 'POP_JUMP_IF_TRUE'
+    # with (if needed) 'EXTENDED_ARG',
+    return list(code_to_insert.co_code[:-RETURN_VALUE_SIZE]) + jump_instruction_list
 
 
 _created = {}
@@ -282,15 +298,13 @@ def _insert_code(code_to_modify, code_to_insert, before_line):
     :param before_line: Number of line for code insertion
     :return: boolean flag whether insertion was successful, modified code
     """
-    linestarts = dict(dis.findlinestarts(code_to_modify))
-    if before_line not in linestarts.values():
-        return False, code_to_modify
-
-    offset = None
-    for off, line_no in linestarts.items():
+    line_starts = dict(dis.findlinestarts(code_to_modify))
+    for off, line_no in line_starts.items():
         if line_no == before_line:
             offset = off
             break
+    else:
+        return False, code_to_modify
 
     code_to_insert_list = add_jump_instruction(offset, code_to_insert)
     try:
