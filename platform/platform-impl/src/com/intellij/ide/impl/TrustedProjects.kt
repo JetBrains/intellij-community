@@ -197,6 +197,10 @@ internal fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = 
   return false
 }
 
+/**
+ * Per-project "is this project trusted" setting from the previous version of the trusted API.
+ * It shouldn't be used and is kept for migration purposes only.
+ */
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
