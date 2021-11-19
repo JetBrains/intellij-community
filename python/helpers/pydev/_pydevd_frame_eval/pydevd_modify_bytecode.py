@@ -70,35 +70,21 @@ def _make_linetable(code_to_modify, all_inserted_code):
     .. _lnotab_notes.txt: https://github.com/python/cpython/blob/5a14f71fe869d4a62dcdeb9a8fbbb5884c75060c/Objects/lnotab_notes.txt
 
     """
-    assert len(all_inserted_code) == 1, "Generating a linetable from multiple " \
-                                        "inserted code chunks is not supported."
-
-    offset, code_list = all_inserted_code[0]
-
-    if offset == 0:
-        # A shortcut when the breakpoint is on the first line.
-        return bytes([len(code_list), 0]) + code_to_modify.co_linetable
-
-    new_lines, delta = [], len(code_list)
-
-    for i, (start, end, line) in enumerate(code_to_modify.co_lines()):
-        if offset == end:
-            new_lines.append((start, end + delta, line))
-            break
-        new_lines.append((start, end, line))
-    else:
-        return None
-
-    for start, end, line in list(code_to_modify.co_lines())[i+1:]:
-        new_lines.append((start + delta, end + delta, line))
-
-    new_linetable, prev_line = [], code_to_modify.co_firstlineno
-    for start, end, line in new_lines:
-        new_linetable.append(end - start)
-        new_linetable.append(line - prev_line)
-        prev_line = line
-
-    return bytes(new_linetable)
+    new_line_table, end = [], 0
+    inst_increments = code_to_modify.co_linetable[0::2]
+    line_increments = code_to_modify.co_linetable[1::2]
+    it = zip(inst_increments, line_increments)
+    for inst_delta, line_delta in it:
+        start = end
+        end = start + inst_delta
+        for offset, code_list in all_inserted_code:
+            if offset == start:
+                new_line_table.append(inst_delta + len(code_list))
+                break
+        else:
+            new_line_table.append(inst_delta)
+        new_line_table.append(line_delta)
+    return bytes(new_line_table)
 
 
 def _make_lnotab(code_to_modify, all_inserted_code):
