@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
@@ -42,13 +43,13 @@ final class UnixScriptBuilder {
       additionalJvmArgs += "-Xbootclasspath/a:\$BOOT_CLASS_PATH"
     }
 
-    Path vmOptionsPath = null
+    Path vmOptionsPath
     switch (osFamily) {
       case OsFamily.LINUX:
         vmOptionsPath = distBinDir.resolve("${baseName}64.vmoptions")
         break
       case OsFamily.MACOS:
-        vmOptionsFileName = distBinDir.resolve("${baseName}.vmoptions")
+        vmOptionsPath = distBinDir.resolve("${baseName}.vmoptions")
         break
       default:
         throw new IllegalStateException("Unknown OsFamily")
