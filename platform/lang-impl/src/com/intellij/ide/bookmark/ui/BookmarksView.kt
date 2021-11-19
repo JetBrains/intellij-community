@@ -6,6 +6,7 @@ import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.dnd.DnDSupport
+import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
@@ -24,7 +25,6 @@ import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
-import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.OpenSourceUtil
@@ -47,7 +47,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   private val structure = BookmarksTreeStructure(this)
   private val model = StructureTreeModel(structure, this)
-  val tree = Tree(AsyncTreeModel(model, this))
+  val tree = DnDAwareTree(AsyncTreeModel(model, this))
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
 
