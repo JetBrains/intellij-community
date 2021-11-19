@@ -5,12 +5,13 @@ import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.providers.FileBookmarkImpl
 import com.intellij.ide.bookmark.providers.LineBookmarkImpl
 import com.intellij.ide.dnd.*
+import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Rectangle
 
-internal class DragAndDropHandler(val view: BookmarksView) : DnDTargetChecker, DnDDropHandler.WithResult {
+internal class DragAndDropHandler(val view: BookmarksView) : DnDNativeTarget, DnDTargetChecker, DnDDropHandler.WithResult {
 
   private class AttachedBookmarks(val occurrences: List<BookmarkOccurrence>)
   private class AttachedBookmarkGroups(val groups: List<BookmarkGroup>)
@@ -86,8 +87,33 @@ internal class DragAndDropHandler(val view: BookmarksView) : DnDTargetChecker, D
           else -> setLineHighlighting(event, bounds, above)
         }
       }
+      else -> {
+        val files = FileCopyPasteUtil.getFileListFromAttachedObject(attached)
+        if (files.isEmpty()) {
+          if (!isMac || attached !is DnDNativeTarget.EventInfo) return false
+          // ProjectViewDropTarget.update says that it is not possible
+          // to obtain dragged items _before_ accepting _drop_ on Macs
+          // so lets check flavors only
+          if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) return false
+          setHighlighting(event, bounds)
+          return true
+        }
+        val manager = BookmarksManager.getInstance(view.project) as? BookmarksManagerImpl ?: return false
+        val group = node.value as? BookmarkGroup
+        if (group != null && strict) return when {
+          !updateOnly -> manager.dragAddInto(group, files)
+          !manager.canDragAddInto(group, files) -> false
+          else -> setHighlighting(event, bounds)
+        }
+        if (node.parent?.value !is BookmarkGroup) return false
+        val occurrence = node.bookmarkOccurrence ?: return false
+        return when {
+          !updateOnly -> manager.dragAdd(above, occurrence, files)
+          !manager.canDragAddInto(occurrence.group, files) -> false
+          else -> setLineHighlighting(event, bounds, above)
+        }
+      }
     }
-    return false
   }
 
   private fun setHighlighting(event: DnDEvent, bounds: Rectangle): Boolean {
