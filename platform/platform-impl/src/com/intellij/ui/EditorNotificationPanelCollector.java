@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorNotificationPanelCollector extends CounterUsagesCollector {
-  public static final EventLogGroup GROUP = new EventLogGroup("editor.notification.panel", 1);
+  public static final EventLogGroup GROUP = new EventLogGroup("editor.notification.panel", 2);
 
   private static final StringEventField KEY_FIELD = EventFields.StringValidatedByCustomRule("key", "editor_notification_panel_key");
   private static final StringEventField CLASSNAME_FIELD = EventFields.StringValidatedByCustomRule("class_name", "class_name");
