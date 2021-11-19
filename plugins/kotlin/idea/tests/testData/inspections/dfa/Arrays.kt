@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun arrayCast(x: Array<Int>) {
     @Suppress("UNCHECKED_CAST")
     val y = x as Array<Any>

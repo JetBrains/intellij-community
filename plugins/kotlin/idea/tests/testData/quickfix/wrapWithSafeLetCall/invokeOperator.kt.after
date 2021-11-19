@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo(val bar: Bar)
 
 class Bar {

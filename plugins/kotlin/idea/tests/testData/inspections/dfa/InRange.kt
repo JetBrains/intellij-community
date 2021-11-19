@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(obj : Int) {
     if (obj > 10) {
         if (<warning descr="Condition 'obj in 1..5' is always false">obj in 1..5</warning>) {}

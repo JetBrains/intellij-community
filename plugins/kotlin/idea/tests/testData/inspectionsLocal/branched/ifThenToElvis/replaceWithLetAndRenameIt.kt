@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(it: String?) {
     val x = <caret>if (it != null) {

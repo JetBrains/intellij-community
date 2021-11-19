@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Convert to 'let'
 class Employee(val firstName: String, val manager: Employee?)
 

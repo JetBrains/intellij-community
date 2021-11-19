@@ -1,5 +1,5 @@
 // "Import" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // LANGUAGE_VERSION: 1.2
 // ACTION: Create function 'suspendCoroutineOrReturn'
 // ACTION: Rename reference

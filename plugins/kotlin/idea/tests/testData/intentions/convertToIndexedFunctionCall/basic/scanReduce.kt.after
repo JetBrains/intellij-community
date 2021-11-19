@@ -1,5 +1,5 @@
 // INTENTION_TEXT: "Convert to 'runningReduceIndexed'"
-// WITH_RUNTIME
+// WITH_STDLIB
 // DISABLE-ERRORS
 // AFTER-WARNING: This class can only be used with the compiler argument '-Xopt-in=kotlin.RequiresOptIn'
 // TODO: fix warning?

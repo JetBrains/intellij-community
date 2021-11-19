@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Replace with 'listOf' function
 import java.util.Arrays
 

@@ -1,5 +1,5 @@
 // "Replace with 'newFun(this, s)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 interface I {
     @Deprecated("", ReplaceWith("newFun(this, s)"))

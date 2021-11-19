@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: FALSE
 
 fun foo(): Boolean {

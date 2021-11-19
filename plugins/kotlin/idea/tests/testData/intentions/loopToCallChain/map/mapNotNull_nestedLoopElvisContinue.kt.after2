@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'flatMap{}.mapNotNull{}.mapTo(){}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().flatMap{}.mapNotNull{}.mapTo(){}'"
 // AFTER-WARNING: Parameter 'p' is never used

@@ -1,5 +1,5 @@
 // "Replace with 'OptIn(*markerClass)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 @file:<caret>UseExperimental(Foo::class, Bar::class)
 
 annotation class Foo

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 class FooClass {
     @Transient
     val test: Int?<caret> = 5

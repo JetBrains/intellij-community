@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo {
     val prop = <caret>Obj.prop.toString()
 }

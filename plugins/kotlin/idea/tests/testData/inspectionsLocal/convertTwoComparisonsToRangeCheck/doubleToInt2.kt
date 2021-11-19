@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(bar: Double) {
     0 <= bar && bar <= 10<caret>
 }

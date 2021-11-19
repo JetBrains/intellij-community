@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Variable 'x' is never used
 fun interface I<A, B, C, D> {
     fun method(x: Pair<A, B>): Pair<C, D>

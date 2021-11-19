@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun simpleWhile() {
     var x = 0
     while (x < 100000) {

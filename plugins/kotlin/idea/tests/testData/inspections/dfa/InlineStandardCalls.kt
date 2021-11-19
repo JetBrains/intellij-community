@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun inlineLet() {
     val x = 5
     val y = x.let { if(<warning descr="Condition 'it == 5' is always true">it == 5</warning>) 1 else 2 }

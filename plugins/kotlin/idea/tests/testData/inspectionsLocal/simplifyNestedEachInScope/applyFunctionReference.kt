@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(num: Int) = println(num + 1)
 
 fun test(): List<Int> {

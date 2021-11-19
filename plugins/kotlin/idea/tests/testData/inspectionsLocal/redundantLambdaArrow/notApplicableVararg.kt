@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun main() {
     registerHandler(handlers = *arrayOf(

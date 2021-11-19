@@ -1,5 +1,5 @@
 // SUGGESTED_NAMES: pair, intIntPair, intPair
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int
 // PARAM_DESCRIPTOR: value-parameter a: kotlin.Int defined in foo

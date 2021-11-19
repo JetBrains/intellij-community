@@ -14,4 +14,4 @@ val list = listOf<fold text='(...)' expand='true'>(
     2
 )</fold>
 
-// WITH_RUNTIME
+// WITH_STDLIB

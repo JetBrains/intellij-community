@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     <caret>when (val a = 42) {
         else -> use(a, a)

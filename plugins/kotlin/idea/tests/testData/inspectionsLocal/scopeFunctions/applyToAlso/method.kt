@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Convert to 'also'
 
 val x = hashSetOf<String>().<caret>apply {

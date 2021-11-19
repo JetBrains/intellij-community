@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // WITH_DEFAULT_VALUE: false
 fun a() {
     1.b(2)

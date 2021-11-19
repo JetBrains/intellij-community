@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 val x = listOf(1, 2, 3).<caret>map(
         // comment1

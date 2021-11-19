@@ -1,7 +1,7 @@
 // HIGHLIGHT: INFORMATION
 // PROBLEM: Replace 'associate' with 'associateBy'
 // FIX: Replace with 'associateBy'
-// WITH_RUNTIME
+// WITH_STDLIB
 fun getKey(i: Int): Long = 1L
 fun getValue(i: Int): String = ""
 

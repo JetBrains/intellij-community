@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun compareObjects(x: Any?, y: Any?) {
     if (<warning descr="Condition 'x == x' is always true">x == x</warning>) {}
     if (x == y) {

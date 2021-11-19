@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun qualifierDoesNotAddSmartCast(x: Any) {
     x as String
     if (x.length == 0) return

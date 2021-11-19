@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // MIN_JAVA_VERSION: 9
 // FIX: Replace with 'mutableSetOf' function
 

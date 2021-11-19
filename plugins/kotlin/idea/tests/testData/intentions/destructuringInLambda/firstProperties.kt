@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Destructured parameter 'a' is never used
 // AFTER-WARNING: Destructured parameter 'b' is never used
 

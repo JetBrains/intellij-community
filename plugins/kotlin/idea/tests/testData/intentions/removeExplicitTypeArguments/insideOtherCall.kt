@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class ListWrapper<T>(val x: List<T>)
 

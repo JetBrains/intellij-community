@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun main() {
     <caret>(1..100).forEach { i ->
         if (i % 2 == 0) return@forEach

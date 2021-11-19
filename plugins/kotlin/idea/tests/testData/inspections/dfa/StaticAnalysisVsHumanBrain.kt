@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // KTIJ-18352
 fun process(options: Map<String, Int>, inputs: List<String>, s: String): List<Int> {
     val res = mutableListOf<Int>()

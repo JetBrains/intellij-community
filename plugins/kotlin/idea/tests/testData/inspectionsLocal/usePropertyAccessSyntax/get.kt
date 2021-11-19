@@ -1,5 +1,5 @@
 // PROBLEM: "Use of getter method instead of property access syntax"
-// WITH_RUNTIME
+// WITH_STDLIB
 import java.io.File
 
 fun foo(file: File) {

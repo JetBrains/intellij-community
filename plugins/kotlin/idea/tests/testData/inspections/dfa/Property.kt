@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 abstract class X {
     var a: Int = 0
     @Volatile

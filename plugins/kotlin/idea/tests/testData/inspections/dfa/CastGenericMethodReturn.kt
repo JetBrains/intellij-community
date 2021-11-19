@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(t: Test) {
     val result = t.returnT() as? String
     if (result == null) {}

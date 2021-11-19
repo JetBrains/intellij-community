@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun javaClassRef() {
     val xKClass = X::class
     val x = xKClass.java

@@ -12,7 +12,7 @@
 // ACTION: Rename reference
 // ERROR: An annotation argument must be a compile-time constant
 // ERROR: Unresolved reference: Unknown
-// WITH_RUNTIME
+// WITH_STDLIB
 
 import kotlin.reflect.KClass
 

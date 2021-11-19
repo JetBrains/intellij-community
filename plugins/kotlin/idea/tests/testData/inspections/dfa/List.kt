@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun listIsEmpty(x: List<Int>): Unit {
     if (x.size == 0) return
     if (<warning descr="Condition 'x.isEmpty()' is always false">x.isEmpty()</warning>) {}

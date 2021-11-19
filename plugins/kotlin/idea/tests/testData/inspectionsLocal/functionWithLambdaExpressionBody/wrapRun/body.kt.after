@@ -1,5 +1,5 @@
 // FIX: Convert to run { ... }
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(a: Int, b: Int) = run {
     println(a)
     a + b

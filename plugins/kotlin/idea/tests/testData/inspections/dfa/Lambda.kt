@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun itVariable(x:List<Int>) {
     x.forEach {
         if (it > 0) {

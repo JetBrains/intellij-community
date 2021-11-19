@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun objectDeclaration() {
     var x : Any = object : X(), Y {}
     if (<warning descr="Condition 'x is X' is always true">x is X</warning>) {}

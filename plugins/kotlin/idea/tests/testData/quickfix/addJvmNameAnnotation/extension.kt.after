@@ -1,5 +1,5 @@
 // "Add '@JvmName' annotation" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 interface Foo<T>
 
 fun Foo<Int>.foo() = this

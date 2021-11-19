@@ -5,7 +5,7 @@
 // ACTION: Create property 'abc' as constructor parameter
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Rename reference
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class Test {
     fun outer() {

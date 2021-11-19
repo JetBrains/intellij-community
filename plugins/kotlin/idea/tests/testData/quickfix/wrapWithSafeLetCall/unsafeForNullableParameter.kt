@@ -6,7 +6,7 @@
 // ACTION: Convert to with
 // ACTION: Surround with null check
 // DISABLE-ERRORS
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(s: String?) {}
 
 fun bar(s: String?) {

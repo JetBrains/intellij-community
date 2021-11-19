@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 data class Foo(val map: Map<String, Int>) : Map<String, Int> by map
 
 fun main() {

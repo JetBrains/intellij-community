@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // Tests from PR#1176
 fun foo(a: Int, b: Int) {
     val flag = a > b

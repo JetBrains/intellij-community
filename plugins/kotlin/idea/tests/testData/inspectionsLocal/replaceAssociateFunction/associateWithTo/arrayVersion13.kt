@@ -1,6 +1,6 @@
 // LANGUAGE_VERSION: 1.3
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun getValue(i: Int): String = ""
 
 fun associateWithTo() {

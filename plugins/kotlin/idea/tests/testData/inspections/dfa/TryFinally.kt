@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile

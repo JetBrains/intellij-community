@@ -1,5 +1,5 @@
 // AFTER-WARNING: Variable 'result' is never used
-// WITH_RUNTIME
+// WITH_STDLIB
 class X {
     fun one() {}
     fun two() = ""

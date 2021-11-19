@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filterIndexed{}.any()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filterIndexed{}.any()'"
 // AFTER-WARNING: Variable 'found' is never used

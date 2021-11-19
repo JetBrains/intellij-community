@@ -1,5 +1,5 @@
 // "Replace '@JvmField' with 'const'" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: JvmField has no effect on a private property
 // ACTION: Convert to lazy property
 // ACTION: Add 'const' modifier

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 data class D(val x: Int = 1, val y: Int = 2, val z: Int = 3)
 
 fun test(i: Int?, j: Int) {

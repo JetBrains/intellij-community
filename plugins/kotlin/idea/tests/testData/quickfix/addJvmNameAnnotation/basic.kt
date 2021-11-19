@@ -1,5 +1,5 @@
 // "Add '@JvmName' annotation" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo {
     fun <caret>bar(foo: List<String>): String {
         return "1"

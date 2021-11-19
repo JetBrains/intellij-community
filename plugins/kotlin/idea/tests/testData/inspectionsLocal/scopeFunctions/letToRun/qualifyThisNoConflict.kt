@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class C {
     fun foo(s: String, s2: String = ""): String = "c"

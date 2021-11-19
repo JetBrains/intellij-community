@@ -6,7 +6,7 @@
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Rename reference
 // ERROR: Unresolved reference: abc
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class Test {
     fun testMethod(x:Int = <caret>abc) {

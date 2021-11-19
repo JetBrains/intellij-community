@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun f() {
     val listOf = listOf<Int>()
     val v : List<Int> = listOf
