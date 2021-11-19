@@ -312,7 +312,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       FrameState.setFrameStateListener(this)
       glassPane = IdeGlassPaneImpl(getRootPane(), true)
       if (SystemInfo.isMac && !(SystemInfo.isMacSystemMenu && java.lang.Boolean.getBoolean("mac.system.menu.singleton"))) {
-        jMenuBar = IdeMenuBar.createMenuBar()
+        jMenuBar = IdeMenuBar.createMenuBar().setFrame(this);
+
       }
       MouseGestureManager.getInstance().add(this)
       focusTraversalPolicy = IdeFocusTraversalPolicy()
