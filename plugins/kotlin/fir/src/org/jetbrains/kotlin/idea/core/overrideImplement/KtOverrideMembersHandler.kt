@@ -63,7 +63,7 @@ internal open class KtOverrideMembersHandler : KtGenerateMembersHandler() {
                     }
                 }
 
-                val hasNoSuperTypesExceptAny = classOrObjectSymbol.superTypes.singleOrNull()?.type?.isAny == true
+                val hasNoSuperTypesExceptAny = classOrObjectSymbol.superTypes.singleOrNull()?.isAny == true
                 for (symbolToProcess in symbolsToProcess) {
                     val originalOverriddenSymbol = symbolToProcess.originalOverriddenSymbol
                     val containingSymbol = originalOverriddenSymbol?.originalContainingClassForOverride

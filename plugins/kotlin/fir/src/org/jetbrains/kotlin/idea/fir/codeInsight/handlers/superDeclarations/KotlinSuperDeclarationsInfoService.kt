@@ -81,7 +81,7 @@ object KotlinSuperDeclarationsInfoService {
             }
         )
         is KtClassOrObjectSymbol -> KotlinSuperDeclarationsInfo(
-            symbol.superTypes.mapNotNull { (it.type as? KtNonErrorClassType)?.classSymbol?.psi },
+            symbol.superTypes.mapNotNull { (it as? KtNonErrorClassType)?.classSymbol?.psi },
             KotlinSuperDeclarationsInfo.DeclarationKind.CLASS,
         )
 
