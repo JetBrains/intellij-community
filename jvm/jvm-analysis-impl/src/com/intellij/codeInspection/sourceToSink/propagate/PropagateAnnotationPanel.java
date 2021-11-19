@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -65,7 +66,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class PropagateAnnotationPanel extends JPanel implements Disposable {
@@ -264,22 +264,23 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
     void updateEditorTexts(@NotNull TaintNode taintNode) {
       if (taintNode == myRoot || taintNode.getParentDescriptor() == null) {
-        myUsageEditor.show(null);
-        myMemberEditor.show(null);
+        myUsageEditor.show(null, null);
+        myMemberEditor.show(null, null);
         return;
       }
       PsiElement usage = taintNode.getRef();
       if (usage == null) return;
       PsiElement parentPsi = getParentPsi(usage);
       if (parentPsi == null) return;
-      myUsageEditor.show(parentPsi);
+      PsiElement usageHighlight = PsiTreeUtil.isAncestor(parentPsi, usage, true) ? usage : getIdentifier(parentPsi);
+      if (usageHighlight == null) return;
+      myUsageEditor.show(parentPsi, usageHighlight);
+
       PsiElement element = taintNode.getPsiElement();
       if (element == null) return;
-      myMemberEditor.show(element);
-      PsiElement usageHighlight = PsiTreeUtil.isAncestor(parentPsi, usage, true) ? usage : getIdentifier(parentPsi);
-      if (usageHighlight != null) myUsageEditor.highlight(parentPsi, usageHighlight);
       PsiElement elementHighlight = getIdentifier(element);
-      if (elementHighlight != null) myMemberEditor.highlight(element, elementHighlight);
+      if (elementHighlight == null) return;
+      myMemberEditor.show(element, elementHighlight);
     }
 
     @Override
@@ -307,30 +308,31 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       private final Editor myEditor;
       private final Collection<RangeHighlighter> myHighlighters = new ArrayList<>();
       private final String myEmptyText;
-      private int myIndent;
-
 
       private ElementEditor(Editor editor, String emptyText) {
         myEditor = editor;
         myEmptyText = emptyText;
       }
 
-      public void show(@Nullable PsiElement element) {
-        String elementText = getText(element);
-        String text = elementText == null ? JvmAnalysisBundle.message(myEmptyText) : elementText;
+      public void show(@Nullable PsiElement element, @Nullable PsiElement toHighlight) {
+        if (element == null || toHighlight == null) {
+          String text = JvmAnalysisBundle.message(myEmptyText);
+          ApplicationManager.getApplication().runWriteAction(() -> myEditor.getDocument().setText(text));
+          return;
+        }
+        ElementModel model = ElementModel.create(element, toHighlight);
+        if (model == null) return;
+        String text = model.myText;
         ApplicationManager.getApplication().runWriteAction(() -> myEditor.getDocument().setText(text));
-        if (element == null) return;
         EditorHighlighter highlighter = createHighlighter(element);
         ((EditorEx)myEditor).setHighlighter(highlighter);
+        highlightRange(element.getProject(), model.myHighlightRange);
       }
 
-      public void highlight(@NotNull PsiElement elementInEditor, @NotNull PsiElement toHighlight) {
-        Project project = elementInEditor.getProject();
+      private void highlightRange(@NotNull Project project, @NotNull TextRange range) {
         HighlightManager highlighter = HighlightManager.getInstance(project);
         myHighlighters.forEach(h -> highlighter.removeSegmentHighlighter(myEditor, h));
         myHighlighters.clear();
-        TextRange range = rangeInParent(elementInEditor, toHighlight);
-        if (range == null) return;
         highlighter.addRangeHighlight(myEditor, range.getStartOffset(), range.getEndOffset(),
                                       EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, false, myHighlighters);
       }
@@ -340,63 +342,58 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
         EditorFactory.getInstance().releaseEditor(myEditor);
       }
 
-      private @Nullable TextRange rangeInParent(@NotNull PsiElement parent, @NotNull PsiElement child) {
-        int parentStart = getStartOffset(parent);
-        if (parentStart == -1) return null;
-        TextRange childRange = child.getTextRange();
-        Document document = PsiDocumentManager.getInstance(parent.getProject()).getDocument(parent.getContainingFile());
-        if (document == null) return null;
-        int parentLineNumber = document.getLineNumber(parent.getTextRange().getStartOffset());
-        int childLineNumber = document.getLineNumber(child.getTextRange().getStartOffset());
-        int parentEndLineNumber = document.getLineNumber(parent.getTextRange().getEndOffset());
-        if (childLineNumber < parentLineNumber || childLineNumber > parentEndLineNumber) return null;
-        int indent = (childLineNumber - parentLineNumber + 1) * myIndent;
-        return childRange.shiftLeft(parentStart).shiftLeft(indent);
-      }
-
-      private @Nullable String getText(@Nullable PsiElement element) {
-        if (element == null) return null;
-        PsiFile file = element.getContainingFile();
-        if (file == null) return null;
-        Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
-        if (document == null) return null;
-        TextRange textRange = element.getTextRange();
-        if (textRange == null) return null;
-        int start = document.getLineStartOffset(document.getLineNumber(textRange.getStartOffset()));
-        int end = document.getLineEndOffset(document.getLineNumber(textRange.getEndOffset()));
-        if (start >= end) return null;
-        String text = document.getText().substring(start, end);
-        String[] lines = text.split("\n");
-        myIndent = getIndent(lines);
-        text = Arrays.stream(lines).map(line -> line.substring(myIndent)).collect(Collectors.joining("\n"));
-        return text;
-      }
-
-      private static int getStartOffset(@NotNull PsiElement owner) {
-        PsiFile file = owner.getContainingFile();
-        Document document = PsiDocumentManager.getInstance(owner.getProject()).getDocument(file);
-        if (document == null) return -1;
-        int lineNumber = document.getLineNumber(owner.getTextRange().getStartOffset());
-        return document.getLineStartOffset(lineNumber);
-      }
-
-      private static int getIndent(String @NotNull [] lines) {
-        int prefix = Integer.MAX_VALUE;
-        for (int i = 0; i < lines.length && prefix != 0; i++) {
-          String line = lines[i];
-          int indent = 0;
-          while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
-          if (indent == line.length()) continue;
-          if (indent < prefix) prefix = indent;
-        }
-        return prefix;
-      }
-
       private static @NotNull EditorHighlighter createHighlighter(@NotNull PsiElement element) {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         Project project = element.getProject();
         VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
         return HighlighterFactory.createHighlighter(virtualFile, scheme, project);
+      }
+
+      private static class ElementModel {
+        private final String myText;
+        private final TextRange myHighlightRange;
+
+        private ElementModel(@NotNull String text, @NotNull TextRange highlightRange) {
+          myText = text;
+          myHighlightRange = highlightRange;
+        }
+
+        static @Nullable ElementModel create(@NotNull PsiElement element, @NotNull PsiElement toHighlight) {
+          PsiFile file = element.getContainingFile();
+          if (file == null) return null;
+          Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+          if (document == null) return null;
+          TextRange textRange = element.getTextRange();
+          if (textRange == null) return null;
+          int startLineNumber = document.getLineNumber(textRange.getStartOffset());
+          int start = document.getLineStartOffset(startLineNumber);
+          int end = document.getLineEndOffset(document.getLineNumber(textRange.getEndOffset()));
+          String[] lines = document.getText(TextRange.create(start, end)).split("\n");
+          int indent = getIndent(lines);
+          TextRange highlightRange = toHighlight.getTextRange();
+          int highlightLine = document.getLineNumber(highlightRange.getStartOffset()) - startLineNumber;
+          int highlightIndent = 0;
+          for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.isBlank()) continue;
+            if (i <= highlightLine) highlightIndent += indent;
+            lines[i] = line.substring(indent);
+          }
+          highlightRange = highlightRange.shiftLeft(start).shiftLeft(highlightIndent);
+          return new ElementModel(StringUtil.join(lines, "\n"), highlightRange);
+        }
+
+        private static int getIndent(String @NotNull [] lines) {
+          int prefix = Integer.MAX_VALUE;
+          for (int i = 0; i < lines.length && prefix != 0; i++) {
+            String line = lines[i];
+            int indent = 0;
+            while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
+            if (indent == line.length()) continue;
+            if (indent < prefix) prefix = indent;
+          }
+          return prefix;
+        }
       }
     }
   }
