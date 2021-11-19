@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
@@ -320,16 +319,16 @@ public final class Utils {
       }
       else if (action instanceof ActionGroup &&
                !Boolean.TRUE.equals(presentation.getClientProperty("actionGroup.perform.only"))) {
-        Menu submenuPeer = nativePeer != null ? (Menu)nativePeer.add(new Menu(presentation.getText(enableMnemonics))) : null;
-        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons, submenuPeer);
+        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
+        if (nativePeer != null) nativePeer.add(menu.getScreenMenuPeer());
       }
       else {
-        MenuItem menuItemPeer = nativePeer != null ? nativePeer.add(new MenuItem()) : null;
-        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons, menuItemPeer);
+        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons);
         component.add(each);
         children.add(each);
+        if (nativePeer != null) nativePeer.add(each.getScreenMenuItemPeer());
       }
     }
 
