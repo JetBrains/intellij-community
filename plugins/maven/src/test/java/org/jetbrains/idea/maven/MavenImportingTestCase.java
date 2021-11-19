@@ -64,7 +64,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
-  private boolean isNewImportingProcess = true;
+  private final boolean isNewImportingProcess = Boolean.parseBoolean(System.getProperty("maven.new.importing.process"));
 
   @Override
   protected void setUp() throws Exception {
