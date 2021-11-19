@@ -441,25 +441,26 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
         expr instanceof PyCallExpression) priority = 1;
     else if (expr instanceof PyPrefixExpression) {
       final IElementType opType = getOperationType(expr);
-      if (opType == PLUS || opType == MINUS || opType == TILDE) priority = 2;
-      if (opType == NOT_KEYWORD) priority = 11;
+      if (opType == AWAIT_KEYWORD) priority = 2;
+      if (opType == PLUS || opType == MINUS || opType == TILDE) priority = 3;
+      if (opType == NOT_KEYWORD) priority = 12;
     }
     else if (expr instanceof PyBinaryExpression) {
       final IElementType opType = getOperationType(expr);
-      if (opType == EXP) priority =  3;
-      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  4;
-      if (opType == PLUS || opType == MINUS) priority =  5;
-      if (opType == LTLT || opType == GTGT) priority = 6;
-      if (opType == AND) priority = 7;
-      if (opType == XOR) priority = 8;
-      if (opType == OR) priority = 9;
-      if (COMPARISON_OPERATIONS.contains(opType)) priority = 10;
-      if (opType == AND_KEYWORD) priority = 12;
-      if (opType == OR_KEYWORD) priority = 13;
+      if (opType == EXP) priority =  4;
+      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  5;
+      if (opType == PLUS || opType == MINUS) priority =  6;
+      if (opType == LTLT || opType == GTGT) priority = 7;
+      if (opType == AND) priority = 8;
+      if (opType == XOR) priority = 9;
+      if (opType == OR) priority = 10;
+      if (COMPARISON_OPERATIONS.contains(opType)) priority = 11;
+      if (opType == AND_KEYWORD) priority = 13;
+      if (opType == OR_KEYWORD) priority = 14;
     }
-    else if (expr instanceof PyConditionalExpression) priority = 14;
-    else if (expr instanceof PyLambdaExpression) priority = 15;
-    else if (expr instanceof PyAssignmentExpression) priority = 16;
+    else if (expr instanceof PyConditionalExpression) priority = 15;
+    else if (expr instanceof PyLambdaExpression) priority = 16;
+    else if (expr instanceof PyAssignmentExpression) priority = 17;
 
     return -priority;
   }
