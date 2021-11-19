@@ -851,7 +851,7 @@ public final class PluginManagerConfigurable
             .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
             .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
                                 defaultCategory.equals(o2.title) ? -1 :
-                                StringUtil.compare(o1.title, o2.title, true))
+                                o1.compareTo(o2))
             .forEachOrdered(group -> {
               myInstalledPanel.addGroup(group);
               myPluginModel.addEnabledGroup(group);
@@ -1134,7 +1134,8 @@ public final class PluginManagerConfigurable
     });
   }
 
-  private final class ComparablePluginsGroup extends PluginsGroup {
+  private final class ComparablePluginsGroup extends PluginsGroup
+    implements Comparable<ComparablePluginsGroup> {
 
     private boolean myIsEnable = false;
 
@@ -1150,6 +1151,11 @@ public final class PluginManagerConfigurable
                                     (__, ___) -> setEnabledState());
 
       titleWithEnabled(myPluginModel);
+    }
+
+    @Override
+    public int compareTo(@NotNull ComparablePluginsGroup other) {
+      return StringUtil.compare(title, other.title, true);
     }
 
     @Override
