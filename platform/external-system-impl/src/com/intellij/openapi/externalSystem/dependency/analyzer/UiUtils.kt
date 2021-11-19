@@ -23,9 +23,9 @@ import javax.swing.*
 import javax.swing.border.Border
 
 
-internal val BORDER = 6
-internal val INDENT = 16
-internal val ICON_TEXT_GAP = 4
+internal const val BORDER = 6
+internal const val INDENT = 16
+internal const val ICON_TEXT_GAP = 4
 
 internal fun emptyListBorder(): Border {
   return JBUI.Borders.empty()
@@ -40,9 +40,11 @@ internal fun emptyListCellBorder(list: JList<*>, index: Int, indent: Int = 0): B
 }
 
 internal fun setupListPopupPreferredWidth(list: JList<*>) {
-  val preferredSize = list.preferredSize
-  preferredSize.width = maxOf(JBUI.scale(164), preferredSize.width)
-  list.preferredSize = preferredSize
+  list.setPreferredWidth(maxOf(JBUI.scale(164), list.preferredSize.width))
+}
+
+internal fun JComponent.setPreferredWidth(width: Int) {
+  preferredSize = preferredSize.also { it.width = width }
 }
 
 internal fun label(text: @Nls String) =
@@ -117,6 +119,16 @@ internal fun action(action: (AnActionEvent) -> Unit, update: (AnActionEvent) -> 
     override fun actionPerformed(e: AnActionEvent) = action(e)
     override fun update(e: AnActionEvent) = update(e)
   }
+
+internal fun popupActionGroup(vararg actions: AnAction) =
+  DefaultActionGroup(*actions)
+    .apply { isPopup = true }
+
+internal fun actionSeparator() = Separator()
+
+internal fun labelSeparator() =
+  JLabel(AllIcons.General.Divider)
+    .apply { border = JBUI.Borders.empty() }
 
 internal fun expandTreeAction(tree: JTree, update: (AnActionEvent) -> Unit = {}) =
   action({ TreeUtil.expandAll(tree) }, update)

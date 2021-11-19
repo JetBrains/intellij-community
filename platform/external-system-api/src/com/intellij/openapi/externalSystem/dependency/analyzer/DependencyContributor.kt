@@ -46,10 +46,16 @@ interface DependencyContributor {
 
   interface InspectionResult {
 
-    object Omitted : InspectionResult
+    interface Info: InspectionResult {
 
-    object Duplicate : InspectionResult
+      object Omitted : Info
 
-    class VersionConflict(val conflicted: Dependency.Data.Artifact) : InspectionResult
+      object Duplicate : Info
+    }
+
+    interface Warning : InspectionResult {
+
+      class VersionConflict(val conflicted: Dependency.Data.Artifact) : Warning
+    }
   }
 }

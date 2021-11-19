@@ -4,7 +4,9 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Artifact
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Module
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Info.Duplicate
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Info.Omitted
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Warning.VersionConflict
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.LocalTimeCounter
