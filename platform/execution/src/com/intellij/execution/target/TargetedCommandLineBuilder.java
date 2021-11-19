@@ -3,6 +3,7 @@ package com.intellij.execution.target;
 
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,7 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
   @NotNull private final Set<File> myFilesToDeleteOnTermination = new HashSet<>();
 
   @NotNull private final TargetEnvironmentRequest myRequest;
+  private boolean myRedirectErrorStream = false;
 
   public TargetedCommandLineBuilder(@NotNull TargetEnvironmentRequest request) {
     myRequest = request;
@@ -39,7 +41,8 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
                                    myInputFilePath,
                                    myCharset,
                                    new ArrayList<>(myParameters),
-                                   new HashMap<>(myEnvironment));
+                                   new HashMap<>(myEnvironment),
+                                   myRedirectErrorStream);
   }
 
   public void setCharset(@NotNull Charset charset) {
@@ -122,5 +125,13 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
   @NotNull
   public Set<File> getFilesToDeleteOnTermination() {
     return myFilesToDeleteOnTermination;
+  }
+
+  public void setRedirectErrorStreamFromRegistry() {
+    setRedirectErrorStream(Registry.is("run.processes.with.redirectedErrorStream", false));
+  }
+
+  public void setRedirectErrorStream(boolean redirectErrorStream) {
+    myRedirectErrorStream = redirectErrorStream;
   }
 }
