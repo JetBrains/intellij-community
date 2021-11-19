@@ -115,7 +115,7 @@ enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) 
 
         override fun provideHintDetails(elem: PsiElement): List<InlayInfoDetails> {
             elem.safeAs<KtFunctionLiteral>()?.parent.safeAs<KtLambdaExpression>()?.let { expression ->
-                provideLambdaImplicitHints(expression)?.let { return listOf(it) }
+                provideLambdaImplicitHints(expression)?.let { return it }
             }
             return emptyList()
         }
