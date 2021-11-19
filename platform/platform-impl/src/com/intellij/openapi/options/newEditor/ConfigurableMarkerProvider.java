@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public interface ConfigurableLabelProvider {
+public interface ConfigurableMarkerProvider {
 
-  @Nls @Nullable String getLabel();
+  @Nls @Nullable String getMarkerText();
 }
