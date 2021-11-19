@@ -18,11 +18,13 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
+import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +47,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   private final DataContext myContext;
   private boolean myToggled;
   private final boolean myUseDarkIcons;
-  private final MenuItem myScreenMenuItemPeer;
+  private final @Nullable MenuItem myScreenMenuItemPeer;
 
   public ActionMenuItem(@NotNull AnAction action,
                         @NotNull Presentation presentation,
@@ -54,8 +56,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
                         boolean enableMnemonics,
                         boolean unused,
                         boolean insideCheckedGroup,
-                        boolean useDarkIcons,
-                        MenuItem screenMenuItemPeer) {
+                        boolean useDarkIcons) {
     myAction = ActionRef.fromAction(action);
     myPresentation = presentation;
     myPlace = place;
@@ -68,8 +69,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     addActionListener(actionTransmitter);
     setBorderPainted(false);
 
-    myScreenMenuItemPeer = screenMenuItemPeer;
-    if (myScreenMenuItemPeer != null) {
+    if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      myScreenMenuItemPeer = new MenuItem();
       myScreenMenuItemPeer.setActionDelegate(()-> {
         // Called on AppKit when user activates menu item
         if (isToggleable()) {
@@ -80,22 +81,11 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           actionTransmitter.performAction(0);
         });//invokeLater
       });//setActionDelegate
-    }
+    } else
+      myScreenMenuItemPeer = null;
 
     updateUI();
     init();
-  }
-
-  public ActionMenuItem(@NotNull AnAction action,
-                        @NotNull Presentation presentation,
-                        @NotNull String place,
-                        @NotNull DataContext context,
-                        boolean enableMnemonics,
-                        boolean unused,
-                        boolean insideCheckedGroup,
-                        boolean useDarkIcons
-  ) {
-    this(action, presentation, place, context, enableMnemonics, unused, insideCheckedGroup, useDarkIcons, null);
   }
 
   public @NotNull AnAction getAnAction() {
@@ -105,6 +95,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   public @NotNull String getPlace() {
     return myPlace;
   }
+
+  public @Nullable MenuItem getScreenMenuItemPeer() { return myScreenMenuItemPeer; }
 
   private static boolean isEnterKeyStroke(KeyStroke keyStroke) {
     return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && keyStroke.getModifiers() == 0;

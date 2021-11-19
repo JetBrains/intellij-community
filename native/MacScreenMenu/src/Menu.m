@@ -186,20 +186,53 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
     // 3. schedule on AppKit
     Menu * __strong menu = (Menu *)menuObj;
     dispatch_block_t block = ^{
-        // NOTE: when use [menu->nsMenu removeAllItems] => selection is dropped
-        // so don't allow menu to be empty: remove all except first
-        NSInteger countBefore = [menu->nsMenu numberOfItems];
-        for (int i = [menu->nsMenu numberOfItems]; i-1 > 0 ; i--) {
-            [menu->nsMenu removeItemAtIndex:i-1];
+        NSMenu * mainMenu = menu == nil ? [NSApplication sharedApplication].mainMenu : nil;
+
+        //
+        // clear old items
+        //
+        NSInteger countBefore = 0;
+        if (menu != nil) {
+            // NOTE: when use [menu->nsMenu removeAllItems] => selection is dropped
+            // so don't allow menu to be empty: remove all except first
+            countBefore = [menu->nsMenu numberOfItems];
+            for (int i = [menu->nsMenu numberOfItems]; i - 1 > 0; i--) {
+                [menu->nsMenu removeItemAtIndex:i - 1];
+            }
+        } else {
+            // clear Main Menu: remove all except first (AppMenu)
+            id appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
+            if (appMenu != nil) {
+                [appMenu retain];
+                [mainMenu removeAllItems];
+                [mainMenu addItem:appMenu];
+                [appMenu release];
+            }
         }
 
+        //
         // add new items
+        //
         for (int i = 0; i < length; i++) {
             MenuItem * child = (MenuItem *)newItemsPtrs[i];
             if (child == NULL) {
-                [menu->nsMenu addItem:[NSMenuItem separatorItem]];
+                // add separator
+                if (menu != nil)
+                    [menu->nsMenu addItem:[NSMenuItem separatorItem]];
+                else
+                    [mainMenu addItem:[NSMenuItem separatorItem]];
             } else {
-                [menu addItem:child];
+                // add menu item
+                if (menu != nil)
+                    [menu addItem:child];
+                else {
+                    if ([child isKindOfClass:[Menu class]]) {
+                        // "validate", just for insurance
+                        Menu * menuModified = (Menu *)child;
+                        [menuModified->nsMenuItem setSubmenu:menuModified->nsMenu];
+                    }
+                    [mainMenu addItem:child->nsMenuItem];
+                }
                 [child release];
             }
         }
@@ -221,14 +254,11 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_Menu
- * Method:    nativeRefillMainMenu
- * Signature: ([JZ)V
+ * Method:    nativeInitClass
+ * Signature: ()V
  */
 JNIEXPORT void JNICALL
-Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefillMainMenu
-(JNIEnv *env, jclass peerClass, jlongArray newItems, jboolean onAppKit)
-{
-    JNI_COCOA_ENTER();
+Java_com_intellij_ui_mac_screenmenu_Menu_nativeInitClass(JNIEnv *env, jclass peerClass) {
     if (sjc_Menu == NULL) {
         // Cache Menu jclass, because JNI can't find it when:
         // 1. class in signed JAR
@@ -238,60 +268,5 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefillMainMenu
             sjc_Menu = (*env)->NewGlobalRef(env, sjc_Menu);
         }
     }
-
-    // 1. create copy of array
-    jsize length = (*env)->GetArrayLength(env, newItems);
-    size_t lengthInBytes = length*sizeof(long);
-    long * newItemsPtrs = (long *)malloc(lengthInBytes);
-    jlong * ptrs = (*env)->GetLongArrayElements(env, newItems, NULL);
-    memcpy(newItemsPtrs, ptrs, lengthInBytes);
-    (*env)->ReleaseLongArrayElements(env, newItems, ptrs, 0);
-
-    // 2. retain new items
-    for (int i = 0; i < length; i++) {
-        id newItem = (id)(newItemsPtrs[i]);
-        if (newItem != NULL) {
-            [newItem retain];
-        }
-    }
-
-    // 3. schedule on AppKit
-    dispatch_block_t block = ^{
-        NSMenu * mainMenu = [NSApplication sharedApplication].mainMenu;
-        // remove all except first (AppMenu)
-//        for (int i = [mainMenu numberOfItems]; i-1 > 0 ; i--) {
-//            [mainMenu removeItemAtIndex:i-1];
-//        }
-        id appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
-        [appMenu retain];
-        [mainMenu removeAllItems];
-        if (appMenu != nil) {
-            [mainMenu addItem:appMenu];
-            [appMenu release];
-        }
-
-        // add new items
-        for (int i = 0; i < length; i++) {
-            MenuItem * child = (MenuItem *) newItemsPtrs[i];
-            if (child == NULL) {
-                [mainMenu addItem:[NSMenuItem separatorItem]];
-            } else {
-                if ([child isKindOfClass:[Menu class]]) {
-                    // "validate" itemModified (i.e. connect corresponding fMenuItem and fMenu)
-                    Menu * menuModified = (Menu *)child;
-                    [menuModified->nsMenuItem setSubmenu:menuModified->nsMenu];
-                }
-                [mainMenu addItem:child->nsMenuItem];
-                [child release];
-            }
-        }
-        free(newItemsPtrs);
-    };
-
-    if (onAppKit && ![NSThread isMainThread])
-        dispatch_async(dispatch_get_main_queue(), block);
-    else
-        block();
-
-    JNI_COCOA_EXIT();
 }
+
