@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
@@ -141,5 +143,28 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
     assertEquals(sink.text, "Hello")
     assertEquals(sink.details, "World")
     assertEquals(sink.fraction, 0.42)
+  }
+
+  fun `test checkCancelledEvenWithPCEDisabled checks job`() {
+    val started = Semaphore(1)
+    val canCheck = Semaphore(1)
+    val job = Job()
+    val f = ApplicationManager.getApplication().executeOnPooledThread {
+      withJob(job) {
+        checkCancelledEvenWithPCEDisabled(null)
+        started.up()
+        assertTrue(canCheck.waitFor(2000))
+        try {
+          checkCancelledEvenWithPCEDisabled(null)
+          fail()
+        }
+        catch (ignored: JobCanceledException) {
+        }
+      }
+    }
+    assertTrue(started.waitFor(2000))
+    job.cancel()
+    canCheck.up()
+    f.get(2000, TimeUnit.MILLISECONDS)
   }
 }
