@@ -99,9 +99,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     val ptyOptions = request.ptyOptions
     val generalCommandLine = if (ptyOptions != null) {
-      PtyCommandLine(commandLine.collectCommandsSynchronously()).also {
-        it.withOptions(ptyOptions)
-      }
+      PtyCommandLine(commandLine.collectCommandsSynchronously()).withOptions(ptyOptions)
     }
     else {
       GeneralCommandLine(commandLine.collectCommandsSynchronously())
