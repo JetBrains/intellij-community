@@ -129,18 +129,19 @@ fun Project.isTrusted() = getTrustedState() == ThreeState.YES
 
 @ApiStatus.Internal
 fun Project.getTrustedState(): ThreeState {
-  val explicit = this.service<TrustedProjectSettings>().trustedState
-  if (explicit != ThreeState.UNSURE) {
-    return explicit
+  val projectPath = basePath
+  if (projectPath != null) {
+    val explicit = TrustedPaths.getInstance().getProjectPathTrustedState(Paths.get(projectPath))
+    if (explicit != ThreeState.UNSURE) {
+      return explicit
+    }
   }
+
   if (isProjectImplicitlyTrusted(this)) {
     return ThreeState.YES
   }
-  val projectPath = basePath
-  if (projectPath != null) {
-    return TrustedPaths.getInstance().getProjectPathTrustedState(Paths.get(projectPath))
-  }
-  return ThreeState.UNSURE
+
+  return this.service<TrustedProjectSettings>().trustedState
 }
 
 fun Project.setTrusted(value: Boolean) {
