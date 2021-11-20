@@ -24,10 +24,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * @param <T> test result type
- */
-abstract class CachingFileTester<T> {
+abstract class CachingFileTester {
   private static final Logger LOG = Logger.getInstance(CachingFileTester.class);
   private static final int FILE_TEST_TIMEOUT_MS = 30000;
 
@@ -82,10 +79,10 @@ abstract class CachingFileTester<T> {
   }
 
   @NotNull
-  private T testOrAbort(@NotNull GitExecutable executable) throws Exception {
+  private GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     Ref<Exception> exceptionRef = new Ref<>();
-    Ref<T> resultRef = new Ref<>();
+    Ref<GitVersion> resultRef = new Ref<>();
 
     Semaphore semaphore = new Semaphore(0);
 
@@ -128,14 +125,14 @@ abstract class CachingFileTester<T> {
   }
 
   @NotNull
-  protected abstract T testExecutable(@NotNull GitExecutable executable) throws Exception;
+  protected abstract GitVersion testExecutable(@NotNull GitExecutable executable) throws Exception;
 
-  class TestResult {
-    @Nullable private final T myResult;
+  public static class TestResult {
+    @Nullable private final GitVersion myResult;
     @Nullable private final Exception myException;
     private final long myFileLastModifiedTimestamp;
 
-    TestResult(@NotNull T result, long timestamp) {
+    TestResult(@NotNull GitVersion result, long timestamp) {
       myResult = result;
       myFileLastModifiedTimestamp = timestamp;
       myException = null;
@@ -148,7 +145,7 @@ abstract class CachingFileTester<T> {
     }
 
     @Nullable
-    public T getResult() {
+    public GitVersion getResult() {
       return myResult;
     }
 
