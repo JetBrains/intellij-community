@@ -34,7 +34,6 @@
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleCoroutineDebugProjectResolver" order="last"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestTasksResolver"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver"/>
-    <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinCompilerArgumentsCacheResolver"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
 
