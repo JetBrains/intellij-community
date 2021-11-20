@@ -26,16 +26,16 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
-public class AppEditorFontPanel implements Disposable {
+public class AppFontPanel implements Disposable {
 
-  @NotNull private final AppEditorFontOptionsPanel myOptionsPanel;
-  @NotNull private final FontEditorPreview         myPreview;
-  @NotNull private final EditorColorsScheme        myPreviewScheme;
-  @NotNull private final JPanel                    myTopPanel;
-  private                JLabel                    myEditorFontLabel;
-  @NotNull private final JPanel                    myWarningPanel;
+  @NotNull private final AppFontOptionsPanel myOptionsPanel;
+  @NotNull private final FontEditorPreview   myPreview;
+  @NotNull private final EditorColorsScheme  myPreviewScheme;
+  @NotNull private final JPanel              myTopPanel;
+  private                JLabel              myEditorFontLabel;
+  @NotNull private final JPanel              myWarningPanel;
 
-  public AppEditorFontPanel() {
+  public AppFontPanel(@NotNull FontOptionsPanelFactory fontOptionsPanelFactory) {
     myTopPanel = new JPanel(new BorderLayout());
     myWarningPanel = createMessagePanel();
     myTopPanel.add(myWarningPanel, BorderLayout.NORTH);
@@ -44,7 +44,7 @@ public class AppEditorFontPanel implements Disposable {
     innerPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0,0,0));
     JBSplitter splitter = new JBSplitter(false, 0.3f);
     myPreviewScheme = createPreviewScheme();
-    myOptionsPanel = new AppEditorFontOptionsPanel(myPreviewScheme);
+    myOptionsPanel = fontOptionsPanelFactory.create(myPreviewScheme);
     myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(5));
     myPreview = new FontEditorPreview(()-> myPreviewScheme, true) {
       @Override
@@ -144,7 +144,11 @@ public class AppEditorFontPanel implements Disposable {
   }
 
   @NotNull
-  public AppEditorFontOptionsPanel getOptionsPanel() {
+  public AppFontOptionsPanel getOptionsPanel() {
     return myOptionsPanel;
+  }
+
+  protected interface FontOptionsPanelFactory {
+    @NotNull AppFontOptionsPanel create(@NotNull EditorColorsScheme previewScheme);
   }
 }

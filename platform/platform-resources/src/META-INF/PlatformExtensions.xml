@@ -625,6 +625,15 @@
         instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"
     />
 
+    <applicationConfigurable
+      groupId="editor"
+      groupWeight="188"
+      bundle="messages.IdeBundle"
+      key="configurable.console.font.name"
+      provider="com.intellij.application.options.editor.fonts.AppConsoleFontConfigurable$Provider"
+      parentId="editor.preferences.fonts.default"
+    />
+
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.keymap.NationalKeyboardSupport"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"/>
