@@ -145,13 +145,17 @@ public final class ImmutableZipFile implements Closeable {
     int centralDirPosition;
     int commentSize;
     int commentVersion;
+    int optimizedMetadataOffset = -1;
     if (isZip64) {
       entryCount = (int)buffer.getLong(offset + 32);
       centralDirSize = (int)buffer.getLong(offset + 40);
       centralDirPosition = (int)buffer.getLong(offset + 48);
 
       commentSize = (int)(buffer.getLong(offset + 4) + 12) - 56;
-      commentVersion = commentSize == 9 ? buffer.get(offset + 22) : 0;
+      commentVersion = commentSize == 5 ? buffer.get(offset + 56) : 0;
+      if (commentVersion == 1) {
+        optimizedMetadataOffset = buffer.getInt(offset + 56 + 1);
+      }
     }
     else {
       entryCount = buffer.getShort(offset + 10) & 0xffff;
@@ -159,14 +163,17 @@ public final class ImmutableZipFile implements Closeable {
       centralDirPosition = buffer.getInt(offset + 16);
 
       commentSize = buffer.getShort(offset + 20);
-      commentVersion = commentSize == 9 ? buffer.get(offset + 56) : 0;
+      commentVersion = commentSize == 9 ? buffer.get(offset + 22) : 0;
+      if (commentVersion == 1) {
+        entryCount = buffer.getInt(offset + 23);
+        optimizedMetadataOffset = buffer.getInt(offset + 27);
+      }
     }
 
     if (commentVersion == 1) {
       int pos = buffer.position();
 
-      entryCount = buffer.getInt(offset + 23);
-      buffer.position(buffer.getInt(offset + 27));
+      buffer.position(optimizedMetadataOffset);
       IntBuffer intBuffer = buffer.asIntBuffer();
 
       int[] sizes = new int[entryCount];

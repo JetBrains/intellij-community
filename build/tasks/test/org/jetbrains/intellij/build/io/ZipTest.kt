@@ -58,7 +58,7 @@ class ZipTest {
   fun `read zip file with more than 65K entries`() {
     Assumptions.assumeTrue(SystemInfoRt.isUnix)
 
-    val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2, fs.root)
+    val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2 + 20, fs.root)
     ImmutableZipFile.load(archiveFile).use { zipFile ->
       for (name in list) {
         assertThat(zipFile.getEntry(name)).isNotNull()

@@ -164,7 +164,44 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     writeBuffer(metadataBuffer)
 
     buffer.clear()
+    if (entryCount < 65_535) {
+      // write end of central directory record (EOCD)
+      buffer.clear()
+      buffer.putInt(0x06054b50)
+      // write 0 to clear reused buffer content
+      // number of this disk (short), disk where central directory starts (short)
+      buffer.putInt(0)
+      // number of central directory records on this disk
+      val shortEntryCount = (entryCount.coerceAtMost(0xffff) and 0xffff).toShort()
+      buffer.putShort(shortEntryCount)
+      // total number of central directory records
+      buffer.putShort(shortEntryCount)
+      buffer.putInt(centralDirectoryLength)
+      // Offset of start of central directory, relative to start of archive
+      buffer.putInt((centralDirectoryOffset and 0xffffffffL).toInt())
 
+      // comment length
+      if (withOptimizedMetadataEnabled) {
+        buffer.putShort(1 + 4 + 4)
+        // version
+        buffer.put(1)
+        buffer.putInt(sizes.size)
+        buffer.putInt(optimizedMetadataOffset)
+      }
+      else {
+        buffer.putShort(0)
+      }
+    }
+    else {
+      writeZip64End(centralDirectoryLength, centralDirectoryOffset, optimizedMetadataOffset)
+    }
+    buffer.flip()
+    writeBuffer(buffer)
+
+    finished = true
+  }
+
+  private fun writeZip64End(centralDirectoryLength: Int, centralDirectoryOffset: Long, optimizedMetadataOffset: Int) {
     val eocd64Position = channelPosition
 
     buffer.putInt(0x06064b50)
@@ -192,7 +229,6 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     if (withOptimizedMetadataEnabled) {
       // version
       buffer.put(1)
-      buffer.putInt(sizes.size)
       buffer.putInt(optimizedMetadataOffset)
     }
 
@@ -223,11 +259,6 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     buffer.putInt(0xffffffff.toInt())
     // comment length
     buffer.putShort(0)
-
-    buffer.flip()
-    writeBuffer(buffer)
-
-    finished = true
   }
 
   internal fun getChannelPositionAndAdd(increment: Int): Long {
