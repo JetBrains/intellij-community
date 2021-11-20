@@ -2,27 +2,26 @@
 
 package org.jetbrains.kotlin.idea.searcheverywhere
 
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.*
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.findFacadeClass
-import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
- * Q: Why is [KtSearchEverywhereEqualityProvider] implemented as bunch of methods but not as bunch of extension points?
+ * Q: Why is [KtSearchEverywhereEqualityProvider] implemented as a bunch of methods but not as a bunch of extension points?
  * A: Because we want to make sure that "native Psi vs KtLightElement" is checked first
  *
- * @see NativePsiAndKtLightElementEqualityProviderTest
- * @see KtFileAndKtClassEqualityProviderTest
- * @see KtFileAndKtClassForFacadeTest
+ * @see org.jetbrains.kotlin.idea.searcheverywhere.NativePsiAndKtLightElementEqualityProviderTest
+ * @see org.jetbrains.kotlin.idea.searcheverywhere.KtFileAndKtClassEqualityProviderTest
+ * @see org.jetbrains.kotlin.idea.searcheverywhere.KtFileAndKtClassForFacadeTest
  */
 class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
     override fun compareItems(
@@ -106,13 +105,5 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
     }
 }
 
-private fun SearchEverywhereFoundElementInfo.toKtElement(): KtElement? {
-    val elem = element
-    if (elem is KtElement) {
-        return elem
-    }
-    if (elem is KtLightElement<*, *>) {
-        return elem.kotlinOrigin
-    }
-    return null
-}
+private fun SearchEverywhereFoundElementInfo.toKtElement(): KtElement? =
+    PSIPresentationBgRendererWrapper.toPsi(element)?.unwrapped as? KtElement
