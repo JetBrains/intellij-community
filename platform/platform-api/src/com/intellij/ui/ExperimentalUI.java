@@ -144,6 +144,12 @@ public final class ExperimentalUI {
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
         return paths.get(Strings.trimStart(path, "/"));
       }
+
+      @Override
+      public @Nullable ClassLoader getContextClassLoader(@NotNull String path,
+                                                         @Nullable ClassLoader originalClassLoader) {
+        return getClass().getClassLoader();
+      }
     };
   }
 
