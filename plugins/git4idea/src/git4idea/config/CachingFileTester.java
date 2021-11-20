@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +81,26 @@ abstract class CachingFileTester {
 
   @NotNull
   private GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
+    int maxAttempts = 1;
+
+    // IDEA-248193 Apple Git might hang with timeout after hibernation. Do several attempts.
+    if (SystemInfo.isMac && "/usr/bin/git".equals(executable.getExePath())) {
+      maxAttempts = 3;
+    }
+
+    int attempt = 0;
+    while (attempt < maxAttempts) {
+      GitVersion result = runTestWithTimeout(executable);
+      if (result != null) return result;
+      attempt++;
+    }
+
+    throw new GitVersionIdentificationException("Cannot identify version of git executable: no response" +
+                                                (maxAttempts > 1 ? String.format(" in %s attempts", maxAttempts) : ""), null);
+  }
+
+  @Nullable
+  private GitVersion runTestWithTimeout(@NotNull GitExecutable executable) throws Exception {
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     Ref<Exception> exceptionRef = new Ref<>();
     Ref<GitVersion> resultRef = new Ref<>();
@@ -108,7 +129,7 @@ abstract class CachingFileTester {
       }
       if (!resultRef.isNull()) return resultRef.get();
       if (!exceptionRef.isNull()) throw exceptionRef.get();
-      throw new GitVersionIdentificationException("Cannot identify version of git executable: no response", null);
+      return null; // timeout
     }
     finally {
       indicator.cancel();
