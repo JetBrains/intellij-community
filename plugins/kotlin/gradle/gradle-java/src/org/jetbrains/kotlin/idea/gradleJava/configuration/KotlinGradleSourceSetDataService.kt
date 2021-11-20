@@ -287,7 +287,7 @@ fun configureFacetByGradleModule(
     }
     ideModule.hasExternalSdkConfiguration = sourceSetNode?.data?.sdkName != null
 
-    val cacheHolder = moduleNode.kotlinIdeaProjectDataOrFail.compilerArgumentsCacheHolder
+    val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
     val kotlinGradleSourceSetData = kotlinGradleSourceSetDataNode?.data
 
     val cachedArgsInfo = kotlinGradleSourceSetData?.cachedArgsInfo
@@ -323,7 +323,7 @@ private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<Module
         return
     }
 
-    val cacheHolder = moduleNode.kotlinIdeaProjectDataOrNull?.compilerArgumentsCacheHolder ?: return
+    val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
     val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull ?: return
     val kotlinGradleSourceSetDataNodes = ExternalSystemApiUtil.findAll(kotlinGradleProjectDataNode, KotlinGradleSourceSetData.KEY)
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "main" }?.let {

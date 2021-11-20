@@ -69,8 +69,11 @@ import java.util.stream.Collectors
 
 @Order(ExternalSystemConstants.UNORDERED + 1)
 open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
+    private val cacheManager = KotlinMPPCompilerArgumentsCacheMergeManager
+
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
         return super.createModule(gradleModule, projectDataNode)?.also {
+            cacheManager.mergeCache(gradleModule, resolverCtx)
             initializeModuleData(gradleModule, it, projectDataNode, resolverCtx)
             populateSourceSetInfos(gradleModule, it, resolverCtx)
         }
@@ -851,16 +854,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 )
             }
 
-            val moduleDataNode = moduleNodesByCompilationMap[compilation]
-                ?.also { moduleNodesByCompilationMap.remove(compilation) }
-                ?: return null
-            val projectDataNode = ExternalSystemApiUtil.findParent(moduleDataNode, ProjectKeys.PROJECT)
-                ?: error("Failed to find ProjectData for module node '$moduleDataNode'")
-            val cacheHolder = ExternalSystemApiUtil.find(projectDataNode, KotlinIdeaProjectData.KEY)
-                ?.data
-                ?.compilerArgumentsCacheHolder
-                ?: error("Failed to find KotlinIdeaProjectData for project node '$projectDataNode'")
-
+            val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
 
             return KotlinSourceSetInfo(compilation).also { sourceSetInfo ->
                 sourceSetInfo.moduleId = getKotlinModuleId(gradleModule, compilation, resolverCtx)
