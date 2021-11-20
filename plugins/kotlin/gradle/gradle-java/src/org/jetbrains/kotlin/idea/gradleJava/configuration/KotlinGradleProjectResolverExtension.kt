@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
-import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
 import org.jetbrains.kotlin.idea.util.PsiPrecedences
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
@@ -33,14 +32,6 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 import java.util.*
-
-val DataNode<out ModuleData>.kotlinIdeaProjectDataOrNull: KotlinIdeaProjectData?
-    get() = ExternalSystemApiUtil.findParent(this, ProjectKeys.PROJECT)?.let { projectDataDataNode: DataNode<ProjectData> ->
-        ExternalSystemApiUtil.find(projectDataDataNode, KotlinIdeaProjectData.KEY)?.data
-    }
-
-val DataNode<out ModuleData>.kotlinIdeaProjectDataOrFail: KotlinIdeaProjectData
-    get() = kotlinIdeaProjectDataOrNull ?: error("Failed to find KotlinIdeaProjectData for $this")
 
 val DataNode<out ModuleData>.kotlinGradleProjectDataNodeOrNull: DataNode<KotlinGradleProjectData>?
     get() = when (this.data) {
@@ -164,6 +155,8 @@ var DataNode<out ModuleData>.pureKotlinSourceFolders: MutableCollection<String>
 
 class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() {
     val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
+    private val cacheManager = KotlinCompilerArgumentsCacheMergeManager
+
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
         return setOf(KotlinGradleModelBuilder::class.java, KotlinTarget::class.java, RandomUtils::class.java, Unit::class.java)
@@ -182,6 +175,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
         return super.createModule(gradleModule, projectDataNode)?.also {
+            cacheManager.mergeCache(gradleModule, resolverCtx)
             initializeModuleData(gradleModule, it, projectDataNode, resolverCtx)
         }
     }
