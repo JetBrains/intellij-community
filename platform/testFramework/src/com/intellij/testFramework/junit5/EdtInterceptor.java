@@ -32,6 +32,13 @@ public class EdtInterceptor implements InvocationInterceptor {
   }
 
   @Override
+  public void interceptTestTemplateMethod(Invocation<Void> invocation,
+                                          ReflectiveInvocationContext<Method> invocationContext,
+                                          ExtensionContext extensionContext) throws Throwable {
+    doRun(invocation, extensionContext);
+  }
+
+  @Override
   public void interceptTestMethod(Invocation<Void> invocation,
                                   ReflectiveInvocationContext<Method> invocationContext,
                                   ExtensionContext extensionContext) throws Throwable {
