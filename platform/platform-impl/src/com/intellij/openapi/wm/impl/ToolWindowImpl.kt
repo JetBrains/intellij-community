@@ -12,6 +12,7 @@ import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
@@ -33,6 +34,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.Consumer
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
@@ -552,8 +554,16 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
 
     if (ExperimentalUI.isNewToolWindowsStripes()) {
-      UIUtil.setBackgroundRecursively(contentManager.value.component, JBUI.CurrentTheme.ToolWindow.background())
+      setBackgroundRecursively(contentManager.value.component, JBUI.CurrentTheme.ToolWindow.background())
     }
+  }
+
+  private fun setBackgroundRecursively(component: Component, bg: Color) {
+    UIUtil.forEachComponentInHierarchy(component, Consumer { c: Component ->
+      if (c !is ActionButton) {
+        c.background = bg
+      }
+    })
   }
 
   override fun getHelpId() = helpId
