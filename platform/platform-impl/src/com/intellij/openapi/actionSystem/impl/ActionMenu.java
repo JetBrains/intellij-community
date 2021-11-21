@@ -23,9 +23,11 @@ import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -55,6 +58,7 @@ public final class ActionMenu extends JBMenu {
   private final boolean myUseDarkIcons;
   private Disposable myDisposable;
   private final @Nullable Menu myScreenMenuPeer;
+  private final @Nullable SubElementSelector mySubElementSelector;
 
   public ActionMenu(@Nullable DataContext context,
                     @NotNull String place,
@@ -79,6 +83,7 @@ public final class ActionMenu extends JBMenu {
     else {
       myScreenMenuPeer = null;
     }
+    mySubElementSelector = SubElementSelector.isForceDisabled ? null : new SubElementSelector(this);
 
     updateUI();
 
@@ -226,6 +231,27 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
+  @Override
+  protected void processMouseEvent(MouseEvent e) {
+    boolean suppressSelectionRequest = false;
+
+    if (mySubElementSelector != null) {
+      if ((e.getID() == MouseEvent.MOUSE_PRESSED) || (e.getID() == MouseEvent.MOUSE_ENTERED)) {
+        mySubElementSelector.ignoreNextSelectionRequest();
+        suppressSelectionRequest = true;
+      }
+    }
+
+    try {
+      super.processMouseEvent(e);
+    }
+    finally {
+      if (suppressSelectionRequest) {
+        mySubElementSelector.cancelIgnoringOfNextSelectionRequest();
+      }
+    }
+  }
+
   private class MenuListenerImpl implements ChangeListener, MenuListener {
     ScheduledFuture<?> myDelayedClear;
     boolean isSelected = false;
@@ -270,6 +296,8 @@ public final class ActionMenu extends JBMenu {
         myDisposable = null;
       }
       onMenuHidden();
+
+      if (mySubElementSelector != null) mySubElementSelector.cancelNextSelection();
     }
 
     private void onMenuHidden() {
@@ -316,7 +344,12 @@ public final class ActionMenu extends JBMenu {
         return;
       }
     }
+
     super.setPopupMenuVisible(b);
+
+    if (b && (mySubElementSelector != null)) {
+      mySubElementSelector.selectSubElementIfNecessary();
+    }
   }
 
   public void clearItems() {
@@ -445,6 +478,102 @@ public final class ActionMenu extends JBMenu {
       myEventToRedispatch = null;
       myStartMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+    }
+  }
+
+
+  private static final class SubElementSelector {
+    static final boolean isForceDisabled = !Registry.is("ide.popup.menu.navigation.keyboard.selectFirstEnabledSubItem", false);
+
+
+    SubElementSelector(@NotNull ActionMenu owner) {
+      if (isForceDisabled) {
+        throw new IllegalStateException("Attempt to create an instance of ActionMenu.SubElementSelector class when it is force disabled");
+      }
+
+      myOwner = owner;
+      myShouldIgnoreNextSelectionRequest = false;
+      myCurrentRequestId = -1;
+    }
+
+    @RequiresEdt
+    void ignoreNextSelectionRequest() {
+      myShouldIgnoreNextSelectionRequest = true;
+    }
+
+    @RequiresEdt
+    void cancelIgnoringOfNextSelectionRequest() {
+      myShouldIgnoreNextSelectionRequest = false;
+    }
+
+    @RequiresEdt
+    void selectSubElementIfNecessary() {
+      final boolean shouldIgnoreNextSelectionRequest = myShouldIgnoreNextSelectionRequest;
+      cancelIgnoringOfNextSelectionRequest();
+
+      if (shouldIgnoreNextSelectionRequest) {
+        return;
+      }
+
+      final int thisRequestId = ++myCurrentRequestId;
+      SwingUtilities.invokeLater(() -> selectFirstEnabledElement(thisRequestId));
+    }
+
+    @RequiresEdt
+    void cancelNextSelection() {
+      ++myCurrentRequestId;
+    }
+
+
+    private final @NotNull ActionMenu myOwner;
+    private boolean myShouldIgnoreNextSelectionRequest;
+    private int myCurrentRequestId;
+
+
+    @RequiresEdt
+    private void selectFirstEnabledElement(final int requestId) {
+      if (requestId != myCurrentRequestId) {
+        // the request was cancelled or a newer request was created
+        return;
+      }
+
+      if (!myOwner.isSelected()) {
+        return;
+      }
+
+      final var menuSelectionManager = MenuSelectionManager.defaultManager();
+
+      final var currentSelectedPath = menuSelectionManager.getSelectedPath();
+      if (currentSelectedPath.length < 2) {
+        return;
+      }
+
+      final var lastElementInCurrentPath = currentSelectedPath[currentSelectedPath.length - 1];
+
+      final MenuElement[] newSelectionPath;
+      if (lastElementInCurrentPath == myOwner.myStubItem) {
+        newSelectionPath = currentSelectedPath.clone();
+      }
+      else if (lastElementInCurrentPath == myOwner.getPopupMenu()) {
+        newSelectionPath = Arrays.copyOf(currentSelectedPath, currentSelectedPath.length + 1);
+      }
+      else if ( (currentSelectedPath[currentSelectedPath.length - 2] == myOwner.getPopupMenu()) &&
+                !ArrayUtil.contains(lastElementInCurrentPath.getComponent(), myOwner.getMenuComponents()) ) {
+        newSelectionPath = currentSelectedPath.clone();
+      }
+      else {
+        return;
+      }
+
+      final var menuComponents = myOwner.getMenuComponents();
+      for (final var component : menuComponents) {
+        if ((component != myOwner.myStubItem) && component.isEnabled() && (component instanceof JMenuItem)) {
+          newSelectionPath[newSelectionPath.length - 1] = (MenuElement)component;
+          menuSelectionManager.setSelectedPath(newSelectionPath);
+
+          return;
+        }
+      }
     }
   }
 }
