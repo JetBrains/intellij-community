@@ -421,6 +421,8 @@ abstract class Cell : BaseBuilder {
   }
 
   @JvmOverloads
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(prop.toBinding(), columns, range, step)
   }
