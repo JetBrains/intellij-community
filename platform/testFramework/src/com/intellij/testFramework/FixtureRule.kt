@@ -46,6 +46,7 @@ import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.lang.annotation.Inherited
 import java.nio.file.Path
 
 private var sharedModule: Module? = null
@@ -276,6 +277,7 @@ class RuleChain(vararg val rules: TestRule) : TestRule {
 private fun <T : Annotation> Description.getOwnOrClassAnnotation(annotationClass: Class<T>) = getAnnotation(annotationClass) ?: testClass?.getAnnotation(annotationClass)
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
+@Inherited
 annotation class RunsInEdt
 
 class EdtRule : TestRule {
