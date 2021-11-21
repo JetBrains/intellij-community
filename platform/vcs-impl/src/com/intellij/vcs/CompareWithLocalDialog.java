@@ -38,10 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class CompareWithLocalDialog {
   @RequiresEdt
@@ -176,10 +174,11 @@ public class CompareWithLocalDialog {
     @NotNull
     @Override
     protected List<AnAction> createToolbarActions() {
-      return ContainerUtil.append(
-        super.createToolbarActions(),
-        new MyGetVersionAction()
-      );
+      List<AnAction> actions = new ArrayList<>();
+      actions.add(new MyRefreshAction());
+      actions.addAll(super.createToolbarActions());
+      actions.add(new MyGetVersionAction());
+      return actions;
     }
 
     @NotNull
@@ -254,6 +253,33 @@ public class CompareWithLocalDialog {
 
         return ChangesUtil.loadContentRevision(revision);
       }
+    }
+  }
+
+  private static class MyRefreshAction extends DumbAwareAction {
+    private MyRefreshAction() {
+      super(VcsBundle.messagePointer("action.name.refresh.compare.with.local.panel"),
+            VcsBundle.messagePointer("action.description.refresh.compare.with.local.panel"),
+            AllIcons.Actions.Refresh);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      MyLoadingChangesPanel changesPanel = e.getData(MyLoadingChangesPanel.DATA_KEY);
+      if (changesPanel == null) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      MyChangesBrowser browser = ObjectUtils.tryCast(changesPanel.getChangesBrowser(), MyChangesBrowser.class);
+      e.getPresentation().setEnabledAndVisible(browser != null && browser.myLocalContent != LocalContent.NONE);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      MyLoadingChangesPanel changesPanel = e.getRequiredData(MyLoadingChangesPanel.DATA_KEY);
+      FileDocumentManager.getInstance().saveAllDocuments();
+      changesPanel.reloadChanges();
     }
   }
 
