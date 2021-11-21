@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="org.junit.jupiter:junit-jupiter-params:5.7.0" type="repository">
+  <library name="JUnit5Params" type="repository">
     <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-params:5.7.0" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.7.0/junit-jupiter-params-5.7.0.jar!/" />
