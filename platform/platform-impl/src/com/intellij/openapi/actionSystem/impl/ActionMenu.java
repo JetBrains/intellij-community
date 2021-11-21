@@ -488,7 +488,9 @@ public final class ActionMenu extends JBMenu {
 
 
   private static final class SubElementSelector {
-    static final boolean isForceDisabled = !Registry.is("ide.popup.menu.navigation.keyboard.selectFirstEnabledSubItem", false);
+    static final boolean isForceDisabled =
+      SystemInfo.isMacSystemMenu ||
+      !Registry.is("ide.popup.menu.navigation.keyboard.selectFirstEnabledSubItem", false);
 
 
     SubElementSelector(@NotNull ActionMenu owner) {
