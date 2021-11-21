@@ -60,9 +60,12 @@ class ZipTest {
 
     val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2 + 20, fs.root)
     ImmutableZipFile.load(archiveFile).use { zipFile ->
+      zipFile.getEntry("qweqw")
+
       for (name in list) {
         assertThat(zipFile.getEntry(name)).isNotNull()
       }
+
     }
   }
 

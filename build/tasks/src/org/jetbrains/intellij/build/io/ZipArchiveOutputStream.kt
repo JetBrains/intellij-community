@@ -346,7 +346,7 @@ private fun computeTableIndexes(names: List<ByteArray>): IntArray {
         indexToName[index] = name
         break
       }
-      else if (name.contentEquals(indexToName[index])) {
+      else if (name.contentEquals(found)) {
         indexes[entryIndex] = index
         break
       }

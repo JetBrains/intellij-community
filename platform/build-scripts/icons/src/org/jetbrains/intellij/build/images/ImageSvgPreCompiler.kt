@@ -1,29 +1,33 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
-import com.intellij.openapi.util.text.Formats
 import com.intellij.ui.svg.ImageValue
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.ui.svg.SvgTranscoder
 import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.DigestUtil
+import io.netty.buffer.PooledByteBufAllocator
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import org.apache.batik.transcoder.TranscoderException
+import org.jetbrains.ikv.IkvWriter
+import org.jetbrains.integratedBinaryPacking.IntBitPacker
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.mvstore.DataUtil
 import org.jetbrains.mvstore.MVMap
-import org.jetbrains.mvstore.MVStore
 import org.jetbrains.mvstore.type.IntDataType
 import java.awt.image.BufferedImage
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.NotDirectoryException
-import java.nio.file.Path
+import java.awt.image.DataBufferByte
+import java.nio.channels.FileChannel
+import java.nio.file.*
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
+import java.util.function.Function
 import kotlin.system.exitProcess
 
 private class FileInfo(val file: Path) {
@@ -75,9 +79,8 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     }
 
     @JvmStatic
-    fun optimize(dbFile: Path, compilationOutputRoot: Path, dirs: List<Path>) {
-      val compiler = ImageSvgPreCompiler(compilationOutputRoot)
-      compiler.compileIcons(dbFile, dirs)
+    fun optimize(dbDir: Path, compilationOutputRoot: Path, dirs: List<Path>): List<Path> {
+      return ImageSvgPreCompiler(compilationOutputRoot).compileIcons(dbDir, dirs)
     }
 
     private fun mainImpl(args: Array<String>) {
@@ -111,22 +114,23 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     compileIcons(dbFile, modules.mapNotNull { javaExtensionService.getOutputDirectory(it, false)?.toPath() })
   }
 
-  fun compileIcons(dbFile: Path, dirs: List<Path>) {
-    val storeBuilder = MVStore.Builder()
-      .autoCommitBufferSize(128_1024)
-      .keysPerPage(257)
-      .backgroundExceptionHandler { e, _ -> throw e }
-      // fast lz4 - 14 MB, high compression - 9 MB, so, we use high even if it consumes a lot of CPU (anyway, performed in parallel)
-      .compressionLevel(2)
-    val store = storeBuilder.truncateAndOpen(dbFile)
+  fun compileIcons(dbDir: Path, dirs: List<Path>): List<Path> {
+    Files.createDirectories(dbDir)
+
+    val resultFiles = CopyOnWriteArrayList<Path>()
+
+    val scaleToMap = ConcurrentHashMap<Float, IkvWriter>(scales.size * 2, 0.75f, 2)
     try {
       val mapBuilder = MVMap.Builder<Int, ImageValue>()
       mapBuilder.keyType(IntDataType.INSTANCE)
       mapBuilder.valueType(ImageValue.ImageValueSerializer())
 
-      val scaleToMap = ConcurrentHashMap<Float, MVMap<Int, ImageValue>>(scales.size * 2, 0.75f, 2)
-      val getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Int, ImageValue> = { k, isDark ->
-        SvgCacheManager.getMap(k, isDark, scaleToMap, store, mapBuilder)
+      val getMapByScale: (scale: Float, isDark: Boolean) -> IkvWriter = { k, isDark ->
+        scaleToMap.computeIfAbsent(k + if (isDark) 10_000 else 0, Function<Float, IkvWriter> {
+          val file = dbDir.resolve("icons-v1-$k${if (isDark) "-d" else ""}.db")
+          resultFiles.add(file)
+          IkvWriter(FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)))
+        })
       }
 
       val rootRobotData = IconRobotsData(parent = null, ignoreSkipTag = false, usedIconsRobots = null)
@@ -137,24 +141,26 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     finally {
       val span = GlobalOpenTelemetry.getTracer("build-script")
         .spanBuilder("save rasterized SVG database")
-        .setAttribute("path", dbFile.toString())
+        .setAttribute("path", dbDir.toString())
         .setAttribute(AttributeKey.longKey("iconCount"), totalFiles.get())
         .startSpan()
       try {
-        store.close()
-        span.setAttribute(AttributeKey.stringKey("fileSize"), Formats.formatFileSize(Files.size(dbFile)))
+        scaleToMap.values.forEach(IkvWriter::close)
+        //span.setAttribute(AttributeKey.stringKey("fileSize"), Formats.formatFileSize(Files.size(dbFile)))
       }
       finally {
         span.end()
       }
     }
+
+    return resultFiles
   }
 
   private fun processDir(dir: Path,
                          rootDir: Path,
                          level: Int,
                          rootRobotData: IconRobotsData,
-                         getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Int, ImageValue>) {
+                         getMapByScale: (scale: Float, isDark: Boolean) -> IkvWriter) {
     val stream = try {
       Files.newDirectoryStream(dir)
     }
@@ -210,7 +216,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
   }
 
   private fun processImage(variants: List<Path>,
-                           getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Int, ImageValue>,
+                           getMapByScale: (scale: Float, isDark: Boolean) -> IkvWriter,
                            // just to reuse
                            dimension: ImageLoader.Dimension2DDouble) {
     //println("$id: ${variants.joinToString { rootDir.relativize(it).toString() }}")
@@ -239,7 +245,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     val light2x = variants.find { it.toString().endsWith("@2x.svg") }
     for (scale in scales) {
       val document = createSvgDocument(null, if (scale >= 2 && light2x != null) Files.newInputStream(light2x) else light1xData.byteInputStream())
-      addEntry(getMapByScale(scale, false), SvgTranscoder.createImage(scale, document, dimension), dimension, light1x, imageKey)
+      addEntry(getMapByScale(scale, false), SvgTranscoder.createImage(scale, document, dimension), dimension, imageKey, scale)
     }
 
     val dark2x = variants.find { it.toString().endsWith("@2x_dark.svg") }
@@ -247,7 +253,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     for (scale in scales) {
       val document = createSvgDocument(null, Files.newInputStream(if (scale >= 2 && dark2x != null) dark2x else dark1x))
       val image = SvgTranscoder.createImage(scale, document, dimension)
-      addEntry(getMapByScale(scale, true), image, dimension, dark1x, imageKey)
+      addEntry(getMapByScale(scale, true), image, dimension, imageKey, scale)
     }
   }
 
@@ -276,17 +282,38 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
   }
 }
 
-private fun addEntry(map: MutableMap<Int, ImageValue>,
-                     image: BufferedImage,
-                     dimension: ImageLoader.Dimension2DDouble,
-                     file: Path,
-                     imageKey: Int) {
-  val newValue = SvgCacheManager.writeImage(image, dimension)
-  //println("put ${(map as MVMap).id} $file : $imageKey")
-  val oldValue = map.putIfAbsent(imageKey, newValue)
-  // duplicated images - not yet clear should be forbid it or not
-  if (oldValue != null && oldValue != newValue) {
-    throw IllegalStateException("Hash collision for key $file (imageKey=$imageKey)")
+private fun addEntry(map: IkvWriter, image: BufferedImage, dimension: ImageLoader.Dimension2DDouble, imageKey: Int, scale: Float) {
+  val w = image.width
+  val h = image.height
+  @Suppress("UndesirableClassUsage")
+  val convertedImage = BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR)
+  val g = convertedImage.createGraphics()
+  g.drawImage(image, 0, 0, null)
+  g.dispose()
+  val data = SvgCacheManager.extractBufferData(convertedImage.raster.dataBuffer as DataBufferByte)
+  val buffer = PooledByteBufAllocator.DEFAULT.ioBuffer(DataUtil.VAR_INT_MAX_SIZE * 2 + data.size + 1)
+  try {
+    assert(w / scale == dimension.width.toFloat())
+    assert(h / scale == dimension.height.toFloat())
+    if (w == h) {
+      if (w < 254) {
+        buffer.writeByte(w)
+      }
+      else {
+        buffer.writeByte(255)
+        IntBitPacker.writeVar(buffer, w)
+      }
+    }
+    else {
+      buffer.writeByte(254)
+      IntBitPacker.writeVar(buffer, w)
+      IntBitPacker.writeVar(buffer, h)
+    }
+    buffer.writeBytes(data)
+    map.write(imageKey, buffer)
+  }
+  finally {
+    buffer.release()
   }
 }
 

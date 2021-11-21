@@ -17,6 +17,8 @@ import org.jetbrains.mvstore.type.FixedByteArrayDataType;
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Map;
@@ -35,6 +37,19 @@ public final class SvgCacheManager {
   private final MVStore store;
   private final Map<Float, MVMap<byte[], ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
   private final MVMap.Builder<byte[], ImageValue> mapBuilder;
+
+  private static final @Nullable MethodHandle getDataHandle = getGetDataHandle();
+
+  private static MethodHandle getGetDataHandle() {
+    try {
+      return MethodHandles.privateLookupIn(DataBufferByte.class, MethodHandles.lookup())
+        .findGetter(DataBufferByte.class, "data", byte[].class);
+    }
+    catch (Throwable e) {
+      getLogger().error("cannot create DataBufferByte.data accessor", e);
+      return null;
+    }
+  }
 
   private static final class StoreErrorHandler implements BiConsumer<Throwable, MVStore> {
     private boolean isStoreOpened;
@@ -170,6 +185,22 @@ public final class SvgCacheManager {
     return image;
   }
 
+  static Image readImage(@NotNull ByteBuffer data, int actualWidth, int actualHeight) throws Throwable {
+    // Create a STABLE internal buffer. It will be marked dirty for now, but will remain STABLE after a refresh.
+    DataBufferByte dataBuffer = new DataBufferByte(actualWidth * 4 * (actualHeight - 1) + 4 * actualWidth);
+
+    if (getDataHandle == null) {
+      for (int i = 0, n = data.remaining(); i < n; i++) {
+        dataBuffer.setElem(i, data.get());
+      }
+    }
+    else {
+      data.get((byte[])getDataHandle.invokeExact(dataBuffer));
+    }
+    WritableRaster raster = Raster.createInterleavedRaster(dataBuffer, actualWidth, actualHeight, actualWidth * 4, 4, B_OFFS, null);
+    return new BufferedImage(colorModel, raster, false, null);
+  }
+
   public static @NotNull ImageValue writeImage(@NotNull BufferedImage image, @NotNull ImageLoader.Dimension2DDouble size) {
     int actualWidth = image.getWidth();
     int actualHeight = image.getHeight();
@@ -193,7 +224,7 @@ public final class SvgCacheManager {
     return dataBuffer;
   }
 
-  private static byte[] extractBufferData(DataBufferByte dataBufferByte) {
+  public static byte[] extractBufferData(DataBufferByte dataBufferByte) {
     // Calling getData() directly will mark the internal buffer UNTRACKABLE, so preserve ownership.
     byte[] imageData = new byte[dataBufferByte.getSize()];
     for (int i = 0; i < imageData.length; i++) {

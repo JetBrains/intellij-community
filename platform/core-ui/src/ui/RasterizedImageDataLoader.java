@@ -12,7 +12,6 @@ import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ImageLoader.Dimension2DDouble;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -127,7 +126,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       }
     }
 
-    Dimension2DDouble originalUserSize = new Dimension2DDouble(0, 0);
+    ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
     try {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
       Image image;

@@ -56,20 +56,20 @@ public final class SVGLoader {
     static {
       SvgPrebuiltCacheManager prebuiltCache;
       try {
-        Path dbFile = null;
+        Path dbDir = null;
         if (USE_CACHE) {
           String dbPath = System.getProperty("idea.ui.icons.prebuilt.db");
           if (!"false".equals(dbPath)) {
             if (dbPath == null || dbPath.isEmpty()) {
-              dbFile = Path.of(PathManager.getBinPath() + "/icons.db");
+              dbDir = Path.of(PathManager.getBinPath() + "/icons");
             }
             else {
-              dbFile = Path.of(dbPath);
+              dbDir = Path.of(dbPath);
             }
           }
         }
 
-        prebuiltCache = dbFile != null && Files.exists(dbFile) ? new SvgPrebuiltCacheManager(dbFile) : null;
+        prebuiltCache = dbDir != null && Files.isDirectory(dbDir) ? new SvgPrebuiltCacheManager(dbDir) : null;
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoader.class).error("Cannot use prebuilt svg cache", e);

@@ -48,6 +48,13 @@ public final class Murmur3_32Hash {
     return fMix(h1, 4);
   }
 
+  public static int hashInt(int input, int seed) {
+    int k1 = mixK1(input);
+    int h1 = mixH1(seed, k1);
+
+    return fMix(h1, 4);
+  }
+
   public int hashLong(long input) {
     int low = (int)input;
     int high = (int)(input >>> 32);
