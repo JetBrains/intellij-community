@@ -75,8 +75,10 @@ public final class ActionMenu extends JBMenu {
       myScreenMenuPeer.setOnOpen(() -> fillMenu(), this);
       myScreenMenuPeer.setOnClose(() -> setSelected(false), this);
       myScreenMenuPeer.listenPresentationChanges(myPresentation);
-    } else
+    }
+    else {
       myScreenMenuPeer = null;
+    }
 
     updateUI();
 
@@ -104,6 +106,7 @@ public final class ActionMenu extends JBMenu {
   }
 
   private JPopupMenu mySpecialMenu;
+
   @Override
   public JPopupMenu getPopupMenu() {
     if (mySpecialMenu == null) {
@@ -427,7 +430,8 @@ public final class ActionMenu extends JBMenu {
 
         if (!isMouseMovingTowardsSubmenu) {
           myCallbackAlarm.request();
-        } else {
+        }
+        else {
           myCallbackAlarm.cancel();
         }
         return true;
