@@ -374,7 +374,7 @@ public class HgVcs extends AbstractVcs {
       }
     };
     try {
-      myVersion = HgVersion.identifyVersion(executable);
+      myVersion = HgVersion.identifyVersion(myProject, executable);
       //if version is not supported, but have valid hg executable
       if (!myVersion.isSupported()) {
         LOG.info("Unsupported Hg version: " + myVersion);
