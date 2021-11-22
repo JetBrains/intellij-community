@@ -13,12 +13,11 @@ import java.nio.channels.WritableByteChannel
 import java.util.zip.ZipEntry
 
 internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
-                                      private val withOptimizedMetadataEnabled: Boolean,
-                                      hintIsSmall: Boolean) : AutoCloseable {
+                                      private val withOptimizedMetadataEnabled: Boolean) : AutoCloseable {
   private var finished = false
   private var entryCount = 0
 
-  private val metadataBuffer = ByteBuffer.allocateDirect((if (hintIsSmall) 2 else 12) * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
+  private var metadataBuffer = ByteBuffer.allocateDirect(2 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
   // 1 MB should be enough for end of central directory record
   private val buffer = ByteBuffer.allocateDirect(1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
 
@@ -304,7 +303,15 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
   }
 
   private fun writeCentralFileHeader(size: Int, compressedSize: Int, method: Int, crc: Long, name: ByteArray, offset: Long, dataOffset: Int) {
-    val buffer = metadataBuffer
+    var buffer = metadataBuffer
+    if (buffer.remaining() < (46 + name.size)) {
+      metadataBuffer = ByteBuffer.allocateDirect(buffer.capacity() * 2).order(ByteOrder.LITTLE_ENDIAN)
+      buffer.flip()
+      metadataBuffer.put(buffer)
+      unmapBuffer(buffer)
+      buffer = metadataBuffer
+    }
+
     val headerOffset = buffer.position()
     buffer.putInt(headerOffset, 0x02014b50)
     // compression method

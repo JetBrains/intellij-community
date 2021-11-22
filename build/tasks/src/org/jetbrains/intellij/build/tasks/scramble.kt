@@ -69,7 +69,7 @@ fun runScrambler(scramblerJar: Path,
   }
   finally {
     val zippedLogsFile = logDir.resolve("$logSpecifier.zip")
-    writeNewZip(zippedLogsFile, compress = true, hintIsSmall = true) { zipCreator ->
+    writeNewZip(zippedLogsFile, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)
       archiver.setRootDir(workingDir, "")
       Files.newDirectoryStream(workingDir).use { dirStream ->

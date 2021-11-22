@@ -47,7 +47,7 @@ private fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targe
                                       keymaps).toByteArray()
 
   val buffer = ByteBuffer.allocate(128 * 1024)
-  ZipFileWriter(WritableByteChannelBackedByByteBuffer(buffer), hintIsSmall = true).use { zipCreator ->
+  ZipFileWriter(WritableByteChannelBackedByByteBuffer(buffer)).use { zipCreator ->
     zipCreator.uncompressedData("META-INF/plugin.xml", ByteBuffer.wrap(pluginXmlData))
 
     @Suppress("SpellCheckingInspection")
@@ -76,7 +76,7 @@ private fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targe
   buffer.flip()
 
   val resultFile = targetDir.resolve("${shortName}Keymap.zip")
-  writeNewZip(resultFile, hintIsSmall = true) {
+  writeNewZip(resultFile) {
     it.uncompressedData("${shortName}Keymap.jar", buffer)
   }
   return Pair(resultFile, pluginXmlData)

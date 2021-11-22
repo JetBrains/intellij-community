@@ -17,7 +17,7 @@ fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, ass
             classPath = classPath,
             logger = logger)
 
-    writeNewZip(assetJar, compress = true, hintIsSmall = true) { zipCreator ->
+    writeNewZip(assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)
       archiver.setRootDir(resourceRoot)
       compressDir(resourceRoot.resolve("topics"), archiver)
