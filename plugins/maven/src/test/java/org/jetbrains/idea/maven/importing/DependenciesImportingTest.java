@@ -2170,8 +2170,10 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     configConfirmationForYesAnswer();
 
+
+    setIgnoredFilesPathForNextImport(Collections.singletonList(m2.getPath()));
+
     if(!isNewImportingProcess) {
-      myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(m2.getPath()));
       myProjectsManager.forceUpdateProjects(myProjectsManager.getProjects());
     }
     importProject();

@@ -35,8 +35,7 @@ class MavenImportFlow {
                        enabledProfiles: Collection<String>,
                        disabledProfiles: Collection<String>): MavenInitialImportContext {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val projectManager = MavenProjectsManager.getInstance(project)
-    //assert(!projectManager.isMavenizedProject)
+    val projectManager = MavenProjectsManager.getInstance(project) //assert(!projectManager.isMavenizedProject)
     val isVeryNewProject = project.getUserData<Boolean>(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT)
     if (isVeryNewProject == true) {
       ExternalStorageConfigurationManager.getInstance(project).isEnabled = true
@@ -47,7 +46,8 @@ class MavenImportFlow {
     return MavenInitialImportContext(project, pomFiles, profiles, generalSettings, importingSettings, indicator)
   }
 
-  fun prepareReimport(project: Project, indicator: MavenProgressIndicator,
+  fun prepareReimport(project: Project,
+                      indicator: MavenProgressIndicator,
                       enabledProfiles: Collection<String>,
                       disabledProfiles: Collection<String>): MavenInitialImportContext {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
@@ -63,7 +63,9 @@ class MavenImportFlow {
                                      MavenWorkspaceSettingsComponent.getInstance(project).settings.getImportingSettings(), indicator)
   }
 
-  fun readMavenFiles(context: MavenInitialImportContext): MavenReadContext {
+  fun readMavenFiles(context: MavenInitialImportContext,
+                     ignorePaths: MutableList<String>?,
+                     ignorePatterns: MutableList<String>?): MavenReadContext {
     val projectManager = MavenProjectsManager.getInstance(context.project)
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
@@ -94,6 +96,9 @@ class MavenImportFlow {
 
       }
     }, d)
+
+    ignorePaths?.let { projectsTree.ignoredFilesPaths = it }
+    ignorePatterns?.let { projectsTree.ignoredFilesPatterns = it }
 
     projectsTree.update(context.pomFiles, true, context.generalSettings, context.indicator)
     Disposer.dispose(d)
@@ -167,8 +172,7 @@ class MavenImportFlow {
     val resolver = MavenProjectResolver(context.readContext.projectsTree)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
-    return resolver.downloadSourcesAndJavadocs(context.project, context.projectsToImport, null, sources, javadocs,
-                                               embeddersManager,
+    return resolver.downloadSourcesAndJavadocs(context.project, context.projectsToImport, null, sources, javadocs, embeddersManager,
                                                consoleToBeRemoved, context.initialContext.indicator)
 
   }
@@ -191,9 +195,8 @@ class MavenImportFlow {
       }
     }, d)
     context.projectsToImport.forEach {
-      resolver.resolveFolders(it, context.initialContext.importingSettings,
-                              embeddersManager,
-                              consoleToBeRemoved, context.initialContext.indicator)
+      resolver.resolveFolders(it, context.initialContext.importingSettings, embeddersManager, consoleToBeRemoved,
+                              context.initialContext.indicator)
     }
 
 

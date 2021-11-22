@@ -63,6 +63,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
   protected final boolean isNewImportingProcess = Boolean.parseBoolean(System.getProperty("maven.new.importing.process"));
+  private List<String> myIgnorePaths;
+  private List<String> myIgnorePatterns;
 
   @Override
   protected void setUp() throws Exception {
@@ -423,6 +425,24 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(Arrays.asList(files), false);
   }
 
+
+
+  protected void setIgnoredFilesPathForNextImport(@NotNull List<String> paths) {
+    if(isNewImportingProcess) {
+      myIgnorePaths = paths;
+    } else {
+      myProjectsManager.setIgnoredFilesPaths(paths);
+    }
+  }
+
+  protected void setIgnoredPathPatternsForNextImport(@NotNull List<String> patterns) {
+    if(isNewImportingProcess) {
+      myIgnorePatterns = patterns;
+    } else {
+      myProjectsManager.setIgnoredFilesPatterns(patterns);
+    }
+  }
+
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
     if(isNewImportingProcess) {
       importViaNewFlow(files, failOnReadingError, Collections.emptyList(), profiles);
@@ -443,7 +463,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                             getMavenImporterSettings(),
                             Arrays.asList(profiles),
                             disabledProfiles);
-    MavenReadContext readContext = flow.readMavenFiles(initialImportContext);
+    MavenReadContext readContext = flow.readMavenFiles(initialImportContext, myIgnorePaths, myIgnorePatterns);
     if(failOnReadingError) {
       assertFalse("Failed to import Maven project: " + readContext.collectProblems(), readContext.hasReadingProblems());
     }
