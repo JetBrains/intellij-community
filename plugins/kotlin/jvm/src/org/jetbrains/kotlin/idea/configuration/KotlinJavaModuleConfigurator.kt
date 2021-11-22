@@ -8,14 +8,11 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryType
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -100,9 +97,9 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
         }
     }
 
-    override fun configureModule(module: Module, collector: NotificationMessageCollector) {
-        super.configureModule(module, collector)
-        addStdlibToJavaModuleInfo(module, collector)
+    override fun configureModule(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>?) {
+        super.configureModule(module, collector, writeActions)
+        addStdlibToJavaModuleInfo(module, collector, writeActions)
     }
 
     companion object {

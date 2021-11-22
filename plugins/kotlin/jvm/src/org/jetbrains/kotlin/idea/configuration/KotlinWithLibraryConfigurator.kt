@@ -8,10 +8,10 @@ import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.ExternalLibraryDescriptor
-import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.framework.ui.CreateLibraryDialogWithModules
 import org.jetbrains.kotlin.idea.quickfix.askUpdateRuntime
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
@@ -99,9 +100,25 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         }
 
         val collector = createConfigureKotlinNotificationCollector(project)
-        for (module in modulesToConfigure) {
-            configureModule(module, collector)
+        val writeActions = mutableListOf<() -> Unit>()
+        underModalProgress(
+            project,
+            KotlinJvmBundle.message("configure.kotlin.in.modules.progress.text")) {
+            val progressIndicator = ProgressManager.getGlobalProgressIndicator()
+            for ((index, module) in modulesToConfigure.withIndex()) {
+                if (!isUnitTestMode()) {
+                    progressIndicator?.let {
+                        it.checkCanceled()
+                        it.fraction = index * 1.0 / modulesToConfigure.size
+                        it.text = KotlinJvmBundle.message("configure.kotlin.in.modules.progress.text")
+                        it.text2 = KotlinJvmBundle.message("configure.kotlin.in.module.0.progress.text", module.name)
+                    }
+                }
+                configureModule(module, collector, writeActions)
+            }
         }
+
+        writeActions.forEach { it() }
 
         configureKotlinSettings(modulesToConfigure)
 
@@ -116,11 +133,11 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         }
     }
 
-    open fun configureModule(module: Module, collector: NotificationMessageCollector) {
-        configureModuleWithLibrary(module, collector)
+    open fun configureModule(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>? = null) {
+        configureModuleWithLibrary(module, collector, writeActions)
     }
 
-    private fun configureModuleWithLibrary(module: Module, collector: NotificationMessageCollector) {
+    private fun configureModuleWithLibrary(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>?) {
         val project = module.project
 
         val library = (findAndFixBrokenKotlinLibrary(module, collector)
@@ -129,24 +146,42 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             ?: createNewLibrary(project, collector)) as LibraryEx
 
         val sdk = module.sdk
-        val model = library.modifiableModel
+        library.modifiableModel.let { libraryModel ->
+            configureLibraryJar(project, libraryModel, libraryJarDescriptor, collector, ProgressManager.getGlobalProgressIndicator())
 
-        configureLibraryJar(project, model, libraryJarDescriptor, collector)
-        ApplicationManager.getApplication().runWriteAction { model.commit() }
+            // commit will be performed later on EDT
+            writeActions.addOrExecute { runWriteAction { libraryModel.commit() } }
+        }
 
-        addLibraryToModuleIfNeeded(module, library, collector)
+        addLibraryToModuleIfNeeded(module, library, collector, writeActions)
+    }
+
+    private fun MutableList<() -> Unit>?.addOrExecute(writeAction: () -> Unit) {
+        if (this != null) {
+            add(writeAction)
+        } else {
+            writeAction()
+        }
     }
 
     fun configureLibraryJar(
         project: Project,
         library: LibraryEx.ModifiableModelEx,
         libraryJarDescriptor: LibraryJarDescriptor,
-        collector: NotificationMessageCollector
+        collector: NotificationMessageCollector,
+        progressIndicator: ProgressIndicator? = null
     ) {
         library.kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
         val properties = libraryJarDescriptor.repositoryLibraryProperties
         library.properties = properties
-        JarRepositoryManager.loadDependenciesModal(project, properties, true, true, null, null).forEach {
+        val dependencies =
+            if (progressIndicator != null) {
+                JarRepositoryManager.loadDependenciesSync(project, properties, true, true, null, null, progressIndicator)
+            } else {
+                JarRepositoryManager.loadDependenciesModal(project, properties, true, true, null, null)
+            }
+
+        dependencies.forEach {
             library.addRoot(it.file, it.type)
         }
 
@@ -159,33 +194,42 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             ?: LibraryTablesRegistrar.getInstance().libraryTable.libraries.firstOrNull { isKotlinLibrary(it, project) }
     }
 
-    private fun addLibraryToModuleIfNeeded(module: Module, library: Library, collector: NotificationMessageCollector) {
-        val expectedDependencyScope = getDependencyScope(module)
-        val kotlinLibrary = getKotlinLibrary(module)
+    private fun addLibraryToModuleIfNeeded(
+        module: Module,
+        library: Library,
+        collector: NotificationMessageCollector,
+        writeActions: MutableList<() -> Unit>?
+    ) {
+        ApplicationManager.getApplication().assertIsNonDispatchThread()
+
+        val model = runReadAction { ModuleRootManager.getInstance(module).modifiableModel }
+        val expectedDependencyScope = runReadAction { getDependencyScope(module) }
+        val kotlinLibrary = runReadAction { getKotlinLibrary(module) }
         if (kotlinLibrary == null) {
-            ModuleRootModificationUtil.addDependency(module, library, expectedDependencyScope, false)
+            val entry: LibraryOrderEntry = model.addLibraryEntry(library)
+            entry.isExported = false
+            entry.scope = expectedDependencyScope
             collector.addMessage(KotlinJvmBundle.message("0.library.was.added.to.module.1", library.name.toString(), module.name))
         } else {
-            ModuleRootModificationUtil.updateModel(module) {
-                val libraryEntry = it.findLibraryOrderEntry(kotlinLibrary)
-                if (libraryEntry != null) {
-                    val libraryDependencyScope = libraryEntry.scope
-                    if (expectedDependencyScope != libraryDependencyScope) {
-                        libraryEntry.scope = expectedDependencyScope
-
-                        collector.addMessage(
-                            KotlinJvmBundle.message(
-                                "0.library.scope.has.changed.from.1.to.2.for.module.3",
-                                kotlinLibrary.name.toString(),
-                                libraryDependencyScope,
-                                expectedDependencyScope,
-                                module.name
-                            )
+            model.findLibraryOrderEntry(kotlinLibrary)?.let { libraryEntry ->
+                val libraryDependencyScope = libraryEntry.scope
+                if (expectedDependencyScope != libraryDependencyScope) {
+                    libraryEntry.scope = expectedDependencyScope
+                    collector.addMessage(
+                        KotlinJvmBundle.message(
+                            "0.library.scope.has.changed.from.1.to.2.for.module.3",
+                            kotlinLibrary.name.toString(),
+                            libraryDependencyScope,
+                            expectedDependencyScope,
+                            module.name
                         )
-                    }
+                    )
                 }
             }
         }
+
+        // commit will be performed later on EDT
+        writeActions.addOrExecute { runWriteAction { model.commit() } }
     }
 
     fun createNewLibrary(
