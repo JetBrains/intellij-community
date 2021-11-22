@@ -14,13 +14,11 @@ abstract class MustAlreadyBeRemovedApiInspectionTestBase : UastInspectionTestBas
   override val inspection = MustAlreadyBeRemovedApiInspection().apply { currentVersion = "3.0" }
 
   @Suppress("DuplicatedCode")
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return object : ProjectDescriptor(sdkLevel, false) {
-      override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-        super.configureModule(module, model, contentEntry)
-        val jar = File(PathUtil.getJarPathForClass(ApiStatus.ScheduledForRemoval::class.java))
-        PsiTestUtil.addLibrary(model, "annotations", jar.parent, jar.name)
-      }
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(sdkLevel) {
+    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+      super.configureModule(module, model, contentEntry)
+      val jar = File(PathUtil.getJarPathForClass(ApiStatus.ScheduledForRemoval::class.java))
+      PsiTestUtil.addLibrary(model, "annotations", jar.parent, jar.name)
     }
   }
 }
