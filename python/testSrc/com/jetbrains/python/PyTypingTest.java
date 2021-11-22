@@ -25,7 +25,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -1728,7 +1727,7 @@ public class PyTypingTest extends PyTestCase {
     assertFalse(PsiTreeUtil.hasErrorElements(injected));
   }
 
-  private void doTest(@NotNull String expectedType, @Language("TEXT") @NotNull String text) {
+  private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
