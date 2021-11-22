@@ -75,20 +75,22 @@ def _make_linetable(code_to_modify, all_inserted_code):
     inst_increments = code_to_modify.co_linetable[0::2]
     line_increments = code_to_modify.co_linetable[1::2]
     it = zip(inst_increments, line_increments)
+    offset_to_code_list = {offset: code_list for offset, code_list in all_inserted_code}
+    if 0 in offset_to_code_list:
+        new_line_table.append(len(offset_to_code_list.pop(0)))
+        new_line_table.append(0)
     for inst_delta, line_delta in it:
         start = end
         end = start + inst_delta
-        for offset, code_list in all_inserted_code:
-            if offset == start:
-                new_delta = inst_delta + len(code_list)
-                while new_delta > MAX_BYTE:
-                    new_line_table.append(MAX_BYTE)
-                    new_line_table.append(line_delta)
-                    line_delta = 0
-                    new_delta -= MAX_BYTE
-                new_line_table.append(new_delta)
+        if end in offset_to_code_list:
+            new_delta = inst_delta + len(offset_to_code_list[end])
+            while new_delta > MAX_BYTE:
+                new_line_table.append(MAX_BYTE)
                 new_line_table.append(line_delta)
-                break
+                line_delta = 0
+                new_delta -= MAX_BYTE
+            new_line_table.append(new_delta)
+            new_line_table.append(line_delta)
         else:
             new_line_table.append(inst_delta)
             new_line_table.append(line_delta)

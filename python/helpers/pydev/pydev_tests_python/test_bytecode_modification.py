@@ -115,8 +115,6 @@ class TestInsertCode(unittest.TestCase):
         elif opcode == dis.opmap['LOAD_NAME']:
             assert code1.co_names[arg1] == code2.co_names[arg2], err_msg
 
-    @pytest.mark.skipif(
-        IS_PY310_OR_GREATER, reason="Python 3.10 uses different schema for line table")
     def test_line_before_py310(self):
 
         def foo():
@@ -139,32 +137,6 @@ class TestInsertCode(unittest.TestCase):
         success, result = insert_code(method.__code__, foo.__code__, method.__code__.co_firstlineno + 3)
         assert success
         assert list(result.co_lnotab) == [0, 1, 4, 1, 14, 1]
-
-    @pytest.mark.skipif(
-        not IS_PY310_OR_GREATER,
-        reason="Python versions before 3.10 use different schema for line table")
-    def test_line_after_py310(self):
-
-        def foo():
-            global global_loaded
-            global_loaded()
-
-        def method():
-            a = 10
-            b = 20
-            c = 20
-
-        success, result = insert_code(method.__code__, foo.__code__, method.__code__.co_firstlineno + 1)
-        assert success
-        assert list(result.co_lnotab) == [0, 1, 14, 1, 4, 1]
-
-        success, result = insert_code(method.__code__, foo.__code__, method.__code__.co_firstlineno + 2)
-        assert success
-        assert list(result.co_lnotab) == [0, 1, 4, 1, 14, 1]
-
-        success, result = insert_code(method.__code__, foo.__code__, method.__code__.co_firstlineno + 3)
-        assert success
-        assert list(result.co_lnotab) == [0, 1, 4, 1, 4, 1]
 
     def test_assignment(self):
         self.original_stdout = sys.stdout
@@ -794,11 +766,8 @@ class TestInsertCode(unittest.TestCase):
 
             self.check_insert_to_line_by_symbols(foo, call_tracing, foo.__code__.co_firstlineno + 40,
                                                  foo_check_40.__code__)
-
-
         finally:
             sys.stdout = self.original_stdout
-
 
     def test_add_jump_instruction(self):
         def foo():
