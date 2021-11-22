@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
@@ -79,12 +80,19 @@ class DependencyAnalyzerViewImpl(
   private val usagesTreeModel = DefaultTreeModel(null)
 
   override fun setSelectedExternalProject(externalProjectPath: String) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     this.externalProjectPath = externalProjectPath
   }
 
   override fun setSelectedDependency(externalProjectPath: String, dependency: Dependency) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     setSelectedExternalProject(externalProjectPath)
     dependencyItem = findDependencyItem(dependency)
+  }
+
+  private fun updateViewModel() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    updateExternalProjectsModel()
   }
 
   private fun getExternalProjects(): List<ExternalProject> {
@@ -297,9 +305,11 @@ class DependencyAnalyzerViewImpl(
     showDependencyGroupIdProperty.afterChange { updateDependencyModel() }
 
     contributor.whenDataChanged({
-      updateExternalProjectsModel()
+      invokeLater {
+        updateViewModel()
+      }
     }, parentDisposable)
-    updateExternalProjectsModel()
+    updateViewModel()
   }
 
   private fun JTree.bind(property: ObservableClearableProperty<DependencyItem?>) = apply {
@@ -354,7 +364,7 @@ class DependencyAnalyzerViewImpl(
 
   private fun expandAllWhenStructureChanged(tree: JTree) {
     tree.model.addTreeModelListener(
-      TreeModelAdapter.create { _, t ->
+      TreeModelAdapter.create { _, _ ->
         invokeLater {
           TreeUtil.expandAll(tree)
         }
