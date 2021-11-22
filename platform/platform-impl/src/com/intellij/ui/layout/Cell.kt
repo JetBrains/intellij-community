@@ -438,6 +438,8 @@ abstract class Cell : BaseBuilder {
    * @param step allows changing value by up/down keys on keyboard
    */
   @JvmOverloads
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun intTextField(binding: PropertyBinding<Int>,
                    columns: Int? = null,
                    range: IntRange? = null,
@@ -831,6 +833,8 @@ fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): 
   }
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun <C : JTextComponent> C.bindIntProperty(property: ObservableClearableProperty<Int>): C =
   bind(property.transform({ it.toString() }, { it.toInt() }))
 
