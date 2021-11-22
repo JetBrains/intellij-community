@@ -1575,6 +1575,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection"
                      key="inspection.java.8.collection.remove.if.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="Java8ListReplaceAll"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18api.Java8ListReplaceAllInspection"
+                     key="inspection.java.8.collection.remove.if.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExplicitArrayFilling"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
