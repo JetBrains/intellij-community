@@ -3,19 +3,19 @@
   "fixed": false,
   "ui": [
     {
-      "key": "BookmarkIcon.background",
+      "key": "Bookmark.iconBackground",
       "description": "The background of the default bookmark icon."
     },
     {
-      "key": "BookmarkMnemonicIcon.foreground",
+      "key": "Bookmark.Mnemonic.iconForeground",
       "description": "The text color on the bookmark icon with mnemonic."
     },
     {
-      "key": "BookmarkMnemonicIcon.background",
+      "key": "Bookmark.Mnemonic.iconBackground",
       "description": "The background of the bookmark icon with mnemonic."
     },
     {
-      "key": "BookmarkMnemonicIcon.borderColor",
+      "key": "Bookmark.Mnemonic.iconBorderColor",
       "description": "The border color of the bookmark icon with mnemonic."
     },
     {

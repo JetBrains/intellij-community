@@ -55,7 +55,6 @@
       "foreground": "#BBBBBB"
     },
 
-    "BookmarkIcon.background": "#AA8542",
     "Borders.ContrastBorderColor": "#323232",
 
     "Button": {
@@ -247,10 +246,13 @@
       "maxGutterIconWidth": 18
     },
 
-    "BookmarkMnemonicIcon": {
-      "background": "#5B5341",
-      "borderColor": "#D9A343",
-      "foreground": "#BBBBBB"
+    "Bookmark": {
+      "iconBackground": "#AA8542",
+      "Mnemonic": {
+        "iconForeground": "#BBBBBB",
+        "iconBackground": "#5B5341",
+        "iconBorderColor": "#D9A343"
+      }
     },
 
     "NavBar.borderColor": "#515151",
