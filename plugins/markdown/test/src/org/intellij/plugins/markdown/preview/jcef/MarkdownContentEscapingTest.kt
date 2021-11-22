@@ -4,32 +4,38 @@ package org.intellij.plugins.markdown.preview.jcef
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.NonHeadlessRule
-import com.intellij.ui.scale.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.collectPageSource
+import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.createJcefTestRule
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.File
 
 /**
- * Run with *intellij.test.standalone=true*
+ * Run with:
+ * * *intellij.test.standalone=true*
+ * * *java.awt.headless=false* (although, this should be set by [NonHeadlessRule],
+ *   it seems that JCEF initialization will check this property before the rule is applied)
  *
- * Basically all these tests are checking if the passed to the preview HTML
+ * Basically, all these tests are checking if the passed to the preview HTML
  * stays the same after conversion to incremental DOM.
  */
-class MarkdownContentEscapingTest {
+@RunWith(Parameterized::class)
+class MarkdownContentEscapingTest(enableOsr: Boolean) {
   @Rule
   @JvmField
-  val nonHeadless: TestRule = NonHeadlessRule();
-  
+  val rule: TestRule = RuleChain.outerRule(NonHeadlessRule()).around(createJcefTestRule(enableOsr))
+
   @Test
   fun `applied patch sanity`() = doTest("appliedPatchSanity")
 
@@ -49,14 +55,6 @@ class MarkdownContentEscapingTest {
   fun `interesting symbols`() = doTest("interestingSymbols")
 
   private fun doTest(name: String) {
-    doTest(name, false)
-    doTest(name, true)
-  }
-
-  private fun doTest(name: String, osr: Boolean) {
-    TestScaleHelper.assumeStandalone()
-    TestScaleHelper.setRegistryProperty("ide.browser.jcef.markdownView.osr.enabled", osr.toString())
-
     val content = File(testPath, "$name.html").readText()
     val panel = MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content)
     val expected = parseContentBody(content)
@@ -82,21 +80,14 @@ class MarkdownContentEscapingTest {
   }
 
   companion object {
-    init {
-      //TestScaleHelper.setRegistryProperty("ide.browser.jcef.headless.enabled", "true")
-      TestScaleHelper.setRegistryProperty("ide.browser.jcef.testMode.enabled", "true")
-    }
+    @JvmStatic
+    @get:Parameterized.Parameters(name = "enableOsr = {0}")
+    val modes = listOf(true, false)
 
     private val testPath = FileUtil.join(MarkdownTestingUtil.TEST_DATA_PATH!!, "preview", "jcef", "escaping")
 
     @ClassRule
     @JvmField
     val appRule = ApplicationRule()
-
-    @AfterClass
-    @JvmStatic
-    fun after() {
-      TestScaleHelper.restoreRegistryProperties()
-    }
   }
 }
