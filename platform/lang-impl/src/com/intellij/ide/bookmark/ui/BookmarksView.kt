@@ -186,7 +186,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     tree.isRootVisible = false
     tree.showsRootHandles = true // TODO: fix auto-expand
     if (!isPopup) {
-      TreeSpeedSearch(tree)
       val handler = DragAndDropHandler(this)
       DnDSupport.createBuilder(tree)
         .setDisposableParent(this)
@@ -205,6 +204,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       override fun focusGained(event: FocusEvent?) = selectionAlarm.cancelAndRequest()
     })
 
+    TreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)
