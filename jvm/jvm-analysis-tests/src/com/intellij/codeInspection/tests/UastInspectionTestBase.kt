@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
@@ -32,6 +33,7 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
 
   protected fun JavaCodeInsightTestFixture.setLanguageLevel(languageLevel: LanguageLevel) {
     LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, languageLevel, testRootDisposable)
   }
 
   protected fun JavaCodeInsightTestFixture.testHighlighting(lang: ULanguage, text: String) {
