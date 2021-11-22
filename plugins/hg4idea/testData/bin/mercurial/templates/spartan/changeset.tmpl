@@ -1,0 +1,58 @@
+{header}
+<title>{repo|escape}: changeset {node|short}</title>
+</head>
+<body>
+
+<div class="buttons">
+<a href="{url|urlescape}log/{symrev}{sessionvars%urlparameter}">changelog</a>
+<a href="{url|urlescape}shortlog/{symrev}{sessionvars%urlparameter}">shortlog</a>
+<a href="{url|urlescape}graph/{symrev}{sessionvars%urlparameter}">graph</a>
+<a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a>
+<a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a>
+<a href="{url|urlescape}file/{symrev}{sessionvars%urlparameter}">files</a>
+<a href="{url|urlescape}raw-rev/{symrev}">raw</a>
+{archives%archiveentry}
+<a href="{url|urlescape}help{sessionvars%urlparameter}">help</a>
+</div>
+
+<h2><a href="/">Mercurial</a> {pathdef%breadcrumb} / changeset: {desc|strip|escape|firstline|nonempty}</h2>
+
+<table id="changesetEntry">
+<tr>
+ <th class="changeset">changeset {rev}:</th>
+ <td class="changeset"><a href="{url|urlescape}rev/{node|short}{sessionvars%urlparameter}">{node|short}</a></td>
+</tr>
+{ifeq(count(parent), '2', parent%changesetparentdiff, parent%changesetparent)}
+{child%changesetchild}
+{changesettag}
+<tr>
+ <th class="author">author:</th>
+ <td class="author">{author|obfuscate}</td>
+</tr>
+<tr>
+ <th class="date">date:</th>
+ <td class="date age">{date|rfc822date}</td>
+</tr>
+{ifeq(phase, 'public', '', '<tr>
+ <th class="phase">phase:</th>
+ <td class="phase">{phase|escape}</td>
+</tr>')}
+{if(obsolete, succsandmarkers%obsfateentry)}
+{if(instabilities, whyunstable%whyunstableentry)}
+<tr>
+ <th class="files">files:</th>
+ <td class="files">{files}</td>
+</tr>
+<tr>
+ <th class="description">description:</th>
+ <td class="description">{desc|strip|escape|websub|addbreaks|nonempty}</td>
+</tr>
+</table>
+
+<div id="changesetDiff">
+{diff}
+</div>
+
+{footer}
+
+

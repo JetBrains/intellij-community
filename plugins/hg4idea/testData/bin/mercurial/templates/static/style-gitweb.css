@@ -1,0 +1,389 @@
+body { font-family: sans-serif; font-size: 12px; border:solid #d9d8d1; border-width:1px; margin:10px; background: white; color: black; }
+a { color:#0000cc; }
+a:hover, a:visited, a:active { color:#880000; }
+div.page_header { height:25px; padding:8px; font-size:18px; font-weight:bold; background-color:#d9d8d1; }
+div.page_header a:visited { color:#0000cc; }
+div.page_header a:hover { color:#880000; }
+div.page_nav {
+    padding:8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+div.page_nav a:visited { color:#0000cc; }
+div.extra_nav {
+    padding: 8px;
+}
+div.extra_nav a:visited {
+    color: #0000cc;
+}
+div.page_path { padding:8px; border:solid #d9d8d1; border-width:0px 0px 1px}
+div.page_footer { padding:4px 8px; background-color: #d9d8d1; }
+div.page_footer_text { float:left; color:#555555; font-style:italic; }
+div.page_body { padding:8px; }
+div.title, a.title {
+	display:block; padding:6px 8px;
+	font-weight:bold; background-color:#edece6; text-decoration:none; color:#000000;
+}
+a.title:hover { background-color: #d9d8d1; }
+div.title_text { padding:6px 0px; border: solid #d9d8d1; border-width:0px 0px 1px; }
+div.log_body { padding:8px 8px 8px 150px; }
+.age { white-space:nowrap; }
+a.title span.age { position:relative; float:left; width:142px; font-style:italic; }
+div.log_link {
+	padding:0px 8px;
+	font-size:10px; font-family:sans-serif; font-style:normal;
+	position:relative; float:left; width:136px;
+}
+div.list_head { padding:6px 8px 4px; border:solid #d9d8d1; border-width:1px 0px 0px; font-style:italic; }
+a.list { text-decoration:none; color:#000000; }
+a.list:hover { text-decoration:underline; color:#880000; }
+table { padding:8px 4px; }
+th { padding:2px 5px; font-size:12px; text-align:left; }
+.parity0 { background-color:#ffffff; }
+tr.dark, .parity1, pre.sourcelines.stripes > :nth-child(4n+4) { background-color:#f6f6f0; }
+tr.light:hover, .parity0:hover, tr.dark:hover, .parity1:hover,
+pre.sourcelines.stripes > :nth-child(4n+2):hover,
+pre.sourcelines.stripes > :nth-child(4n+4):hover,
+pre.sourcelines.stripes > :nth-child(4n+1):hover + :nth-child(4n+2),
+pre.sourcelines.stripes > :nth-child(4n+3):hover + :nth-child(4n+4) { background-color:#edece6; }
+td { padding:2px 5px; font-size:12px; vertical-align:top; }
+td.closed { background-color: #99f; }
+td.link { padding:2px 5px; font-family:sans-serif; font-size:10px; }
+td.indexlinks { white-space: nowrap; }
+td.indexlinks a {
+  padding: 2px 5px; line-height: 10px;
+  border: 1px solid;
+  color: #ffffff; background-color: #7777bb;
+  border-color: #aaaadd #333366 #333366 #aaaadd;
+  font-weight: bold;  text-align: center; text-decoration: none;
+  font-size: 10px;
+}
+td.indexlinks a:hover { background-color: #6666aa; }
+div.pre { font-family:monospace; font-size:12px; white-space:pre; }
+
+.search {
+    margin-right: 8px;
+}
+
+div#hint {
+  position: absolute;
+  display: none;
+  width: 250px;
+  padding: 5px;
+  background: #ffc;
+  border: 1px solid yellow;
+  border-radius: 5px;
+  z-index: 15;
+}
+
+#searchform:hover div#hint { display: block; }
+
+tr.thisrev a { color:#999999; text-decoration: none; }
+tr.thisrev pre { color:#009900; }
+td.annotate {
+  white-space: nowrap;
+}
+div.annotate-info {
+  z-index: 5;
+  display: none;
+  position: absolute;
+  background-color: #FFFFFF;
+  border: 1px solid #d9d8d1;
+  text-align: left;
+  color: #000000;
+  padding: 5px;
+}
+div.annotate-info a { color: #0000FF; text-decoration: underline; }
+td.annotate:hover div.annotate-info { display: inline; }
+
+#diffopts-form {
+  padding-left: 8px;
+  display: none;
+}
+
+.linenr { color:#999999; text-decoration:none }
+div.rss_logo { float: right; white-space: nowrap; }
+div.rss_logo a {
+	padding:3px 6px; line-height:10px;
+	border:1px solid; border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e;
+	color:#ffffff; background-color:#ff6600;
+	font-weight:bold; font-family:sans-serif; font-size:10px;
+	text-align:center; text-decoration:none;
+}
+div.rss_logo a:hover { background-color:#ee5500; }
+pre { margin: 0; }
+span.logtags span {
+	padding: 0px 4px;
+	font-size: 10px;
+	font-weight: normal;
+	border: 1px solid;
+	background-color: #ffaaff;
+	border-color: #ffccff #ff00ee #ff00ee #ffccff;
+}
+span.logtags span.phasetag {
+	background-color: #dfafff;
+	border-color: #e2b8ff #ce48ff #ce48ff #e2b8ff;
+}
+span.logtags span.obsoletetag {
+	background-color: #dddddd;
+	border-color: #e4e4e4 #a3a3a3 #a3a3a3 #e4e4e4;
+}
+span.logtags span.instabilitytag {
+	background-color: #ffb1c0;
+	border-color: #ffbbc8 #ff4476 #ff4476 #ffbbc8;
+}
+span.logtags span.tagtag {
+	background-color: #ffffaa;
+	border-color: #ffffcc #ffee00 #ffee00 #ffffcc;
+}
+span.logtags span.branchtag {
+	background-color: #aaffaa;
+	border-color: #ccffcc #00cc33 #00cc33 #ccffcc;
+}
+span.logtags span.inbranchtag {
+	background-color: #d5dde6;
+	border-color: #e3ecf4 #9398f4 #9398f4 #e3ecf4;
+}
+span.logtags span.bookmarktag {
+	background-color: #afdffa;
+	border-color: #ccecff #46ace6 #46ace6 #ccecff;
+}
+span.difflineplus { color:#008800; }
+span.difflineminus { color:#cc0000; }
+span.difflineat { color:#990099; }
+div.diffblocks { counter-reset: lineno; }
+div.diffblock { counter-increment: lineno; }
+pre.sourcelines { position: relative; counter-reset: lineno; }
+pre.sourcelines > span {
+	display: inline-block;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0 0 0 5em;
+	counter-increment: lineno;
+	vertical-align: top;
+}
+pre.sourcelines > span:before {
+	-moz-user-select: -moz-none;
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	display: inline-block;
+	margin-left: -6em;
+	width: 4em;
+	color: #999;
+	text-align: right;
+	content: counters(lineno,".");
+	float: left;
+}
+pre.sourcelines > a {
+	display: inline-block;
+	position: absolute;
+	left: 0px;
+	width: 4em;
+	height: 1em;
+}
+tr:target td,
+pre.sourcelines > span:target,
+pre.sourcelines.stripes > span:target {
+	background-color: #bfdfff;
+}
+
+.description {
+    font-family: monospace;
+    white-space: pre;
+}
+
+/* Followlines */
+tbody.sourcelines > tr.followlines-selected,
+pre.sourcelines > span.followlines-selected {
+  background-color: #99C7E9 !important;
+}
+
+div#followlines {
+  background-color: #FFF;
+  border: 1px solid #d9d8d1;
+  padding: 5px;
+  position: fixed;
+}
+
+div.followlines-cancel {
+  text-align: right;
+}
+
+div.followlines-cancel > button {
+  line-height: 80%;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background-color: inherit;
+  font-weight: bold;
+}
+
+div.followlines-cancel > button:hover {
+  color: #FFFFFF;
+  background-color: #CF1F1F;
+}
+
+div.followlines-link {
+  margin: 2px;
+  margin-top: 4px;
+  font-family: sans-serif;
+}
+
+.btn-followlines {
+  position: absolute;
+  display: none;
+  cursor: pointer;
+  box-sizing: content-box;
+  font-size: 11px;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  margin: 0px;
+  margin-top: -2px;
+  padding: 0px;
+  background-color: #E5FDE5;
+  border: 1px solid #9BC19B;
+  font-family: monospace;
+  text-align: center;
+  line-height: 5px;
+}
+
+span.followlines-select .btn-followlines {
+  margin-left: -1.6em;
+}
+
+.btn-followlines:hover {
+  transform: scale(1.1, 1.1);
+}
+
+.btn-followlines .followlines-plus {
+  color: green;
+}
+
+.btn-followlines .followlines-minus {
+  color: red;
+}
+
+.btn-followlines-end {
+  background-color: #ffdcdc;
+}
+
+.sourcelines tr:hover .btn-followlines,
+.sourcelines span.followlines-select:hover > .btn-followlines {
+  display: inline;
+}
+
+.btn-followlines-hidden,
+.sourcelines tr:hover .btn-followlines-hidden {
+  display: none;
+}
+
+/* Graph */
+div#wrapper {
+	position: relative;
+	margin: 0;
+	padding: 0;
+	margin-top: 3px;
+}
+
+canvas {
+	position: absolute;
+	z-index: 5;
+	top: -0.9em;
+	margin: 0;
+}
+
+ul#graphnodes {
+	list-style: none inside none;
+	padding: 0;
+	margin: 0;
+}
+
+ul#graphnodes li {
+	position: relative;
+	height: 37px;
+	overflow: visible;
+	padding-top: 2px;
+}
+
+ul#graphnodes li .fg {
+	position: absolute;
+	z-index: 10;
+}
+
+ul#graphnodes li .info {
+	font-size: 100%;
+	font-style: italic;
+}
+
+/* Comparison */
+.legend {
+    padding: 1.5% 0 1.5% 0;
+}
+
+.legendinfo {
+    border: 1px solid #d9d8d1;
+    font-size: 80%;
+    text-align: center;
+    padding: 0.5%;
+}
+
+.equal {
+    background-color: #ffffff;
+}
+
+.delete {
+    background-color: #faa;
+    color: #333;
+}
+
+.insert {
+    background-color: #ffa;
+}
+
+.replace {
+    background-color: #e8e8e8;
+}
+
+.comparison {
+    overflow-x: auto;
+}
+
+.header th {
+    text-align: center;
+}
+
+.block {
+    border-top: 1px solid #d9d8d1;
+}
+
+.scroll-loading {
+  -webkit-animation: change_color 1s linear 0s infinite alternate;
+  -moz-animation: change_color 1s linear 0s infinite alternate;
+  -o-animation: change_color 1s linear 0s infinite alternate;
+  animation: change_color 1s linear 0s infinite alternate;
+}
+
+@-webkit-keyframes change_color {
+  from { background-color: #A0CEFF; } to {  }
+}
+@-moz-keyframes change_color {
+  from { background-color: #A0CEFF; } to {  }
+}
+@-o-keyframes change_color {
+  from { background-color: #A0CEFF; } to {  }
+}
+@keyframes change_color {
+  from { background-color: #A0CEFF; } to {  }
+}
+
+.scroll-loading-error {
+    background-color: #FFCCCC !important;
+}
+
+#doc {
+    margin: 0 8px;
+}
