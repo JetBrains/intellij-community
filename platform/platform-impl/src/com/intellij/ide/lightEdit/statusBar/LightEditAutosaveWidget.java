@@ -157,8 +157,8 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
   }
 
   @Override
-  public void autosaveModeChanged(boolean isAutoSave) {
-    LightEditFeatureUsagesUtil.logAutoSaveModeChanged(isAutoSave);
+  public void autosaveModeChanged(boolean isAutosave) {
+    LightEditFeatureUsagesUtil.logAutosaveModeChanged(isAutosave);
     if (myStatusBar != null) {
       myStatusBar.updateWidget(ID());
     }

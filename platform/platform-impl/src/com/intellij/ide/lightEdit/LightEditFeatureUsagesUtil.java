@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.lightEdit;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -44,7 +43,7 @@ public final class LightEditFeatureUsagesUtil extends CounterUsagesCollector {
     OPEN_FILE_EVENT_ID.log(project, openPlace);
   }
 
-  public static void logAutoSaveModeChanged(boolean isAutoSave) {
+  public static void logAutosaveModeChanged(boolean isAutoSave) {
     AUTO_SAVE_MODE_EVENT_ID.log(isAutoSave);
   }
 
