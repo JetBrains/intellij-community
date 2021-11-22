@@ -7,6 +7,8 @@ import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.PathUtil
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.nio.file.Path
+import kotlin.io.path.copyTo
 
 class EclipseClasspathTest {
   @JvmField
@@ -150,13 +152,23 @@ class EclipseClasspathTest {
     doTest("test", true, "linked")
   }
 
+  @Test
+  fun testNoDotProject() {
+    doTest(fileSuffixesToCheck = listOf("/.classpath", "/.project", ".iml"), updateExpectedDir = {
+      val dotProject = eclipseTestDataRoot.resolve("round/workspaceOnly/test/.project")
+      dotProject.copyTo(it.resolve("test/.project"))
+    })
+  }
 
-  private fun doTest(eclipseProjectDirPath: String = "test", setupPathVariables: Boolean = false, testDataParentDir: String = "round") {
+
+  private fun doTest(eclipseProjectDirPath: String = "test", setupPathVariables: Boolean = false, testDataParentDir: String = "round",
+                     updateExpectedDir: (Path) -> Unit = {}, fileSuffixesToCheck: List<String> = listOf("/.classpath", ".iml")) {
     val testDataRoot = eclipseTestDataRoot
     val testRoot = testDataRoot.resolve(testDataParentDir).resolve(testName.methodName.removePrefix("test").decapitalize())
     val commonRoot = testDataRoot.resolve("common").resolve("testModuleWithClasspathStorage")
     val modulePath = "$eclipseProjectDirPath/${PathUtil.getFileName(eclipseProjectDirPath)}"
-    checkLoadSaveRoundTrip(listOf(testRoot, commonRoot), tempDirectory, setupPathVariables, listOf("test" to modulePath))
+    loadEditSaveAndCheck(listOf(testRoot, commonRoot), tempDirectory, setupPathVariables, listOf("test" to modulePath), ::forceSave,
+                         updateExpectedDir, fileSuffixesToCheck)
   }
 
   companion object {
