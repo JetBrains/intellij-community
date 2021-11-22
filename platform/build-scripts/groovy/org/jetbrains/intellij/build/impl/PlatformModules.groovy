@@ -150,7 +150,11 @@ final class PlatformModules {
       alreadyPackedModules.addAll(entry.value)
     }
 
-    jar(BaseLayout.APP_JAR, PLATFORM_API_MODULES, productLayout, layout)
+    for (String moduleName : (PLATFORM_API_MODULES)) {
+      if (!productLayout.excludedModuleNames.contains(moduleName)) {
+        layout.withModule(moduleName, moduleName == "intellij.platform.jps.model" ? "jps-model.jar" : BaseLayout.APP_JAR)
+      }
+    }
     jar(BaseLayout.APP_JAR, productLayout.productApiModules, productLayout, layout)
 
     for (String module in productLayout.productImplementationModules) {
@@ -191,7 +195,7 @@ final class PlatformModules {
       "intellij.platform.ide.util.netty",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt"
-      ), productLayout, layout)
+    ), productLayout, layout)
 
     jar(BaseLayout.APP_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
     jar(BaseLayout.APP_JAR, List.of(
@@ -264,12 +268,12 @@ final class PlatformModules {
       "jna", PackMode.STANDALONE_MERGED,
       "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
       "intellij-coverage", PackMode.STANDALONE_SEPARATE,
-    )
+      )
 
     layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
       "JDOM",
       "Trove4j",
-    ))
+      ))
 
     for (JpsLibrary library in additionalProjectLevelLibraries) {
       String name = library.name

@@ -95,7 +95,7 @@ public final class ClasspathBootstrap {
       return;
     }
 
-    if (result.add(path) && path == BANNED_JAR) {
+    if (result.add(path) && path.equals(BANNED_JAR)) {
       LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + PathUtilRt.getFileName(path) + " is added to build process classpath");
     }
   }
