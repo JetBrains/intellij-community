@@ -1,11 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JCEFHtmlPanel
+import org.cef.browser.CefBrowser
+import org.cef.browser.CefFrame
+import org.cef.handler.CefRequestHandlerAdapter
+import org.cef.network.CefRequest
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
@@ -16,16 +21,19 @@ import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.JcefBrowserPipeImpl
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.random.Random
 
 class MarkdownJCEFHtmlPanel(
   private val _project: Project?,
   private val _virtualFile: VirtualFile?
-): JCEFHtmlPanel(isOffScreenRendering(), null, getClassUrl()), MarkdownHtmlPanel {
+): JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanel {
   constructor(): this(null, null)
 
-  private val resourceProvider = MyResourceProvider()
-  private val browserPipe = JcefBrowserPipeImpl(this)
+  private val pageBaseName = "markdown-preview-index-${hashCode()}.html"
+  private val resourceProvider = MyAggregatingResourceProvider()
+  private val browserPipe = JcefBrowserPipeImpl(
+    this,
+    injectionAllowedUrls = listOf(PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName))
+  )
 
   private val scrollListeners = ArrayList<MarkdownHtmlPanel.ScrollListener>()
 
@@ -61,10 +69,10 @@ class MarkdownJCEFHtmlPanel(
       styles.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
     )
 
-  private fun loadIndexContent() {
+  private fun buildIndexContent(): String {
     reloadExtensions()
     // language=HTML
-    val content = """
+    return """
       <!DOCTYPE html>
       <html>
         <head>
@@ -76,7 +84,10 @@ class MarkdownJCEFHtmlPanel(
         </head>
       </html>
     """
-    super<JCEFHtmlPanel>.setHtml(content)
+  }
+
+  private fun loadIndexContent() {
+    loadURL(PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName))
   }
 
   @Volatile
@@ -89,6 +100,7 @@ class MarkdownJCEFHtmlPanel(
     Disposer.register(this, browserPipe)
     val resourceProviderRegistration = PreviewStaticServer.instance.registerResourceProvider(resourceProvider)
     Disposer.register(this, resourceProviderRegistration)
+    jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser)
     browserPipe.subscribe(JcefBrowserPipeImpl.WINDOW_READY_EVENT) {
       delayedContent?.let {
         cefBrowser.executeJavaScript(it, null, 0)
@@ -175,22 +187,59 @@ class MarkdownJCEFHtmlPanel(
     )
   }
 
-  private inner class MyResourceProvider : ResourceProvider {
+  private inner class MyAggregatingResourceProvider : ResourceProvider {
     private val internalResources = baseScripts + baseStyles
 
     override fun canProvide(resourceName: String): Boolean {
-      return resourceName in internalResources || currentExtensions.any { it.resourceProvider.canProvide(resourceName) }
+      return resourceName in internalResources ||
+             resourceName == pageBaseName ||
+             currentExtensions.any { it.resourceProvider.canProvide(resourceName) }
     }
 
     override fun loadResource(resourceName: String): ResourceProvider.Resource? {
       return when (resourceName) {
+        pageBaseName -> ResourceProvider.Resource(buildIndexContent().toByteArray(), "text/html")
         in internalResources -> ResourceProvider.loadInternalResource<MarkdownJCEFHtmlPanel>(resourceName)
         else -> currentExtensions.map { it.resourceProvider }.firstOrNull { it.canProvide(resourceName) }?.loadResource(resourceName)
       }
     }
   }
 
+  private inner class MyFilteringRequestHandler: CefRequestHandlerAdapter() {
+    override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, user_gesture: Boolean, is_redirect: Boolean): Boolean {
+      if (request.resourceType == CefRequest.ResourceType.RT_CSP_REPORT) {
+        logger.warn("""
+          Detected a CSP violation on the preview page: $pageBaseName!
+          Current page url: ${browser.url}
+          Initiated by user gesture: $user_gesture
+          Was redirect: $is_redirect
+          Full request:
+          $request
+        """.trimIndent())
+        return true
+      }
+      val targetPageUrl = PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName)
+      val requestedUrl = request.url
+      if (requestedUrl != targetPageUrl) {
+        logger.warn("""
+          Canceling request for an external page with url: $requestedUrl.
+          Current page url: ${browser.url}
+          Target safe url: $targetPageUrl
+        """.trimIndent())
+        return true
+      }
+      return false
+    }
+
+    override fun onOpenURLFromTab(browser: CefBrowser, frame: CefFrame, target_url: String, user_gesture: Boolean): Boolean {
+      logger.warn("Canceling navigation for url: $target_url (user_gesture=$user_gesture)")
+      return true
+    }
+  }
+
   companion object {
+    private val logger = logger<MarkdownJCEFHtmlPanel>()
+
     private const val SET_SCROLL_EVENT = "setScroll"
 
     private val baseScripts = listOf(
@@ -201,16 +250,6 @@ class MarkdownJCEFHtmlPanel(
     )
 
     private val baseStyles = emptyList<String>()
-
-    private fun getClassUrl(): String {
-      val url = try {
-        val cls = MarkdownJCEFHtmlPanel::class.java
-        cls.getResource("${cls.simpleName}.class")?.toExternalForm() ?: error("Failed to get class URL!")
-      } catch (ignored: Exception) {
-        "about:blank"
-      }
-      return "$url@${Random.nextInt(Integer.MAX_VALUE)}"
-    }
 
     private fun isOffScreenRendering(): Boolean = Registry.`is`("ide.browser.jcef.markdownView.osr.enabled")
   }

@@ -17,8 +17,15 @@ import java.io.IOException
 /**
  * You can check resource/org/intellij/plugins/markdown/ui/preview/jcef/BrowserPipe.js
  * for the browser-side implementation.
+ *
+ * @param browser Browser to use this pipe with.
+ * @param injectionAllowedUrls A list of safe URLs which are allowed to receive injection with [BrowserPipe] API.
+ * All URLs are considered to be safe for injection if this parameter is null.
  */
-internal class JcefBrowserPipeImpl(private val browser: JBCefBrowserBase): BrowserPipe {
+internal class JcefBrowserPipeImpl(
+  private val browser: JBCefBrowserBase,
+  private val injectionAllowedUrls: List<String>? = null
+): BrowserPipe {
   private val query = checkNotNull(JBCefJSQuery.create(browser))
   private val receiveSubscribers = hashMapOf<String, MutableList<BrowserPipe.Handler>>()
 
@@ -27,9 +34,13 @@ internal class JcefBrowserPipeImpl(private val browser: JBCefBrowserBase): Brows
     query.addHandler(::receiveHandler)
     browser.jbCefClient.addLoadHandler(object: CefLoadHandlerAdapter() {
       override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-        val code = query.inject("raw")
-        browser.executeJavaScript("window['$ourBrowserNamespace']['$postToIdeFunctionName'] = raw => $code;", null, 0)
-        browser.executeJavaScript("window.dispatchEvent(new Event('IdeReady'));", null, 0)
+        val pageUrl = browser.url
+        when {
+          injectionAllowedUrls != null && pageUrl !in injectionAllowedUrls -> {
+            logger.warn("$pageUrl was not included in the list of allowed for injection urls! Allowed urls:\n$injectionAllowedUrls")
+          }
+          else -> inject(browser)
+        }
       }
     }, browser.cefBrowser)
   }
@@ -54,6 +65,12 @@ internal class JcefBrowserPipeImpl(private val browser: JBCefBrowserBase): Brows
   }
 
   override fun dispose() = Unit
+
+  private fun inject(browser: CefBrowser) {
+    val code = query.inject("raw")
+    browser.executeJavaScript("window['$ourBrowserNamespace']['$postToIdeFunctionName'] = raw => $code;", null, 0)
+    browser.executeJavaScript("window.dispatchEvent(new Event('IdeReady'));", null, 0)
+  }
 
   @ApiStatus.Internal
   data class PackedMessage(
