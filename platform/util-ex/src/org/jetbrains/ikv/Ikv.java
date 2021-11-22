@@ -31,18 +31,69 @@ So, besides offset, we have to store size. Values are not sorted by MPH to ensur
 
 Little endian is used because both Intel and M1 CPU uses little endian (saves a little for writing and reading integers).
 */
-public final class Ikv implements AutoCloseable {
-  private final RecSplitEvaluator<Long> evaluator;
-  private final long[] offsetAndSizePairs;
-  private ByteBuffer mappedBuffer;
+public abstract class Ikv implements AutoCloseable {
+  private static final LongHash LONG_HASH = new LongHash();
 
-  private Ikv(RecSplitEvaluator<Long> evaluator, long[] offsetAndSizePairs, ByteBuffer mappedBuffer) {
+  protected final RecSplitEvaluator<Long> evaluator;
+  protected ByteBuffer mappedBuffer;
+
+  public static final class SizeAwareIkv extends Ikv {
+    private final long[] offsetAndSizePairs;
+
+    private SizeAwareIkv(RecSplitEvaluator<Long> evaluator, ByteBuffer mappedBuffer, long[] offsetAndSizePairs) {
+      super(evaluator, mappedBuffer);
+
+      this.offsetAndSizePairs = offsetAndSizePairs;
+    }
+
+    public ByteBuffer getValue(int key) {
+      int index = evaluator.evaluate((long)key);
+      if (index < 0) {
+        return null;
+      }
+
+      long pair = offsetAndSizePairs[index];
+      int start = (int)(pair >> 32);
+      ByteBuffer buffer = mappedBuffer.asReadOnlyBuffer();
+      buffer.position(start);
+      buffer.limit(start + (int)pair);
+      return buffer;
+    }
+  }
+
+  public static final class SizeUnawareIkv extends Ikv {
+    private final int[] offsets;
+
+    private SizeUnawareIkv(RecSplitEvaluator<Long> evaluator, ByteBuffer mappedBuffer, int[] offsets) {
+      super(evaluator, mappedBuffer);
+
+      this.offsets = offsets;
+    }
+
+    // if size is known by reader
+    public ByteBuffer getUnboundedValue(int key) {
+      int index = evaluator.evaluate((long)key);
+      if (index < 0) {
+        return null;
+      }
+      return mappedBuffer.asReadOnlyBuffer().position(offsets[index]);
+    }
+  }
+
+  private Ikv(RecSplitEvaluator<Long> evaluator, ByteBuffer mappedBuffer) {
     this.evaluator = evaluator;
-    this.offsetAndSizePairs = offsetAndSizePairs;
     this.mappedBuffer = mappedBuffer;
   }
 
-  public static @NotNull Ikv loadIkv(@NotNull Path file) throws IOException {
+  public static @NotNull Ikv.SizeAwareIkv loadSizeAwareIkv(@NotNull Path file) throws IOException {
+    return (SizeAwareIkv)doLoadIkv(file);
+  }
+
+  public static @NotNull SizeUnawareIkv loadSizeUnawareIkv(@NotNull Path file) throws IOException {
+    return (SizeUnawareIkv)doLoadIkv(file);
+  }
+
+  public static @NotNull Ikv doLoadIkv(@NotNull Path file) throws IOException {
     ByteBuffer mappedBuffer;
     int fileSize;
     try (FileChannel fileChannel = FileChannel.open(file, EnumSet.of(StandardOpenOption.READ))) {
@@ -61,12 +112,14 @@ public final class Ikv implements AutoCloseable {
       mappedBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
-    int position = fileSize - Integer.BYTES;
+    int position = fileSize - 1;
+    boolean withSize = mappedBuffer.get(position) == 1;
+    position -= Integer.BYTES;
     int keyDataSize = mappedBuffer.getInt(position);
     position -= Integer.BYTES;
     int entryCount = mappedBuffer.getInt(position);
 
-    int offsetAndSizePairsDataSize = entryCount * Long.BYTES;
+    int offsetAndSizePairsDataSize = entryCount * (withSize ? Long.BYTES : Integer.BYTES);
 
     // read key data
     position -= keyDataSize + offsetAndSizePairsDataSize;
@@ -75,25 +128,18 @@ public final class Ikv implements AutoCloseable {
 
     // read value offsets
     position += keyDataSize;
+    Settings settings = new Settings(10, 256);
     mappedBuffer.position(position);
-    long[] valueOffsets = new long[entryCount];
-    mappedBuffer.asLongBuffer().get(valueOffsets);
-
-    return new Ikv(new RecSplitEvaluator<>(keyData, new LongHash(), new Settings(10, 256)), valueOffsets, mappedBuffer);
-  }
-
-  public ByteBuffer getValue(int key) {
-    int index = evaluator.evaluate((long)key);
-    if (index < 0) {
-      return null;
+    if (withSize) {
+      long[] offsetAndSizePairs = new long[entryCount];
+      mappedBuffer.asLongBuffer().get(offsetAndSizePairs);
+      return new Ikv.SizeAwareIkv(new RecSplitEvaluator<>(keyData, LONG_HASH, settings), mappedBuffer, offsetAndSizePairs);
     }
-
-    long pair = offsetAndSizePairs[index];
-    int start = (int)(pair >> 32);
-    ByteBuffer buffer = mappedBuffer.asReadOnlyBuffer();
-    buffer.position(start);
-    buffer.limit(start + (int)pair);
-    return buffer;
+    else {
+      int[] valueOffsets = new int[entryCount];
+      mappedBuffer.asIntBuffer().get(valueOffsets);
+      return new Ikv.SizeUnawareIkv(new RecSplitEvaluator<>(keyData, LONG_HASH, settings), mappedBuffer, valueOffsets);
+    }
   }
 
   @Override

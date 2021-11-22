@@ -25,6 +25,7 @@ import java.awt.*
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.lang.ref.WeakReference
+import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -99,7 +100,7 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
         var normalizingScale = 1f
         if ((document.url?.contains("@2x") == true) and
-            document.rootElement?.attributes?.getNamedItem(DATA_SCALED_ATTR)?.nodeValue?.toLowerCase().equals("true"))
+            document.rootElement?.attributes?.getNamedItem(DATA_SCALED_ATTR)?.nodeValue?.lowercase(Locale.ENGLISH).equals("true"))
         {
           normalizingScale = 2f
         }
@@ -111,8 +112,8 @@ class SvgTranscoder private constructor(private var width: Float, private var he
         val image = render((transcoder.width + 0.5f).toInt(), (transcoder.height + 0.5f).toInt(), transform, gvtRoot)
 
         // Take into account the image size rounding and correct the original user size in order to compensate the inaccuracy.
-        val effectiveUserWidth = image.width / scale;
-        val effectiveUserHeight = image.height / scale;
+        val effectiveUserWidth = image.width / scale
+        val effectiveUserHeight = image.height / scale
 
         // outDimensions should contain the base size
         outDimensions?.setSize(effectiveUserWidth.toDouble() / normalizingScale, effectiveUserHeight.toDouble() / normalizingScale)
@@ -257,7 +258,7 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
     val docHost = documentUrl.host
     val externalResourceHost: String = resourceUrl.host
-    if (docHost != externalResourceHost && (docHost == null || docHost != externalResourceHost) && "data" != resourceUrl.protocol) {
+    if (docHost != externalResourceHost && "data" != resourceUrl.protocol) {
       throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
     }
   }
@@ -279,7 +280,7 @@ private fun computeTransform(document: SVGOMDocument,
   val preserveAspectRatioMatrix: AffineTransform
   val root = document.rootElement
   val viewBox = root.getAttributeNS(null, SVGConstants.SVG_VIEW_BOX_ATTRIBUTE)
-  if (viewBox != null && viewBox.isNotEmpty()) {
+  if (viewBox.isNotEmpty()) {
     val aspectRatio = root.getAttributeNS(null, SVGConstants.SVG_PRESERVE_ASPECT_RATIO_ATTRIBUTE)
     preserveAspectRatioMatrix = ViewBox.getPreserveAspectRatioTransform(root, viewBox, aspectRatio, width, height, context)
   }
@@ -308,6 +309,7 @@ private fun render(offScreenWidth: Int, offScreenHeight: Int, usr2dev: AffineTra
   g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
   g.setRenderingHint(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE, WeakReference(image))
   g.transform = identityTransform
+  @Suppress("GraphicsSetClipInspection")
   g.setClip(0, 0, offScreenWidth, offScreenHeight)
   g.composite = AlphaComposite.Clear
   g.fillRect(0, 0, offScreenWidth, offScreenHeight)

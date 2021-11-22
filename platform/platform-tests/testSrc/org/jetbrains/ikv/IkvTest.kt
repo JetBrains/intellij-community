@@ -31,8 +31,30 @@ class IkvTest {
       }
     }
 
-    Ikv.loadIkv(file).use {
+    Ikv.loadSizeAwareIkv(file).use {
       assertThat(it.getValue(key)).isEqualTo(ByteBuffer.wrap(data))
+    }
+  }
+
+  @Test
+  fun singleKeySizeUnaware(@TempDir tempDir: Path) {
+    val file = tempDir.resolve("db")
+
+    val data = random.nextBytes(random.nextInt(64, 512))
+    val key = Murmur3_32Hash.MURMUR3_32.hashBytes(data, 0, data.size)
+
+    Files.createDirectories(file.parent)
+    FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)).use { channel ->
+      val writer = IkvWriter(channel, writeSize = false)
+      writer.use {
+        writer.write(key, data)
+      }
+    }
+
+    Ikv.loadSizeUnawareIkv(file).use {
+      val value = it.getUnboundedValue(key)
+      assertThat(value).isNotEqualTo(ByteBuffer.wrap(data))
+      assertThat(value.slice().limit(value.position() + data.size)).isEqualTo(ByteBuffer.wrap(data))
     }
   }
 
@@ -41,7 +63,7 @@ class IkvTest {
     val file = tempDir.resolve("db")
 
     val list = generateDb(file, 2)
-    Ikv.loadIkv(file).use {
+    Ikv.loadSizeAwareIkv(file).use {
       for ((key, data) in list) {
         assertThat(it.getValue(key)).isEqualTo(ByteBuffer.wrap(data))
       }
@@ -53,7 +75,7 @@ class IkvTest {
     val file = tempDir.resolve("db")
 
     val list = generateDb(file, 1_024)
-    Ikv.loadIkv(file).use { ikv ->
+    Ikv.loadSizeAwareIkv(file).use { ikv ->
       for ((key, data) in list) {
         assertThat(ikv.getValue(key)).isEqualTo(ByteBuffer.wrap(data))
       }

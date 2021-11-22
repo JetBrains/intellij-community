@@ -2,26 +2,22 @@
 package com.intellij.ui.svg;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import org.jetbrains.integratedBinaryPacking.IntBitPacker;
 import org.jetbrains.mvstore.DataUtil;
 import org.jetbrains.mvstore.type.DataType;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public final class ImageValue {
-  final byte[] data;
-  final float width;
-  final float height;
-  final int actualWidth;
-  final int actualHeight;
+  final int[] data;
+  final int w;
+  final int h;
 
-  ImageValue(byte[] data, float width, float height, int actualWidth, int actualHeight) {
+  ImageValue(int[] data, int w, int h) {
     this.data = data;
-    this.width = width;
-    this.height = height;
-    this.actualWidth = actualWidth;
-    this.actualHeight = actualHeight;
+    this.w = w;
+    this.h = h;
   }
 
   @Override
@@ -34,19 +30,14 @@ public final class ImageValue {
     }
 
     ImageValue value = (ImageValue)o;
-    return Float.compare(value.width, width) == 0 &&
-           Float.compare(value.height, height) == 0 &&
-           actualWidth == value.actualWidth &&
-           actualHeight == value.actualHeight && Arrays.equals(data, value.data);
+    return w == value.w && h == value.h && Arrays.equals(data, value.data);
   }
 
   @Override
   public int hashCode() {
     int result = Arrays.hashCode(data);
-    result = 31 * result + (width != 0.0f ? Float.floatToIntBits(width) : 0);
-    result = 31 * result + (height != 0.0f ? Float.floatToIntBits(height) : 0);
-    result = 31 * result + actualWidth;
-    result = 31 * result + actualHeight;
+    result = 31 * result + w;
+    result = 31 * result + h;
     return result;
   }
 
@@ -58,9 +49,7 @@ public final class ImageValue {
 
     @Override
     public int getMemory(ImageValue obj) {
-      return Float.BYTES * 2 +
-             DataUtil.VAR_INT_MAX_SIZE * 2 +
-             obj.data.length + 1;
+      return DataUtil.VAR_INT_MAX_SIZE * 2 + (obj.data.length * Integer.BYTES) + 1;
     }
 
     @Override
@@ -70,73 +59,53 @@ public final class ImageValue {
 
     @Override
     public void write(ByteBuf buf, ImageValue obj) {
-      if (obj.width == obj.actualWidth && obj.height == obj.actualHeight) {
-        if (obj.height == obj.width) {
-          if (obj.actualWidth < 254) {
-            buf.writeByte(obj.actualWidth);
-          }
-          else {
-            buf.writeByte(255);
-            IntBitPacker.writeVar(buf, obj.actualWidth);
-          }
+      if (obj.w == obj.h) {
+        if (obj.w < 254) {
+          buf.writeByte(obj.w);
         }
         else {
-          buf.writeByte(254);
-          IntBitPacker.writeVar(buf, obj.actualWidth);
-          IntBitPacker.writeVar(buf, obj.actualHeight);
+          buf.writeByte(255);
+          IntBitPacker.writeVar(buf, obj.w);
         }
       }
       else {
-        buf.writeByte(0);
-        buf.writeFloat(obj.width);
-        buf.writeFloat(obj.height);
-        IntBitPacker.writeVar(buf, obj.actualWidth);
-        IntBitPacker.writeVar(buf, obj.actualHeight);
+        buf.writeByte(254);
+        IntBitPacker.writeVar(buf, obj.w);
+        IntBitPacker.writeVar(buf, obj.h);
       }
-      buf.writeBytes(obj.data);
+      for (int i : obj.data) {
+        buf.writeInt(i);
+      }
     }
 
     @Override
     public ImageValue read(ByteBuf buf) {
-      float width;
-      float height;
       int actualWidth;
       int actualHeight;
 
       short format = buf.readUnsignedByte();
-      if (format == 255) {
+      if (format < 254) {
+        actualWidth = format;
+        actualHeight = format;
+      }
+      else if (format == 255) {
         actualWidth = IntBitPacker.readVar(buf);
         //noinspection SuspiciousNameCombination
         actualHeight = actualWidth;
-
-        width = actualWidth;
-        //noinspection SuspiciousNameCombination
-        height = actualWidth;
-      }
-      else if (format == 254) {
-        actualWidth = IntBitPacker.readVar(buf);
-        actualHeight = IntBitPacker.readVar(buf);
-
-        width = actualWidth;
-        height = actualHeight;
-      }
-      else if (format != 0) {
-        actualWidth = format;
-        actualHeight = format;
-        width = format;
-        height = format;
       }
       else {
-        width = buf.readFloat();
-        height = buf.readFloat();
         actualWidth = IntBitPacker.readVar(buf);
         actualHeight = IntBitPacker.readVar(buf);
       }
 
-      int length = actualWidth * actualHeight * 4;
-      byte[] data = ByteBufUtil.getBytes(buf, buf.readerIndex(), length);
-      buf.readerIndex(buf.readerIndex() + length);
-      return new ImageValue(data, width, height, actualWidth, actualHeight);
+      int length = actualWidth * actualHeight;
+      int[] data = new int[length];
+      int lengthInBytes = length << 2;
+      // must be big endian order - do not use little endian here (ARGB is expected)
+      ByteBuffer nioBuf = DataUtil.getNioBuffer(buf, buf.readerIndex(), lengthInBytes);
+      nioBuf.asIntBuffer().get(data, 0, length);
+      buf.readerIndex(buf.readerIndex() + lengthInBytes);
+      return new ImageValue(data, actualWidth, actualHeight);
     }
   }
 }

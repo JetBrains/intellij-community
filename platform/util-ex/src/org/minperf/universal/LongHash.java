@@ -1,34 +1,25 @@
-// Copyright 2021 Thomas Mueller. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.minperf.universal;
 
-/**
- * A sample hash implementation for long keys.
- */
+import static java.lang.Long.rotateLeft;
+
 public final class LongHash implements UniversalHash<Long> {
-  public static long universalHash(long x, long index) {
-    long v0 = index ^ 0x736f6d6570736575L;
-    long v1 = index ^ 0x646f72616e646f6dL;
-    long v2 = index ^ 0x6c7967656e657261L;
-    long v3 = index ^ 0x7465646279746573L;
-    v3 ^= x;
-    for (int i = 0; i < 4; i++) {
-      v0 += v1;
-      v2 += v3;
-      v1 = Long.rotateLeft(v1, 13);
-      v3 = Long.rotateLeft(v3, 16);
-      v1 ^= v0;
-      v3 ^= v2;
-      v0 = Long.rotateLeft(v0, 32);
-      v2 += v1;
-      v0 += v3;
-      v1 = Long.rotateLeft(v1, 17);
-      v3 = Long.rotateLeft(v3, 21);
-      v1 ^= v2;
-      v3 ^= v0;
-      v2 = Long.rotateLeft(v2, 32);
-    }
-    v0 ^= x;
-    return v0 ^ v1 ^ v2 ^ v3;
+  private final static long PRIME64_1 = 0x9E3779B185EBCA87L;
+  private final static long PRIME64_2 = 0xC2B2AE3D27D4EB4FL;
+  private final static long PRIME64_3 = 0x165667B19E3779F9L;
+  private final static long PRIME64_4 = 0x85EBCA77C2b2AE63L;
+  private final static long PRIME64_5 = 0x27D4EB2F165667C5L;
+
+  public static long universalHash(long x, long seed) {
+    long hash = seed + PRIME64_5 + Long.BYTES;
+    long temp = hash ^ rotateLeft(x * PRIME64_2, 31) * PRIME64_1;
+    hash = rotateLeft(temp, 27) * PRIME64_1 + PRIME64_4;
+    hash ^= hash >>> 33;
+    hash *= PRIME64_2;
+    hash ^= hash >>> 29;
+    hash *= PRIME64_3;
+    hash ^= hash >>> 32;
+    return hash;
   }
 
   @Override
@@ -38,6 +29,6 @@ public final class LongHash implements UniversalHash<Long> {
 
   @Override
   public String toString() {
-    return "LongHash (SipHash)";
+    return "LongHash (XXHash64)";
   }
 }

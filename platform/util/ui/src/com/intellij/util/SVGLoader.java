@@ -80,7 +80,7 @@ public final class SVGLoader {
 
       SvgCacheManager cache;
       try {
-        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v4.db")) : null;
+        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v5.db")) : null;
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoader.class).error(e);
@@ -142,7 +142,13 @@ public final class SVGLoader {
         if (themeDigest == DEFAULT_THEME && rasterizedCacheKey != 0) {
           SvgPrebuiltCacheManager cache = SvgCache.prebuiltPersistentCache;
           if (cache != null) {
-            image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
+            try {
+              image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
+            }
+            catch (Throwable e) {
+              Logger.getInstance(SVGLoader.class).error("cannot load from prebuilt icon cache", e);
+              image = null;
+            }
             if (image != null) {
               return image;
             }
@@ -245,7 +251,7 @@ public final class SVGLoader {
     if (themeDigest != null) {
       try {
         long cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled();
-        SvgCache.persistentCache.storeLoadedImage(themeDigest, data, scale, bufferedImage, docSize);
+        SvgCache.persistentCache.storeLoadedImage(themeDigest, data, scale, bufferedImage);
         IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart);
       }
       catch (Exception e) {
