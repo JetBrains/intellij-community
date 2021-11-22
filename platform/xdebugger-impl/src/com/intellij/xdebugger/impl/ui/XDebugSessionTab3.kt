@@ -111,7 +111,9 @@ class XDebugSessionTab3(
 
     myUi.addContent(content, 0, PlaceInGrid.center, false)
 
-    ui.defaults.initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
+    ui.defaults
+      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
+      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION, LayoutAttractionPolicy.FocusOnce())
 
     addDebugToolwindowActions(session.project)
 

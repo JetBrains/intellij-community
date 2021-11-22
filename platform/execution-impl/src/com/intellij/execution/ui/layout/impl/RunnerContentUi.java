@@ -137,8 +137,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private boolean myMoveToGridActionEnabled = true;
   private final RunnerLayoutUi myRunnerUi;
 
-  private final Map<String, LayoutAttractionPolicy> myAttractions = new HashMap<>();
-  private final Map<String, LayoutAttractionPolicy> myConditionAttractions = new HashMap<>();
+  private final Map<Pair<String, String>, LayoutAttractionPolicy> myAttractions = new HashMap<>();
 
   private ActionGroup myTabPopupActions;
   private ActionGroup myAdditionalFocusActions;
@@ -1452,17 +1451,17 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   public void setPolicy(String contentId, final LayoutAttractionPolicy policy) {
-    myAttractions.put(contentId, policy);
+    myAttractions.put(Pair.create(contentId, null), policy);
   }
 
   void setConditionPolicy(final String condition, final LayoutAttractionPolicy policy) {
-    myConditionAttractions.put(condition, policy);
+    myAttractions.put(Pair.create(null, condition), policy);
   }
 
-  private static LayoutAttractionPolicy getOrCreatePolicyFor(String key,
-                                                             Map<String, LayoutAttractionPolicy> map,
+  private static LayoutAttractionPolicy getOrCreatePolicyFor(@Nullable String contentId, @Nullable String condition,
+                                                             @NotNull Map<Pair<String, String>, LayoutAttractionPolicy> map,
                                                              LayoutAttractionPolicy defaultPolicy) {
-    return map.computeIfAbsent(key, __ -> defaultPolicy);
+    return map.computeIfAbsent(Pair.create(contentId, condition), __ -> defaultPolicy);
   }
 
   public @Nullable Content findContent(@NotNull String key) {
@@ -1702,21 +1701,24 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   public void attract(final Content content, boolean afterInitialized) {
-    processAttraction(content.getUserData(ViewImpl.ID), myAttractions, new LayoutAttractionPolicy.Bounce(), afterInitialized, true);
-  }
-
-  void attractByCondition(@NotNull String condition, boolean afterInitialized) {
-    processAttraction(myLayoutSettings.getToFocus(condition), myConditionAttractions, myLayoutSettings.getAttractionPolicy(condition),
+    processAttraction(content.getUserData(ViewImpl.ID), null, new LayoutAttractionPolicy.Bounce(),
                       afterInitialized, true);
   }
 
-  void clearAttractionByCondition(String condition, boolean afterInitialized) {
-    processAttraction(myLayoutSettings.getToFocus(condition), myConditionAttractions, new LayoutAttractionPolicy.FocusOnce(),
-                      afterInitialized, false);
+  void attractByCondition(@NotNull String condition, boolean afterInitialized) {
+    processAttractionByCondition(condition, afterInitialized, true);
   }
 
-  private void processAttraction(@Nullable String contentId,
-                                 @NotNull Map<String, LayoutAttractionPolicy> policyMap,
+  void clearAttractionByCondition(String condition, boolean afterInitialized) {
+    processAttractionByCondition(condition, afterInitialized, false);
+  }
+
+  private void processAttractionByCondition(@NotNull String condition, boolean afterInitialized, boolean activate) {
+    processAttraction(myLayoutSettings.getToFocus(condition), condition, myLayoutSettings.getAttractionPolicy(condition),
+                      afterInitialized, activate);
+  }
+
+  private void processAttraction(@Nullable String contentId, @Nullable String condition,
                                  @NotNull LayoutAttractionPolicy defaultPolicy,
                                  boolean afterInitialized,
                                  boolean activate) {
@@ -1725,7 +1727,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       Content content = findContent(contentId);
       if (content == null) return;
 
-      final LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, policyMap, defaultPolicy);
+      LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, condition, myAttractions, defaultPolicy);
       if (activate) {
         // See IDEA-93683, bounce attraction should not disable further focus attraction
         if (!(policy instanceof LayoutAttractionPolicy.Bounce)) {

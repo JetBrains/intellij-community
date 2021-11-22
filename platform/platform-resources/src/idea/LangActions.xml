@@ -1161,6 +1161,7 @@
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
+      <action id="Debugger.FocusOnFinish" class="com.intellij.xdebugger.impl.actions.FocusOnFinishAction"/>
       <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
       <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"/>
       <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"/>
