@@ -3,7 +3,6 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
@@ -14,8 +13,6 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.IncorrectOperationException
 import com.siyeh.ig.callMatcher.CallMatcher
 import java.util.*
-import java.util.stream.Collectors
-import kotlin.collections.ArrayList
 
 
 internal object JavaInlayHintsProvider {
@@ -339,7 +336,7 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
                     is PsiMethodCallExpression -> argExpr.methodExpression.referenceName
                     else -> null
                   }?.lowercase(Locale.getDefault()) ?: return false
-    val paramName = arg.parameter.name.toLowerCase()
+    val paramName = arg.parameter.name.lowercase(Locale.getDefault())
     if (paramName.length < MIN_REASONABLE_PARAM_NAME_SIZE || argName.length < MIN_REASONABLE_PARAM_NAME_SIZE) {
       return false
     }
