@@ -7,7 +7,7 @@ public class SomeClass {
 
     }
 
-    public void sql(String sql) {
+    public void singleParamDslWithSameParamName(String singleParamDslWithSameParamName) {
 
     }
 }

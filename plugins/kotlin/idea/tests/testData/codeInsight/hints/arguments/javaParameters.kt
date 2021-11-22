@@ -8,5 +8,5 @@ fun javaParameters() {
     some.doNotInvokeMe(/* index = */ 0, /* ...args = */ "a", "b")
     some.doNotInvokeMe(/* index = */ 0, /* ...names = */ <hint text="...args:"/>"a", "b")
 
-    some.sql("select 1 as 1")
+    some.singleParamDslWithSameParamName("no hint param name equals method name")
 }
