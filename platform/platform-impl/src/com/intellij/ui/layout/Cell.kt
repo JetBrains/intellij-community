@@ -756,7 +756,9 @@ fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T>): C = appl
   }
   addListSelectionListener {
     mutex.lockOrSkip {
-      property.set(selectedValue)
+      if (!it.valueIsAdjusting) {
+        property.set(selectedValue)
+      }
     }
   }
 }
