@@ -285,6 +285,8 @@ private fun shouldShowHintsForExpression(callArgument: PsiElement): Boolean {
 }
 
 
+private const val MIN_REASONABLE_PARAM_NAME_SIZE = 3
+
 private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiParameter?, val varArgExpressions: List<PsiExpression>) {
   
   
@@ -338,6 +340,9 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
                     else -> null
                   }?.lowercase(Locale.getDefault()) ?: return false
     val paramName = arg.parameter.name.toLowerCase()
+    if (paramName.length < MIN_REASONABLE_PARAM_NAME_SIZE || argName.length < MIN_REASONABLE_PARAM_NAME_SIZE) {
+      return false
+    }
     return argName.contains(paramName) || paramName.contains(argName)
   }
 
