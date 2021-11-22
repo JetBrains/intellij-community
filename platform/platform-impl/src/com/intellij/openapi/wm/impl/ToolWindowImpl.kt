@@ -633,6 +633,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   private inner class GearActionGroup(toolWindow: ToolWindow) : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
+      if (ExperimentalUI.isNewToolWindowsStripes()) {
+        templatePresentation.icon = AllIcons.Actions.More
+      }
       templatePresentation.text = IdeBundle.message("show.options.menu")
       val additionalGearActions = additionalGearActions
       if (additionalGearActions != null) {

@@ -139,6 +139,8 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
     paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
+    paths.put("actions/more.svg", "/expui/16x16/general/moreVertical.svg");
+    paths.put("general/hideToolWindow.svg", "/expui/16x16/general/close.svg");
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
