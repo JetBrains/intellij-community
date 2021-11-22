@@ -7,6 +7,7 @@ from types import CodeType
 
 MAX_BYTE = 255
 RETURN_VALUE_SIZE = 2
+IS_PY310_OR_GREATER = sys.version_info > (3, 10)
 
 
 def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_code_list, attribute_name, op_list):
@@ -48,7 +49,7 @@ def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_
 def _modify_new_lines(code_to_modify, all_inserted_code):
     # Python 3.10 and above uses a different schema for encoding of line numbers.
     # See PEP 626 for the details.
-    if sys.version_info >= (3, 10):
+    if IS_PY310_OR_GREATER:
         return _make_linetable(code_to_modify, all_inserted_code)
     return _make_lnotab(code_to_modify, all_inserted_code)
 
@@ -79,11 +80,18 @@ def _make_linetable(code_to_modify, all_inserted_code):
         end = start + inst_delta
         for offset, code_list in all_inserted_code:
             if offset == start:
-                new_line_table.append(inst_delta + len(code_list))
+                new_delta = inst_delta + len(code_list)
+                while new_delta > MAX_BYTE:
+                    new_line_table.append(MAX_BYTE)
+                    new_line_table.append(line_delta)
+                    line_delta = 0
+                    new_delta -= MAX_BYTE
+                new_line_table.append(new_delta)
+                new_line_table.append(line_delta)
                 break
         else:
             new_line_table.append(inst_delta)
-        new_line_table.append(line_delta)
+            new_line_table.append(line_delta)
     return bytes(new_line_table)
 
 
@@ -154,8 +162,9 @@ def _unpack_opargs(code, inserted_code_list, current_index):
     for i in range(0, len(code), 2):
         op = code[i]
         if op >= HAVE_ARGUMENT:
-            if not extended_arg:
-                # in case if we added EXTENDED_ARG, but haven't inserted it to the source code yet.
+            if extended_arg == 0:
+                # In case if we added EXTENDED_ARG, but haven't inserted it to the source code yet.
+                # XXX: it seems like this procedure does not support multiple EXTENDED_ARG instruction.
                 for code_index in range(current_index, len(inserted_code_list)):
                     inserted_offset, inserted_code = inserted_code_list[code_index]
                     if inserted_offset == i and inserted_code[0] == EXTENDED_ARG:
@@ -176,7 +185,7 @@ def _update_label_offsets(code_obj, breakpoint_offset, breakpoint_code_list):
     :return: bytes sequence with modified labels; list of named tuples (resulting offset, list of code instructions) with
       information about all inserted pieces of code
     """
-    all_inserted_code = list()
+    all_inserted_code = []
     InsertedCode = namedtuple('InsertedCode', ['offset', 'code_list'])
     # the list with all inserted pieces of code
     all_inserted_code.append(InsertedCode(breakpoint_offset, breakpoint_code_list))
@@ -200,12 +209,17 @@ def _update_label_offsets(code_obj, breakpoint_offset, breakpoint_code_list):
                         offsets_for_modification.append(offset)
                 elif op in dis.hasjabs:
                     # change label for absolute jump if code was inserted before it
-                    if current_offset < arg:
+                    if IS_PY310_OR_GREATER and current_offset // 2 < arg:
+                        offsets_for_modification.append(offset)
+                    elif current_offset < arg:
                         offsets_for_modification.append(offset)
         for i in offsets_for_modification:
             op = code_list[i]
             if op >= dis.HAVE_ARGUMENT:
-                new_arg = code_list[i + 1] + len(current_code_list)
+                # CPython 3.10 and upwards use words instead of bytes for offsets!
+                adjust = len(current_code_list) // 2 if IS_PY310_OR_GREATER \
+                    else len(current_code_list)
+                new_arg = code_list[i + 1] + adjust
                 if new_arg <= MAX_BYTE:
                     code_list[i + 1] = new_arg
                 else:
@@ -230,16 +244,13 @@ def _update_label_offsets(code_obj, breakpoint_offset, breakpoint_code_list):
     return bytes(code_list), all_inserted_code
 
 
-def _return_none_fun():
-    return None
-
-
 def add_jump_instruction(jump_arg, code_to_insert):
     """
     Note: although it's adding a POP_JUMP_IF_TRUE, it's actually no longer used now
     (we could only return the return and possibly the load of the 'None' before the
     return -- not done yet because it needs work to fix all related tests).
     """
+    jump_arg = jump_arg // 2 if IS_PY310_OR_GREATER else jump_arg
     buffer = [opmap['POP_JUMP_IF_TRUE'], jump_arg & MAX_BYTE]
 
     jump_arg >>= 8
