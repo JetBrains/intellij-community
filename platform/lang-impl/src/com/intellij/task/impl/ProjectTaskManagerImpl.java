@@ -140,8 +140,10 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
       LOG.debug("Can not create single execution environment for tasks of different runners: '" + tasksMap + "'");
       return null;
     }
-    ProjectTask[] tasks = tasksMap.values().iterator().next().toArray(EMPTY_TASKS_ARRAY);
-    return ProjectTaskRunner.EP_NAME.computeSafeIfAny(runner -> runner.createExecutionEnvironment(myProject, tasks));
+    Map.Entry<ProjectTaskRunner, List<ProjectTask>> entry = tasksMap.entrySet().iterator().next();
+    ProjectTask[] tasks = entry.getValue().toArray(EMPTY_TASKS_ARRAY);
+    ProjectTaskRunner taskRunner = entry.getKey();
+    return taskRunner.createExecutionEnvironment(myProject, tasks);
   }
 
   @Override
