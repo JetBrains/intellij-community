@@ -30,13 +30,19 @@ interface BaseBuilder {
 }
 
 interface RowBuilder : BaseBuilder {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun createChildRow(label: JLabel? = null,
                      isSeparated: Boolean = false,
                      noGrid: Boolean = false,
                      @Nls title: String? = null): Row
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun createNoteOrCommentRow(component: JComponent): Row
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun checkBoxGroup(@Nls title: String?, body: () -> Unit)
 
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
@@ -183,6 +189,8 @@ fun Row.enableIf(predicate: ComponentPredicate) {
   predicate.addListener { enabled = it }
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun Row.enableSubRowsIf(predicate: ComponentPredicate) {
   subRowsEnabled = predicate()
   predicate.addListener { subRowsEnabled = it }

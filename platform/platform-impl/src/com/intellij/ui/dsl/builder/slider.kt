@@ -12,8 +12,8 @@ fun Cell<JSlider>.labelTable(map: Map<Int, JComponent>): Cell<JSlider> {
   return this
 }
 
-fun Cell<JSlider>.bindValue(modelBinding: PropertyBinding<Int>): Cell<JSlider> {
-  return bind(JSlider::getValue, JSlider::setValue, modelBinding)
+fun Cell<JSlider>.bindValue(binding: PropertyBinding<Int>): Cell<JSlider> {
+  return bind(JSlider::getValue, JSlider::setValue, binding)
 }
 
 fun Cell<JSlider>.bindValue(prop: KMutableProperty0<Int>): Cell<JSlider> {

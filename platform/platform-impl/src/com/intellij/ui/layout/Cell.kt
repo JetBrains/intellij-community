@@ -581,6 +581,8 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): CellBuilder<ActionButton> {
     val actionButton = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
     return actionButton()
@@ -840,6 +842,8 @@ fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): 
 fun <C : JTextComponent> C.bindIntProperty(property: ObservableClearableProperty<Int>): C =
   bind(property.transform({ it.toString() }, { it.toInt() }))
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
   val slider = JSlider()
   UIUtil.setSliderIsFilled(slider, true)
@@ -853,11 +857,15 @@ fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder
   return slider()
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun <T : JSlider> CellBuilder<T>.labelTable(table: Hashtable<Int, JComponent>.() -> Unit): CellBuilder<T> {
   component.labelTable = Hashtable<Int, JComponent>().apply(table)
   return this
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun <T : JSlider> CellBuilder<T>.withValueBinding(modelBinding: PropertyBinding<Int>): CellBuilder<T> {
   return withBinding(JSlider::getValue, JSlider::setValue, modelBinding)
 }
