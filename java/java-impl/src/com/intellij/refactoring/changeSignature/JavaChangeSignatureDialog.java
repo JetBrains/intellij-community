@@ -576,13 +576,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
         }
         catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-          IdeFocusManager.getGlobalInstance()
-            .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true));
           return JavaRefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText());
         }
         catch (PsiTypeCodeFragment.NoTypeException e) {
-          IdeFocusManager.getGlobalInstance()
-            .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true));
           return JavaRefactoringBundle.message("changeSignature.no.return.type");
         }
       }
@@ -660,8 +656,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
       return null;
     });
-
-    if (message == null) { // warnings
+    if ((myReturnTypeCodeFragment != null &&
+         message == JavaRefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText())) ||
+        message == JavaRefactoringBundle.message("changeSignature.no.return.type")) {
+      IdeFocusManager.getGlobalInstance()
+        .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true));
+    }
+    else if (message == null) { // warnings
       try {
         if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
           if (PsiTypesUtil.hasUnresolvedComponents(((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType())) {
@@ -684,7 +685,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           }
         }
       }
-      catch (PsiTypeCodeFragment.IncorrectTypeException ignored) { }
+      catch (PsiTypeCodeFragment.IncorrectTypeException ignored) {
+      }
     }
     return message;
   }
