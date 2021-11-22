@@ -976,6 +976,9 @@
     <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
                       groupKey="inspection.general.tools.group.name" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
+    <globalInspection shortName="EmptyDirectory" bundle="messages.LangBundle" key="empty.directory.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
+                      level="WARNING" implementationClass="com.intellij.codeInspection.EmptyDirectoryInspection"/>
 
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
     <annotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkAnnotator"/>

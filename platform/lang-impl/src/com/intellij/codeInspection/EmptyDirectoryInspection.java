@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.siyeh.ig.packaging;
+package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -16,27 +16,29 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class EmptyDirectoryInspection extends BaseGlobalInspection {
+public class EmptyDirectoryInspection extends GlobalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportDirectoriesUnderSourceRoots = false;
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "empty.directories.only.under.source.roots.option"), this,
+    return new SingleCheckboxOptionsPanel(LangBundle.message("empty.directories.only.under.source.roots.option"), this,
                                           "onlyReportDirectoriesUnderSourceRoots");
   }
 
   @Override
   public boolean isGraphNeeded() {
+    return false;
+  }
+
+  @Override
+  public boolean isReadActionNeeded() {
     return false;
   }
 
@@ -69,7 +71,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
         return true;
       }
       processor.addProblemElement(refDirectory, manager.createProblemDescriptor(
-        InspectionGadgetsBundle.message("empty.directories.problem.descriptor", relativePath),
+        LangBundle.message("empty.directories.problem.descriptor", relativePath),
         new EmptyPackageFix(file.getUrl(), file.getName())));
       return true;
     }, globalSearchScope);
@@ -100,14 +102,14 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message(
+      return LangBundle.message(
         "empty.directories.delete.quickfix", name);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("empty.directories.delete.quickfix", "");
+      return LangBundle.message("empty.directories.delete.quickfix", "");
     }
 
     @Override
