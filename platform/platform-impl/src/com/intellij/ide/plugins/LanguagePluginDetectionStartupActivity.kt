@@ -24,8 +24,6 @@ private const val GROUP_ID = "Language Plugins Notifications"
 internal class LanguagePluginDetectionStartupActivity : StartupActivity.Background {
 
   override fun runActivity(project: Project) {
-    if (!Experiments.getInstance().isFeatureEnabled("language.detect.notification")) return
-
     val pluginId = findLanguagePluginToInstall()
     if (pluginId == null) return
 

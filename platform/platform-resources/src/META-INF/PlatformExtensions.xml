@@ -1272,7 +1272,6 @@
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
     <startupActivity implementation="com.intellij.ide.plugins.LanguagePluginDetectionStartupActivity"/>
-    <experimentalFeature id="language.detect.notification" percentOfUsers="0"/>
     <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
