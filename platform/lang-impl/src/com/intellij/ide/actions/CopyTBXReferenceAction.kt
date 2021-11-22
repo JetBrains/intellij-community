@@ -115,8 +115,8 @@ object CopyTBXReferenceAction {
       return null
     }
 
-    val selectionStart = editor.visualToLogicalPosition(caret.selectionStartPosition)
-    val selectionEnd = editor.visualToLogicalPosition(caret.selectionEndPosition)
+    val selectionStart = editor.offsetToLogicalPosition(editor.selectionModel.selectionStart)
+    val selectionEnd = editor.offsetToLogicalPosition(editor.selectionModel.selectionEnd)
 
     return String.format("%d:%d-%d:%d",
                          selectionStart.line + 1,
