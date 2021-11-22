@@ -395,23 +395,8 @@ public final class PsiImplUtil {
     PsiModifierList modifierList = member.getModifierList();
     int accessLevel = modifierList == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList);
     if (accessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC || accessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
-      if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
-        PsiClass containingClass = member.getContainingClass();
-        if (containingClass != null) {
-          //constructors cannot be overridden so their use scope can't be wider than their class's
-          return containingClass.getUseScope();
-        }
-      }
-      final PsiClass containingClass = member.getContainingClass();
-      if (containingClass != null) {
-        final PsiModifierList classModifierList = containingClass.getModifierList();
-        if (classModifierList != null && classModifierList.hasModifierProperty(PsiModifier.FINAL)) {
-          if (PsiUtil.getAccessLevel(classModifierList) < accessLevel) {
-            return containingClass.getUseScope();
-          }
-        }
-      }
-      return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
+      SearchScope classScope = getClassUseScopeIfApplicable(member, aClass, accessLevel);
+      return (classScope != null) ? classScope : maximalUseScope;
     }
     if (accessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
       PsiClass topClass = PsiUtil.getTopLevelClass(member);
@@ -419,12 +404,27 @@ public final class PsiImplUtil {
     }
     if (file instanceof PsiJavaFile) {
       PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(((PsiJavaFile)file).getPackageName());
+      final SearchScope classScope = getClassUseScopeIfApplicable(member, aClass, accessLevel);
+      if (classScope != null) return classScope;
       if (aPackage != null) {
         SearchScope scope = PackageScope.packageScope(aPackage, false);
         return scope.intersectWith(maximalUseScope);
       }
     }
     return maximalUseScope;
+  }
+
+  private static SearchScope getClassUseScopeIfApplicable(PsiMember member, PsiClass aClass, int accessLevel) {
+    if (aClass == null) return null;
+    final PsiModifierList classModifierList = aClass.getModifierList();
+    if (classModifierList == null) return null;
+    if (!classModifierList.hasModifierProperty(PsiModifier.FINAL) &&
+        !(member instanceof PsiMethod && ((PsiMethod)member).isConstructor())) {
+      // class use scope doesn't matter, since another very visible class can inherit from aClass
+      return null;
+    }
+    // constructors and members of final classes cannot be accessed via a subclass so their use scope can't be wider than their class's
+    return (PsiUtil.getAccessLevel(classModifierList) < accessLevel) ? aClass.getUseScope() : null;
   }
 
   public static boolean isInServerPage(@Nullable final PsiElement element) {
