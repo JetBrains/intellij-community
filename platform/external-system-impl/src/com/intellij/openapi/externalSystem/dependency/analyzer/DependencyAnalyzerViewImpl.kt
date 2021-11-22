@@ -428,8 +428,8 @@ class DependencyAnalyzerViewImpl(
       }
       else {
         append(data.displayText)
-        append(" (${item.scope})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
+      append(" (${item.scope})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
   }
 
