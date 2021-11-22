@@ -29,7 +29,7 @@ import javax.swing.*
 import javax.swing.border.MatteBorder
 
 @ApiStatus.Internal
-open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : StartPagePromoter {
+open class OnboardingLessonPromoter(@NonNls private val lessonId: String, @NonNls private val languageName: String) : StartPagePromoter {
   open fun promoImage(): Icon = FeaturesTrainerIcons.Img.PluginIcon
 
   override fun getPromotionForInitialState(): JPanel? {
@@ -45,7 +45,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     header.font = UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(UIUtil.getLabelFont().size2D + JBUI.scale(4))
     vPanel.add(header)
     vPanel.add(rigid(0, 4))
-    val description = JLabel("<html>${LearnBundle.message("welcome.promo.description", LessonUtil.productName)}</html>").also {
+    val description = JLabel("<html>${LearnBundle.message("welcome.promo.description", LessonUtil.productName, languageName)}</html>").also {
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
         SystemInfo.isLinux -> JBUIScale.scale(-2)
         SystemInfo.isMac -> JBUIScale.scale(-1)
