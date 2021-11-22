@@ -2,7 +2,7 @@ import org.jetbrains.annotations.NotNull
 
 abstract class X : java.util.ArrayList<String>(), Runnable {
     @NotNull
-    override fun iterator(): MutableIterator<String?> {
+    override fun iterator(): MutableIterator<String> {
         return super.iterator()
     }
 }
