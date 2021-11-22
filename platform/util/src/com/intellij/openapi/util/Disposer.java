@@ -38,10 +38,14 @@ public final class Disposer {
   @Contract(pure = true, value = "->new")
   public static Disposable newDisposable() {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
-    //noinspection Convert2Lambda
     return new Disposable() {
       @Override
       public void dispose() { }
+
+      @Override
+      public String toString() {
+        return "newDisposable";
+      }
     };
   }
 
