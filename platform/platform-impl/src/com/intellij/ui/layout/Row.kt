@@ -59,6 +59,8 @@ interface RowBuilder : BaseBuilder {
    * Creates row with a huge gap after it, that can be used to group related components.
    * Think of [titledRow] without a title and additional indent.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun blockRow(init: Row.() -> Unit): Row
 
   /**
