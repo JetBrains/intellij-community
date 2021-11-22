@@ -105,11 +105,8 @@ internal fun toggleAction(property: ObservableClearableProperty<Boolean>): Toggl
     override fun setSelected(e: AnActionEvent, state: Boolean) = property.set(state)
   }
 
-internal fun action(action: (AnActionEvent) -> Unit, update: (AnActionEvent) -> Unit) =
-  object : DumbAwareAction() {
-    override fun actionPerformed(e: AnActionEvent) = action(e)
-    override fun update(e: AnActionEvent) = update(e)
-  }
+internal fun action(action: (AnActionEvent) -> Unit) =
+  SimpleConfigurableAction().whenActionPreformed(action)
 
 internal fun popupActionGroup(vararg actions: AnAction) =
   DefaultActionGroup(*actions)
@@ -121,12 +118,23 @@ internal fun labelSeparator() =
   JLabel(AllIcons.General.Divider)
     .apply { border = JBUI.Borders.empty() }
 
-internal fun expandTreeAction(tree: JTree, update: (AnActionEvent) -> Unit = {}) =
-  action({ TreeUtil.expandAll(tree) }, update)
+internal fun expandTreeAction(tree: JTree) =
+  action { TreeUtil.expandAll(tree) }
     .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.expand") }
     .apply { templatePresentation.icon = AllIcons.Actions.Expandall }
 
-internal fun collapseTreeAction(tree: JTree, update: (AnActionEvent) -> Unit = {}) =
-  action({ TreeUtil.collapseAll(tree, 0) }, update)
+internal fun collapseTreeAction(tree: JTree) =
+  action { TreeUtil.collapseAll(tree, 0) }
     .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.collapse") }
     .apply { templatePresentation.icon = AllIcons.Actions.Collapseall }
+
+internal class SimpleConfigurableAction : DumbAwareAction() {
+  private val actions = ArrayList<(AnActionEvent) -> Unit>()
+  private val updaters = ArrayList<(AnActionEvent) -> Unit>()
+
+  override fun actionPerformed(e: AnActionEvent) = actions.forEach { it(e) }
+  override fun update(e: AnActionEvent) = updaters.forEach { it(e) }
+
+  fun whenActionPreformed(action: (AnActionEvent) -> Unit) = apply { actions.add(action) }
+  fun whenActionUpdated(update: (AnActionEvent) -> Unit) = apply { updaters.add(update) }
+}

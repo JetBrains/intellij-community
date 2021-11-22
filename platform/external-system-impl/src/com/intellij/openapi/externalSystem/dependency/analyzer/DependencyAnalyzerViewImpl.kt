@@ -226,8 +226,10 @@ class DependencyAnalyzerViewImpl(
     val showDependencyTreeAction = toggleAction(showDependencyTreeProperty)
       .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.show") }
       .apply { templatePresentation.icon = AllIcons.Actions.ShowAsTree }
-    val expandDependencyTreeAction = expandTreeAction(dependencyTree) { it.presentation.isEnabled = showDependencyTree }
-    val collapseDependencyTreeAction = collapseTreeAction(dependencyTree) { it.presentation.isEnabled = showDependencyTree }
+    val expandDependencyTreeAction = expandTreeAction(dependencyTree)
+      .whenActionUpdated { it.presentation.isEnabled = showDependencyTree }
+    val collapseDependencyTreeAction = collapseTreeAction(dependencyTree)
+      .whenActionUpdated { it.presentation.isEnabled = showDependencyTree }
 
     val usagesTitle = label(usagesTitleProperty)
     val usagesTree = SimpleTree(usagesTreeModel)
