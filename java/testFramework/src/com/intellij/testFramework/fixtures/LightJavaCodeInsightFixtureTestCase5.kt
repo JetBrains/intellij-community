@@ -19,7 +19,7 @@ abstract class LightJavaCodeInsightFixtureTestCase5 (projectDescriptor: LightPro
   protected open fun getTestDataPath() : String? = null
 
   @RegisterExtension
-  private val testNameRule = TestNameExtension()
+  protected val testNameRule = TestNameExtension()
 
   protected fun getTestName(lowercaseFirstLetter: Boolean): String {
     return PlatformTestUtil.getTestName(testNameRule.methodName, lowercaseFirstLetter)

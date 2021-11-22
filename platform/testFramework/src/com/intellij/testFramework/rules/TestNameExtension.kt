@@ -8,10 +8,12 @@ import kotlin.properties.Delegates
 
 class TestNameExtension : BeforeEachCallback {
   var methodName: String by Delegates.notNull()
+  var displayName: String by Delegates.notNull()
 
 
   @Throws(Exception::class)
   override fun beforeEach(context: ExtensionContext) {
     methodName = context.testMethod.map { m: Method -> m.name }.orElse(context.displayName)
+    displayName = context.displayName
   }
 }
