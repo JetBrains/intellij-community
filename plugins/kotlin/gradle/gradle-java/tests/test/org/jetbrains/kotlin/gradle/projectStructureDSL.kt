@@ -362,7 +362,7 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
     @Suppress("UnstableApiUsage")
     inline fun <reified T : KotlinImportingDiagnostic> assertDiagnosticsCount(count: Int) {
         val moduleNode = GradleUtil.findGradleModuleData(module)
-        val diagnostics = moduleNode!!.kotlinImportingDiagnosticsContainer!!
+        val diagnostics = moduleNode!!.kotlinGradleProjectDataOrFail.kotlinImportingDiagnosticsContainer!!
         val typedDiagnostics = diagnostics.filterIsInstance<T>()
         if (typedDiagnostics.size != count) {
             projectInfo.messageCollector.report(
