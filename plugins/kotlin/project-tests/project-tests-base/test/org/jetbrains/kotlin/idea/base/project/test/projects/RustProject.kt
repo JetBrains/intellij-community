@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.base.project.test.projects
 
-import org.jetbrains.kotlin.idea.perf.common.HighlightFile
-import org.jetbrains.kotlin.idea.perf.common.ProjectAction
-import org.jetbrains.kotlin.idea.perf.common.ProjectData
-import org.jetbrains.kotlin.idea.perf.common.TypeAndAutocompleteInFile
+import org.jetbrains.kotlin.idea.perf.common.*
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
 
 object RustProject {
@@ -15,7 +12,7 @@ object RustProject {
     */
     val project = ProjectData(
         name = "intellijRustPlugin",
-        path = "../intellij-rust",
+        path = perfTestProjectPath("intellij-rust"),
         openAction = ProjectOpenAction.GRADLE_PROJECT,
     )
 
