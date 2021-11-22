@@ -54,7 +54,8 @@ class DependencyAnalyzerViewImpl(
   private val showDependencyGroupIdProperty = propertyGraph.graphProperty { false }
     .bindWithBooleanStorage(SHOW_GROUP_ID_PROPERTY)
 
-  private val dependencyDataProperty = propertyGraph.graphProperty<Dependency.Data?> { null }
+  private val dependencyItemProperty = propertyGraph.graphProperty<DependencyItem?> { null }
+  private val dependencyGroupItemProperty = dependencyItemProperty.transform({ it?.group }, { it?.filteredVariances?.firstOrNull() })
   private val showDependencyTreeProperty = propertyGraph.graphProperty { false }
     .bindWithBooleanStorage(SHOW_AS_TREE_PROPERTY)
 
@@ -66,7 +67,8 @@ class DependencyAnalyzerViewImpl(
   private var showDependencyWarnings by showDependencyWarningsProperty
   private var showDependencyGroupId by showDependencyGroupIdProperty
 
-  private var dependencyData by dependencyDataProperty
+  private var dependencyItem by dependencyItemProperty
+  private var dependencyGroupItem by dependencyGroupItemProperty
   private var showDependencyTree by showDependencyTreeProperty
 
   private val externalProjects = ArrayList<ExternalProject>()
@@ -82,7 +84,7 @@ class DependencyAnalyzerViewImpl(
 
   override fun setSelectedDependency(externalProjectPath: String, dependency: Dependency) {
     setSelectedExternalProject(externalProjectPath)
-    dependencyData = dependency.data
+    dependencyItem = findDependencyItem(dependency)
   }
 
   private fun getExternalProjects(): List<ExternalProject> {
@@ -94,16 +96,8 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun findDependencyItem(dependency: Dependency?): DependencyItem? {
-    return findDependencyItem(dependency?.data)
-  }
-
-  private fun findDependencyItem(data: Dependency.Data?): DependencyItem? {
     return dependencyGroups.flatMap { it.variances }
-      .find { it.dependency.data == data }
-  }
-
-  private fun findDependencyGroupItem(data: Dependency.Data?): DependencyGroupItem? {
-    return findDependencyItem(data)?.group
+      .find { it.dependency == dependency }
   }
 
   private fun filterDependencyItems(items: List<DependencyItem>): List<DependencyItem> {
@@ -157,13 +151,11 @@ class DependencyAnalyzerViewImpl(
     val filteredDependencyItems = dependencyGroups.flatMap { it.filteredVariances }
     dependencyTreeModel.setRoot(buildTree(filteredDependencyItems))
 
-    val dependencyItem = filteredDependencyItems.find { it.dependency.data == dependencyData }
-                         ?: filteredDependencyItems.firstOrNull()
-    dependencyData = dependencyItem?.dependency?.data
+    dependencyItem = filteredDependencyItems.find { it == dependencyItem }
+                     ?: filteredDependencyItems.firstOrNull()
   }
 
   private fun updateUsagesModel() {
-    val dependencyGroupItem = findDependencyGroupItem(dependencyData)
     val dependencyItems = dependencyGroupItem?.variances ?: emptyList()
     usagesTreeModel.setRoot(buildTree(dependencyItems))
   }
@@ -226,11 +218,11 @@ class DependencyAnalyzerViewImpl(
     val dependencyList = JBList(dependencyListModel)
       .apply { cellRenderer = DependencyGroupRenderer() }
       .apply { emptyText.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.empty") }
-      .bind(dependencyDataProperty.transform(::findDependencyGroupItem) { it?.group?.data })
+      .bind(dependencyGroupItemProperty)
     val dependencyTree = SimpleTree(dependencyTreeModel)
       .apply { cellRenderer = DependencyRenderer() }
       .apply { emptyText.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.empty") }
-      .bind(dependencyDataProperty.transform(::findDependencyItem) { it?.dependency?.data })
+      .bind(dependencyItemProperty)
     val showDependencyTreeAction = toggleAction(showDependencyTreeProperty)
       .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.show") }
       .apply { templatePresentation.icon = AllIcons.Actions.ShowAsTree }
@@ -291,27 +283,17 @@ class DependencyAnalyzerViewImpl(
   }
 
   init {
-    usagesTitleProperty.dependsOn(dependencyDataProperty)
+    usagesTitleProperty.dependsOn(dependencyGroupItemProperty)
     usagesTitleProperty.dependsOn(showDependencyGroupIdProperty)
-    externalProjectProperty.afterChange {
-      updateScopesModel()
-      updateDependencyModel()
-    }
-    dependencyDataProperty.afterChange {
-      updateUsagesModel()
-    }
-    dependencyDataFilterProperty.afterChange {
-      updateDependencyModel()
-    }
-    dependencyScopeFilterProperty.afterChange {
-      updateDependencyModel()
-    }
-    showDependencyWarningsProperty.afterChange {
-      updateDependencyModel()
-    }
-    showDependencyGroupIdProperty.afterChange {
-      updateDependencyModel()
-    }
+
+    externalProjectProperty.afterChange { updateScopesModel() }
+    externalProjectProperty.afterChange { updateDependencyModel() }
+    dependencyGroupItemProperty.afterChange { updateUsagesModel() }
+    dependencyDataFilterProperty.afterChange { updateDependencyModel() }
+    dependencyScopeFilterProperty.afterChange { updateDependencyModel() }
+    showDependencyWarningsProperty.afterChange { updateDependencyModel() }
+    showDependencyGroupIdProperty.afterChange { updateDependencyModel() }
+
     contributor.whenDataChanged({
       updateExternalProjectsModel()
     }, parentDisposable)
@@ -352,8 +334,8 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun getUsagesTitle(): @NlsContexts.Label String {
-    val dependencyData = dependencyData ?: return ""
-    return ExternalSystemBundle.message("external.system.dependency.analyzer.usages.title", dependencyData.displayText)
+    val groupData = dependencyGroupItem?.group?.data ?: return ""
+    return ExternalSystemBundle.message("external.system.dependency.analyzer.usages.title", groupData.displayText)
   }
 
   private val Dependency.Data.displayText: @NlsSafe String
