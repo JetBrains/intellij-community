@@ -37,9 +37,6 @@ var DataNode<out ModuleData>.kotlinSourceSet: KotlinSourceSetInfo?
 val DataNode<out ModuleData>.kotlinSourceSetData: KotlinSourceSetData?
     get() = ExternalSystemApiUtil.getChildren(this, KotlinSourceSetData.KEY).firstOrNull()?.data
 
-var DataNode<out ModuleData>.kotlinImportingDiagnosticsContainer: KotlinImportingDiagnosticsContainer?
-        by CopyableDataNodeUserDataProperty(Key.create("KOTLIN_IMPORTING_DIAGNOSTICS_CONTAINER"))
-
 val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
     get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
 
