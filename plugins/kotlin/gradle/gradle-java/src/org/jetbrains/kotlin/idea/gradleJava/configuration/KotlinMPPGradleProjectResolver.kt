@@ -216,8 +216,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             Key.create<MutableMap<String/* artifact path */, MutableList<String> /* module ids*/>>("gradleMPPArtifactsMap")
         val proxyObjectCloningCache = WeakHashMap<Any, Any>()
 
-        private val moduleNodesByCompilationMap = WeakHashMap<KotlinCompilation, DataNode<out ModuleData>>()
-
         //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
         private var DataNode<ModuleData>.isMppDataInitialized
                 by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_MPP_DATA_INITIALIZED"), false)
@@ -318,7 +316,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
             val sourceSetToCompilationData = LinkedHashMap<String, MutableSet<GradleSourceSetData>>()
             for (target in mppModel.targets) {
-                target.compilations.forEach { moduleNodesByCompilationMap[it] = mainModuleNode }
                 if (shouldDelegateToOtherPlugin(target)) continue
                 if (target.name == KotlinTarget.METADATA_TARGET_NAME) continue
                 val targetData = KotlinTargetData(target.name).also {
@@ -482,7 +479,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             val mppModel = resolverCtx.getMppModel(gradleModule)
             if (mppModel == null || externalProject == null) return
             mainModuleNode.isMppDataInitialized = true
-            moduleNodesByCompilationMap.clear()
 
             // save artifacts locations.
             val userData = projectDataNode.getUserData(MPP_CONFIGURATION_ARTIFACTS) ?: HashMap<String, MutableList<String>>().apply {
