@@ -3,7 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Pair;
@@ -13,7 +13,10 @@ import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
-import org.cef.handler.*;
+import org.cef.handler.CefFocusHandler;
+import org.cef.handler.CefFocusHandlerAdapter;
+import org.cef.handler.CefKeyboardHandler;
+import org.cef.handler.CefKeyboardHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +102,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       return Pair.create(
         shortcut,
         LightEditActionFactory.create(event -> {
-          Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+          Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
           if (component == null) return;
           Component parentComponent = component.getParent();
           if (!(parentComponent instanceof JComponent)) return;
@@ -252,40 +255,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   private @NotNull JPanel createComponent() {
     Component uiComp = getCefBrowser().getUIComponent();
-    JPanel resultPanel = new JPanel(new BorderLayout()) {
-      {
-        enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
-      }
-      @Override
-      public void setBackground(Color bg) {
-        uiComp.setBackground(bg);
-        super.setBackground(bg);
-      }
-      @Override
-      public void removeNotify() {
-        if (SystemInfo.isWindows) {
-          if (myCefBrowser.getUIComponent().hasFocus()) {
-            // pass focus before removal
-            myCefBrowser.setFocus(false);
-          }
-        }
-        myFirstShow = true;
-        super.removeNotify();
-      }
-      @Override
-      public Dimension getPreferredSize() {
-        // Preferred size should not be zero, otherwise the content loading is not triggered
-        Dimension size = super.getPreferredSize();
-        return size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
-      }
-      @Override
-      protected void processFocusEvent(FocusEvent e) {
-        super.processFocusEvent(e);
-        if (e.getID() == FocusEvent.FOCUS_GAINED) {
-          uiComp.requestFocusInWindow();
-        }
-      }
-    };
+    JPanel resultPanel = new MyPanel(uiComp);
 
     resultPanel.setBackground(JBColor.background());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
@@ -372,8 +342,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   // for binary compatibility
   protected class DefaultCefContextMenuHandler extends JBCefBrowserBase.DefaultCefContextMenuHandler {
-    public DefaultCefContextMenuHandler(boolean isInternal) {
-      super(isInternal);
+    public DefaultCefContextMenuHandler() {
+      super();
+    }
+    public DefaultCefContextMenuHandler(boolean isOpenDevToolsItemEnabled) {
+      super(isOpenDevToolsItemEnabled);
     }
   }
 
@@ -401,6 +374,55 @@ public class JBCefBrowser extends JBCefBrowserBase {
     @Override
     public Component getDefaultComponent(Container aContainer) {
       return myCefBrowser.getUIComponent();
+    }
+  }
+
+  public class MyPanel extends JPanel {
+    private final Component myUiComp;
+
+    private MyPanel(Component uiComp) {
+      super(new BorderLayout());
+      myUiComp = uiComp;
+      myUiComp.setBackground(getBackground());
+      enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+    }
+
+    @Override
+    public void setBackground(Color bg) {
+      if (myUiComp != null) myUiComp.setBackground(bg);
+      super.setBackground(bg);
+    }
+
+    @Override
+    public void removeNotify() {
+      if (SystemInfo.isWindows) {
+        if (myCefBrowser.getUIComponent().hasFocus()) {
+          // pass focus before removal
+          myCefBrowser.setFocus(false);
+        }
+      }
+      myFirstShow = true;
+      super.removeNotify();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      // Preferred size should not be zero, otherwise the content loading is not triggered
+      Dimension size = super.getPreferredSize();
+      return size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
+    }
+
+    @Override
+    protected void processFocusEvent(FocusEvent e) {
+      super.processFocusEvent(e);
+      if (e.getID() == FocusEvent.FOCUS_GAINED) {
+        myUiComp.requestFocusInWindow();
+      }
+    }
+
+    @NotNull
+    public JBCefBrowser getJBCefBrowser() {
+      return JBCefBrowser.this;
     }
   }
 }

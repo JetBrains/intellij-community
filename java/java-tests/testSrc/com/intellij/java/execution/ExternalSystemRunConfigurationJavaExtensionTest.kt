@@ -33,14 +33,15 @@ class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExte
     val notificationsCollector = NotificationsCollector()
     val oldTestDialog = TestDialogManager.setTestDialog(notificationsCollector)
     try {
-      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+      LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
         override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
           t !is FakeExecutionException  // don't fail this if `LOG.error()` was called for our exception somewhere
-      })
-      runInEdtAndWait {
-        ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()
+      }) {
+        runInEdtAndWait {
+          ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()
+        }
+        assertThat(assertOneElement(notificationsCollector.notifications), containsString(FakeExecutionException.MESSAGE))
       }
-      assertThat(assertOneElement(notificationsCollector.notifications), containsString(FakeExecutionException.MESSAGE))
     }
     finally {
       TestDialogManager.setTestDialog(oldTestDialog)

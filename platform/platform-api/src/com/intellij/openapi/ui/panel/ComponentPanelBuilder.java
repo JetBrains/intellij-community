@@ -35,6 +35,8 @@ import java.util.function.Supplier;
 
 public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
+  public static final int MAX_COMMENT_WIDTH = 70;
+
   private final JComponent myComponent;
 
   private @NlsContexts.Label String myLabelText;
@@ -276,10 +278,10 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   public static @NotNull JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
                                                        boolean isCommentBelow) {
-    return createCommentComponent(commentText, isCommentBelow, 70, true);
+    return createCommentComponent(commentText, isCommentBelow, MAX_COMMENT_WIDTH, true);
   }
 
-  public static @NotNull JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
+  public static @NotNull JLabel  createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
                                                        boolean isCommentBelow,
                                                        int maxLineLength) {
     return createCommentComponent(commentText, isCommentBelow, maxLineLength, true);
@@ -315,6 +317,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   public static JLabel createNonWrappingCommentComponent(@NotNull @NlsContexts.DetailedDescription String commentText) {
     return new CommentLabel(commentText);
+  }
+
+  public static Font getCommentFont(Font font) {
+    if (SystemInfo.isMac) {
+      return new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font));
+    }
+    return font;
   }
 
   private static void setCommentText(@NotNull JLabel component,
@@ -356,7 +365,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       super.setUI(ui);
 
       if (SystemInfo.isMac) {
-        setFont(new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(getFont())));
+        setFont(getCommentFont(getFont()));
       }
     }
   }
@@ -383,7 +392,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         protected HyperlinkListener createHyperlinkListener() {
           return myHyperlinkListener;
         }
-      }, myCommentText, myCommentBelow, 70, myCommentAllowAutoWrapping);
+      }, myCommentText, myCommentBelow, MAX_COMMENT_WIDTH, myCommentAllowAutoWrapping);
 
       if (myCommentIcon != null) {
         comment.setIcon(myCommentIcon);
@@ -406,7 +415,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
 
     private void setCommentTextImpl(String commentText) {
-      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow, 70);
+      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow, MAX_COMMENT_WIDTH);
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {

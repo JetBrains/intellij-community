@@ -87,7 +87,7 @@ public class ThumbnailComponent extends JComponent {
         long oldValue = this.fileSize;
         if (oldValue != fileSize) {
             this.fileSize = fileSize;
-            firePropertyChange(FILE_SIZE_PROP, new Long(oldValue), new Long(this.fileSize));
+            firePropertyChange(FILE_SIZE_PROP, Long.valueOf(oldValue), Long.valueOf(this.fileSize));
         }
     }
 

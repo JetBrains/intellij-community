@@ -1,1 +1,1 @@
-window.cefQuery_352776719_1({request: '' + 'hello',onSuccess: function(response) {},onFailure: function(error_code, error_message) {}});
+/* javascript is auto-generated */

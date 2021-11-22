@@ -55,9 +55,9 @@ public abstract class ActionManagerEx extends ActionManager {
   public abstract String getPrevPreformedActionId();
 
   /**
-   * Comparator compares action ids (String) on order of action registration.
+   * A comparator that compares action ids (String) by the order of action registration.
    *
-   * @return a negative integer if action that corresponds to the first id was registered earlier than the action that corresponds
+   * @return a negative integer if the action that corresponds to the first id was registered earlier than the action that corresponds
    *  to the second id; zero if both ids are equal; a positive number otherwise.
    */
   @NotNull
@@ -96,7 +96,7 @@ public abstract class ActionManagerEx extends ActionManager {
   public abstract boolean isActionPopupStackEmpty();
 
   /**
-   * Allows to receive notifications when popup menus created from action groups are shown and hidden.
+   * Allows receiving notifications when popup menus created from action groups are shown and hidden.
    */
   @SuppressWarnings("unused")  // used in Rider
   public abstract void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable);

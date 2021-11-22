@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -36,7 +36,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
     final PsiElement[] declared = dcl.getDeclaredElements();
 
     // declaration statement could wrap class or dcl
-    if (declared.length > 0 && (!context.shouldRecursivelyMatch() || !(matchedNode.getParent() instanceof PsiDeclarationStatement)) /* skip twice matching for child*/) {
+    if (declared.length > 0 && !(matchedNode.getParent() instanceof PsiDeclarationStatement) /* skip twice matching for child*/) {
       if (!(matchedNode instanceof PsiField)) {
         return context.getMatcher().matchSequentially(
           new ArrayBackedNodeIterator(declared),

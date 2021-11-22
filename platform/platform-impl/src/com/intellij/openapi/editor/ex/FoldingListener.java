@@ -53,6 +53,12 @@ public interface FoldingListener {
   }
 
   /**
+   * Invoked in a batch folding operation before any change is performed.
+   */
+  default void onFoldProcessingStart() {
+  }
+
+  /**
    * Informs that fold processing is done.
    */
   default void onFoldProcessingEnd() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -29,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.sanitizeFileName
@@ -51,7 +53,7 @@ open class ApplicationRule : TestRule {
     }
   }
 
-  final override fun apply(base: Statement, description: Description): Statement? {
+  final override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
       override fun evaluate() {
         before(description)
@@ -77,7 +79,7 @@ open class ApplicationRule : TestRule {
  * Rule should be used only and only if you open projects in a custom way in test cases and cannot use [ProjectRule].
  */
 class ProjectTrackingRule : TestRule {
-  override fun apply(base: Statement, description: Description): Statement? {
+  override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
       override fun evaluate() {
         (ProjectManager.getInstance() as TestProjectManager).startTracking().use {
@@ -112,7 +114,8 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
 
   private var sharedProject: ProjectEx? = null
   private var testClassName: String? = null
-  var virtualFilePointerTracker: VirtualFilePointerTracker? = null
+  var virtualFilePointerTracker: VirtualFilePointerTracker? =null
+  var libraryTracker: LibraryTableTracker? = null
   var projectTracker: AccessToken? = null
 
   override fun before(description: Description) {
@@ -127,6 +130,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
     val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities).copy(preloadServices = preloadServices)
     val project = (ProjectManager.getInstance() as TestProjectManager).openProject(projectFile, options) as ProjectEx
     virtualFilePointerTracker = VirtualFilePointerTracker()
+    libraryTracker = LibraryTableTracker()
     return project
   }
 
@@ -136,6 +140,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
     l.catchAndStoreExceptions { sharedProject?.let { PlatformTestUtil.forceCloseProjectWithoutSaving(it) } }
     l.catchAndStoreExceptions { projectTracker?.finish() }
     l.catchAndStoreExceptions { virtualFilePointerTracker?.assertPointersAreDisposed() }
+    l.catchAndStoreExceptions { libraryTracker?.assertDisposed() }
     l.catchAndStoreExceptions {
       sharedProject = null
       sharedModule = null
@@ -416,7 +421,7 @@ suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
  * Copy files from [projectPaths] directories to a temp directory, load project from it and pass it to [checkProject].
  */
 fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: TemporaryDirectory, checkProject: suspend (Project) -> Unit) {
-  @Suppress("RedundantSuspendModifier")
+  @Suppress("RedundantSuspendModifier", "BlockingMethodInNonBlockingContext")
   suspend fun copyProjectFiles(targetDir: VirtualFile): Path {
     val projectDir = VfsUtil.virtualToIoFile(targetDir)
     var projectFileName: String? = null
@@ -463,21 +468,14 @@ class DisposableRule : ExternalResource() {
   }
 }
 
-class SystemPropertyRule(private val name: String, private val value: String = "true") : ExternalResource() {
+class SystemPropertyRule(private val name: String, private val value: String) : ExternalResource() {
   private var oldValue: String? = null
 
   public override fun before() {
-    oldValue = System.getProperty(name)
-    System.setProperty(name, value)
+    oldValue = System.setProperty(name, value)
   }
 
   public override fun after() {
-    val oldValue = oldValue
-    if (oldValue == null) {
-      System.clearProperty(name)
-    }
-    else {
-      System.setProperty(name, oldValue)
-    }
+    SystemProperties.setProperty(name, oldValue)
   }
 }

@@ -92,7 +92,7 @@ public final class ImageUtil {
 
   /**
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
-   * @see #createImage(GraphicsConfiguration, double, double, int, PaintUtil.RoundingMode)
+   * @see #createImage(GraphicsConfiguration, int, int, int)
    */
   @NotNull
   public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {

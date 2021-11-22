@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.ComboBoxPopupState
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
 import java.util.function.Predicate
 import javax.swing.ComboBoxModel
 import javax.swing.ListModel
@@ -78,6 +80,21 @@ class SdkComboBoxModel private constructor(
         (sdkTypeCreationFilter == null || sdkTypeCreationFilter.test(it))
       }
       return createSdkComboBoxModel(project, sdksModel, sdkTypeFilter, sdkTypeCreationFilter, sdkFilter)
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun createProjectJdkComboBoxModel(
+      project: Project,
+      parentDisposable: Disposable,
+      sdkTypeFilter: Predicate<SdkTypeId>? = null,
+      sdkTypeCreationFilter: Predicate<SdkTypeId>? = null,
+      sdkFilter: Predicate<Sdk>? = null
+    ): SdkComboBoxModel {
+      val sdksModel = ProjectSdksModel()
+        .apply { Disposer.register(parentDisposable, Disposable { disposeUIResources() }) }
+        .apply { reset(project) }
+      return createJdkComboBoxModel(project, sdksModel, sdkTypeFilter, sdkTypeCreationFilter, sdkFilter)
     }
   }
 }

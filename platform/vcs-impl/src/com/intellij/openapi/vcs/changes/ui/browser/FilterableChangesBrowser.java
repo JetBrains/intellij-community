@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui.browser;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -93,7 +93,7 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
   protected @NotNull JComponent createCenterPanel() {
     JComponent centerPanel = super.createCenterPanel();
     myLoadingDecorator = new ProgressBarLoadingDecorator(JBUI.Panels.simplePanel(centerPanel), this,
-                                                         ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+                                                         ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     return myLoadingDecorator.getComponent();
   }
 

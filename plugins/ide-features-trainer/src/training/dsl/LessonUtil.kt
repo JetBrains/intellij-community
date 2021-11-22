@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.WindowStateService
@@ -41,10 +42,7 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.*
 import training.util.learningToolWindow
-import java.awt.Component
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.Window
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
@@ -53,8 +51,10 @@ import javax.swing.JList
 import javax.swing.KeyStroke
 
 object LessonUtil {
-  val productName: String
-    get() = ApplicationNamesInfo.getInstance().fullProductName
+  val productName: String get() {
+    val name = ApplicationNamesInfo.getInstance().fullProductName
+    return if (name == "DataSpell") "JetBrains DataSpell" else name
+    }
 
   fun hideStandardToolwindows(project: Project) {
     val windowManager = ToolWindowManager.getInstance(project)
@@ -205,12 +205,19 @@ object LessonUtil {
     return x != 0
   }
 
-  fun LessonContext.highlightBreakpointGutter(logicalPosition: () -> LogicalPosition) {
+
+  val breakpointXRange: (width: Int) -> IntRange = { IntRange(20, it - 27) }
+
+  fun LessonContext.highlightBreakpointGutter(xRange: (width: Int) -> IntRange = breakpointXRange,
+                                              logicalPosition: () -> LogicalPosition
+
+  ) {
     task {
       triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
-        return@l Rectangle(20, y, ui.width - 26, editor.lineHeight)
+        val range = xRange(ui.width)
+        return@l Rectangle(range.first, y, range.last - range.first + 1, editor.lineHeight)
       }
     }
   }
@@ -271,6 +278,23 @@ object LessonUtil {
       else -> return false
     }
     return true
+  }
+
+  inline fun<reified T: Component> findUiParent(start: Component, predicate: (Component) -> Boolean): T? {
+    if (start is T && predicate(start)) return start
+    var ui: Container? = start.parent
+    while (ui != null) {
+      if (ui is T && predicate(ui)) {
+        return ui
+      }
+      ui = ui.parent
+    }
+    return null
+  }
+
+  fun returnToWelcomeScreenRemark(): String {
+    val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
+    return if (isSingleProject) LessonsBundle.message("onboarding.return.to.welcome.remark") else ""
   }
 }
 

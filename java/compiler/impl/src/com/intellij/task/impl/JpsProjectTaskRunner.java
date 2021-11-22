@@ -66,7 +66,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
       fileGeneratedTopicConnection = null;
     }
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(tasks);
-    ModalityUiUtil.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.getDisposed(), () -> {
       try (MyNotificationCollector notificationCollector = new MyNotificationCollector(context, callback, () -> {
         if (fileGeneratedTopicConnection != null) {
           fileGeneratedTopicConnection.disconnect();
@@ -78,7 +78,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
         runEmptyBuildTask(project, context, notificationCollector, taskMap);
         runArtifactsBuildTasks(project, context, notificationCollector, taskMap);
       }
-    }, ModalityState.defaultModalityState(), project.getDisposed());
+    });
   }
 
   @Override

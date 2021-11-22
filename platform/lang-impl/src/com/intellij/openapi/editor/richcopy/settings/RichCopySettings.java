@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.richcopy.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Denis Zhdanov
  */
-@State(name = "EditorRichCopySettings", storages = @Storage("editor.rich.copy.xml"))
+@State(name = "EditorRichCopySettings", storages = @Storage("editor.rich.copy.xml"), category = SettingsCategory.UI)
 public class RichCopySettings implements PersistentStateComponent<RichCopySettings> {
 
   @NotNull public static final String ACTIVE_GLOBAL_SCHEME_MARKER = "__ACTIVE_GLOBAL_SCHEME__";

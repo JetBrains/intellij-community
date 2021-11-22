@@ -255,16 +255,6 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     return result;
   }
 
-  /**
-   * @deprecated use {@link #getFileList()}
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public synchronized LinkedHashSet<VirtualFile> getFileSet() {
-    return new LinkedHashSet<>(getFileList());
-  }
-
   public synchronized boolean hasBeenOpen(@NotNull VirtualFile f) {
     for (HistoryEntry each : myEntriesList) {
       if (f.equals(each.getFile())) {

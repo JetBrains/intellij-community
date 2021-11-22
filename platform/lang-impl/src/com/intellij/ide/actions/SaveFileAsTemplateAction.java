@@ -6,10 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +21,7 @@ final class SaveFileAsTemplateAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = Objects.requireNonNull(e.getData(CommonDataKeys.PROJECT));
-    String fileText = Objects.requireNonNull(e.getData(PlatformDataKeys.FILE_TEXT));
+    String fileText = Objects.requireNonNull(e.getData(PlatformCoreDataKeys.FILE_TEXT));
     VirtualFile file = Objects.requireNonNull(e.getData(CommonDataKeys.VIRTUAL_FILE));
     String extension = StringUtil.notNullize(file.getExtension());
     String nameWithoutExtension = file.getNameWithoutExtension();

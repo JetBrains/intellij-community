@@ -32,7 +32,7 @@ class ButtonToolbarImpl extends JPanel {
     initButtons(actionGroup);
 
     updateActions();
-    ActionManagerEx.getInstanceEx().addTimerListener(500, new WeakTimerListener(new MyTimerListener()));
+    ActionManagerEx.getInstanceEx().addTimerListener(new WeakTimerListener(new MyTimerListener()));
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
   }
 

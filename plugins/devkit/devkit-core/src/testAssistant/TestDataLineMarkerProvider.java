@@ -13,10 +13,17 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +33,8 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.*;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.File;
+import java.util.*;
 
 
 public final class TestDataLineMarkerProvider extends LineMarkerProviderDescriptor {
@@ -100,20 +106,46 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
   public static String getTestDataBasePath(@Nullable PsiClass psiClass) {
     if (psiClass == null) return null;
 
-    final UAnnotation annotation =
-      UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(psiClass,
-                                                                        Collections.singleton(TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME)),
-                               UAnnotation.class);
+    return CachedValuesManager.getCachedValue(psiClass, () -> {
+      final List<String> pathComponents = new ArrayList<>();
+      PsiClass currentPsiClass = psiClass;
+      while (currentPsiClass != null) {
+        String testMetaData = annotationValue(currentPsiClass, TestFrameworkConstants.TEST_METADATA_ANNOTATION_QUALIFIED_NAME);
+        String testDataPath = annotationValue(currentPsiClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
+        PsiClass containingClass = currentPsiClass.getContainingClass();
+        if (!StringUtil.isEmpty(testMetaData) && (currentPsiClass.equals(psiClass) || containingClass != null)) {
+          pathComponents.add(testMetaData);
+        }
+        if (!StringUtil.isEmpty(testDataPath)) {
+          pathComponents.add(testDataPath);
+        }
+        currentPsiClass = containingClass;
+      }
+      if (pathComponents.isEmpty()) return null;
+      Collections.reverse(pathComponents);
+      String path = FileUtil.toSystemIndependentName(Strings.join(pathComponents, File.separator));
+      return new CachedValueProvider.Result<>(path, PsiModificationTracker.MODIFICATION_COUNT);
+    });
+  }
+
+  @Nullable
+  public static String annotationValue(@NotNull PsiModifierListOwner owner, String annotationFqName) {
+    Set<String> annotationNames = Collections.singleton(annotationFqName);
+    boolean nestedClass = owner instanceof PsiClass && ((PsiClass)owner).getContainingClass() != null;
+    PsiAnnotation element = nestedClass
+                            ? AnnotationUtil.findAnnotation(owner, annotationNames)
+                            : AnnotationUtil.findAnnotationInHierarchy(owner, annotationNames);
+    final UAnnotation annotation = UastContextKt.toUElement(element, UAnnotation.class);
     if (annotation != null) {
       UExpression value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value != null) {
-        final Project project = psiClass.getProject();
+        final Project project = owner.getProject();
         final Object constantValue = value.evaluate();
         if (constantValue instanceof String) {
           String path = (String)constantValue;
           if (path.contains(TestFrameworkConstants.CONTENT_ROOT_VARIABLE)) {
             final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-            final VirtualFile file = psiClass.getContainingFile().getVirtualFile();
+            final VirtualFile file = owner.getContainingFile().getVirtualFile();
             if (file == null) {
               return null;
             }

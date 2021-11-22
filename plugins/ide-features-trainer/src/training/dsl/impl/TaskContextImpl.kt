@@ -242,6 +242,13 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     return result
   }
 
+  override fun timerCheck(delayMillis: Int, checkState: TaskRuntimeContext.() -> Boolean): CompletableFuture<Boolean> {
+    val future = recorder.timerCheck(delayMillis) { checkState(runtimeContext) }
+    addStep(future)
+    return future
+  }
+
+
   override fun addFutureStep(p: DoneStepContext.() -> Unit) {
     val future: CompletableFuture<Boolean> = CompletableFuture()
     addStep(future)

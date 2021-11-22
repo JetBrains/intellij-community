@@ -55,7 +55,7 @@ public interface RefElement extends RefEntity {
     return getPsiElement();
   }
 
-  SmartPsiElementPointer getPointer();
+  SmartPsiElementPointer<?> getPointer();
 
   /**
    * Checks if a chain of references exists from one of the entry points to this element.

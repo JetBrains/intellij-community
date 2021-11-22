@@ -1,0 +1,5 @@
+// "Create property 'x' as constructor parameter" "true"
+annotation class Annotation(val x: Int)
+
+@Annotation(x = 1)
+class C

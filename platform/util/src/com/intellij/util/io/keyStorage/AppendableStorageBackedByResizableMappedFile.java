@@ -36,6 +36,12 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     myFileLength = (int)length();
   }
 
+  @Override
+  public void clear() throws IOException {
+    super.clear();
+    myFileLength = 0;
+  }
+
   private void flushKeyStoreBuffer() throws IOException {
     if (myBufferPosition > 0) {
       put(myFileLength, myAppendBuffer, 0, myBufferPosition);
@@ -89,24 +95,24 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   }
 
   @Override
-  public boolean processAll(@NotNull Processor<? super Data> processor) throws IOException {
+  public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
     assert !isDirty();
     if (myFileLength == 0) return true;
 
     return readInputStream(is -> {
       // calculation may restart few times, so it's expected that processor processes duplicated
-      DataInputStream keyStream = new DataInputStream(
-        new BufferedInputStream(new LimitedInputStream(is, myFileLength) {
-          @Override
-          public int available() {
-            return remainingLimit();
-          }
-        }, 32768));
-
+      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), myFileLength) {
+        @Override
+        public int available() {
+          return remainingLimit();
+        }
+      };
+      DataInputStream keyStream = new DataInputStream(lis);
       try {
         while (true) {
+          int offset = lis.getBytesRead();
           Data key = myDataDescriptor.read(keyStream);
-          if (!processor.process(key)) return false;
+          if (!processor.process(offset, key)) return false;
         }
       }
       catch (EOFException e) {

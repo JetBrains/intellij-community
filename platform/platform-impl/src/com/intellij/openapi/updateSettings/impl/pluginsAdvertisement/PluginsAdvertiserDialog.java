@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +18,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author anna
@@ -23,7 +26,7 @@ import java.util.function.Predicate;
 public final class PluginsAdvertiserDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiserDialog.class);
 
-  private final SortedSet<PluginDownloader> myPluginToInstall = new TreeSet<>(Comparator.comparing(PluginDownloader::getPluginName, String::compareToIgnoreCase));
+  private final Collection<PluginDownloader> myPluginToInstall;
   private final @Nullable Project myProject;
   private final @NotNull List<PluginNode> myCustomPlugins;
   private final @Nullable Consumer<? super Boolean> myFinishFunction;
@@ -35,7 +38,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
                           @Nullable Consumer<? super Boolean> finishFunction) {
     super(project);
     myProject = project;
-    myPluginToInstall.addAll(pluginsToInstall);
+    myPluginToInstall = pluginsToInstall;
     myCustomPlugins = customPlugins;
     myFinishFunction = finishFunction;
     setTitle(IdeBundle.message("dialog.title.choose.plugins.to.install.or.enable"));
@@ -51,8 +54,8 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   @Override
   protected @NotNull JComponent createCenterPanel() {
     if (myPanel == null) {
-      myPanel = new DetectedPluginsPanel();
-      myPanel.addAll(myPluginToInstall);
+      myPanel = new DetectedPluginsPanel(myProject);
+      myPanel.addAll(myPluginToInstall, myPluginToInstall.iterator().next());
     }
     return myPanel;
   }
@@ -88,6 +91,19 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     }
 
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(nodes)) {
+      return false;
+    }
+
+    var org = PluginManagerFilters.getInstance();
+    var notAllowedToInstallPlugins = nodes
+      .stream()
+      .filter(descriptor -> !org.allowInstallingPlugin(descriptor))
+      .map(e -> e.getPluginId().getIdString())
+      .collect(Collectors.toCollection(TreeSet<String>::new));
+
+    if (!notAllowedToInstallPlugins.isEmpty()) {
+      LOG.warn("Some advertised plugins were not allowed to install for " +
+               "the organization: " + StringUtil.join(notAllowedToInstallPlugins, ", "));
       return false;
     }
 

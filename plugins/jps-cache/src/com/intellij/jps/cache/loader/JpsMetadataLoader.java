@@ -20,7 +20,7 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 public class JpsMetadataLoader {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsMetadataLoader");
+  private static final Logger LOG = Logger.getInstance(JpsMetadataLoader.class);
   private static final String SOURCES_STATE_FILE_NAME = "target_sources_state.json";
   private final BuildManager myBuildManager;
   private final JpsServerClient myClient;

@@ -3,4 +3,4 @@
 [secondaryConstructorByJavaSuperCall.1.kt] New instance creation 22 B("")
 [secondaryConstructorByJavaSuperCall.1.kt] Supertype 17 class C : B("") {
 [secondaryConstructorByJavaSuperCall.1.kt] Unclassified 12 constructor(a: Int) : super("") {
-[secondaryConstructorByJavaSuperCall.1.kt] Unclassified 2 constructor(): this("") {
+[secondaryConstructorByJavaSuperCall.1.kt] Unclassified 2 constructor() : this("") {

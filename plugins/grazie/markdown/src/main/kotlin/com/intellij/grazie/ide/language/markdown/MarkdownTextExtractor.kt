@@ -16,8 +16,8 @@ class MarkdownTextExtractor : TextExtractor() {
     if (allowedDomains.contains(TextContent.TextDomain.PLAIN_TEXT) &&
         (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root))) {
       return TextContentBuilder.FromPsi
-        .withUnknown { e ->
-          e.node.isMarkdownCodeType() ||
+        .withUnknown { it.node.isMarkdownCodeType() }
+        .excluding { e ->
           e.elementType == MarkdownElementTypes.IMAGE ||
           e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e)
         }

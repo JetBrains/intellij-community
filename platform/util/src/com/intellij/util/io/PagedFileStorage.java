@@ -259,7 +259,14 @@ public class PagedFileStorage implements Forceable {
   }
 
   public void resize(long newSize) throws IOException {
-    long oldSize = Files.exists(myFile) ? Files.size(myFile) : 0;
+    long oldSize;
+    if (Files.exists(myFile)) {
+      oldSize = Files.size(myFile);
+    }
+    else {
+      Files.createDirectories(myFile.getParent());
+      oldSize = 0;
+    }
     if (oldSize == newSize && oldSize == length()) return;
 
     final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;

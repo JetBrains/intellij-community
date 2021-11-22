@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -21,8 +22,8 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.replaceService
-import com.intellij.testFramework.setRegistryPropertyForTest
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.util.isSupported
@@ -41,8 +42,9 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     application.replaceService(Environment::class.java, TestEnvironment(), testRootDisposable)
     application.replaceService(ExternalSystemJdkProvider::class.java, TestJdkProvider(), testRootDisposable)
 
-    setRegistryPropertyForTest("unknown.sdk.auto", false)
-    setRegistryPropertyForTest("use.jdk.vendor.in.suggested.jdk.name", false) //we have inconsistency between SDK names in JDK
+    setRegistryPropertyForTest("unknown.sdk.auto", "false")
+    setRegistryPropertyForTest("use.jdk.vendor.in.suggested.jdk.name", "false") //we have inconsistency between SDK names in JDK
+
     SdkType.EP_NAME.point.registerExtension(SdkTestCase.TestSdkType, testRootDisposable)
 
     environment.variables(ExternalSystemJdkUtil.JAVA_HOME to null)

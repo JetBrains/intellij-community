@@ -45,11 +45,6 @@ public final class DiscoveredTestsIndex extends MapReduceIndex<Integer, IntList,
     protected MyIndexStorage(@NotNull Path storageFile) throws IOException {
       super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, IntArrayExternalizer.INSTANCE, 4 * 1024, false);
     }
-
-    @Override
-    protected void checkCanceled() {
-      ProgressManager.checkCanceled();
-    }
   }
 
   private static final IndexExtension<Integer, IntList, UsedSources> INDEX_EXTENSION = new IndexExtension<>() {

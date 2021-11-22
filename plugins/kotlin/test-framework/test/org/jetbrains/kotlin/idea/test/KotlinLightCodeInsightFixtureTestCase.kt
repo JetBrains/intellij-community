@@ -13,7 +13,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -40,8 +40,11 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
@@ -109,20 +112,26 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         if (!isFirPlugin) {
             invalidateLibraryCache(project)
         }
+    }
 
+    override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
         if (captureExceptions) {
-            LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+            LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
                 override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
                     exceptions.addIfNotNull(t)
                     return super.processError(category, message, t, details)
                 }
-            })
+            }) {
+                super.runBare(testRunnable)
+            }
+        }
+        else {
+            super.runBare(testRunnable)
         }
     }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { LoggedErrorProcessor.restoreDefaultProcessor() },
             ThrowableRunnable { disableKotlinOfficialCodeStyle(project) },
             ThrowableRunnable { super.tearDown() },
         )
@@ -313,7 +322,7 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
     // TODO: refactor such tests or add sophisticated check for the directive
     val options = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $COMPILER_ARGUMENTS_DIRECTIVE ").firstOrNull()
 
-    if (version != null || jvmTarget != null || options != null) {
+    if (version != null || apiVersion != null || jvmTarget != null || options != null) {
         configureLanguageAndApiVersion(
             project, module,
             version ?: LanguageVersion.LATEST_STABLE.versionString,
@@ -400,7 +409,7 @@ private fun rollbackCompilerOptions(project: Project, module: Module, removeFace
     KotlinCommonCompilerArgumentsHolder.getInstance(project).update { this.languageVersion = LanguageVersion.LATEST_STABLE.versionString }
 
     if (removeFacet) {
-        module.removeKotlinFacet(IdeModifiableModelsProviderImpl(project), commitModel = true)
+        module.removeKotlinFacet(ProjectDataManager.getInstance().createModifiableModelsProvider(project), commitModel = true)
         return
     }
 
@@ -431,7 +440,7 @@ fun withCustomLanguageAndApiVersion(
         if (removeFacet) {
             KotlinCommonCompilerArgumentsHolder.getInstance(project)
                 .update { this.languageVersion = LanguageVersion.LATEST_STABLE.versionString }
-            module.removeKotlinFacet(IdeModifiableModelsProviderImpl(project), commitModel = true)
+            module.removeKotlinFacet(ProjectDataManager.getInstance().createModifiableModelsProvider(project), commitModel = true)
         } else {
             configureLanguageAndApiVersion(
                 project,
@@ -450,7 +459,7 @@ private fun configureLanguageAndApiVersion(
     apiVersion: String?
 ) {
     WriteAction.run<Throwable> {
-        val modelsProvider = IdeModifiableModelsProviderImpl(project)
+        val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
         val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false)
 
         val compilerArguments = facet.configuration.settings.compilerArguments
@@ -458,7 +467,7 @@ private fun configureLanguageAndApiVersion(
             compilerArguments.apiVersion = null
         }
 
-        facet.configureFacet(languageVersion, null, modelsProvider)
+        facet.configureFacet(languageVersion, null, modelsProvider, emptySet())
         if (apiVersion != null) {
             facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion)
         }

@@ -11,7 +11,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -132,7 +132,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
             return lookup.getBounds();
           }
         }
-        if (LangDataKeys.MODULE.is(dataId)) {
+        if (PlatformCoreDataKeys.MODULE.is(dataId)) {
           return ModuleUtilCore.findModuleForFile(myFile, myProject);
         }
         return superProvider.getData(dataId);

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -15,6 +14,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -68,7 +68,7 @@ internal fun chooseApplicableComponentFunctions(
     val functions = getApplicableComponentFunctions(contextExpression, type, receiverExpression)
     if (functions.size <= 1) return callback(emptyList())
 
-    if (ApplicationManager.getApplication().isUnitTestMode) return callback(functions)
+    if (isUnitTestMode()) return callback(functions)
 
     if (editor == null) return callback(emptyList())
 

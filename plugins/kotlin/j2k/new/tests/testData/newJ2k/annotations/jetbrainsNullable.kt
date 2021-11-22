@@ -3,6 +3,11 @@ package test
 
 class Test(str: String?) {
     var myStr: String? = "String2"
+
+    init {
+        myStr = str
+    }
+
     fun sout(str: String?) {
         println(str)
     }
@@ -17,9 +22,5 @@ class Test(str: String?) {
         sout(test)
         sout(dummy(test))
         Test(test)
-    }
-
-    init {
-        myStr = str
     }
 }

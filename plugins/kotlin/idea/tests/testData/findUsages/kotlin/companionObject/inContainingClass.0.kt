@@ -1,6 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtObjectDeclaration
 // OPTIONS: usages
-class A() {
+class A {
     init {
         foo()
         v
@@ -10,13 +10,13 @@ class A() {
         ext() // companion object is extension receiver
     }
 
-    companion <caret>object: Foo {
+    companion <caret>object : Foo {
         fun foo() {
         }
 
         val v = 42
 
-        fun Int.get(a: Int) = this + a
+        operator fun Int.get(a: Int) = this + a
     }
 }
 
@@ -24,5 +24,3 @@ interface Foo
 
 fun Foo.ext() {
 }
-
-// DISABLE-ERRORS

@@ -14,7 +14,7 @@ import java.awt.event.ActionEvent;
 import java.util.HashMap;
 import java.util.function.Function;
 
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
 public class SwingActionDelegate extends AnAction implements DumbAware {
   private static final Key<Function<String, JComponent>> FUNCTION = Key.create("SwingActionsMapping");

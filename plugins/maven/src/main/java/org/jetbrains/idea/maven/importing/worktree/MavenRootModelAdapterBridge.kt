@@ -43,7 +43,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
 
   private var moduleEntity: ModuleEntity = initialModuleEntity
   private val legacyBridge = ModuleRootComponentBridge.getInstance(module)
-  private val modifiableModel = legacyBridge.getModifiableModel(builder, builder.toStorage(), RootConfigurationAccessor())
+  private val modifiableModel = legacyBridge.getModifiableModel(builder, RootConfigurationAccessor())
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val entitySource = MavenExternalSource.INSTANCE
 

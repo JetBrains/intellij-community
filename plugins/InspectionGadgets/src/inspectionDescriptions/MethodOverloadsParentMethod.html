@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports instance methods having the same name and the same number of parameters as a method in a superclass,
-and where at least one of the parameters is not of the same type but of a compatible type.
+Reports instance methods with the same name and the same number of parameters as a method in a superclass,
+but where at least one of the parameters is of a different incompatible type.
 <p>
   In this case, the method in a subclass will be overloading the method from the superclass
   instead of overriding it. If it is unintended, it may result in latent bugs.

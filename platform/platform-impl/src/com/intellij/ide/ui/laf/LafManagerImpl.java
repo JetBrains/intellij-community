@@ -17,13 +17,16 @@ import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -70,7 +73,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-@State(name = "LafManager", storages = @Storage("laf.xml"))
+@State(name = "LafManager", storages = @Storage("laf.xml"), category = SettingsCategory.UI)
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(LafManager.class);
 
@@ -158,6 +161,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final Lazy<ActionToolbar> settingsToolbar = new SynchronizedClearableLazy<>(() -> {
     DefaultActionGroup group = new DefaultActionGroup(new PreferredLafAction());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true);
+    toolbar.setTargetComponent(toolbar.getComponent());
     toolbar.getComponent().setOpaque(false);
     return toolbar;
   });
@@ -654,25 +658,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     // set L&F
-    // that is IDEA default LAF
-    if (IdeaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
-      IdeaLaf laf = new IdeaLaf(null);
-      MetalLookAndFeel.setCurrentTheme(new IdeaBlueMetalTheme());
-      try {
-        UIManager.setLookAndFeel(laf);
-        updateIconsUnderSelection(false);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        Messages.showMessageDialog(
-          IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.getMessage()),
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        );
-        return true;
-      }
-    }
-    else if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
+    if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
@@ -858,7 +844,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchLafFonts(uiDefaults);
 
-    patchListUI(uiDefaults);
     patchTreeUI(uiDefaults);
 
     patchHiDPI(uiDefaults);
@@ -914,25 +899,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     FontUIResource buttonFont = getFont("Helvetica Neue", 13, Font.PLAIN);
     defaults.put("Button.font", buttonFont);
-    Font menuFont = getFont("Lucida Grande", 14, Font.PLAIN);
+    Font menuFont = getFont("Lucida Grande", 13, Font.PLAIN);
     defaults.put("Menu.font", menuFont);
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
   }
 
-  private static void patchBorder(UIDefaults defaults, String key) {
-    if (defaults.getBorder(key) == null) {
-      defaults.put(key, JBUI.Borders.empty(1, 0).asUIResource());
-    }
-  }
-
-  private static void patchListUI(UIDefaults defaults) {
-    patchBorder(defaults, "List.border");
-  }
-
   private static void patchTreeUI(UIDefaults defaults) {
-    patchBorder(defaults, "Tree.border");
     defaults.put("TreeUI", DefaultTreeUI.class.getName());
     defaults.put("Tree.repaintWholeRow", true);
     if (isUnsupported(defaults.getIcon("Tree.collapsedIcon"))) {
@@ -1236,12 +1210,33 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
+        if (IdeaPopupMenuUI.isUnderPopup(contents) && IdeaPopupMenuUI.isRoundBorder()) {
+          window.setBackground(Gray.TRANSPARENT);
+          window.setOpacity(1);
+        }
       }
       return popup;
     }
 
-    private static Point fixPopupLocation(final Component contents, final int x, final int y) {
-      if (!(contents instanceof JToolTip)) return new Point(x, y);
+    private static Point fixPopupLocation(final Component contents, final int x, int y) {
+      if (!(contents instanceof JToolTip)) {
+        if (IdeaPopupMenuUI.isUnderPopup(contents)) {
+          int topBorder = JBUI.insets("PopupMenu.borderInsets", JBUI.emptyInsets()).top;
+          Component invoker = ((JPopupMenu)contents).getInvoker();
+          if (invoker instanceof ActionMenu) {
+            y -= topBorder / 2;
+            if (SystemInfoRt.isMac) {
+              y += JBUI.scale(1);
+            }
+          }
+          else {
+            y -= topBorder;
+            y -= JBUI.scale(1);
+          }
+        }
+
+        return new Point(x, y);
+      }
 
       final PointerInfo info;
       try {

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
-import com.intellij.application.options.CodeCompletionOptions
+import com.intellij.application.options.CodeCompletionConfigurable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
@@ -173,7 +173,7 @@ class ItemsDecoratorInitializer : LookupTracker() {
     init {
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.configure")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
+          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionConfigurable::class.java)
           notification.expire()
         }
       })

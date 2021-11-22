@@ -3,13 +3,13 @@
 Reports redundant <code>File</code> creation in one of the following constructors when only <code>String</code> path can be used: <code>FileInputStream</code>, <code>FileOutputStream</code>,
 <code>FileReader</code>, <code>FileWriter</code>, <code>PrintStream</code>, <code>PrintWriter</code>, <code>Formatter</code>.
 <p>Example:</p>
-<pre>
+<pre><code>
 InputStream is = new FileInputStream(new File("in.txt"));
-</pre>
+</code></pre>
 <p>After quick-fix is applied:</p>
-<pre>
+<pre><code>
 InputStream is = new FileInputStream("in.txt");
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2020.3</small></p>
 </body>

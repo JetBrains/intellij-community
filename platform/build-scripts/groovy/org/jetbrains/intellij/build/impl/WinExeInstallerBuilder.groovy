@@ -2,7 +2,9 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.Nullable
@@ -92,7 +94,7 @@ final class WinExeInstallerBuilder {
 
     if (SystemInfoRt.isLinux) {
       Path ideaNsiPath = nsiConfDir.resolve("idea.nsi")
-      Files.writeString(ideaNsiPath, BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], ""))
+      Files.writeString(ideaNsiPath, BuildUtils.replaceAll(Files.readString(ideaNsiPath), ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], ""))
     }
 
     try {
@@ -118,6 +120,12 @@ final class WinExeInstallerBuilder {
       Path file = Paths.get(it)
       Files.copy(file, nsiConfDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
     }
+
+    // Log final nsi directory to make debugging easier
+    def logDir = new File(buildContext.paths.buildOutputRoot, "log")
+    def nsiLogDir = new File(logDir, "nsi")
+    NioFiles.deleteRecursively(nsiLogDir.toPath())
+    FileUtil.copyDir(nsiConfDir.toFile(), nsiLogDir)
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
     buildContext.messages.block("Running NSIS tool to build .exe installer for Windows") {

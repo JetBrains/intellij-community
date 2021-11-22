@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.inst.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.TypeCastInstruction;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
@@ -32,11 +33,11 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,10 +228,21 @@ public final class GuessManagerImpl extends GuessManager {
           else if (instruction instanceof InstanceofInstruction) {
             DfaValue dfaRight = memState.pop();
             DfaValue dfaLeft = memState.pop();
-            memState.push(adjustValue(dfaLeft, ((InstanceofInstruction)instruction).getLeft()));
+            memState.push(adjustValue(dfaLeft, getInstanceOfOperand(((InstanceofInstruction)instruction))));
             memState.push(dfaRight);
           }
           return super.acceptInstruction(instructionState);
+        }
+
+        @Nullable
+        private PsiExpression getInstanceOfOperand(InstanceofInstruction instruction) {
+          if (instruction.getDfaAnchor() instanceof JavaExpressionAnchor) {
+            PsiExpression expression = ((JavaExpressionAnchor)instruction.getDfaAnchor()).getExpression();
+            if (expression instanceof PsiInstanceOfExpression) {
+              return ((PsiInstanceOfExpression)expression).getOperand();
+            }
+          }
+          return null;
         }
 
         private DfaValue adjustValue(@NotNull DfaValue value, @Nullable PsiExpression expression) {
@@ -581,7 +593,7 @@ public final class GuessManagerImpl extends GuessManager {
 
     MultiMap<PsiExpression, PsiType> getResult() {
       MultiMap<PsiExpression, PsiType> result = MultiMap.createSet(
-        new Object2ObjectOpenCustomHashMap<>(ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY));
+        CollectionFactory.createCustomHashingStrategyMap(ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY));
       Project project = myForPlace.getProject();
       myResult.forEach((value, constraint) -> {
         if (value.getDescriptor() instanceof ExpressionVariableDescriptor) {

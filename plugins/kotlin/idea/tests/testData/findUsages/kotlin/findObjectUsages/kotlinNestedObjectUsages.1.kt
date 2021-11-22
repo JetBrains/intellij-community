@@ -7,8 +7,8 @@ class Client {
     fun fooBar() {
         val a = A()
 
-        println("foo = ${a.O.foo}")
-        val obj = a.O
+        println("foo = ${A.O.foo}")
+        val obj = A.O
         println("length: ${obj.foo.length}")
     }
 }

@@ -23,6 +23,7 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,10 +34,10 @@ import java.util.List;
  */
 public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
   @Override
-  public void createUsageInfoForParameter(final PsiReference reference,
-                                          final List<UsageInfo> usages,
-                                          final PsiParameter parameter,
-                                          final PsiMethod method) {
+  public void createUsageInfoForParameter(@NotNull PsiReference reference,
+                                          @NotNull List<UsageInfo> usages,
+                                          @NotNull PsiParameter parameter,
+                                          @NotNull PsiMethod method) {
     int index = method.getParameterList().getParameterIndex(parameter);
     final PsiElement element = reference.getElement();
     PsiCall call = null;

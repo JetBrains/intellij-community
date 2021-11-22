@@ -6,6 +6,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
 import com.intellij.vcs.log.graph.api.LinearGraph
@@ -206,7 +208,7 @@ private fun hideTrivialMerge(collapsedGraph: CollapsedGraph, graph: LiteLinearGr
 
 abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   // file -> (commitId -> (parent commitId -> change kind))
-  private val affectedCommits = Object2ObjectOpenCustomHashMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
+  private val affectedCommits = CollectionFactory.createCustomHashingStrategyMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
   internal val commitToRename = MultiMap<UnorderedPair<Int>, Rename>()
 
   val isEmpty: Boolean
@@ -219,11 +221,11 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   constructor(startPath: FilePath) : this(listOf(startPath))
 
   internal fun build(oldRenames: MultiMap<UnorderedPair<Int>, Rename>): FileHistoryData {
-    val newPaths = ObjectOpenCustomHashSet(FILE_PATH_HASHING_STRATEGY)
+    val newPaths = CollectionFactory.createCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY)
     newPaths.addAll(startPaths)
 
     while (newPaths.isNotEmpty()) {
-      val commits = Object2ObjectOpenCustomHashMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
+      val commits = CollectionFactory.createCustomHashingStrategyMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
       newPaths.associateWithTo(commits) { getAffectedCommits(it) }
       affectedCommits.putAll(commits)
       newPaths.clear()
@@ -485,6 +487,6 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 }
 
 @JvmField
-val FILE_PATH_HASHING_STRATEGY: Hash.Strategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
 data class EdgeData<T>(val parent: T, val child: T)

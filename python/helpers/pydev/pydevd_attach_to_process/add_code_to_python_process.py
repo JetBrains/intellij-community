@@ -462,6 +462,7 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
     target_dll = os.path.abspath(os.path.normpath(target_dll))
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
+    target_dll_name = os.path.splitext(os.path.basename(target_dll))[0]
 
     # Note: we currently don't support debug builds
     is_debug = 0
@@ -478,12 +479,17 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
 #         '--batch-silent',
     ]
 
+    cmd.extend(["--init-eval-command='set auto-solib-add off'"])  # Faster loading.
+
     cmd.extend(["--eval-command='set scheduler-locking off'"])  # If on we'll deadlock.
 
     cmd.extend(["--eval-command='set architecture %s'" % arch])
 
+    cmd.extend(["--eval-command='sharedlibrary libdl'"])  # For dlopen.
+
     cmd.extend([
-        "--eval-command='call dlopen(\"%s\", 2)'" % target_dll,
+        "--eval-command='call (void*)dlopen(\"%s\", 2)'" % target_dll,
+        "--eval-command='sharedlibrary %s'" % target_dll_name,
         "--eval-command='call (int)DoAttach(%s, \"%s\", %s)'" % (
             is_debug, python_code, show_debug_info)
     ])

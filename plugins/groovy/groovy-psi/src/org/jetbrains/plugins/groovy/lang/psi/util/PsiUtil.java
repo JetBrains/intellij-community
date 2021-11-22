@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -1465,5 +1466,21 @@ public final class PsiUtil {
       return false;
     }
     return candidate.getArgumentMapping() instanceof NullArgumentMapping<?>;
+  }
+
+  public static @Nullable Pair<@NotNull PsiType,@NotNull Integer> getComponentForSpreadWithDot(@NotNull PsiType type) {
+    PsiType componentType;
+    if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
+      componentType = com.intellij.psi.util.PsiUtil.substituteTypeParameter(type, JAVA_UTIL_COLLECTION, 0, false);
+    } else if (type instanceof PsiArrayType) {
+      componentType = ((PsiArrayType)type).getComponentType();
+    } else {
+      componentType = null;
+    }
+    if (componentType == null) {
+      return null;
+    }
+    var nested = getComponentForSpreadWithDot(componentType);
+    return nested == null ? Pair.create(componentType, 1) : Pair.create(nested.first, nested.second + 1);
   }
 }

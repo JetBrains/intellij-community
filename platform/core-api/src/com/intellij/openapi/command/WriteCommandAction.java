@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -17,6 +18,7 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.NlsContexts.Command;
@@ -54,16 +56,21 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   private static final class BuilderImpl implements Builder {
     private final Project myProject;
-    private final PsiFile[] myPsiFiles;
+    private final Collection<? extends PsiElement> myPsiElements;
     private @Command String myCommandName = getDefaultCommandName();
     private String myGroupId = DEFAULT_GROUP_ID;
     private UndoConfirmationPolicy myUndoConfirmationPolicy;
     private boolean myGlobalUndoAction;
     private boolean myShouldRecordActionForActiveDocument = true;
 
-    private BuilderImpl(Project project, PsiFile @NotNull ... files) {
+    private BuilderImpl(Project project, @NotNull Collection<? extends PsiElement> elements) {
       myProject = project;
-      myPsiFiles = files;
+      myPsiElements = elements;
+    }
+
+    private BuilderImpl(Project project, PsiElement @NotNull ... elements) {
+      myProject = project;
+      myPsiElements = Arrays.asList(elements);
     }
 
     @NotNull
@@ -129,7 +136,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
 
     private <E extends Throwable> E doRunWriteCommandAction(@NotNull ThrowableRunnable<E> action) {
-      if (myPsiFiles.length > 0 && !FileModificationService.getInstance().preparePsiElementsForWrite(myPsiFiles)) {
+      if (myPsiElements.size() > 0 && !FileModificationService.getInstance().preparePsiElementsForWrite(myPsiElements)) {
         return null;
       }
 
@@ -178,6 +185,12 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   @Contract(pure = true)
   public static Builder writeCommandAction(Project project, PsiFile @NotNull ... files) {
     return new BuilderImpl(project, files);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static Builder writeCommandAction(Project project, Collection<? extends PsiElement> elementsToMakeWritable) {
+    return new BuilderImpl(project, elementsToMakeWritable);
   }
 
   private final @Command String myCommandName;

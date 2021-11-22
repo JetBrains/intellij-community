@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -61,7 +61,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
     if (!PsiUtil.isLanguageLevel7OrHigher(element)) return null;
     PsiJavaFile maybeRecord = (PsiJavaFile)PsiFileFactory.getInstance(element.getProject())
       .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, element.getText(), false, false);
-    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(maybeRecord, LanguageLevel.JDK_15_PREVIEW);
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(maybeRecord, LanguageLevel.JDK_16);
     PsiClass[] classes = maybeRecord.getClasses();
     if (classes.length == 1 && classes[0].isRecord()) {
       return classes[0];

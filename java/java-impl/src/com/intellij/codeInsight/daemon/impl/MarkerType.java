@@ -25,10 +25,7 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +115,7 @@ public class MarkerType {
 
     return GutterTooltipHelper.getTooltipText(
       Arrays.asList(pair.superMethod, pair.subClass),
-      element -> element instanceof PsiMethod ? getTooltipPrefix(method, (PsiMethod)element, "") : " via subclass ",
+      element -> element instanceof PsiMethod ? getTooltipPrefix(method, (PsiMethod)element, "") : " " + JavaBundle.message("tooltip.via.subclass") + " ",
       element -> element instanceof PsiMethod && isSameSignature(method, (PsiMethod)element),
       IdeActions.ACTION_GOTO_SUPER);
   }
@@ -128,9 +125,10 @@ public class MarkerType {
     StringBuilder sb = new StringBuilder(prefix);
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
-    sb.append(isSuperAbstract && !isAbstract ? "Implements method " : "Overrides method ");
-    if (isSameSignature(method, superMethod)) sb.append("in ");
-    return sb.toString();
+    String key = isSameSignature(method, superMethod)
+                 ? (isSuperAbstract && !isAbstract ? "tooltip.implements.method.in" : "tooltip.overrides.method.in")
+                 : (isSuperAbstract && !isAbstract ? "tooltip.implements.method" : "tooltip.overrides.method");
+    return sb.append(JavaBundle.message(key)).append(" ").toString();
   }
 
   private static boolean isSameSignature(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
@@ -146,14 +144,14 @@ public class MarkerType {
   private static String getFunctionalImplementationTooltip(@NotNull PsiClass psiClass) {
     PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> processor = getProcessor(5, true);
     FunctionalExpressionSearch.search(psiClass).forEach(new PsiElementProcessorAdapter<>(processor));
-    if (processor.isOverflow()) return getImplementationTooltip("Has several functional implementations");
+    if (processor.isOverflow()) return getImplementationTooltip("tooltip.has.several.functional.implementations");
     if (processor.getCollection().isEmpty()) return null;
-    return getImplementationTooltip(processor.getCollection(), "Is functionally implemented in");
+    return getImplementationTooltip(processor.getCollection(), JavaBundle.message("tooltip.is.functionally.implemented.in"));
   }
 
   @NotNull
-  private static String getImplementationTooltip(@NotNull String prefix, PsiElement @NotNull ... elements) {
-    return getImplementationTooltip(Arrays.asList(elements), prefix);
+  private static String getImplementationTooltip(@NotNull String prefixKey, PsiElement @NotNull ... elements) {
+    return getImplementationTooltip(Arrays.asList(elements), JavaBundle.message(prefixKey));
   }
 
   @NotNull
@@ -214,7 +212,7 @@ public class MarkerType {
   private static String getOverriddenMethodTooltip(@NotNull PsiMethod method) {
     final PsiClass aClass = method.getContainingClass();
     if (aClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      return getImplementationTooltip("Is implemented in several subclasses");
+      return getImplementationTooltip("tooltip.is.implemented.in.several.subclasses");
     }
 
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = getProcessor(5, false);
@@ -224,7 +222,7 @@ public class MarkerType {
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     if (processor.isOverflow()){
-      return getImplementationTooltip(isAbstract ? "Is implemented in several subclasses" : "Is overridden in several subclasses");
+      return getImplementationTooltip(isAbstract ? "tooltip.is.implemented.in.several.subclasses" : "tooltip.is.overridden.in.several.subclasses");
     }
 
     PsiMethod[] overridings = processor.toArray(PsiMethod.EMPTY_ARRAY);
@@ -235,7 +233,7 @@ public class MarkerType {
     Comparator<PsiMethod> comparator = PsiElementRenderingInfo.getComparator(new PsiMethodRenderingInfo(false));
     Arrays.sort(overridings, comparator);
 
-    return getImplementationTooltip(isAbstract ? "Is implemented in" : "Is overridden in", overridings);
+    return getImplementationTooltip(isAbstract ? "tooltip.is.implemented.in" : "tooltip.is.overridden.in", overridings);
   }
 
   private static void navigateToOverriddenMethod(MouseEvent e, @NotNull final PsiMethod method) {
@@ -252,10 +250,7 @@ public class MarkerType {
       GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method));
       OverridingMethodsSearch.search(method, scope,true).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
       if (isAbstract && collectProcessor.getCollection().size() < 2) {
-        final PsiClass aClass = ReadAction.compute(method::getContainingClass);
-        if (aClass != null) {
-          FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
-        }
+        FunctionalExpressionSearch.search(method).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
       }
     }, JavaAnalysisBundle.message("searching.for.overriding.methods"), true, method.getProject(), (JComponent)e.getComponent())) {
       return;
@@ -296,7 +291,7 @@ public class MarkerType {
     ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(processor));
 
     if (processor.isOverflow()) {
-      return getImplementationTooltip(aClass.isInterface() ? "Is implemented by several subclasses" : "Is overridden by several subclasses");
+      return getImplementationTooltip(aClass.isInterface() ? "tooltip.is.implemented.by.several.subclasses" : "tooltip.is.overridden.by.several.subclasses");
     }
 
     PsiClass[] subclasses = processor.toArray(PsiClass.EMPTY_ARRAY);
@@ -305,7 +300,7 @@ public class MarkerType {
     Comparator<PsiClass> comparator = PsiElementRenderingInfo.getComparator(PsiClassRenderingInfo.INSTANCE);
     Arrays.sort(subclasses, comparator);
 
-    return getImplementationTooltip(aClass.isInterface() ? "Is implemented by" : "Is subclassed by", subclasses);
+    return getImplementationTooltip(aClass.isInterface() ? "tooltip.is.implemented.by" : "tooltip.is.subclassed.by", subclasses);
   }
 
   // Used in Kotlin, please don't make private
@@ -352,8 +347,10 @@ public class MarkerType {
       super(project, title, createComparatorWrapper((Comparator)renderer.getComparator()));
     }
 
-    void collectFunctionalInheritors(@NotNull ProgressIndicator indicator, PsiClass psiClass) {
-      FunctionalExpressionSearch.search(psiClass).forEach(expr -> {
+    void collectFunctionalInheritors(@NotNull ProgressIndicator indicator, PsiMember member) {
+      Query<PsiFunctionalExpression> search = member instanceof PsiClass ? FunctionalExpressionSearch.search((PsiClass)member) 
+                                                                         : FunctionalExpressionSearch.search((PsiMethod)member);
+      search.forEach(expr -> {
         if (!updateComponent(expr)) {
           indicator.cancel();
         }
@@ -448,9 +445,7 @@ public class MarkerType {
             return super.process(psiMethod);
           }
         });
-      if (ReadAction.compute(() -> myMethod.hasModifierProperty(PsiModifier.ABSTRACT))) {
-        collectFunctionalInheritors(indicator, ReadAction.compute(myMethod::getContainingClass));
-      }
+      collectFunctionalInheritors(indicator, myMethod);
     }
   }
 }

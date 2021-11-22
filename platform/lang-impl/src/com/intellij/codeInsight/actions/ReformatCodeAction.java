@@ -86,7 +86,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
       return;
     }
-    else if (PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) != null || LangDataKeys.MODULE_CONTEXT.getData(dataContext) != null) {
+    else if (PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext) != null || LangDataKeys.MODULE_CONTEXT.getData(dataContext) != null) {
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
       ReformatFilesOptions selectedFlags = getLayoutProjectOptions(project, moduleContext);
       if (selectedFlags != null) {
@@ -305,7 +305,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       // skip. Both directories and single files are supported.
     }
     else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
-             PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
+             PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) {
         return false;
@@ -365,5 +365,3 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return true;
   }
 }
-
-

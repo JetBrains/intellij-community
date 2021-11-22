@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -21,10 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 
 abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
@@ -63,17 +59,17 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   protected abstract List<String> getFilterValues(@NotNull Filter filter);
 
   @NotNull
-  protected ActionGroup createRecentItemsActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup();
+  protected List<AnAction> createRecentItemsActionGroup() {
+    List<AnAction> group = new ArrayList<>();
     List<List<String>> recentlyFiltered = getRecentValuesFromSettings();
     if (!recentlyFiltered.isEmpty()) {
-      group.addSeparator(VcsLogBundle.message("vcs.log.filter.recent"));
+      group.add(Separator.create(VcsLogBundle.message("vcs.log.filter.recent")));
       for (List<String> recentGroup : recentlyFiltered) {
         if (!recentGroup.isEmpty()) {
           group.add(new PredefinedValueAction(recentGroup));
         }
       }
-      group.addSeparator();
+      group.add(Separator.getInstance());
     }
     return group;
   }

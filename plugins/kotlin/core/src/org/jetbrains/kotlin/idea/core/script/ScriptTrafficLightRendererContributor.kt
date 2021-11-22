@@ -5,18 +5,32 @@ package org.jetbrains.kotlin.idea.core.script
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
 
 class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
-    override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? =
-        if ((file as? KtFile)?.isScript() == true) {
-            ScriptTrafficLightRenderer(file.project, editor.document, file)
-        } else null
+    @RequiresBackgroundThread
+    override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? {
+        val ktFile = file.safeAs<KtFile>() ?: return null
+        val isScript = runReadAction { ktFile.isScript() /* RequiresBackgroundThread */}
+        return if (isScript) {
+            ScriptTrafficLightRenderer(ktFile.project, editor.document, ktFile)
+        } else {
+            null
+        }
+    }
 
     class ScriptTrafficLightRenderer(project: Project, document: Document, private val file: KtFile) :
         TrafficLightRenderer(project, document) {

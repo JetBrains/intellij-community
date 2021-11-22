@@ -29,7 +29,7 @@ import java.util.function.Function;
 public final class InspectionsResultUtil {
   @NonNls public static final String DESCRIPTIONS = ".descriptions";
   @NonNls public static final String XML_EXTENSION = ".xml";
-  static final Logger LOG = Logger.getInstance(InspectionsResultUtil.class);
+  private static final Logger LOG = Logger.getInstance(InspectionsResultUtil.class);
 
   @NonNls public static final String PROFILE = "profile";
   @NonNls public static final String INSPECTIONS_NODE = "inspections";
@@ -100,7 +100,7 @@ public final class InspectionsResultUtil {
     }
   }
 
-  private static boolean isToolEnabled(@NotNull InspectionProfile profile, String shortName) {
+  private static boolean isToolEnabled(@NotNull InspectionProfile profile, @NotNull String shortName) {
     if (profile instanceof InspectionProfileImpl) {
       ToolsImpl tools = ((InspectionProfileImpl)profile).getToolsOrNull(shortName, null);
       if (tools != null)  {
@@ -110,16 +110,12 @@ public final class InspectionsResultUtil {
     return profile.isToolEnabled(HighlightDisplayKey.find(shortName));
   }
 
-  public static @NotNull Path getInspectionResultPath(@NotNull Path outputDir, String name) {
-    return outputDir.resolve(name + XML_EXTENSION);
-  }
-
-  public static @NotNull Path getInspectionResultFile(@NotNull Path outputDirectory, @NotNull String name) {
-    return outputDirectory.resolve(name + XML_EXTENSION);
+  public static @NotNull Path getInspectionResultPath(@NotNull Path outputDir, @NotNull String shortName) {
+    return outputDir.resolve(shortName + XML_EXTENSION);
   }
 
   public static @NotNull BufferedWriter getWriter(@NotNull Path outputDirectory, @NotNull String name) throws IOException {
-    Path file = getInspectionResultFile(outputDirectory, name);
+    Path file = getInspectionResultPath(outputDirectory, name);
     Files.createDirectories(outputDirectory);
     return Files.newBufferedWriter(file);
   }
@@ -127,15 +123,14 @@ public final class InspectionsResultUtil {
   public static void writeInspectionResult(@NotNull Project project, @NotNull String shortName,
                                            @NotNull Collection<? extends InspectionToolWrapper<?, ?>> wrappers,
                                            @NotNull Path outputDirectory,
-                                           @NotNull Function<? super InspectionToolWrapper<?, ?>, ? extends InspectionToolResultExporter> f) throws IOException {
+                                           @NotNull Function<? super InspectionToolWrapper<?, ?>, ? extends InspectionToolResultExporter> presentationGetter) throws IOException {
     //dummy entry points tool
     if (wrappers.isEmpty()) return;
-    try (XmlWriterWrapper reportWriter = new XmlWriterWrapper(project, outputDirectory, shortName,
-                                                              GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+    try (XmlWriterWrapper reportWriter = new XmlWriterWrapper(project, outputDirectory, shortName, GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
          XmlWriterWrapper aggregateWriter = new XmlWriterWrapper(project, outputDirectory, shortName + AGGREGATE, ROOT)) {
       reportWriter.checkOpen();
       for (InspectionToolWrapper<?, ?> wrapper : wrappers) {
-        InspectionToolResultExporter presentation = f.apply(wrapper);
+        InspectionToolResultExporter presentation = presentationGetter.apply(wrapper);
         presentation.exportResults(reportWriter::writeElement, presentation::isExcluded, presentation::isExcluded);
         if (presentation instanceof AggregateResultsExporter) {
           ((AggregateResultsExporter)presentation).exportAggregateResults(aggregateWriter::writeElement);
@@ -188,13 +183,12 @@ public final class InspectionsResultUtil {
         return;
       }
 
-      try {
+      Writer writer = myFileWriter;
+      try (writer) {
         endWritingXml();
       }
       finally {
-        Writer fileWriter = myFileWriter;
         myFileWriter = null;
-        fileWriter.close();
       }
     }
 

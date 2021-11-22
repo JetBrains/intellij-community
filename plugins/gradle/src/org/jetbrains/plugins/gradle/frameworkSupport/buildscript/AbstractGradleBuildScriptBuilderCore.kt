@@ -5,7 +5,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.script
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import java.util.function.Consumer
 
 @Suppress("unused")
@@ -68,7 +68,8 @@ abstract class AbstractGradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuild
   override fun withPostfix(configure: ScriptTreeBuilder.() -> Unit) = applyAndMerge(postfixes, configure)
   override fun withPostfix(configure: Consumer<ScriptTreeBuilder>) = withPostfix(configure::accept)
 
-  override fun generate() = script(scriptBuilder) {
+  override fun generate() = scriptBuilder.generate(generateTree())
+  fun generateTree() = tree {
     join(imports).ln()
     callIfNotEmpty("buildscript") {
       join(buildScriptPrefixes).ln()

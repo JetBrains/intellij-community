@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.rt.junit;
+
+import com.intellij.rt.execution.junit.TestsRepeater;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,43 +24,24 @@ public interface IdeaTestRunner<T> {
   String getTestClassName(T child);
 
   final class Repeater {
-    public static int startRunnerWithArgs(IdeaTestRunner<?> testRunner,
-                                          String[] args,
+    public static int startRunnerWithArgs(final IdeaTestRunner<?> testRunner,
+                                          final String[] args,
                                           ArrayList<String> listeners,
-                                          String name,
-                                          int count,
+                                          final String name,
+                                          final int count,
                                           boolean sendTree) {
       testRunner.createListeners(listeners, count);
-      if (count == 1) {
-        return testRunner.startRunnerWithArgs(args, name, count, sendTree);
+      try {
+        return TestsRepeater.repeat(count, sendTree, new TestsRepeater.TestRun() {
+          @Override
+          public int execute(boolean sendTree) {
+            return testRunner.startRunnerWithArgs(args, name, count, sendTree);
+          }
+        });
       }
-      else {
-        boolean success = true;
-        if (count > 0) {
-          int i = 0;
-          while (i++ < count) {
-            final int result = testRunner.startRunnerWithArgs(args, name, count, sendTree);
-            if (result == -2) {
-              return result;
-            }
-            success &= result == 0;
-            sendTree = false;
-          }
-
-          return success ? 0 : -1;
-        }
-        else {
-          while (true) {
-            int result = testRunner.startRunnerWithArgs(args, name, count, sendTree);
-            if (result == -2) {
-              return -1;
-            }
-            success &= result == 0;
-            if (count == -2 && !success) {
-              return -1;
-            }
-          }
-        }
+      catch (Exception e) {
+        e.printStackTrace(System.err);
+        return -2;
       }
     }
   }

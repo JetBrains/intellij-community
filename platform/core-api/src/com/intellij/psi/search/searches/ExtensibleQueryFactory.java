@@ -30,7 +30,7 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
   }
 
   /**
-   * @deprecated Please specify extension point name explicitly
+   * @deprecated Please specify the extension point name explicitly
    */
   @Deprecated
   protected ExtensibleQueryFactory(@NonNls final String epNamespace) {

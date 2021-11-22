@@ -31,5 +31,4 @@ public class DataProviderSearcher extends QueryExecutorBase<PsiReference, Method
       queryParameters.getOptimizer().searchWord(providerName, queryParameters.getEffectiveSearchScope(), UsageSearchContext.IN_STRINGS, true, method);
     }
   }
-
 }

@@ -21,6 +21,8 @@ import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcs.log.runInEdt
 import git4idea.GitVcs
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.StashInfo
 import java.util.*
@@ -44,6 +46,9 @@ class GitStashTracker(private val project: Project) : Disposable {
       }
     })
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsListener {
+      scheduleRefresh()
+    })
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
       scheduleRefresh()
     })
     if (!ApplicationManager.getApplication().isUnitTestMode) {

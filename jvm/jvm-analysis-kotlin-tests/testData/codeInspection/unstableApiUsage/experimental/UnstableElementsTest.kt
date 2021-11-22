@@ -77,7 +77,7 @@ class UnstableElementsTest {
     // ---------------------------------
 
     @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable with @ApiStatus.Experimental">AnnotatedAnnotation</warning> class C1
-    @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable with @ApiStatus.Experimental">AnnotatedAnnotation</warning>(<warning descr="'nonAnnotatedAttributeInAnnotatedAnnotation' is declared in unstable @interface 'pkg.AnnotatedAnnotation' marked with @ApiStatus.Experimental">nonAnnotatedAttributeInAnnotatedAnnotation</warning> = "123") class C2
+    @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable with @ApiStatus.Experimental">AnnotatedAnnotation</warning>(<warning descr="'nonAnnotatedAttributeInAnnotatedAnnotation' is declared in unstable annotation 'pkg.AnnotatedAnnotation' marked with @ApiStatus.Experimental">nonAnnotatedAttributeInAnnotatedAnnotation</warning> = "123") class C2
     @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable with @ApiStatus.Experimental">AnnotatedAnnotation</warning>(<warning descr="'annotatedAttributeInAnnotatedAnnotation' is marked unstable with @ApiStatus.Experimental">annotatedAttributeInAnnotatedAnnotation</warning> = "123") class C3
     @NonAnnotatedAnnotation class C4 
     @NonAnnotatedAnnotation(nonAnnotatedAttributeInNonAnnotatedAnnotation = "123") class C5 

@@ -24,9 +24,11 @@ int
 interface
 long
 native
+non-sealed
 private
 protected
 public
+sealed
 short
 static
 strictfp

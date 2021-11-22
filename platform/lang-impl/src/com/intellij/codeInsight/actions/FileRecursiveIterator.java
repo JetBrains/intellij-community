@@ -7,8 +7,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSet;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -58,7 +59,7 @@ class FileRecursiveIterator {
   }
 
   boolean processAll(@NotNull Processor<? super PsiFile> processor) {
-    CompactVirtualFileSet visited = new CompactVirtualFileSet();
+    VirtualFileSet visited = VfsUtilCore.createCompactVirtualFileSet();
     for (VirtualFile root : myRoots) {
       if (!ProjectRootManager.getInstance(myProject).getFileIndex().iterateContentUnderDirectory(root, fileOrDir -> {
         if (fileOrDir.isDirectory() || !visited.add(fileOrDir)) {

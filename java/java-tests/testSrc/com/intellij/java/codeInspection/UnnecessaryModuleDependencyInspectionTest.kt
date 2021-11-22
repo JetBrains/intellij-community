@@ -177,13 +177,13 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
   private fun assertInspectionProducesZeroResults() {
     val presentation = getReportedProblems()
     Assert.assertFalse(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
-                       presentation.hasReportedProblems())
+                       presentation.hasReportedProblems().toBoolean())
   }
 
   private fun assertReportedProblems(expectedProblems: String) {
     val presentation = getReportedProblems()
     Assert.assertTrue(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
-                      presentation.hasReportedProblems())
+                      presentation.hasReportedProblems().toBoolean())
     Assert.assertEquals(expectedProblems,
                         presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
   }

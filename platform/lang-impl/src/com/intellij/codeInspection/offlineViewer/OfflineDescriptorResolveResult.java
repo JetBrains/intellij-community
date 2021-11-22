@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
@@ -212,7 +213,8 @@ public final class OfflineDescriptorResolveResult {
       int curIdx = 0;
       for (ProblemDescriptor descriptor : list) {
         final PsiNamedElement member = BatchModeDescriptorsUtil.getContainerElement(descriptor.getPsiElement(), localTool, context);
-        if (psiElement instanceof PsiFile || psiElement.equals(member)) {
+        final PsiElement element = psiElement instanceof LightElement ? psiElement.getNavigationElement() : psiElement;
+        if (psiElement instanceof PsiFile || element.equals(member)) {
           if (curIdx == idx) {
             return descriptor;
           }

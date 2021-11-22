@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -79,12 +80,16 @@ final class CommunityRepositoryModules {
       withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
       withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       withModule("intellij.maven.errorProne.compiler")
+
       withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
+
       withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
+
       withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
+
       withArtifact("maven-event-listener", "")
       withResource("maven36-server-impl/lib/maven3", "lib/maven3")
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
@@ -106,7 +111,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       withModule("intellij.gradle.toolingProxy")
-      withProjectLibrary("Gradle")
+      withProjectLibrary("Gradle", ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
     },
 /* Android Studio: exclude dependencyUpdater
     plugin("intellij.packageSearch"),
@@ -120,13 +125,6 @@ Android Studio: exclude intellij.gradle.dsl */
       withModule("intellij.gradle.jps")
     },
     plugin("intellij.gradle.java.maven"),
-/* Android Studio: exclude intellij.platform.testGuiFramework
-    plugin("intellij.platform.testGuiFramework") {
-      mainJarName = "testGuiFramework.jar"
-      withProjectLibrary("fest")
-      withProjectLibrary("fest-swing")
-    },
-Android Studio: exclude intellij.platform.testGuiFramework */
     plugin("intellij.junit") {
       mainJarName = "idea-junit.jar"
       withModule("intellij.junit.rt", "junit-rt.jar")
@@ -149,6 +147,8 @@ Android Studio: exclude intellij.platform.testGuiFramework */
     },
     plugin("intellij.java.coverage") {
       withModule("intellij.java.coverage.rt")
+      // explicitly pack JaCoCo as a separate JAR
+      withModuleLibrary("JaCoCo", "intellij.java.coverage", "jacoco.jar")
     },
     plugin("intellij.java.decompiler") {
       directoryName = "java-decompiler"
@@ -174,10 +174,7 @@ Android Studio: exclude intellij.platform.testGuiFramework */
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
 Android Studio: exclude Python */
 /* Android Studio: exclude smali
-    // required for android plugin
-    plugin("intellij.android.smali") {
-      withModule("intellij.android.smali")
-    },
+    plugin("intellij.android.smali"),
 Android Studio: exclude smali */
     plugin("intellij.completionMlRanking"),
     plugin("intellij.completionMlRankingModels") {
@@ -209,8 +206,10 @@ Android Studio: exclude intellij.statsCollector */
       withModule("intellij.grazie.properties")
       withModule("intellij.grazie.xml")
       withModule("intellij.grazie.yaml")
-    }
+    },
 Android Studio: exclude intellij.android.jpsBuildPlugin */
+    plugin("intellij.java.rareRefactorings"),
+    plugin("intellij.toml")
   ]
 
   static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = [
@@ -352,7 +351,7 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
 
       withModule("intellij.android.jps.model")
 
-      withProjectLibrary("kxml2") //todo[nik] move to module libraries
+      withProjectLibrary("kxml2")
 
       withProjectLibrary("asm-tools")
       withResourceFromModule("intellij.android.core", "lib/commons-compress-1.8.1.jar", "lib")
@@ -375,6 +374,19 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       withProjectLibrary("studio-grpc")
       withProjectLibrary("layoutinspector-proto")
       withProjectLibrary("emulator-proto")
+
+      //these project-level libraries are used from Android plugin only, so it's better to include them into its lib directory
+      withProjectLibrary("aapt-proto")
+      withProjectLibrary("aia-proto")
+      withProjectLibrary("baksmali")
+      withProjectLibrary("dexlib2")
+      withProjectLibrary("kotlin-gradle-plugin-model")
+      withProjectLibrary("libam-instrumentation-data-proto")
+      withProjectLibrary("studio-analytics-proto")
+      withProjectLibrary("HdrHistogram")
+      withProjectLibrary("zxing-core")
+      withProjectLibrary("sqlite")
+      withProjectLibrary("javax-inject")
 
       // Asset Studio images.
       withResourceFromModule("intellij.android.core", "resources/images/asset_studio", "resources/images/asset_studio")

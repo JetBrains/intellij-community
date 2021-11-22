@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CompoundPositionManager extends PositionManagerEx implements MultiRequestPositionManager{
+public class CompoundPositionManager implements PositionManagerWithConditionEvaluation, MultiRequestPositionManager {
   private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
 
   public static final CompoundPositionManager EMPTY = new CompoundPositionManager();
@@ -171,23 +171,31 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     }, Collections.emptyList(), position);
   }
 
-  @Nullable
-  @Override
-  public XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl descriptor) {
+  @NotNull
+  public List<XStackFrame> createStackFrames(@NotNull StackFrameDescriptorImpl descriptor) {
+    Location location = descriptor.getLocation();
     for (PositionManager positionManager : myPositionManagers) {
-      if (positionManager instanceof PositionManagerEx) {
-        try {
-          XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(descriptor);
-          if (xStackFrame != null) {
-            return xStackFrame;
+      try {
+        if (positionManager instanceof PositionManagerWithMultipleStackFrames && location != null) {
+          List<XStackFrame> stackFrames = ((PositionManagerWithMultipleStackFrames)positionManager).createStackFrames(
+            descriptor.getFrameProxy(), (DebugProcessImpl)descriptor.getDebugProcess(), location
+          );
+          if (stackFrames != null) {
+            return stackFrames;
           }
         }
-        catch (Throwable e) {
-          DebuggerUtilsImpl.logError(e);
+        else if (positionManager instanceof PositionManagerEx) {
+          XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(descriptor);
+          if (xStackFrame != null) {
+            return Collections.singletonList(xStackFrame);
+          }
         }
       }
+      catch (Throwable e) {
+        DebuggerUtilsImpl.logError(e);
+      }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Override
@@ -196,9 +204,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
                                       @NotNull Location location,
                                       @NotNull String expression) {
     for (PositionManager positionManager : myPositionManagers) {
-      if (positionManager instanceof PositionManagerEx) {
+      if (positionManager instanceof PositionManagerWithConditionEvaluation) {
         try {
-          ThreeState result = ((PositionManagerEx)positionManager).evaluateCondition(context, frame, location, expression);
+          PositionManagerWithConditionEvaluation manager = (PositionManagerWithConditionEvaluation)positionManager;
+          ThreeState result = manager.evaluateCondition(context, frame, location, expression);
           if (result != ThreeState.UNSURE) {
             return result;
           }

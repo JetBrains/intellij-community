@@ -116,7 +116,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
       ApplicationManager.getApplication().invokeLater {
         val project = e.project!!
         val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().also { it.isForcedToUseIdeaFileChooser = true }
-        FileChooserFactory.getInstance().createPathChooser(descriptor, project, e.dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT))
+        FileChooserFactory.getInstance().createPathChooser(descriptor, project, e.dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
           .choose(project.guessProjectDir()) {
             val recentDirectories = RunAnythingContextRecentDirectoryCache.getInstance(project).state.paths
             val path = it.single().path

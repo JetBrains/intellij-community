@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Internal
 
 package com.intellij.find.actions
 
 import com.intellij.find.FindSettings
+import com.intellij.find.actions.SearchOptionsService.SearchVariant
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.api.UsageOptions
@@ -33,9 +34,10 @@ private fun <O> findUsages(showDialog: Boolean,
                            target: SearchTarget,
                            handler: UsageHandler<O>,
                            selectedScope: SearchScope) {
+  val persistedOptions: PersistedSearchOptions = getSearchOptions(SearchVariant.FIND_USAGES, target)
   val allOptions = AllSearchOptions(
-    options = UsageOptions.createOptions(true, selectedScope),
-    textSearch = if (target.hasTextSearchStrings()) false else null,
+    options = UsageOptions.createOptions(persistedOptions.usages, selectedScope),
+    textSearch = if (target.hasTextSearchStrings()) persistedOptions.textSearch else null,
     customOptions = handler.getCustomOptions(UsageHandler.UsageAction.FIND_USAGES)
   )
   findUsages(showDialog, project, target, handler, allOptions)
@@ -53,7 +55,9 @@ private fun <O> findUsages(showDialog: Boolean,
       // cancelled
       return
     }
-    findUsages(project, target, handler, dialog.result())
+    val dialogResult: AllSearchOptions<O> = dialog.result()
+    setSearchOptions(SearchVariant.FIND_USAGES, target, dialogResult)
+    findUsages(project, target, handler, dialogResult)
   }
   else {
     findUsages(project, target, handler, allOptions)

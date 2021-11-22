@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -10,5 +11,5 @@ import org.jetbrains.annotations.ApiStatus;
 @FunctionalInterface
 @ApiStatus.Experimental
 public interface IOCancellationCallback {
-  void checkCancelled();
+  void checkCancelled() throws ProcessCanceledException;
 }

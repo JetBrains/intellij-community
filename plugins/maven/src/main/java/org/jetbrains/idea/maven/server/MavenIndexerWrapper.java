@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
-import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -144,8 +143,8 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     });
   }
 
-  public Set<MavenArtifactInfo> search(final int localId, final Query query, final int maxResult) throws MavenServerIndexerException {
-    return perform(() -> getOrCreateWrappee().search(getRemoteId(localId), query, maxResult, ourToken));
+  public Set<MavenArtifactInfo> search(final int localId, final String pattern, final int maxResult) throws MavenServerIndexerException {
+    return perform(() -> getOrCreateWrappee().search(getRemoteId(localId), pattern, maxResult, ourToken));
   }
 
   private int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {

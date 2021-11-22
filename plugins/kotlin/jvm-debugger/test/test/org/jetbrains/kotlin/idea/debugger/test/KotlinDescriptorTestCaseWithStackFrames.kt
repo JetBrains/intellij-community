@@ -103,7 +103,7 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
 
             out(frame)
             if (frame is CoroutinePreflightFrame) {
-                val key = frame.coroutineInfoData.key
+                val key = frame.coroutineInfoData.descriptor
                 out(0, "CoroutineInfo: ${key.id} ${key.name} ${key.state}")
             }
 
@@ -152,7 +152,7 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
     }
 
     override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        val regex = Regex(pattern = "$mavenDependencyRegex(-javaagent)?")
+        val regex = Regex(pattern = "$MAVEN_DEPENDENCY_REGEX(-javaagent)?")
         val result = regex.matchEntire(library) ?: return
         val (_, groupId: String, artifactId: String, version: String, agent: String) = result.groupValues
         if ("-javaagent" == agent)

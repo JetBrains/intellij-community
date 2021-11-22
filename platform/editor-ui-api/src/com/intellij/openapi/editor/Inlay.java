@@ -115,6 +115,17 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   void repaint();
 
   /**
+   * Returns properties specified at inlay creation.
+   *
+   * @see InlayModel#addInlineElement(int, InlayProperties, EditorCustomElementRenderer)
+   * @see InlayModel#addBlockElement(int, InlayProperties, EditorCustomElementRenderer)
+   * @see InlayModel#addAfterLineEndElement(int, InlayProperties, EditorCustomElementRenderer)
+   */
+  default @NotNull InlayProperties getProperties() {
+    return new InlayProperties();
+  }
+
+  /**
    * @see #getPlacement()
    */
   enum Placement { INLINE, ABOVE_LINE, BELOW_LINE, AFTER_LINE_END }

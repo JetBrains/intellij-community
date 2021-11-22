@@ -222,14 +222,13 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 val moveDestination: MoveDestination = targetSourceRootPath?.let {
                     AutocreatingSingleSourceRootMoveDestination(packageWrapper, rootDir.findFileByRelativePath(it)!!)
                 } ?: MultipleRootsMoveDestination(packageWrapper)
-                val targetDir = moveDestination.getTargetIfExists(mainFile)
-                val targetVirtualFile = if (targetSourceRootPath != null) {
+                val destDirIfAny = moveDestination.getTargetIfExists(mainFile)
+                val targetDir = if (targetSourceRootPath != null) {
                     rootDir.findFileByRelativePath(targetSourceRootPath)!!
                 } else {
-                    targetDir?.virtualFile
+                    destDirIfAny?.virtualFile
                 }
-
-                KotlinMoveTargetForDeferredFile(FqName(packageName), targetDir, targetVirtualFile) {
+                KotlinMoveTargetForDeferredFile(FqName(packageName), targetDir) {
                     createKotlinFile(guessNewFileName(elementsToMove)!!, moveDestination.getTargetDirectory(mainFile))
                 }
             } ?: config.getString("targetFile").let { filePath ->
@@ -278,7 +277,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                     val fileName = (delegate.newClassName ?: elementToMove.name!!) + ".kt"
                     val targetPackageFqName = (mainFile as KtFile).packageFqName
                     val targetDir = mainFile.containingDirectory!!
-                    KotlinMoveTargetForDeferredFile(targetPackageFqName, targetDir, null) {
+                    KotlinMoveTargetForDeferredFile(targetPackageFqName, targetDir.virtualFile) {
                         createKotlinFile(fileName, targetDir, targetPackageFqName.asString())
                     }
                 }

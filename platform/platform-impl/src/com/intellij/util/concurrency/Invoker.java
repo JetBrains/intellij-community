@@ -400,7 +400,7 @@ public abstract class Invoker implements Disposable {
    * This class is the {@code Invoker} in a single background thread.
    * This invoker does not need additional synchronization.
    *
-   * @deprecated use {@link Background#Background(Disposable)} instead
+   * @deprecated use {@link Invoker#forBackgroundThreadWithReadAction(Disposable)} instead
    */
   @Deprecated
   @ScheduledForRemoval(inVersion = "2021.1")
@@ -444,18 +444,6 @@ public abstract class Invoker implements Disposable {
     private final ScheduledExecutorService executor;
 
     /**
-     * Creates the invoker of user read actions on a background thread.
-     *
-     * @param parent a disposable parent object
-     * @deprecated use {@link #forBackgroundThreadWithReadAction} instead
-     */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public Background(@NotNull Disposable parent) {
-      this(parent, true);
-    }
-
-    /**
      * Creates the invoker of user read actions on background threads.
      *
      * @param parent     a disposable parent object
@@ -470,50 +458,7 @@ public abstract class Invoker implements Disposable {
       this(parent, ThreeState.YES, maxThreads);
     }
 
-    /**
-     * Creates the invoker of user tasks on a background thread.
-     *
-     * @param parent        a disposable parent object
-     * @param useReadAction {@code true} to run user tasks as read actions with write action priority,
-     *                      {@code false} to run user tasks without read locks
-     * @deprecated use {@link #forBackgroundThreadWithReadAction} or {@link #forBackgroundThreadWithoutReadAction} instead
-     */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public Background(@NotNull Disposable parent, boolean useReadAction) {
-      this(parent, ThreeState.fromBoolean(useReadAction));
-    }
-
-    /**
-     * Creates the invoker of user tasks on a background thread.
-     *
-     * @param parent        a disposable parent object
-     * @param useReadAction {@code YES} to run user tasks as read actions with write action priority,
-     *                      {@code NO} to run user tasks without read locks,
-     *                      {@code UNSURE} does not guarantee that read action is allowed
-     * @deprecated use {@link #forBackgroundThreadWithReadAction} or {@link #forBackgroundThreadWithoutReadAction} instead
-     */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction) {
-      this(parent, useReadAction, 1);
-    }
-
-    /**
-     * Creates the invoker of user tasks on background threads.
-     *
-     * @param parent        a disposable parent object
-     * @param useReadAction {@code YES} to run user tasks as read actions with write action priority,
-     *                      {@code NO} to run user tasks without read locks,
-     *                      {@code UNSURE} does not guarantee that read action is allowed
-     * @param maxThreads    the number of threads used for parallel calculation,
-     *                      where 1 guarantees sequential calculation,
-     *                      which allows not to use additional synchronization
-     * @deprecated use {@link #forBackgroundThreadWithReadAction} or {@link #forBackgroundThreadWithoutReadAction} instead
-     */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
+    private Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
       super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", parent, useReadAction);
       executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), maxThreads);
     }

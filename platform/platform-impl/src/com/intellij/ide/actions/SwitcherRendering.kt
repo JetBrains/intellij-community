@@ -1,16 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.editor.colors.EditorFontType.PLAIN
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable.ICON_FLAG_READ_STATUS
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
@@ -23,16 +20,14 @@ import com.intellij.openapi.wm.impl.ToolWindowEventSource
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.ui.*
-import com.intellij.ui.paint.EffectPainter.LINE_UNDERSCORE
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
-import javax.swing.Icon
+import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
@@ -42,6 +37,7 @@ private val mainTextComparator by lazy { Comparator.comparing(SwitcherListItem::
 
 
 internal interface SwitcherListItem {
+  val mnemonic: String? get() = null
   val mainText: String
   val statusText: String get() = ""
   val shortcutText: String? get() = null
@@ -85,6 +81,7 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
+    component.iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
     component.append(mainText)
   }
 }
@@ -92,7 +89,7 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
 
 internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : SwitcherListItem {
   private val actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.id)
-  var mnemonic: String? = null
+  override var mnemonic: String? = null
 
   override val mainText = window.stripeTitle
   override val statusText = message("recent.files.accessible.show.tool.window", mainText)
@@ -112,7 +109,8 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
-    component.icon = MnemonicIcon(window.icon, mnemonic, selected)
+    component.iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
+    component.icon = RenderingUtil.getIcon(window.icon ?: EmptyIcon.ICON_13, selected)
     component.append(mainText)
   }
 }
@@ -141,6 +139,7 @@ internal class SwitcherVirtualFile(
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
+    component.iconTextGap = JBUI.scale(4)
     component.icon = when (Registry.`is`("ide.project.view.change.icon.on.selection", true)) {
       true -> RenderingUtil.getIcon(icon, selected)
       else -> icon
@@ -160,10 +159,16 @@ internal class SwitcherVirtualFile(
 
 internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : ListCellRenderer<SwitcherListItem> {
   private val SEPARATOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
+  @Suppress("HardCodedStringLiteral") // to calculate preferred size
+  private val mnemonic = JLabel("W").apply {
+    preferredSize = preferredSize.apply { width += JBUI.CurrentTheme.ActionsList.mnemonicIconGap() }
+    font = JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(font)
+  }
   private val main = SimpleColoredComponent().apply { isOpaque = false }
   private val extra = SimpleColoredComponent().apply { isOpaque = false }
   private val panel = CellRendererPanel(BorderLayout()).apply {
-    add(BorderLayout.WEST, main)
+    add(BorderLayout.WEST, mnemonic)
+    add(BorderLayout.CENTER, main)
     add(BorderLayout.EAST, extra)
   }
 
@@ -178,9 +183,12 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
       else -> border
     }
     RenderingUtil.getForeground(list, selected).let {
+      mnemonic.foreground = if (selected) it else JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND
       main.foreground = it
       extra.foreground = it
     }
+    mnemonic.text = value.mnemonic ?: ""
+    mnemonic.isVisible = value.mnemonic != null
     value.prepareMainRenderer(main, selected)
     value.prepareExtraRenderer(extra, selected)
     applySpeedSearchHighlighting(switcher, main, false, selected)
@@ -207,37 +215,4 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     windows
   }
   else emptyList()
-}
-
-
-private class MnemonicIcon(val icon: Icon?, val mnemonic: String?, val selected: Boolean) : Icon {
-  private val size = JBUI.scale(16)
-  private val width = mnemonic?.let { JBUI.scale(10) } ?: 0
-
-  override fun getIconWidth() = size + width
-  override fun getIconHeight() = size
-  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    RenderingUtil.getIcon(icon, selected)?.let {
-      val dx = x + (size - it.iconWidth) / 2
-      val dy = y + (size - it.iconHeight) / 2
-      it.paintIcon(c, g, dx, dy)
-    }
-    if (g is Graphics2D && false == mnemonic?.isEmpty()) {
-      val font = PLAIN.globalFont.deriveFont(.8f * size)
-      g.font = font
-      g.paint = when (selected) {
-        true -> JBUI.CurrentTheme.List.foreground(true, true)
-        else -> JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND
-      }
-      UISettings.setupAntialiasing(g)
-      val metrics = g.fontMetrics
-      val w = metrics.stringWidth(mnemonic)
-      val dx = x + size - (w - width) / 2
-      val dy = y + size - metrics.descent
-      g.drawString(mnemonic, dx, dy)
-      if (SystemInfo.isWindows) {
-        LINE_UNDERSCORE.paint(g, dx, dy, w, metrics.descent, font)
-      }
-    }
-  }
 }

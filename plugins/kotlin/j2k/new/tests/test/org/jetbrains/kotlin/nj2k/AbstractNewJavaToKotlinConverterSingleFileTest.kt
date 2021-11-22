@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.LanguageLevelProjectExtension
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
@@ -56,5 +58,8 @@ abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKo
         File(javaPath.replace(".java", ".new.kt")).takeIf { it.exists() }
             ?: super.provideExpectedFile(javaPath)
 
-    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataPath, fileName()))
+    private fun getLanguageLevel() =
+        if (testDataDirectory.toString().contains("newJavaFeatures")) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_8
+
+    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataPath, fileName()), languageLevel = getLanguageLevel())
 }

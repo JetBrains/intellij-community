@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
@@ -108,6 +109,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     this.onlySuggestNullSafe = onlySuggestNullSafe;
   }
 
+  @IntentionFamilyName
+  public static @NotNull String getReplaceWithSwitchFixName(){
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
+  }
+
   private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
 
     IfCanBeSwitchFix() {}
@@ -115,7 +121,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
+      return getReplaceWithSwitchFixName();
     }
 
     @Override
@@ -411,7 +417,14 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     else if (element instanceof PsiBreakStatement) {
       final PsiIdentifier labelIdentifier = ((PsiBreakStatement)element).getLabelIdentifier();
       if (labelIdentifier == null) {
-        switchStatementText.append("break ").append(breakLabelString).append(';');
+        PsiElement child = element.getFirstChild();
+        switchStatementText.append(child.getText()).append(" ").append(breakLabelString);
+        child = child.getNextSibling();
+        while (child != null) {
+          switchStatementText.append(child.getText());
+          child = child.getNextSibling();
+        }
+        return;
       }
       else {
         switchStatementText.append(text);

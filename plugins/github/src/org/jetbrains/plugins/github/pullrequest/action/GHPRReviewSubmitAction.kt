@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.codereview.InlineIconButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -28,7 +29,6 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JButtonAction
 import com.intellij.util.ui.UIUtil
-import com.intellij.collaboration.ui.codereview.InlineIconButton
 import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -73,8 +73,6 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       e.presentation.text = getText(comments)
       e.presentation.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, pendingReview)
     }
-
-    updateButtonFromPresentation(e)
   }
 
   private fun getPrefix(place: String) = if (place == ActionPlaces.DIFF_TOOLBAR) GithubBundle.message("pull.request.review.submit")

@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Optional
 
 from cryptography.hazmat.backends.interfaces import HMACBackend
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
@@ -21,10 +20,10 @@ class KBKDFHMAC(KeyDerivationFunction):
         rlen: int,
         llen: int,
         location: CounterLocation,
-        label: Optional[bytes],
-        context: Optional[bytes],
-        fixed: Optional[bytes],
-        backend: Optional[HMACBackend] = ...,
+        label: bytes | None,
+        context: bytes | None,
+        fixed: bytes | None,
+        backend: HMACBackend | None = ...,
     ): ...
     def derive(self, key_material: bytes) -> bytes: ...
     def verify(self, key_material: bytes, expected_key: bytes) -> None: ...

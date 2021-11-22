@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
@@ -49,7 +50,7 @@ class LoopToCallChainInspection : AbstractKotlinInspection() {
             }
         }
 
-    class Fix(val lazy: Boolean, val text: String = "") : LocalQuickFix {
+    class Fix(val lazy: Boolean, @Nls val text: String = "") : LocalQuickFix {
         override fun getFamilyName(): String {
             return if (lazy) {
                 KotlinBundle.message("loop.to.call.fix.family.name2")

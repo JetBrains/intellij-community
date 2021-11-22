@@ -25,10 +25,6 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     var recentNewPullRequestHead by property<RepoCoordinatesHolder?>(null) { it == null }
   }
 
-  @Deprecated("Deprecated when moving to single-tab pull requests")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  fun getHiddenUrls(): Set<String> = emptySet()
-
   var selectedRepoAndAccount: Pair<GHGitRepositoryMapping, GithubAccount>?
     get() {
       val (url, accountId) = state.selectedUrlAndAccountId ?: return null

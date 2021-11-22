@@ -3,14 +3,12 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.util.io.Decompressor
 import org.eclipse.aether.repository.RemoteRepository
 import org.jdom.input.SAXBuilder
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import java.io.File
-import java.security.MessageDigest
 
 internal fun findLibrary(
         repoLocation: RepoLocation,
@@ -101,10 +99,22 @@ private fun substitutePathVariables(path: String): String {
         return projectDir.resolve(path.drop(RepoLocation.PROJECT_DIR.toString().length)).absolutePath
     }
     else if (path.startsWith("${RepoLocation.MAVEN_REPOSITORY}/")) {
-        val m2 = System.getenv("M2_HOME")?.let { File(it) }
-                 ?: File(System.getProperty("user.home", null) ?: error("Unable to get the user home directory"), ".m2")
-        val repoDir = m2.resolve("repository")
-        return repoDir.absolutePath + path.drop(RepoLocation.MAVEN_REPOSITORY.toString().length)
+        val homeDir = System.getProperty("user.home", null)?.let { File(it) }
+
+        fun File.extractLocalRepository() = inputStream()
+            .use { stream -> SAXBuilder().build(stream) }?.rootElement?.children
+            ?.firstOrNull { it.name == "localRepository" }?.value?.let { File(it) }
+
+        // https://maven.apache.org/settings.html
+        val customM2Repo = homeDir?.resolve(".m2")?.resolve("settings.xml")?.takeIf { it.exists() }?.extractLocalRepository()
+            ?: System.getenv("M2_HOME")?.let { File(it) }?.resolve("conf")?.resolve("settings.xml")?.takeIf { it.exists() }
+                ?.extractLocalRepository()
+
+        val m2Repo = customM2Repo
+            ?: homeDir?.resolve(".m2")?.resolve("repository")
+            ?: error("Unable to find maven local repo directory")
+
+        return m2Repo.absolutePath + path.drop(RepoLocation.MAVEN_REPOSITORY.toString().length)
     }
 
     return path

@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
@@ -36,7 +35,7 @@ public class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory
       @Nullable
       @Override
       public VirtualFile getSchemaFile() {
-        return VfsUtil.findFileByURL(getClass().getResource(THEME_SCHEMA));
+        return JsonSchemaProviderFactory.getResourceFile(getClass(), THEME_SCHEMA);
       }
 
       @NotNull

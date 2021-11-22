@@ -66,7 +66,7 @@ object DetectionContext {
       if (language in ListDetector.supported) {
         //Check if threshold by list detector is not met
         val listResult = details[LanguageDetector.Type.List]?.detected ?: return
-        val maxList = listResult.maxBy { it.probability } ?: return
+        val maxList = listResult.maxByOrNull { it.probability } ?: return
         if (maxList.probability < LIST_CONFIDENCE_THRESHOLD || maxList.lang != result.preferred) return
       }
 
@@ -75,7 +75,7 @@ object DetectionContext {
         val ngramResult = details[LanguageDetector.Type.Ngram]?.detected
         //Check ngram only it was used. Otherwise, we believe to list detector
         if (ngramResult != null) {
-          val maxNgram = ngramResult.maxBy { it.probability } ?: return
+          val maxNgram = ngramResult.maxByOrNull { it.probability } ?: return
           if (maxNgram.probability < NGRAM_CONFIDENCE_THRESHOLD || maxNgram.lang != result.preferred) return
         }
       }

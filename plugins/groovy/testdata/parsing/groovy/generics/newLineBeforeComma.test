@@ -20,6 +20,8 @@ Groovy script
       <empty list>
     Implements clause
       <empty list>
+    Permits clause
+      <empty list>
     PsiElement(new line)('\n')
     PsiErrorElement:'>' or '{' expected, got ','
       <empty list>

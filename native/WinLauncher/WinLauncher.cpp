@@ -529,9 +529,11 @@ bool LoadVMOptions() {
     lines.push_back(std::string("-Djb.vmOptionsFile=") + vmOptionsFile);
   }
   else {
-    wchar_t *title = NULL;
-    if (LoadStringW(hInst, IDS_ERROR_LAUNCHING_APP, (LPWSTR)(&title), 0) != 0) {
-      MessageBoxW(NULL, L"Cannot find VM options file", title, MB_OK);
+    wchar_t *titleBuf = NULL;
+    int len = LoadStringW(hInst, IDS_ERROR_LAUNCHING_APP, (LPWSTR)(&titleBuf), 0);
+    if (len != 0) {
+      std::wstring title(titleBuf, len);
+      MessageBoxW(NULL, L"Cannot find VM options file", title.c_str(), MB_OK);
     }
   }
 
@@ -910,14 +912,38 @@ int CheckSingleInstance()
     // Creating mapping for exitCode transmission
     HANDLE hResultFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, resultFileName.c_str());
 
-    SendCommandLineToFirstInstance(response_id);
-    CloseHandle(hFileMapping);
-    CloseHandle(hEvent);
-
-    // Lock wait for the response
     std::string responseEventName = std::string("IntelliJLauncherEvent.") + std::to_string(static_cast<long long>(response_id));
     HANDLE hResponseEvent = CreateEventA(NULL, FALSE, FALSE, responseEventName.c_str());
-    WaitForSingleObject(hResponseEvent, INFINITE);
+
+    SendCommandLineToFirstInstance(response_id);
+    CloseHandle(hFileMapping);
+
+    // It is theoretically possible for this code to spin forever in a loop.
+    //
+    // There's a race condition when the process we talked to in SendCommandLineToFirstInstance was terminated, another
+    // one started, took over the file mapping, but have no idea about our command (because we only send it once).
+    //
+    // For now, this problem is unresolved, though it should very rarely happen in practice.
+    const DWORD waitTimeoutMs = 1000;
+    while (WaitForSingleObject(hResponseEvent, waitTimeoutMs) == WAIT_TIMEOUT)
+    {
+      // Check if the file mapping still exists outside the current process:
+      hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
+      if (!hFileMapping)
+      {
+        // Means the mapping was abandoned by the initial process we observed. So, we should take over.
+        hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
+          mappingName.c_str());
+        CloseHandle(hResultFileMapping);
+        CloseHandle(hResponseEvent);
+        return -1;
+      }
+
+      // Ok, the mapping still exists, so the process is still alive. Proceed to spin.
+      CloseHandle(hFileMapping);
+    }
+
+    CloseHandle(hEvent);
     CloseHandle(hResponseEvent);
 
     // Read the exitCode

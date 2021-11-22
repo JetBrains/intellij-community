@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import com.intellij.openapi.vcs.impl.VcsEP;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -33,7 +32,6 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   implements Configurable.NoScroll, Configurable.WithEpDependencies {
   @NotNull private final Project myProject;
   private VcsDirectoryConfigurationPanel myMappings;
-  private VcsGeneralConfigurationConfigurable myGeneralPanel;
 
   public VcsManagerConfigurable(@NotNull Project project) {
     myProject = project;
@@ -80,9 +78,6 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     if (myMappings != null) {
       myMappings.disposeUIResources();
     }
-    if (myGeneralPanel != null) {
-      myGeneralPanel.disposeUIResources();
-    }
     myMappings = null;
   }
 
@@ -105,20 +100,14 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   protected Configurable[] buildConfigurables() {
-    myGeneralPanel = new VcsGeneralConfigurationConfigurable(myProject, this);
-
     List<Configurable> result = new ArrayList<>();
 
-    result.add(myGeneralPanel);
-    result.add(new VcsBackgroundOperationsConfigurable(myProject));
-    boolean ignoreSettingsAvailable = Registry.is("vcs.ignorefile.generation", true);
-    if (!myProject.isDefault() && ignoreSettingsAvailable) {
+    result.add(new VcsGeneralSettingsConfigurable(myProject));
+    if (Registry.is("vcs.ignorefile.generation", true)) {
       result.add(new IgnoredSettingsPanel(myProject));
     }
     result.add(new IssueNavigationConfigurationPanel(myProject));
-    if (!myProject.isDefault()) {
-      result.add(new ChangelistConflictConfigurable(myProject));
-    }
+    result.add(new ChangelistConflictConfigurable(myProject));
     result.add(new CommitDialogConfigurable(myProject));
     result.add(new ShelfProjectConfigurable(myProject));
     for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
@@ -135,11 +124,6 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     }
 
     return result.toArray(new Configurable[0]);
-  }
-
-  @Nullable
-  public VcsDirectoryConfigurationPanel getMappings() {
-    return myMappings;
   }
 
   @NotNull

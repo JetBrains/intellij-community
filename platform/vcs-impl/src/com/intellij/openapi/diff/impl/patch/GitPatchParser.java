@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.vcsUtil.VcsFileUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,15 +154,17 @@ public final class GitPatchParser {
     @Nullable private final String myBeforeName;
     @Nullable private final String myAfterName;
 
-    @Nullable private final String myBeforeIndex;
-    @Nullable private final String myAfterIndex;
+    @Nullable private final @Nls String myBeforeIndex;
+    @Nullable private final @Nls String myAfterIndex;
 
     private final int myNewFileMode;
 
     @NotNull private final FileStatus myFileStatus;
 
     private PatchInfo(@NotNull Couple<String> beforeAfterName,
-                      @Nullable Couple<String> indexes, @NotNull FileStatus status, int newFileMode) {
+                      @Nullable Couple<@Nls String> indexes,
+                      @NotNull FileStatus status,
+                      int newFileMode) {
       myBeforeName = beforeAfterName.first;
       myAfterName = beforeAfterName.second;
       myBeforeIndex = Pair.getFirst(indexes);

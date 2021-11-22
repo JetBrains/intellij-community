@@ -85,7 +85,7 @@ abstract class AbstractMultiModuleIdeResolveTest : AbstractMultiModuleTest() {
 
     protected open fun checkFile(file: KtFile, expectedFile: File) {
         val resolutionFacade = file.getResolutionFacade()
-        val (bindingContext, moduleDescriptor) = resolutionFacade.analyzeWithAllCompilerChecks(listOf(file))
+        val (bindingContext, moduleDescriptor) = resolutionFacade.analyzeWithAllCompilerChecks(file)
 
         val directives = KotlinTestUtils.parseDirectives(file.text)
         val diagnosticsFilter = parseDiagnosticFilterDirective(directives, allowUnderscoreUsage = false)

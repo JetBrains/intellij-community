@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
@@ -191,10 +192,21 @@ public interface TypeConstraint {
   }
 
   /**
+   * @return true if this type always represents an enum
+   */
+  default boolean isEnum() {
+    return false;
+  }
+
+  default @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
+    return null;
+  }
+
+  /**
    * @param type {@link DfType} to extract {@link TypeConstraint} from
    * @return an extracted type constraint
    */
-  static @NotNull TypeConstraint fromDfType(DfType type) {
+  static @NotNull TypeConstraint fromDfType(@NotNull DfType type) {
     return type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() :
            type == DfType.BOTTOM ? TypeConstraints.BOTTOM :
            TypeConstraints.TOP;
@@ -615,6 +627,16 @@ public interface TypeConstraint {
     @Override
     public boolean isArray() {
       return instanceOfTypes().anyMatch(Exact::isArray);
+    }
+
+    @Override
+    public boolean isEnum() {
+      return myInstanceOf.size() == 1 && myInstanceOf.iterator().next().isEnum();
+    }
+
+    @Override
+    public @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
+      return myInstanceOf.size() == 1 ? myInstanceOf.iterator().next().getEnumConstant(ordinal) : null;
     }
 
     @Override

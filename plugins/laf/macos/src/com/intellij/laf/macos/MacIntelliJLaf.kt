@@ -17,6 +17,11 @@ class MacIntelliJLaf : IntelliJLaf() {
   override fun loadDefaults(defaults: UIDefaults) {
     super.loadDefaults(defaults)
     defaults["ClassLoader"] = javaClass.classLoader
+    for ((key,value) in baseDefaults) {
+      if (key is String && key.endsWith(".selectionBackground")) {
+        defaults[key] = value
+      }
+    }
   }
 
   override fun getPrefix(): String = "/com/intellij/ide/ui/laf/intellijlaf"

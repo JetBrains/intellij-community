@@ -19,7 +19,7 @@ var JpsProject.kotlinCompilerSettings
 
 var JpsProject.kotlinCommonCompilerArguments
     get() = kotlinCompilerSettingsContainer.commonCompilerArguments
-    internal set(value) {
+    /*internal */set(value) {
         getOrCreateSettings().commonCompilerArguments = value
     }
 
@@ -37,7 +37,7 @@ var JpsProject.k2JsCompilerArguments
 
 var JpsProject.k2JvmCompilerArguments
     get() = kotlinCompilerSettingsContainer.k2JvmCompilerArguments
-    internal set(value) {
+    /*internal */set(value) {
         getOrCreateSettings().k2JvmCompilerArguments = value
     }
 

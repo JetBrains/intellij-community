@@ -29,6 +29,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   private final HighlightDisplayLevel myLevel;
   protected final int myLineNumber;
   protected final RefEntity myElement;
+  private @Nullable String myMessage = null;
 
   public ProblemDescriptionNode(RefEntity element,
                                 @NotNull CommonProblemDescriptor descriptor,
@@ -76,17 +77,21 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     }
   }
 
+  public boolean needCalculateTooltip() {
+    return myMessage == null;
+  }
+
   @Nullable
   public String getToolTipText() {
     if (!isValid()) return null;
+    if (myMessage != null) return myMessage;
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return null;
+
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-    String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, false);
-    if (XmlStringUtil.isWrappedInHtml(message)) {
-      return message;
-    }
-    return XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    String message = ProblemDescriptorUtil.renderDescriptor(descriptor, element, ProblemDescriptorUtil.NONE).getTooltip();
+    myMessage = XmlStringUtil.isWrappedInHtml(message) ? message : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    return myMessage;
   }
 
   @Override

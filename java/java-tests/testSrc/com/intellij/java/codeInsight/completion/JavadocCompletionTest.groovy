@@ -47,7 +47,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testNamesInClass() {
     configureByFile("ClassTagName.java")
-    assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "param", "see", "serial", "since", "version")
+    assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "see", "serial", "since", "version")
   }
 
   void testNamesInField() {
@@ -57,7 +57,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testNamesInMethod0() {
     configureByFile("MethodTagName0.java")
-    assertStringItems("deprecated", "exception", "param", "return", "see", "serialData", "since", "throws")
+    assertStringItems("deprecated", "exception", "return", "see", "serialData", "since", "throws")
   }
 
   void testNamesInMethod1() {
@@ -135,7 +135,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testException0() {
     configureByFile("Exception0.java")
-    assertStringItems("deprecated", "exception", "param", "see", "serialData", "since", "throws")
+    assertStringItems("deprecated", "exception", "see", "serialData", "since", "throws")
   }
 
   void testException1() {
@@ -751,6 +751,37 @@ interface Bar<T> extends Foo<T> {
     myFixture.type('\b\n')
     myFixture.checkResult "/** {@link #foo}<caret> */ interface Foo { void foo(int a); }}"
     assert !TemplateManagerImpl.getTemplateState(myFixture.editor)
+  }
+
+  void "test tags at top level"() {
+    myFixture.configureByText 'a.java', "interface Foo { /**\n * <caret> */void foo(int a); }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['@deprecated', '@exception', '@param', '@param a', '@see', '@serialData', '@since', '@throws']
+    def element = myFixture.lookupElements[2]
+    assert element.lookupString == "@param"
+    selectItem(element)
+    myFixture.checkResult("interface Foo { /**\n" +
+                          " * @param  */void foo(int a); }")
+  }
+
+  void "test tags at top level inline"() {
+    myFixture.configureByText 'a.java', "interface Foo { /** Hello <caret> */void foo(int a); }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@value}']
+    def element = myFixture.lookupElements[4]
+    assert element.lookupString == "{@link}"
+    selectItem(element)
+    myFixture.checkResult("interface Foo { /** Hello {@link <caret>} */void foo(int a); }")
+  }
+
+  void "test tags at top level inline in brace"() {
+    myFixture.configureByText 'a.java', "interface Foo { /** Hello {<caret>} */void foo(int a); }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['@code', '@docRoot', '@inheritDoc', '@link', '@linkplain', '@literal', '@value']
+    def element = myFixture.lookupElements[3]
+    assert element.lookupString == "@link"
+    selectItem(element)
+    myFixture.checkResult("interface Foo { /** Hello {@link <caret>} */void foo(int a); }")
   }
 
 }

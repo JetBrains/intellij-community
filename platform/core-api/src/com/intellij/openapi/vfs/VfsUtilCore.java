@@ -820,4 +820,13 @@ public class VfsUtilCore {
     }
     return file;
   }
+
+  @NotNull
+  public static VirtualFileSet createCompactVirtualFileSet() {
+    return new CompactVirtualFileSet();
+  }
+  @NotNull
+  public static VirtualFileSet createCompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
+    return new CompactVirtualFileSet(files);
+  }
 }

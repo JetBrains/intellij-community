@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
-import com.intellij.application.options.CodeCompletionOptions
+import com.intellij.application.options.CodeCompletionConfigurable
 import com.intellij.completion.ml.MLCompletionBundle
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
@@ -117,7 +117,7 @@ object RankingSupport {
       })
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.configure")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
+          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionConfigurable::class.java)
         }
       })
     }

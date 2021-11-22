@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.refactoring.resolveToExpectedDescriptorIfPossible
+import org.jetbrains.kotlin.idea.search.codeUsageScope
 import org.jetbrains.kotlin.idea.search.excludeKotlinSources
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
@@ -72,7 +73,7 @@ fun forEachKotlinOverride(
 }
 
 fun PsiMethod.forEachOverridingMethod(
-    scope: SearchScope = runReadAction { useScope },
+    scope: SearchScope = runReadAction { this.codeUsageScope() },
     processor: (PsiMethod) -> Boolean
 ): Boolean {
     if (this !is KtFakeLightMethod) {

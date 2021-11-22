@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -26,7 +26,7 @@ public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   @NotNull
@@ -90,7 +90,6 @@ public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_LOCAL_THIS, "inline.local.this.only.choice");
 
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INHERITANCE_TO_DELEGATION_DELEGATE_OTHER, "inheritance.to.delegation.delegate.other");
-    addBoolIfDiffers(result, settings, defaultSettings, s -> s.INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS, "introduce.constant.move.to.another.class");
 
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_CLASS_SEARCH_IN_COMMENTS, "inline.class.search.in.comments");
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_CLASS_SEARCH_IN_NON_JAVA, "inline.class.search.in.non.java");

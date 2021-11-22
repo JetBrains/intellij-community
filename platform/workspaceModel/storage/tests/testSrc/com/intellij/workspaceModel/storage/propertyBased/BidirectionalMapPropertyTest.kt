@@ -2,12 +2,12 @@
 package com.intellij.workspaceModel.storage.propertyBased
 
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
-import com.intellij.util.containers.BidirectionalMap as OriginalBidirectionalMap
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
 import org.junit.Assert
 import org.junit.Test
+import com.intellij.util.containers.BidirectionalMap as OriginalBidirectionalMap
 
 class BidirectionalMapPropertyTest {
 

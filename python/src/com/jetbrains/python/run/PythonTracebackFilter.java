@@ -42,6 +42,12 @@ public class PythonTracebackFilter implements Filter {
       final VirtualFile vFile = findFileByName(linkInTrace.getFileName());
 
       if (vFile != null) {
+        if (!vFile.isDirectory()) {
+          var extension = vFile.getExtension();
+          if (extension != null && !extension.equals("py")) {
+            return null;
+          }
+        }
         final OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(myProject, vFile, lineNumber - 1);
         final int textStartOffset = entireLength - line.length();
         final int startPos = linkInTrace.getStartPos();

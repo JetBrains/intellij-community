@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImp
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
@@ -19,7 +20,7 @@ import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import java.util.concurrent.atomic.AtomicInteger
 
-class KotlinConfigurationCheckerStartupActivity : StartupActivity {
+class KotlinConfigurationCheckerStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
         NotificationsConfiguration.getNotificationsConfiguration()
             .register(
@@ -32,7 +33,9 @@ class KotlinConfigurationCheckerStartupActivity : StartupActivity {
             notifyOutdatedBundledCompilerIfNecessary(project)
         })
 
-        KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
+        DumbService.getInstance(project).runWhenSmart {
+            KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
+        }
     }
 }
 
@@ -45,6 +48,7 @@ class KotlinConfigurationCheckerService(val project: Project) {
                 val ktModules = getModulesWithKotlinFiles(project)
                 indicator.isIndeterminate = false
                 for ((idx, module) in ktModules.withIndex()) {
+                    indicator.checkCanceled()
                     if (project.isDisposed) return
                     indicator.fraction = 1.0 * idx / ktModules.size
                     runReadAction {

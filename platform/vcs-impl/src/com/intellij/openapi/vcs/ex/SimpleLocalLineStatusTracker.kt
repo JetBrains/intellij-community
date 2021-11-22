@@ -31,7 +31,7 @@ class SimpleLocalLineStatusTracker(project: Project,
 
   @RequiresEdt
   override fun setBaseRevision(vcsContent: CharSequence) {
-    setBaseRevision(vcsContent, null)
+    setBaseRevisionContent(vcsContent, null)
   }
 
   @Suppress("UNCHECKED_CAST")

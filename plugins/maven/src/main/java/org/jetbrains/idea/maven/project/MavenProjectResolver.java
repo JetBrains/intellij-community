@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,12 +17,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -78,12 +79,7 @@ public class MavenProjectResolver {
       catch (Throwable t) {
         MavenConfigParseException cause = findParseException(t);
         if (cause != null) {
-          for (MavenProject mavenProject : mavenProjects) {
-            if (VfsUtilCore.pathEqualsTo(mavenProject.getDirectoryFile(), cause.getDirectory())) {
-              showNotificationInvalidConfig(project, mavenProject, cause.getMessage());
-              mavenProject.setConfigFileError(cause.getMessage());
-            }
-          }
+          MavenLog.LOG.warn("Cannot parse maven config", cause);
         }
         else {
           throw t;
@@ -161,7 +157,8 @@ public class MavenProjectResolver {
     }
   }
 
-  public void resolvePlugins(@NotNull MavenProject mavenProject,
+  public void resolvePlugins(@NotNull Project project,
+                             @NotNull MavenProject mavenProject,
                              @NotNull NativeMavenProjectHolder nativeMavenProject,
                              @NotNull MavenEmbeddersManager embeddersManager,
                              @NotNull MavenConsole console,
@@ -175,9 +172,11 @@ public class MavenProjectResolver {
     try {
       process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
 
+      Map<MavenPlugin, File> unresolvedPlugins = new HashMap<>();
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
 
+        File file = MavenUtil.getRepositoryParentFile(project, each.getMavenId());
         Collection<MavenArtifact> artifacts = embedder.resolvePlugin(each, mavenProject.getRemoteRepositories(), nativeMavenProject, false);
 
         for (MavenArtifact artifact : artifacts) {
@@ -188,8 +187,16 @@ public class MavenProjectResolver {
           }
         }
         if (artifacts.isEmpty() && myProject != null) {
+          unresolvedPlugins.put(each, file);
+        }
+      }
+      if (!unresolvedPlugins.isEmpty()) {
+        Collection<File> files = unresolvedPlugins.values();
+        CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
+        for (MavenPlugin mavenPlugin : unresolvedPlugins.keySet()) {
           MavenProjectsManager.getInstance(myProject)
-            .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).showError(each.getMavenId().getKey());
+            .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
+            .showBuildIssue(mavenPlugin.getMavenId().getKey(), fix);
         }
       }
 

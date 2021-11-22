@@ -360,7 +360,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof AbstractFileType &&
+    return obj == this ||
+           obj instanceof AbstractFileType &&
            getName().equals(((AbstractFileType)obj).getName()) &&
            mySyntaxTable.equals(((AbstractFileType)obj).mySyntaxTable);
   }

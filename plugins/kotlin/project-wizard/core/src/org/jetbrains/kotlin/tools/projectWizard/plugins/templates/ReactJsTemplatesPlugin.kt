@@ -21,7 +21,7 @@ class ReactJsTemplatesPlugin(context: Context) : TemplatePlugin(context) {
 
         val addTemplate by pipelineTask(GenerationPhase.PREPARE) {
             withAction {
-                TemplatesPlugin.addTemplate.execute(ReactJsClientTemplate())
+                TemplatesPlugin.addTemplate.execute(ReactJsClientTemplate)
             }
         }
     }

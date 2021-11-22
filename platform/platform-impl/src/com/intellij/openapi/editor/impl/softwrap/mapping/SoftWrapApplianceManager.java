@@ -30,6 +30,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+import static com.intellij.openapi.editor.ex.EditorEx.VERTICAL_SCROLLBAR_LEFT;
+
 /**
  * The general idea of soft wraps processing is to build a cache to use for quick document dimensions mapping
  * ({@code 'logical position -> visual position'}, {@code 'offset -> logical position'} etc) and update it incrementally
@@ -97,7 +99,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     myEditor = editor;
     myPainter = painter;
     myDataMapper = dataMapper;
-    myWidthProvider = new DefaultVisibleAreaWidthProvider(editor);
+    myWidthProvider = new DefaultVisibleAreaWidthProvider();
     myEditor.getScrollingModel().addVisibleAreaListener(e -> {
       updateAvailableArea();
       updateLastTopLeftCornerOffset();
@@ -221,7 +223,7 @@ public class SoftWrapApplianceManager implements Dumpable {
                            myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1).generate();
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Soft wrap recalculation done: " + event.toString() + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
+        LOG.debug("Soft wrap recalculation done: " + event + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
       }
       if (event.getActualEndOffset() > endOffsetUpperEstimate) {
         LOG.error("Unexpected error at soft wrap recalculation", new Attachment("softWrapModel.txt", myEditor.getSoftWrapModel().toString()));
@@ -319,12 +321,6 @@ public class SoftWrapApplianceManager implements Dumpable {
       return recalculateSoftWraps(); // Recalculate existing dirty regions if any.
     }
 
-    final JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
-    int verticalScrollBarWidth = scrollBar.getWidth();
-    if (verticalScrollBarWidth <= 0) {
-      verticalScrollBarWidth = scrollBar.getPreferredSize().width;
-    }
-
     // We experienced the following situation:
     //   1. Editor is configured to show scroll bars only when necessary;
     //   2. Editor with active soft wraps is changed in order for the vertical scroll bar to appear;
@@ -337,7 +333,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     // I.e. we have an endless EDT activity that stops only when editor is re-sized in a way to avoid vertical scroll bar.
     // That's why we don't recalculate soft wraps when visual area width is changed to the vertical scroll bar width value assuming
     // that such a situation is triggered by the scroll bar (dis)appearance.
-    if (currentVisibleAreaWidth - myVisibleAreaWidth == verticalScrollBarWidth) {
+    if (currentVisibleAreaWidth - myVisibleAreaWidth == getVerticalScrollBarWidth()) {
       myVisibleAreaWidth = currentVisibleAreaWidth;
       return recalculateSoftWraps();
     }
@@ -479,6 +475,15 @@ public class SoftWrapApplianceManager implements Dumpable {
     myAvailableWidth = width;
   }
 
+  private int getVerticalScrollBarWidth() {
+    JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
+    int width = scrollBar.getWidth();
+    if (width <= 0) {
+      width = scrollBar.getPreferredSize().width;
+    }
+    return width;
+  }
+
   /**
    * This interface is introduced mostly for encapsulating GUI-specific values retrieval and make it possible to write
    * tests for soft wraps processing.
@@ -488,17 +493,15 @@ public class SoftWrapApplianceManager implements Dumpable {
     int getVisibleAreaWidth();
   }
 
-  private static class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
-
-    private final EditorImpl myEditor;
-
-    DefaultVisibleAreaWidthProvider(EditorImpl editor) {
-      myEditor = editor;
-    }
+  private class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
 
     @Override
     public int getVisibleAreaWidth() {
       Insets insets = myEditor.getContentComponent().getInsets();
+      if (myEditor.getVerticalScrollbarOrientation() == VERTICAL_SCROLLBAR_LEFT && insets.left == 0) {
+        // we assume left scroll bar is always shown to avoid recalculating soft wraps twice (before it's shown and after that)
+        insets.left = getVerticalScrollBarWidth();
+      }
       int width = Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - insets.left - insets.right);
       if (myEditor.isInDistractionFreeMode()) {
         int rightMargin = myEditor.getSettings().getRightMargin(myEditor.getProject());

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.ConfigureKotlinNotification
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
@@ -85,7 +86,7 @@ fun checkHideNonConfiguredNotifications(project: Project) {
         }
 
         val hideNotification =
-            if (!ApplicationManager.getApplication().isUnitTestMode) {
+            if (!isUnitTestMode()) {
                 try {
                     val moduleSourceRootGroups = notification.notificationState.notConfiguredModules
                         .mapNotNull { ModuleManager.getInstance(project).findModuleByName(it) }

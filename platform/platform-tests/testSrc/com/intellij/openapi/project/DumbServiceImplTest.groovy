@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
@@ -14,6 +14,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.FileBasedIndex
@@ -27,22 +28,18 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+
 /**
  * @author peter
  */
 class DumbServiceImplTest extends BasePlatformTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    def key = "idea.force.dumb.queue.tasks"
+    String key = "idea.force.dumb.queue.tasks"
     String prev = System.setProperty(key, "true")
     disposeOnTearDown {
-      if (prev != null) {
-        System.setProperty(key, prev)
-      } else {
-        System.clearProperty(key)
-      }
+      SystemProperties.setProperty(key, prev)
     }
   }
 

@@ -107,12 +107,12 @@ class ServiceViewActionProvider {
 
   @Nullable
   static ServiceView getSelectedView(@NotNull AnActionEvent e) {
-    return getSelectedView(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    return getSelectedView(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
   @Nullable
   static ServiceView getSelectedView(@NotNull DataProvider provider) {
-    return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
+    return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
   }
 
   @Nullable

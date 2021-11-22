@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -252,7 +252,8 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createRenameFileFix(@NotNull String newName);
 
-  public abstract @NotNull LocalQuickFix createRenameFix();
+  @Nullable
+  public abstract IntentionAction createRenameFix(@NotNull PsiElement element, @Nullable Object highlightInfo);
 
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
@@ -320,6 +321,11 @@ public abstract class QuickFixFactory {
   }
 
   @NotNull
+  public abstract IntentionAction createReplaceWithTypePatternFix(@NotNull PsiReferenceExpression exprToReplace,
+                                                                  @NotNull PsiClass resolvedExprClass,
+                                                                  @NotNull String patternVarName);
+
+  @NotNull
   public abstract IntentionAction createStaticImportMethodFix(@NotNull PsiMethodCallExpression call);
 
   @NotNull
@@ -355,14 +361,6 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createInitializeFinalFieldInConstructorFix(@NotNull PsiField field);
 
-  /**
-   * @deprecated use {@link #createDeleteFix(PsiElement)} on {@link PsiReferenceParameterList} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public abstract IntentionAction createRemoveTypeArgumentsFix(@NotNull PsiElement variable);
-
   @NotNull
   public abstract IntentionAction createChangeClassSignatureFromUsageFix(@NotNull PsiClass owner,
                                                                          @NotNull PsiReferenceParameterList parameterList);
@@ -389,7 +387,9 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
 
-  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
+  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter,
+                                                       @NotNull Object highlightInfo,
+                                                       boolean excludingHierarchy);
 
   @NotNull
   public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName);
@@ -401,7 +401,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field);
 
   @NotNull
-  public abstract IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement);
+  public abstract IntentionAction createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix);
 
   @NotNull
   public abstract IntentionAction createEnableOptimizeImportsOnTheFlyFix();
@@ -536,4 +536,9 @@ public abstract class QuickFixFactory {
   public abstract @NotNull IntentionAction createInsertReturnFix(@NotNull PsiExpression expression);
 
   public abstract @NotNull IntentionAction createIterateFix(@NotNull PsiExpression expression);
+
+  public abstract @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
+
+  @Nullable
+  public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo);
 }

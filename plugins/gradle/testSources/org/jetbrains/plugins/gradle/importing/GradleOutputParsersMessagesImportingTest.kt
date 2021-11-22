@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.importing.ImportSpec
@@ -139,13 +139,13 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                              " finished")
 
     // check unresolved dependency w/o repositories
-    buildScript.addDependency("testCompile 'junit:junit:4.12'")
+    buildScript.addTestImplementationDependency("junit:junit:4.12")
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
-                             "  Could not resolve junit:junit:4.12")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:4.12",
-                               "Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
+                             "  Could not resolve junit:junit:4.12 for project:test")
+    assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 for project:test",
+                               "project:test: Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
                                when {
                                  isNewDependencyResolutionApplicable -> "Required by:\n" +
                                                                         "    project :\n"
@@ -164,15 +164,15 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
     // check unresolved dependency for offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = true
-    buildScript.addDependency("testCompile 'junit:junit:99.99'")
+    buildScript.addTestImplementationDependency("junit:junit:99.99")
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
-                             "  Could not resolve junit:junit:99.99")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
+                             "  Could not resolve junit:junit:99.99 for project:test")
+    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project:test",
                                when {
-                                 isNewDependencyResolutionApplicable -> "No cached version of junit:junit:99.99 available for offline mode.\n"
-                                 else -> "Could not resolve junit:junit:99.99.\n"
+                                 isNewDependencyResolutionApplicable -> "project:test: No cached version of junit:junit:99.99 available for offline mode.\n"
+                                 else -> "project:test: Could not resolve junit:junit:99.99.\n"
                                } +
                                "\n" +
                                "Possible solution:\n" +
@@ -185,9 +185,9 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
-                             "  Could not resolve junit:junit:99.99")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
-                               "Could not resolve junit:junit:99.99.\n" +
+                             "  Could not resolve junit:junit:99.99 for project")
+    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project",
+                               "project: Could not resolve junit:junit:99.99.\n" +
                                "\n" +
                                "Possible solution:\n" +
                                " - Disable offline mode and reload the project\n" +
@@ -199,9 +199,9 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
-                             "  Could not resolve junit:junit:99.99")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
-                               "Could not find junit:junit:99.99.\n" +
+                             "  Could not resolve junit:junit:99.99 for project:test")
+    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project:test",
+                               "project:test: Could not find junit:junit:99.99.\n" +
                                "Searched in the following locations:\n" +
                                "  $itemLinePrefix https://repo.labs.intellij.net/repo1/junit/junit/99.99/junit-99.99.pom\n" +
                                "  $itemLinePrefix https://repo.labs.intellij.net/repo1/junit/junit/99.99/junit-99.99.jar\n" +
@@ -302,15 +302,25 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test startup build script errors with column info`() {
-    importProject("apply plugin: 'java'\n" +
-                  "dependencies { \n" +
-                  "  testCompile group: 'junit', name: 'junit', version: '4.12\n" +
-                  "}")
+    val builder = createBuildScriptBuilder()
+    importProject(
+      builder
+        .withJavaPlugin()
+        .addTestImplementationDependency(builder.code("group: 'junit', name: 'junit', version: '4.12"))
+        .generate())
 
-    assertSyncViewTreeEquals("-\n" +
-                             " -failed\n" +
-                             "  -build.gradle\n" +
-                             "   expecting ''', found '\\n'")
+    if (isGradleOlderThan("7.0")) {
+      assertSyncViewTreeEquals("-\n" +
+                               " -failed\n" +
+                               "  -build.gradle\n" +
+                               "   expecting ''', found '\\n'")
+    }
+    else {
+      assertSyncViewTreeEquals("-\n" +
+                               " -failed\n" +
+                               "  -build.gradle\n" +
+                               "   Unexpected input: '{'")
+    }
   }
 
   @Test

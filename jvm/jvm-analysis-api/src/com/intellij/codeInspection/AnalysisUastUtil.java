@@ -119,7 +119,7 @@ public final class AnalysisUastUtil {
     return false;
   }
 
-  public static PsiType getContainingMethodOrLambdaReturnType(UCallExpression expression) {
+  public static PsiType getContainingMethodOrLambdaReturnType(UExpression expression) {
     UElement parent = expression.getUastParent();
     while (parent != null) {
       if (parent instanceof UMethod) {

@@ -38,11 +38,6 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
     }
 
     @Override
-    public String tree2string(int indent, @NotNull String lineSeparator) {
-      return null;
-    }
-
-    @Override
     protected boolean isDataValid() {
       return true;
     }

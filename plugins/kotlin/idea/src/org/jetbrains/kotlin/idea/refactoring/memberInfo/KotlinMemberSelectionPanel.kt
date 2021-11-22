@@ -6,13 +6,14 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SeparatorFactory
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import java.awt.BorderLayout
 
 class KotlinMemberSelectionPanel(
     @NlsContexts.DialogTitle title: String,
     memberInfo: List<KotlinMemberInfo>,
-    abstractColumnHeader: String?
+    @Nls abstractColumnHeader: String? = null
 ) : AbstractMemberSelectionPanel<KtNamedDeclaration, KotlinMemberInfo>() {
     private val table = createMemberSelectionTable(memberInfo, abstractColumnHeader)
 
@@ -26,7 +27,7 @@ class KotlinMemberSelectionPanel(
 
     private fun createMemberSelectionTable(
         memberInfo: List<KotlinMemberInfo>,
-        abstractColumnHeader: String?
+        @Nls abstractColumnHeader: String?
     ): KotlinMemberSelectionTable {
         return KotlinMemberSelectionTable(memberInfo, null, abstractColumnHeader)
     }

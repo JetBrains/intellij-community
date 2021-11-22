@@ -24,7 +24,7 @@ public abstract class PsiReferenceService {
    * @param element PSI element to which the references will be bound
    * @param hints optional hints which are passed to {@link PsiReferenceProvider#acceptsHints(PsiElement, PsiReferenceService.Hints)} and
    * {@link PsiReferenceProvider#acceptsTarget(PsiElement)} before the {@link com.intellij.patterns.ElementPattern} is matched, for performing
-   * fail-fast checks in case the pattern takes long to match.
+   * fail-fast checks in case the pattern takes a long time to match.
    * @return the references
    */
   @NotNull

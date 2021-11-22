@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
+import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +40,12 @@ public final class ColorSettingsUtil {
     if (isInspectionColorsPage(provider)) {
       addInspectionSeverityAttributes(result);
     }
+    return result;
+  }
+
+  public static List<ColorDescriptor> getAllColorDescriptors(@NotNull ColorAndFontDescriptorsProvider provider) {
+    List<ColorDescriptor> result = new ArrayList<>();
+    Collections.addAll(result, provider.getColorDescriptors());
     return result;
   }
 

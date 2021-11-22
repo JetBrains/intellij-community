@@ -1,4 +1,0 @@
-record R(<spot>
-  int i,
-  String s</spot>
-) {}

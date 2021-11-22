@@ -213,7 +213,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   /**
-   * @deprecated use {@link JavaModuleData#getLanguageLevel())} instead
+   * @deprecated use {@link JavaModuleData#getLanguageLevel} instead
    */
   @Nullable
   @Deprecated
@@ -223,7 +223,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   /**
-   * @deprecated use {@link JavaModuleData#setLanguageLevel(LanguageLevel))} instead
+   * @deprecated use {@link JavaModuleData#setLanguageLevel} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
@@ -233,7 +233,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   /**
-   * @deprecated use {@link JavaModuleData#getTargetBytecodeVersion())} instead
+   * @deprecated use {@link JavaModuleData#getTargetBytecodeVersion} instead
    */
   @Nullable
   @Deprecated
@@ -243,7 +243,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   /**
-   * @deprecated use {@link JavaModuleData#setTargetBytecodeVersion(String))} instead
+   * @deprecated use {@link JavaModuleData#setTargetBytecodeVersion} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
@@ -253,7 +253,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   /**
-   * @deprecated use {@link ModuleSdkData#getSdkName)} instead
+   * @deprecated use {@link ModuleSdkData#getSdkName} instead
    */
   @Nullable
   @Deprecated
@@ -276,21 +276,21 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   //<editor-fold desc="Backward compatibility preserving methods">
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   public void internalSetSourceCompatibility(@Nullable String sourceCompatibility) {
     this.sourceCompatibility = sourceCompatibility;
   }
 
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   public void internalSetTargetCompatibility(@Nullable String targetCompatibility) {
     this.targetCompatibility = targetCompatibility;
   }
 
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   public void internalSetSdkName(@Nullable String sdkName) {
     this.sdkName = sdkName;
   }
@@ -311,7 +311,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   public boolean isSetSdkName() {
     return isSetSdkName;
   }

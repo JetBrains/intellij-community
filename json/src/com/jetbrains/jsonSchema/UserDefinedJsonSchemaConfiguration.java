@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -43,7 +44,8 @@ public class UserDefinedJsonSchemaConfiguration {
     return o1.path.compareToIgnoreCase(o2.path);
   };
 
-  public @Nls String name;
+  private @Nls String name;
+  private @Nullable @Nls String generatedName;
   public String relativePathToSchema;
   public JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
   public boolean applicationDefined;
@@ -71,6 +73,14 @@ public class UserDefinedJsonSchemaConfiguration {
     this.schemaVersion = schemaVersion;
     this.applicationDefined = applicationDefined;
     setPatterns(patterns);
+  }
+
+  public void setGeneratedName(@NotNull @Nls String generatedName) {
+    this.generatedName = generatedName;
+  }
+
+  public @Nls String getGeneratedName() {
+    return this.generatedName;
   }
 
   public @Nls String getName() {
@@ -133,7 +143,7 @@ public class UserDefinedJsonSchemaConfiguration {
           result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(Item.neutralizePath(patternText.getPath())));
           break;
         case Pattern:
-          String pathText = patternText.getPath().replace(File.separatorChar, '/').replace('\\', '/');
+          String pathText = FileUtil.toSystemIndependentName(patternText.getPath());
           final Pattern pattern = pathText.isEmpty()
                                   ? PatternUtil.NOTHING
                                   : pathText.indexOf('/') >= 0

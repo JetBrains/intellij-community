@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {
     companion object {
         //language=RegExp
-        val mavenDependencyRegex = """maven\(([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+)\)"""
+        const val MAVEN_DEPENDENCY_REGEX = """maven\(([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+)\)"""
     }
 
     private val dp: DebugProcessImpl
@@ -183,11 +183,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val filters = createSmartStepIntoFilters()
         if (chooseFromList == 0) {
             filters.forEach {
-                dp.managerThread.schedule(dp.createStepIntoCommand(this, ignoreFilters, it))
+                doStepInto(ignoreFilters, it)
             }
         } else {
             try {
-                dp.managerThread.schedule(dp.createStepIntoCommand(this, ignoreFilters, filters[chooseFromList - 1]))
+                doStepInto(ignoreFilters, filters[chooseFromList - 1])
             } catch (e: IndexOutOfBoundsException) {
                 val elementText = runReadAction { debuggerContext.sourcePosition.elementAt.getElementTextWithContext() }
                 throw AssertionError("Couldn't find smart step into command at: \n$elementText", e)
@@ -229,7 +229,8 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val debugProcess = debuggerContext.debugProcess ?: error("Debug process is absent")
         val nodeManager = debugProcess.xdebugProcess!!.nodeManager
         val descriptor = nodeManager.getStackFrameDescriptor(null, frameProxy)
-        val stackFrame = debugProcess.positionManager.createStackFrame(descriptor) ?: error("Can't create stack frame for $descriptor")
+        val stackFrame = debugProcess.positionManager.createStackFrames(descriptor).firstOrNull() ?:
+            error("Can't create stack frame for $descriptor")
 
         ApplicationManager.getApplication().executeOnPooledThread {
             stackFrame.callback()
@@ -248,7 +249,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        val regex = Regex(mavenDependencyRegex)
+        val regex = Regex(MAVEN_DEPENDENCY_REGEX)
         val result = regex.matchEntire(library) ?: return
         val (_, groupId: String, artifactId: String, version: String) = result.groupValues
         addMavenDependency(compilerFacility, groupId, artifactId, version)

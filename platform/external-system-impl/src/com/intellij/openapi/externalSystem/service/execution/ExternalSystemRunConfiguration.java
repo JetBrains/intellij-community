@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.service.execution;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
-import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -26,8 +25,10 @@ import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationFragmentedEditor;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -37,20 +38,22 @@ import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,12 +61,8 @@ import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.Map;
 
-public class ExternalSystemRunConfiguration
-  extends LocatableConfigurationBase
-  implements SearchScopeProvidingRunProfile,
-             CommonProgramRunConfigurationParameters {
+public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
 
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
@@ -107,19 +106,40 @@ public class ExternalSystemRunConfiguration
   }
 
   @Override
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   public ExternalSystemRunConfiguration clone() {
+    ConfigurationFactory configurationFactory = getFactory();
+    if (configurationFactory == null) {
+      return null;
+    }
+
     final Element element = new Element("toClone");
     try {
       writeExternal(element);
-      RunConfiguration configuration = getFactory().createTemplateConfiguration(getProject());
+      RunConfiguration clone = configurationFactory.createTemplateConfiguration(getProject());
+      ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)clone;
       configuration.setName(getName());
       configuration.readExternal(element);
-      return (ExternalSystemRunConfiguration)configuration;
+      configuration.initializeSettings();
+      return configuration;
     }
     catch (InvalidDataException | WriteExternalException e) {
       LOG.error(e);
       return null;
     }
+  }
+
+  private void initializeSettings() {
+    if (StringUtil.isEmptyOrSpaces(mySettings.getExternalProjectPath())) {
+      ObjectUtils.consumeIfNotNull(getRootProjectPath(), mySettings::setExternalProjectPath);
+    }
+  }
+
+  private @Nullable String getRootProjectPath() {
+    ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
+    AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(getProject(), externalSystemId);
+    ExternalProjectPojo externalProject = ContainerUtil.getFirstItem(localSettings.getAvailableProjects().keySet());
+    return ObjectUtils.doIfNotNull(externalProject, it -> FileUtil.toCanonicalPath(it.getPath()));
   }
 
   @Override
@@ -213,81 +233,11 @@ public class ExternalSystemRunConfiguration
       if (file != null) {
         Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
         if (module != null) {
-          scope = GlobalSearchScopes.executionScope(Collections.singleton(module));
+          scope = ExecutionSearchScopes.executionScope(Collections.singleton(module));
         }
       }
     }
     return scope;
-  }
-
-  public @NotNull ProjectSystemId getExternalSystemId() {
-    return mySettings.getExternalSystemId();
-  }
-
-  public void setExternalProjectPath(@Nullable String path) {
-    mySettings.setExternalProjectPath(path);
-  }
-
-  public @Nullable String getExternalProjectPath() {
-    return mySettings.getExternalProjectPath();
-  }
-
-  @ApiStatus.Experimental
-  public void setTasksAndArguments(@NotNull String tasksAndArguments) {
-    mySettings.setTasksAndArguments(tasksAndArguments);
-  }
-
-  @ApiStatus.Experimental
-  public @NotNull String getTasksAndArguments() {
-    return mySettings.getTasksAndArguments();
-  }
-
-  @Override
-  public void setProgramParameters(@Nullable String value) {
-    mySettings.setScriptParameters(value);
-  }
-
-  @Override
-  public @Nullable String getProgramParameters() {
-    return mySettings.getScriptParameters();
-  }
-
-  @Override
-  public void setWorkingDirectory(@Nullable String value) {
-    mySettings.setExternalProjectPath(value);
-  }
-
-  @Override
-  public @Nullable String getWorkingDirectory() {
-    return mySettings.getExternalProjectPath();
-  }
-
-  @Override
-  public void setEnvs(@NotNull Map<String, String> envs) {
-    mySettings.setEnv(envs);
-  }
-
-  @Override
-  public @NotNull Map<String, String> getEnvs() {
-    return mySettings.getEnv();
-  }
-
-  @Override
-  public void setPassParentEnvs(boolean passParentEnvs) {
-    mySettings.setPassParentEnvs(passParentEnvs);
-  }
-
-  @Override
-  public boolean isPassParentEnvs() {
-    return mySettings.isPassParentEnvs();
-  }
-
-  public @Nullable String getVmOptions() {
-    return mySettings.getVmOptions();
-  }
-
-  public void setVmOptions(@Nullable String vmOptions) {
-    mySettings.setVmOptions(vmOptions);
   }
 
   static void foldGreetingOrFarewell(@Nullable ExecutionConsole consoleView, String text, boolean isGreeting) {

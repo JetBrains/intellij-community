@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -17,6 +17,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ui.JBUI;
@@ -232,7 +233,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
         @Override
         public void itemStateChanged(ItemEvent e) {
           if (e.getStateChange() == ItemEvent.SELECTED) {
-            myCbVarType.setEnabled(Comparing.equal(myTypeSelector.getSelectedType(), myExpression.getType()));
+            myCbVarType.setEnabled(Comparing.equal(myTypeSelector.getSelectedType(), RefactoringUtil.getTypeByExpressionWithExpectedType(myExpression)));
           }
         }
       });

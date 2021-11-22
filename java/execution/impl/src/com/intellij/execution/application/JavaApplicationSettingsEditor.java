@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;

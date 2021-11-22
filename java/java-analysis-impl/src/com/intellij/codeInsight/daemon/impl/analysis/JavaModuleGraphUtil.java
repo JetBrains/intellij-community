@@ -21,6 +21,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -158,9 +159,20 @@ public final class JavaModuleGraphUtil {
   private static @NotNull List<Set<PsiJavaModule>> findCycles(Project project) {
     Set<PsiJavaModule> projectModules = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      List<PsiJavaModule> descriptors = ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getSourceRoots(true),
+      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      List<PsiJavaModule> descriptors = ContainerUtil.mapNotNull(moduleRootManager.getSourceRoots(true),
         root -> findDescriptorByFile(root, project));
-      if (descriptors.size() > 1) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
+      if (descriptors.size() > 2) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
+
+      if (descriptors.size() == 2) {
+        if (descriptors.stream()
+              .map(d -> PsiUtilCore.getVirtualFile(d))
+              .filter(Objects::nonNull)
+              .map(moduleRootManager.getFileIndex()::isInTestSourceContent).count() < 2) {
+          return Collections.emptyList();
+        }
+        projectModules.addAll(descriptors);
+      }
       if (descriptors.size() == 1) projectModules.add(descriptors.get(0));
     }
 

@@ -287,7 +287,13 @@ internal fun writeFile(cachedFile: Path?,
     val content = dataWriter.toBufferExposingByteArray(lineSeparator)
     if (isEqualContent(file, lineSeparator, content, prependXmlProlog)) {
       val contentString = content.toByteArray().toString(Charsets.UTF_8)
-      LOG.warn("Content equals, but it must be handled not on this level: file ${file.name}, content:\n$contentString")
+      val message = "Content equals, but it must be handled not on this level: file ${file.name}, content:\n$contentString"
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        LOG.debug(message)
+      }
+      else {
+        LOG.warn(message)
+      }
     }
     else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
       DEBUG_LOG = "${file.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(file)}"

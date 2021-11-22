@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
@@ -130,7 +130,11 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope {
   @Override
   @NonNls
   public String toString() {
-    return "Modules with dependents:" + StringUtil.join(myRootModules, Module::getName, ",");
+    return "Modules with dependents: (roots: [" +
+           StringUtil.join(myRootModules, Module::getName, ", ") +
+           "], including dependents: [" +
+           StringUtil.join(myModules, Module::getName, ", ") +
+           "])";
   }
 
   @Override

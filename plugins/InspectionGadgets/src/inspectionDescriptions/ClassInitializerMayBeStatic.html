@@ -6,26 +6,24 @@ Reports instance initializers which may be made <code>static</code>.
   Static initializers are executed once the class is resolved,
   while instance initializers are executed on each instantiation of the class.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class A {
      public static String CONSTANT;
      {
         CONSTANT = "Hello";
      }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class A {
      public static String CONSTANT;
      static {
         CONSTANT = "Hello"; //now initialized only once per class
      }
   }
-</pre>
+</code></pre>
 
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

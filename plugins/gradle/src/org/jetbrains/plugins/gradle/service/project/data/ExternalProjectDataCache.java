@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.data;
 
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -14,7 +17,6 @@ import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,20 +36,6 @@ public class ExternalProjectDataCache {
 
   public ExternalProjectDataCache(@NotNull Project project) {
     myProject = project;
-  }
-
-  /**
-   * Kept for compatibility with Kotlin
-   * @deprecated since 2019.1
-   */
-  @Deprecated
-  @Nullable
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ExternalProject getRootExternalProject(@NotNull ProjectSystemId systemId, @NotNull File projectRootDir) {
-    if (GradleConstants.SYSTEM_ID != systemId) {
-      throw new IllegalStateException("Attempt to use Gradle-specific cache with illegal system id [" + systemId.getReadableName() + "]");
-    }
-    return getRootExternalProject(ExternalSystemApiUtil.toCanonicalPath(projectRootDir.getPath()));
   }
 
   @Nullable

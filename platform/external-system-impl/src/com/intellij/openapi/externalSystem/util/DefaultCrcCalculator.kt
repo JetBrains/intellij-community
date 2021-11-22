@@ -1,5 +1,4 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.lang.ParserDefinition
@@ -15,6 +14,6 @@ internal object DefaultCrcCalculator : AbstractCrcCalculator() {
 
   override fun isIgnoredToken(tokenType: IElementType, tokenText: CharSequence, parserDefinition: ParserDefinition): Boolean {
     val ignoredTokens = TokenSet.orSet(parserDefinition.commentTokens, parserDefinition.whitespaceTokens)
-    return ignoredTokens.contains(tokenType);
+    return ignoredTokens.contains(tokenType)
   }
 }

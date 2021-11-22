@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from werkzeug.wrappers import BaseRequest as Request, BaseResponse as Response
 
@@ -32,9 +32,9 @@ class DebuggedApplication:
         evalex: bool = ...,
         request_key: str = ...,
         console_path: str = ...,
-        console_init_func: Optional[Any] = ...,
+        console_init_func: Any | None = ...,
         show_hidden_frames: bool = ...,
-        lodgeit_url: Optional[Any] = ...,
+        lodgeit_url: Any | None = ...,
         pin_security: bool = ...,
         pin_logging: bool = ...,
     ): ...

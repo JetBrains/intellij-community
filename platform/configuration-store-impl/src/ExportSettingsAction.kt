@@ -113,7 +113,7 @@ fun exportSettings(exportableItems: Set<ExportableItem>,
                    storageManager: StateStorageManagerImpl = getAppStorageManager()) {
   val filter = HashSet<String>()
   Compressor.Zip(out)
-    .nioFilter { entryName, _ -> filter.add(entryName) }
+    .filter { entryName, _ -> filter.add(entryName) }
     .use { zip ->
       for (item in exportableItems) {
         if (item.fileSpec.isDirectory) {

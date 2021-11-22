@@ -25,6 +25,7 @@ import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.FutureResult;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +153,7 @@ public final class CommandLineProcessor {
     result = processApplicationStarters(args, currentDirectory);
     if (result != null) return result;
 
-    result = processJetBrainsProtocol(args);
+    result = processCustomHandlers(args);
     if (result != null) return result;
 
     return processOpenFile(args, currentDirectory);
@@ -189,14 +190,10 @@ public final class CommandLineProcessor {
   }
 
   @Nullable
-  private static CommandLineProcessorResult processJetBrainsProtocol(@NotNull List<String> args) {
-    String command = args.get(0);
-    if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
-      ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      return new CommandLineProcessorResult(null, OK_FUTURE);
-    }
-    return null;
+  private static CommandLineProcessorResult processCustomHandlers(@NotNull List<String> args) {
+    Future<CliResult> result = CommandLineCustomHandler.Companion.process(args);
+    if (result == null) return null;
+    return new CommandLineProcessorResult(null, result);
   }
 
   @NotNull

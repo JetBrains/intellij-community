@@ -2,9 +2,11 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 
+@NonNls
 public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_ASSERT = "org.junit.Assert";
   public static final String ORG_JUNIT_ASSUME = "org.junit.Assume";

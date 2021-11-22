@@ -202,12 +202,19 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   /**
-   * Returns the attributes defined in this scheme (not inherited from a parent).
+   * Returns attributes defined in this scheme (not inherited from a parent).
    */
-  @SuppressWarnings("unused")  // for Rider
   @NotNull
   public Map<@NonNls String, TextAttributes> getDirectlyDefinedAttributes() {
     return new HashMap<>(myAttributesMap);
+  }
+
+  /**
+   * Returns colors defined in this scheme (not inherited from a parent).
+   */
+  @NotNull
+  public Map<ColorKey, Color> getDirectlyDefinedColors() {
+    return new HashMap<>(myColorsMap);
   }
 
   @Override

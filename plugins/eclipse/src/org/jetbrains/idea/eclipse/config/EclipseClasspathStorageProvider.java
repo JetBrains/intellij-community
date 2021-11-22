@@ -91,7 +91,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
   private static void updateEntitySource(Module module, Function<? super EntitySource, ? extends EntitySource> updateSource) {
     ModuleBridge moduleBridge = (ModuleBridge)module;
     WorkspaceEntityStorage moduleEntityStorage = moduleBridge.getEntityStorage().getCurrent();
-    ModuleEntity moduleEntity = ModuleManagerBridgeImpl.Companion.findModuleEntity(moduleEntityStorage, moduleBridge);
+    ModuleEntity moduleEntity = ModuleManagerBridgeImpl.findModuleEntity(moduleEntityStorage, moduleBridge);
     if (moduleEntity != null) {
       EntitySource entitySource = moduleEntity.getEntitySource();
       ModuleManagerBridgeImpl

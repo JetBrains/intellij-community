@@ -29,18 +29,11 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler {
-  /**
-   * @deprecated Use {@link #getRefactoringName()} instead
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final String REFACTORING_NAME = "Pull Members Up";
-
   private PsiClass mySubclass;
   private Project myProject;
 

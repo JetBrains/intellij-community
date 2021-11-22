@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.base.Preconditions;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -580,7 +579,7 @@ public final class PyPsiUtils {
   }
 
   public static void assertValid(@NotNull final Module module) {
-    Preconditions.checkArgument(!module.isDisposed(), String.format("Module %s is disposed", module));
+    LOG.assertTrue(!module.isDisposed(), String.format("Module %s is disposed", module));
   }
 
   @Nullable

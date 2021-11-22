@@ -11,7 +11,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -61,7 +61,7 @@ object UpdateChecker {
 
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
-  private const val PRODUCT_DATA_TTL_MS = 300_000L
+  private const val PRODUCT_DATA_TTL_MIN = 5L
   private const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
   private const val MACHINE_ID_PARAMETER = "mid"
 
@@ -248,7 +248,7 @@ object UpdateChecker {
     try {
       indicator?.text = IdeBundle.message("updates.checking.platform")
       val productData = loadProductData(indicator)
-      if (!settings.isPlatformUpdateEnabled || productData == null) {
+      if (ExternalUpdateManager.ACTUAL != null || productData == null) {
         PlatformUpdates.Empty
       }
       else {
@@ -288,7 +288,7 @@ object UpdateChecker {
       }
 
       productDataCache = SoftReference(result)
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MIN, TimeUnit.MINUTES)
       return@withLock result.getOrThrow()
     }
 
@@ -570,7 +570,7 @@ object UpdateChecker {
             title,
             message,
             NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatedPlugins.size)) { e, _ ->
-              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
+              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
             },
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), runnable),
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
@@ -601,12 +601,7 @@ object UpdateChecker {
         NoUpdatesDialog(showSettingsLink).show()
       }
       else if (userInitiated) {
-        if (UpdateSettings.getInstance().isPlatformUpdateEnabled) {
-          showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", IdeBundle.message("updates.no.updates.notification"))
-        }
-        else {
-          showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", IdeBundle.message("updates.no.plugin.updates.notification"))
-        }
+        showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", NoUpdatesDialog.getNoUpdatesText())
       }
     }
   }

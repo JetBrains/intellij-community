@@ -3,10 +3,7 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
@@ -45,7 +42,7 @@ public final class ExternalSystemActionUtil {
 
   @Nullable
   public static Module getModule(DataContext context) {
-    final Module module = LangDataKeys.MODULE.getData(context);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(context);
     return module != null ? module : LangDataKeys.MODULE_CONTEXT.getData(context);
   }
 
@@ -163,4 +160,3 @@ public final class ExternalSystemActionUtil {
     return new ExternalTaskExecutionInfo(settings, DefaultRunExecutor.EXECUTOR_ID);
   }
 }
-

@@ -41,7 +41,7 @@ public class TouchbarTest {
         NST.setTouchBar(null, ID.NIL);
         testTB.release();
       }
-    }).start();
+    }, "com.intellij.ui.mac.touchbar.TouchbarTest._createFrame").start();
 
   }
 

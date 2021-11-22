@@ -12,7 +12,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -86,7 +86,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   }
 
   private static ResourceBundleEditor getEditor(@NotNull AnActionEvent e) {
-    final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
+    final FileEditor editor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
     return editor instanceof ResourceBundleEditor ? (ResourceBundleEditor)editor : null;
   }
 
@@ -140,4 +140,3 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   }
 
 }
-

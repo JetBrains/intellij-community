@@ -4,6 +4,7 @@ plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose") version "1.0.0-alpha3"
     id("com.android.library")
+    id("kotlin-android-extensions")
 }
 
 group = "me.user"
@@ -50,11 +51,11 @@ kotlin {
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdkVersion(29)
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
         minSdkVersion(24)
-        targetSdkVersion(30)
+        targetSdkVersion(29)
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8

@@ -7,6 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
+  /**
+   * This table lists known actions which use the same shortcut. Note that it's ok to add a new entry here only if you're sure that the
+   * mentioned actions will never be enabled in the same context. Otherwise, users may get unexpected behavior when they try to use that
+   * shortcut.
+   */
   @NonNls
   protected static final Map<String, String[][]> DEFAULT_DUPLICATES = new HashMap<>(){{
     put("$default", new String[][] {
@@ -16,7 +21,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
                                   "EditorEnter", "NextTemplateVariable",
                                   "Git.Log.Branches.Change.Branch.Filter", "SplitChooser.Split"},
     { "F1",                       "ContextHelp", "org.jetbrains.r.actions.REditorHelpAction"},
-    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename", "Table-startEditing", "Tree-startEditing"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
     { "F3",                       "FindNext", "PoToggleSelection"},
     { "F5",                       "Graph.RouteEdges", "CopyElement", "PoBrowserRefresh"},
@@ -45,7 +50,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control I",                "ImplementMethods", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
     { "control INSERT",           "$Copy", "Terminal.CopySelectedText"},
     { "control M",                "EditorScrollToCenter", "Vcs.ShowMessageHistory"},
-    { "control N",                "FileChooser.NewFolder", "GotoClass"},
+    { "control N",                "Console.TableResult.AddRow", "FileChooser.NewFolder", "GotoClass"},
     { "control P",                "FileChooser.TogglePathShowing", "ParameterInfo"},
     { "control R",                "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control SLASH",            "CommentByLineComment", "Graph.ActualSize"},
@@ -74,7 +79,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control PERIOD",           "EditorChooseLookupItemDot", "CollapseSelection"},
     { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
     { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorStartNewLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit", "RConsoleNextLineAction"},
-    { "shift F4",                 "Debugger.EditTypeSource", "EditSourceInNewWindow"},
+    { "shift F4",                 "XDebugger.JumpToTypeSource", "EditSourceInNewWindow"},
     { "shift F6",                 "RenameElement", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
     { "shift INSERT",             "$Paste", "Terminal.Paste"},
@@ -84,7 +89,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt B",              "NotebookInsertCellBelowAction", "tasks.open.in.browser", "sql.SelectInDatabaseView"},
     { "shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
     { "shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
-    { "shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
+    { "shift ctrl C",             "Console.TableResult.CopyAggregatorResult", "CopyPaths", "DatabaseView.CopyDdlAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     { "shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff", "Console.TableResult.CompareCells"},
     { "shift control ENTER",      "EditorCompleteStatement", "Console.Jpa.GenerateSql", "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
     { "shift control F10",        "Console.Open", "RunClass", "RunTargetAction"},
@@ -176,7 +181,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control D",                "$Delete", "Diff.ShowDiff", "CompareTwoFiles", "Console.TableResult.CloneRow", "SendEOF", "FileChooser.GotoDesktop", "org.jetbrains.r.console.RConsoleView.REofAction"},
     { "control K",                "EditorCutLineEnd", "CheckinProject"},
     { "control M",                "EditorEnter", "EditorChooseLookupItem", "NextTemplateVariable", "Console.Execute"},
-    { "control N",                "EditorDown", "FileChooser.NewFolder"},
+    { "control N",                "Console.TableResult.AddRow", "EditorDown", "FileChooser.NewFolder"},
     { "control P",                "EditorUp", "FileChooser.TogglePathShowing"},
     { "control R",                "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "FindPrevious"},
     { "control SLASH",            "$Undo", "Graph.ActualSize"},
@@ -213,7 +218,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl alt K",         "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
     { "ctrl E",                   SECOND_STROKE, "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox"},
     { "shift alt RIGHT",          "Diff.NextChange", "EditorRightWithSelection"},
-    { "ctrl N",                   "FileChooser.NewFolder", "NewElement"},
+    { "ctrl N",                   "Console.TableResult.AddRow", "FileChooser.NewFolder", "NewElement"},
     { "shift F5",                 "Graph.ApplyCurrentLayout", "Stop"},
     { "ctrl alt W",               "ActivateWebToolWindow", "Vcs.UpdateProject"},
     { "shift alt ENTER",          "JupyterDebugAction", "ToggleFullScreen"},
@@ -232,7 +237,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
-    { "shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction", "Terminal.CopySelectedText", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
+    { "shift ctrl C",             "Console.TableResult.CopyAggregatorResult", "CopyPaths", "DatabaseView.CopyDdlAction", "Terminal.CopySelectedText", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     { "shift ctrl V",             "PasteMultiple", "Terminal.Paste"},
     });
     put("Default for GNOME", new String[][] {
@@ -251,7 +256,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt L",              "ReformatCode", "context.load"},
     });
     put("Eclipse", new String[][] {
-    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue"},
+    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Table-startEditing", "Tree-startEditing"},
     { "F3",                       "GotoDeclaration", "PoToggleSelection"},
     { "F5",                       "Graph.RouteEdges", "StepInto", "PoBrowserRefresh"},
     { "alt DOWN",                 "ShowContent", "MoveStatementDown", "ShowSearchHistory"},
@@ -261,7 +266,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control B",                "CompileDirty", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
     { "control D",                "EditorDeleteLine", "Diff.ShowDiff", "CompareTwoFiles", "Console.TableResult.CloneRow", "SendEOF", "FileChooser.GotoDesktop", "org.jetbrains.r.console.RConsoleView.REofAction"},
     { "control I",                "AutoIndentLines", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
-    { "control N",                "ShowPopupMenu", "FileChooser.NewFolder"},
+    { "control N",                "Console.TableResult.AddRow", "ShowPopupMenu", "FileChooser.NewFolder"},
     { "control P",                "FileChooser.TogglePathShowing", "Print"},
     { "control R",                "RunToCursor", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control U",                "EvaluateExpression", "CommanderSwapPanels", "org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"},
@@ -296,18 +301,18 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control BACK_SPACE",       "EditorDeleteToWordStart", "ToggleDockMode"},
     { "control DIVIDE",           "CollapseRegionRecursively", "Graph.ActualSize"},
     { "control M",                "Vcs.ShowMessageHistory", "Move"},
-    { "control N",                "NewElement", "FileChooser.NewFolder"},
+    { "control N",                "Console.TableResult.AddRow", "NewElement", "FileChooser.NewFolder"},
     { "control R",                "RenameElement", "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "control U",                SECOND_STROKE, "CommanderSwapPanels", "org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"},
     { "control PERIOD",           "GotoNextError", "EditorChooseLookupItemDot"},
     { "control alt DOWN",         "MethodDown", "NextOccurence", "Console.TableResult.NextPage"},
     { "control alt UP",           "MethodUp", "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt shift P",      "Print", "ReformatWithPrettierAction"},
-    { "shift F4",                 "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox", "Debugger.EditTypeSource", "Vcs.ShowMessageHistory", "EditSourceInNewWindow"},
+    { "shift F4",                 "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox", "XDebugger.JumpToTypeSource", "Vcs.ShowMessageHistory", "EditSourceInNewWindow"},
     { "shift alt F9",             "ChooseDebugConfiguration", "ValidateXml", "ValidateJsp"},
     { "shift alt D",              "ToggleFloatingMode", "hg4idea.QFold"},
     { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
-    { "shift ctrl C",             "CommentByLineComment", "DatabaseView.CopyDdlAction"},
+    { "shift ctrl C",             "CommentByLineComment", "Console.TableResult.CopyAggregatorResult", "DatabaseView.CopyDdlAction"},
     { "shift control H",          "ChangesView.ShelveSilently", "ReplaceInPath"},
     { "shift control K",          "HippieCompletion", "Vcs.Push"},
     { "shift control M",          "RInsertPipeAction", "ShowBookmarks"},
@@ -318,7 +323,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("Eclipse (Mac OS X)", new String[][] {
     { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},
-    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
+    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename", "Table-startEditing", "Tree-startEditing"},
     { "F3",                       "GotoDeclaration", "EditSource", "PoToggleSelection"},
     { "F5",                       "StepInto", "Graph.RouteEdges", "PoBrowserRefresh"},
     { "alt DOWN",                 "MoveStatementDown", "MethodOverloadSwitchDown", "ShowSearchHistory"},
@@ -346,7 +351,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl DOWN",          "EditorUnSelectWord", "ShowContent"},
     });
     put("Sublime Text", new String[][] {
-    { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
+    { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue", "Table-startEditing", "Tree-startEditing"},
     { "alt MINUS",                "Back", "RInsertAssignmentAction"},
     { "ctrl ADD",                 "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
     { "ctrl B",                   "Compile", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
@@ -356,7 +361,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl EQUALS",              "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
     { "ctrl M",                   "EditorMatchBrace", "Vcs.ShowMessageHistory"},
     { "ctrl MINUS",               "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
-    { "ctrl N",                   "FileChooser.NewFolder", "NewElement"},
+    { "ctrl N",                   "Console.TableResult.AddRow", "FileChooser.NewFolder", "NewElement"},
     { "ctrl P",                   "FileChooser.TogglePathShowing", "GotoFile"},
     { "ctrl R",                   "FileStructurePopup", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "ctrl SUBTRACT",            "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
@@ -372,7 +377,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl L",                   "EditorSelectLine", "Terminal.ClearBuffer"},
     });
     put("Sublime Text (Mac OS X)", new String[][] {
-    { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
+    { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue", "Table-startEditing", "Tree-startEditing"},
     { "meta ADD",                 "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
     { "meta B",                   "Compile", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
     { "meta BACK_SPACE",          "EditorDeleteToLineStart", "$Delete"},
@@ -441,9 +446,18 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Tree-selectFirstExtendSelection",
     "Tree-selectFirst"
   );
-  private static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS =
-    List.of("Log.KeymapGroup", "UsageGroupingActionGroup", "SearchEverywhereActions", "Images.ThumbnailViewActions", "Images.ImageViewActions",
-            "ArrangementRulesGroup", "ServiceViewTreeToolbar", "TodoViewGroupByGroup", "ChangesView.GroupBy");
+  private static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS = List.of(
+    "Log.KeymapGroup",
+    "UsageGroupingActionGroup",
+    "UsageFilteringActionGroup",
+    "SearchEverywhereActions",
+    "Images.ThumbnailViewActions",
+    "Images.ImageViewActions",
+    "ArrangementRulesGroup",
+    "ServiceViewTreeToolbar",
+    "TodoViewGroupByGroup",
+    "ChangesView.GroupBy"
+  );
 
   @Override
   protected Collection<String> getConflictSafeGroups() {

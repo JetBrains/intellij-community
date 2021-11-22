@@ -45,7 +45,8 @@ internal class ProcessManagerServerService(
                                    commandLine.environMap,
                                    commandLine.inFile.takeUnless { it.isEmpty() }?.let { File(it) },
                                    commandLine.outFile.takeUnless { it.isEmpty() }?.let { File(it) },
-                                   commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
+                                   commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) },
+                                   commandLine.redirectErrorStream)
     }
 
     return CreateProcessReply.newBuilder().apply {

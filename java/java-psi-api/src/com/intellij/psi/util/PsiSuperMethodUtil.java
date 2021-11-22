@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -52,8 +53,7 @@ public final class PsiSuperMethodUtil {
 
   @NotNull
   public static Map<MethodSignature, Set<PsiMethod>> collectOverrideEquivalents(@NotNull PsiClass aClass) {
-    final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
-      new Object2ObjectOpenCustomHashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+    final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent = MethodSignatureUtil.createErasedMethodSignatureMap();
     final GlobalSearchScope resolveScope = aClass.getResolveScope();
     PsiClass[] supers = aClass.getSupers();
     for (int i = 0; i < supers.length; i++) {
@@ -86,6 +86,19 @@ public final class PsiSuperMethodUtil {
     return overrideEquivalent;
   }
 
+  /**
+   * Maps the given class to the class which is located in the specified resolve scope.
+   * <p/>
+   * For the multi-module projects which use different jdks or libraries,
+   * it's important to map e.g. super class hierarchy to the current jdk.
+   * <p>Example:</p>
+   * Suppose there is an abstract reader in a module with jdk 1.6 which inherits {@link Closeable} (no super interfaces!). 
+   * In another module with jdk 1.7+ an inheritor of this reader should implement {@link AutoCloseable} though.
+   * 
+   * @param psiClass       a class to remap
+   * @param resolveScope   scope where class should be found
+   * @return               remapped class or same, if no other candidates were found
+   */
   @Nullable
   public static PsiClass correctClassByScope(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope resolveScope) {
     String qualifiedName = psiClass.getQualifiedName();
@@ -108,7 +121,15 @@ public final class PsiSuperMethodUtil {
       return psiClass;
     }
 
-    return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, resolveScope);
+    PsiClass aClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, resolveScope);
+    VirtualFile mappedVFile = PsiUtilCore.getVirtualFile(aClass);
+    if (mappedVFile != null) {
+      Module module = index.getModuleForFile(vFile);
+      if (module != null && module == index.getModuleForFile(mappedVFile)) {
+        return psiClass;
+      }
+    }
+    return aClass;
   }
 
 }

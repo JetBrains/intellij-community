@@ -11,6 +11,7 @@ import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
+import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,7 @@ public class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAc
 
         return assignmentExpression.map(PsiAssignmentExpression::getLExpression)
           .filter(PsiReferenceExpression.class::isInstance).map(PsiReferenceExpression.class::cast)
-          .map(PsiReferenceExpression::resolve) .filter(PsiField.class::isInstance)
+          .map(PsiReferenceExpression::resolve).filter(PsiField.class::isInstance)
           .map(PsiField.class::cast);
       }
     }
@@ -192,8 +193,16 @@ public class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAc
   }
 
   private void replaceWithAnnotation(@NotNull PsiModifierList modifierList, @NotNull PsiMethod method, @NotNull String annotationName) {
+    final Optional<String> accessLevelFQN = LombokProcessorUtil.convertModifierToLombokAccessLevel(method);
+
     method.delete();
-    modifierList.addAnnotation(annotationName);
+
+    PsiAnnotation addedAnnotation = modifierList.addAnnotation(annotationName);
+    if (accessLevelFQN.isPresent()) {
+      PsiExpression accessLevelExpression = PsiElementFactory.getInstance(modifierList.getProject())
+        .createExpressionFromText(accessLevelFQN.get(), null);
+      addedAnnotation.setDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, accessLevelExpression);
+    }
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

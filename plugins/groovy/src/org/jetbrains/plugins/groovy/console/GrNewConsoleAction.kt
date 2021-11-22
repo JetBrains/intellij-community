@@ -5,7 +5,7 @@ import com.intellij.execution.console.ConsoleHistoryController
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.fileEditor.FileEditorManager
 
 class GrNewConsoleAction : AnAction() {
@@ -16,7 +16,7 @@ class GrNewConsoleAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val module = e.getData(LangDataKeys.MODULE)?.takeIf(::isApplicableModule)
+    val module = e.getData(PlatformCoreDataKeys.MODULE)?.takeIf(::isApplicableModule)
     val contentFile = ConsoleHistoryController.getContentFile(
       GroovyConsoleRootType.getInstance(),
       GroovyConsoleRootType.CONTENT_ID,

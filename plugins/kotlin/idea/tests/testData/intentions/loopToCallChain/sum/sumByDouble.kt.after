@@ -1,3 +1,4 @@
+// API_VERSION: 1.3
 // WITH_RUNTIME
 // INTENTION_TEXT: "Replace with 'sumByDouble{}'"
 // IS_APPLICABLE_2: false

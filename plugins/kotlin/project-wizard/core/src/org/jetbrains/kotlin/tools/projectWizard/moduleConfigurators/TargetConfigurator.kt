@@ -13,16 +13,16 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleStri
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetAccessIR
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.compiler
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.jsCompilerParam
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.irOrLegacyCompiler
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.kind
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.browserSubTarget
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.cssSupport
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedConfigurator.Companion.nodejsSubTarget
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeTargetConfigurator.createTargetIrs
-import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.buildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.isGradle
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
@@ -34,10 +34,8 @@ interface TargetConfigurator : ModuleConfiguratorWithModuleType {
     fun canCoexistsWith(other: List<TargetConfigurator>): Boolean = true
 
     fun Reader.createTargetIrs(module: Module): List<BuildSystemIR>
-    fun createInnerTargetIrs(
-        reader: Reader,
-        module: Module
-    ): List<BuildSystemIR> = emptyList()
+
+    fun createInnerTargetIrs(reader: Reader, module: Module): List<BuildSystemIR> = emptyList()
 }
 
 abstract class TargetConfiguratorWithTests : ModuleConfiguratorWithTests, TargetConfigurator
@@ -83,20 +81,15 @@ enum class JsTargetKind(override val text: String) : DisplayableSettingItem {
     APPLICATION(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind.application"))
 }
 
-enum class JsCompiler(override val text: String) : DisplayableSettingItem {
-    IR("IR"),
-    LEGACY("LEGACY"),
-    BOTH("BOTH")
+enum class JsCompiler(override val text: String, val scriptValue: String) : DisplayableSettingItem {
+    IR(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.ir"), "IR"),
+    LEGACY(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.legacy"), "LEGACY"),
+    BOTH(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.both"), "BOTH")
 }
 
-object JsBrowserTargetConfigurator : JsTargetConfigurator, ModuleConfiguratorWithTests {
+abstract class AbstractBrowserTargetConfigurator: JsTargetConfigurator, ModuleConfiguratorWithTests {
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
-        super<ModuleConfiguratorWithTests>.getConfiguratorSettings() +
-                super<JsTargetConfigurator>.getConfiguratorSettings() +
-                cssSupport
-
-    @NonNls
-    override val id = "jsBrowser"
+         super<JsTargetConfigurator>.getConfiguratorSettings()
 
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.js.browser")
 
@@ -108,12 +101,32 @@ object JsBrowserTargetConfigurator : JsTargetConfigurator, ModuleConfiguratorWit
         +DefaultTargetConfigurationIR(
             module.createTargetAccessIr(
                 ModuleSubType.js,
-                paramsWithJsCompiler(module)
+                createAdditionalParams(module)
             )
         ) {
             browserSubTarget(module, this@createTargetIrs)
         }
     }
+
+    abstract fun Reader.createAdditionalParams(module: Module): List<String>
+}
+
+object JsBrowserTargetConfigurator : AbstractBrowserTargetConfigurator() {
+    @NonNls
+    override val id = "jsBrowser"
+
+    override fun Reader.createAdditionalParams(module: Module): List<String> = listOf(irOrLegacyCompiler(module))
+}
+
+object MppLibJsBrowserTargetConfigurator : AbstractBrowserTargetConfigurator() {
+    @NonNls
+    override val id = "mppLibJsBrowser"
+
+    override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> {
+        return listOf(testFramework, kind, compiler)
+    }
+
+    override fun Reader.createAdditionalParams(module: Module): List<String> = jsCompilerParam(module)?.let { listOf(it) } ?: emptyList()
 }
 
 object JsNodeTargetConfigurator : JsTargetConfigurator {
@@ -122,13 +135,11 @@ object JsNodeTargetConfigurator : JsTargetConfigurator {
 
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.js.node")
 
-    override fun Reader.createTargetIrs(
-        module: Module
-    ): List<BuildSystemIR> = irsList {
+    override fun Reader.createTargetIrs(module: Module): List<BuildSystemIR> = irsList {
         +DefaultTargetConfigurationIR(
             module.createTargetAccessIr(
                 ModuleSubType.js,
-                paramsWithJsCompiler(module)
+                listOf(irOrLegacyCompiler(module))
             )
         ) {
             nodejsSubTarget(module, this@createTargetIrs)
@@ -136,15 +147,13 @@ object JsNodeTargetConfigurator : JsTargetConfigurator {
     }
 }
 
-internal fun Reader.paramsWithJsCompiler(module: Module): List<String> = jsCompilerParam(module)?.let {
-    listOf(it)
-} ?: emptyList()
-
 object CommonTargetConfigurator : TargetConfiguratorWithTests(), SimpleTargetConfigurator, SingleCoexistenceTargetConfigurator {
     override val moduleSubType = ModuleSubType.common
     override val text: String = KotlinNewProjectWizardBundle.message("module.configurator.common")
 
     override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.COMMON
+
+    override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> = emptyList()
 }
 
 object JvmTargetConfigurator : JvmModuleConfigurator,
@@ -154,7 +163,7 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
 
     override val text: String = KotlinNewProjectWizardBundle.message("module.configurator.jvm")
 
-    override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.JUNIT4
+    override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.JUNIT5
 
     override fun createInnerTargetIrs(
         reader: Reader,
@@ -170,11 +179,11 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
                     }
 
                 }
-                if (Settings.javaSupport.reference.settingValue) {
+                if (!module.hasAndroidSibling()) {
                     "withJava"()
                 }
             }
-            val testFramework = inContextOfModuleConfigurator(module) { ModuleConfiguratorWithTests.testFramework.reference.settingValue }
+            val testFramework = inContextOfModuleConfigurator(module) { getTestFramework(module) }
             if (testFramework != KotlinTestFramework.NONE) {
                 testFramework.usePlatform?.let { usePlatform ->
                     "testRuns[\"test\"].executionTask.configure" {
@@ -185,17 +194,7 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
         }
     }
 
-    override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
-        super.getConfiguratorSettings() +
-                Settings.javaSupport
-
-    object Settings : ModuleConfiguratorSettings() {
-        val javaSupport by booleanSetting(
-            KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.java.support"),
-            GenerationPhase.PROJECT_GENERATION
-        ) {
-            description = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.java.support.description")
-            defaultValue = value(false)
-        }
-    }
+    private fun Module.hasAndroidSibling(): Boolean =
+        configurator is TargetConfigurator
+                && parent?.subModules?.any { it.configurator is AndroidModuleConfigurator } ?: false
 }

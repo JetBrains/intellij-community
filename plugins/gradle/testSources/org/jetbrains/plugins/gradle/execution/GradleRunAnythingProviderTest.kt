@@ -215,13 +215,24 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "  Unknown command-line option '--unknown-option'"
       )
 
-    executeAndWait("taskWithArgs")
-      .assertExecutionTree(
-        "-\n" +
-        " -failed\n" +
-        "  :taskWithArgs\n" +
-        "  No value has been specified for property 'myArgs'"
-      )
+    if (isGradleNewerOrSameAs("7.0")) {
+      executeAndWait("taskWithArgs")
+        .assertExecutionTree(
+          "-\n" +
+          " -failed\n" +
+          "  :taskWithArgs\n" +
+          "  A problem was found with the configuration of task ':taskWithArgs' (type 'ArgsTask')."
+        )
+    }
+    else {
+      executeAndWait("taskWithArgs")
+        .assertExecutionTree(
+          "-\n" +
+          " -failed\n" +
+          "  :taskWithArgs\n" +
+          "  No value has been specified for property 'myArgs'"
+        )
+    }
 
     // test known build CLI option before tasks and with task quoted argument with apostrophe (')
     // (<build_option> <task> <arg>='<arg_value>')
@@ -235,12 +246,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "successful",
         {
           assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing tasks 'taskWithArgs --my_args='test args' --quiet'...\n" +
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args='test args' --quiet'...\n" +
             "\n" +
             "(?:Starting Gradle Daemon...\n" +
             "Gradle Daemon started in .* ms\n)?" +
             "test args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Tasks execution finished 'taskWithArgs --my_args='test args' --quiet'.\n"
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args='test args' --quiet'.\n"
           )
         }
       )
@@ -286,12 +297,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "successful",
         {
           assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing tasks 'taskWithArgs --my_args=test_args --quiet'...\n" +
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args=test_args --quiet'...\n" +
             "\n" +
             "(?:Starting Gradle Daemon...\n" +
             "Gradle Daemon started in .* ms\n)?" +
             "test_args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Tasks execution finished 'taskWithArgs --my_args=test_args --quiet'.\n"
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args=test_args --quiet'.\n"
           )
         }
       )
@@ -308,12 +319,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "successful",
         {
           assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing tasks 'taskWithArgs --my_args test_args --quiet'...\n" +
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args test_args --quiet'...\n" +
             "\n" +
             "(?:Starting Gradle Daemon...\n" +
             "Gradle Daemon started in .* ms\n)?" +
             "test_args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Tasks execution finished 'taskWithArgs --my_args test_args --quiet'.\n"
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args test_args --quiet'.\n"
           )
         }
       )

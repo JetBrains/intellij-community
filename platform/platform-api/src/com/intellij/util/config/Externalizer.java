@@ -21,7 +21,7 @@ public interface Externalizer<T> {
     @Override
     public Integer readValue(Element dataElement) {
       try {
-        return new Integer(dataElement.getAttributeValue(VALUE_ATTRIBUTE));
+        return Integer.valueOf(dataElement.getAttributeValue(VALUE_ATTRIBUTE));
       }
       catch (NumberFormatException e) {
         return null;

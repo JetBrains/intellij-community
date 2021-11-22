@@ -2,8 +2,8 @@
 <body>
 Reports primary constructor parameters that can have <code>val</code> or <code>var</code> removed.
 <p>
-    Class properties declared in constructor consume additional memory.
-    If the parameter value is only used in the constructor, usually there is no reason to store them.
+    Class properties declared in the constructor increase memory consumption.
+    If the parameter value is only used in the constructor, you can omit them.
 </p>
 <p>Note that the referenced object might be garbage-collected earlier.</p>
 <p><b>Example:</b></p>
@@ -14,7 +14,7 @@ Reports primary constructor parameters that can have <code>val</code> or <code>v
       }
   }
 </code></pre>
-<p>A quick-fix is suggested to remove the extra <code>val</code> or <code>var</code> keyword:</p>
+<p>A quick-fix removes the extra <code>val</code> or <code>var</code> keyword:</p>
 <pre><code>
   class Task(name: String) {
       init {

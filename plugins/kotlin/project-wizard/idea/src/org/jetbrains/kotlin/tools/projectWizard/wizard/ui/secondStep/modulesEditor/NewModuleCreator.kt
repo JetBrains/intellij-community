@@ -67,7 +67,7 @@ class NewModuleCreator {
                 name,
                 configurator,
                 template = null,
-                sourcesets = sourcesets,
+                sourceSets = sourcesets,
                 subModules = emptyList()
             )
             createModule(createdModule)

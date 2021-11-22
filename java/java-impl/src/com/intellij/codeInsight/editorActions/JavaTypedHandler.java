@@ -79,6 +79,8 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return Result.CONTINUE;
+
     int offset = editor.getCaretModel().getOffset();
     if (charTyped == ' ' &&
         StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, PsiKeyword.NEW)) {

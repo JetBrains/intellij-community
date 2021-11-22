@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.local.wizard
 
 import com.intellij.ide.starters.JavaStartersBundle
@@ -34,6 +35,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import org.jdom.Element
 import java.io.File
+import java.net.SocketTimeoutException
 import java.nio.file.Files
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -190,7 +192,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
       }
 
       addFieldsAfter(this)
-    }.withVisualPadding(NAME_FIELD_TOP_PADDING)
+    }.withVisualPadding(topField = true)
   }
 
   protected open fun addFieldsBefore(layout: LayoutBuilder) {}
@@ -291,6 +293,9 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
       if (e is HttpRequests.HttpStatusException
           && (e.statusCode == 403 || e.statusCode == 404)) {
         logger<StarterInitialStep>().debug("No updates for $starterId: $url")
+      }
+      else if (e is SocketTimeoutException) {
+        logger<StarterInitialStep>().debug("Socket timeout for $starterId: $url")
       }
       else {
         logger<StarterInitialStep>().warn("Unable to load external starter $starterId dependency updates from: $url", e)

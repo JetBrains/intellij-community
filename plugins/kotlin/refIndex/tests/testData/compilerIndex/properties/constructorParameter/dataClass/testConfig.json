@@ -1,0 +1,10 @@
+{
+    "usages": [
+        "Main.kt",
+        "Explicit.kt",
+        "Explicit2.kt",
+        "Implicit.kt",
+        "Implicit2.kt",
+        "Property2.kt"
+    ]
+}

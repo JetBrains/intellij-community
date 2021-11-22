@@ -32,7 +32,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -793,7 +793,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         if (getText() != modelText) setText(modelText);
       });
       new HelpTooltip().setTitle(VcsLogBundle.message("vcs.log.filter.text.hash.tooltip"))
-        .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER))
+        .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER))
         .setLocation(HelpTooltip.Alignment.BOTTOM)
         .installOn(getTextEditor());
       Disposer.register(parentDisposable, this::hidePopup);

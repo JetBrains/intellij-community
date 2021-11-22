@@ -48,4 +48,11 @@ public abstract class DumbModeTask implements Disposable {
   @Override
   public void dispose() {
   }
+
+  /**
+   * Queues dumb mode task to be performed in dumb mode. See {@link DumbService#queueTask(DumbModeTask)}.
+   */
+  public final void queue(@NotNull Project project) {
+    DumbService.getInstance(project).queueTask(this);
+  }
 }

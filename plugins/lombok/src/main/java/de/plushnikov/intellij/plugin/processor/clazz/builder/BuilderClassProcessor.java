@@ -37,7 +37,7 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
       return true;
     }
 
-    final String innerBuilderClassName = getBuilderHandler().getBuilderClassName(psiClass, psiAnnotation, null);
+    final String innerBuilderClassName = BuilderHandler.getBuilderClassName(psiClass, psiAnnotation, null);
     return Objects.equals(nameHint, innerBuilderClassName);
   }
 

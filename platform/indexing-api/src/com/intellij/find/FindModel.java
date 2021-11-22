@@ -23,12 +23,6 @@ import java.util.regex.PatternSyntaxException;
  * operations.
  */
 public class FindModel extends UserDataHolderBase implements Cloneable {
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void initStringToFindNoMultiline(FindModel findModel, String s) {
-    initStringToFind(findModel, s);
-  }
-
   public static void initStringToFind(FindModel findModel, String s) {
     if (!StringUtil.isEmpty(s)) {
       if (findModel.isMultiline() || (!s.contains("\r") && !s.contains("\n"))) {

@@ -40,6 +40,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private ContentUI myUI;
   private final List<Content> myContents = new ArrayList<>();
+  private final List<ContentManagerImpl> myNestedManagers = new SmartList<>();
   private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
   private final List<Content> mySelection = new ArrayList<>();
   private final boolean myCanCloseContents;
@@ -94,6 +95,17 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (ui instanceof Disposable) {
       Disposer.register(this, (Disposable)ui);
     }
+  }
+
+  public void addNestedManager(@NotNull ContentManagerImpl manager) {
+    myNestedManagers.add(manager);
+    Disposer.register(this, manager);
+    Disposer.register(manager, new Disposable() {
+      @Override
+      public void dispose() {
+        myNestedManagers.remove(manager);
+      }
+    });
   }
 
   @Override
@@ -182,8 +194,34 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Disposer.register(this, content);
   }
 
+  //protected ContentManagerImpl getManager(@NotNull Content content) {
+  //  for (ContentManagerImpl nestedManager : myNestedManagers) {
+  //    if (nestedManager.getIndexOfContent(content) != -1) return nestedManager;
+  //  }
+  //  return this;
+  //}
+
+  @ApiStatus.Experimental
+  public @Nullable ContentManagerImpl getActiveNestedManager() {
+    ContentManagerImpl candidate = null;
+    for (ContentManagerImpl manager : myNestedManagers) {
+      if (manager.getContentCount() > 0) candidate = manager;
+      Content[] selectedContents = manager.getSelectedContents();
+      for (Content content : selectedContents) {
+        if (UIUtil.isFocusAncestor(content.getComponent())) return manager;
+      }
+      ContentManagerImpl activeNestedManager = manager.getActiveNestedManager();
+      if (activeNestedManager != null) return activeNestedManager;
+    }
+    return candidate;
+  }
+
   @Override
   public boolean removeContent(@NotNull Content content, boolean dispose) {
+    //ContentManager manager = getManager(content);
+    //if (manager != this) {
+    //  return manager.removeContent(content, dispose);
+    //}
     boolean wasFocused = UIUtil.isFocusAncestor(content.getComponent());
     return removeContent(content, dispose, wasFocused, false).isDone();
   }
@@ -214,6 +252,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     ApplicationManager.getApplication().assertIsDispatchThread();
     int indexToBeRemoved = getIndexOfContent(content);
     if (indexToBeRemoved == -1) {
+      //ContentManagerImpl manager = getManager(content);
+      //if (manager != null) return manager.doRemoveContent(content, dispose);
       return ActionCallback.REJECTED;
     }
 
@@ -301,6 +341,16 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @Override
   public int getContentCount() {
     return myContents.size();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    boolean empty = ContentManager.super.isEmpty();
+    if (!empty) return false;
+    for (ContentManager manager : myNestedManagers) {
+      if (!manager.isEmpty()) return false;
+    }
+    return true;
   }
 
   @Override
@@ -618,6 +668,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myDisposed = true;
 
     myContents.clear();
+    myNestedManagers.clear();
     mySelection.clear();
     myContentWithChangedComponent.clear();
     myUI = null;

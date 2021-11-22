@@ -15,7 +15,6 @@ import org.intellij.plugins.markdown.editor.images.ConfigureImageDialog
 import org.intellij.plugins.markdown.editor.images.ImageUtils
 import org.intellij.plugins.markdown.editor.images.MarkdownImageData
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
-import org.intellij.plugins.markdown.util.MarkdownFileUtil
 
 class InsertImageAction : AnAction(), DumbAware {
   override fun update(event: AnActionEvent) {

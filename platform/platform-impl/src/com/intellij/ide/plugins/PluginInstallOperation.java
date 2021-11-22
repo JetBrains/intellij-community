@@ -4,10 +4,12 @@ package com.intellij.ide.plugins;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -239,6 +241,10 @@ public final class PluginInstallOperation {
   private boolean prepareToInstall(@NotNull PluginNode pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
     if (!checkMissingDependencies(pluginNode, pluginIds)) return false;
+    if (!PluginManagerFilters.getInstance().allowInstallingPlugin(pluginNode)) {
+      LOG.warn("The plugin " + pluginNode.getPluginId() + " is not allowed to install for the organization");
+      return false;
+    }
     IdeaPluginDescriptor toDisable = checkDependenciesAndReplacements(pluginNode);
 
     myShownErrors = false;
@@ -321,62 +327,47 @@ public final class PluginInstallOperation {
                                    @Nullable List<PluginId> pluginIds) {
     // check for dependent plugins at first.
     List<IdeaPluginDependency> dependencies = pluginNode.getDependencies();
-    if (!dependencies.isEmpty()) {
-      // prepare plugins list for install
-      final List<PluginNode> depends = new ArrayList<>();
-      final List<PluginNode> optionalDeps = new ArrayList<>();
-      for (IdeaPluginDependency dependency : dependencies) {
-        PluginId depPluginId = dependency.getPluginId();
+    if (dependencies.isEmpty()) {
+      return true;
+    }
 
-        if (PluginManagerCore.isModuleDependency(depPluginId)) {
-          IdeaPluginDescriptorImpl descriptorByModule = PluginManagerCore.findPluginByModuleDependency(depPluginId);
-          PluginId pluginIdByModule = descriptorByModule != null ?
-                                      descriptorByModule.getPluginId() :
-                                      getCachedPluginId(depPluginId.getIdString());
+    // prepare plugins list for install
+    final List<PluginNode> depends = new ArrayList<>();
+    final List<PluginNode> optionalDeps = new ArrayList<>();
+    for (IdeaPluginDependency dependency : dependencies) {
+      PluginId depPluginId = dependency.getPluginId();
 
-          if (pluginIdByModule == null) continue;
-          depPluginId = pluginIdByModule;
-        }
-        if (PluginManagerCore.isPluginInstalled(depPluginId) ||
-            InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
-            InstalledPluginsState.getInstance().wasInstalledWithoutRestart(depPluginId) ||
-            pluginIds != null && pluginIds.contains(depPluginId)) {
-          // ignore installed or installing plugins
-          continue;
-        }
+      if (PluginManagerCore.isModuleDependency(depPluginId)) {
+        IdeaPluginDescriptorImpl descriptorByModule = PluginManagerCore.findPluginByModuleDependency(depPluginId);
+        PluginId pluginIdByModule = descriptorByModule != null ?
+                                    descriptorByModule.getPluginId() :
+                                    getCachedPluginId(depPluginId.getIdString());
 
-        IdeaPluginDescriptor depPluginDescriptor = findPluginInRepo(depPluginId);
-        PluginNode depPlugin;
-        if (depPluginDescriptor instanceof PluginNode) {
-          depPlugin = (PluginNode)depPluginDescriptor;
-        }
-        else {
-          depPlugin = new PluginNode(depPluginId, depPluginId.getIdString(), "-1");
-        }
-
-        if (depPluginDescriptor != null) {
-          if (dependency.isOptional()) {
-            optionalDeps.add(depPlugin);
-          }
-          else {
-            depends.add(depPlugin);
-          }
-        }
+        if (pluginIdByModule == null) continue;
+        depPluginId = pluginIdByModule;
+      }
+      if (PluginManagerCore.isPluginInstalled(depPluginId) ||
+          InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
+          InstalledPluginsState.getInstance().wasInstalledWithoutRestart(depPluginId) ||
+          pluginIds != null && pluginIds.contains(depPluginId)) {
+        // ignore installed or installing plugins
+        continue;
       }
 
-      if (!prepareDependencies(pluginNode, depends, "plugin.manager.dependencies.detected.title",
-                               "plugin.manager.dependencies.detected.message")) {
-        return false;
-      }
-
-      if (Registry.is("ide.plugins.suggest.install.optional.dependencies")) {
-        if (!prepareDependencies(pluginNode, optionalDeps, "plugin.manager.optional.dependencies.detected.title",
-                                 "plugin.manager.optional.dependencies.detected.message")) {
-          return false;
-        }
+      PluginNode depPluginDescriptor = findPluginInRepo(depPluginId);
+      if (depPluginDescriptor != null) {
+        (dependency.isOptional() ? optionalDeps : depends).add(depPluginDescriptor);
       }
     }
-    return true;
+
+    if (!prepareDependencies(pluginNode, depends, "plugin.manager.dependencies.detected.title",
+                             "plugin.manager.dependencies.detected.message")) {
+      return false;
+    }
+
+    return !Registry.is("ide.plugins.suggest.install.optional.dependencies") ||
+           prepareDependencies(pluginNode, optionalDeps, "plugin.manager.optional.dependencies.detected.title",
+                               "plugin.manager.optional.dependencies.detected.message");
   }
 
   private boolean prepareDependencies(@NotNull IdeaPluginDescriptor pluginNode,
@@ -438,40 +429,36 @@ public final class PluginInstallOperation {
     }
   }
 
-  private static @NotNull @Nls String getPluginsText(@NotNull List<PluginNode> pluginNodes) {
-    int size = pluginNodes.size();
+  private static @NotNull @Nls String getPluginsText(@NotNull List<PluginNode> nodes) {
+    List<String> pluginNames = ContainerUtil.map(nodes,
+                                                 node -> StringUtil.wrapWithDoubleQuote(node.getName()));
+
+    int size = pluginNames.size();
     if (size == 1) {
-      return "\"" + pluginNodes.get(0).getName() + "\" plugin";
+      return pluginNames.get(0);
     }
-    return StringUtil.join(pluginNodes.subList(0, size - 1), node -> "\"" + node.getName() + "\"", ", ") +
-           " and \"" +
-           pluginNodes.get(size - 1) +
-           "\" plugins";
+
+    return NlsMessages.formatAndList(pluginNames);
   }
 
   /**
    * Searches for plugin with id 'depPluginId' in custom repos and Marketplace and then takes one with bigger version number
    */
-  private @Nullable IdeaPluginDescriptor findPluginInRepo(@NotNull PluginId depPluginId) {
-    IdeaPluginDescriptor pluginFromCustomRepos = myCustomReposPlugins
-      .stream()
+  private @Nullable PluginNode findPluginInRepo(@NotNull PluginId depPluginId) {
+    PluginNode pluginFromCustomRepos = myCustomReposPlugins.stream()
       .parallel()
       .filter(p -> p.getPluginId().equals(depPluginId))
       .findAny()
       .orElse(null);
-    PluginNode pluginFromMarketplace = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(depPluginId);
-    if (pluginFromCustomRepos == null) {
-      return pluginFromMarketplace;
-    }
-    if (pluginFromMarketplace == null) {
-      return pluginFromCustomRepos;
-    }
-    if (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginFromCustomRepos.getVersion(), pluginFromMarketplace) > 0) {
-      return pluginFromCustomRepos;
-    }
-    else {
-      return pluginFromMarketplace;
-    }
+
+    PluginNode pluginFromMarketplace = MarketplaceRequests.getInstance()
+      .getLastCompatiblePluginUpdate(depPluginId);
+
+    boolean fromCustomRepos = pluginFromMarketplace == null ||
+                              pluginFromCustomRepos != null &&
+                              PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginFromCustomRepos.getVersion(),
+                                                                                        pluginFromMarketplace) > 0;
+    return fromCustomRepos ? pluginFromCustomRepos : pluginFromMarketplace;
   }
 
   private static @Nullable PluginId getCachedPluginId(@NotNull String pluginId) {

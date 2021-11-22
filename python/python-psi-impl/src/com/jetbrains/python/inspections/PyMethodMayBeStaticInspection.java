@@ -55,7 +55,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(@NotNull PyFunction node) {
-      if (PyNames.getBuiltinMethods(LanguageLevel.forElement(node)).containsKey(node.getName())) return;
+      if (isBuiltin(node)) return;
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
       final PsiElement firstSuper = PySuperMethodsSearch.search(node, myTypeEvalContext).findFirst();
@@ -128,6 +128,11 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
                         null, new PyMakeMethodStaticQuickFix(), new PyMakeFunctionFromMethodQuickFix());
       }
     }
+  }
+
+  private static boolean isBuiltin(@NotNull PyFunction node) {
+    final var name = node.getName();
+    return name != null && PyNames.getBuiltinMethods(LanguageLevel.forElement(node)).containsKey(name);
   }
 
   private static boolean isTestElement(@NotNull PyFunction node) {

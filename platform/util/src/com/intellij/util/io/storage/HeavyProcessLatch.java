@@ -164,7 +164,7 @@ public final class HeavyProcessLatch {
 
   private static class Op implements Operation {
     private final Type myType;
-    private final String myDisplayName;
+    private final @NotNull @Nls String myDisplayName;
 
     Op(@NotNull Type type, @NotNull @Nls String displayName) {
       myType = type;

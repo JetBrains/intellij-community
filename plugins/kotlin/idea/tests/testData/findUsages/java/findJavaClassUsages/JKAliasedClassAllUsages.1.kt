@@ -1,5 +1,7 @@
 import AAA as A
-public class X(bar: String? = A.BAR): A() {
+import AAA
+
+public class X(bar: String? = A.BAR) : A() {
     var next: A? = A()
     val myBar: String? = A.BAR
 
@@ -13,7 +15,7 @@ public class X(bar: String? = A.BAR): A() {
         aa.bar = ""
     }
 
-    fun getNext(): A? {
+    fun getNextFun(): A? {
         return next
     }
 
@@ -21,12 +23,12 @@ public class X(bar: String? = A.BAR): A() {
         super<A>.foo()
     }
 
-    companion object: AAA() {
+    companion object : AAA() {
 
     }
 }
 
-object O: A() {
+object O : A() {
 
 }
 

@@ -116,7 +116,7 @@ public final class MouseWheelSmoothScroll {
 
   static class InertialAnimator implements ActionListener {
 
-    private final static int REFRESH_TIME = 1000 / 144;
+    private final static int REFRESH_TIME = 1000 / 250;
     private double myInitValue = Double.NaN, myCurrentValue = Double.NaN, myTargetValue = Double.NaN;
     private long myStartEventTime = -1, myLastEventTime = -1, myDuration = -1;
     private AnimationSettings mySettings;

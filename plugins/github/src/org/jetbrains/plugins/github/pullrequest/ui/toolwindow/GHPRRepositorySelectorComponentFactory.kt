@@ -2,13 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
@@ -87,21 +86,18 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
 
-    val applyButton = JButton(applyAction).apply {
+    val applyButton = JButton(applyAction).defaultButton().apply {
       isOpaque = false
-      ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
       controlVisibilityFromAction(this, applyAction)
     }
 
-    val githubLoginButton = JButton(githubLoginAction).apply {
+    val githubLoginButton = JButton(githubLoginAction).defaultButton().apply {
       isOpaque = false
-      ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
       controlVisibilityFromAction(this, githubLoginAction)
     }
     val tokenLoginLink = createLinkLabel(tokenLoginAction)
-    val gheLoginButton = JButton(gheLoginAction).apply {
+    val gheLoginButton = JButton(gheLoginAction).defaultButton().apply {
       isOpaque = false
-      ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
       controlVisibilityFromAction(this, gheLoginAction)
     }
     val actionsPanel = JPanel(HorizontalLayout(UI.scale(16))).apply {

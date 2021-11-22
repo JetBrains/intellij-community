@@ -16,11 +16,11 @@ import com.sun.jdi.*
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 
 fun StackFrameProxyImpl.safeVisibleVariables(): List<LocalVariableProxyImpl> {
-    return wrapAbsentInformationException { visibleVariables() } ?: emptyList()
+    return wrapEvaluateException { visibleVariables() } ?: emptyList()
 }
 
 fun StackFrameProxyImpl.safeVisibleVariableByName(name: String): LocalVariableProxyImpl? {
-    return wrapAbsentInformationException { visibleVariableByName(name) }
+    return wrapEvaluateException { visibleVariableByName(name) }
 }
 
 fun StackFrame.safeVisibleVariables(): List<LocalVariable> {
@@ -77,6 +77,10 @@ fun StackFrameProxy.safeStackFrame(): StackFrame? {
 
 fun StackFrameProxyImpl.safeThreadProxy(): ThreadReferenceProxyImpl? {
     return wrapEvaluateException { this.threadProxy() }
+}
+
+fun StackFrameProxyImpl.safeThisObject(): ObjectReference? {
+    return wrapEvaluateException { thisObject() }
 }
 
 fun Location.safeSourceName(): String? {

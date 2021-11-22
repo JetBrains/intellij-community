@@ -229,7 +229,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
         else if (r.equals(ref)) {
           final TextRange range = r.getRangeInElement();
           final int oldLength = range.getLength();
-          lengthDelta = new Integer(newText.length() - oldLength);
+          lengthDelta = Integer.valueOf(newText.length() - oldLength);
           r.setRangeInElement(range.grown(lengthDelta));
         }
       }

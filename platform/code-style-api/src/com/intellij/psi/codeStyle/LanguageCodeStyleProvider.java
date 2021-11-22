@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+/**
+ * Can be obtained via {@link CodeStyleSettingsService#getLanguageCodeStyleProvider(Language)}
+ */
 @ApiStatus.Internal
 public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactory {
   @NotNull

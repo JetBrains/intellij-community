@@ -9,6 +9,7 @@ import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -183,7 +184,12 @@ var <PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION><MUTABLE_VARIABLE>globalCounte
     }
 
     override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY
-    override fun getDisplayName(): String = KotlinLanguage.NAME
+    override fun getDisplayName(): String {
+        @Suppress("UnnecessaryVariable")
+        @NlsSafe
+        val name = KotlinLanguage.NAME
+        return name
+    }
 
     override fun isRainbowType(type: TextAttributesKey): Boolean {
         return type == KotlinHighlightingColors.LOCAL_VARIABLE ||

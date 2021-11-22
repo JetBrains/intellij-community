@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -154,7 +154,7 @@ class SubmittableTextField(
       }
 
       override fun getData(dataId: String): Any? {
-        if (PlatformDataKeys.FILE_EDITOR.`is`(dataId)) {
+        if (PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId)) {
           return editor?.let { TextEditorProvider.getInstance().getTextEditor(it) } ?: super.getData(dataId)
         }
         return super.getData(dataId)

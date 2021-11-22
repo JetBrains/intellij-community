@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.actions.internal
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -17,6 +16,7 @@ import com.intellij.util.ui.EmptyClipboardOwner
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.buildNumber
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
@@ -42,7 +42,7 @@ class CopyKotlinProjectOverviewAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isVisible = ApplicationManager.getApplication().isInternal
+        e.presentation.isVisible = isApplicationInternalMode()
 
         val project = e.getData(CommonDataKeys.PROJECT)
         e.presentation.isEnabled = project != null

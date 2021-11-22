@@ -72,8 +72,7 @@ class GradleModuleTransformer : ModuleTransformer {
         project: Project,
         buildVirtualFile: VirtualFile
     ) =
-        runCatching { PsiManager.getInstance(project).findFile(buildVirtualFile) }
-            .getOrNull()
+        PsiManager.getInstance(project).findFile(buildVirtualFile)
             ?.language
             ?.displayName
             ?.contains("kotlin", ignoreCase = true) == true

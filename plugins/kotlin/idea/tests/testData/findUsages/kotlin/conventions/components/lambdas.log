@@ -15,7 +15,7 @@ Used plain search of parameter a of A(val a: Int, val b: Int) in LocalSearchScop
     CLASS:A
     FUN:null
     { a, n -> val (x, y) = a!! }
-    { val (x, y ) = it }
+    { val (x, y) = it }
     { val (x, y) = it }
     { val (x, y) = it }
     { val (x, y) = it }

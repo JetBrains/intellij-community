@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -33,7 +33,7 @@ public final class LambdaUtil {
   }
 
   public static @Nullable PsiType getFunctionalInterfaceReturnType(@Nullable PsiType functionalInterfaceType) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(normalizeFunctionalType(functionalInterfaceType));
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass != null) {
       final MethodSignature methodSignature = getFunction(psiClass);
@@ -47,7 +47,21 @@ public final class LambdaUtil {
 
   @Contract("null -> null")
   public static @Nullable PsiMethod getFunctionalInterfaceMethod(@Nullable PsiType functionalInterfaceType) {
-    return getFunctionalInterfaceMethod(PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
+    return getFunctionalInterfaceMethod(PsiUtil.resolveGenericsClassInType(normalizeFunctionalType(functionalInterfaceType)));
+  }
+
+  /**
+   * Extract functional interface from intersection
+   */
+  @Nullable
+  public static PsiType normalizeFunctionalType(@Nullable PsiType functionalInterfaceType) {
+    if (functionalInterfaceType instanceof PsiIntersectionType) {
+      PsiType functionalConjunct = extractFunctionalConjunct((PsiIntersectionType)functionalInterfaceType);
+      if (functionalConjunct != null) {
+        functionalInterfaceType = functionalConjunct;
+      }
+    }
+    return functionalInterfaceType;
   }
 
   public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiElement element) {
@@ -87,10 +101,7 @@ public final class LambdaUtil {
   }
 
   public static boolean isFunctionalType(PsiType type) {
-    if (type instanceof PsiIntersectionType) {
-      return extractFunctionalConjunct((PsiIntersectionType)type) != null;
-    }
-    return isFunctionalClass(PsiUtil.resolveClassInClassTypeOnly(type));
+    return isFunctionalClass(PsiUtil.resolveClassInClassTypeOnly(normalizeFunctionalType(type)));
   }
 
   @Contract("null -> false")

@@ -18,7 +18,7 @@ public final class ContentManagerWatcher {
   }
 
   public static void watchContentManager(@NotNull ToolWindow toolWindow, @NotNull ContentManager contentManager) {
-    toolWindow.setAvailable(contentManager.getContentCount() > 0);
+    toolWindow.setAvailable(!contentManager.isEmpty());
 
     contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
@@ -28,7 +28,7 @@ public final class ContentManagerWatcher {
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent e) {
-        toolWindow.setAvailable(contentManager.getContentCount() > 0);
+        toolWindow.setAvailable(!contentManager.isEmpty());
       }
     });
   }

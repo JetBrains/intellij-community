@@ -707,7 +707,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                 NULL_MAVEN_CONSOLE,
                                 getMavenProgressIndicator()
       );
-      myProjectResolver.resolvePlugins(parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
+      myProjectResolver.resolvePlugins(myProject, parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
       myProjectResolver
         .resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
     }
@@ -1851,8 +1851,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     updateAll(myProjectPom);
 
-    MyLoggingListener l = new MyLoggingListener();
-
     createProfilesXmlOldStyle("<profile>" +
                               "  <id>one</id>" +
                               "  <activation>" +
@@ -1864,7 +1862,10 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                               "</profile>");
 
     updateAll(myProjectPom);
-    assertEquals("updated: project deleted: <none> ", l.log);
+
+    List<VirtualFile> existingManagedFiles = myTree.getExistingManagedFiles();
+    List<VirtualFile> obsoleteFiles = myTree.getRootProjectsFiles();
+    assertEquals(existingManagedFiles, obsoleteFiles);
   }
 
   @Test 

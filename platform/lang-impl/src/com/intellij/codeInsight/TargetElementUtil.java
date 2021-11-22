@@ -12,8 +12,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -99,7 +99,7 @@ public class TargetElementUtil  {
 
   public static boolean inVirtualSpace(@NotNull Editor editor, int offset) {
     return offset == editor.getCaretModel().getOffset()
-           && EditorUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
+           && EditorCoreUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
   }
 
   /**

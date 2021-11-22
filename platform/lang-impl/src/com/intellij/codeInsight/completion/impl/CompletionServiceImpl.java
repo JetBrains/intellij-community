@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
@@ -76,11 +77,11 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   }
 
   @Override
-  public void setAdvertisementText(@Nullable final String text) {
+  public void setAdvertisementText(@NlsContexts.PopupAdvertisement @Nullable final String text) {
     setAdvertisementText(ClientId.getCurrent(), text);
   }
 
-  private static void setAdvertisementText(@NotNull ClientId clientId, @Nullable final String text) {
+  private static void setAdvertisementText(@NotNull ClientId clientId, @NlsContexts.PopupAdvertisement @Nullable final String text) {
     if (text == null) return;
     final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator(clientId);
     if (completion != null) {

@@ -7,7 +7,7 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,7 +26,7 @@ public class GotoResourceBundleLocalizationsProvider extends GotoRelatedProvider
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull final DataContext context) {
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
+    final FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof ResourceBundleEditor) {
       return Collections.emptyList();
     }

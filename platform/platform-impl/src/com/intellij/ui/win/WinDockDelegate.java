@@ -20,6 +20,9 @@ import org.jetbrains.annotations.SystemIndependent;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -33,27 +36,37 @@ public final class WinDockDelegate implements SystemDock.Delegate {
 
   @Override
   public void updateRecentProjectsMenu() {
-    final List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
+    final var stackTraceHolder = new Throwable("Asynchronously launched from here");
 
-    final @NotNull JumpTask @NotNull [] jumpTasks = convertToJumpTasks(recentProjectActions);
+    ForkJoinPool.commonPool().execute(() -> {
+      try {
+        final var wsi = wsiFuture.get(30, TimeUnit.SECONDS);
+        if (wsi == null) {
+          return;
+        }
 
-    try {
-      wsi.postShellTask((@NotNull final WinShellIntegration.ShellContext ctx) -> {
-        ctx.clearRecentTasksList();
-        ctx.setRecentTasksList(jumpTasks);
-      }).get();
-    }
-    catch (final InterruptedException e) {
-      LOG.warn(e);
-    }
-    catch (final Throwable e) {
-      LOG.error(e);
-    }
+        final List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
+        final @NotNull JumpTask @NotNull [] jumpTasks = convertToJumpTasks(recentProjectActions);
+
+        wsi.postShellTask((final @NotNull WinShellIntegration.ShellContext ctx) -> {
+          ctx.clearRecentTasksList();
+          ctx.setRecentTasksList(jumpTasks);
+        }).get();
+      }
+      catch (final InterruptedException e) {
+        e.addSuppressed(stackTraceHolder);
+        LOG.warn(e);
+      }
+      catch (final Throwable e) {
+        e.addSuppressed(stackTraceHolder);
+        LOG.error(e);
+      }
+    });
   }
 
 
-  private WinDockDelegate(@NotNull final WinShellIntegration wsi) {
-    this.wsi = wsi;
+  private WinDockDelegate(final @NotNull Future<@Nullable WinShellIntegration> wsiFuture) {
+    this.wsiFuture = wsiFuture;
   }
 
 
@@ -114,28 +127,31 @@ public final class WinDockDelegate implements SystemDock.Delegate {
   }
 
 
-  private final @NotNull WinShellIntegration wsi;
+  private final @NotNull Future<@Nullable WinShellIntegration> wsiFuture;
 
 
   private static final Logger LOG = Logger.getInstance(WinDockDelegate.class);
   private static final @Nullable WinDockDelegate instance;
 
   static {
-    @Nullable WinDockDelegate instanceInitializer = null;
+    final var stackTraceHolder = new Throwable("Asynchronously launched from here");
 
-    try {
-      if (Registry.is("windows.jumplist")) {
-        final @Nullable var wsi = WinShellIntegration.getInstance();
-        if (wsi != null) {
-          instanceInitializer = new WinDockDelegate(WinShellIntegration.getInstance());
+    //                                                          Not AppExecutorUtil.getAppExecutorService() for class loading optimization
+    final @NotNull Future<@Nullable WinShellIntegration> wsiFuture = ForkJoinPool.commonPool().submit(() -> {
+      try {
+        if (!Registry.is("windows.jumplist")) {
+          return null;
         }
-      }
-    }
-    catch (Throwable err) {
-      LOG.error(err);
-      instanceInitializer = null;
-    }
 
-    instance = instanceInitializer;
+        return WinShellIntegration.getInstance();
+      }
+      catch (final Throwable err) {
+        err.addSuppressed(stackTraceHolder);
+        LOG.error("Failed to initialize com.intellij.ui.win.WinShellIntegration instance", err);
+        return null;
+      }
+    });
+
+    instance = new WinDockDelegate(wsiFuture);
   }
 }

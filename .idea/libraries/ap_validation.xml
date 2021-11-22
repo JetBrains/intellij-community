@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ap-validation" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:ap-validation:0.0.9">
+    <properties maven-id="org.jetbrains.intellij.deps:ap-validation:0.0.20">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
@@ -10,11 +10,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ap-validation/0.0.9/ap-validation-0.0.9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ap-validation/0.0.20/ap-validation-0.0.20.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/model/53/model-53.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ap-validation/0.0.9/ap-validation-0.0.9-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ap-validation/0.0.20/ap-validation-0.0.20-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/model/53/model-53-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

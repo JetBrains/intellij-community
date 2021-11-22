@@ -5,6 +5,9 @@ import com.intellij.internal.psiView.PsiViewerDialog;
 import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -20,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -30,6 +34,7 @@ import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +47,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
@@ -57,6 +61,8 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
   private AbstractTreeModel myTreeModel;
   @NotNull
   private final Tree myStubTree;
+  @NotNull
+  private final StubDetailsViewer myStubDetailsViewer;
   @Nullable
   private JPanel myPanel;
   @NotNull
@@ -66,13 +72,14 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @NotNull
   private volatile Map<ASTNode, StubElement<?>> myNodeToStubs = new BidirectionalMap<>();
-  private Disposable myTreeModelDisposable = Disposer.newDisposable();
+  Disposable myTreeModelDisposable = Disposer.newDisposable();
 
 
   public StubViewerPsiBasedTree(@NotNull Project project, @NotNull PsiTreeUpdater updater) {
     myProject = project;
     myUpdater = updater;
     myStubTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
+    myStubDetailsViewer = new StubDetailsViewer(this);
   }
 
   @Override
@@ -94,13 +101,22 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     ViewerPsiBasedTree.removeListenerOfClass(myStubTree, StubTreeSelectionListener.class);
   }
 
+
   @NotNull
   @Override
   public JComponent getComponent() {
     if (myPanel != null) return myPanel;
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(ScrollPaneFactory.createScrollPane(myStubTree));
-    panel.setBorder(IdeBorderFactory.createBorder());
+
+    JBSplitter splitter = new JBSplitter("StubViewer.showPreviewDetails.proportion", 0.7f);
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myStubTree, true));
+    AnAction action = myStubDetailsViewer.addComponent(splitter);
+
+    ActionToolbarImpl toolbar = new ActionToolbarImpl("Stub Viewer", new DefaultActionGroup(action), false);
+    toolbar.setTargetComponent(splitter);
+
+    BorderLayoutPanel panel = new BorderLayoutPanel();
+    panel.addToCenter(splitter).addToRight(toolbar).setBorder(IdeBorderFactory.createBorder());
+
     initTree(myStubTree);
     myPanel = panel;
     return panel;
@@ -234,17 +250,23 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       StubElement<?> topLevelStub = rootNode == null ? null : rootNode.getStub();
       if (!(topLevelStub instanceof PsiFileStub)) return;
 
-      TreePath selectionPath = myStubTree.getSelectionPath();
-      if (selectionPath == null) return;
-
-      StubElement<?> stub = ((StubTreeNode)((DefaultMutableTreeNode)selectionPath.getLastPathComponent()).getUserObject()).getStub();
+      StubElement<?> stub = getSelectedStub();
+      if (stub == null) return;
       PsiElement result = getPsiElementForStub(stub);
 
 
       if (result != null) {
         myUpdater.updatePsiTree(result, myStubTree.hasFocus() ? result.getTextRange() : null);
+        myStubDetailsViewer.valueChanged(stub);
       }
     }
+  }
+
+  @Nullable StubElement<?> getSelectedStub() {
+    TreePath selectionPath = myStubTree.getSelectionPath();
+    return selectionPath != null
+           ? ((StubTreeNode)((DefaultMutableTreeNode)selectionPath.getLastPathComponent()).getUserObject()).getStub()
+           : null;
   }
 
   private DefaultMutableTreeNode getRoot() {

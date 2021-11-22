@@ -6,9 +6,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -414,7 +414,7 @@ public final class JavaBuilderUtil {
     if (!dirtyFilesHolder.hasRemovedFiles()) {
       return Collections.emptySet();
     }
-    final Set<String> removed = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> removed = CollectionFactory.createFilePathSet();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       removed.addAll(dirtyFilesHolder.getRemovedFiles(target));
     }

@@ -13,7 +13,7 @@ fun bar(x: X<String>) {
     x.foo(1, 2)
 }
 
-open class A<T>: X<T> {
+open class A<T> : X<T> {
     open fun <caret>foo(t: T) {
         println(t)
     }
@@ -45,5 +45,3 @@ fun B.foo(s: String, n: Number) {
 fun bar(b: B) {
     b.foo("", 0)
 }
-
-// DISABLE-ERRORS

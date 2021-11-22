@@ -307,7 +307,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
     if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return "reference.toolWindows.favorites";
     }
     if (LangDataKeys.NO_NEW_ACTION.is(dataId)) {

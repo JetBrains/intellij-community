@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.google.gson.JsonElement
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions
@@ -237,8 +238,8 @@ internal class ToolboxUpdateServiceTest {
     val token = UUID.randomUUID().toString()
     val url = "http://localhost:${BuiltInServerManager.getInstance().port}/api/toolbox/$action"
 
-    withSystemProperty("toolbox.heartbeat.millis", "10") {
-      withSystemProperty("toolbox.notification.token", token) {
+    PlatformTestUtil.withSystemProperty<Nothing>("toolbox.heartbeat.millis", "10") {
+      PlatformTestUtil.withSystemProperty<Nothing>("toolbox.notification.token", token) {
         val builder = HttpRequest.newBuilder(URI(url))
         if (includeToken) {
           builder.header("Authorization", "toolbox $token")
@@ -250,26 +251,11 @@ internal class ToolboxUpdateServiceTest {
         Assertions.assertThat(HttpResponseStatus.valueOf(response.statusCode())).isEqualTo(responseStatus)
         try {
           body(response)
-        } finally {
+        }
+        finally {
           runCatching { response.body()?.close() }
         }
       }
-    }
-  }
-}
-
-private inline fun <Y> withSystemProperty(key: String, value: String, action: () -> Y): Y {
-  val old = System.getProperty(key)
-  System.setProperty(key, value)
-  try {
-    return action()
-  }
-  finally {
-    if (old == null) {
-      System.clearProperty(key)
-    }
-    else {
-      System.setProperty(key, old)
     }
   }
 }

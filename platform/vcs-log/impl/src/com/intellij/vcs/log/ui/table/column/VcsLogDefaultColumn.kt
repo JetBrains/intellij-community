@@ -157,12 +157,7 @@ internal object Hash : VcsLogDefaultColumn<String>("Default.Hash", VcsLogBundle.
 }
 
 private fun updateTableOnCommitDetailsLoaded(column: VcsLogColumn<*>, graphTable: VcsLogGraphTable) {
-  val miniDetailsLoadedListener = Runnable {
-    if (graphTable.getTableColumn(column) != null) {
-      graphTable.reLayout()
-      graphTable.repaint()
-    }
-  }
+  val miniDetailsLoadedListener = Runnable { graphTable.onColumnDataChanged(column) }
   graphTable.logData.miniDetailsGetter.addDetailsLoadedListener(miniDetailsLoadedListener)
   Disposer.register(graphTable) {
     graphTable.logData.miniDetailsGetter.removeDetailsLoadedListener(miniDetailsLoadedListener)

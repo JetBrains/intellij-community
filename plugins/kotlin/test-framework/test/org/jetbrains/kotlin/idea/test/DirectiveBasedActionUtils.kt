@@ -13,8 +13,10 @@ import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 
 object DirectiveBasedActionUtils {
+    const val DISABLE_ERRORS_DIRECTIVE = "// DISABLE-ERRORS"
+
     fun checkForUnexpectedErrors(file: KtFile, diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }) {
-        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// DISABLE-ERRORS").isNotEmpty()) {
+        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
             return
         }
 
@@ -45,7 +47,8 @@ object DirectiveBasedActionUtils {
             .sorted()
 
         UsefulTestCase.assertOrderedEquals(
-            "All actual $name should be mentioned in test data with '$directive' directive. But no unnecessary $name should be me mentioned",
+            "All actual $name should be mentioned in test data with '$directive' directive. " +
+                    "But no unnecessary $name should be me mentioned, file:\n${file.text}",
             actual,
             expected
         )

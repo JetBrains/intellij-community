@@ -9,15 +9,17 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.service.TemplateEngineService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.ModuleConfiguratorWithTests
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.isPresent
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.KotlinTestFramework
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.settingValue
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectName
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.updateBuildFiles
+import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.InterceptionPoint
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.TemplateInterceptionApplicationState
@@ -157,13 +159,14 @@ class TemplatesPlugin(context: Context) : Plugin(context) {
 
         private fun Reader.defaultSettings(moduleIR: ModuleIR) = mapOf(
             "projectName" to projectName,
-            "moduleName" to moduleIR.name
+            "moduleName" to moduleIR.name,
+            "package" to moduleIR.originalModule.javaPackage(pomIR()).asCodePackage()
         )
 
         private fun Reader.generatePathForFileTemplate(module: ModuleIR, filePath: FilePath): Path? {
             if (filePath is SrcFilePath
                 && filePath.sourcesetType == SourcesetType.test
-                && settingValue(module.originalModule, ModuleConfiguratorWithTests.testFramework)?.isPresent != true
+                && settingValue(module.originalModule, JvmModuleConfigurator.testFramework) == KotlinTestFramework.NONE
             ) return null
             val moduleConfigurator = module.originalModule.configurator
             return when (module) {

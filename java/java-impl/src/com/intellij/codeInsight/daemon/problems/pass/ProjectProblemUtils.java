@@ -1,18 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider;
+import com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.problems.Problem;
-import com.intellij.codeInsight.hints.presentation.WithAttributesPresentation;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.MouseButton;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
+import com.intellij.codeInsight.hints.presentation.WithAttributesPresentation;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.jvm.JvmLanguage;
 import com.intellij.openapi.editor.Document;
@@ -84,8 +83,7 @@ public final class ProjectProblemUtils {
   }
 
   private static void showProblems(@NotNull Editor editor, @NotNull PsiMember member) {
-    FUCounterUsageLogger.getInstance().logEvent(member.getProject(), JavaCodeVisionProvider.FUS_GROUP_ID, RELATED_PROBLEMS_CLICKED_EVENT_ID);
-
+    JavaCodeVisionUsageCollector.RELATED_PROBLEMS_CLICKED_EVENT_ID.log(member.getProject());
     Map<PsiMember, Set<Problem>> problems = getReportedProblems(editor);
     Set<Problem> relatedProblems = problems.get(member);
     if (relatedProblems == null || relatedProblems.isEmpty()) return;

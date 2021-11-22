@@ -106,5 +106,6 @@ message CommandLine {
   string in_file = 3;
   string out_file = 4;
   string err_file = 5;
-  map<string, string> environ = 6;
+  bool redirect_error_stream = 6;
+  map<string, string> environ = 7;
 }

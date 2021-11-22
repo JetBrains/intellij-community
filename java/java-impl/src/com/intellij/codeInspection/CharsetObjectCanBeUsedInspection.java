@@ -258,7 +258,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getName() {
-      return JavaBundle.message("inspection.charset.object.can.be.used.fix.name", myConstantName);
+      return CommonQuickFixBundle.message("fix.replace.with.x", myConstantName);
     }
 
     @Nls

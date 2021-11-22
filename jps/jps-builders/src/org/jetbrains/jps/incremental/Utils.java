@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -104,5 +105,30 @@ public final class Utils {
       return -1; // in case of int overflow, return -1 to let VM choose the heap size
     }
     return Math.max(maxMbytes, 256); // per-forked process: minimum 256 Mb
+  }
+
+  /**
+   * @param count initial counter value
+   * @param operation a runnable to be warapped
+   * @return wraps given Runnable operation so that resulting Runnable is executed every 'count' invocation of run() method
+   */
+  public static Runnable asCountedRunnable(int count, Runnable operation) {
+    return new Runnable() {
+      private final AtomicInteger myCounter = new AtomicInteger(count);
+      @Override
+      public void run() {
+        int currentVal = myCounter.decrementAndGet();
+        if (currentVal % count == 0) {
+          try {
+            operation.run();
+          }
+          finally {
+            while (currentVal <= 0 && !myCounter.compareAndSet(currentVal, count + (currentVal % count))) { // restore the counter
+              currentVal = myCounter.get();
+            }
+          }
+        }
+      }
+    };
   }
 }

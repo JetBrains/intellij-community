@@ -13,17 +13,17 @@ class BaseProtectedConstructor {
 internal class DerivedSamePackage {
     private val i = BaseProtectedConstructor().usageInPropertyInitializer()
 
-    companion object {
-        init {
-            BaseProtectedConstructor().usageInStaticInit()
-        }
+    init {
+        BaseProtectedConstructor().usageInConstructor()
     }
 
     fun usage() {
         BaseProtectedConstructor().usageInMethod()
     }
 
-    init {
-        BaseProtectedConstructor().usageInConstructor()
+    companion object {
+        init {
+            BaseProtectedConstructor().usageInStaticInit()
+        }
     }
 }

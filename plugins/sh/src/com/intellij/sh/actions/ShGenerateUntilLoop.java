@@ -8,7 +8,6 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
 public class ShGenerateUntilLoop extends ShBaseGenerateAction {
@@ -26,6 +25,5 @@ public class ShGenerateUntilLoop extends ShBaseGenerateAction {
 
     moveAtNewLineIfNeeded(editor);
     templateManager.startTemplate(editor, template);
-    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
   }
 }

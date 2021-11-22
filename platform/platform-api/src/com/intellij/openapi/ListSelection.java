@@ -61,6 +61,10 @@ public final class ListSelection<T> {
     return myList.isEmpty();
   }
 
+  /**
+   * Map all elements in the list and remove elements for which converter returned null.
+   * If selected element was removed, select remaining element before it.
+   */
   @NotNull
   public <V> ListSelection<V> map(@NotNull NullableFunction<? super T, ? extends V> convertor) {
     int newSelectionIndex = -1;

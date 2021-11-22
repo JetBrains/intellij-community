@@ -4,6 +4,7 @@ package com.intellij.openapi.progress.impl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -213,14 +214,23 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // run in the current thread (?)
   @Override
   public void executeNonCancelableSection(@NotNull Runnable runnable) {
+    computeInNonCancelableSection(() -> {
+      runnable.run();
+      return null;
+    });
+  }
+
+  // FROM EDT: bg OR calling if can't
+  @Override
+  public <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E {
     try {
       if (isInNonCancelableSection()) {
-        runnable.run();
+        return computable.compute();
       }
       else {
         try {
           isInNonCancelableSection.set(Boolean.TRUE);
-          executeProcessUnderProgress(runnable, NonCancelableIndicator.INSTANCE);
+          return computeUnderProgress(computable, NonCancelableIndicator.INSTANCE);
         }
         finally {
           isInNonCancelableSection.remove();
@@ -228,32 +238,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
     }
     catch (ProcessCanceledException e) {
-      LOG.error("PCE is not expected in non-cancellable section execution", new Exception(e));
+      throw new RuntimeException("PCE is not expected in non-cancellable section execution", e);
     }
-  }
-
-  // FROM EDT: bg OR calling if can't
-  @Override
-  public <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E {
-    Ref<T> result = new Ref<>();
-    Ref<Exception> exception = new Ref<>();
-    executeNonCancelableSection(() -> {
-      try {
-        result.set(computable.compute());
-      }
-      catch (Exception t) {
-        exception.set(t);
-      }
-    });
-
-    Throwable t = exception.get();
-    if (t != null) {
-      ExceptionUtil.rethrowUnchecked(t);
-      @SuppressWarnings("unchecked") E e = (E)t;
-      throw e;
-    }
-
-    return result.get();
   }
 
   @Override
@@ -317,17 +303,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                    @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                    @NotNull Runnable process,
                                                    @Nullable Runnable successRunnable,
-                                                   @Nullable Runnable canceledRunnable) {
-    runProcessWithProgressAsynchronously(project, progressTitle, process, successRunnable, canceledRunnable,
-                                         PerformInBackgroundOption.DEAF);
-  }
-
-  // bg; runnables on UI/EDT?
-  @Override
-  public void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                   @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                                   @NotNull Runnable process,
-                                                   @Nullable Runnable successRunnable,
                                                    @Nullable Runnable canceledRunnable,
                                                    @NotNull PerformInBackgroundOption option) {
     runProcessWithProgressAsynchronously(new Task.Backgroundable(project, progressTitle, true, option) {
@@ -381,6 +356,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @ApiStatus.Internal
   public static boolean shouldKeepTasksAsynchronousInHeadlessMode() {
     return SystemProperties.getBooleanProperty("intellij.progress.task.ignoreHeadless", false);
+  }
+
+  @ApiStatus.Internal
+  public static boolean shouldKeepTasksAsynchronous() {
+    Application application = ApplicationManager.getApplication();
+    boolean isHeadless = application.isUnitTestMode() || application.isHeadlessEnvironment();
+    return !isHeadless || shouldKeepTasksAsynchronousInHeadlessMode();
   }
 
   // from any: bg or current if can't
@@ -634,6 +616,19 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // run in current thread
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
+    computeUnderProgress(() -> {
+      process.run();
+      return null;
+    }, progress);
+  }
+
+  @Override
+  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action, @Nullable ProgressIndicator indicator) {
+    ApplicationManager.getApplication().runReadAction(action);
+    return true;
+  }
+
+  private <V, E extends Throwable> V computeUnderProgress(@NotNull ThrowableComputable<V, E> process, ProgressIndicator progress) throws E {
     if (progress == null) myUnsafeProgressCount.incrementAndGet();
 
     try {
@@ -644,14 +639,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         long threadId = currentThread.getId();
         setCurrentIndicator(threadId, progress);
         try {
-          registerIndicatorAndRun(progress, currentThread, oldIndicator, process);
+          return registerIndicatorAndRun(progress, currentThread, oldIndicator, process);
         }
         finally {
           setCurrentIndicator(threadId, oldIndicator);
         }
       }
       else {
-        process.run();
+        return process.compute();
       }
     }
     finally {
@@ -659,17 +654,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  @Override
-  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action, @Nullable ProgressIndicator indicator) {
-    ApplicationManager.getApplication().runReadAction(action);
-    return true;
-  }
-
   // this thread
-  private void registerIndicatorAndRun(@NotNull ProgressIndicator indicator,
-                                       @NotNull Thread currentThread,
-                                       ProgressIndicator oldIndicator,
-                                       @NotNull Runnable process) {
+  private <V, E extends Throwable> V registerIndicatorAndRun(@NotNull ProgressIndicator indicator,
+                                                             @NotNull Thread currentThread,
+                                                             ProgressIndicator oldIndicator,
+                                                             @NotNull ThrowableComputable<V, E> process) throws E {
     List<Set<Thread>> threadsUnderThisIndicator = new ArrayList<>();
     synchronized (threadsUnderIndicator) {
       boolean oneOfTheIndicatorsIsCanceled = false;
@@ -702,7 +691,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
 
     try {
-      process.run();
+      return process.compute();
     }
     finally {
       synchronized (threadsUnderIndicator) {

@@ -16,12 +16,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdkVersion {{compile_sdk_version}}
+    buildToolsVersion '{{build_tools_version}}'
     defaultConfig {
         applicationId 'org.jetbrains.kotlin.mpp_app_android'
         minSdkVersion 15
-        targetSdkVersion 28
+        targetSdkVersion {{compile_sdk_version}}
         versionCode 1
         versionName '1.0'
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'

@@ -9,16 +9,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
-import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
@@ -27,7 +26,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings
+import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
@@ -60,15 +59,12 @@ object MarkdownImportExportUtils {
    * if the directory is not specified, the base directory of the project is refreshed.
    */
   fun refreshProjectDirectory(project: Project, refreshPath: String) {
-    ModalityUiUtil.invokeLaterIfNeeded(
-      {
-        LocalFileSystem
-          .getInstance()
-          .refreshAndFindFileByIoFile(File(refreshPath))
-          ?.refresh(true, true)
-      },
-      ModalityState.defaultModalityState()
-    )
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState()) {
+      LocalFileSystem
+        .getInstance()
+        .refreshAndFindFileByIoFile(File(refreshPath))
+        ?.refresh(true, true)
+    }
   }
 
   /**
@@ -94,14 +90,17 @@ object MarkdownImportExportUtils {
    * converts the specified docx file using the pandoc utility,
    * and also calls the copy method for it to the same directory if the conversion was successful.
    */
-  fun copyAndConvertToMd(project: Project, vFileToImport: VirtualFile, selectedFileUrl: String) {
-    object : Task.Modal(project, MarkdownBundle.message("markdown.import.docx.convert"), true) {
+  fun copyAndConvertToMd(project: Project,
+                         vFileToImport: VirtualFile,
+                         selectedFileUrl: String,
+                         @NlsContexts.DialogTitle taskTitle: String) {
+    object : Task.Modal(project, taskTitle, true) {
       private lateinit var createdFilePath: String
       private lateinit var output: ProcessOutput
 
       private val dirToImport = File(selectedFileUrl).parent
       private val newFileName = File(selectedFileUrl).nameWithoutExtension
-      private val resourcesDir = PandocApplicationSettings.getInstance().state.myPathToImages ?: project.basePath!!
+      private val resourcesDir = PandocSettings.getInstance(project).pathToImages ?: project.basePath!!
 
       override fun run(indicator: ProgressIndicator) {
         val filePath = FileUtil.join(dirToImport, "${newFileName}.${MarkdownFileType.INSTANCE.defaultExtension}")
@@ -122,7 +121,6 @@ object MarkdownImportExportUtils {
 
       override fun onSuccess() {
         if (output.stderrLines.isEmpty()) {
-          vFileToImport.copySelectedFile(project, dirToImport, newFileName)
           OpenFileAction.openFile(createdFilePath, project)
         }
         else {
@@ -130,28 +128,6 @@ object MarkdownImportExportUtils {
         }
       }
     }.queue()
-  }
-
-  /**
-   * Copies the selected file to the specified directory.
-   * If the copying failed, sends a notification to the user about it.
-   */
-  private fun VirtualFile.copySelectedFile(project: Project, dirToImport: String, newFileName: String) {
-    val fileNameWithExtension = "$newFileName.${MarkdownDocxExportProvider.format.extension}"
-
-    try {
-      val localFS = LocalFileSystem.getInstance()
-      val dirToImportVF = localFS.findFileByPath(dirToImport) ?: localFS.findFileByPath(project.basePath!!)!!
-
-      runWriteAction {
-        val directory = PsiManager.getInstance(project).findDirectory(dirToImportVF)!!
-        val file = PsiManager.getInstance(project).findFile(this)!!
-        directory.copyFileFrom(fileNameWithExtension, file)
-      }
-    }
-    catch (exception: Throwable) {
-      MarkdownNotifier.notifyIfConvertFailed(project, "[$fileNameWithExtension] ${exception.localizedMessage}")
-    }
   }
 
   private const val TARGET_FORMAT_NAME = "markdown"

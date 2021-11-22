@@ -32,15 +32,7 @@ class LibraryStateSnapshot(
   val storage: WorkspaceEntityStorage,
   val libraryTable: LibraryTable,
   val parentDisposable: Disposable) {
-  private val roots = libraryEntity.roots.groupBy { it.type }.mapValues { (_, roots) ->
-    val urls = roots.filter { it.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }
-    val jarDirs = roots
-      .filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }
-      .map {
-        JarDirectoryDescription(it.url, it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY)
-      }
-    FileContainerDescription(urls, jarDirs)
-  }
+  private val roots = collectFiles(libraryEntity)
   private val excludedRootsContainer = if (libraryEntity.excludedRoots.isNotEmpty()) {
     FileContainerDescription(libraryEntity.excludedRoots,
                              emptyList())
@@ -106,4 +98,16 @@ class LibraryStateSnapshot(
 
   val externalSource: ProjectModelExternalSource?
     get() = (libraryEntity.entitySource as? JpsImportedEntitySource)?.toExternalSource()
+
+  companion object {
+    fun collectFiles(libraryEntity: LibraryEntity): Map<Any, FileContainerDescription> = libraryEntity.roots.groupBy { it.type }.mapValues { (_, roots) ->
+      val urls = roots.filter { it.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }
+      val jarDirs = roots
+        .filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }
+        .map {
+          JarDirectoryDescription(it.url, it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY)
+        }
+      FileContainerDescription(urls, jarDirs)
+    }
+  }
 }

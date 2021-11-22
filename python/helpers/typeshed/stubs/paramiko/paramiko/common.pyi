@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict, Protocol, Text, Union
+from typing import Protocol, Text, Union
 
 MSG_DISCONNECT: int
 MSG_IGNORE: int
@@ -74,7 +74,7 @@ cMSG_CHANNEL_REQUEST: bytes
 cMSG_CHANNEL_SUCCESS: bytes
 cMSG_CHANNEL_FAILURE: bytes
 
-MSG_NAMES: Dict[int, str]
+MSG_NAMES: dict[int, str]
 
 AUTH_SUCCESSFUL: int
 AUTH_PARTIALLY_SUCCESSFUL: int
@@ -86,7 +86,7 @@ OPEN_FAILED_CONNECT_FAILED: int
 OPEN_FAILED_UNKNOWN_CHANNEL_TYPE: int
 OPEN_FAILED_RESOURCE_SHORTAGE: int
 
-CONNECTION_FAILED_CODE: Dict[int, str]
+CONNECTION_FAILED_CODE: dict[int, str]
 
 DISCONNECT_SERVICE_NOT_AVAILABLE: int
 DISCONNECT_AUTH_CANCELLED_BY_USER: int

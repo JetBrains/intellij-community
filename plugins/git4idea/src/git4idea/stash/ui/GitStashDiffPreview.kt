@@ -2,28 +2,28 @@
 package git4idea.stash.ui
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
-import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.runInEdtAsync
+import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
-import java.util.*
+import one.util.streamex.StreamEx
+import java.beans.PropertyChangeListener
 import java.util.stream.Stream
-import kotlin.streams.asSequence
+import javax.swing.JTree
+import kotlin.streams.toList
 
-class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInEditor: Boolean, parentDisposable: Disposable) :
+abstract class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInEditor: Boolean, parentDisposable: Disposable) :
   ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
 
   val toolbarWrapper get() = myToolbarWrapper
@@ -33,8 +33,11 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInE
       myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
     }
     tree.addSelectionListener(Runnable {
-      updatePreviewLater(tree.isModelUpdateInProgress)
+      updatePreviewLater(false)
     }, this)
+    tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, PropertyChangeListener {
+      updatePreviewLater(false)
+    })
 
     Disposer.register(parentDisposable, this)
 
@@ -57,13 +60,15 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInE
     return MyGoToChangePopupProvider().createGoToChangeAction()
   }
 
+  protected abstract fun getTag(change: Change): ChangesBrowserNode.Tag?
+
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
     override fun getChanges(): List<PresentableChange> {
-      return allChanges.asSequence().mapNotNull { wrapper -> wrapper.createProducer(project) as? ChangeDiffRequestChain.Producer }.toList()
+      return allChanges.toList()
     }
 
     override fun select(change: PresentableChange) {
-      this@GitStashDiffPreview.selectFilePath(change.filePath)
+      (change as? Wrapper)?.run(::selectChange)
     }
 
     override fun getSelectedChange(): PresentableChange? {
@@ -72,46 +77,20 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInE
   }
 
   override fun selectChange(change: Wrapper) {
-    val node = TreeUtil.findNode(tree.root, Condition { sameChange(change.userObject, it.userObject) }) ?: return
-    TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
+    VcsLogChangesBrowser.selectObjectWithTag(tree, change.userObject, change.tag)
   }
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean = false
 
   private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
-    return treeModelData.userObjectsStream(Change::class.java).map { MyChangeWrapper(it) }
-  }
-
-  companion object {
-    private fun sameChange(change1: Any, change2: Any): Boolean {
-      if (change1 !is Change) return false
-      if (change2 !is Change) return false
-      return sameChange(change1, change2)
-    }
-
-    private fun sameChange(change1: Change, change2: Change): Boolean {
-      if (change1.beforeRevision?.file != change2.beforeRevision?.file) return false
-      if (change1.beforeRevision?.revisionNumber != change2.beforeRevision?.revisionNumber) return false
-      if (change1.afterRevision?.file != change2.afterRevision?.file) return false
-      if (change1.afterRevision?.revisionNumber != change2.afterRevision?.revisionNumber) return false
-      return true
+    return StreamEx.of(treeModelData.nodesStream()).select(ChangesBrowserChangeNode::class.java).map {
+      MyChangeWrapper(it.userObject, getTag(it.userObject))
     }
   }
 
-  private class MyChangeWrapper(change: Change) : ChangeWrapper(change) {
-
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (javaClass != other?.javaClass) return false
-
-      other as MyChangeWrapper
-
-      return sameChange(change, other.change)
-    }
-
-    override fun hashCode(): Int {
-      return Objects.hash(change.beforeRevision?.file, change.beforeRevision?.revisionNumber,
-                          change.afterRevision?.file, change.afterRevision?.revisionNumber)
+  private class MyChangeWrapper(change: Change, tag: ChangesBrowserNode.Tag?) : ChangeWrapper(change, tag) {
+    override fun createProducer(project: Project?): DiffRequestProducer? {
+      return ChangeDiffRequestProducer.create(project, change, mapOf(Pair(ChangeDiffRequestProducer.TAG_KEY, tag)))
     }
   }
 }

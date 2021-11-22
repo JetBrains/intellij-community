@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.NioFiles
@@ -12,6 +12,7 @@ import java.nio.charset.Charset
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
+import java.util.*
 import java.util.function.Predicate
 import kotlin.math.min
 
@@ -210,7 +211,8 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
   return null
 }
 
-private val illegalChars = HashSet(listOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':'))
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+private val illegalChars = HashSet(java.util.List.of('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':'))
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
 fun sanitizeFileName(name: String, replacement: String? = "_", truncateIfNeeded: Boolean = true, extraIllegalChars: Predicate<Char>? = null): String {
@@ -261,3 +263,17 @@ fun isSymbolicLink(attributes: BasicFileAttributes?): Boolean {
 }
 
 fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)
+
+@Throws(IOException::class)
+fun generateRandomPath(parentDirectory: Path): Path {
+  var path = parentDirectory.resolve(UUID.randomUUID().toString())
+  var i = 0
+  while (path.exists() && i < 5) {
+    path = parentDirectory.resolve(UUID.randomUUID().toString())
+    ++i
+  }
+  if (path.exists()) {
+    throw IOException("Couldn't generate unique random path.")
+  }
+  return path
+}

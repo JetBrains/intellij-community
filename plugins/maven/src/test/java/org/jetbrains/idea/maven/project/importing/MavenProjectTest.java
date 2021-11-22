@@ -533,6 +533,7 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                      "    <plugin>" +
                      "      <groupId>org.apache.maven.plugins</groupId>" +
                      "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version>3.6.0</version>" +
                      "      <configuration>" +
                      "        <release>7</release>" +
                      "      </configuration>" +
@@ -544,6 +545,8 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
     assertEquals("7", getMavenProject().getReleaseLevel());
     assertEquals(LanguageLevel.JDK_1_7, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
+    assertEquals(LanguageLevel.JDK_1_7,
+                 LanguageLevel.parse(CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("project"))));
   }
 
   @Test 

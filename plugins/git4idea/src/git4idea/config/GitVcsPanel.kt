@@ -9,6 +9,7 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runInEdt
@@ -17,20 +18,19 @@ import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.ui.*
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.layout.*
@@ -57,7 +57,6 @@ import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
-import javax.swing.JLabel
 import javax.swing.border.Border
 
 private fun gitSharedSettings(project: Project) = GitSharedSettings.getInstance(project)
@@ -103,12 +102,8 @@ internal class GitVcsPanel(private val project: Project) :
 
   private val currentUpdateInfoFilterProperties = MyLogProperties(project.service<GitUpdateProjectInfoLogProperties>())
 
-  private lateinit var branchUpdateInfoRow: Row
-  private lateinit var branchUpdateInfoCommentRow: Row
-  private lateinit var supportedBranchUpLabel: JLabel
-
   private val pathSelector: VcsExecutablePathSelector by lazy {
-    VcsExecutablePathSelector(GitVcs.NAME, disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
+    VcsExecutablePathSelector(GitVcs.DISPLAY_NAME.get(), disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
       override fun patchExecutable(executable: String): String? {
         return GitExecutableDetector.patchExecutablePath(executable)
       }
@@ -177,7 +172,7 @@ internal class GitVcsPanel(private val project: Project) :
 
   private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }
 
-  private fun LayoutBuilder.gitExecutableRow() = row {
+  private fun RowBuilder.gitExecutableRow() = row {
     pathSelector.mainPanel(growX)
       .onReset {
         resetPathSelector()
@@ -204,7 +199,6 @@ internal class GitVcsPanel(private val project: Project) :
         }
 
         validateExecutableOnceAfterClose()
-        updateBranchUpdateInfoRow()
         VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
       }
   }
@@ -221,7 +215,6 @@ internal class GitVcsPanel(private val project: Project) :
                        projectSettingsPathToGit != null,
                        projectSettingsPathToGit,
                        detectedExecutable)
-    updateBranchUpdateInfoRow()
   }
 
   /**
@@ -240,21 +233,8 @@ internal class GitVcsPanel(private val project: Project) :
     }
   }
 
-  private fun updateBranchUpdateInfoRow() {
-    val branchInfoSupported = GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(project)
-    branchUpdateInfoRow.enabled = AdvancedSettings.getBoolean("git.update.incoming.outgoing.info") && branchInfoSupported
-    branchUpdateInfoCommentRow.visible = !branchInfoSupported
-    supportedBranchUpLabel.foreground = if (!branchInfoSupported && projectSettings.incomingCheckStrategy != GitIncomingCheckStrategy.Never) {
-      DialogWrapper.ERROR_FOREGROUND_COLOR
-    }
-    else {
-      UIUtil.getContextHelpForeground()
-    }
-  }
-
-  private fun LayoutBuilder.branchUpdateInfoRow() {
-    branchUpdateInfoRow = row {
-      supportedBranchUpLabel = JBLabel(message("settings.supported.for.2.9"))
+  private fun RowBuilder.branchUpdateInfoRow() {
+    row {
       cell {
         label(message("settings.explicitly.check") + " ")
         comboBox(
@@ -264,78 +244,16 @@ internal class GitVcsPanel(private val project: Project) :
           },
           { selectedStrategy ->
             projectSettings.incomingCheckStrategy = selectedStrategy as GitIncomingCheckStrategy
-            updateBranchUpdateInfoRow()
             if (!project.isDefault) {
               GitBranchIncomingOutgoingManager.getInstance(project).updateIncomingScheduling()
             }
           })
       }
-      branchUpdateInfoCommentRow = row {
-        supportedBranchUpLabel()
-      }
+      enableIf(AdvancedSettingsPredicate("git.update.incoming.outgoing.info", disposable!!))
     }
   }
 
-  override fun getId() = "vcs.${GitVcs.NAME}"
-
-  override fun createConfigurables(): List<UnnamedConfigurable> {
-    return VcsEnvCustomizer.EP_NAME.extensions.mapNotNull { it.getConfigurable(project) }
-  }
-
-  override fun createPanel(): DialogPanel = panel {
-    gitExecutableRow()
-    row {
-      checkBox(cdEnableStagingArea)
-        .enableIf(StagingAreaAvailablePredicate(project, disposable!!))
-    }
-    if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
-      row {
-        checkBox(cdSyncBranches(project)).applyToComponent {
-          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get())
-        }
-      }
-    }
-    row {
-      checkBox(cdAddCherryPickSuffix(project))
-    }
-    row {
-      checkBox(cdWarnAboutCrlf(project))
-    }
-    row {
-      checkBox(cdWarnAboutDetachedHead(project))
-    }
-    branchUpdateInfoRow()
-    row {
-      cell {
-        label(message("settings.update.method"))
-        comboBox(
-          CollectionComboBoxModel(getUpdateMethods()),
-          { projectSettings.updateMethod },
-          { projectSettings.updateMethod = it!! },
-          renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)
-        )
-      }
-    }
-    row {
-      cell {
-        label(message("settings.clean.working.tree"))
-        buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
-          GitSaveChangesPolicy.values().forEach { saveSetting ->
-            radioButton(saveSetting.text, saveSetting)
-          }
-        }
-      }
-    }
-    row {
-      checkBox(cdAutoUpdateOnPush(project))
-    }
-    row {
-      val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
-      row {
-        checkBox(cdHidePushDialogForNonProtectedBranches(project))
-          .enableIf(previewPushOnCommitAndPush.selected)
-      }
-    }
+  private fun RowBuilder.protectedBranchesRow() {
     row {
       cell {
         label(message("settings.protected.branched"))
@@ -358,20 +276,93 @@ internal class GitVcsPanel(private val project: Project) :
         checkBox(synchronizeBranchProtectionRules(project))
       }
     }
+  }
+
+  override fun getId() = "vcs.${GitVcs.NAME}"
+
+  override fun createConfigurables(): List<UnnamedConfigurable> {
+    return VcsEnvCustomizer.EP_NAME.extensions.mapNotNull { it.getConfigurable(project) }
+  }
+
+  override fun createPanel(): DialogPanel = panel {
+    gitExecutableRow()
+    titledRow(message("settings.commit.group.title")) {
+      row {
+        checkBox(cdEnableStagingArea)
+          .enableIf(StagingAreaAvailablePredicate(project, disposable!!))
+      }
+      row {
+        checkBox(cdWarnAboutCrlf(project))
+      }
+      row {
+        checkBox(cdWarnAboutDetachedHead(project))
+      }
+      row {
+        checkBox(cdAddCherryPickSuffix(project))
+      }
+      createGpgSignRow(project, disposable!!)
+    }
+
+    titledRow(message("settings.push.group.title")) {
+      row {
+        checkBox(cdAutoUpdateOnPush(project))
+      }
+      row {
+        val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
+        row {
+          checkBox(cdHidePushDialogForNonProtectedBranches(project))
+            .enableIf(previewPushOnCommitAndPush.selected)
+        }
+      }
+      protectedBranchesRow()
+    }
+
+    titledRow(message("settings.update.group.title")) {
+      row {
+        cell {
+          label(message("settings.update.method"))
+          buttonGroup({ projectSettings.updateMethod }, { projectSettings.updateMethod = it }) {
+            getUpdateMethods().forEach { saveSetting ->
+              radioButton(saveSetting.methodName, saveSetting)
+            }
+          }
+        }
+      }
+      row {
+        cell {
+          label(message("settings.clean.working.tree"))
+          buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
+            GitSaveChangesPolicy.values().forEach { saveSetting ->
+              radioButton(saveSetting.text, saveSetting)
+            }
+          }
+        }
+      }
+      row {
+        checkBox(cdAutoUpdateOnPush(project))
+      }
+      if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
+        updateProjectInfoFilter()
+      }
+    }
+
+    if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
+      row {
+        checkBox(cdSyncBranches(project)).applyToComponent {
+          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get())
+        }
+      }
+    }
+    branchUpdateInfoRow()
     row {
       checkBox(cdOverrideCredentialHelper)
     }
     for (configurable in configurables) {
       appendDslConfigurableRow(configurable)
     }
-
-    if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
-      updateProjectInfoFilter()
-    }
-    createGpgSignRow(project, disposable!!)
   }
 
-  private fun LayoutBuilder.updateProjectInfoFilter() {
+  private fun RowBuilder.updateProjectInfoFilter() {
     row {
       cell {
         val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
@@ -477,4 +468,17 @@ class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : C
   }
 
   override fun invoke(): Boolean = GitRepositoryManager.getInstance(project).repositories.size != 0
+}
+
+class AdvancedSettingsPredicate(val id: String, val disposable: Disposable) : ComponentPredicate() {
+  override fun addListener(listener: (Boolean) -> Unit) {
+    ApplicationManager.getApplication().messageBus.connect(disposable)
+      .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+          listener(invoke())
+        }
+      })
+  }
+
+  override fun invoke(): Boolean = AdvancedSettings.getBoolean(id)
 }

@@ -1,10 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring.suggested
 
-import com.intellij.openapi.application.runUndoTransparentWriteAction
-import com.intellij.openapi.command.executeCommand
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.refactoring.suggested.SignaturePresentationBuilder
 import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
@@ -47,11 +44,6 @@ object JavaSuggestedRefactoringUI : SuggestedRefactoringUI() {
 
   override fun extractValue(fragment: PsiCodeFragment): NewParameterValue.Expression? {
     if ((fragment as PsiExpressionCodeFragment).expression == null) return null
-    executeCommand {
-      runUndoTransparentWriteAction {
-        JavaCodeStyleManager.getInstance(fragment.project).qualifyClassReferences(fragment)
-      }
-    }
     return NewParameterValue.Expression(fragment.expression!!)
   }
 }

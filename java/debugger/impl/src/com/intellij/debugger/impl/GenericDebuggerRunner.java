@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -78,6 +78,13 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
   // used externally
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
+    if (state instanceof JavaCommandLine && 
+        !JavaProgramPatcher.patchJavaCommandLineParamsUnderProgress(env.getProject(), 
+                                                                    () -> JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), 
+                                                                                                               env.getExecutor(), 
+                                                                                                               env.getRunProfile()))) {
+        return null;
+    }
     return createContentDescriptor(state, env);
   }
 
@@ -87,6 +94,9 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     return state.prepareTargetToCommandExecution(env, LOG,"Failed to execute debug configuration async", () -> {
+      if (state instanceof JavaCommandLine) {
+        JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), env.getExecutor(), env.getRunProfile());
+      }
       return createContentDescriptor(state, env);
     });
   }
@@ -95,7 +105,6 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
   protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
       JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      JavaProgramPatcher.runCustomPatchers(parameters, environment.getExecutor(), environment.getRunProfile());
       boolean isPollConnection = true;
       RemoteConnection connection = null;
       if (state instanceof RemoteConnectionCreator) {

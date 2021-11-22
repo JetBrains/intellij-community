@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
@@ -53,13 +54,13 @@ class KotlinPlugin(context: Context) : Plugin(context) {
         val version by property(
             // todo do not hardcode kind & repository
             WizardKotlinVersion(
-                Versions.KOTLIN,
-                KotlinVersionKind.M,
-                Repositories.KOTLIN_EAP_MAVEN_CENTRAL,
-                KotlinVersionProviderService.getBuildSystemPluginRepository(
-                    KotlinVersionKind.M,
-                    devRepository = Repositories.JETBRAINS_KOTLIN_DEV
-                )
+              Versions.KOTLIN,
+              KotlinVersionKind.M,
+              Repositories.KOTLIN_EAP_MAVEN_CENTRAL,
+              KotlinVersionProviderService.getBuildSystemPluginRepository(
+                  KotlinVersionKind.M,
+                  devRepository = Repositories.JETBRAINS_KOTLIN_DEV
+              )
             )
         )
 
@@ -145,7 +146,7 @@ class KotlinPlugin(context: Context) : Plugin(context) {
         }
 
         val createSourcesetDirectories by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
-            runAfter(KotlinPlugin.createModules)
+            runAfter(createModules)
             withAction {
                 fun Path?.createKotlinAndResourceDirectories(moduleConfigurator: ModuleConfigurator): TaskResult<Unit> {
                     if (this == null) return UNIT_SUCCESS
@@ -202,7 +203,7 @@ class KotlinPlugin(context: Context) : Plugin(context) {
 }
 
 enum class ProjectKind(
-    override val text: String,
+    @Nls override val text: String,
     val supportedBuildSystems: Set<BuildSystemType>,
     val shortName: String = text,
     val message: String? = null,

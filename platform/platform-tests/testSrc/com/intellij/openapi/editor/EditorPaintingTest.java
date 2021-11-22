@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.Collections;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
@@ -164,7 +165,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
   public void testIndentGuideOverBlockInlayWithSoftWraps() throws Exception {
     initText("  a\n    b c");
-    configureSoftWraps(5);
+    configureSoftWraps(5, false);
     runIndentsPass();
     addBlockInlay(0);
     checkResult();
@@ -263,18 +264,33 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testCaretAtFoldRegion() throws Exception {
+    initText("test");
+    addCollapsedFoldRegion(0, 4, ".");
+    checkResultWithGutter();
+  }
+
   public void testCustomFoldRegion() throws Exception {
     initText("a\nb\nc");
-    FoldingModel foldingModel = getEditor().getFoldingModel();
-    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(1, 1, new OurCustomFoldRegionRenderer()));
+    addCustomLinesFolding(1, 1);
     checkResultWithGutter();
   }
 
   public void testCustomFoldRegionWithCaret() throws Exception {
     initText("a\n<caret>b\nc");
-    FoldingModel foldingModel = getEditor().getFoldingModel();
-    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(1, 1, new OurCustomFoldRegionRenderer()));
+    addCustomLinesFolding(1, 1);
     checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegionWithCaretAtEnd() throws Exception {
+    initText("a\nb<caret>\nc");
+    addCustomLinesFolding(1, 1);
+    checkResultWithGutter();
+  }
+
+  private void addCustomLinesFolding(int startLine, int endLine) {
+    FoldingModel foldingModel = getEditor().getFoldingModel();
+    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(startLine, endLine, new OurCustomFoldRegionRenderer()));
   }
 
   private void runIndentsPass() {
@@ -349,10 +365,11 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
     @Override
     public void paint(@NotNull CustomFoldRegion region,
-                      @NotNull Graphics g,
-                      @NotNull Rectangle r,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
                       @NotNull TextAttributes textAttributes) {
       g.setColor(Color.pink);
+      Rectangle r = targetRegion.getBounds();
       int startX = r.x;
       int endX = r.x + r.width - 1;
       int startY = r.y;

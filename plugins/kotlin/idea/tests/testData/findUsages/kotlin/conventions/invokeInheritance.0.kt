@@ -3,11 +3,11 @@
 package pack
 
 open class Base {
-    open operator fun invoke(){}
+    open operator fun invoke() {}
 }
 
-class Child: Base() {
-    override fun <caret>invoke(){}
+class Child : Base() {
+    override fun <caret>invoke() {}
 }
 
 fun test() {

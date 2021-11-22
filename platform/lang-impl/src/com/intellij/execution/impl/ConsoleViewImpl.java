@@ -747,7 +747,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     Document document = editor.getDocument();
     int documentTextLength = document.getTextLength();
     if (documentTextLength > 0) {
-      DocumentUtil.executeInBulk(document, true, () -> document.deleteString(0, documentTextLength));
+      DocumentUtil.executeInBulk(document, () -> document.deleteString(0, documentTextLength));
     }
     synchronized (LOCK) {
       clearHyperlinkAndFoldings();
@@ -803,7 +803,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (CommonDataKeys.EDITOR.is(dataId)) {
       return editor;
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
@@ -1578,4 +1578,3 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return getEditor().getDocument().getText();
   }
 }
-

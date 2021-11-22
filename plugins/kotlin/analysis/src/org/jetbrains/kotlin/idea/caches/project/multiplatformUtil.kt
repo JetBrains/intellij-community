@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetTypeRegistry
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.module.Module
@@ -26,6 +25,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType.Companion.ID
 import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 
 val Module.isNewMPPModule: Boolean
     get() = facetSettings?.mppVersion.isNewMPP ||
-        facetSettings?.mppVersion.isHmpp // TODO: review clients, correct them to use precise checks for MPP version
+            facetSettings?.mppVersion.isHmpp // TODO: review clients, correct them to use precise checks for MPP version
 
 val Module.externalProjectId: String
     get() = facetSettings?.externalProjectId ?: ""
@@ -89,7 +89,7 @@ val Module.implementingModules: List<Module>
 private val Module.stableModuleName: String
     get() = ExternalSystemModulePropertyManager.getInstance(this).getLinkedProjectId()
         ?: name.also {
-            if (!ApplicationManager.getApplication().isUnitTestMode) LOG.error("Don't have a LinkedProjectId for module $this for HMPP!")
+            if (!isUnitTestMode()) LOG.error("Don't have a LinkedProjectId for module $this for HMPP!")
         }
 
 private val Project.modulesByLinkedKey: Map<String, Module>
@@ -133,6 +133,14 @@ val Module.implementedModules: List<Module>
                 val modelsProvider = IdeModelsProviderImpl(project)
                 findOldFashionedImplementedModuleNames().mapNotNull { modelsProvider.findIdeModule(it) }
             }
+        }
+    }
+
+val Module.additionalVisibleModules: List<Module>
+    get() = cacheInvalidatingOnRootModifications cache@{
+        val facetSettings = facetSettings ?: return@cache emptyList()
+        facetSettings.additionalVisibleModuleNames.mapNotNull { moduleName ->
+            project.modulesByLinkedKey[moduleName]
         }
     }
 

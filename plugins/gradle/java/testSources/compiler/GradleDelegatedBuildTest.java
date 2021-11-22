@@ -13,6 +13,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.messages.MessageBusConnection;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -38,19 +39,15 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     createProjectSubFile("impl/src/main/resources/dir/file-impl.properties");
     createProjectSubFile("impl/src/test/resources/dir/file-impl-test.properties");
+    GradleBuildScriptBuilder builder = createBuildScriptBuilder();
     importProject(
-      "allprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "}\n" +
-      "\n" +
-      "dependencies {\n" +
-      "  compile project(':api')\n" +
-      "}\n" +
-      "configure(project(':api')) {\n" +
-      "  dependencies {\n" +
-      "    compile project(':impl')\n" +
-      "  }\n" +
-      "}"
+      builder
+        .allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+        .addImplementationDependency(builder.project(":api"))
+        .project(":api", p -> {
+          p.addImplementationDependency(p.project(":impl"));
+        })
+        .generate()
     );
     assertModules("project", "project.main", "project.test",
                   "project.api", "project.api.main", "project.api.test",
@@ -173,20 +170,13 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
                          "import my.pack.ApiTest;\n" +
                          "public class ImplTest extends ApiTest {}");
 
-    importProject(
-      "allprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "}\n" +
-      "\n" +
-      "dependencies {\n" +
-      "  compile project(':impl')\n" +
-      "}\n" +
-      "configure(project(':impl')) {\n" +
-      "  dependencies {\n" +
-      "    compile project(':api')\n" +
-      "  }\n" +
-      "}"
-    );
+    importProject(script(it -> {
+      it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+        .addImplementationDependency(it.project(":impl"))
+        .project(":impl", p -> {
+          p.addImplementationDependency(p.project(":api"));
+        });
+    }));
     assertModules("project", "project.main", "project.test",
                   "project.api", "project.api.main", "project.api.test",
                   "project.impl", "project.impl.main", "project.impl.test");
@@ -234,6 +224,12 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
                              path("impl/build/generated/sources/headers/java/main")));
     }
 
+    if (isGradleNewerOrSameAs("7.1")) {
+      expected.addAll(asList(path("build/tmp/compileJava/previous-compilation-data.bin"),
+                             path("api/build/tmp/compileJava/previous-compilation-data.bin"),
+                             path("impl/build/tmp/compileJava/previous-compilation-data.bin")));
+    }
+
     Assertions.assertThat(dirtyOutputRoots)
       .containsExactlyInAnyOrderElementsOf(expected);
 
@@ -269,6 +265,11 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
     if (isGradleNewerOrSameAs("6.3")) {
       expected.addAll(asList(path("build/generated/sources/headers/java/main"),
                              path("build/generated/sources/headers/java/test")));
+    }
+
+    if (isGradleNewerOrSameAs("7.1")) {
+      expected.addAll(asList(path("build/tmp/compileTestJava/previous-compilation-data.bin"),
+                             path("build/tmp/compileJava/previous-compilation-data.bin")));
     }
 
     Assertions.assertThat(dirtyOutputRoots)

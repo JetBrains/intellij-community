@@ -20,7 +20,7 @@ dependencies {
     implementation(compose.desktop.currentOs)
 }
 
-tasks.withType<KotlinCompile>() {
+tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "11"
 }
 

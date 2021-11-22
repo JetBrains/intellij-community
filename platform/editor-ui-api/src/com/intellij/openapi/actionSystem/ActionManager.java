@@ -153,7 +153,15 @@ public abstract class ActionManager {
   @Nullable
   public abstract AnAction getActionOrStub(@NotNull @NonNls String id);
 
-  public abstract void addTimerListener(int unused, @NotNull TimerListener listener);
+  public abstract void addTimerListener(@NotNull TimerListener listener);
+
+  /**
+   * @deprecated use {@link #addTimerListener(TimerListener)}
+   */
+  @Deprecated
+  public void addTimerListener(int unused, @NotNull TimerListener listener) {
+    addTimerListener(listener);
+  }
 
   public abstract void removeTimerListener(@NotNull TimerListener listener);
 

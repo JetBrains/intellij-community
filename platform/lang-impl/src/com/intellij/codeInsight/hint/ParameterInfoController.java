@@ -515,17 +515,9 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
         return Pair.create(previousBestPoint, previousBestPosition);
       }
 
-      boolean isMultiline = list != null && StringUtil.containsAnyChar(list.getText(), "\n\r");
       if (pos == null) pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
-      Pair<Point, Short> position;
+      Pair<Point, Short> position = chooseBestHintPosition(myEditor, pos, hint, activeLookup, preferredPosition, false);
 
-      if (!isMultiline) {
-        position = chooseBestHintPosition(myEditor, pos, hint, activeLookup, preferredPosition, false);
-      }
-      else {
-        Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
-        position = new Pair<>(p, HintManager.ABOVE);
-      }
       previousBestPoint = position.getFirst();
       previousBestPosition = position.getSecond();
       previousOffset = offset;

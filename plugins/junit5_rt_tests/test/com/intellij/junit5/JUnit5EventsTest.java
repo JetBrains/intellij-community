@@ -144,6 +144,8 @@ public class JUnit5EventsTest {
                             "##teamcity[testSuiteFinished  id='|[engine:testMethod|]' name='brokenStream()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }
 
+  // This class is actually the test-data
+  @SuppressWarnings({"JUnitTestCaseWithNoTests", "NewClassNamingConvention"})
   private static class TestClass {
     @Test
     void test1() {

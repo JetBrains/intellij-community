@@ -5,19 +5,19 @@ or 'marker' shorthand form.
 <p>Annotations that contain whitespace between the @-sign and the name
   of the annotation are also reported.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   @interface Foo { String[] value(); }
 
   @ Foo({"foo"})
   public String name;
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   @interface Foo { String[] value(); }
 
   @Foo("foo")
   public String name;
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

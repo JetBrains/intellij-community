@@ -31,7 +31,7 @@ import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.shellcheck.intention.ShDisableInspectionIntention;
-import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
+import com.intellij.sh.shellcheck.intention.ShSuppressInspectionIntention;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -153,7 +153,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
         builder = builder.withFix(new ShQuickFixIntention(formattedMessage, fix, shellcheckResponse.timestamp));
       }
       String quotedMessage = quote(formattedMessage);
-      builder.withFix(new SuppressInspectionIntention(quotedMessage, scCode, startOffset))
+      builder.withFix(new ShSuppressInspectionIntention(quotedMessage, scCode, startOffset))
       .withFix(new ShDisableInspectionIntention(quotedMessage, scCode))
         .create();
     }

@@ -6,7 +6,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetToModuleAction;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
@@ -937,7 +937,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
       try {
         ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
-        String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
+        String modulePresentation = IdeCoreBundle.message("project.new.wizard.module.identification");
         NamePathComponent component = new NamePathComponent(JavaUiBundle.message("label.module.name"),
                                                             JavaUiBundle.message("label.component.file.location", StringUtil.capitalize(modulePresentation)),
                                                             JavaUiBundle
@@ -1014,9 +1014,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   static final class CopiedModuleBuilder extends ModuleBuilder {
-    @NotNull ModifiableRootModel myRootModel;
-    @NotNull Path myComponentPath;
-    @NotNull Project myProject;
+    @NotNull private final ModifiableRootModel myRootModel;
+    @NotNull private final Path myComponentPath;
+    @NotNull private final Project myProject;
 
     CopiedModuleBuilder(@NotNull ModifiableRootModel rootModel, @NotNull Path componentPath, @NotNull Project project) {
       this.myRootModel = rootModel;

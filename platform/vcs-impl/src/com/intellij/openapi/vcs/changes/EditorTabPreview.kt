@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Disposer.isDisposed
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -38,7 +37,7 @@ import kotlin.streams.toList
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
-  private val previewFile = EditorTabDiffPreviewVirtualFile(this)
+  protected val previewFile: PreviewDiffVirtualFile = EditorTabDiffPreviewVirtualFile(this)
   private val updatePreviewQueue =
     MergingUpdateQueue("updatePreviewQueue", 100, true, null, diffProcessor).apply {
       setRestartTimerOnAdd(true)
@@ -47,12 +46,6 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
 
   var escapeHandler: Runnable? = null
 
-  fun openWithDoubleClick(tree: ChangesTree) {
-    installDoubleClickHandler(tree)
-    installEnterKeyHandler(tree)
-    installSelectionChangedHandler(tree) { updatePreview(false) }
-  }
-
   fun installListeners(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
     installDoubleClickHandler(tree)
     installEnterKeyHandler(tree)
@@ -60,11 +53,11 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
       //do not open file aggressively on start up, do it later
       DumbService.getInstance(project).smartInvokeLater {
         if (isDisposed(updatePreviewQueue)) return@smartInvokeLater
-        installSelectionHandler(tree, isOpenEditorDiffPreviewWithSingleClick)
+        installSelectionHandler(tree, true)
       }
     }
     else {
-      installSelectionHandler(tree, isOpenEditorDiffPreviewWithSingleClick)
+      installSelectionHandler(tree, false)
     }
   }
 

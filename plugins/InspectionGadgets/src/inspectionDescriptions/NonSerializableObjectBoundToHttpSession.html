@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports objects not implementing <code>java.io.Serializable</code> used as arguments to
+Reports objects of classes not implementing <code>java.io.Serializable</code> used as arguments to
 <code>javax.servlet.http.HttpSession.setAttribute()</code> or
 <code>javax.servlet.http.HttpSession.putValue()</code>.
 <p>
-  Such objects will not be serialized if the 'HttpSession' is passivated or migrated,
+  Such objects will not be serialized if the <code>HttpSession</code> is passivated or migrated,
   and may result in difficult-to-diagnose bugs.
 </p>
 <p>

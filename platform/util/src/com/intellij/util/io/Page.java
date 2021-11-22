@@ -18,8 +18,8 @@ public class Page {
   private final PoolPageKey myKey;
 
   private ByteBuffer buf;
-  private boolean read = false;
-  private boolean dirty = false;
+  private boolean read;
+  private boolean dirty;
   private int myFinalizationId;
   private BitSet myWriteMask;
 
@@ -162,6 +162,7 @@ public class Page {
       ensureReadOrWriteMaskExists();
 
       final int start = (int)(index - offset);
+      ensureIndexInRange(index);
       final ByteBuffer b = getBuf();
       b.position(start);
 
@@ -175,13 +176,20 @@ public class Page {
     }
   }
 
+  private void ensureIndexInRange(long index) {
+    if (index < offset) {
+      throw new IllegalArgumentException("index < offset: index = " + index + ", offset = " + offset);
+    }
+  }
+
   public int get(long index, byte[] bytes, int off, int length) {
     synchronized (lock) {
       myFinalizationId = 0;
       ensureRead();
 
-      final int start = (int)(index - offset);
-      final ByteBuffer b = getBuf();
+      ensureIndexInRange(index);
+      int start = (int)(index - offset);
+      ByteBuffer b = getBuf();
       b.position(start);
 
       int count = Math.min(length, PAGE_SIZE - start);

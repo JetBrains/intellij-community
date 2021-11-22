@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls;
 
 public final class IntProperty extends ValueProperty<Integer> {
   public IntProperty(@NonNls String name, int defaultValue) {
-    super(name, new Integer(defaultValue));
+    super(name, Integer.valueOf(defaultValue));
   }
 
   public int value(AbstractPropertyContainer container) {
@@ -14,6 +14,6 @@ public final class IntProperty extends ValueProperty<Integer> {
   }
 
   public void primSet(AbstractPropertyContainer container, int value) {
-    set(container, new Integer(value));
+    set(container, Integer.valueOf(value));
   }
 }

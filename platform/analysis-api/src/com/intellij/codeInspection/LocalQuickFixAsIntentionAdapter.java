@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +71,14 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return myFix.startInWriteAction();
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
+    if (result == null) return null;
+    ProblemDescriptor descriptor = myProblemDescriptor.getDescriptorForPreview(target);
+    return new LocalQuickFixAsIntentionAdapter(result, descriptor);
   }
 }
 

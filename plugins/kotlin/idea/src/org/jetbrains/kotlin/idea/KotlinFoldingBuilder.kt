@@ -116,9 +116,10 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     private fun getRangeToFold(node: ASTNode, document: Document): TextRange {
         if (node.elementType is KtFunctionElementType) {
             val function = node.psi as? KtNamedFunction
+            val funKeyword = function?.funKeyword
             val bodyExpression = function?.bodyExpression
-            if (bodyExpression != null && bodyExpression !is KtBlockExpression) {
-                if (function.startLine(document) != bodyExpression.startLine(document)) {
+            if (funKeyword != null && bodyExpression != null && bodyExpression !is KtBlockExpression) {
+                if (funKeyword.startLine(document) != bodyExpression.startLine(document)) {
                     val lineBreak = bodyExpression.siblings(forward = false, withItself = false).firstOrNull { "\n" in it.text }
                     if (lineBreak != null) {
                         return TextRange(lineBreak.startOffset, bodyExpression.endOffset)

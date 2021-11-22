@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -44,12 +43,6 @@ public interface CustomComponentAction {
    * This method shall be used to update the specific custom component after a successful action update.
    */
   default void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
-  }
-
-  /** @deprecated Use {@link CustomComponentAction#createCustomComponent(Presentation, String)} */
-  @Deprecated
-  default @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place, @NotNull DataContext dataContext) {
-    return createCustomComponent(presentation, place);
   }
 
   /** @deprecated Use {@link CustomComponentAction#createCustomComponent(Presentation, String)} */

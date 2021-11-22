@@ -22,46 +22,49 @@ interface PyExecuteConsoleCustomizer {
    * Return true if `virtualFile` supports execution in custom run descriptor. This descriptor will be used for executing the whole file
    * or a code fragment from it
    */
-  @JvmDefault
   fun isCustomDescriptorSupported(virtualFile: VirtualFile): Boolean = false
 
   /**
    * Return type of a custom run descriptor, which will be used for executing virtualFile or a code fragment from it
    */
-  @JvmDefault
   fun getCustomDescriptorType(virtualFile: VirtualFile): DescriptorType? = null
 
   /**
    * Return existing run descriptor, if a file's custom descriptor type is `DescriptorType.EXISTING`
    */
-  @JvmDefault
   fun getExistingDescriptor(virtualFile: VirtualFile): RunContentDescriptor? = null
 
   /**
    * Update custom descriptor value and type for `virtualFile`
    */
-  @JvmDefault
   fun updateDescriptor(virtualFile: VirtualFile, type: DescriptorType, descriptor: RunContentDescriptor?) {}
 
   /**
    * Notify about new name set for custom run descriptor
    */
-  @JvmDefault
   fun descriptorNameUpdated(descriptor: RunContentDescriptor, newName: String) {}
 
   /**
    * Return run descriptor name
    */
-  @JvmDefault
   fun getDescriptorName(descriptor: RunContentDescriptor): String = descriptor.displayName
 
   /**
    * Return a run configuration created from the context
    */
-  @JvmDefault
   fun getContextConfig(dataContext: DataContext): PythonRunConfiguration? = null
+
+  /**
+   * Return true if console is starting and schedule command execution
+   */
+  fun isConsoleStarting(virtualFile: VirtualFile?, commandText: String?): Boolean = false
+
+  /**
+   * Notify that runner started execution, but console process will be started later
+   */
+  fun notifyRunnerStart(virtualFile: VirtualFile, runner: PydevConsoleRunner) {}
 }
 
 enum class DescriptorType {
-  NEW, EXISTING
+  NEW, EXISTING, STARTING, NON_INTERACTIVE
 }

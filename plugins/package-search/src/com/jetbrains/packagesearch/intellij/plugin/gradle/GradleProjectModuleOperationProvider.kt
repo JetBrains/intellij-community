@@ -18,6 +18,8 @@ private const val EXTENSION_GRADLE_KTS = "gradle.kts"
 
 internal open class GradleProjectModuleOperationProvider : AbstractProjectModuleOperationProvider() {
 
+    override fun usesSharedPackageUpdateInspection() = true
+
     override fun hasSupportFor(project: Project, psiFile: PsiFile?): Boolean {
         // Logic based on com.android.tools.idea.gradle.project.sync.GradleFiles.isGradleFile()
         val file = psiFile?.virtualFile ?: return false

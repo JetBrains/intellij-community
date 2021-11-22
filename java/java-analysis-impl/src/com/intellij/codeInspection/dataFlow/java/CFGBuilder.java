@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchAllTrap;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -289,7 +290,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder isInstance(PsiMethodCallExpression anchor) {
-    return add(new InstanceofInstruction(anchor));
+    return add(new InstanceofInstruction(new JavaExpressionAnchor(anchor), true));
   }
 
   /**
@@ -314,12 +315,10 @@ public class CFGBuilder {
    * Stack after: ... result
    *
    * @param anchor element to bind this instruction to
-   * @param operand operand expression (pushed before)
-   * @param castType cast type (pushed before)
    * @return this builder
    */
-  public CFGBuilder isInstance(PsiExpression anchor, @Nullable PsiExpression operand, @NotNull PsiType castType) {
-    return add(new InstanceofInstruction(new JavaExpressionAnchor(anchor), operand, castType));
+  public CFGBuilder isInstance(PsiExpression anchor) {
+    return add(new InstanceofInstruction(new JavaExpressionAnchor(anchor), false));
   }
 
   /**
@@ -629,6 +628,22 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to perform binary numeric operation on stack operands
+   * <p>
+   * Stack before: ... operand1 operand2
+   * <p>
+   * Stack after: ... result
+   *
+   * @param binOp operation to perform
+   * @param expression anchor
+   * @return this builder
+   */
+  public CFGBuilder mathOp(@NotNull LongRangeBinOp binOp, @Nullable PsiExpression expression) {
+    myAnalyzer.addInstruction(new NumericBinaryInstruction(binOp, expression == null ? null : new JavaExpressionAnchor(expression)));
+    return this;
+  }
+
+  /**
    * Generate instructions to assign top stack value to the specified variable
    * <p>
    * Stack before: ... value
@@ -818,7 +833,7 @@ public class CFGBuilder {
     if (qualifier == null) return false;
     PsiType type = qualifier.getOperand().getType();
     push(DfTypes.typedObject(type, Nullability.NOT_NULL));
-    add(new InstanceofInstruction(new JavaMethodReferenceReturnAnchor(methodRef), null, type));
+    add(new InstanceofInstruction(new JavaMethodReferenceReturnAnchor(methodRef), false));
     return true;
   }
 

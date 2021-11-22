@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.JBScrollPane;
@@ -180,11 +179,6 @@ public final class EditorEmbeddedComponentManager {
     @Override
     public int calcWidthInPixels(@NotNull Inlay inlay) {
       return Math.max(getWidth(), 0);
-    }
-
-    @Override
-    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
-      // No need to do anything there. Components are rendered directly by the RepaintManager.
     }
 
     @Override

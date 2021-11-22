@@ -102,7 +102,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
     private final static int ourMaxWidth = 100;
 
     @Override
-    public void customizeCellRenderer(final JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       final Object value,
                                       final boolean selected,
                                       final boolean expanded,

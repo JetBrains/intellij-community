@@ -4,27 +4,34 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.util.Range
+import org.jetbrains.kotlin.builtins.isSuspendFunctionType
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import javax.swing.Icon
 
 class KotlinLambdaSmartStepTarget(
-    label: String,
+    resultingDescriptor: CallableDescriptor,
+    parameter: ValueParameterDescriptor,
     highlightElement: KtFunction,
     lines: Range<Int>,
-    val isInline: Boolean,
-    val isSuspend: Boolean
-) : SmartStepTarget(label, highlightElement, true, lines) {
+    val isInline: Boolean = InlineUtil.isInline(resultingDescriptor),
+    val isSuspend: Boolean = parameter.type.isSuspendFunctionType,
+    val methodName: String = OperatorNameConventions.INVOKE.asString()
+) : SmartStepTarget(
+        calcLabel(resultingDescriptor, parameter, methodName),
+        highlightElement,
+        true,
+        lines
+) {
     override fun getIcon(): Icon = KotlinIcons.LAMBDA
 
     fun getLambda() = highlightElement as KtFunction
-
-    companion object {
-        fun calcLabel(descriptor: DeclarationDescriptor, paramName: Name): String {
-            return "${descriptor.name.asString()}: ${paramName.asString()}.${OperatorNameConventions.INVOKE.asString()}()"
-        }
-    }
 }
+
+private fun calcLabel(descriptor: DeclarationDescriptor, parameter: ValueParameterDescriptor, functionName: String) =
+    "${descriptor.name.asString()}: ${parameter.name.asString()}.$functionName()"

@@ -5,7 +5,6 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
@@ -49,27 +48,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   @Deprecated
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
                      @Nullable Condition<? super SdkTypeId> filter) {
-    this(jdkModel, filter, getSdkFilter(filter), filter, false);
-  }
-
-  /**
-   * @deprecated since {@link #setSetupButton} methods are deprecated, use the
-   * more specific constructor to pass all parameters
-   *
-   * The {@param addSuggestedItems} is ignored (it was not actively used) and
-   * it is no longer possible to have {@link SuggestedJdkItem} as a selected
-   * item of that ComboBox. The implementation will take care about turning a
-   * suggested SDKs into {@link Sdk}s
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
-  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
-                     @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
-                     @Nullable Condition<? super Sdk> filter,
-                     @Nullable Condition<? super SdkTypeId> creationFilter,
-                     boolean addSuggestedItems) {
-    this(null, jdkModel, sdkTypeFilter, filter, creationFilter, null);
+    this(null, jdkModel, filter, getSdkFilter(filter), filter, null);
   }
 
   /**
@@ -498,37 +477,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof NoneJdkComboBoxItem;
-    }
-  }
-
-  /**
-   * @deprecated this type is never visible from the {@link #getSelectedItem()} method,
-   * it is kept here for binary compatibility
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static class SuggestedJdkItem extends JdkComboBoxItem {
-    private final SdkType mySdkType;
-    private final String myPath;
-
-    SuggestedJdkItem(@NotNull SdkType sdkType, @NotNull String path) {
-      mySdkType = sdkType;
-      myPath = path;
-    }
-
-    @NotNull
-    public SdkType getSdkType() {
-      return mySdkType;
-    }
-
-    @NotNull
-    public String getPath() {
-      return myPath;
-    }
-
-    @Override
-    public String toString() {
-      return myPath;
     }
   }
 

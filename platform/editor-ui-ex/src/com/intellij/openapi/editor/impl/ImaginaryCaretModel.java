@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -11,16 +12,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-class ImaginaryCaretModel implements CaretModel {
+public class ImaginaryCaretModel implements CaretModel {
   private final ImaginaryEditor myEditor;
   private final ImaginaryCaret myCaret;
 
-  ImaginaryCaretModel(ImaginaryEditor editor) {
+  private static final Logger LOG = Logger.getInstance(ImaginaryCaretModel.class);
+
+  public ImaginaryCaretModel(ImaginaryEditor editor) {
     myEditor = editor;
     myCaret = new ImaginaryCaret(this);
   }
 
-  ImaginaryEditor getEditor() {
+  protected ImaginaryEditor getEditor() {
     return myEditor;
   }
 
@@ -36,12 +39,12 @@ class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public void addCaretListener(@NotNull CaretListener listener) {
-    throw notImplemented();
+    LOG.info("Called ImaginaryCaretModel#addCaretListener which is stubbed and has no implementation");
   }
 
   @Override
   public void removeCaretListener(@NotNull CaretListener listener) {
-    throw notImplemented();
+    LOG.info("Called ImaginaryCaretModel#removeCaretListener which is stubbed and has no implementation");
   }
 
   @Override

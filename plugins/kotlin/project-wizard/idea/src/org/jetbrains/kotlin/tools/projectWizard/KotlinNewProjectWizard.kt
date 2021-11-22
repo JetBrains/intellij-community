@@ -2,72 +2,46 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.LabelAndComponent
-import com.intellij.ide.NewProjectWizard
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.BuildSystemWithSettings
-import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.ide.wizard.*
+import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
-import java.awt.Dimension
-import java.awt.event.ItemListener
-import javax.swing.JComponent
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.columns
 
-class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
-  override val language: String = "Kotlin"
-  override var settingsFactory = { KotlinSettings() }
+class KotlinNewProjectWizard : NewProjectWizard {
+    override val name: String = "Kotlin"
 
-  override fun settingsList(settings: KotlinSettings): List<LabelAndComponent> {
-      val buildSystems = settings.buildSystems.value
-      var component: JComponent = JBLabel()
-      panel {
-          row {
-              component = buttonSelector(buildSystems, settings.buildSystemProperty) { it.name }.component
-          }
-      }
+    override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
-      settings.propertyGraph.afterPropagation {
-          buildSystems.forEach { it.advancedSettings().apply { isVisible = false } }
-          settings.buildSystemProperty.get().advancedSettings().apply { isVisible = true }
-      }
+    class Step(
+        parent: NewProjectWizardLanguageStep
+    ) : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, KotlinBuildSystemType.EP_NAME),
+        NewProjectWizardBuildSystemData,
+        NewProjectWizardLanguageData by parent {
 
-      val sdkCombo = JdkComboBox(null, ProjectSdksModel(), null, null, null, null)
-          .apply { minimumSize = Dimension(0, 0) }
-          .also { combo -> combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk }) }
+        override val self = this
 
-      // These are IDE-plugin based build-systems, i.e. Gradle and Maven
-      if (buildSystems.isNotEmpty()) {
-          settings.buildSystemProperty.set(buildSystems.first())
-      }
+        override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
 
-      return listOf(
-          LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.build.system")), component),
-          LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo)
-      ).plus(buildSystems.map { LabelAndComponent(component = it.advancedSettings()) })
-  }
+        override val buildSystemProperty by ::stepProperty
+        override val buildSystem by ::step
 
-  override fun setupProject(project: Project, settings: KotlinSettings, context: WizardContext) {
-    settings.buildSystemProperty.get().setupProject(project, settings)
-  }
-}
+        lateinit var sdkComboBox: Cell<JdkComboBox>
+        val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+        val sdk by sdkProperty
 
-class KotlinSettings {
-    var sdk: Sdk? = null
-    val propertyGraph: PropertyGraph = PropertyGraph()
-    val buildSystems: Lazy<List<KotlinBuildSystemWithSettings<out Any?>>> = lazy {
-        KotlinBuildSystemType.EP_NAME.extensionList.map { KotlinBuildSystemWithSettings(it) }
-    }
-
-    val buildSystemProperty: GraphProperty<KotlinBuildSystemWithSettings<*>> = propertyGraph.graphProperty {
-        buildSystems.value.first()
+        override fun setupCommonUI(builder: Panel) {
+            with(builder) {
+                row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+                    sdkComboBox = sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id)
+                        .columns(COLUMNS_MEDIUM)
+                }
+            }
+        }
     }
 }
-
-open class KotlinBuildSystemWithSettings<P>(val buildSystemType: KotlinBuildSystemType<P>) :
-    BuildSystemWithSettings<KotlinSettings, P>(buildSystemType)

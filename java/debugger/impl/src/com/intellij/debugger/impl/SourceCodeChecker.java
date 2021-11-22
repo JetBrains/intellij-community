@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public final class SourceCodeChecker {
   private static final Logger LOG = Logger.getInstance(SourceCodeChecker.class);
@@ -73,7 +74,7 @@ public final class SourceCodeChecker {
     });
   }
 
-  private static ThreeState check(Location location, SourcePosition position, Project project) {
+  private static CompletableFuture<ThreeState> check(Location location, SourcePosition position, Project project) {
     Method method = DebuggerUtilsEx.getMethod(location);
     // for now skip constructors, bridges, lambdas etc.
     if (method == null ||
@@ -83,67 +84,68 @@ public final class SourceCodeChecker {
         method.isStaticInitializer() ||
         (method.declaringType() instanceof ClassType && ((ClassType)method.declaringType()).isEnum()) ||
         DebuggerUtilsEx.isLambda(method)) {
-      return ThreeState.UNSURE;
+      return CompletableFuture.completedFuture(ThreeState.UNSURE);
     }
-    List<Location> locations = DebuggerUtilsEx.allLineLocations(method);
-    if (ContainerUtil.isEmpty(locations)) {
-      return ThreeState.UNSURE;
-    }
-    if (position != null) {
-      return ReadAction.compute(() -> {
-        PsiFile psiFile = position.getFile();
-        if (!psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) { // only for java for now
-          return ThreeState.UNSURE;
-        }
-        Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-        if (document == null) {
-          return ThreeState.UNSURE;
-        }
-        boolean res = false;
-        PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
-        if (psiMethod != null) {
-          TextRange range = psiMethod.getTextRange();
-          if (psiMethod instanceof PsiDocCommentOwner) {
-            PsiDocComment comment = ((PsiDocCommentOwner)psiMethod).getDocComment();
-            if (comment != null) {
-              range = new TextRange(comment.getTextRange().getEndOffset() + 1, range.getEndOffset());
+    return DebuggerUtilsAsync.allLineLocationsAsync(method).thenApply(locations -> {
+      if (ContainerUtil.isEmpty(locations)) {
+        return ThreeState.UNSURE;
+      }
+      if (position != null) {
+        return ReadAction.compute(() -> {
+          PsiFile psiFile = position.getFile();
+          if (!psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) { // only for java for now
+            return ThreeState.UNSURE;
+          }
+          Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+          if (document == null) {
+            return ThreeState.UNSURE;
+          }
+          boolean res = false;
+          PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
+          if (psiMethod != null) {
+            TextRange range = psiMethod.getTextRange();
+            if (psiMethod instanceof PsiDocCommentOwner) {
+              PsiDocComment comment = ((PsiDocCommentOwner)psiMethod).getDocComment();
+              if (comment != null) {
+                range = new TextRange(comment.getTextRange().getEndOffset() + 1, range.getEndOffset());
+              }
+            }
+            int startLine = document.getLineNumber(range.getStartOffset()) + 1;
+            int endLine = document.getLineNumber(range.getEndOffset()) + 1;
+            res = getLinesStream(locations, psiFile).allMatch(line -> startLine <= line && line <= endLine);
+            if (!res) {
+              LOG.debug("Source check failed: Method " + method.name() + ", source: " + ((NavigationItem)psiMethod).getName() +
+                        "\nLines: " + getLinesStream(locations, psiFile).joining(", ") +
+                        "\nExpected range: " + startLine + "-" + endLine
+              );
             }
           }
-          int startLine = document.getLineNumber(range.getStartOffset()) + 1;
-          int endLine = document.getLineNumber(range.getEndOffset()) + 1;
-          res = getLinesStream(locations, psiFile).allMatch(line -> startLine <= line && line <= endLine);
+          else {
+            LOG.debug("Source check failed: method " + method.name() + " not found in sources");
+          }
           if (!res) {
-            LOG.debug("Source check failed: Method " + method.name() + ", source: " + ((NavigationItem)psiMethod).getName() +
-                      "\nLines: " + getLinesStream(locations, psiFile).joining(", ") +
-                      "\nExpected range: " + startLine + "-" + endLine
-            );
+            VirtualFile virtualFile = position.getFile().getVirtualFile();
+            AppUIUtil.invokeOnEdt(() -> {
+              if (!project.isDisposed()) {
+                FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+                if (editor instanceof TextEditor) {
+                  HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
+                                                          JavaDebuggerBundle.message("warning.source.code.not.match"));
+                }
+                else {
+                  XDebuggerManagerImpl.getNotificationGroup()
+                    .createNotification(JavaDebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
+                    .notify(project);
+                }
+              }
+            });
+            return ThreeState.NO;
           }
-        }
-        else {
-          LOG.debug("Source check failed: method " + method.name() + " not found in sources");
-        }
-        if (!res) {
-          VirtualFile virtualFile = position.getFile().getVirtualFile();
-          AppUIUtil.invokeOnEdt(() -> {
-            if (!project.isDisposed()) {
-              FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
-              if (editor instanceof TextEditor) {
-                HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
-                                                        JavaDebuggerBundle.message("warning.source.code.not.match"));
-              }
-              else {
-                XDebuggerManagerImpl.getNotificationGroup()
-                  .createNotification(JavaDebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
-                  .notify(project);
-              }
-            }
-          });
-          return ThreeState.NO;
-        }
-        return ThreeState.YES;
-      });
-    }
-    return ThreeState.YES;
+          return ThreeState.YES;
+        });
+      }
+      return ThreeState.YES;
+    });
   }
 
   private static IntStreamEx getLinesStream(List<Location> locations, PsiFile psiFile) {
@@ -189,10 +191,11 @@ public final class SourceCodeChecker {
               continue;
             }
           }
-          if (check(loc, position, process.getProject()) == ThreeState.NO) {
-            System.out.println("failed " + type);
-            break;
-          }
+          check(loc, position, process.getProject()).thenAccept(res -> {
+            if (res == ThreeState.NO) {
+              System.out.println("failed " + type);
+            }
+          });
         }
       }
       catch (AbsentInformationException ignored) {

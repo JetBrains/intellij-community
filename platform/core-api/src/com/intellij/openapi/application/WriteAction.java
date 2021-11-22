@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,12 +43,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
     Application application = ApplicationManager.getApplication();
     if (application.isWriteThread()) {
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-      try {
+      try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())) {
         result.run();
-      }
-      finally {
-        token.finish();
       }
       return result;
     }
@@ -58,12 +54,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     WriteThread.invokeAndWait(() -> {
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-      try {
+      try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())){
         result.run();
-      }
-      finally {
-        token.finish();
       }
     });
 
@@ -133,6 +125,10 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * <br/>Instead, please use {@link #compute(ThrowableComputable)}.
    */
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
+    return computeAndWait(action, ModalityState.defaultModalityState());
+  }
+
+  public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action, ModalityState modalityState) throws E {
     Application application = ApplicationManager.getApplication();
     if (application.isWriteThread()) {
       return ApplicationManager.getApplication().runWriteAction(action);
@@ -155,7 +151,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       catch (Throwable e) {
         exception.set(e);
       }
-    });
+    }, modalityState);
 
     Throwable t = exception.get();
     if (t != null) {

@@ -582,7 +582,9 @@ abstract class LineLayout {
       BidiRun subRun = new BidiRun(level, start, end);
       List<Chunk> subChunks = new SmartList<>();
       Document document = view.getEditor().getDocument();
-      for (Chunk chunk : getChunks(document.getImmutableCharSequence(), document.getLineStartOffset(line))) {
+      List<Chunk> chunks = getChunks(document.getImmutableCharSequence(), document.getLineStartOffset(line));
+      for (int i = (start - startOffset) / CHUNK_CHARACTERS; i < chunks.size(); i++) {
+        Chunk chunk = chunks.get(i);
         if (chunk.endOffset <= start) continue;
         if (chunk.startOffset >= end) break;
         subChunks.add(chunk.subChunk(view, this, line, start, end, quickEvaluationListener));

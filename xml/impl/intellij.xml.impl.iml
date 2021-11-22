@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
   </component>
   <component name="copyright">
     <Base>

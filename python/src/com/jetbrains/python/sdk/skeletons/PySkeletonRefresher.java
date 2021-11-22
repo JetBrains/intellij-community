@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
@@ -218,7 +217,6 @@ public class PySkeletonRefresher {
     final List<VirtualFile> paths = new ArrayList<>();
 
     paths.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
-    paths.addAll(BuildoutFacet.getExtraPathForAllOpenModules());
 
     return ContainerUtil.mapNotNull(paths, file -> {
       if (file.isInLocalFileSystem()) {

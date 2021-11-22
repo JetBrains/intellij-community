@@ -13,7 +13,7 @@ fun bar(x: X<String>) {
     x.foo(1, 2)
 }
 
-open class A<T>: X<T> {
+open class A<T> : X<T> {
     internal open fun <caret>foo(t: T) {
         println(t)
     }

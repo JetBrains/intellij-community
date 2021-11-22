@@ -120,7 +120,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       return null;
     }
     version = version.trim();
-    return version.isEmpty() ? null : fromString(version, null, null);
+    return fromString(version, null, null);
   }
 
   public static @Nullable BuildNumber fromStringWithProductCode(@NotNull String version, @NotNull String productCode) {
@@ -128,6 +128,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static @Nullable BuildNumber fromString(@NotNull String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
+    if (version.isEmpty()) return null;
     String code = version;
     int productSeparator = code.indexOf('-');
     String productCode;

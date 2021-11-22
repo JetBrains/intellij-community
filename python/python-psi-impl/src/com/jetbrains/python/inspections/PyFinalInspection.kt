@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.pyi.PyiUtil
+import com.jetbrains.python.refactoring.PyDefUseUtil
 
 class PyFinalInspection : PyInspection() {
 
@@ -144,7 +145,9 @@ class PyFinalInspection : PyInspection() {
         checkFinalReassignment(node)
       }
 
-      if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node }) {
+      if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any {
+          it != node && !PyDefUseUtil.isDefinedBefore(node, it)
+        }) {
         registerProblem(node, PyPsiBundle.message("INSP.final.already.declared.name.could.not.be.redefined.as.final"))
       }
     }

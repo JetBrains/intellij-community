@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -100,7 +99,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private RunAnythingContext mySelectedExecutingContext;
   private final List<RunAnythingContext> myAvailableExecutingContexts = new ArrayList<>();
   private RunAnythingChooseContextAction myChooseContextAction;
-  private final Alarm myListRenderingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myListRenderingAlarm = new Alarm();
   private final ExecutorService myExecutorService =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Run Anything list building");
 
@@ -470,7 +469,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private DataContext getDataContext() {
     return SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, getProject())
-      .add(LangDataKeys.MODULE, getModule())
+      .add(PlatformCoreDataKeys.MODULE, getModule())
       .add(CommonDataKeys.VIRTUAL_FILE, getWorkDirectory())
       .add(RunAnythingAction.EXECUTOR_KEY, getExecutor())
       .add(RunAnythingProvider.EXECUTING_CONTEXT, myChooseContextAction.getSelectedContext())
@@ -683,7 +682,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myCurrentWorker = ActionCallback.DONE;
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    myModule = actionEvent.getData(LangDataKeys.MODULE);
+    myModule = actionEvent.getData(PlatformCoreDataKeys.MODULE);
 
     init();
 

@@ -390,7 +390,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   @NeedsIndex.ForStandardLibrary
   void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {
-    checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'clone', 'toString', 'notify', 'notifyAll'
+    checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'new File', 'new File', 'new File', 'new File', 'clone', 'toString', 'notify', 'notifyAll'
   }
 
   void testPreferBetterMatchingConstantToMethods() {

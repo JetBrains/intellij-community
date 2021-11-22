@@ -3,7 +3,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -28,7 +28,7 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
     return SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
       .add(CommonDataKeys.VIRTUAL_FILE, file)
-      .add(PlatformDataKeys.PROJECT_FILE_DIRECTORY, PlatformTestUtil.getOrCreateProjectBaseDir(project))
+      .add(PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY, PlatformTestUtil.getOrCreateProjectBaseDir(project))
       .build();
   }
 

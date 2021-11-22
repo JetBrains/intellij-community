@@ -38,13 +38,14 @@ public final class ExternalToolWindowManager {
         @Override
         public void onProjectsLinked(@NotNull Collection linked) {
 
-          Consumer<ToolWindow> activate = (toolWindow) -> toolWindow.setAvailable(true, () -> {
-            boolean shouldShow = settings.getLinkedProjectsSettings().size() == 1
-                                 && project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null;
-            if (shouldShow) {
-              toolWindow.show(null);
-            }
-          });
+          Consumer<ToolWindow> activate = (toolWindow) ->
+            UIUtil.invokeLaterIfNeeded(() -> toolWindow.setAvailable(true, () -> {
+              boolean shouldShow = settings.getLinkedProjectsSettings().size() == 1
+                                   && project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null;
+              if (shouldShow) {
+                toolWindow.show(null);
+              }
+            }));
 
           final ToolWindow toolWindow = getToolWindow(project, manager.getSystemId());
           if (toolWindow != null) {

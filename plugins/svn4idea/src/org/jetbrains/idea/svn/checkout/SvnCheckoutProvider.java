@@ -120,8 +120,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                               WorkingCopyFormat selectedFormat) {
     final Ref<Boolean> checkoutSuccessful = new Ref<>();
     final Exception[] exception = new Exception[1];
-    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project, message("progress.title.check.out"), true,
-                                                                               VcsConfiguration.getInstance(project).getCheckoutOption()) {
+    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project, message("progress.title.check.out"), true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;

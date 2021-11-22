@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -16,7 +17,12 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @CompileStatic
-class ApplicationInfoProperties {
+final class ApplicationInfoProperties {
+  @SuppressWarnings('SpellCheckingInspection')
+  private static final DateTimeFormatter BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
+  @VisibleForTesting
+  @SuppressWarnings('SpellCheckingInspection')
+  static final DateTimeFormatter MAJOR_RELEASE_DATE_PATTERN = DateTimeFormatter.ofPattern('uuuuMMdd')
   private final String appInfoXml
   final String majorVersion
   final String minorVersion
@@ -44,7 +50,7 @@ class ApplicationInfoProperties {
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   @CompileStatic(TypeCheckingMode.SKIP)
-  private ApplicationInfoProperties(ProductProperties productProperties, String appInfoXml) {
+  private ApplicationInfoProperties(ProductProperties productProperties, String appInfoXml, BuildMessages messages) {
     this.appInfoXml = appInfoXml
     def root = new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
 
@@ -73,7 +79,11 @@ class ApplicationInfoProperties {
       productCode = productProperties.productCode
     }
     this.productCode = productCode
-    majorReleaseDate = root.build.first().@majorReleaseDate
+    def majorReleaseDate = root.build.first().@majorReleaseDate
+    if (!isEAP && (majorReleaseDate == null || majorReleaseDate.startsWith('__'))) {
+      messages.error("majorReleaseDate may be omitted only for EAP")
+    }
+    this.majorReleaseDate = formatMajorReleaseDate(majorReleaseDate)
     productName = namesTag.@fullname ?: shortProductName
     edition = namesTag.@edition
     motto = namesTag.@motto
@@ -89,8 +99,28 @@ class ApplicationInfoProperties {
     patchesUrl = root."update-urls"[0]?.@"patches"
   }
 
+  String getAppInfoXml() {
+    return appInfoXml
+  }
+
+  @VisibleForTesting
+  static String formatMajorReleaseDate(String majorReleaseDateRaw) {
+    if (majorReleaseDateRaw == null || majorReleaseDateRaw.startsWith('__')) {
+      return ZonedDateTime.now(ZoneOffset.UTC).format(MAJOR_RELEASE_DATE_PATTERN)
+    }
+    else {
+      try {
+        MAJOR_RELEASE_DATE_PATTERN.parse(majorReleaseDateRaw)
+        return majorReleaseDateRaw
+      }
+      catch (Exception ignored) {
+        return MAJOR_RELEASE_DATE_PATTERN.format(BUILD_DATE_PATTERN.parse(majorReleaseDateRaw))
+      }
+    }
+  }
+
   ApplicationInfoProperties(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
-    this(productProperties, findApplicationInfoInSources(project, productProperties, messages))
+    this(productProperties, findApplicationInfoInSources(project, productProperties, messages), messages)
   }
 
   String getUpperCaseProductName() { shortProductName.toUpperCase() }
@@ -110,7 +140,7 @@ class ApplicationInfoProperties {
 
   @NotNull
   ApplicationInfoProperties patch(BuildContext buildContext) {
-    String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
+    String date = ZonedDateTime.now(ZoneOffset.UTC).format(BUILD_DATE_PATTERN)
     ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
     String builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
@@ -125,7 +155,7 @@ class ApplicationInfoProperties {
       "BUILD", buildContext.buildNumber,
       "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
     ), "__")
-    return new ApplicationInfoProperties(buildContext.productProperties, patchedAppInfoXml)
+    return new ApplicationInfoProperties(buildContext.productProperties, patchedAppInfoXml, buildContext.messages)
   }
 
   //copy of ApplicationInfoImpl.shortenCompanyName

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.find.FindManager;
@@ -31,7 +31,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
@@ -109,7 +108,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.ActionID.IntroducePropertyAction);
+      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.INTRODUCE_PROPERTY);
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       Pair<XmlElement, TextRange> elementAndRange = getSelectedElementAndTextRange(editor, file);

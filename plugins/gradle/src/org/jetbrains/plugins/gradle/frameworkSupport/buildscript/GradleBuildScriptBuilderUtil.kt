@@ -5,13 +5,16 @@ package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
 
-
-fun isSupportedImplementationScope(gradleVersion: GradleVersion): Boolean {
+fun isSupportedJavaLibraryPlugin(gradleVersion: GradleVersion): Boolean {
   return gradleVersion.baseVersion >= GradleVersion.version("3.4")
 }
 
+fun isSupportedImplementationScope(gradleVersion: GradleVersion): Boolean {
+  return isSupportedJavaLibraryPlugin(gradleVersion)
+}
+
 fun isSupportedRuntimeOnlyScope(gradleVersion: GradleVersion): Boolean {
-  return gradleVersion.baseVersion >= GradleVersion.version("3.4")
+  return isSupportedJavaLibraryPlugin(gradleVersion)
 }
 
 fun isSupportedJUnit5(gradleVersion: GradleVersion): Boolean {

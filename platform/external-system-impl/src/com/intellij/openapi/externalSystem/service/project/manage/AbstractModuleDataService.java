@@ -490,6 +490,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     modifiableRootModel.rearrangeOrderEntries(newOrder);
   }
 
+  @SuppressWarnings("deprecation")
   private void importModuleSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {
     if (!data.isSetSdkName()) return;
     if (modifiableRootModel.getSdk() != null) return;

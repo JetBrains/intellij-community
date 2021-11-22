@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -10,6 +10,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
@@ -59,7 +60,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiElement element = myMatchingVisitor.getElement();
     if (!(element instanceof PsiComment)) {
-      if (element instanceof PsiMember) {
+      if (element instanceof PsiMember && PsiTreeUtil.skipWhitespacesAndCommentsForward(comment) instanceof PsiDeclarationStatement) {
         other = ObjectUtils.tryCast(element.getFirstChild(), PsiComment.class);
       }
     }
@@ -223,20 +224,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitDocComment(PsiDocComment comment) {
-    final PsiDocComment other;
-    if (myMatchingVisitor.getElement() instanceof PsiDocCommentOwner) {
-      other = ((PsiDocCommentOwner)myMatchingVisitor.getElement()).getDocComment();
-      if (!myMatchingVisitor.setResult(other != null)) {
-        // doc comment are not collapsed for inner classes!
-        return;
-      }
-    }
-    else {
-      other = (PsiDocComment)myMatchingVisitor.getElement();
-      if (!myMatchingVisitor.setResult(!(myMatchingVisitor.getElement().getParent() instanceof PsiDocCommentOwner))) {
-        return; // we should matched the doc before
-      }
-    }
+    final PsiDocComment other = myMatchingVisitor.getElement(PsiDocComment.class);
+    if (other == null) return;
 
     final PsiDocTag[] tags = comment.getTags();
     if (tags.length > 0 && !myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(tags, other.getTags()))) return;
@@ -367,7 +356,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiField other = myMatchingVisitor.getElement(PsiField.class);
     if (other == null) return;
     final PsiDocComment comment = field.getDocComment();
-    if (comment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other))) return;
+    if (comment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other.getDocComment()))) return;
     if (!myMatchingVisitor.setResult(checkHierarchy(other, field))) return;
     super.visitField(field);
   }
@@ -1579,7 +1568,35 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (other == null) return;
     if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getOperand(), other.getOperand()))) return;
     if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getCheckType(), other.getCheckType()))) return;
-    myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getPattern(), other.getPattern()));
+    final PsiPattern pattern = expression.getPattern();
+    PsiPattern otherPattern = other.getPattern();
+    if (pattern instanceof PsiTypeTestPattern) {
+      final PsiTypeTestPattern typeTestPattern = (PsiTypeTestPattern)pattern;
+      otherPattern = skipParenthesesDown(otherPattern);
+      if (otherPattern instanceof PsiTypeTestPattern) {
+        final PsiTypeTestPattern otherVariable = (PsiTypeTestPattern)otherPattern;
+        myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(typeTestPattern.getPatternVariable(), otherVariable.getPatternVariable()));
+      }
+      else {
+        myMatchingVisitor.setResult(myMatchingVisitor.allowsAbsenceOfMatch(typeTestPattern.getPatternVariable()));
+      }
+    }
+    else {
+      myMatchingVisitor.setResult(myMatchingVisitor.match(pattern, otherPattern));
+    }
+  }
+
+  private PsiPattern skipParenthesesDown(PsiPattern pattern) {
+    if (!myMatchingVisitor.getMatchContext().getOptions().isLooseMatching()) {
+      return pattern;
+    }
+    return JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern);
+  }
+
+  @Override
+  public void visitParenthesizedPattern(PsiParenthesizedPattern pattern) {
+    final PsiParenthesizedPattern other = myMatchingVisitor.getElement(PsiParenthesizedPattern.class);
+    myMatchingVisitor.setResult(other != null && myMatchingVisitor.match(pattern.getPattern(), other.getPattern()));
   }
 
   @Override
@@ -1756,7 +1773,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiDocComment comment = clazz.getDocComment();
     if (comment != null) {
-      if (!myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other))) return;
+      if (!myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other.getDocComment()))) return;
     }
 
     final PsiIdentifier identifier1 = clazz.getNameIdentifier();
@@ -1807,7 +1824,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     context.pushResult();
     try {
       final PsiDocComment docComment = method.getDocComment();
-      if (docComment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, other))) return;
+      if (docComment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, other.getDocComment()))) return;
       if (method.hasTypeParameters() && !myMatchingVisitor.setResult(
         myMatchingVisitor.match(method.getTypeParameterList(), other.getTypeParameterList()))) return;
 

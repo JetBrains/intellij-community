@@ -30,7 +30,9 @@ class RemoveWhenBranchFix(element: KtWhenEntry) : KotlinQuickFixAction<KtWhenEnt
                 Errors.REDUNDANT_ELSE_IN_WHEN ->
                     (diagnostic.psiElement as? KtWhenEntry)?.let { RemoveWhenBranchFix(it) }
                 Errors.SENSELESS_NULL_IN_WHEN ->
-                    diagnostic.psiElement.getStrictParentOfType<KtWhenEntry>()?.let { RemoveWhenBranchFix(it) }
+                    diagnostic.psiElement.getStrictParentOfType<KtWhenEntry>()
+                        ?.takeIf { it.conditions.size == 1 }
+                        ?.let { RemoveWhenBranchFix(it) }
                 else ->
                     null
             }

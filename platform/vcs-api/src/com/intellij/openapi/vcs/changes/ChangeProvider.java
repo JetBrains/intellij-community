@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * The provider of change information (from the point of view of VCS).
+ * The provider of the change information (from the point of view of VCS).
  */
 public interface ChangeProvider {
   /**
@@ -23,10 +23,10 @@ public interface ChangeProvider {
    * of the dirty scope, but if these changes are reported, they will be
    * ignored by the caller.</p>
    *
-   * @param dirtyScope a changes on the virtual file system
+   * @param dirtyScope a set of changes on the virtual file system
    * @param builder a builder of VCS changes
    * @param progress a current progress object
-   * @throws VcsException if there there is a VCS specific problem
+   * @throws VcsException if there is a VCS specific problem
    */
   void getChanges(@NotNull VcsDirtyScope dirtyScope,
                   @NotNull ChangelistBuilder builder,

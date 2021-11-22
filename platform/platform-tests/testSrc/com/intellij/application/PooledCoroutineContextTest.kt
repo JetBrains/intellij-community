@@ -10,11 +10,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
 class PooledCoroutineContextTest : UsefulTestCase() {
   @Test
-  fun `log error`() = runBlocking<Unit> {
+  fun `log error`() {
     val errorMessage = "don't swallow me"
     val loggedErrors = loggedErrorsAfterThrowingFromGlobalScope(RuntimeException(errorMessage))
 
@@ -22,41 +23,41 @@ class PooledCoroutineContextTest : UsefulTestCase() {
   }
 
   @Test
-  fun `do not log ProcessCanceledException`() = runBlocking<Unit> {
+  fun `do not log ProcessCanceledException`() {
     val errorMessage = "ignore me"
     val loggedErrors = loggedErrorsAfterThrowingFromGlobalScope(ProcessCanceledException(RuntimeException(errorMessage)))
 
     assertThat(loggedErrors).noneMatch { errorMessage in it.cause?.message.orEmpty() }
   }
 
-  private suspend fun loggedErrorsAfterThrowingFromGlobalScope(exception: Throwable): List<Throwable> {
+  private fun loggedErrorsAfterThrowingFromGlobalScope(exception: Throwable): List<Throwable> {
     // cannot use assertThatThrownBy here, because AssertJ doesn't support Kotlin coroutines
     val loggedErrors = mutableListOf<Throwable>()
     withLoggedErrorsRecorded(loggedErrors) {
-      GlobalScope.launch(Dispatchers.ApplicationThreadPool) {
-        throw exception
-      }.join()
+      runBlocking<Unit> {
+        withNoopThreadUncaughtExceptionHandler {
+          GlobalScope.launch(Dispatchers.ApplicationThreadPool) {
+            throw exception
+          }.join()
+        }
+      }
     }
-
     return loggedErrors
   }
 
-  private suspend fun <T> withLoggedErrorsRecorded(loggedErrors: List<Throwable>,
-                                                   block: suspend () -> T): T {
-    val savedInstance = LoggedErrorProcessor.getInstance()
+  private fun <T> withLoggedErrorsRecorded(loggedErrors: List<Throwable>,
+                                                   block: () -> T): T {
     val synchronizedLoggedErrors = Collections.synchronizedList(loggedErrors)
-    LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+    val result:AtomicReference<T> = AtomicReference()
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
         synchronizedLoggedErrors.add(t)
         return false
       }
-    })
-    return try {
-      withNoopThreadUncaughtExceptionHandler { block() }
+    }) {
+      result.set(block())
     }
-    finally {
-      LoggedErrorProcessor.setNewInstance(savedInstance)
-    }
+    return result.get()
   }
 
   private suspend fun <T> withNoopThreadUncaughtExceptionHandler(block: suspend () -> T): T {

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -180,7 +181,7 @@ public final class KeymapUtil {
   }
 
   public static boolean isSimplifiedMacShortcuts() {
-    return SystemInfo.isMac && Registry.is("ide.macos.disable.native.shortcut.symbols", false);
+    return SystemInfo.isMac && AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
   }
 
   @NotNull

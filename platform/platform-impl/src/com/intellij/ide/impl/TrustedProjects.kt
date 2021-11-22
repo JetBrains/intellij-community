@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TrustedProjects")
 @file:ApiStatus.Experimental
 
@@ -9,10 +9,11 @@ import com.intellij.ide.impl.TrustedCheckResult.NotTrusted
 import com.intellij.ide.impl.TrustedCheckResult.Trusted
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
@@ -48,11 +49,11 @@ fun confirmOpeningUntrustedProject(
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String,
   @NlsContexts.Button cancelButtonText: String
-): OpenUntrustedProjectChoice {
+): OpenUntrustedProjectChoice = invokeAndWaitIfNeeded {
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
   val trustedCheckResult = getImplicitTrustedCheckResult(projectDir.toNioPath())
   if (trustedCheckResult is Trusted) {
-    return OpenUntrustedProjectChoice.IMPORT
+    return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.IMPORT
   }
 
   val choice = MessageDialogBuilder.Message(title, message)
@@ -70,11 +71,11 @@ fun confirmOpeningUntrustedProject(
     cancelButtonText, null -> OpenUntrustedProjectChoice.CANCEL
     else -> {
       LOG.error("Illegal choice $choice")
-      return OpenUntrustedProjectChoice.CANCEL
+      return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.CANCEL
     }
   }
   TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
-  return openChoice
+  return@invokeAndWaitIfNeeded openChoice
 }
 
 fun confirmLoadingUntrustedProject(
@@ -83,11 +84,11 @@ fun confirmLoadingUntrustedProject(
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String
-) : Boolean {
+): Boolean = invokeAndWaitIfNeeded {
   val trustedCheckResult = getImplicitTrustedCheckResult(project)
   if (trustedCheckResult is Trusted) {
     project.setTrusted(true)
-    return true
+    return@invokeAndWaitIfNeeded true
   }
 
   val answer = MessageDialogBuilder.yesNo(title, message)
@@ -98,7 +99,7 @@ fun confirmLoadingUntrustedProject(
     .ask(project)
   project.setTrusted(answer)
   TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(project, answer)
-  return answer
+  return@invokeAndWaitIfNeeded answer
 }
 
 @ApiStatus.Experimental
@@ -125,8 +126,8 @@ fun Project.setTrusted(value: Boolean) {
   }
 }
 
-fun createDoNotAskOptionForLocation(projectLocationPath: String): DialogWrapper.DoNotAskOption {
-  return object : DialogWrapper.DoNotAskOption.Adapter() {
+fun createDoNotAskOptionForLocation(projectLocationPath: String): DoNotAskOption {
+  return object : DoNotAskOption.Adapter() {
     override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
       if (isSelected && exitCode == Messages.YES) {
         TrustedProjectsStatistics.TRUST_LOCATION_CHECKBOX_SELECTED.log()
@@ -147,7 +148,9 @@ fun isProjectImplicitlyTrusted(projectDir: Path?): Boolean {
 
 private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
                                        ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                       SystemProperties.`is`("idea.is.integration.test")
+                                       java.lang.Boolean.getBoolean("idea.is.integration.test") ||
+                                       java.lang.Boolean.getBoolean("idea.trust.all.projects")
+                                       
 
 private sealed class TrustedCheckResult {
   object Trusted : TrustedCheckResult()

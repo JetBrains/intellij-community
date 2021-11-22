@@ -4,14 +4,18 @@ package org.jetbrains.kotlin.idea
 
 import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
+import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.descriptors.*
@@ -52,6 +56,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.constant
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.util.function.Consumer
 
 class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNamePolicy {
     override fun renderClassifier(classifier: ClassifierDescriptor, renderer: DescriptorRenderer): String {
@@ -79,7 +84,7 @@ class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNameP
             return name
         return buildString {
             val ref = classifier.fqNameUnsafe.toString()
-            DocumentationManagerUtil.createHyperlink(this, ref, name, true)
+            DocumentationManagerUtil.createHyperlink(this, ref, name, true, false)
         }
     }
 }
@@ -120,16 +125,40 @@ class WrapValueParameterHandler(val base: DescriptorRenderer.ValueParametersHand
     }
 }
 
-open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider() {
+class KotlinDocumentationProvider : AbstractDocumentationProvider() {
+
+    override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {
+        if (file !is KtFile) return
+
+        PsiTreeUtil.processElements(file) {
+            val comment = (it as? KtDeclaration)?.docComment
+            if (comment != null) sink.accept(comment)
+            true
+        }
+    }
+
+    @Nls
+    override fun generateRenderedDoc(comment: PsiDocCommentBase): String? {
+        val docComment = comment as? KDoc ?: return null
+
+        val result = StringBuilder().also {
+            it.renderKDoc(docComment.getDefaultSection(), docComment.getAllSections())
+        }
+
+        @Suppress("HardCodedStringLiteral")
+        return JavaDocExternalFilter.filterInternalDocInfo(result.toString())
+    }
 
     override fun getCustomDocumentationElement(editor: Editor, fil: PsiFile, contextElement: PsiElement?): PsiElement? {
         return if (contextElement.isModifier()) contextElement else null
     }
 
+    @Nls
     override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?): String? {
         return if (element == null) null else getText(element, originalElement, true)
     }
 
+    @Nls
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
         return getText(element, originalElement, false)
     }
@@ -197,8 +226,8 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
 
                 val enumSource = SourceNavigationHelper.getNavigationElement(enumDeclaration)
                 val functionName = functionDescriptor.fqNameSafe.shortName().asString()
-                return@run enumSource.findDescendantOfType<KDoc> {
-                    it.getChildrenOfType<KDocSection>().any { it.findTagByName(functionName) != null }
+                return@run enumSource.findDescendantOfType<KDoc> { doc ->
+                    doc.getChildrenOfType<KDocSection>().any { it.findTagByName(functionName) != null }
                 }
             }
 
@@ -217,10 +246,11 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
         }
 
 
-        private fun renderEnum(element: KtClass, originalElement: PsiElement?, quickNavigation: Boolean): String? {
+        @NlsSafe
+        private fun renderEnum(element: KtClass, originalElement: PsiElement?, quickNavigation: Boolean): String {
             val referenceExpression = originalElement?.getNonStrictParentOfType<KtReferenceExpression>()
             if (referenceExpression != null) {
-                // When caret on special enum function (e.g SomeEnum.values<caret>())
+                // When caret on special enum function (e.g. SomeEnum.values<caret>())
                 // element is not an KtReferenceExpression, but KtClass of enum
                 // so reference extracted from originalElement
                 val context = referenceExpression.analyze(BodyResolveMode.PARTIAL)
@@ -233,9 +263,11 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
             return renderKotlinDeclaration(element, quickNavigation)
         }
 
+        @Nls
         private fun getText(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean) =
             getTextImpl(element, originalElement, quickNavigation)
 
+        @Nls
         private fun getTextImpl(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
             if (element is PsiWhiteSpace) {
                 val itElement = findElementWithText(originalElement, "it")
@@ -256,12 +288,13 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
             }
 
             if (element is KtClass && element.isEnum()) {
-                // When caret on special enum function (e.g SomeEnum.values<caret>())
+                // When caret on special enum function (e.g. SomeEnum.values<caret>())
                 // element is not an KtReferenceExpression, but KtClass of enum
                 return renderEnum(element, originalElement, quickNavigation)
             } else if (element is KtEnumEntry && !quickNavigation) {
                 val ordinal = element.containingClassOrObject?.body?.run { getChildrenOfType<KtEnumEntry>().indexOf(element) }
 
+                @Suppress("HardCodedStringLiteral")
                 return buildString {
                     insert(buildKotlinDeclaration(element, quickNavigation)) {
                         definition {
@@ -312,6 +345,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
             return null
         }
 
+        @NlsSafe
         private fun renderKotlinDeclaration(declaration: KtExpression, quickNavigation: Boolean) = buildString {
             insert(buildKotlinDeclaration(declaration, quickNavigation)) {}
         }
@@ -333,6 +367,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
             return buildKotlin(context, declarationDescriptor, quickNavigation, declaration, resolutionFacade)
         }
 
+        @NlsSafe
         private fun renderKotlinImplicitLambdaParameter(element: KtReferenceExpression, quickNavigation: Boolean): String? {
             val resolutionFacade = element.getResolutionFacade()
             val context = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
@@ -409,7 +444,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
                 if (containingDeclaration != null) {
                     val fqName = containingDeclaration.fqNameSafe
                     if (!fqName.isRoot) {
-                        DocumentationManagerUtil.createHyperlink(this, fqName.asString(), fqName.asString(), false)
+                        DocumentationManagerUtil.createHyperlink(this, fqName.asString(), fqName.asString(), false, true)
                     }
                     val fileName =
                         descriptor
@@ -440,7 +475,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
             val psi = declarationDescriptor.findPsi() as? KtFunction ?: return ""
             val lightElement =
                 LightClassUtil.getLightClassMethod(psi) // Light method for super's scan in javadoc info gen
-            val javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(psi.project, lightElement)
+            val javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(psi.project, lightElement, false)
             val builder = StringBuilder()
             if (javaDocInfoGenerator.generateDocInfoCore(builder, false)) {
                 val renderedJava = builder.toString()
@@ -488,6 +523,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
             wrap("<$tag>", "</$tag>", body)
         }
 
+        @NlsSafe
         private fun mixKotlinToJava(
             declarationDescriptor: DeclarationDescriptor,
             element: PsiElement,

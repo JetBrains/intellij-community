@@ -1,7 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: usages
-data class A(public val field: Int) {
-    public val field<caret>: String
+data class A(val field: Int) {
+    val field<caret>: String
 }
 
 fun main(args: Array<String>) {
@@ -9,4 +9,5 @@ fun main(args: Array<String>) {
 
     println(a.field)
 }
+
 // DISABLE-ERRORS

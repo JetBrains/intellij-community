@@ -1,39 +1,69 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.CommonBundle
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.AnimatedIcon
 import com.intellij.xml.util.XmlStringUtil.escapeString
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 
-open class HighlightingProblem(
+internal class HighlightingProblem(
   override val provider: ProblemsProvider,
   override val file: VirtualFile,
-  private val highlighter: RangeHighlighterEx
+  val highlighter: RangeHighlighterEx
 ) : FileProblem {
 
-  private fun getIcon(level: HighlightDisplayLevel) = if (severity >= level.severity.myVal) level.icon else null
+  private fun getIcon(level: HighlightDisplayLevel): Icon? = when {
+    text.isEmpty() || asyncDescriptionRequested.get() -> AnimatedIcon.Default.INSTANCE
+    severity >= level.severity.myVal -> level.icon
+    else -> null
+  }
 
-  open val info: HighlightInfo?
+  private var asyncDescriptionRequested = AtomicBoolean(false)
+  private var loading = AtomicBoolean(false)
+
+  val info: HighlightInfo?
     get() {
-      return HighlightInfo.fromRangeHighlighter(highlighter)
+      val info = HighlightInfo.fromRangeHighlighter(highlighter)
+      if (info is AsyncDescriptionSupplier) {
+        requestAsyncDescription(info)
+      }
+      return info
     }
+
+  private fun requestAsyncDescription(info: AsyncDescriptionSupplier) {
+    if (!asyncDescriptionRequested.compareAndSet(false, true)) return
+    loading.set(true)
+
+    info.requestDescription().onSuccess {
+      // we do that to avoid Concurrent modification exception
+      ApplicationManager.getApplication().invokeLater {
+        val panel = ProblemsView.getSelectedPanel(provider.project) as? HighlightingPanel
+        panel?.currentRoot?.problemUpdated(this)
+        loading.set(false)
+      }
+    }
+  }
 
   override val icon: Icon
     get() = HighlightDisplayLevel.find(info?.severity)?.icon
-            ?: getIcon(HighlightDisplayLevel.ERROR)
-            ?: getIcon(HighlightDisplayLevel.WARNING)
-            ?: HighlightDisplayLevel.WEAK_WARNING.icon
+           ?: getIcon(HighlightDisplayLevel.ERROR)
+           ?: getIcon(HighlightDisplayLevel.WARNING)
+           ?: HighlightDisplayLevel.WEAK_WARNING.icon
 
   override val text: String
     get() {
-      val text = info?.description ?: return "Invalid"
+      val text = info?.description ?: return CommonBundle.getLoadingTreeNodeText()
       val pos = text.indexOfFirst { StringUtil.isLineBreak(it) }
       return if (pos < 0 || text.startsWith("<html>", ignoreCase = true)) text
       else text.substring(0, pos) + StringUtil.ELLIPSIS
@@ -48,6 +78,7 @@ open class HighlightingProblem(
   override val description: String?
     get() {
       val text = info?.description ?: return null
+      if (text.isEmpty()) return null
       val pos = text.indexOfFirst { StringUtil.isLineBreak(it) }
       return if (pos < 0 || text.startsWith("<html>", ignoreCase = true)) null
       else "<html>" + StringUtil.join(StringUtil.splitByLines(escapeString(text)), "<br/>")

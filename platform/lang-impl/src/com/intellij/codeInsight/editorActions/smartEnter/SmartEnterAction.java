@@ -6,6 +6,7 @@ import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHand
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -32,6 +33,10 @@ public class SmartEnterAction extends EditorAction {
   private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      if (editor instanceof EditorWindow && editor.isOneLineMode()) {
+        // One-line injection: prefer for host instead
+        return false;
+      }
       return getEnterHandler().isEnabled(editor, caret, dataContext);
     }
 

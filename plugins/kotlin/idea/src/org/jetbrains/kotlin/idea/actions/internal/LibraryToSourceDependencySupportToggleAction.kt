@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.project.KotlinLibraryToSourceAnalysisComponent
 import org.jetbrains.kotlin.idea.project.libraryToSourceAnalysisEnabled
 
 class LibraryToSourceDependencySupportToggleAction : ToggleAction(
-    KotlinBundle.message("toggle.library.to.source.dependency.support"),
+    KotlinBundle.message("title.toggle.library.to.source.dependency.support"),
     KotlinBundle.message("enable.components.for.library.to.source.analysis.in.kotlin"),
     null
 ) {

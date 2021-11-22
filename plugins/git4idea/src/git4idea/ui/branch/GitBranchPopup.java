@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.popup.PopupDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -180,7 +181,10 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       popupGroup.addAll(GitBranchPopupActions.getRebaseActions());
     }
     popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, allRepositories));
-    popupGroup.add(new GitBranchPopupActions.CheckoutRevisionActions(myProject, allRepositories));
+
+    if (!ExperimentalUI.isNewVcsBranchPopup()) {
+      popupGroup.add(new GitBranchPopupActions.CheckoutRevisionActions(myProject, allRepositories));
+    }
 
     popupGroup.addAll(createRepositoriesActions());
 

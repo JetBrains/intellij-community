@@ -162,7 +162,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         Path parentDir = path.getParent();
         Path newDataFile = parentDir.resolve(path.getFileName() + ".storageData.backup");
         Files.createDirectories(parentDir);
-        createOrTruncateFile(path);
+        createOrTruncateFile(newDataFile);
 
         Path oldDataFile = parentDir.resolve(path.getFileName() + DATA_EXTENSION);
         DataTable newDataTable = new DataTable(newDataFile, myPool);

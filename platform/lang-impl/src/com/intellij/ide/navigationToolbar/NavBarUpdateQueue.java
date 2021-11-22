@@ -4,7 +4,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -71,7 +71,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     try {
       NavBarModel model = myPanel.getModel();
       if (dataContext != null) {
-        Component parent = UIUtil.findUltimateParent(PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+        Component parent = UIUtil.findUltimateParent(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext));
         Project project = parent instanceof IdeFrame ? ((IdeFrame)parent).getProject() : null;
         if (myPanel.getProject() != project || myPanel.isNodePopupActive()) {
           requestModelUpdate(null, myPanel.getContextObject(), true);

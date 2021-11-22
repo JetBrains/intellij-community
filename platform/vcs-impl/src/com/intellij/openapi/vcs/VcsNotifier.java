@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import org.jetbrains.annotations.*;
 
 import java.util.Collection;
@@ -15,14 +14,14 @@ import static com.intellij.util.ui.UIUtil.BR;
 import static com.intellij.util.ui.UIUtil.LINE_SEPARATOR;
 
 public class VcsNotifier {
-  public static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup(
-    "Vcs Messages", ChangesViewContentManager.TOOLWINDOW_ID);
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
-    "Vcs Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
-  public static final NotificationGroup STANDARD_NOTIFICATION = new NotificationGroup(
-    "Vcs Notifications", NotificationDisplayType.BALLOON, true);
-  public static final NotificationGroup SILENT_NOTIFICATION = new NotificationGroup(
-    "Vcs Silent Notifications", NotificationDisplayType.NONE, true);
+  public static final NotificationGroup NOTIFICATION_GROUP_ID =
+    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Messages");
+  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION =
+    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Important Messages");
+  public static final NotificationGroup STANDARD_NOTIFICATION =
+    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Notifications");
+  public static final NotificationGroup SILENT_NOTIFICATION =
+    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Silent Notifications");
 
   private final @NotNull Project myProject;
 

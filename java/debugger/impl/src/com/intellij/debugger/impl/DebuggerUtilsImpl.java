@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -38,8 +38,11 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -401,5 +404,16 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
       return res;
     });
+  }
+
+  @Nullable
+  public static XValueMarkers<?, ?> getValueMarkers(@Nullable DebugProcess process) {
+    if (process instanceof DebugProcessImpl) {
+      XDebugSession session = ((DebugProcessImpl)process).getSession().getXDebugSession();
+      if (session instanceof XDebugSessionImpl) {
+        return ((XDebugSessionImpl)session).getValueMarkers();
+      }
+    }
+    return null;
   }
 }

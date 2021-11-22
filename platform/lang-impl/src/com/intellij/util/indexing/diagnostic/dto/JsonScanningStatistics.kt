@@ -19,7 +19,9 @@ data class JsonScanningStatistics(
   val timeUpdatingContentLessIndexes: JsonDuration = JsonDuration(0),
   val timeIndexingWithoutContent: JsonDuration = JsonDuration(0),
 
-  // Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
+  /**
+   * Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
+   */
   val scannedFiles: List<JsonScannedFile>? = null
 ) {
   @JsonIgnoreProperties(ignoreUnknown = true)

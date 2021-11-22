@@ -3,10 +3,6 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.entities.ModifiableWithArrayEntity
-import com.intellij.workspaceModel.storage.entities.MySource
-import com.intellij.workspaceModel.storage.entities.WithArrayEntity
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl

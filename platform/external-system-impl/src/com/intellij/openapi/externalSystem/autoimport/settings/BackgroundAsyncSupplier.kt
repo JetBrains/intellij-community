@@ -2,17 +2,37 @@
 package com.intellij.openapi.externalSystem.autoimport.settings
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import java.util.concurrent.Executor
 
-abstract class BackgroundAsyncSupplier<R> : AsyncSupplier<R> {
+class BackgroundAsyncSupplier<R>(
+  private val supplier: AsyncSupplier<R>,
+  private val shouldKeepTasksAsynchronous: () -> Boolean,
+  private val backgroundExecutor: Executor
+) : AsyncSupplier<R> {
   override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
-    if (isBlocking()) {
-      consumer(get())
-    }
-    else {
-      BackgroundTaskUtil.executeOnPooledThread(parentDisposable) {
-        consumer(get())
+    if (shouldKeepTasksAsynchronous()) {
+      BackgroundTaskUtil.execute(backgroundExecutor, parentDisposable) {
+        supplier.supply(consumer, parentDisposable)
       }
     }
+    else {
+      supplier.supply(consumer, parentDisposable)
+    }
+  }
+
+  class Builder<R>(private val supplier: AsyncSupplier<R>) {
+    constructor(supplier: () -> R) : this(AsyncSupplier.blocking(supplier))
+
+    private var shouldKeepTasksAsynchronous: () -> Boolean =
+      CoreProgressManager::shouldKeepTasksAsynchronous
+
+    fun shouldKeepTasksAsynchronous(provider: () -> Boolean) = apply {
+      shouldKeepTasksAsynchronous = provider
+    }
+
+    fun build(backgroundExecutor: Executor) =
+      BackgroundAsyncSupplier(supplier, shouldKeepTasksAsynchronous, backgroundExecutor)
   }
 }

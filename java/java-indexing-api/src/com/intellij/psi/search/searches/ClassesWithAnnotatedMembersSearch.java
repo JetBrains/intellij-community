@@ -2,7 +2,7 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
@@ -23,21 +23,23 @@ public final class ClassesWithAnnotatedMembersSearch extends ExtensibleQueryFact
     private final PsiClass myAnnotationClass;
     private final SearchScope myScope;
 
-    public Parameters(final PsiClass annotationClass, final SearchScope scope) {
+    public Parameters(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
       myAnnotationClass = annotationClass;
       myScope = scope;
     }
 
+    @NotNull
     public PsiClass getAnnotationClass() {
       return myAnnotationClass;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
   }
 
-  public static Query<PsiClass> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  public static @NotNull Query<PsiClass> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return INSTANCE.createQuery(new Parameters(annotationClass, scope));
   }
 }

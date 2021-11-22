@@ -20,6 +20,7 @@ class FileFinderTest : MavenTestCase() {
     val mainPom = createProjectSubFile("pom.xml", pomContent)
     createProjectSubFile(".flatten-pom.xml", pomContent)
     createProjectSubFile("pom-template.xml", pomContent)
+    createProjectSubFile("pom.xml.versionsBackup", pomContent)
     val root = mainPom.parent
     val findPomFiles = FileFinder.findPomFiles(Array(1) { root }, true, mavenProgressIndicator)
     assertTrue(findPomFiles.size == 1)
@@ -57,5 +58,16 @@ class FileFinderTest : MavenTestCase() {
     val findPomFiles = FileFinder.findPomFiles(Array(1) { root }, true, mavenProgressIndicator)
     assertTrue(findPomFiles.size == 4)
     assertContainsElements(findPomFiles, mainPom, mainPomA, pomB1, pomB2)
+  }
+
+  fun `test find pom file with same names - expect one main pom xml`() {
+    val mainPom = createProjectSubFile("pom.xml", pomContent)
+    createProjectSubFile("pom.png", "not xml")
+    createProjectSubFile("pom-all.xml", pomContent)
+    createProjectSubFile("pom-2.xml", pomContent)
+    val root = mainPom.parent
+    val findPomFiles = FileFinder.findPomFiles(Array(1) { root }, true, mavenProgressIndicator)
+    assertTrue(findPomFiles.size == 1)
+    assertEquals(mainPom, findPomFiles.get(0))
   }
 }

@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports a class that directly extends <code>java.lang.Throwable</code>.
+Reports classes that directly extend <code>java.lang.Throwable</code>.
 <p>Extending <code>java.lang.Throwable</code> directly is generally considered bad practice.
   It is usually enough to extend <code>java.lang.RuntimeException</code>, <code>java.lang.Exception</code>, or - in special
   cases - <code>java.lang.Error</code>.</p>
@@ -9,6 +9,5 @@ Reports a class that directly extends <code>java.lang.Throwable</code>.
   class EnigmaThrowable extends Throwable {} // warning: Class 'EnigmaThrowable' directly extends 'java.lang.Throwable'
 </code></pre>
 <!-- tooltip end -->
-<!--<p><small>New in 15</small><p>-->
 </body>
 </html>

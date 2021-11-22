@@ -38,7 +38,7 @@ open class PomFileActionBase(generateProvider: AbstractDomGenerateProvider<*>) :
 }
 
 private class KotlinMavenPluginProvider :
-    AbstractDomGenerateProvider<MavenDomPlugin>("kotlin-maven-plugin-provider", MavenDomPlugin::class.java) {
+    AbstractDomGenerateProvider<MavenDomPlugin>("kotlin-maven-plugin-provider", "kotlin-maven-plugin-provider", MavenDomPlugin::class.java) {
 
     override fun generate(parent: DomElement?, editor: Editor?): MavenDomPlugin? {
         if (parent !is MavenDomProjectModel) {
@@ -74,7 +74,7 @@ private class KotlinMavenPluginProvider :
 }
 
 private class KotlinMavenExecutionProvider(val goal: String, val phase: String) :
-    AbstractDomGenerateProvider<MavenDomPlugin>("kotlin-maven-execution-provider", MavenDomPlugin::class.java) {
+    AbstractDomGenerateProvider<MavenDomPlugin>("kotlin-maven-execution-provider", "kotlin-maven-execution-provider", MavenDomPlugin::class.java) {
 
     override fun generate(parent: DomElement?, editor: Editor?): MavenDomPlugin? {
         if (parent !is MavenDomPlugin) {
@@ -84,9 +84,7 @@ private class KotlinMavenExecutionProvider(val goal: String, val phase: String) 
         val file = PomFile.forFileOrNull(DomUtil.getFile(parent)) ?: return null
         val execution = file.addExecution(parent, goal, phase, listOf(goal))
 
-        if (editor != null) {
-            editor.caretModel.moveToOffset(execution.ensureXmlElementExists().endOffset)
-        }
+        editor?.caretModel?.moveToOffset(execution.ensureXmlElementExists().endOffset)
 
         return parent
     }

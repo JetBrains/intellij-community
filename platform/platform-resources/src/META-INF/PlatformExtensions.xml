@@ -136,6 +136,9 @@
 
     <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="true" os="mac"/>
 
+    <applicationService serviceInterface="com.intellij.ide.ui.IdeUiService"
+                                          serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeUiServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
 
@@ -223,10 +226,6 @@
 
     <applicationService serviceImplementation="com.intellij.ui.WinFocusStealer" os="windows" preload="notHeadless"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.diff.DiffRequestFactory"
-                        serviceImplementation="com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.diff.DiffManager"
-                        serviceImplementation="com.intellij.openapi.diff.impl.external.DiffManagerImpl"/>
     <applicationService serviceInterface="com.intellij.diff.DiffManager"
                         serviceImplementation="com.intellij.diff.DiffManagerImpl"/>
     <applicationService serviceInterface="com.intellij.diff.DiffContentFactory"
@@ -285,6 +284,9 @@
     <fileEditorProvider implementation="com.intellij.ide.plugins.UIComponentEditorProvider"/>
     <iconProvider implementation="com.intellij.ide.plugins.UIComponentVirtualFile$UIComponentVirtualFileIconProvider"/>
 
+    <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
+    <diff.tools.combined.diffBlockFactory implementation="com.intellij.diff.tools.combined.CombinedSimpleDiffBlockFactory" order="last"/>
+
     <editorTabColorProvider implementation="com.intellij.diff.editor.VcsEditorTabColorProvider" order="first"/>
 
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
@@ -307,8 +309,13 @@
     <applicationService serviceInterface="com.intellij.openapi.fileChooser.FileSystemTreeFactory"
                         serviceImplementation="com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
+
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.hint.ClientHintManager"
+                        serviceImplementation="com.intellij.codeInsight.hint.LocalHintManager"
+                        client="local"/>
+
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.TypedAction"
@@ -345,6 +352,9 @@
                              bundle="messages.CredentialStoreBundle"
                              key="password.safe.configurable"
                              id="application.passwordSafe"/>
+
+    <applicationService serviceInterface="com.intellij.credentialStore.CredentialStoreUiService"
+                        serviceImplementation="com.intellij.credentialStore.CredentialStoreUiServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
                         serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
@@ -402,7 +412,19 @@
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
+    <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
+                        serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistryImpl" />
+
+    <applicationService serviceInterface="com.intellij.execution.process.ProcessService"
+                        serviceImplementation="com.intellij.execution.process.ProcessServiceImpl" />
+
+    <applicationService serviceInterface="com.intellij.util.io.IoService"
+                        serviceImplementation="com.intellij.util.io.IoServiceImpl" />
+
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
+
+    <applicationService serviceImplementation="com.intellij.ide.CommandLineCustomHandler$StartupService" preload="true" />
+    <commandLineCustomHandler implementation="com.intellij.ide.impl.JetBrainsProtocolCommandLineHandler" />
 
     <!-- Android Studio: don't register IntelliJ fork
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
@@ -548,11 +570,11 @@
                              id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
 
     <fileType name="ARCHIVE" implementationClass="com.intellij.ide.highlighter.ArchiveFileType" fieldName="INSTANCE"
-              extensions="zip;jar;war;ear;swc;ane;egg;apk"/>
+              extensions="ane;apk;ear;egg;jar;swc;war;zip"/>
     <fileType name="PLAIN_TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextFileType" fieldName="INSTANCE" language="TEXT"
               extensions="txt"/>
     <fileType name="Native" implementationClass="com.intellij.openapi.fileTypes.NativeFileType" fieldName="INSTANCE"
-              extensions="doc;docx;xls;xlsx;ppt;pptx;mdb;vsd;pdf;hlp;chm;odt"/>
+              extensions="chm;doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
     <fileType name="UNKNOWN" implementationClass="com.intellij.openapi.fileTypes.UnknownFileType" fieldName="INSTANCE"/>
     <fileType name="AUTO_DETECTED" implementationClass="com.intellij.openapi.fileTypes.ex.DetectedByContentFileType" fieldName="INSTANCE"/>
 
@@ -702,6 +724,7 @@
     <applicationInitializedListener implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IntelliJProjectUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector"/>
@@ -723,7 +746,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
     <statistics.counterUsagesCollector groupId="inspection.widget" version="2"/>
-
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.cache.CacheRecoveryUsageCollector"/>.
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="3"/>
 
     <statistics.counterUsagesCollector groupId="vfs" version="2"/>
@@ -760,11 +783,11 @@
     <applicationInitializedListener implementation="com.intellij.ide.customize.CustomizeIDEWizardCollectorActivity"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
-    <postStartupActivity implementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl$EventLogSubscribeActivity"/>
 <!-- Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered in androidstudio.xml
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
 Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered in androidstudio.xml -->
-    <statistic.eventLog.fusStateEventTracker implementation="com.intellij.featureStatistics.fusCollectors.SystemStateMonitor"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.OsDataCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.IdeSessionDataCollector"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.WSLInstallationsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.impl.TrustedProjectsStatistics" />
@@ -789,7 +812,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
                         serviceImplementation="com.intellij.openapi.application.impl.AsyncExecutionServiceImpl"/>
 
     <preloadingActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
-    <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
+    <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity" order="last"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
 
@@ -861,9 +884,14 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <actionPromoter implementation="com.intellij.ide.actions.WindowActionPromoter"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsGlobalSummaryManager"/>
 
+    <projectService serviceInterface="com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider"
+                    serviceImplementation="com.intellij.internal.statistic.local.FileTypeUsageLocalSummary"
+                    testServiceImplementation="com.intellij.internal.statistic.local.TestFileTypeUsageSummaryProvider"/>
+
     <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModelCache"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
+    <recoveryAction implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRecoveryAction"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
 
@@ -872,12 +900,22 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
                         serviceImplementation="com.intellij.openapi.editor.impl.FontFamilyServiceImpl"
                         preload="notHeadless"/>
 
-    <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
-    <jbProtocolCommand implementation="com.intellij.openapi.application.JBProtocolShutdownCommand"/>
     <jbProtocolCommand implementation="com.intellij.navigation.JBProtocolNavigateCommand"/>
 
     <intentionAction>
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.lists.JoinLinesIntention</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.lists.SplitLineIntention</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
@@ -1126,7 +1164,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <statistics.counterUsagesCollector groupId="startup" version="1"/>
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
 
-    <postStartupActivity implementation="com.intellij.ide.startup.CheckFsSanityAndProjectRootPostStartUpActivity" order="last"/>
+    <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity" order="last"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.openapi.wm.impl.GlobalMenuLinux$MyActionTuner"/>
 
@@ -1203,8 +1241,9 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <notificationGroup id="Built-in Server" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Password Safe" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Tutorials" displayType="BALLOON"/>
-    <notificationGroup id="Test Results: Run" displayType="TOOL_WINDOW" toolWindowId="Run" />
-    <notificationGroup id="Test Results: Debug" displayType="TOOL_WINDOW" toolWindowId="Debug" />
+    <notificationGroup id="Test Results: Run" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false"/>
+    <notificationGroup id="Test Results: Debug" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false"/>
+    <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
@@ -1224,10 +1263,11 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
 
-    <moduleType implementationClass="com.intellij.ide.NewProjectModuleType" id="newWizard.newProjectType" order="first"/>
-    <moduleType implementationClass="com.intellij.ide.NewWizardEmptyModuleType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewModuleType" id="newWizard.newModuleType"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewProjectType" id="newWizard.newProjectType" order="first"/>
+    <moduleType implementationClass="com.intellij.ide.wizard.NewEmptyProjectType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
 
-    <newProjectWizard implementation="com.intellij.ide.HTMLNewProjectWizard"/>
+    <newProjectWizard implementation="com.intellij.ide.wizard.HTMLNewProjectWizard"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
@@ -1240,6 +1280,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <postStartupActivity implementation="com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigration"/>
 
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>
+    <advancedSetting id="ide.macos.disable.native.shortcut.symbols" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="ide.max.recent.files" default="50" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentFilesLimit"/>
     <advancedSetting id="ide.max.recent.locations" default="25" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentLocationsLimit"/>
@@ -1260,12 +1301,16 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <advancedSetting id="editor.open.tabs.in.main.window" default="false" groupKey="group.advanced.settings.editor.tabs" service="com.intellij.ide.ui.UISettings" property="openTabsInMainWindow"/>
     <advancedSetting id="terminal.buffer.max.lines.count" default="5000" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.type.ahead" default="true" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.type.ahead.latency.threshold" default="100" groupKey="group.advanced.settings.terminal"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"
                     serviceImplementation="com.intellij.presentation.impl.FilePresentationServiceImpl"/>
 
     <advancedSetting id="show.diff.as.editor.tab" default="true" bundle="messages.DiffBundle" groupKey="advanced.settings.vcs"/>
+
+    <recoveryAction implementation="com.intellij.ide.actions.cache.InvalidateCachesAndRestartAction"/>
    </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

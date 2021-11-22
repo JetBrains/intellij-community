@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -12,7 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -177,7 +177,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
   public void startProgress(DebuggerCommandImpl command, ProgressWindow progressWindow) {
-    new ProgressIndicatorListenerAdapter() {
+    new ProgressIndicatorListener() {
       @Override
       public void cancelled() {
         command.release();
@@ -252,6 +252,10 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   public boolean isIdle() {
     return myEvents.isEmpty();
+  }
+
+  public boolean hasAsyncCommands() {
+    return myEvents.hasAsyncCommands();
   }
 
   void restartIfNeeded() {

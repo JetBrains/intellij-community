@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution.configurations;
 
 import com.intellij.execution.CantRunException;
@@ -114,7 +114,7 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testPreviewLanguageFeatures() throws CantRunException {
     ModuleRootModificationUtil.updateModel(myModule, (model) -> {
       model.getModuleExtension(LanguageLevelModuleExtension.class)
-           .setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+           .setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);
       Sdk mockJdk = IdeaTestUtil.getMockJdk(JavaVersion.compose(14));
       WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk, myProject));
       model.setSdk(mockJdk);

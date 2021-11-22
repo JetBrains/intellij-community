@@ -18,7 +18,7 @@ public class DarculaCheckBoxBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, c) != null ?
+    return ComponentUtil.getParentOfType(CellRendererPane.class, c) != null ?
            JBUI.emptyInsets().asUIResource() :
            JBUI.insets(borderWidthPropertyName(), JBUI.insets(1));
   }

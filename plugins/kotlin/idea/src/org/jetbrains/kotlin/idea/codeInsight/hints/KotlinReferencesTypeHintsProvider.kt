@@ -2,8 +2,12 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.SettingsKey
+import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
+import javax.swing.JComponent
 
 @Suppress("UnstableApiUsage")
 class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinReferencesTypeHintsProvider.Settings>() {
@@ -15,10 +19,39 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
         var parameterType: Boolean = false
     )
 
+    override val key: SettingsKey<Settings> = SettingsKey("kotlin.references.types.hints")
     override val name: String = KotlinBundle.message("hints.settings.types")
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable {
-        return createTypeHintsImmediateConfigurable(settings)
+        return object : ImmediateConfigurable {
+                override fun createComponent(listener: ChangeListener): JComponent = panel {}
+
+                override val mainCheckboxText: String = KotlinBundle.message("hints.settings.common.items")
+
+                override val cases: List<ImmediateConfigurable.Case>
+                    get() = listOf(
+                        ImmediateConfigurable.Case(
+                            KotlinBundle.message("hints.settings.types.property"),
+                            "hints.type.property",
+                            settings::propertyType
+                        ),
+                        ImmediateConfigurable.Case(
+                            KotlinBundle.message("hints.settings.types.variable"),
+                            "hints.type.variable",
+                            settings::localVariableType
+                        ),
+                        ImmediateConfigurable.Case(
+                            KotlinBundle.message("hints.settings.types.return"),
+                            "hints.type.function.return",
+                            settings::functionReturnType
+                        ),
+                        ImmediateConfigurable.Case(
+                            KotlinBundle.message("hints.settings.types.parameter"),
+                            "hints.type.function.parameter",
+                            settings::parameterType
+                        ),
+                    )
+            }
     }
 
     override fun createSettings(): Settings = Settings()

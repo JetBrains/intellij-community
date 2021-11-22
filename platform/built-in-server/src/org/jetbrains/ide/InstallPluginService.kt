@@ -99,7 +99,7 @@ internal class InstallPluginService : RestService() {
       val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       ApplicationManager.getApplication().invokeLater(Runnable {
         AppIcon.getInstance().requestAttention(effectiveProject, true)
-        installAndEnable(plugins.toSet()) { }
+        installAndEnable(effectiveProject, plugins.toSet()) { }
         isAvailable = true
       }, effectiveProject.disposed)
     }

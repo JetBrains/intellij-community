@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api.file.builder
 
-import com.google.common.collect.MapMaker
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.idea.fir.low.level.api.annotations.PrivateForInline
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.lockWithPCECheck
 import java.util.concurrent.ConcurrentMap
@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 
 internal class LockProvider<KEY> {
-    private val locks: ConcurrentMap<KEY, ReadWriteLock> = MapMaker().weakKeys().makeMap()
+    private val locks: ConcurrentMap<KEY, ReadWriteLock> = CollectionFactory.createConcurrentWeakMap()
 
     @OptIn(PrivateForInline::class)
     private val deadLockGuard = DeadLockGuard()

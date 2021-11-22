@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
-import org.jetbrains.kotlin.idea.refactoring.move.getOrCreateDirectory
 import org.jetbrains.kotlin.idea.refactoring.move.mapWithReadActionInProcess
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.idea.refactoring.move.updatePackageDirective
@@ -34,6 +33,7 @@ import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getFileOrScriptDeclarations
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
@@ -135,7 +135,7 @@ internal class MoveKotlinTopLevelDeclarationsModel(
 
         return KotlinMoveTargetForDeferredFile(
             FqName(targetPackage),
-            targetDirectory
+            targetDirectory?.virtualFile
         ) {
             val deferredFileName = if (singleSourceFileMode) fileNameInPackage else it.name
             val deferredFileDirectory = moveDestination.getTargetDirectory(it)
@@ -153,12 +153,11 @@ internal class MoveKotlinTopLevelDeclarationsModel(
 
         checkTargetFileName(targetFile.name)
 
-        val jetFile = targetFile.toPsiFile(project) as? KtFile
-        if (jetFile != null) {
-            if (sourceFiles.singleOrNull() == jetFile) {
+        targetFile.toPsiFile(project).safeAs<KtFile>()?.let {
+            if (sourceFiles.singleOrNull() == it) {
                 throw ConfigurationException(KotlinBundle.message("text.cannot.move.to.original.file"))
             }
-            return KotlinMoveTargetForExistingElement(jetFile)
+            return KotlinMoveTargetForExistingElement(it)
         }
 
         val targetDirectoryPath = targetFile.toPath().parent
@@ -174,23 +173,16 @@ internal class MoveKotlinTopLevelDeclarationsModel(
         }
 
         val psiDirectory = targetDirectoryPath.toFile().toPsiDirectory(project)
+            ?: error("$targetDirectoryPath couldn't be converted to PsiDirectory")
 
         val targetPackageFqName = sourceFiles.singleOrNull()?.packageFqName
-            ?: psiDirectory?.getPackage()?.let { FqName(it.qualifiedName) }
+            ?: psiDirectory.getPackage()?.let { FqName(it.qualifiedName) }
             ?: throw ConfigurationException(
                 KotlinBundle.message("text.cannot.find.package.corresponding.to.0", targetDirectoryPath)
             )
 
-        val targetDirectoryPathString = targetDirectoryPath.toString()
-        val finalTargetPackageFqName = targetPackageFqName.asString()
-
-        return KotlinMoveTargetForDeferredFile(
-            targetPackageFqName,
-            psiDirectory,
-            targetFile = null
-        ) {
-            val actualPsiDirectory = psiDirectory ?: getOrCreateDirectory(targetDirectoryPathString, project)
-            getOrCreateKotlinFile(targetFile.name, actualPsiDirectory, finalTargetPackageFqName)
+        return KotlinMoveTargetForDeferredFile(targetPackageFqName, psiDirectory.virtualFile) {
+            getOrCreateKotlinFile(targetFile.name, psiDirectory, targetPackageFqName.asString())
         }
     }
 

@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -52,7 +53,7 @@ import org.jetbrains.kotlin.utils.SmartList
 fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCallExpression {
     val ktExpression = this.getArgumentExpression()
         ?: throw KotlinExceptionWithAttachments("no argument expression for $this")
-            .withAttachment("lambdaExpression", this.text)
+            .withPsiAttachment("lambdaExpression", this)
     return moveInsideParenthesesAndReplaceWith(ktExpression, bindingContext)
 }
 
@@ -416,9 +417,24 @@ fun KtClass.isInheritable(): Boolean {
 }
 
 val KtParameter.isOverridable: Boolean
-    get() = hasValOrVar() &&
-            !hasModifier(KtTokens.FINAL_KEYWORD) &&
-            (hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD))
+    get() = hasValOrVar() && !isEffectivelyFinal
+
+val KtProperty.isOverridable: Boolean
+    get() = !isTopLevel && !isEffectivelyFinal
+
+private val KtDeclaration.isEffectivelyFinal: Boolean
+    get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
+            !(hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD)) ||
+            containingClassOrObject?.isEffectivelyFinal == true
+
+private val KtClassOrObject.isEffectivelyFinal: Boolean
+    get() = this is KtObjectDeclaration ||
+            this is KtClass && isEffectivelyFinal
+
+private val KtClass.isEffectivelyFinal: Boolean
+    get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
+            isData() ||
+            !(isSealed() || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD))
 
 fun KtDeclaration.isOverridable(): Boolean {
     val parent = parent

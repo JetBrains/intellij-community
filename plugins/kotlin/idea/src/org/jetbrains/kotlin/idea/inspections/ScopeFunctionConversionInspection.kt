@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -157,7 +158,7 @@ abstract class ConvertScopeFunctionFix(private val counterpartName: String) : Lo
         replacements.apply()
         postprocessLambda(lambda)
 
-        if (replacements.isNotEmpty() && replacements.elementToRename != null && !ApplicationManager.getApplication().isUnitTestMode) {
+        if (replacements.isNotEmpty() && replacements.elementToRename != null && !isUnitTestMode()) {
             replacements.elementToRename!!.startInPlaceRename()
         }
     }

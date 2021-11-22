@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -312,5 +313,11 @@ public class EditorStressTest extends AbstractEditorTest {
     public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
       return 1;
     }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
+                      @NotNull TextAttributes textAttributes) {}
   }
 }

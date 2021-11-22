@@ -4,23 +4,23 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.ValueContainer;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.List;
 
 final class FileId2ValueMapping<Value> {
   private static final Logger LOG = Logger.getInstance(FileId2ValueMapping.class);
 
-  private final TIntObjectHashMap<Value> id2ValueMap;
+  private final Int2ObjectMap<Value> id2ValueMap = new Int2ObjectOpenHashMap<>();
   private final ValueContainerImpl<Value> valueContainer;
   private boolean myOnePerFileValidationEnabled = true;
 
   FileId2ValueMapping(ValueContainerImpl<Value> _valueContainer) {
-    id2ValueMap = new TIntObjectHashMap<>();
     valueContainer = _valueContainer;
 
-    TIntArrayList removedFileIdList = null;
+    IntArrayList removedFileIdList = null;
     List<Value> removedValueList = null;
 
     for (final ValueContainer.ValueIterator<Value> valueIterator = _valueContainer.getValueIterator(); valueIterator.hasNext();) {
@@ -31,7 +31,7 @@ final class FileId2ValueMapping<Value> {
         Value previousValue = id2ValueMap.put(id, value);
         if (previousValue != null) {  // delay removal of duplicated id -> value mapping since it will affect valueIterator we are using
           if (removedFileIdList == null) {
-            removedFileIdList = new TIntArrayList();
+            removedFileIdList = new IntArrayList();
             removedValueList = new SmartList<>();
           }
           removedFileIdList.add(id);

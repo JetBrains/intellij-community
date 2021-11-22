@@ -31,8 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
-import static com.intellij.openapi.actionSystem.LangDataKeys.MODULE;
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.PROJECT_FILE_DIRECTORY;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.MODULE;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY;
 
 /**
  * @author Eugene Belyaev

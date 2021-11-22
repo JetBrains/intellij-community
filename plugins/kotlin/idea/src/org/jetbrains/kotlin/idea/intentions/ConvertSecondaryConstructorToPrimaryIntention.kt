@@ -197,6 +197,7 @@ class ConvertSecondaryConstructorToPrimaryIntention : SelfTargetingRangeIntentio
                     null
             }
             val leftDescriptor = context[BindingContext.REFERENCE_TARGET, leftReference] as? PropertyDescriptor ?: return null
+            if (leftDescriptor.containingDeclaration != constructorDescriptor.containingDeclaration) return null
             return rightDescriptor to leftDescriptor
         }
     }

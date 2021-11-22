@@ -12,7 +12,8 @@ import com.intellij.util.io.BooleanDataDescriptor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -40,7 +41,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
     return inputData -> {
       TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
 
-      TIntArrayList result = new TIntArrayList();
+      IntList result = new IntArrayList();
       for (int i = 0; i < tokens.getTokenCount(); i++) {
         if (tokens.hasType(i, PLUS) &&
             (tokens.hasType(tokens.forwardWhile(i + 1, JavaParserUtil.WS_COMMENTS), ElementType.ALL_LITERALS) !=
@@ -52,7 +53,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
       if (result.isEmpty()) return Collections.emptyMap();
 
       Map<Boolean, PlusOffsets> resultMap = new HashMap<>();
-      resultMap.put(Boolean.TRUE, new PlusOffsets(result.toNativeArray()));
+      resultMap.put(Boolean.TRUE, new PlusOffsets(result.toIntArray()));
       return resultMap;
     };
   }

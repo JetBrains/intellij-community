@@ -15,6 +15,7 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.target.RunTargetsEnabled;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.BrowserUtil;
@@ -96,7 +97,8 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   private static boolean willRunOnTarget(@NotNull final TargetEnvironmentAwareRunProfile configuration) {
-    return configuration.getDefaultTargetName() != null || isProjectUnderWsl(((RunConfigurationBase<?>)configuration).getProject());
+    Project project = ((RunConfigurationBase<?>)configuration).getProject();
+    return TargetEnvironmentConfigurations.getEffectiveTargetName(configuration, project) != null || isProjectUnderWsl(project);
   }
 
   private static boolean isProjectUnderWsl(@NotNull Project project) {

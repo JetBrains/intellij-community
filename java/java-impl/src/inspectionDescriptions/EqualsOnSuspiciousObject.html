@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports the cases in which <code>equals()</code> is called on specific classes like <code>StringBuilder</code> or <code>StringBuffer</code>.
-<p>The <code>equals()</code> method is not overridden in these classes, so it may return <code>false</code> even when the contents of two objects are the same.
+Reports <code>equals()</code> calls on <code>StringBuilder</code> or <code>StringBuffer</code> instances.
+<p>The <code>equals()</code> method is not overridden in these classes, so it may return <code>false</code> even when the contents of the two objects are the same.
 If the reference equality is intended, it's better to use <code>==</code> to avoid confusion.</p>
 <p>Example:</p>
 <pre><code>

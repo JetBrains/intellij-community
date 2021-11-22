@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.actions;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
@@ -41,6 +40,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

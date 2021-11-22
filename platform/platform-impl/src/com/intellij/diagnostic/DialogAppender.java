@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.idea.Main;
@@ -19,7 +19,7 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-public class DialogAppender extends AppenderSkeleton {
+public final class DialogAppender extends AppenderSkeleton {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
@@ -57,7 +57,7 @@ public class DialogAppender extends AppenderSkeleton {
 
   private void queueAppend(IdeaLoggingEvent event) {
     if (myPendingAppendCounts.incrementAndGet() > MAX_ASYNC_LOGGING_EVENTS) {
-      // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
+      // stop adding requests to the queue, or we can get OOME on pending logging requests (IDEA-95327)
       myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
     }
     else {

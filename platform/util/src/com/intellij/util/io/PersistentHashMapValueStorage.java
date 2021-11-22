@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -43,8 +42,6 @@ public final class PersistentHashMapValueStorage {
   static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
   public static final class CreationTimeOptions {
-    public static final ThreadLocal<IOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION =
-      new ThreadLocal<>();
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> HAS_NO_CHUNKS = new ThreadLocal<>();
@@ -56,13 +53,13 @@ public final class PersistentHashMapValueStorage {
       }
     };
 
-    private final IOCancellationCallback myIOCancellationCallback;
+    private final @NotNull IOCancellationCallback myIOCancellationCallback;
     private final boolean myReadOnly;
     private final boolean myCompactChunksWithValueDeserialization;
     private final boolean myHasNoChunks;
-    private final boolean myDoCompression;
+    private final boolean myUseCompression;
 
-    private CreationTimeOptions(IOCancellationCallback callback,
+    private CreationTimeOptions(@NotNull IOCancellationCallback callback,
                                 boolean readOnly,
                                 boolean compactChunksWithValueDeserialization,
                                 boolean hasNoChunks,
@@ -71,15 +68,19 @@ public final class PersistentHashMapValueStorage {
       myReadOnly = readOnly;
       myCompactChunksWithValueDeserialization = compactChunksWithValueDeserialization;
       myHasNoChunks = hasNoChunks;
-      myDoCompression = doCompression;
+      myUseCompression = doCompression;
     }
 
     int getVersion() {
-      return (myHasNoChunks ? 10 : 0) * 31 + (myDoCompression ? 0x13 : 0);
+      return (myHasNoChunks ? 10 : 0) * 31 + (myUseCompression ? 0x13 : 0);
     }
 
     boolean isReadOnly() {
       return myReadOnly;
+    }
+
+    boolean useCompression() {
+      return myUseCompression;
     }
 
     @NotNull
@@ -89,14 +90,14 @@ public final class PersistentHashMapValueStorage {
         true,
         myCompactChunksWithValueDeserialization,
         myHasNoChunks,
-        myDoCompression
+        myUseCompression
       );
     }
 
     @NotNull
     static CreationTimeOptions threadLocalOptions() {
       return new CreationTimeOptions(
-        EXCEPTIONAL_IO_CANCELLATION.get(),
+        IOCancellationCallbackHolder.INSTANCE.getUsedIoCallback(),
         READONLY.get() == Boolean.TRUE,
         COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.get() == Boolean.TRUE,
         HAS_NO_CHUNKS.get() == Boolean.TRUE,
@@ -160,7 +161,7 @@ public final class PersistentHashMapValueStorage {
     myPath = path;
     myOptions = options;
 
-    if (myOptions.myDoCompression) {
+    if (myOptions.useCompression()) {
       myCompressedAppendableFile = new MyCompressedAppendableFile();
       mySize = myCompressedAppendableFile.length();
     }
@@ -261,11 +262,10 @@ public final class PersistentHashMapValueStorage {
   private static final ThreadLocalCachedByteArray myBuffer = new ThreadLocalCachedByteArray();
   private static final int ourBufferLength = 1024;
 
-  private long compactValuesWithoutChunks(@NotNull List<? extends CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
+  private long compactValuesWithoutChunks(@NotNull List<CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
     throws IOException {
     //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
-    infos
-      .sort((Comparator<CompactionRecordInfo>)(info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
+    infos.sort((info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
 
     final int fileBufferLength = 256 * 1024;
     final byte[] buffer = new byte[fileBufferLength];
@@ -326,7 +326,7 @@ public final class PersistentHashMapValueStorage {
     return fragments | ((long)newFragments << 32);
   }
 
-  long compactValues(@NotNull List<? extends CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage) throws IOException {
+  long compactValues(@NotNull List<CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage) throws IOException {
     if (myOptions.myHasNoChunks) {
       return compactValuesWithoutChunks(infos, storage);
     }
@@ -534,7 +534,7 @@ public final class PersistentHashMapValueStorage {
     try {
       long chunk = tailChunkAddress;
       while (chunk != 0) {
-        if (chunk < 0 || chunk > mySize) throw new PersistentEnumeratorBase.CorruptedException(myPath);
+        if (chunk < 0 || chunk > mySize) throw new CorruptedException(myPath);
 
         byte[] buffer = myBuffer.getBuffer(ourBufferLength);
         int len = (int)Math.min(ourBufferLength, mySize - chunk);
@@ -558,7 +558,7 @@ public final class PersistentHashMapValueStorage {
           reader.get(chunk + headerOffset, result, 0, chunkSize);
         }
 
-        if (prevChunkAddress >= chunk) throw new PersistentEnumeratorBase.CorruptedException(myPath);
+        if (prevChunkAddress >= chunk) throw new CorruptedException(myPath);
 
         chunk = prevChunkAddress;
         chunkCount++;
@@ -568,12 +568,12 @@ public final class PersistentHashMapValueStorage {
           assert !myOptions.myHasNoChunks;
         }
         if (result.length > mySize && myCompressedAppendableFile == null) {
-          throw new PersistentEnumeratorBase.CorruptedException(myPath);
+          throw new CorruptedException(myPath);
         }
       }
     }
     catch (OutOfMemoryError error) {
-      throw new PersistentEnumeratorBase.CorruptedException(myPath);
+      throw new CorruptedException(myPath);
     }
     finally {
       if (readerHandle != null) {
@@ -637,10 +637,10 @@ public final class PersistentHashMapValueStorage {
 
   // hook for exceptional termination of long io operation
   private void checkCancellation() {
-    if (myOptions.myIOCancellationCallback != null) myOptions.myIOCancellationCallback.checkCancelled();
+    myOptions.myIOCancellationCallback.checkCancelled();
   }
 
-  private int readChunkSize(@NotNull DataInputStream in) throws IOException {
+  private static int readChunkSize(@NotNull DataInputStream in) throws IOException {
     final int chunkSize = DataInputOutputUtil.readINT(in);
     if (chunkSize < 0) {
       throw new IOException("Value storage corrupted: negative chunk size: " + chunkSize);

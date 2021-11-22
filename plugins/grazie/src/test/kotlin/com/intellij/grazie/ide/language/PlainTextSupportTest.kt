@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.language
 
-import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -14,21 +13,11 @@ class PlainTextSupportTest : GrazieTestBase() {
   }
 
   fun `test no grammar checks in TextFieldWithAutoCompletion`() {
-    enableInspectionsInTextFields()
     val field = TextFieldWithAutoCompletion(
       project, TextFieldWithAutoCompletion.StringsCompletionProvider(emptyList(), null), true, "I have an new apple here.")
     field.addNotify()
     disposeOnTearDown(Disposable { field.removeNotify() })
     myFixture.configureFromExistingVirtualFile(FileDocumentManager.getInstance().getFile(field.editor!!.document)!!)
-    assertEmpty(myFixture.doHighlighting().filter { it.inspectionToolId?.contains("Grazie") == true })
-  }
-
-  private fun enableInspectionsInTextFields() {
-    InspectionProfileImpl.INIT_INSPECTIONS = true
-  }
-
-  override fun tearDown() {
-    InspectionProfileImpl.INIT_INSPECTIONS = false
-    super.tearDown()
+    myFixture.checkHighlighting()
   }
 }

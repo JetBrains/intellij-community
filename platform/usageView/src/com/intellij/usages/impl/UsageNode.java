@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageNodePresentation;
@@ -17,14 +16,6 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
   @Override
   public String toString() {
     return getUsage().toString();
-  }
-
-  @Override
-  public String tree2string(int indent, @NotNull String lineSeparator) {
-    StringBuffer result = new StringBuffer();
-    StringUtil.repeatSymbol(result, ' ', indent);
-    result.append(getUsage());
-    return result.toString();
   }
 
   @Override

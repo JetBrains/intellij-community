@@ -4,6 +4,8 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -61,6 +63,8 @@ public class DetachDirectoryAction extends DumbAwareAction {
   }
 
   public static void detachDirectoriesWithUndo(@NotNull Project project, @NotNull List<VirtualFile> files) {
-    AttachDirectoryUtils.addRemoveEntriesWithUndo(project, null, files, false);
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    if (modules.length == 0) return;
+    AttachDirectoryUtils.addRemoveEntriesWithUndo(modules[0], files, false);
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,8 +22,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  public static final String METHOD_TYPE = "Method {0}";
-
   /** @deprecated Use {@link #HIERARCHY_BROWSER} data key instead. */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
@@ -48,8 +47,8 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   @Override
   protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
-    HashMap<String, Supplier<String>> map = new HashMap<>();
-    map.put(METHOD_TYPE, MethodHierarchyBrowserBase::getMethodType);
+    Map<String, Supplier<String>> map = new HashMap<>();
+    map.put(getMethodType(), MethodHierarchyBrowserBase::getMethodType);
     return map;
   }
 
@@ -131,8 +130,9 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
     }
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
+  @Nls
   public static String getMethodType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.method");
   }
 }

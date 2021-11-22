@@ -14,7 +14,7 @@ public class DelegatedInspectionToolPresentation extends DefaultInspectionToolPr
   @NotNull
   private final InspectionProblemConsumer myDelegate;
 
-  public DelegatedInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper,
+  public DelegatedInspectionToolPresentation(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                                              @NotNull GlobalInspectionContextImpl context,
                                              @NotNull InspectionProblemConsumer delegate) {
     super(toolWrapper, context);
@@ -32,6 +32,6 @@ public class DelegatedInspectionToolPresentation extends DefaultInspectionToolPr
     if (filter != null && !filter.shouldReportProblem(refElement, descriptors)) {
       return;
     }
-    exportResults(descriptors, refElement, (element) -> myDelegate.consume(element, myToolWrapper));
+    exportResults(descriptors, refElement, element -> myDelegate.consume(element, myToolWrapper), __ -> false);
   }
 }

@@ -75,9 +75,7 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
 
     List<GitRepository> repositories = new ArrayList<>(selectedRepositories);
     ModalityUiUtil.invokeLaterIfNeeded(
-      () -> new GitPushAfterCommitDialog(project, repositories, GitBranchUtil.getCurrentRepository(project)).showOrPush(),
-      modality,
-      project.getDisposed()
+      modality, project.getDisposed(), () -> new GitPushAfterCommitDialog(project, repositories, GitBranchUtil.getCurrentRepository(project)).showOrPush()
     );
   }
 }

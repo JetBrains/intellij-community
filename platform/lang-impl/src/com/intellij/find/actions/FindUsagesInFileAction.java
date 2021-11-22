@@ -50,7 +50,7 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
 
     UsageTarget[] usageTargets = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
     if (usageTargets != null) {
-      FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+      FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
       if (fileEditor != null) {
         usageTargets[0].findUsagesInEditor(fileEditor);
       }

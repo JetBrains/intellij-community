@@ -4,9 +4,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CustomFoldRegionTest extends AbstractEditorTest {
@@ -120,6 +122,12 @@ public class CustomFoldRegionTest extends AbstractEditorTest {
         public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
           return 30;
         }
+
+        @Override
+        public void paint(@NotNull CustomFoldRegion region,
+                          @NotNull Graphics2D g,
+                          @NotNull Rectangle2D targetRegion,
+                          @NotNull TextAttributes textAttributes) {}
       }));
     });
     assertEquals(new Dimension(75, 54), getEditor().getContentComponent().getPreferredSize());
@@ -177,6 +185,12 @@ public class CustomFoldRegionTest extends AbstractEditorTest {
         public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
           return size[1];
         }
+
+        @Override
+        public void paint(@NotNull CustomFoldRegion region,
+                          @NotNull Graphics2D g,
+                          @NotNull Rectangle2D targetRegion,
+                          @NotNull TextAttributes textAttributes) {}
       });
       assertNotNull(region[0]);
     });
@@ -219,6 +233,20 @@ public class CustomFoldRegionTest extends AbstractEditorTest {
     addInlay(4, 15);
     addCustomFoldRegion(0, 0, 40, 30);
     assertEquals(new Dimension(40, 30), getEditor().getContentComponent().getPreferredSize());
+  }
+
+  public void testDelete() {
+    initText("line1\n<caret>line2\nline3");
+    assertNotNull(addCustomFoldRegion(1, 1));
+    delete();
+    checkResultByText("line1\n<caret>\nline3");
+  }
+
+  public void testBackspace() {
+    initText("line1\nline2\n<caret>\nline4");
+    assertNotNull(addCustomFoldRegion(1, 1));
+    backspace();
+    checkResultByText("line1\n<caret>\nline4");
   }
 
   private void checkOverlapWithNormalRegion(int regionStartOffset,

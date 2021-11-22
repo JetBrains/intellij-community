@@ -113,7 +113,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     logStream = logStreamCandidate;
   }
 
-  private IdeaPluginDescriptorImpl[] parents;
+  private final IdeaPluginDescriptorImpl[] parents;
 
   // cache of computed list of all parents (not only direct)
   private volatile ClassLoader[] allParents;
@@ -275,11 +275,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                                                                                                    pluginClassLoader.packagePrefix,
                                                                                                    forceLoadFromSubPluginClassloader);
             if (consistencyError != null) {
-              if (!consistencyError.isEmpty()) {
-                if (error == null) {
-                  // yes, we blame requestor plugin
-                  error = new PluginException(consistencyError, pluginId);
-                }
+              if (!consistencyError.isEmpty() && error == null) {
+                // yes, we blame requestor plugin
+                error = new PluginException(consistencyError, pluginId);
               }
               continue;
             }
@@ -555,10 +553,10 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   private static final class DeepEnumeration implements Enumeration<URL> {
-    private final @NotNull List<? extends Enumeration<URL>> list;
+    private final @NotNull List<Enumeration<URL>> list;
     private int myIndex;
 
-    DeepEnumeration(@NotNull List<? extends Enumeration<URL>> enumerations) {
+    DeepEnumeration(@NotNull List<Enumeration<URL>> enumerations) {
       list = enumerations;
     }
 
@@ -584,48 +582,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @TestOnly
-  @ApiStatus.Internal
   public @NotNull List<IdeaPluginDescriptorImpl> _getParents() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(parents));
-  }
-
-  @ApiStatus.Internal
-  public void attachParent(@NotNull IdeaPluginDescriptorImpl parent) {
-    //noinspection SSBasedInspection
-    if (Arrays.stream(parents).anyMatch(it -> it == parent)) {
-      return;
-    }
-
-    int length = parents.length;
-    IdeaPluginDescriptorImpl[] result = new IdeaPluginDescriptorImpl[length + 1];
-    System.arraycopy(parents, 0, result, 0, length);
-    result[length] = parent;
-    parents = result;
-    allParents = null;
-    parentListCacheIdCounter.incrementAndGet();
-  }
-
-  /**
-   * You must clear allParents cache for all loaded plugins.
-   */
-  @ApiStatus.Internal
-  public boolean detachParent(@NotNull IdeaPluginDescriptorImpl parent) {
-    for (int i = 0; i < parents.length; i++) {
-      if (parent != parents[i]) {
-        continue;
-      }
-
-      int length = parents.length;
-      IdeaPluginDescriptorImpl[] result = new IdeaPluginDescriptorImpl[length - 1];
-      System.arraycopy(parents, 0, result, 0, i);
-      System.arraycopy(parents, i + 1, result, i, length - i - 1);
-      parents = result;
-      allParents = null;
-      parentListCacheIdCounter.incrementAndGet();
-      return true;
-    }
-    return false;
   }
 
   @Override

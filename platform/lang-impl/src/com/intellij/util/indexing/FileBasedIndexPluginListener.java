@@ -9,7 +9,7 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
   private final @NotNull FileBasedIndexTumbler mySwitcher;
 
   FileBasedIndexPluginListener() {
-    mySwitcher = new FileBasedIndexTumbler();
+    mySwitcher = new FileBasedIndexTumbler("Plugin loaded/unloaded");
   }
 
   @Override
@@ -37,6 +37,6 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
   }
 
   private void afterPluginSetChanged() {
-    mySwitcher.turnOn(null, "Plugin loaded/unloaded");
+    mySwitcher.turnOn(null);
   }
 }

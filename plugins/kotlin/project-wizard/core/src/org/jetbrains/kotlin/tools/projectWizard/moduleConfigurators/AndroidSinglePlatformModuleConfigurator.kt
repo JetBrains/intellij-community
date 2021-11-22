@@ -27,7 +27,7 @@ import java.nio.file.Path
 object AndroidSinglePlatformModuleConfigurator :
     SinglePlatformModuleConfigurator,
     AndroidModuleConfigurator {
-    override val moduleKind: ModuleKind get() = ModuleKind.singleplatformAndroid
+    override val moduleKind: ModuleKind get() = ModuleKind.singlePlatformAndroid
 
     override fun getNewAndroidManifestPath(module: Module): Path? = null
 

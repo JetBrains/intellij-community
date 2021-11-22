@@ -7,7 +7,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.guessTypes
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
 import org.jetbrains.kotlin.psi.*
@@ -94,7 +94,7 @@ class RenameUnresolvedReferenceFix(element: KtNameReferenceExpression) : KotlinQ
             .filter { candidate ->
                 candidate is CallableDescriptor && (expectedTypes.any { candidate.returnType?.isSubtypeOf(it) ?: false })
             }
-            .mapTo(if (ApplicationManager.getApplication().isUnitTestMode) linkedSetOf() else linkedSetOf(originalName)) {
+            .mapTo(if (isUnitTestMode()) linkedSetOf() else linkedSetOf(originalName)) {
                 it.name.asString()
             }
             .map { LookupElementBuilder.create(it) }

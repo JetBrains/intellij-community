@@ -106,7 +106,7 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
     assertOrderEntries.invoke()
 
     // change dependency scope to test to get duplicated order entries
-    with(IdeModifiableModelsProviderImpl(project)) {
+    with(ProjectDataManager.getInstance().createModifiableModelsProvider(project)) {
       val modifiableRootModel = getModifiableRootModel(findIdeModule("module2"))
       modifiableRootModel.orderEntries.filterIsInstance<ExportableOrderEntry>().forEach { it.scope = DependencyScope.TEST }
       runWriteAction { commit() }

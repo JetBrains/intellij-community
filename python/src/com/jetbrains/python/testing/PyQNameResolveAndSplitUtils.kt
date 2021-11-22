@@ -20,13 +20,12 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.extensions.getQName
 import com.jetbrains.extensions.QNameResolveContext
+import com.jetbrains.extensions.getQName
 import com.jetbrains.extensions.getRelativeNameTo
 import com.jetbrains.extensions.resolveToElement
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
-import java.util.*
 
 /**
  * Utilities to find which part of [com.intellij.psi.util.QualifiedName] resolves to file and which one to the element
@@ -45,7 +44,7 @@ data class QualifiedNameParts(val fileName: QualifiedName, val elementName: Qual
     var relativeFileName: QualifiedName? = null
     if (folderToGetFileRelativePathTo != null) {
       val folderQName = folderToGetFileRelativePathTo.getQName()
-      relativeFileName = if (folderQName != null) fileName.getRelativeNameTo(folderQName) else fileName // TODO: DOC
+      relativeFileName = folderQName?.let { fileName.getRelativeNameTo(folderQName) } ?: fileName
     }
 
     if (relativeFileName == null) {

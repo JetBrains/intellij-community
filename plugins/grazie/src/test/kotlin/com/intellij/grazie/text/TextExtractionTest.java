@@ -21,7 +21,7 @@ import java.util.Objects;
 public class TextExtractionTest extends BasePlatformTestCase {
   public void testMarkdownInlineLink() {
     TextContent extracted = extractText("a.md", "* list [item](http://x) with a local link", 3);
-    assertEquals("list item with a local link", extracted.toString());
+    assertEquals("list item with a local link", TextContentTest.unknownOffsets(extracted));
     int prefix = "* ".length();
     assertEquals(prefix + "list [".length(), extracted.textOffsetToFile("list ".length()));
     assertEquals(prefix + "list [item".length(), extracted.textOffsetToFile("list item".length()));
@@ -29,7 +29,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
   public void testMarkdownImage() {
     TextContent extracted = extractText("a.md", "[Before ![AltText](http://www.google.com.au/images/nav_logo7.png) after](http://google.com.au/)", 3);
-    assertEquals("Before  after", extracted.toString());
+    assertEquals("Before  after", TextContentTest.unknownOffsets(extracted));
   }
 
   public void testMarkdownInlineCode() {

@@ -20,6 +20,11 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
     override fun mainFile(): File =
         File(testDataDirectory, "${fileName()}.kt")
 
+
+    protected open fun setupAutoImportEnvironment(settings: KotlinCodeInsightSettings, withAutoImport: Boolean) {
+        settings.addUnambiguousImportsOnTheFly = withAutoImport
+    }
+
     private fun doTest(withAutoImport: Boolean) {
         val mainFile = mainFile().also { check(it.exists()) { "$it should exist" } }
         val base = mainFile.parentFile
@@ -39,7 +44,8 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
         val settings = KotlinCodeInsightSettings.getInstance()
         val oldValue = settings.addUnambiguousImportsOnTheFly
         try {
-            settings.addUnambiguousImportsOnTheFly = withAutoImport
+            setupAutoImportEnvironment(settings, withAutoImport)
+
             // same as myFixture.doHighlighting() but allow to change PSI during highlighting (due to addUnambiguousImportsOnTheFly)
             CodeInsightTestFixtureImpl.instantiateAndRun(
                 getFile(),

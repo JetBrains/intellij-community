@@ -120,7 +120,7 @@ public class FragmentHintManager {
     if (fragment != null) {
       String text = getShortcutText(fragment);
       if (text != null) {
-        hint = hint == null ? text : hint + ". " + text;
+        hint = hint == null ? text : StringUtil.trimEnd(hint, ".") + ". " + text;
       }
     }
     myHintConsumer.consume(hint == null ? myDefaultHint : hint);

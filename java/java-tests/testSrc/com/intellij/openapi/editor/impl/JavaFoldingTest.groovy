@@ -850,7 +850,7 @@ class Foo {
 
     def document = (DocumentEx)myFixture.editor.document
     WriteCommandAction.runWriteCommandAction myFixture.project, {
-      DocumentUtil.executeInBulk(document, true, {
+      DocumentUtil.executeInBulk(document, {
         document.insertString(document.getText().indexOf("}") + 1, "\n");
       } as Closure)
     }

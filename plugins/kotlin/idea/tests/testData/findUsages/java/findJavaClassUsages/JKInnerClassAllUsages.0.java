@@ -8,7 +8,7 @@ public class Outer {
 
         }
 
-        public void foo() {
+        public void foo () {
 
         }
     }

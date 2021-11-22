@@ -1,6 +1,6 @@
 import sys
 from _typeshed import ReadableBuffer
-from typing import Callable, Optional
+from typing import Callable
 
 from paramiko.message import Message
 from paramiko.transport import Transport
@@ -23,12 +23,12 @@ class KexGex:
     preferred_bits: int
     hash_algo: Callable[[ReadableBuffer], _Hash] = ...
     transport: Transport
-    p: Optional[int]
-    q: Optional[int]
-    g: Optional[int]
-    x: Optional[int]
-    e: Optional[int]
-    f: Optional[int]
+    p: int | None
+    q: int | None
+    g: int | None
+    x: int | None
+    e: int | None
+    f: int | None
     old_style: bool
     def __init__(self, transport: Transport) -> None: ...
     def start_kex(self, _test_old_style: bool = ...) -> None: ...

@@ -43,7 +43,6 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
   /**
    * A bundle name to find presentable name key
    */
-  @RequiredElement
   @NonNls
   @Attribute("bundleName")
   public String bundleName;

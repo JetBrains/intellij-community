@@ -4,6 +4,7 @@ package com.intellij.vcs.log.history
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind.*
@@ -474,7 +475,7 @@ class FileHistoryTest {
 
 private class FileNamesDataBuilder(private val path: FilePath) {
   private val commitsMap: MutableMap<FilePath, Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>>> =
-    Object2ObjectOpenCustomHashMap(FILE_PATH_HASHING_STRATEGY)
+    CollectionFactory.createCustomHashingStrategyMap(FILE_PATH_HASHING_STRATEGY)
   private val renamesMap: MultiMap<EdgeData<Int>, EdgeData<FilePath>> = MultiMap()
 
   fun addRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {

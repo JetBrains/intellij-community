@@ -22,7 +22,7 @@ public interface ElementFilter {
   ElementFilter[] EMPTY_ARRAY = new ElementFilter[0];
 
   /**
-   * Checks if element in given context is matched by given filter.
+   * Checks if the given element in the given context is matched by this filter.
    *
    * @param element most often PsiElement
    * @param context context of the element (if any)
@@ -31,7 +31,7 @@ public interface ElementFilter {
   boolean isAcceptable(Object element, @Nullable PsiElement context);
 
   /**
-   * Quick check if the filter acceptable for elements of given class at all.
+   * Quick check if the filter is acceptable for elements of the given class at all.
    *
    * @param hintClass class for which we are looking for metadata
    * @return true if class matched

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
@@ -78,7 +79,17 @@ public class BuilderHandler {
     return substitutor;
   }
 
-  public boolean checkAnnotationFQN(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
+  /**
+   * Checks if given annotation could be a '@lombok.Builder' annotation.
+   * <b>Attention</b>: As a workaround it accepts the annotation immediately,
+   * if calculated name for the Builder class is equal to 'Builder' (same as shortName of the lombok annotation),
+   * to prevent recursive calls to AugmentProvider.
+   * In this case the given annotation is most likely '@Builder' one, because calculation of Builder-Class-Name is based on attributes
+   * of the @lombok.Builder annotation!
+   * But still can going wrong, if somebody makes global configuration like 'lombok.builder.className=Builder'
+   * and used annotation like '@crazy_stuff.Builder'"
+   */
+  public static boolean checkAnnotationFQN(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
     return BUILDER_ANNOTATION_SHORT_NAME.equals(getBuilderClassName(psiClass, psiAnnotation, psiMethod)) ||
            PsiAnnotationSearchUtil.checkAnnotationHasOneOfFQNs(psiAnnotation, LombokClassNames.BUILDER);
   }
@@ -98,10 +109,37 @@ public class BuilderHandler {
         final Collection<BuilderInfo> builderInfos = createBuilderInfos(psiClass, null).collect(Collectors.toList());
         result = validateBuilderDefault(builderInfos, problemBuilder) &&
                  validateSingular(builderInfos, problemBuilder) &&
+                 validateBuilderConstructor(psiClass, builderInfos, problemBuilder) &&
                  validateObtainViaAnnotations(builderInfos.stream(), problemBuilder);
       }
     }
     return result;
+  }
+
+  private boolean validateBuilderConstructor(@NotNull PsiClass psiClass,
+                                             Collection<BuilderInfo> builderInfos,
+                                             @NotNull ProblemBuilder problemBuilder) {
+    if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR) &&
+        PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR)) {
+
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR)) {
+        Collection<PsiField> requiredFields = getNoArgsConstructorProcessor().getRequiredFields(psiClass);
+        List<PsiType> requiredTypes = ContainerUtil.map(requiredFields, PsiField::getType);
+        List<PsiType> psiTypes = ContainerUtil.map(builderInfos, BuilderInfo::getFieldType);
+        if(requiredTypes.equals(psiTypes)) {
+          return true;
+        }
+      }
+
+      Optional<PsiMethod> existingConstructorForParameters = getExistingConstructorForParameters(psiClass, builderInfos);
+      if(existingConstructorForParameters.isPresent()) {
+        return true;
+      }
+
+      problemBuilder.addError(LombokBundle.message("inspection.message.lombok.builder.needs.proper.constructor.for.this.class"));
+      return false;
+    }
+    return true;
   }
 
   private boolean validateBuilderDefault(@NotNull Collection<BuilderInfo> builderInfos, @NotNull ProblemBuilder problemBuilder) {
@@ -275,7 +313,7 @@ public class BuilderHandler {
   }
 
   @NotNull
-  public String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @Nullable PsiMethod psiMethod) {
+  public static String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @Nullable PsiMethod psiMethod) {
     final String builderClassName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, "");
     if (!StringUtil.isEmptyOrSpaces(builderClassName)) {
       return builderClassName;
@@ -294,7 +332,7 @@ public class BuilderHandler {
   }
 
   @NotNull
-  String getBuilderClassName(@NotNull PsiClass psiClass, String returnTypeName) {
+  static String getBuilderClassName(@NotNull PsiClass psiClass, String returnTypeName) {
     final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
     final String builderClassNamePattern = configDiscovery.getStringLombokConfigProperty(BUILDER_CLASS_NAME, psiClass);
     return replace(builderClassNamePattern, "*", capitalize(returnTypeName));
@@ -585,10 +623,7 @@ public class BuilderHandler {
 
     Optional<PsiMethod> definedConstructor = Optional.ofNullable(psiMethod);
     if (definedConstructor.isEmpty()) {
-      final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(parentClass);
-      definedConstructor = classConstructors.stream()
-        .filter(m -> sameParameters(m.getParameterList().getParameters(), builderInfos))
-        .findFirst();
+      definedConstructor = getExistingConstructorForParameters(parentClass, builderInfos);
     }
     definedConstructor.map(PsiMethod::getThrowsList).map(PsiReferenceList::getReferencedTypes).map(Arrays::stream)
       .ifPresent(stream -> stream.forEach(methodBuilder::withException));
@@ -596,7 +631,14 @@ public class BuilderHandler {
     return methodBuilder;
   }
 
-  private boolean sameParameters(PsiParameter[] parameters, List<BuilderInfo> builderInfos) {
+  private Optional<PsiMethod> getExistingConstructorForParameters(@NotNull PsiClass parentClass, Collection<BuilderInfo> builderInfos) {
+    final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(parentClass);
+    return classConstructors.stream()
+      .filter(m -> sameParameters(m.getParameterList().getParameters(), builderInfos))
+      .findFirst();
+  }
+
+  private boolean sameParameters(PsiParameter[] parameters, Collection<BuilderInfo> builderInfos) {
     if (parameters.length != builderInfos.size()) {
       return false;
     }
@@ -670,7 +712,6 @@ public class BuilderHandler {
   private NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class);
   }
-
 
   private ToStringProcessor getToStringProcessor() {
     return ApplicationManager.getApplication().getService(ToStringProcessor.class);

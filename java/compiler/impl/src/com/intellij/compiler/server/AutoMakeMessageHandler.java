@@ -144,7 +144,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
       descr = failure.hasStacktrace()? failure.getStacktrace() : "";
     }
     final String msg = JavaCompilerBundle.message("notification.compiler.auto.build.failure", descr);
-    CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO);
+    CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO).notify(myProject);
     ProblemsView.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, msg), sessionId);
   }
 

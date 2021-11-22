@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
@@ -9,8 +11,8 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.util.DetailView;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
@@ -98,13 +100,18 @@ class XBreakpointItem extends BreakpointItem {
       panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
     }
 
-    XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
-    if (sourcePosition != null && sourcePosition.getFile().isValid()) {
-      showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine());
-    }
-    else {
-      panel.clearEditor();
-    }
+    panel.clearEditor();
+    ReadAction.nonBlocking(() -> myBreakpoint.getSourcePosition())
+      .finishOnUiThread(ModalityState.defaultModalityState(), sourcePosition -> {
+        if (sourcePosition != null && sourcePosition.getFile().isValid()) {
+          showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine());
+        }
+        else {
+          panel.clearEditor();
+        }
+      })
+      .coalesceBy(panel)
+      .submit(AppExecutorUtil.getAppExecutorService());
 
     if (myPropertiesPanel != null) {
       myPropertiesPanel.setDetailView(panel);

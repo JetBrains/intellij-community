@@ -6,7 +6,6 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -126,5 +126,5 @@ fun DebugProcess.isDexDebug(): Boolean {
 
 fun VirtualMachine?.isDexDebug(): Boolean {
     // TODO: check other machine names
-    return (emulateDexDebugInTests && ApplicationManager.getApplication().isUnitTestMode) || this?.name() == "Dalvik"
+    return (emulateDexDebugInTests && isUnitTestMode()) || this?.name() == "Dalvik"
 }

@@ -181,7 +181,7 @@ class KotlinCallableDefinitionUsage<T : PsiElement>(
             newParameterList = if (canReplaceEntireList) {
                 parameterList.replace(newParameterList) as KtParameterList
             } else {
-                replaceListPsiAndKeepDelimiters(parameterList, newParameterList) { parameters }
+                replaceListPsiAndKeepDelimiters(changeInfo, parameterList, newParameterList) { parameters }
             }
         } else {
             if (element is KtClass) {

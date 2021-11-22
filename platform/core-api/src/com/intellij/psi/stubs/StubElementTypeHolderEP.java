@@ -34,7 +34,7 @@ public final class StubElementTypeHolderEP {
   public String holderClass;
 
   /**
-   * Allows to avoid class initialization by declaring that the stub element type holder obeys the following contract:
+   * Allows avoiding class initialization by declaring that the stub element type holder obeys the following contract:
    * <ul>
    * <li>It's an interface</li>
    * <li>All stub element types to load are declared as fields in the interface itself, not in super-interfaces</li>

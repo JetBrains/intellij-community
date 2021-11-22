@@ -94,7 +94,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final List<Configurable> myName2Config = new ArrayList<>();
   private final StructureConfigurableContext myContext;
   private final ModulesConfigurator myModuleConfigurator;
-  private JdkListConfigurable myJdkListConfig;
+  private final JdkListConfigurable myJdkListConfig;
 
   private final JLabel myEmptySelection = new JLabel(
     JavaUiBundle.message("project.structure.empty.text"),

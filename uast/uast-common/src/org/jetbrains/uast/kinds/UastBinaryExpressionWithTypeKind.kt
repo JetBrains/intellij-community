@@ -38,17 +38,7 @@ open class UastBinaryExpressionWithTypeKind(val name: String) {
   }
 
   companion object {
-    @kotlin.Deprecated("See KT-32444", replaceWith = ReplaceWith("UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE"))
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     @JvmField
-    val TYPE_CAST: TypeCast = TypeCast.INSTANCE
-
-    @kotlin.Deprecated("See KT-32444", replaceWith = ReplaceWith("UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE"))
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    @JvmField
-    val INSTANCE_CHECK: InstanceCheck = InstanceCheck.INSTANCE
-
-    @JvmField
-    val UNKNOWN: UastBinaryExpressionWithTypeKind = UastBinaryExpressionWithTypeKind("<unknown>")
+    val UNKNOWN = UastBinaryExpressionWithTypeKind("<unknown>")
   }
 }

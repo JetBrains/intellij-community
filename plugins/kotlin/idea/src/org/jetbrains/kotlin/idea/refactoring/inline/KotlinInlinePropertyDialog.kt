@@ -27,7 +27,7 @@ class KotlinInlinePropertyDialog(
     init {
         setPreviewResults(withPreview && shouldBeShown())
         if (simpleLocal) {
-            setDoNotAskOption(object : DoNotAskOption {
+            setDoNotAskOption(object : com.intellij.openapi.ui.DoNotAskOption {
                 override fun isToBeShown() = EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
 
                 override fun setToBeShown(value: Boolean, exitCode: Int) {
@@ -44,7 +44,7 @@ class KotlinInlinePropertyDialog(
         init()
     }
 
-    fun shouldBeShown() = !simpleLocal || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
+    fun shouldBeShown() = !simpleLocal || reference != null && EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
     override fun doHelpAction() = HelpManager.getInstance().invokeHelp(HelpID.INLINE_VARIABLE)
     override val inlineThisOption: KMutableProperty1<KotlinRefactoringSettings, Boolean> get() = KotlinRefactoringSettings::INLINE_LOCAL_THIS
     override val inlineKeepOption: KMutableProperty1<KotlinRefactoringSettings, Boolean> get() = KotlinRefactoringSettings::INLINE_PROPERTY_KEEP

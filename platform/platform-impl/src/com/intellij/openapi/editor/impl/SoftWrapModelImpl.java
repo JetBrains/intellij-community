@@ -2,10 +2,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,18 +18,13 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManage
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -150,17 +143,8 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     Project project = myEditor.getProject();
     VirtualFile file = myEditor.getVirtualFile();
-    if (project != null) {
-      if (file != null) {
-        EditorNotifications.getInstance(project).updateNotifications(file);
-      } else {
-        if (Boolean.TRUE == EditorImpl.INITIALIZED.get(myEditor) && ComponentUtil.getParentOfType(ConsoleView.class, myEditor.getComponent()) != null) {
-          ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myEditor.getComponent()), decorator -> {
-            ToolWindowManager.getInstance(project).notifyByBalloon(decorator.getToolWindowId(), MessageType.WARNING, ApplicationBundle
-              .message("console.forced.soft.wrap.message"));
-          });
-        }
-      }
+    if (project != null && file != null) {
+      EditorNotifications.getInstance(project).updateNotifications(file);
     }
     ApplicationManager.getApplication().invokeLater(() -> {
       ActivityTracker.getInstance().inc();

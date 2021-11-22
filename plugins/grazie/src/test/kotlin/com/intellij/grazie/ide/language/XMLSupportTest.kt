@@ -3,14 +3,10 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
-import com.intellij.lang.Language
 import com.intellij.lang.xml.XMLLanguage
 
 
 class XMLSupportTest : GrazieTestBase() {
-
-  override val additionalEnabledContextLanguages = setOf(XMLLanguage.INSTANCE)
-
   fun `test grammar check in xsd file`() {
     runHighlightTestForFile("ide/language/xml/Example.xsd")
   }
@@ -28,8 +24,4 @@ class XMLSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/xml/Example.html")
   }
 
-  override fun tearDown() {
-    GrazieConfig.update { GrazieConfig.State() }
-    super.tearDown()
-  }
 }

@@ -7,13 +7,17 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
     abstract fun printLeftNonCodeElements(element: JKFormattingOwner)
     abstract fun printRightNonCodeElements(element: JKFormattingOwner)
 
-    override fun visitTreeElement(treeElement: JKTreeElement) {
-        printLeftNonCodeElements(treeElement)
+    override fun visitTreeElement(treeElement: JKElement) {
+        if (treeElement is JKFormattingOwner) {
+            printLeftNonCodeElements(treeElement)
+        }
         visitTreeElementRaw(treeElement)
-        printRightNonCodeElements(treeElement)
+        if (treeElement is JKFormattingOwner) {
+            printRightNonCodeElements(treeElement)
+        }
     }
 
-    abstract fun visitTreeElementRaw(treeElement: JKTreeElement)
+    abstract fun visitTreeElementRaw(treeElement: JKElement)
 
     override fun visitDeclaration(declaration: JKDeclaration) {
         printLeftNonCodeElements(declaration)
@@ -875,6 +879,22 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
     }
 
     open fun visitKtWhenStatementRaw(ktWhenStatement: JKKtWhenStatement) = visitStatementRaw(ktWhenStatement)
+
+    override fun visitKtWhenExpression(ktWhenExpression: JKKtWhenExpression) {
+        printLeftNonCodeElements(ktWhenExpression)
+        visitKtWhenExpressionRaw(ktWhenExpression)
+        printRightNonCodeElements(ktWhenExpression)
+    }
+
+    open fun visitKtWhenExpressionRaw(ktWhenExpression: JKKtWhenExpression) = visitExpressionRaw(ktWhenExpression)
+
+    override fun visitKtWhenBlock(ktWhenBlock: JKKtWhenBlock) {
+        printLeftNonCodeElements(ktWhenBlock)
+        visitKtWhenBlockRaw(ktWhenBlock)
+        printRightNonCodeElements(ktWhenBlock)
+    }
+
+    open fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) = visitTreeElementRaw(ktWhenBlock)
 
     override fun visitKtConvertedFromForLoopSyntheticWhileStatement(ktConvertedFromForLoopSyntheticWhileStatement: JKKtConvertedFromForLoopSyntheticWhileStatement) {
         printLeftNonCodeElements(ktConvertedFromForLoopSyntheticWhileStatement)

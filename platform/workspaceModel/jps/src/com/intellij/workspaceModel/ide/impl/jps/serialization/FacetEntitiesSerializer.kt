@@ -172,12 +172,12 @@ internal class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() 
 internal class FacetsOrderEntity(
   val orderOfFacets: List<String>
 ) : WorkspaceEntityBase() {
-  val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class.java, true)
+  val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class.java)
 }
 
 internal class ModifiableFacetsOrderEntity : ModifiableWorkspaceEntityBase<FacetsOrderEntity>() {
   var orderOfFacets: List<String> by EntityDataDelegation()
-  var module: ModuleEntity by MutableOneToOneChild.NotNull(FacetsOrderEntity::class.java, ModuleEntity::class.java, true)
+  var module: ModuleEntity by MutableOneToOneChild.NotNull(FacetsOrderEntity::class.java, ModuleEntity::class.java)
 }
 
 private val ModuleEntity.facetsOrderEntity get() = referrers(FacetsOrderEntity::module).firstOrNull()
@@ -197,12 +197,12 @@ internal class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExtern
 internal class FacetExternalSystemIdEntity(
   val externalSystemId: String
 ) : WorkspaceEntityBase() {
-  val facet: FacetEntity by OneToOneChild.NotNull(FacetEntity::class.java, true)
+  val facet: FacetEntity by OneToOneChild.NotNull(FacetEntity::class.java)
 }
 
 internal class ModifiableFacetExternalSystemIdEntity : ModifiableWorkspaceEntityBase<FacetExternalSystemIdEntity>() {
   var externalSystemId: String by EntityDataDelegation()
-  var facet: FacetEntity by MutableOneToOneChild.NotNull(FacetExternalSystemIdEntity::class.java, FacetEntity::class.java, true)
+  var facet: FacetEntity by MutableOneToOneChild.NotNull(FacetExternalSystemIdEntity::class.java, FacetEntity::class.java)
 }
 
 private val FacetEntity.externalSystemId get() = referrers(FacetExternalSystemIdEntity::facet).firstOrNull()

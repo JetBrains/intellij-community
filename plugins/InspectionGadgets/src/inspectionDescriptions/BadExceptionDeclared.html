@@ -1,7 +1,8 @@
 <html>
 <body>
-Reports a method that declares an inappropriate exception, such as
-a <code>throws</code> clause that declares an overly generic exception (for example <code>java.lang.Exception</code> or <code>java.lang.Throwable</code>).
+Reports methods that declare an inappropriate exception in their <code>throws</code> clause.
+For example an exception can be inappropriate because it is overly generic,
+such as <code>java.lang.Exception</code> or <code>java.lang.Throwable</code>.
 <p><b>Example:</b></p>
 <pre><code>
   void describeModule(String module) throws Exception {} // warning: Prohibited exception 'Exception' declared

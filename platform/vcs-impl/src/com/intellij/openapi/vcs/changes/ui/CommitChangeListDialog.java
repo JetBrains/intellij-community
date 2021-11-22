@@ -117,7 +117,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Nullable private final String myHelpId;
 
-  @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm();
   @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
     updateButtons();
     updateLegend();

@@ -116,6 +116,7 @@ def is_skipped_module(path, f, qname):
 def is_module(d, root):
     return (os.path.exists(os.path.join(root, d, "__init__.py")) or
             os.path.exists(os.path.join(root, d, "__init__.pyc")) or
+            os.path.exists(os.path.join(root, d, "__init__.pyi")) or
             os.path.exists(os.path.join(root, d, "__init__.pyo")) or
             is_valid_implicit_namespace_package_name(d))
 

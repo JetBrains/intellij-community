@@ -20,7 +20,7 @@ class JsTemplatesPlugin(context: Context) : TemplatePlugin(context) {
 
         val addTemplate by pipelineTask(GenerationPhase.PREPARE) {
             withAction {
-                TemplatesPlugin.addTemplate.execute(SimpleJsClientTemplate())
+                TemplatesPlugin.addTemplate.execute(SimpleJsClientTemplate)
             }
         }
     }

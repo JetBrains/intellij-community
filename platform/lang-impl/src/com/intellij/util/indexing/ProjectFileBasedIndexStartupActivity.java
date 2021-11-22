@@ -45,12 +45,15 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
       ((PushedFilePropertiesUpdaterImpl)propertiesUpdater).initializeProperties();
     }
 
+    fileBasedIndex.registerProjectFileSets(project);
     // schedule dumb mode start after the read action we're currently in
     if (fileBasedIndex instanceof FileBasedIndexImpl) {
-      DumbService.getInstance(project)
-        .queueTask(new UnindexedFilesUpdater(project, IndexInfrastructure.isIndexesInitializationSuspended(), null, "On project open"));
+      boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
+      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project,
+                                                                           suspended,
+                                                                           null,
+                                                                           "On project open"));
     }
-    fileBasedIndex.registerProjectFileSets(project);
 
     // done mostly for tests. In real life this is no-op, because the set was removed on project closing
     Disposer.register(project, () -> removeProjectIndexableSet(project));

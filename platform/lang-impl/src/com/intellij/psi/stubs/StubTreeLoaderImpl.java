@@ -259,4 +259,9 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
     return StubUpdatingIndex.readSavedIndexingStampInfo(file);
   }
+
+  @Override
+  protected boolean isTooLarge(@NotNull VirtualFile file) {
+    return ((FileBasedIndexImpl)FileBasedIndex.getInstance()).isTooLarge(file);
+  }
 }

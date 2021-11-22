@@ -2,7 +2,7 @@
     <actions>
         <!-- Kotlin Console REPL-->
         <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
-                icon="/org/jetbrains/kotlin/idea/icons/kotlin_launch_configuration.png">
+                icon="KotlinIdeaIcons.Kotlin_launch_configuration">
             <add-to-group group-id="KotlinToolsGroup" anchor="last"/>
         </action>
 
@@ -32,7 +32,7 @@
 <!--            TODO(design)-->
             <action id="Kotlin.XDebugger.CoroutinesDump"
                 class="org.jetbrains.kotlin.idea.debugger.coroutine.command.CoroutineDumpAction"
-                    icon="/org/jetbrains/kotlin/idea/icons/kotlin.png"/>
+                    icon="KotlinIdeaIcons.Kotlin"/>
         </group>
 
         <action id="Kotlin.XDebugger.ToggleKotlinVariableView"
@@ -61,6 +61,9 @@
 
         <applicationService serviceImplementation="org.jetbrains.kotlin.idea.debugger.ToggleKotlinVariablesState"/>
 
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
+                          serviceImplementation="org.jetbrains.kotlin.idea.debugger.KotlinJvmDebuggerFacadeImpl"/>
+
         <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
         <debugger.compoundRendererProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinClassRendererProvider"/>
         <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
@@ -71,7 +74,7 @@
         <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionProvider"/>
         <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionHighlighter"/>
         <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
-        <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.KotlinExtraSteppingFilter"/>
+        <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinExtraSteppingFilter"/>
         <xdebugger.settings implementation="org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType"/>
         <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType" order="first"/>
@@ -82,6 +85,15 @@
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
         <debugger.jvmSteppingCommandProvider implementation="org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider"/>
         <debugger.simplePropertyGetterProvider implementation="org.jetbrains.kotlin.idea.debugger.stepping.KotlinSimpleGetterProvider"/>
+
+        <projectService
+                serviceInterface="org.jetbrains.kotlin.idea.debugger.StackFrameInterceptor"
+                serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
+
+        <projectService
+                serviceInterface="org.jetbrains.kotlin.idea.debugger.coroutine.DebuggerListener"
+                serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebuggerListener"/>
+
         <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
 
         <framework.type implementation="org.jetbrains.kotlin.idea.framework.JavaFrameworkType"/>
@@ -103,6 +115,8 @@
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.JvmStartupActivity"/>
 
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.JvmPluginStartupActivity"/>
+        <postStartupActivity implementation="org.jetbrains.kotlin.idea.debugger.filter.JvmDebuggerAddFilterStartupActivity"/>
+
         <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilerStartupActivity"/>
 
@@ -112,7 +126,7 @@
 
         <consoleFilterProvider implementation="org.jetbrains.kotlin.idea.run.KotlinConsoleFilterProvider"/>
 
-        <exceptionFilter implementation="org.jetbrains.kotlin.idea.filters.KotlinExceptionFilterFactory" order="first"/>
+        <exceptionFilter implementation="org.jetbrains.kotlin.idea.debugger.KotlinExceptionFilterFactory" order="first"/>
 
         <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.configuration.KotlinExternalSystemSyncListener"/>
 
@@ -208,7 +222,6 @@
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.NoArgUltraLightClassModifierExtension"/>
         <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
 
-        <completionExtension implementation="org.jetbrains.kotlin.idea.properties.PropertyKeyCompletion"/>
         <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
         <quickFixContributor implementation="org.jetbrains.kotlin.idea.quickfix.JvmQuickFixRegistrar"/>
         <clearBuildState implementation="org.jetbrains.kotlin.idea.compiler.configuration.ClearBuildManagerState"/>
@@ -223,6 +236,7 @@
         <lightTestFramework id="junit4LightTestFramework" order="before lightClassDelegateTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.JUnit4LightTestFramework"/>
         <lightTestFramework id="lightClassDelegateTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.LightClassDelegateTestFramework"/>
     </extensions>
+
     <extensionPoints>
       <extensionPoint qualifiedName="org.jetbrains.kotlin.lightTestFramework"
                       interface="org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework" dynamic="true"/>

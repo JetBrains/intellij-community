@@ -4,9 +4,9 @@
 
 @JvmOverloads
 fun <caret>foo(
-        x: Int = 0,
-        y: Double = 0.0,
-        z: String = "0"
+    x: Int = 0,
+    y: Double = 0.0,
+    z: String = "0"
 ) {
 
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -71,6 +71,26 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
            "      void test() {foo();}\n" +
            "    }\n" +
            "  }\n" +
+           "}");
+  }
+
+  @SuppressWarnings({"PublicConstructorInNonPublicClass", "Convert2Lambda"})
+  public void testIgnoreUsedOutsideInnerClass() {
+    doTest("class OnlyUsedFromAnonymousWarning {\n" +
+           "\n" +
+           "\t public OnlyUsedFromAnonymousWarning() {\n" +
+           "\t\tRunnable someInterface = new Runnable() {\n" +
+           "\t\t\t@Override\n" +
+           "\t\t\tpublic void run() {\n" +
+           "\t\t\t\tproblemMethod();\n" +
+           "\t\t\t}\n" +
+           "\t\t};\n" +
+           "\t\tproblemMethod();\n" +
+           "\t}\n" +
+           "\n" +
+           "\tprivate static void problemMethod() {\n" +
+           "\t\tSystem.out.println(\"Is used not only from anonymous class!\");\n" +
+           "\t}\n" +
            "}");
   }
 

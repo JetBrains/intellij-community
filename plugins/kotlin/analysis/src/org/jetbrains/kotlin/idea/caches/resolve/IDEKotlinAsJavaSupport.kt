@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -288,10 +289,10 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
                 innerClass != null,
                 { "Could not find corresponding inner/nested class " + relativeFqName + " in class " + decompiledClassOrObject.fqName + "\nFile: " + decompiledClassOrObject.containingKtFile.virtualFile.name },
                 {
-                    it.withAttachment("decompiledClassOrObject", decompiledClassOrObject.text)
+                    it.withPsiAttachment("decompiledClassOrObject", decompiledClassOrObject)
                     it.withAttachment("fileClass", decompiledClassOrObject.containingFile::class)
-                    it.withAttachment("file", decompiledClassOrObject.containingFile.text)
-                    it.withAttachment("root", rootLightClassForDecompiledFile.text)
+                    it.withPsiAttachment("file", decompiledClassOrObject.containingFile)
+                    it.withPsiAttachment("root", rootLightClassForDecompiledFile)
                 },
             )
 

@@ -3,6 +3,9 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.hints.InlayInfo
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.prevLeafs
 import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgument
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -10,7 +13,10 @@ import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.resolveCandidates
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toCommentedParameterName
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
+import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.calls.callUtil.getCall
@@ -62,7 +68,7 @@ private fun getArgumentNameHintsForCallCandidate(
 
         resolvedArg.arguments.firstOrNull()?.let { arg ->
             arg.getArgumentExpression()?.let { argExp ->
-                if (!arg.isNamed() && !valueParam.name.isSpecial && argExp.isUnclearExpression()) {
+                if (!arg.isNamed() && !argExp.isAnnotatedWithComment(valueParam, resultingDescriptor) && !valueParam.name.isSpecial && argExp.isUnclearExpression()) {
                     val prefix = if (valueParam.varargElementType != null) "..." else ""
                     val offset = if (arg == valueArgumentList?.arguments?.firstOrNull() && valueParam.varargElementType != null)
                         valueArgumentList.leftParenthesis?.textRange?.endOffset ?: argExp.startOffset
@@ -81,3 +87,9 @@ private fun KtExpression.isUnclearExpression() = when (this) {
     is KtPrefixExpression -> baseExpression is KtConstantExpression && (operationToken == KtTokens.PLUS || operationToken == KtTokens.MINUS)
     else -> false
 }
+
+private fun KtExpression.isAnnotatedWithComment(valueParameter: ValueParameterDescriptor, descriptor: CallableDescriptor): Boolean =
+    (descriptor is JavaMethodDescriptor || descriptor is JavaClassConstructorDescriptor) &&
+            prevLeafs
+                .takeWhile { it is PsiWhiteSpace || it is PsiComment }
+                .any { it is PsiComment && it.text == valueParameter.toCommentedParameterName() }

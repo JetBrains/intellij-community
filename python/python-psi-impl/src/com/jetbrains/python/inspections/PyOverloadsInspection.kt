@@ -14,7 +14,6 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
-import java.util.*
 
 class PyOverloadsInspection : PyInspection() {
 
@@ -54,7 +53,7 @@ class PyOverloadsInspection : PyInspection() {
 
       if (implementation == null) {
         functions
-          .maxBy { it.textOffset }
+          .maxByOrNull { it.textOffset }
           ?.let {
             registerProblem(it.nameIdentifier, if (owner is PyClass) {
               PyPsiBundle.message("INSP.overloads.series.overload.decorated.methods.should.always.be.followed.by.implementation")

@@ -250,7 +250,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         kotlinFacet.configureFacet(
             compilerVersion,
             platform,
-            modifiableModelsProvider
+            modifiableModelsProvider,
+            emptySet()
         )
         val facetSettings = kotlinFacet.configuration.settings
         val configuredPlatform = kotlinFacet.configuration.settings.targetPlatform!!

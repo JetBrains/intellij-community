@@ -29,6 +29,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -68,6 +69,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher CHANGE_CASE = anyOf(exactInstanceCall(JAVA_LANG_STRING, "toLowerCase").parameterCount(0),
                                                        exactInstanceCall(JAVA_LANG_STRING, "toUpperCase").parameterCount(0));
   private static final CallMatcher STRING_VALUE_OF = staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("char[]");
+  private static final CallMatcher STRIP =
+    exactInstanceCall(JAVA_LANG_STRING, "strip", "stripLeading", "stripTrailing").parameterCount(0);
 
   public boolean ignoreStringConstructor = false;
 
@@ -105,7 +108,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem)
       .register(STRING_EQUALS, this::getRedundantSubstringEqualsProblem)
       .register(anyOf(STRING_EQUALS, STRING_EQUALS_IGNORE_CASE), this::getRedundantCaseEqualsProblem)
-      .register(STRING_VALUE_OF, call -> getValueOfProblem(call.getArgumentList()));
+      .register(STRING_VALUE_OF, call -> getValueOfProblem(call.getArgumentList()))
+      .register(STRING_IS_EMPTY, this::getStripIsEmptyProblem);
     private final InspectionManager myManager;
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
@@ -221,8 +225,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       //case: "foo".equals(s.toLowerCase())
       if (equalTo instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression equalsToCallExpression = (PsiMethodCallExpression)equalTo;
-        if (isChangeCaseCall(equalsToCallExpression) &&
-            PsiUtil.isConstantExpression(call.getMethodExpression().getQualifierExpression())) {
+        if (isChangeCaseCall(equalsToCallExpression, call.getMethodExpression().getQualifierExpression())) {
           PsiElement anchor = equalsToCallExpression.getMethodExpression().getReferenceNameElement();
           if (anchor == null) {
             return null;
@@ -236,25 +239,20 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       PsiExpression receiver = qualifierCall.getMethodExpression().getQualifierExpression();
       if (receiver == null) return null;
 
-      //cases:
-      //- text1.toLowerCase().equals("test2")
-      //- text1.toLowerCase().equals(text2.toLowerCase())
-      if (isChangeCaseCall(qualifierCall)) {
-        PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
-        if (anchor == null) {
-          return null;
-        }
+      PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
+      if (anchor == null) {
+        return null;
+      }
+      if (isChangeCaseCall(qualifierCall, equalTo)) {
         //case: text1.toLowerCase().equals("test2")
-        if (PsiUtil.isConstantExpression(equalTo)) {
-          return createChangeCaseProblem(qualifierCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.LEFT);
-        }
+        return createChangeCaseProblem(qualifierCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.LEFT);
+      }
 
-        //case: text1.toLowerCase().equals(text2.toLowerCase())
-        if (equalTo instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression secondCall = (PsiMethodCallExpression)equalTo;
-          if (isEqualChangeCaseCall(qualifierCall, secondCall)) {
-            return createChangeCaseProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
-          }
+      //case: text1.toLowerCase().equals(text2.toLowerCase())
+      if (equalTo instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression secondCall = (PsiMethodCallExpression)equalTo;
+        if (isEqualChangeCaseCall(qualifierCall, secondCall)) {
+          return createChangeCaseProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
         }
       }
 
@@ -277,8 +275,16 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
 
-    private static boolean isChangeCaseCall(@NotNull PsiMethodCallExpression qualifierCall) {
-      return CHANGE_CASE.test(qualifierCall);
+    private static boolean isChangeCaseCall(@NotNull PsiMethodCallExpression qualifierCall,
+                                            @Nullable PsiExpression constant) {
+      if (constant == null) return false;
+      if (!CHANGE_CASE.test(qualifierCall)) return false;
+      String constValue = tryCast(ExpressionUtils.computeConstantExpression(constant), String.class);
+      if (constValue == null) return false;
+      // Do not suggest incorrect fix for "HELLO".equals(s.toLowerCase())
+      String methodName = qualifierCall.getMethodExpression().getReferenceName();
+      String normalized = "toUpperCase".equals(methodName) ? constValue.toUpperCase(Locale.ROOT) : constValue.toLowerCase(Locale.ROOT);
+      return constValue.equals(normalized);
     }
 
     private static boolean isEqualChangeCaseCall(@NotNull PsiMethodCallExpression qualifierCall,
@@ -352,13 +358,13 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
      */
     @NotNull
     private ProblemDescriptor createSubstringToCharAtProblemDescriptor(@NotNull final PsiMethodCallExpression call) {
-      final String converted = SubstringEqualsToCharAtEqualsQuickFix.getTargetString(call, PsiElement::getText);
+      final String converted = SubstringToCharAtQuickFix.getTargetString(call, PsiElement::getText);
       assert converted != null : "Message cannot be null";
 
       final PsiElement outermostEqualsExpr = getOutermostEquals(call);
-      final SubstringEqualsToCharAtEqualsQuickFix fix = new SubstringEqualsToCharAtEqualsQuickFix(outermostEqualsExpr.getText(),
-                                                                                                  converted);
-      final @NlsSafe String message = InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "substring()", "charAt()");
+      final SubstringToCharAtQuickFix fix = new SubstringToCharAtQuickFix(outermostEqualsExpr.getText(), converted, true);
+      final @NlsSafe String message =
+        InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "substring()", "charAt()");
       return myManager.createProblemDescriptor(outermostEqualsExpr,
                                                message,
                                                fix,
@@ -401,6 +407,17 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         return getProblem(qualifierCall, "inspection.redundant.string.call.message");
       }
       return null;
+    }
+
+    @Nullable
+    private ProblemDescriptor getStripIsEmptyProblem(PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (!STRIP.test(qualifierCall)) return null;
+      PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
+      if (anchor == null) return null;
+      String message = InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "strip", "isBlank");
+      return myManager.createProblemDescriptor(anchor, (TextRange)null, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                               new StripIsEmptyToIsBlankFix());
     }
 
     @Nullable
@@ -512,7 +529,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                Objects.requireNonNull(stringExpression).getText(),
                                                args[0].getText());
 
-        final SubstringToCharAtQuickFix fix = new SubstringToCharAtQuickFix(call.getText(), converted);
+        final SubstringToCharAtQuickFix fix = new SubstringToCharAtQuickFix(call.getText(), converted, false);
 
         final TextRange textRange = new TextRange(substring.getStartOffsetInParent(),
                                                   substring.getStartOffsetInParent() + substring.getTextLength());
@@ -556,7 +573,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
      * to be converted with {@link String#charAt(int)}
      *
      * @param call an expression to examine
-     * @return true if the expression is a good candidate to to be converted with {@link String#charAt(int)}, otherwise - false
+     * @return true if the expression is a good candidate to be converted with {@link String#charAt(int)}, otherwise - false
      */
     private static boolean isBetterWithCharAt(@NotNull final PsiMethodCallExpression call) {
       final PsiExpression[] args = call.getArgumentList().getExpressions();
@@ -601,16 +618,19 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     /**
      * An instance of {@link LocalQuickFix} for problems that can be solved by replacing
-     * {@link String#substring(int, int)} with {@link String#charAt(int)}
+     * {@link String#substring(int, int)} with {@link String#charAt(int)} or
+     * {@code stringValue.substring(i, i + 1).equals("_")} with {@code stringValue.charAt(i) == '_'}
      */
     private static class SubstringToCharAtQuickFix implements LocalQuickFix {
       @NotNull private final String myText;
       @NotNull private final String myConverted;
+      private final boolean myEquality;
 
       SubstringToCharAtQuickFix(@NotNull final String text,
-                                @NotNull @NonNls final String converted) {
+                                final @NotNull String converted, boolean equality) {
         myText = text;
         myConverted = converted;
+        myEquality = equality;
       }
 
       @Override
@@ -625,47 +645,20 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
       @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        PsiMethodCallExpression call = tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-        if (call == null) return;
-        PsiExpression[] args = call.getArgumentList().getExpressions();
-        if (args.length != 2) return;
-        ExpressionUtils.bindCallTo(call, "charAt");
-        new CommentTracker().deleteAndRestoreComments(args[1]);
-      }
-    }
-
-    /**
-     * An instance of {@link LocalQuickFix} for problems like
-     * <pre>
-     *   stringValue.substring(i, i + 1).equals("_")
-     * </pre>
-     * that can be changed to
-     * <pre>
-     *   stringValue.charAt(i) == '_'
-     * </pre>
-     */
-    private static class SubstringEqualsToCharAtEqualsQuickFix implements LocalQuickFix {
-      @NotNull private final String myText;
-      @NotNull private final String myConverted;
-
-      SubstringEqualsToCharAtEqualsQuickFix(@NotNull final String text,
-                                            @NotNull final String converted) {
-        myText = text;
-        myConverted = converted;
+        if (myEquality) {
+          applyEqualityFix(descriptor);
+        }
+        else {
+          PsiMethodCallExpression call = tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+          if (call == null) return;
+          PsiExpression[] args = call.getArgumentList().getExpressions();
+          if (args.length != 2) return;
+          ExpressionUtils.bindCallTo(call, "charAt");
+          new CommentTracker().deleteAndRestoreComments(args[1]);
+        }
       }
 
-      @Override
-      public @IntentionName @NotNull String getName() {
-        return CommonQuickFixBundle.message("fix.replace.x.with.y", myText, myConverted);
-      }
-
-      @Override
-      public @IntentionFamilyName @NotNull String getFamilyName() {
-        return CommonQuickFixBundle.message("fix.replace.x.with.y", "substring()", "charAt()");
-      }
-
-      @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      private static void applyEqualityFix(@NotNull final ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement();
         if (element == null) return;
 
@@ -825,6 +818,34 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       }
       ExpressionUtils.bindCallTo(nextCall, myBindCallName);
       ct.replaceAndRestoreComments(substringCall, stringExpr);
+    }
+  }
+
+  private static class StripIsEmptyToIsBlankFix implements LocalQuickFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("remove.redundant.string.fix.text", "isBlank", "strip");
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("use.isblank.to.check.if.string.is.whitespace.or.empty");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiMethodCallExpression stripCall = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      if (stripCall == null) return;
+      PsiMethodCallExpression isEmptyCall = ExpressionUtils.getCallForQualifier(stripCall);
+      if (isEmptyCall == null) return;
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(stripCall.getMethodExpression());
+      if (qualifier == null) return;
+      new CommentTracker().replaceAndRestoreComments(stripCall, qualifier);
+      ExpressionUtils.bindCallTo(isEmptyCall, "isBlank");
     }
   }
 

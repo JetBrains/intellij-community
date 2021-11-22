@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 @SkipSlowTestLocally
 public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTestCase {
@@ -47,24 +48,24 @@ public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTe
   }
 
   public void testSwitchExpressionSpecific() {
-    checkScenarios(JavaFeatureSpecificSanityTest::getSwitchGenerator, " switch");
+    checkScenarios(JavaFeatureSpecificSanityTest::getSwitchGenerator, Pattern.compile(" switch"));
   }
 
   public void testPatternInstanceOfSpecific() {
-    checkScenarios(JavaFeatureSpecificSanityTest::getPatternInstanceOfGenerator, " instanceof");
+    checkScenarios(JavaFeatureSpecificSanityTest::getPatternInstanceOfGenerator, Pattern.compile(" instanceof"));
   }
 
-  public void testIfCanBeSwitchSpecific() {
-    checkScenarios(JavaFeatureSpecificSanityTest::getIfCanBeSwitchGenerator, " if ");
+  public void testPatternIfCanBeSwitchSpecific() {
+    checkScenarios(JavaFeatureSpecificSanityTest::getIfCanBeSwitchGenerator, Pattern.compile(" if \\(\\w+ instanceof .+") );
   }
 
   private void checkScenarios(@NotNull Function<PsiFile, Generator<? extends MadTestingAction>> fileActions,
-                              @NotNull String substring) {
+                              @NotNull Pattern pattern) {
     enableInspections();
 
     PropertyChecker
       .customized().withIterationCount(50)
-      .checkScenarios(createChooser(fileActions, substring));
+      .checkScenarios(createChooser(fileActions, pattern));
   }
 
   private void enableInspections() {
@@ -74,10 +75,10 @@ public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTe
 
   @Contract(pure = true)
   private @NotNull Supplier<MadTestingAction> createChooser(@NotNull Function<PsiFile, Generator<? extends MadTestingAction>> fileActions,
-                                                            @NotNull String substring) {
+                                                            @NotNull Pattern pattern) {
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> {
       try {
-        return f.getName().endsWith(".java") && FileUtil.loadFile(f).contains(substring);
+        return f.getName().endsWith(".java") && pattern.matcher(FileUtil.loadFile(f)).find();
       }
       catch (IOException e) {
         return false;

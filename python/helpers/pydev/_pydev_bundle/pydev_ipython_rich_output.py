@@ -1,0 +1,77 @@
+#  Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+import sys
+from IPython.core.displayhook import DisplayHook
+from IPython.core.displaypub import DisplayPublisher
+
+
+class PyDevDisplayHook(DisplayHook):
+    def write_format_data(self, format_dict, *args, **kwargs):
+        if not is_supported(format_dict):
+            super(PyDevDisplayHook, self).write_format_data(format_dict, *args,
+                                                            **kwargs)
+            return
+        if "text/plain" in format_dict:
+            text = format_dict["text/plain"]
+            if len(text) > 0 and not text.endswith("\n"):
+                format_dict["text/plain"] = text + "\n"
+        send_rich_output(format_dict)
+
+
+class PyDevDisplayPub(DisplayPublisher):
+    def publish(self, data, *args, **kwargs):
+        if not is_supported(data):
+            super(PyDevDisplayPub, self).publish(data, *args, **kwargs)
+            return
+        send_rich_output(data)
+
+
+def is_supported(data):
+    for type in data.keys():
+        if type not in ("text/plain", "image/png", "text/html"):
+            return False
+        if type == "text/html":
+            html = data["text/html"]
+            if not is_data_frame(html):
+                return False
+    return True
+
+
+def is_data_frame(html):
+    return ("javascript" not in html) and ("dataframe" in html) and ("<table" in html)
+
+
+def send_rich_output(data):
+    if 'image/png' in data:
+        import base64
+        png = data['image/png']
+        res = base64.b64encode(png)
+        data['image/png'] = res
+    from _pydev_bundle.pydev_ipython_console_011 import get_client
+    client = get_client()
+    if client:
+        client.sendRichOutput(data)
+    else:
+        sys.stderr.write("Client is None!\n")
+        sys.stderr.flush()
+
+
+def patch_stdout():
+    sys.stdout = PydevStdOut(sys.stdout)
+
+
+class PydevStdOut:
+    def __init__(self, original_stdout=sys.stdout, *args, **kwargs):
+        self.encoding = sys.stdout.encoding
+        self.original_stdout = original_stdout
+
+    def write(self, s):
+        data = {'text/plain': s}
+        send_rich_output(data)
+
+    def __getattr__(self, item):
+        # it's called if the attribute wasn't found
+        if hasattr(self.original_stdout, item):
+            return getattr(self.original_stdout, item)
+        raise AttributeError("%s has no attribute %s" % (self.original_stdout, item))
+

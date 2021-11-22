@@ -3,7 +3,7 @@
 object OOO
 typealias <caret>Alias = OOO
 
-fun f() {
+fun f2() {
     Alias
     val a: Alias
 }

@@ -48,7 +48,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
     updateTree(view);
     TreeUtil.expandAll(view.getTree());
     updateTree(view);
-    PlatformTestUtil.assertTreeEqual(view.getTree(), "-InspectionViewTree\n" +
+    PlatformTestUtil.assertTreeEqual(view.getTree(), "-Inspections Results\n" +
                                                      " -Java\n" +
                                                      "  -Code maturity\n" +
                                                      "   -Usage of API marked for removal\n" +
@@ -65,7 +65,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
     updateTree(view);
     TreeUtil.expandAll(view.getTree());
     updateTree(view);
-    PlatformTestUtil.assertTreeEqual(view.getTree(), "-InspectionViewTree\n" +
+    PlatformTestUtil.assertTreeEqual(view.getTree(), "-Inspections Results\n" +
                                                      " -Java\n" +
                                                      "  -Code maturity\n" +
                                                      "   -Usage of API marked for removal\n" +
@@ -89,7 +89,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
     TreeUtil.expandAll(view.getTree());
     updateTree(view);
 
-    PlatformTestUtil.assertTreeEqual(view.getTree(), ("-InspectionViewTree\n" +
+    PlatformTestUtil.assertTreeEqual(view.getTree(), ("-Inspections Results\n" +
                                                              " -Groovy\n" +
                                                              "  -Data flow\n" +
                                                              "   -Unused assignment\n" +

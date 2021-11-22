@@ -8,13 +8,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -137,13 +134,6 @@ public class ShowFilePathAction extends DumbAwareAction {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final NotificationListener FILE_SELECTING_LISTENER = RevealFileAction.FILE_SELECTING_LISTENER;
 
-  /** @deprecated use {@link RevealFileAction#isSupported} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean isSupported() {
-    return RevealFileAction.isSupported();
-  }
-
   /** @deprecated use {@link RevealFileAction#getFileManagerName} (to be removed in IDEA 2021.3) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
@@ -163,13 +153,6 @@ public class ShowFilePathAction extends DumbAwareAction {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void openDirectory(@NotNull File directory) {
     RevealFileAction.openDirectory(directory);
-  }
-
-  /** @deprecated use {@link RevealFileAction#showDialog} (to be removed in IDEA 2021.3) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void showDialog(Project project, @NlsContexts.DialogMessage String message, @NlsContexts.DialogTitle String title, @NotNull File file, @Nullable DialogWrapper.DoNotAskOption option) {
-    RevealFileAction.showDialog(project, message, title, file, option);
   }
 
   /** @deprecated use {@link RevealFileAction#findLocalFile} (to be removed in IDEA 2021.3) */

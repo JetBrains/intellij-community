@@ -43,7 +43,10 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
 
   protected abstract fun isProjectFile(file: VirtualFile): Boolean
 
-  protected abstract fun linkAndRefreshProject(projectDirectory: Path, project: Project)
+  @Deprecated("redundant method", replaceWith = ReplaceWith("linkToExistingProject(projectFile, project)"))
+  protected open fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
+    throw UnsupportedOperationException("use linkToExistingProject(VirtualFile, Project) instead")
+  }
 
   override fun canOpenProject(file: VirtualFile): Boolean {
     return if (file.isDirectory) file.children.any(::isProjectFile) else isProjectFile(file)
@@ -76,7 +79,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
           ApplicationManager.getApplication().invokeAndWait {
-            linkAndRefreshProject(nioPath, project)
+            linkToExistingProject(projectFile, project)
           }
           updateLastProjectLocation(nioPath)
         }

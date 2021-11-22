@@ -125,4 +125,8 @@ public class InsertionContext {
            completionChar != Lookup.REPLACE_SELECT_CHAR &&
            completionChar != Lookup.NORMAL_SELECT_CHAR;
   }
+
+  public InsertionContext forkByOffsetMap() {
+    return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myFile, myEditor, myAddCompletionChar);
+  }
 }

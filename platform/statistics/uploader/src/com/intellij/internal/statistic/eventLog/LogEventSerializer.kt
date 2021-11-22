@@ -1,8 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.google.gson.*
 import com.google.gson.reflect.TypeToken
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.LogEventAction
+import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import java.io.OutputStreamWriter
 import java.lang.reflect.Type
 import kotlin.math.roundToLong
@@ -107,14 +110,8 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
     val groupVersion = group["version"].asString
 
     val actionObj = obj["event"].asJsonObject
-    val action = createAction(actionObj)
-    if (actionObj.has("data")) {
-      val dataObj = actionObj.getAsJsonObject("data")
-      for ((key, value) in context.deserialize<HashMap<String, Any>>(dataObj, object : TypeToken<HashMap<String, Any>>() {}.type)) {
-        action.addData(key, transformNumbers(value))
-      }
-    }
-    return LogEvent(session, build, bucket, time, groupId, groupVersion, recorderVersion, action)
+    val action = createAction(actionObj, context)
+    return LogEvent(session, build, bucket, time, LogEventGroup(groupId, groupVersion), recorderVersion, action)
   }
 
   private fun transformNumbers(value: Any): Any {
@@ -129,15 +126,22 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
     }
   }
 
-  fun createAction(obj: JsonObject): LogEventAction {
+  fun createAction(obj: JsonObject, context: JsonDeserializationContext): LogEventAction {
     val id = obj.get("id").asString
     val isState = obj.has("state") && obj.get("state").asBoolean
+    val data = HashMap<String, Any>()
+    if (obj.has("data")) {
+      val dataObj = obj.getAsJsonObject("data")
+      for ((key, value) in context.deserialize<HashMap<String, Any>>(dataObj, object : TypeToken<HashMap<String, Any>>() {}.type)) {
+        data[key] = transformNumbers(value)
+      }
+    }
     if (obj.has("count")) {
       val count = obj.get("count").asJsonPrimitive
       if (count.isNumber) {
-        return LogEventAction(id, state = isState, count = count.asInt)
+        return LogEventAction(id, state = isState, count = count.asInt, data = data)
       }
     }
-    return LogEventAction(id, state = isState)
+    return LogEventAction(id, state = isState, data = data)
   }
 }

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.actions.generate
 
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -11,6 +10,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -53,7 +53,7 @@ private val MEMBER_RENDERER = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_
 }
 
 fun confirmMemberRewrite(targetClass: KtClass, vararg descriptors: FunctionDescriptor): Boolean {
-    if (ApplicationManager.getApplication().isUnitTestMode) return true
+    if (isUnitTestMode()) return true
 
     val functionsText =
         descriptors.joinToString(separator = " ${KotlinBundle.message("configuration.text.and")} ") { "'${MEMBER_RENDERER.render(it)}'" }

@@ -41,11 +41,11 @@ public final class GitExecutableProblemsNotifier {
   }
 
   static void notify(@NotNull Project project, @NotNull BadGitExecutableNotification notification) {
-    ModalityUiUtil.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
       if (ensureSingularOfType(project, notification.getClass())) {
         notification.notify(project);
       }
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   /**

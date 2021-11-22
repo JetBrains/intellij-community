@@ -9,7 +9,7 @@ import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.impl.KotlinChainTransformerImpl
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.resolveType
+import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.types.KotlinType
 
@@ -19,7 +19,7 @@ class CollectionChainTransformer : ChainTransformer<KtCallExpression> {
     override fun transform(chainCalls: List<KtCallExpression>, context: PsiElement): StreamChain {
         val chain = transformer.transform(chainCalls, context)
 
-        if (chainCalls.first().resolveType().isArray) {
+        if (chainCalls.first().resolveType()?.isArray == true) {
             val qualifier = WrappedQualifier(chain.qualifierExpression)
             return StreamChainImpl(qualifier, chain.intermediateCalls, chain.terminationCall, chain.context)
         }

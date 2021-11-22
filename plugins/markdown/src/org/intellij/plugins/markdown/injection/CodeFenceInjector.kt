@@ -11,7 +11,7 @@ import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
-import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.hasType
 
 /**
@@ -50,7 +50,9 @@ internal open class CodeFenceInjector : MultiHostInjector {
 
   protected open fun findLangForInjection(element: MarkdownCodeFenceImpl): Language? {
     val name = element.fenceLanguage ?: return null
-    return LanguageGuesser.guessLanguageForInjection(name).takeUnless { MarkdownApplicationSettings.getInstance().isDisableInjections }
+    return LanguageGuesser.guessLanguageForInjection(name).takeIf {
+      MarkdownSettings.getInstance(element.project).areInjectionsEnabled
+    }
   }
 
   /**

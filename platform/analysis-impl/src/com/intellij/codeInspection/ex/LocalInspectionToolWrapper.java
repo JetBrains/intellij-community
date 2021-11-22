@@ -41,7 +41,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   }
 
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return myEP == null ? getTool().getID() : myEP.id == null ? myEP.getShortName() : myEP.id;
   }
 

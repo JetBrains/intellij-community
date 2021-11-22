@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.util.io.Murmur3_32Hash
-import com.intellij.util.lang.ImmutableZipEntry
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.intellij.build.io.ZipFileWriter
 
@@ -10,35 +9,45 @@ internal class PackageIndexBuilder {
   val classPackageHashSet = IntOpenHashSet()
   val resourcePackageHashSet = IntOpenHashSet()
 
-  val dirsToCreate = HashSet<String>()
+  private val dirsToCreate = HashSet<String>()
 
   private var wasWritten = false
 
-  fun add(entries: List<ImmutableZipEntry>) {
-    for (entry in entries) {
-      val name = entry.name
-      if (entry.isDirectory) {
-        continue
-      }
+  // @TestOnly
+  @Suppress("FunctionName")
+  fun _getDirsToCreate(): Set<String> = dirsToCreate
 
-      if (name.endsWith(".class")) {
-        classPackageHashSet.add(getPackageNameHash(name))
-      }
-      else {
-        resourcePackageHashSet.add(getPackageNameHash(name))
-        computeDirsToCreate(entry)
-      }
+  fun addFile(name: String) {
+    if (name.endsWith(".class")) {
+      classPackageHashSet.add(getPackageNameHash(name))
+    }
+    else {
+      resourcePackageHashSet.add(getPackageNameHash(name))
+      computeDirsToCreate(name)
+    }
+  }
+
+  fun writeDirs(zipCreator: ZipFileWriter) {
+    if (dirsToCreate.isEmpty()) {
+      return
     }
 
-    if (!resourcePackageHashSet.isEmpty()) {
-      // add empty package if top-level directory will be requested
-      resourcePackageHashSet.add(0)
+    val list = dirsToCreate.toMutableList()
+    list.sort()
+    for (name in list) {
+      // name in our ImmutableZipEntry doesn't have ending slash
+      zipCreator.addDirEntry(if (name.endsWith('/')) name else "$name/")
     }
   }
 
   fun writePackageIndex(zipCreator: ZipFileWriter) {
     assert(!wasWritten)
     wasWritten = true
+
+    if (!resourcePackageHashSet.isEmpty()) {
+      // add empty package if top-level directory will be requested
+      resourcePackageHashSet.add(0)
+    }
 
     zipCreator.writeUncompressedEntry(PACKAGE_INDEX_NAME,
                                       (2 * Int.SIZE_BYTES) + ((classPackageHashSet.size + resourcePackageHashSet.size) * Int.SIZE_BYTES)) {
@@ -57,8 +66,7 @@ internal class PackageIndexBuilder {
   }
 
   // leave only directories where some non-class files are located (as it can be requested in runtime, e.g. stubs, fileTemplates)
-  private fun computeDirsToCreate(entry: ImmutableZipEntry) {
-    val name = entry.name
+  private fun computeDirsToCreate(name: String) {
     if (name.endsWith("/package.html") || name == "META-INF/MANIFEST.MF") {
       return
     }

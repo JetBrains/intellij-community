@@ -15,10 +15,10 @@ import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.SingleAlarm
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.lastModified
-import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -71,7 +71,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     return project.getProjectDataPath(DATA_DIR_NAME).resolve("cache.data")
   }
 
-  private val saveAlarm = pooledThreadSingleAlarm(1000, this, this::doCacheSaving)
+  private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(1000, this) { this.doCacheSaving() }
 
   override fun saveCacheNow() {
     saveAlarm.cancel()

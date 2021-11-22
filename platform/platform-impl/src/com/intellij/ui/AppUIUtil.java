@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.google.common.base.Predicates;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
@@ -19,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.scale.JBUIScale;
@@ -44,9 +42,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public final class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
@@ -72,22 +70,20 @@ public final class AppUIUtil {
       ScaleContext scaleContext = ScaleContext.create(window);
 
       if (SystemInfoRt.isUnix) {
-        @SuppressWarnings("deprecation")
-        Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, appInfo.getBigIconUrl());
+        @SuppressWarnings("deprecation") Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, appInfo.getBigIconUrl());
         if (image != null) {
           images.add(image);
         }
       }
 
-      @SuppressWarnings("deprecation")
-      Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, appInfo.getIconUrl());
+      @SuppressWarnings("deprecation") Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, appInfo.getIconUrl());
       if (element != null) {
         images.add(element);
       }
 
       if (SystemInfoRt.isWindows) {
-        //noinspection deprecation
-        images.add(loadApplicationIconImage(smallSvgIconUrl, scaleContext, 16, appInfo.getSmallIconUrl()));
+        @SuppressWarnings("deprecation") Image image = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 16, appInfo.getSmallIconUrl());
+        images.add(image);
       }
 
       for (int i = 0; i < images.size(); i++) {
@@ -134,11 +130,9 @@ public final class AppUIUtil {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
 
-    //this is a way to load the release icon in EAP. Need for some actions.
-    if (isReleaseIcon && appInfo.isEAP()) {
-      if (appInfo instanceof ApplicationInfoImpl) {
-        smallIconUrl = ((ApplicationInfoImpl)appInfo).getSmallApplicationSvgIconUrl(false);
-      }
+    if (isReleaseIcon && appInfo.isEAP() && appInfo instanceof ApplicationInfoImpl) {
+      // This is the way to load the release icon in EAP. Needed for some actions.
+      smallIconUrl = ((ApplicationInfoImpl)appInfo).getSmallApplicationSvgIconUrl(false);
     }
 
     Icon icon = smallIconUrl == null ? null : loadApplicationIcon(smallIconUrl, scaleContext, size);
@@ -243,33 +237,29 @@ public final class AppUIUtil {
         ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
       }
     }
-    catch (Exception ignore) {
-    }
+    catch (Exception ignore) { }
   }
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass
   public static String getFrameClass() {
-    String name = Strings.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductNameWithEdition())
+    String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition().toLowerCase(Locale.ENGLISH)
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
-    if (PluginManagerCore.isRunningFromSources()) {
-      wmClass += "-debug";
-    }
+    if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug";
     return wmClass;
   }
 
-  private static final int MIN_ICON_SIZE = 32;
-
   public static @Nullable String findIcon() {
-    String iconsPath = PathManager.getBinPath();
-    String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtilRt.EMPTY_STRING_ARRAY);
+    String binPath = PathManager.getBinPath();
+    String[] binFiles = new File(binPath).list();
 
-    // 1. look for .svg icon
-    for (String child : childFiles) {
-      if (child.endsWith(".svg")) {
-        return iconsPath + '/' + child;
+    if (binFiles != null) {
+      for (String child : binFiles) {
+        if (child.endsWith(".svg")) {
+          return binPath + '/' + child;
+        }
       }
     }
 
@@ -281,22 +271,7 @@ public final class AppUIUtil {
       }
     }
 
-    // 2. look for .png icon of max size
-    int best = MIN_ICON_SIZE - 1;
-    String iconPath = null;
-    for (String child : childFiles) {
-      if (child.endsWith(".png")) {
-        String path = iconsPath + '/' + child;
-        Icon icon = new ImageIcon(path);
-        int size = icon.getIconHeight();
-        if (size > best && size == icon.getIconWidth()) {
-          best = size;
-          iconPath = path;
-        }
-      }
-    }
-
-    return iconPath;
+    return null;
   }
 
   public static boolean needToShowUsageStatsConsent() {
@@ -304,10 +279,10 @@ public final class AppUIUtil {
   }
 
   public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log) {
-    return showConsentsAgreementIfNeeded(log, Predicates.alwaysTrue());
+    return showConsentsAgreementIfNeeded(log, __ -> true);
   }
   
-  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log, final Predicate<Consent> filter) {
+  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log, Predicate<Consent> filter) {
     return showConsentsAgreementIfNeeded(command -> {
       if (EventQueue.isDispatchThread()) {
         command.run();
@@ -323,10 +298,9 @@ public final class AppUIUtil {
     }, filter);
   }
 
-  private static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor, final Predicate<Consent> filter) {
-    final ConsentOptions options = ConsentOptions.getInstance();
-    final Pair<List<Consent>, Boolean> consentsToShow = options.getConsents(filter);
-    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
+  private static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor, Predicate<Consent> filter) {
+    Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents(filter);
+    Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     if (consentsToShow.getSecond()) {
       edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.getFirst())));
     }
@@ -344,7 +318,7 @@ public final class AppUIUtil {
     }
 
     ConsentSettingsUi ui = new ConsentSettingsUi(false);
-    final DialogWrapper dialog = new DialogWrapper(true) {
+    DialogWrapper dialog = new DialogWrapper(true) {
       @Override
       protected @Nullable Border createContentPaneBorder() {
         return null;
@@ -373,7 +347,7 @@ public final class AppUIUtil {
           return actions;
         }
         setOKButtonText(consents.iterator().next().getName());
-        return new Action[]{getOKAction(), new DialogWrapperAction(IdeBundle.message("button.don.t.send")) {
+        return new Action[]{getOKAction(), new DialogWrapperAction(IdeBundle.message("button.do.not.send")) {
           @Override
           protected void doAction(ActionEvent e) {
             close(NEXT_USER_EXIT_CODE);
@@ -387,7 +361,6 @@ public final class AppUIUtil {
         init();
         setAutoAdjustable(false);
       }
-
     };
     ui.reset(consents);
     dialog.setModal(true);
@@ -400,10 +373,10 @@ public final class AppUIUtil {
 
     int exitCode = dialog.getExitCode();
     if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-      return false; //Don't save any changes in this case: user hasn't made a choice
+      return false;  // don't save any changes in this case: a user hasn't made a choice
     }
 
-    final List<Consent> result;
+    List<Consent> result;
     if (consents.size() == 1) {
       result = Collections.singletonList(consents.iterator().next().derive(exitCode == DialogWrapper.OK_EXIT_CODE));
     }
@@ -416,13 +389,13 @@ public final class AppUIUtil {
   }
 
   public static List<Consent> loadConsentsForEditing() {
-    final ConsentOptions options = ConsentOptions.getInstance();
+    ConsentOptions options = ConsentOptions.getInstance();
     List<Consent> result = options.getConsents().getFirst();
     if (options.isEAP()) {
-      final Consent statConsent = options.getDefaultUsageStatsConsent();
+      Consent statConsent = options.getDefaultUsageStatsConsent();
       if (statConsent != null) {
         // init stats consent for EAP from the dedicated location
-        final List<Consent> consents = result;
+        List<Consent> consents = result;
         result = new ArrayList<>();
         result.add(statConsent.derive(UsageStatisticsPersistenceComponent.getInstance().isAllowed()));
         result.addAll(consents);
@@ -435,10 +408,10 @@ public final class AppUIUtil {
     if (consents.isEmpty()) {
       return;
     }
-    final ConsentOptions options = ConsentOptions.getInstance();
 
+    ConsentOptions options = ConsentOptions.getInstance();
     if (ApplicationManager.getApplication() != null && options.isEAP()) {
-      final Predicate<Consent> isUsageStats = ConsentOptions.condUsageStatsConsent();
+      Predicate<Consent> isUsageStats = ConsentOptions.condUsageStatsConsent();
       int saved = 0;
       for (Consent consent : consents) {
         if (isUsageStats.test(consent)) {
@@ -447,7 +420,13 @@ public final class AppUIUtil {
         }
       }
       if (consents.size() - saved > 0) {
-        options.setConsents(consents.stream().filter(Predicate.not(isUsageStats)).collect(Collectors.toList()));
+        List<Consent> list = new ArrayList<>();
+        for (Consent consent : consents) {
+          if (!isUsageStats.test(consent)) {
+            list.add(consent);
+          }
+        }
+        options.setConsents(list);
       }
     }
     else {
@@ -480,7 +459,7 @@ public final class AppUIUtil {
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
   }
 
-  public static boolean isInFullscreen(@Nullable Window window) {
+  public static boolean isInFullScreen(@Nullable Window window) {
     return window instanceof IdeFrame && ((IdeFrame)window).isInFullScreen();
   }
 

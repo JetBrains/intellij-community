@@ -58,9 +58,7 @@ class GradleRerunFailedTestsAction(
   }
 
   private fun ExternalSystemTaskExecutionSettings.setupRerunTestConfiguration(project: Project) {
-    val failedTests = getFailedTests(project)
-      .filterIsInstance<GradleSMTestProxy>()
-      .map { getTestLocationInfo(project, it) }
+    val failedTests = getFailedTests(project).filterIsInstance<GradleSMTestProxy>().mapNotNull { getTestLocationInfo(project, it) }
     val findTestSource = { it: TestLocationInfo -> getSourceFile(it.element) }
     val createFiler = { it: TestLocationInfo -> createTestFilterFrom(it.location, it.psiClass, it.psiMethod, true) }
     val getTestsTaskToRun = { source: VirtualFile ->
@@ -74,14 +72,24 @@ class GradleRerunFailedTestsAction(
     }
   }
 
-  private fun getTestLocationInfo(project: Project, testProxy: GradleSMTestProxy): TestLocationInfo {
+  private fun getTestLocationInfo(project: Project, testProxy: GradleSMTestProxy): TestLocationInfo? {
     val projectScope = GlobalSearchScope.projectScope(project)
     val location = testProxy.getLocation(project, projectScope)
-    return when (val element = location?.psiElement) {
+    val locationInfo = when (val element = location?.psiElement) {
       is PsiClass -> TestLocationInfo(location, element, element)
-      is PsiMethod -> TestLocationInfo(location, element, element.containingClass, element)
-      else -> TestLocationInfo(location)
+      is PsiMethod -> {
+        val parentLocation = testProxy.parent.getLocation(project, projectScope)
+        when (val parentElement = parentLocation?.psiElement) {
+          is PsiClass -> TestLocationInfo(location, element, parentElement, element)
+          else -> null
+        }
+      }
+      else -> null
     }
+    if (locationInfo == null) {
+      LOG.warn("Undefined test to rerun: ${testProxy.locationUrl}")
+    }
+    return locationInfo
   }
 
   private data class TestLocationInfo(

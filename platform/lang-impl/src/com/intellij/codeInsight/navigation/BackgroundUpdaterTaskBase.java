@@ -29,7 +29,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private Ref<? extends UsageView> myUsageView;
   private final Collection<T> myData;
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm();
   private final Object lock = new Object();
 
   private volatile boolean myCanceled;

@@ -24,23 +24,25 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 public class ObjectObjectPersistentMultiMapletTest extends UsefulTestCase {
-  private static final BuilderCollectionFactory<IntValueStreamable> COLLECTION_FACTORY = () -> new ArrayList<>();
+  private static final Supplier<Collection<IntValueStreamable>> COLLECTION_FACTORY = ArrayList::new;
 
   public void testReplaceWithEqualButNotSameKey() throws IOException {
     File file = FileUtil.createTempFile(getTestDirectoryName(), null);
-    ObjectObjectPersistentMultiMaplet<String, IntValueStreamable> maplet =
-      new ObjectObjectPersistentMultiMaplet<>(file, new CaseInsensitiveEnumeratorStringDescriptor(),
-                                              new IntValueExternalizer(),
-                                              COLLECTION_FACTORY);
+    ObjectObjectPersistentMultiMaplet<String, IntValueStreamable> maplet = new ObjectObjectPersistentMultiMaplet<>(
+      file, new CaseInsensitiveEnumeratorStringDescriptor(), new IntValueExternalizer(), COLLECTION_FACTORY
+    );
     try {
       maplet.put("a", new IntValueStreamable(1));
       assertEquals(1, assertOneElement(maplet.get("a")).value);
       maplet.replace("A", Collections.singletonList(new IntValueStreamable(2)));
       assertEquals(2, assertOneElement(maplet.get("a")).value);
-    } finally {
+    }
+    finally {
       maplet.close();
       IOUtil.deleteAllFilesStartingWith(file);
     }

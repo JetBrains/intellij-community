@@ -58,7 +58,7 @@ class GradleStructureWizardStep(
 
   override fun updateProjectData() {
     context.projectBuilder = builder
-    builder.setParentProject(parentData)
+    builder.parentProject = parentData
     builder.projectId = ProjectId(groupId, artifactId, version)
     builder.isInheritGroupId = parentData?.group == groupId
     builder.isInheritVersion = parentData?.version == version

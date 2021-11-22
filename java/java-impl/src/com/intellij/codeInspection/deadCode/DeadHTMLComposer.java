@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.deadCode;
 
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class DeadHTMLComposer extends HTMLComposerImpl {
@@ -145,7 +146,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       @Override public void visitMethod(@NotNull RefMethod method) {
         RefClass refClass = method.getOwnerClass();
         if (method.isExternalOverride()) {
-          String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);
+          String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(Objects.requireNonNull(refClass), false);
           buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis22", classOrInterface));
         } else if (method.isStatic() || method.isConstructor()) {
           int nRefs = method.getInReferences().size();

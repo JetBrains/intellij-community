@@ -22,7 +22,7 @@ import static com.intellij.jps.cache.ui.JpsLoaderNotifications.ATTENTION;
  * Extension point which provides authentication data for requests to the JPS cache server
  */
 public interface JpsServerAuthExtension {
-  Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.JpsServerAuthExtension");
+  Logger LOG = Logger.getInstance(JpsServerAuthExtension.class);
   Key<Boolean> NOTIFICATION_SHOWN_KEY = Key.create("AUTH_NOTIFICATION_SHOWN");
   ExtensionPointName<JpsServerAuthExtension> EP_NAME = ExtensionPointName.create("com.intellij.jpsServerAuthExtension");
 

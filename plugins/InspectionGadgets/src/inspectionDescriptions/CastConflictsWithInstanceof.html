@@ -6,23 +6,21 @@ Reports type cast expressions that are preceded by an <code>instanceof</code> ch
   result in a <code>java.lang.ClassCastException</code> at runtime.
 </p>
 <p><b>Example:</b></p>
-<pre>
-  <code>
-    class Main {
-      int whenCharSequenceCastToNumber(Object o){
-        if (o instanceof CharSequence) {
-          return ((Number) o).intValue();
-        }
-        return 0;
+<pre><code>
+  class Main {
+    int whenCharSequenceCastToNumber(Object o){
+      if (o instanceof CharSequence) {
+        return ((Number) o).intValue();
       }
-
-      int earlyReturnWhenNotCharSequence(Object o){
-        if (!(o instanceof CharSequence)) return 0;
-        return ((Number)o).intValue();
-      }
+      return 0;
     }
-  </code>
-</pre>
+
+    int earlyReturnWhenNotCharSequence(Object o){
+      if (!(o instanceof CharSequence)) return 0;
+      return ((Number)o).intValue();
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 
 </body>

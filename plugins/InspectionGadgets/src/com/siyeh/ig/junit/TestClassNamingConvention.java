@@ -27,13 +27,18 @@ import org.jetbrains.annotations.NonNls;
 
 public class TestClassNamingConvention extends NamingConvention<PsiClass> {
 
-  private static final int DEFAULT_MIN_LENGTH = 8;
-  private static final int DEFAULT_MAX_LENGTH = 64;
+  private static final int DEFAULT_MIN_LENGTH = 5;
+  private static final int DEFAULT_MAX_LENGTH = 255;
   @NonNls public static final String TEST_CLASS_NAMING_CONVENTION_SHORT_NAME = "JUnitTestClassNamingConvention";
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test(s|Case)?|Test[A-Z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
   }
 
   @Override

@@ -82,4 +82,6 @@ public @interface State {
 
   abstract class NameGetter implements Supplier<String> {
   }
+
+  SettingsCategory category() default SettingsCategory.OTHER;
 }

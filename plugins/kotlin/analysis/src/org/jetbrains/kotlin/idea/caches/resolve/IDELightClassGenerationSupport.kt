@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 import org.jetbrains.kotlin.types.KotlinType
 import java.util.concurrent.ConcurrentMap
 
@@ -141,13 +140,8 @@ class IDELightClassGenerationSupport(project: Project) : LightClassGenerationSup
     private fun KtElement.getDiagnosticsHolder() =
         getResolutionFacade().frontendService<LazyLightClassDataHolder.DiagnosticsHolder>()
 
-    override fun resolveToDescriptor(declaration: KtDeclaration): DeclarationDescriptor? {
-        return try {
-            declaration.resolveToDescriptorIfAny(BodyResolveMode.FULL)
-        } catch (e: NoDescriptorForDeclarationException) {
-            null
-        }
-    }
+    override fun resolveToDescriptor(declaration: KtDeclaration): DeclarationDescriptor? =
+        declaration.resolveToDescriptorIfAny(BodyResolveMode.FULL)
 
     override fun analyze(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL)
 

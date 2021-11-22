@@ -31,7 +31,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,18 +126,6 @@ public final class SuperMethodWarningUtil {
 
 
   public static PsiMethod checkSuperMethod(@NotNull PsiMethod method) {
-    return checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-  }
-
-  /**
-   * @deprecated Use {@link SuperMethodWarningUtil#checkSuperMethod(PsiMethod)} instead. 
-   * 
-   * Custom action word doesn't work well with translations thus is replaced with "refactor"
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static PsiMethod checkSuperMethod(@NotNull PsiMethod method, 
-                                           @SuppressWarnings("unused") @NotNull String actionString) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return method;
@@ -152,7 +139,7 @@ public final class SuperMethodWarningUtil {
 
     int useSuperMethod = showDialog(
       method.getProject(),
-      actionString,
+      RefactoringBundle.message("to.refactor"),
       DescriptiveNameUtil.getDescriptiveName(method),
       containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
       containingClass.isInterface(),

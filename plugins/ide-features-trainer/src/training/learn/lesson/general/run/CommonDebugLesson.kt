@@ -477,11 +477,12 @@ fun LessonContext.clearBreakpoints() {
   }
 }
 
-fun LessonContext.toggleBreakpointTask(sample: LessonSample,
+fun LessonContext.toggleBreakpointTask(sample: LessonSample?,
                                        logicalPosition: () -> LogicalPosition,
                                        checkLine: Boolean = true,
+                                       breakpointXRange: (width: Int) -> IntRange = LessonUtil.breakpointXRange,
                                        textContent: TaskContext.() -> Unit) {
-  highlightBreakpointGutter(logicalPosition)
+  highlightBreakpointGutter(breakpointXRange, logicalPosition)
 
   task {
     textContent()
@@ -490,7 +491,7 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample,
     }
     proposeRestore {
       val breakpoints = lineWithBreakpoints()
-      checkExpectedStateOfEditor(sample, checkPosition = checkLine)
+      checkExpectedStateOfEditor(sample ?: previous.sample, checkPosition = checkLine)
       ?: if (breakpoints.isNotEmpty() && (breakpoints != setOf(logicalPosition().line))) {
         TaskContext.RestoreNotification(incorrectBreakPointsMessage, callback = restorePreviousTaskCallback)
       }

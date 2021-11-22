@@ -27,11 +27,17 @@ class Retry:
         connect=...,
         read=...,
         redirect=...,
-        method_whitelist=...,
+        status=...,
+        other=...,
+        allowed_methods=...,
         status_forcelist=...,
         backoff_factor=...,
         raise_on_redirect=...,
-        _observed_errors=...,
+        raise_on_status=...,
+        history=...,
+        respect_retry_after_header=...,
+        remove_headers_on_redirect=...,
+        method_whitelist=...,
     ) -> None: ...
     def new(self, **kw): ...
     @classmethod

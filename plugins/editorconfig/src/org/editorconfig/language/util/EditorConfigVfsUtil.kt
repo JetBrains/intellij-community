@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.editorconfig.language.filetype.EditorConfigFileType
+import org.editorconfig.language.index.EditorConfigIdentifierIndex
 
 object EditorConfigVfsUtil {
   /**
@@ -15,6 +16,10 @@ object EditorConfigVfsUtil {
    * Consider using EditorConfigFileHierarchyService or EditorConfigPsiTreeUtil#findAllParetnsPsi()
    */
   fun getEditorConfigFiles(project: Project): Collection<VirtualFile> {
+    // Not allowed during indexing to prevent reentrant indexing (IDEA-277028)
+    if (EditorConfigIdentifierIndex.isIndexing.get() == true) {
+      return emptyList()
+    }
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val allScope = GlobalSearchScope.allScope(project)
     val filesScope = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, EditorConfigFileType)

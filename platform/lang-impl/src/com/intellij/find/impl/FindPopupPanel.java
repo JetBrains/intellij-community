@@ -80,7 +80,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
@@ -1074,7 +1077,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
     if (fileMasks.length > 0) {
       String fileMask = findSettings.getFileMask();
-      myFileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[fileMasks.length - 1]);
+      myFileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[0]);
     }
     myFileMaskField.setEnabled(isThereFileFilter);
     String toSearch = myModel.getStringToFind();
@@ -1886,7 +1889,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (e.getData(PlatformDataKeys.CONTEXT_COMPONENT) == null) return;
+      if (e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) == null) return;
       if (myPopupState.isRecentlyHidden()) return;
 
       ListPopup listPopup =
@@ -1918,7 +1921,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       @NotNull
       private SimpleTextAttributes getAttributes(@NotNull TextChunk textChunk) {
         SimpleTextAttributes at = textChunk.getSimpleAttributesIgnoreBackground();
-        boolean highlighted = textChunk.getType() != null || at.getFontStyle() == Font.BOLD;
+        boolean highlighted = at.getFontStyle() == Font.BOLD;
         return highlighted
                ? new SimpleTextAttributes(null, at.getFgColor(), at.getWaveColor(),
                                           at.getStyle() & ~SimpleTextAttributes.STYLE_BOLD |
@@ -1976,6 +1979,42 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
 
     @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleJPanel() {
+          @Override
+          public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.UNKNOWN;
+          }
+
+          @Override
+          public AccessibleStateSet getAccessibleStateSet() {
+            AccessibleStateSet stateSet = new AccessibleStateSet();
+            stateSet.addAll(myUsageRenderer.getAccessibleContext().getAccessibleStateSet().toArray());
+            stateSet.addAll(myFileAndLineNumber.getAccessibleContext().getAccessibleStateSet().toArray());
+            return stateSet;
+          }
+
+          @Override
+          public int getAccessibleIndexInParent() {
+            return 0;
+          }
+
+          @Override
+          public int getAccessibleChildrenCount() {
+            return 0;
+          }
+
+          @Override
+          public Accessible getAccessibleChild(int i) {
+            return null;
+          }
+        };
+      }
+      return accessibleContext;
+    }
+
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       myUsageRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       myFileAndLineNumber.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -2026,12 +2065,12 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(
         e.getData(CommonDataKeys.EDITOR) == null ||
-        SwingUtilities.isDescendingFrom(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), myFileMaskField));
+        SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), myFileMaskField));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (SwingUtilities.isDescendingFrom(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), myFileMaskField) && myFileMaskField.isPopupVisible()) {
+      if (SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), myFileMaskField) && myFileMaskField.isPopupVisible()) {
         myFileMaskField.hidePopup();
         return;
       }

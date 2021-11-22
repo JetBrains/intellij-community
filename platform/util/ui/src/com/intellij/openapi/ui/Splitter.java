@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -221,6 +221,8 @@ public class Splitter extends JPanel implements Splittable {
 
   @Override
   public Dimension getMinimumSize() {
+    if (isMinimumSizeSet()) return super.getMinimumSize(); // do not violate Swing's contract
+
     final int dividerWidth = getDividerWidth();
     if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
       final Dimension firstMinSize = myFirstComponent.getMinimumSize();
@@ -243,6 +245,8 @@ public class Splitter extends JPanel implements Splittable {
 
   @Override
   public Dimension getPreferredSize() {
+    if (isPreferredSizeSet()) return super.getPreferredSize(); // do not violate Swing's contract
+
     final int dividerWidth = getDividerWidth();
     if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
       final Dimension firstPrefSize = myFirstComponent.getPreferredSize();

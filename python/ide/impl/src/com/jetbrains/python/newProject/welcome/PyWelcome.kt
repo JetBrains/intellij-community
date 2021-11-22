@@ -126,6 +126,8 @@ private object PyWelcome {
   }
 
   private fun firstUserFile(project: Project, baseDir: VirtualFile, module: Module?): VirtualFile? {
+    if (module != null && module.isDisposed || module == null && project.isDisposed) return null
+
     val sdkBinary = (module?.pythonSdk ?: project.pythonSdk)?.homeDirectory
     val innerSdk = sdkBinary != null && VfsUtil.isAncestor(baseDir, sdkBinary, true)
 

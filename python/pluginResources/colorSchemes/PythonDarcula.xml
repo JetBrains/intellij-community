@@ -1,10 +1,5 @@
 <?xml version='1.0'?>
 <list>
-  <option name="MAKO.SUBSTITUTION">
-    <value>
-      <option name="BACKGROUND" value="232364" />
-    </value>
-  </option>
   <option name="PY.BUILTIN_NAME">
     <value>
       <option name="FOREGROUND" value="8888c6" />

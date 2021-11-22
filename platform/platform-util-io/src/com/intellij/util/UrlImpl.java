@@ -4,7 +4,6 @@ package com.intellij.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,13 +20,6 @@ public final class UrlImpl implements Url {
 
   private String externalForm;
   private UrlImpl withoutParameters;
-
-  /** @deprecated Use {@link Urls#newUnparsable(String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public UrlImpl(@NotNull String path) {
-    this(null, null, path, null);
-  }
 
   UrlImpl(@Nullable String scheme, @Nullable String authority, @Nullable String path) {
     this(scheme, authority, path, null);

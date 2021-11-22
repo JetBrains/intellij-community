@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.grazie" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>

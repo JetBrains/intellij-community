@@ -76,11 +76,6 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
   }
 
   @Override
-  protected void removeTransientDataForInMemoryKeys(int inputId, @NotNull Map<Integer, SerializedStubTree> map) throws IOException {
-    super.removeTransientDataForInMemoryKeys(inputId, map);
-  }
-
-  @Override
   public void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder) {
     Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> maps = getStubIndexMaps((StubCumulativeInputDiffBuilder)diffBuilder);
 

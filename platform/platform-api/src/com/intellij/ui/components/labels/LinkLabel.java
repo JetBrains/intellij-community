@@ -354,6 +354,7 @@ public class LinkLabel<T> extends JLabel {
     public void mousePressed(MouseEvent e) {
       if (isEnabled() && isInClickableArea(e.getPoint())) {
         setActive(true);
+        e.consume();
       }
     }
 
@@ -361,6 +362,7 @@ public class LinkLabel<T> extends JLabel {
     public void mouseReleased(MouseEvent e) {
       if (isEnabled() && myIsLinkActive && isInClickableArea(e.getPoint())) {
         doClick(e);
+        e.consume();
       }
       setActive(false);
     }

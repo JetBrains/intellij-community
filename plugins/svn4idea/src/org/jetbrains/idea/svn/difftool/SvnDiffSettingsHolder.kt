@@ -3,16 +3,13 @@ package org.jetbrains.idea.svn.difftool
 
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Key
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 
-@State(name = "SvnDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
+@State(name = "SvnDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = SettingsCategory.TOOLS)
 class SvnDiffSettingsHolder : PersistentStateComponent<SvnDiffSettingsHolder.State> {
   data class PlaceSettings(
     var SPLITTER_PROPORTION: Float = 0.9f,

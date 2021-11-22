@@ -28,6 +28,12 @@ public interface TargetPresentationBuilder {
   @NotNull TargetPresentationBuilder icon(@Nullable Icon icon);
 
   /**
+   * @see TargetPresentation#getPresentableText
+   */
+  @Contract(value = "_ -> new", pure = true)
+  @NotNull TargetPresentationBuilder presentableText(@Nls @NotNull String text);
+
+  /**
    * @see TargetPresentation#getPresentableTextAttributes
    */
   @Contract(value = "_ -> new", pure = true)

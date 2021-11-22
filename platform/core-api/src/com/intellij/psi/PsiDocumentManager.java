@@ -18,11 +18,11 @@ import java.util.EventListener;
  */
 public abstract class PsiDocumentManager {
   /**
-   * Checks if the PSI tree for the specified document is up to date (its state reflects the latest changes made
+   * Checks if the PSI tree for the specified document is up-to-date (its state reflects the latest changes made
    * to the document content).
    *
    * @param document the document to check.
-   * @return true if the PSI tree for the document is up to date, false otherwise.
+   * @return true if the PSI tree for the document is up-to-date, false otherwise.
    */
   public abstract boolean isCommitted(@NotNull Document document);
 
@@ -83,7 +83,7 @@ public abstract class PsiDocumentManager {
 
   /**
    * Commits all modified but not committed documents under modal dialog (see {@link PsiDocumentManager#commitAllDocuments()}
-   * Should be called in UI thread and outside of write-action
+   * Should be called in UI thread and outside write-action
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean commitAllDocumentsUnderProgress();
@@ -246,7 +246,7 @@ public abstract class PsiDocumentManager {
    * Defer action until all documents with event-system-enabled PSI are committed.
    * Must be called from the EDT only.
    *
-   * @param action to run when all documents committed
+   * @param action to run when all documents are committed
    * @return true if action was run immediately (i.e. all documents are already committed)
    */
   public abstract boolean performWhenAllCommitted(@NotNull Runnable action);

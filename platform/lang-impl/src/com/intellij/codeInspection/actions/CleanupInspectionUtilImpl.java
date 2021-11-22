@@ -62,7 +62,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
 
   private static class PerformBatchFixesTask extends AbstractPerformFixesTask {
     private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<>();
-    private boolean myApplied = false;
+    private boolean myApplied;
 
     PerformBatchFixesTask(@NotNull Project project,
                                  CommonProblemDescriptor @NotNull [] descriptors,
@@ -71,8 +71,8 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
     }
 
     @Override
-    protected void collectFix(QuickFix fix, ProblemDescriptor descriptor, Project project) {
-      myBatchModeDescriptors.add(descriptor);
+    protected <D extends CommonProblemDescriptor> void collectFix(QuickFix<D> fix, D descriptor, Project project) {
+      myBatchModeDescriptors.add((ProblemDescriptor)descriptor);
     }
 
     @Override

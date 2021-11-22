@@ -7,3 +7,5 @@ class A {
         var <caret>foo: String = "foo"
     }
 }
+
+// DISABLE-ERRORS

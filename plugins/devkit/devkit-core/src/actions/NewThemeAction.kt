@@ -4,10 +4,7 @@ package org.jetbrains.idea.devkit.actions
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
 import com.intellij.ide.ui.UIThemeProvider
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.actionSystem.UpdateInBackground
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -40,7 +37,7 @@ class NewThemeAction : AnAction(), UpdateInBackground {
     val view = e.getData(LangDataKeys.IDE_VIEW) ?: return
     val dir = view.getOrChooseDirectory() ?: return
 
-    val module = e.getRequiredData(LangDataKeys.MODULE)
+    val module = e.getRequiredData(PlatformCoreDataKeys.MODULE)
     val project = module.project
     val dialog = NewThemeDialog(project)
     dialog.show()
@@ -54,7 +51,7 @@ class NewThemeAction : AnAction(), UpdateInBackground {
   }
 
   override fun update(e: AnActionEvent) {
-    val module = e.getData(LangDataKeys.MODULE)
+    val module = e.getData(PlatformCoreDataKeys.MODULE)
     e.presentation.isEnabled = module != null && (PluginModuleType.get(module) is PluginModuleType || PsiUtil.isPluginModule(module))
   }
 

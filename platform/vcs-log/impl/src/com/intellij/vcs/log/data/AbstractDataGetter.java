@@ -94,6 +94,10 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @Override
+  public @NotNull T getCommitData(int hash) {
+    return getCommitData(hash, Collections.singleton(hash));
+  }
+
   @NotNull
   public T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes) {
     if (!EventQueue.isDispatchThread()) {
@@ -206,6 +210,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Override
   @Nullable
   public T getCommitDataIfAvailable(int hash) {
+    LOG.assertTrue(EventQueue.isDispatchThread());
     T details = getFromCache(hash);
     if (details != null) {
       if (details instanceof LoadingDetails) {

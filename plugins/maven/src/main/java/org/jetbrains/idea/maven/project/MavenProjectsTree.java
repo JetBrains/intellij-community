@@ -1273,15 +1273,6 @@ public final class MavenProjectsTree {
     myStructureReadLock.unlock();
   }
 
-  /**
-   * @deprecated use #addListener(Listener, Disposable)
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public void addListener(Listener l) {
-    myListeners.add(l);
-  }
-
   public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
     myListeners.add(l, disposable);
   }

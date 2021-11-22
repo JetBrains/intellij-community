@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions.scheme
 
 import com.google.gson.Gson
@@ -13,10 +13,9 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
+import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule.Companion.EMPTY_RULES
-import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.json.JsonLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
@@ -44,6 +43,7 @@ import com.intellij.util.TextFieldCompletionProviderDumbAware
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
 import javax.swing.JComponent
 import javax.swing.JLabel

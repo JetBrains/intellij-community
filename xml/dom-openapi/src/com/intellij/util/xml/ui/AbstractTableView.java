@@ -220,7 +220,7 @@ public abstract class AbstractTableView<T> extends JPanel implements DataProvide
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return getHelpId();
     }
     return null;

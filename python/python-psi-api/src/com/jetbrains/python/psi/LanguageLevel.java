@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -68,7 +67,7 @@ public enum LanguageLevel {
    * You're free to gradually drop support of versions not mentioned here if they present too much hassle to maintain.
    */
   public static final List<LanguageLevel> SUPPORTED_LEVELS =
-    ImmutableList.copyOf(
+    List.copyOf(
       Stream
         .of(values())
         .filter(v -> v.isAtLeast(PYTHON36) || v == PYTHON27)

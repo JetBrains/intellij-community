@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a file system directory and allows to access its contents.
+ * Represents a file system directory and allows accessing its contents.
  */
 public interface PsiDirectory extends PsiFileSystemItem {
   /**

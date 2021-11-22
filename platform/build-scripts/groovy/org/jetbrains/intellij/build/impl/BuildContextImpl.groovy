@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -78,7 +78,7 @@ final class BuildContextImpl extends BuildContext {
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
 
-    bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jna.jar")
+    bootClassPathJarNames = List.of("util.jar", "bootstrap.jar")
     dependenciesProperties = new DependenciesProperties(this)
     applicationInfo = new ApplicationInfoProperties(project, productProperties, messages)
 /* Android Studio: don't patch ApplicationInfo.xml
@@ -87,6 +87,12 @@ Android Studio: don't patch ApplicationInfo.xml */
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
+
+    if (systemSelector.contains(" ")) {
+      messages.error("System selector must not contain spaces: " + systemSelector)
+    }
+
+    options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
     messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }
 
@@ -215,7 +221,7 @@ Android Studio: don't patch ApplicationInfo.xml */
   @Nullable Path findFileInModuleSources(String moduleName, String relativePath) {
     for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName)) ) {
       if (relativePath.startsWith(info.second)) {
-        Path result = info.first.resolve(StringUtil.trimStart(StringUtil.trimStart(relativePath, info.second), "/"))
+        Path result = info.first.resolve(Strings.trimStart(Strings.trimStart(relativePath, info.second), "/"))
         if (Files.exists(result)) {
           return result
         }
@@ -240,7 +246,7 @@ Android Studio: don't patch ApplicationInfo.xml */
         if (!prefix.endsWith("/")) {
           prefix += "/"
         }
-        return new Pair<>(Paths.get(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), StringUtil.trimStart(prefix, "/"))
+        return new Pair<>(Paths.get(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), Strings.trimStart(prefix, "/"))
       })
       .collect(Collectors.toList())
   }

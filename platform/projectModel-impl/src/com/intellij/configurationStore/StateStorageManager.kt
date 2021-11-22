@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 interface StateStorageManager {
@@ -24,6 +25,7 @@ interface StateStorageManager {
 
   fun expandMacro(collapsedPath: String): Path
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.ERROR, message = "Use expandMacro(collapsedPath)", replaceWith = ReplaceWith("expandMacro(collapsedPath)"))
   fun expandMacros(collapsedPath: String): String = expandMacro(collapsedPath).systemIndependentPath
 }

@@ -130,12 +130,15 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     List<UParameter> paramList = method.getUastParameters();
     if (!paramList.isEmpty()){
-      RefParameter[] newParameters = new RefParameterImpl[paramList.size()];
+      List<RefParameter> newParameters = new ArrayList<>(paramList.size());
       for (int i = 0; i < paramList.size(); i++) {
-        newParameters[i] = getRefJavaManager().getParameterReference(paramList.get(i), i, this);
+        UParameter param = paramList.get(i);
+        if (param.getSourcePsi() != null) {
+          ContainerUtil.addIfNotNull(newParameters, getRefJavaManager().getParameterReference(param, i, this));
+        }
       }
       synchronized (this) {
-        myParameters = newParameters;
+        myParameters = newParameters.toArray(EMPTY_PARAMS_ARRAY);
       }
     }
 
@@ -225,7 +228,13 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean hasBody() {
-    return !isAbstract() && !getOwnerClass().isInterface() || !isBodyEmpty();
+    if (!isAbstract()) {
+      RefClass ownerClass = getOwnerClass();
+      if (ownerClass != null && !ownerClass.isInterface()) {
+        return true;
+      }
+    }
+    return !isBodyEmpty();
   }
 
   private void initializeSuperMethods(PsiMethod method) {
@@ -233,8 +242,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
         PsiElement sourceElement = psiSuperMethod instanceof LightElement ? psiSuperMethod.getNavigationElement() : psiSuperMethod;
-        RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(sourceElement);
-        if (refSuperMethod != null) {
+        RefElement refElement = getRefManager().getReference(sourceElement);
+        if (refElement instanceof RefMethodImpl) {
+          RefMethodImpl refSuperMethod = (RefMethodImpl)refElement;
           addSuperMethod(refSuperMethod);
           refSuperMethod.markExtended(this);
         } else {
@@ -445,7 +455,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Nullable
   static RefMethod methodFromExternalName(RefManager manager, String externalName) {
-    return (RefMethod) manager.getReference(findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName));
+    PsiElement method = findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName);
+    if (method instanceof LightElement) {
+      method = method.getNavigationElement();
+    }
+    return (RefMethod) manager.getReference(method);
   }
 
   @Nullable

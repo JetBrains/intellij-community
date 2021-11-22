@@ -1,5 +1,5 @@
-class A: J {
-    constructor(i: Int): super() {
+class A : J {
+    constructor(i: Int) : super() {
 
     }
 
@@ -8,7 +8,7 @@ class A: J {
     }
 }
 
-class B: J() {
+class B : J() {
 
 }
 

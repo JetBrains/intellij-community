@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 
-class SimpleJsClientTemplate : JsClientTemplate() {
+object SimpleJsClientTemplate : JsClientTemplate() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.js.simple.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.js.simple.description")
 

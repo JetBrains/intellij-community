@@ -18,9 +18,10 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   companion object {
     @kotlin.jvm.JvmField
     public var newToolbarRegistryKey: String = "ide.new.navbar"
+
+    val newToolbarEnabled: Boolean
+      get() = Registry.`is`(newToolbarRegistryKey, false)
   }
-  val newToolbarEnabled: Boolean
-    get() = Registry.`is`(newToolbarRegistryKey, false)
 
   private var toolbarState = ExperimentalToolbarStateWrapper()
 
@@ -40,6 +41,9 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
 
   init {
     if (!newToolbarEnabled) {
+      if(!UISettings.instance.state.showMainToolbar && !UISettings.instance.state.showNavigationBar){
+        UISettings.instance.state.showNavigationBar = true
+      }
       toolbarState.state = getToolbarStateByVisibilityFlags(false, UISettings.instance.state.showMainToolbar, false,
                                                             UISettings.instance.state.showNavigationBar)
     }

@@ -384,7 +384,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected @NotNull JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
-    JComponent result = action.createCustomComponent(presentation, myPlace, getDataContext());
+    JComponent result = action.createCustomComponent(presentation, myPlace);
     ToolbarActionTracker.followToolbarComponent(presentation, result, getComponent());
     return result;
   }

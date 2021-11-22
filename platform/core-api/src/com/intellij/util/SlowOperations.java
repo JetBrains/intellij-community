@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -25,12 +25,6 @@ public final class SlowOperations {
   public static final String GENERIC = "generic";
   public static final String FAST_TRACK = "  fast track  ";
 
-  private static final String[] misbehavingFrames = {
-    "org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler",
-    "org.jetbrains.kotlin.idea.actions.KotlinAddImportAction",
-    "org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor",
-    "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
-  };
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
 
@@ -85,7 +79,7 @@ public final class SlowOperations {
       return;
     }
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteAccessAllowed()) {
+    if (application.isWriteAccessAllowed() && !Registry.is("ide.slow.operations.assertion.write.action")) {
       return;
     }
     if (ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
@@ -100,12 +94,6 @@ public final class SlowOperations {
     Throwable throwable = new Throwable();
     if (ThrowableInterner.intern(throwable) != throwable) {
       return;
-    }
-    String stackTrace = ExceptionUtil.currentStackTrace();
-    for (String t : misbehavingFrames) {
-      if (stackTrace.contains(t)) {
-        return;
-      }
     }
     LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
   }

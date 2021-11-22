@@ -1,12 +1,12 @@
 <html>
 <body>
-Reports the Javadoc comments that contain only the <code>{@inheritDoc}</code>
-tag. Since Javadoc copies the super class's comment if no comment is present, a
+Reports Javadoc comments that contain only an <code>{@inheritDoc}</code>
+tag. Since Javadoc copies the super class' comment if no comment is present, a
 comment containing only <code>{@inheritDoc}</code> adds nothing.
 <p>Also, it reports the <code>{@inheritDoc}</code> usages in invalid locations, for example, in fields.</p>
 <p>Suggests removing the unnecessary Javadoc comment.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Example implements Comparable&lt;Example&gt; {
     /**
      * {@inheritDoc}
@@ -16,16 +16,16 @@ comment containing only <code>{@inheritDoc}</code> adds nothing.
       return 0;
     }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class Example implements Comparable&lt;Example&gt; {
     @Override
     public int compareTo(Example o) {
       return 0;
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 

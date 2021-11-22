@@ -104,19 +104,21 @@ final class TokenBuffer {
 
   private void trim() {
     // toss tokens from the beginning until size became < maxCapacity
-    while (size - startIndex > maxCapacity) {
+    int excess = size - maxCapacity;
+    while (excess > startIndex) {
       TokenInfo info = tokens.getFirst();
       int length = info.length();
-      if (length > size - maxCapacity) {
+      if (length > excess) {
         // slice a part of this info
-        startIndex = size - maxCapacity;
+        startIndex = excess;
         break;
       }
       startIndex = 0;
       tokens.removeFirst();
       size -= info.length();
+      excess = size - maxCapacity;
     }
-
+    assert startIndex >= 0 && size >= 0 && maxCapacity >= 0: "startIndex="+startIndex+"; size="+size+"; maxCapacity="+maxCapacity;
     //assert tokens.toList().stream().mapToInt(TokenInfo::length).sum() == size;
   }
 

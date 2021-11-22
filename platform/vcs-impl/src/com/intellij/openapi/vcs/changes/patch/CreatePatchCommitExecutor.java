@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ModalityState;
@@ -23,7 +24,6 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
 import com.intellij.project.ProjectKt;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
@@ -323,7 +323,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       @NotNull
       @Override
       public String getDoNotShowMessage() {
-        return UIBundle.message("dialog.options.do.not.ask");
+        return IdeCoreBundle.message("dialog.options.do.not.ask");
       }
     };
 

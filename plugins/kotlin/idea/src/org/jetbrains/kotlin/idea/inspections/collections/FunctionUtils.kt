@@ -38,21 +38,30 @@ fun KotlinType?.isMap(builtIns: KotlinBuiltIns): Boolean {
 
 fun KotlinType?.isIterable(builtIns: KotlinBuiltIns): Boolean {
     val classDescriptor = this?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false
-    val className = classDescriptor.name.asString()
-    // First two lines are just to make things faster
-    return className.endsWith("List") && classDescriptor.isSubclassOf(builtIns.list)
-            || className.endsWith("Set") && classDescriptor.isSubclassOf(builtIns.set)
-            || classDescriptor.isSubclassOf(builtIns.iterable)
+    return classDescriptor.isListOrSet(builtIns) || classDescriptor.isSubclassOf(builtIns.iterable)
 }
 
-fun KtCallExpression.isCalling(fqName: FqName, context: BindingContext = analyze(BodyResolveMode.PARTIAL)): Boolean {
+fun KotlinType?.isCollection(builtIns: KotlinBuiltIns): Boolean {
+    val classDescriptor = this?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false
+    return classDescriptor.isListOrSet(builtIns) || classDescriptor.isSubclassOf(builtIns.collection)
+}
+
+private fun ClassDescriptor.isListOrSet(builtIns: KotlinBuiltIns): Boolean {
+    val className = name.asString()
+    return className.endsWith("List") && isSubclassOf(builtIns.list)
+            || className.endsWith("Set") && isSubclassOf(builtIns.set)
+}
+
+fun KtCallExpression.isCalling(fqName: FqName, context: BindingContext? = null): Boolean {
     return isCalling(listOf(fqName), context)
 }
 
-fun KtCallExpression.isCalling(fqNames: List<FqName>, context: BindingContext = analyze(BodyResolveMode.PARTIAL)): Boolean {
+fun KtCallExpression.isCalling(fqNames: List<FqName>, context: BindingContext? = null): Boolean {
     val calleeText = calleeExpression?.text ?: return false
-    val fqName = fqNames.firstOrNull { fqName -> fqName.shortName().asString() == calleeText } ?: return false
-    return getResolvedCall(context)?.isCalling(fqName) == true
+    val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
+    if (targetFqNames.isEmpty()) return false
+    val resolvedCall = getResolvedCall(context ?: analyze(BodyResolveMode.PARTIAL)) ?: return false
+    return targetFqNames.any { resolvedCall.isCalling(it) }
 }
 
 fun ResolvedCall<out CallableDescriptor>.isCalling(fqName: FqName): Boolean {

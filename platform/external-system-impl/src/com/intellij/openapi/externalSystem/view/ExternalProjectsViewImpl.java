@@ -129,7 +129,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   public Object getData(@NotNull @NonNls String dataId) {
     if (ExternalSystemDataKeys.VIEW.is(dataId)) return this;
 
-    if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolwindows.gradle";
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return "reference.toolwindows.gradle";
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();

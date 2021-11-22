@@ -3,11 +3,11 @@ package com.intellij.ui.jcef;
 
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -93,7 +93,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
     }
     catch (IOException | NullPointerException e) {
-      Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", e);
+      Logger.getInstance(JBCefBrowserBase.class).error("couldn't find load_error.html", e);
     }
     return "";
   });
@@ -107,7 +107,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
           return Base64.getEncoder().encodeToString(out.toByteArray());
         }
         catch (IOException ex) {
-          Logger.getInstance(JBCefBrowser.class).error("couldn't write an error image", ex);
+          Logger.getInstance(JBCefBrowserBase.class).error("couldn't write an error image", ex);
         }
         return "";
       });
@@ -130,6 +130,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   protected final @NotNull JBCefClient myCefClient;
   protected final @NotNull CefBrowser myCefBrowser;
   private final boolean myIsOffScreenRendering;
+  private final boolean myEnableOpenDevToolsMenuItem;
   private final @Nullable CefLifeSpanHandler myLifeSpanHandler;
   private final @Nullable CefLoadHandler myLoadHandler;
   private final @Nullable CefRequestHandler myRequestHandler;
@@ -143,6 +144,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myCefClient = ObjectUtils.notNull(builder.myClient, () -> JBCefApp.getInstance().createClient(true));
 
     myIsOffScreenRendering = builder.myIsOffScreenRendering;
+    myEnableOpenDevToolsMenuItem = builder.myEnableOpenDevToolsMenuItem;
     boolean isDefaultBrowserCreated = false;
     CefBrowser cefBrowser = builder.myCefBrowser;
 
@@ -598,15 +600,19 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   protected DefaultCefContextMenuHandler createDefaultContextMenuHandler() {
-    return new DefaultCefContextMenuHandler(ApplicationManager.getApplication().isInternal());
+    return new DefaultCefContextMenuHandler();
   }
 
   protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
     protected static final int DEBUG_COMMAND_ID = MENU_ID_USER_LAST;
-    private final boolean isInternal;
+    private final boolean isOpenDevToolsItemEnabled;
 
-    public DefaultCefContextMenuHandler(boolean isInternal) {
-      this.isInternal = isInternal;
+    public DefaultCefContextMenuHandler() {
+      this.isOpenDevToolsItemEnabled = myEnableOpenDevToolsMenuItem || Registry.is("ide.browser.jcef.contextMenu.devTools.enabled");
+    }
+
+    public DefaultCefContextMenuHandler(boolean isOpenDevToolsItemEnabled) {
+      this.isOpenDevToolsItemEnabled = isOpenDevToolsItemEnabled;
     }
 
     @Override
@@ -615,7 +621,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         model.clear();
         return;
       }
-      if (isInternal) {
+      if (isOpenDevToolsItemEnabled) {
         model.addItem(DEBUG_COMMAND_ID, "Open DevTools");
       }
     }
@@ -682,13 +688,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
   }
 
-  // temporary possibility for debug (browser creation with empty url theoretically still can cause side-effects)
-  // TODO: remove after testing
-  private static final boolean USE_ABOUT_BLANK = Boolean.getBoolean("jcef.browser.use.about.blank");
-
   private static @NotNull String validateUrl(@Nullable String url) {
-    if (url != null && !url.isEmpty())
-      return url;
-    return USE_ABOUT_BLANK ? BLANK_URI : "";
+    return url != null && !url.isEmpty() ? url : "";
   }
 }

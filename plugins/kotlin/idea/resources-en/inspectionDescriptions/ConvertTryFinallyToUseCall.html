@@ -13,7 +13,7 @@ Reports a <code>try-finally</code> block with <code>resource.close()</code> in <
       }
   }
 </code></pre>
-<p>After the fix applied and minor clean-up:</p>
+<p>After the quick-fix applied:</p>
 <pre><code>
   fun example() {
       File("file.txt").bufferedReader().use { reader ->

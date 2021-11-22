@@ -50,15 +50,18 @@
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxCustomComponentsIndex"/>
     <intentionAction>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxCollapseSubTagToAttributeIntention</className>
-      <category>JavaFX</category>
+      <bundleName>messages.JavaFXBundle</bundleName>
+      <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxExpandAttributeIntention</className>
-      <category>JavaFX</category>
+      <bundleName>messages.JavaFXBundle</bundleName>
+      <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention</className>
-      <category>JavaFX</category>
+      <bundleName>messages.JavaFXBundle</bundleName>
+      <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
 
     <lang.importOptimizer language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer" order="before XML"/>

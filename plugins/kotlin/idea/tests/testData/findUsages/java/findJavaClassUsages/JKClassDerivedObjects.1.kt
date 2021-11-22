@@ -1,6 +1,6 @@
-public interface T: A
+@Suppress("INTERFACE_WITH_SUPERCLASS")
+interface T : A
 
-public object O1: A()
+object O1 : A() {}
 
-public object O2: T
-
+object O2 : T {}

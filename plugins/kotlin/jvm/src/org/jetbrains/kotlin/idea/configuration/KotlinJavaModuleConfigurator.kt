@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
@@ -47,6 +48,7 @@ open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibr
         get() = JavaRuntimeLibraryDescription.LIBRARY_CAPTION
 
     override val messageForOverrideDialog: String
+        @Nls
         get() = JavaRuntimeLibraryDescription.JAVA_RUNTIME_LIBRARY_CREATION
 
     override val presentableText: String
@@ -97,7 +99,7 @@ open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibr
             for (module in modules) {
                 val sdkVersion = module.sdk?.version
                 if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) {
-                    val modelsProvider = IdeModifiableModelsProviderImpl(project)
+                    val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
                     try {
                         val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false, commitModel = true)
                         val facetSettings = facet.configuration.settings

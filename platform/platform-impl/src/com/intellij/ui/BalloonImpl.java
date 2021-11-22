@@ -188,7 +188,8 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         if (ke.getKeyCode() != KeyEvent.VK_SHIFT &&
             ke.getKeyCode() != KeyEvent.VK_CONTROL &&
             ke.getKeyCode() != KeyEvent.VK_ALT &&
-            ke.getKeyCode() != KeyEvent.VK_META) {
+            ke.getKeyCode() != KeyEvent.VK_META &&
+            ke.getKeyCode() != KeyEvent.VK_WINDOWS) {
           boolean doHide = false;
           // Close the balloon is ESC is pressed inside the balloon
           if (ke.getKeyCode() == KeyEvent.VK_ESCAPE && SwingUtilities.isDescendingFrom(ke.getComponent(), myComp)) {
@@ -1857,23 +1858,26 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
       Point pointTarget = SwingUtilities.convertPoint(myLayeredPane, myBalloon.myTargetPoint, this);
       Rectangle shapeBounds = myContent.getBounds();
-      int shadowSize = myBalloon.getShadowBorderSize();
 
-      if (shadowSize > 0 && myShadow == null && myShadowBorderProvider == null) {
-        initComponentImage(pointTarget, shapeBounds);
-        myShadow = ShadowBorderPainter.createShadow(myImage, 0, 0, false, shadowSize / 2);
-      }
+      if (!DrawUtil.isSimplifiedUI()) {
+        int shadowSize = myBalloon.getShadowBorderSize();
 
-      if (myImage == null && myAlpha != -1) {
-        initComponentImage(pointTarget, shapeBounds);
-      }
+        if (shadowSize > 0 && myShadow == null && myShadowBorderProvider == null) {
+          initComponentImage(pointTarget, shapeBounds);
+          myShadow = ShadowBorderPainter.createShadow(myImage, 0, 0, false, shadowSize / 2);
+        }
 
-      if (myImage != null && myAlpha != -1) {
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
-      }
+        if (myImage == null && myAlpha != -1) {
+          initComponentImage(pointTarget, shapeBounds);
+        }
 
-      if (myShadowBorderProvider != null) {
-        myShadowBorderProvider.paintShadow(this, g);
+        if (myImage != null && myAlpha != -1) {
+          g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
+        }
+
+        if (myShadowBorderProvider != null) {
+          myShadowBorderProvider.paintShadow(this, g);
+        }
       }
 
       if (myImage != null && myAlpha != -1) {

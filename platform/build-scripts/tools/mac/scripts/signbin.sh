@@ -22,7 +22,7 @@ limit=3
 set +e
 while [[ $attempt -le $limit ]]; do
   log "Signing (attempt $attempt) $FILEPATH ..."
-  codesign -v --deep --force -s "$CODESIGN_STRING" "$FILEPATH"
+  codesign -v --deep --force -s "$CODESIGN_STRING" --options=runtime "$FILEPATH"
   ec=$?
   if [[ $ec -ne 0 ]]; then
     ((attempt += 1))

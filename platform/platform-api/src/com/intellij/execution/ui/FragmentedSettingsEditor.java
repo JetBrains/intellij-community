@@ -62,7 +62,17 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
     if (!isDefaultSettings()) {
       for (FragmentedSettings.Option option : settings.getSelectedOptions()) {
         if (!ContainerUtil.or(options, o -> o.getName().equals(option.getName()))) {
-          options.add(option);
+          SettingsEditorFragment<Settings, ?> fragment =
+            getAllFragments().filter(f -> f.getId().equals(option.getName())).findFirst().orElse(null);
+          if (fragment != null) {
+            if (fragment.isSelected() != fragment.isInitiallyVisible(settings)) { // do not keep option in selected otherwise
+              FragmentedSettings.Option updatedOption = new FragmentedSettings.Option(fragment.getId(), fragment.isSelected());
+              options.add(updatedOption);
+            }
+          }
+          else {
+            options.add(option);
+          }
         }
       }
     }

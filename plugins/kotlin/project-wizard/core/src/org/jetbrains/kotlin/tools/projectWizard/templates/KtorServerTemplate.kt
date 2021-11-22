@@ -8,26 +8,26 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.WizardGradleRunConfiguration
 import org.jetbrains.kotlin.tools.projectWizard.WizardRunConfiguration
-import org.jetbrains.kotlin.tools.projectWizard.core.Reader
-import org.jetbrains.kotlin.tools.projectWizard.core.Writer
-import org.jetbrains.kotlin.tools.projectWizard.core.asPath
-import org.jetbrains.kotlin.tools.projectWizard.core.buildList
+import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.TemplateSetting
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetConfigurationIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.addWithJavaIntoJvmTarget
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
-import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.InterceptionPoint
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
+import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
+import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.InterceptionPoint
 
-class KtorServerTemplate : Template() {
+object KtorServerTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.ktor.server.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.ktor.server.description")
 
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.jvm
 
     @NonNls
@@ -49,19 +49,19 @@ class KtorServerTemplate : Template() {
     override fun Writer.getIrsToAddToBuildFile(module: ModuleIR): List<BuildSystemIR> = buildList {
         +RepositoryIR(Repositories.KTOR)
         +RepositoryIR(DefaultRepository.JCENTER)
-        +runTaskIrs(mainClass = "ServerKt")
+
+        val packageName = module.originalModule.javaPackage(pomIR()).asCodePackage()
+        +runTaskIrs(mainClass = "$packageName.ServerKt")
     }
 
     override fun Reader.createRunConfigurations(module: ModuleIR): List<WizardRunConfiguration> = buildList {
-        +WizardGradleRunConfiguration("Run", "run", emptyList())
+        +WizardGradleRunConfiguration(KotlinNewProjectWizardBundle.message("configuration.name.run"), "run", emptyList())
     }
 
-    override fun updateTargetIr(module: ModuleIR, targetConfigurationIR: TargetConfigurationIR): TargetConfigurationIR =
-        targetConfigurationIR.addWithJavaIntoJvmTarget()
-
-    override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> = listOf(
-        FileTemplateDescriptor("$id/server.kt.vm", "Server.kt".asPath()) asSrcOf SourcesetType.main
-    )
+    override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> {
+        val packageName = module.originalModule.javaPackage(pomIR()).asCodePackage()
+        return listOf(FileTemplateDescriptor("$id/server.kt.vm", packageName / "Server.kt") asSrcOf SourcesetType.main)
+    }
 
     val imports = InterceptionPoint("imports", emptyList<String>())
     val routes = InterceptionPoint("routes", emptyList<String>())

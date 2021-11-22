@@ -14,9 +14,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Base lombok processor class
@@ -98,7 +96,13 @@ public abstract class AbstractProcessor implements Processor {
 
   protected static @NotNull List<PsiAnnotation> copyableAnnotations(@NotNull PsiField psiField,
                                                                     @NotNull LombokCopyableAnnotations copyableAnnotations) {
-    final Map<String, String> fullQualifiedToShortNames = copyableAnnotations.getFullQualifiedToShortNames();
+    final PsiAnnotation[] fieldAnnotations = psiField.getAnnotations();
+    if (0 == fieldAnnotations.length) {
+      // nothing to copy if no annotations defined
+      return Collections.emptyList();
+    }
+
+    final Map<String, String> fullQualifiedToShortNames = new HashMap<>(copyableAnnotations.getFullQualifiedToShortNames());
     final PsiClass containingClass = psiField.getContainingClass();
     // append only for BASE_COPYABLE
     if (LombokCopyableAnnotations.BASE_COPYABLE.equals(copyableAnnotations) && null != containingClass) {
@@ -108,7 +112,7 @@ public abstract class AbstractProcessor implements Processor {
       configuredCopyableAnnotations.forEach(fqn->fullQualifiedToShortNames.put(fqn, StringUtil.getShortName(fqn)));
     }
 
-    final Collection<String> existedShortAnnotationNames = ContainerUtil.map(psiField.getAnnotations(), PsiAnnotationSearchUtil::getShortNameOf);
+    final Collection<String> existedShortAnnotationNames = ContainerUtil.map(fieldAnnotations, PsiAnnotationSearchUtil::getShortNameOf);
     // reduce copyableAnnotations to only matching existed annotations by shortName
     fullQualifiedToShortNames.values().retainAll(existedShortAnnotationNames);
     // collect existing annotations to copy

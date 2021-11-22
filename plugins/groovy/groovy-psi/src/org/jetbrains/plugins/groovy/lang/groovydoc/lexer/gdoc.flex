@@ -31,7 +31,7 @@ WS_CHARS = [\ \t\f]
 NL_CHARS = [\n\r]
 WS_NL_CHARS = {WS_CHARS} | {NL_CHARS}
 WS_NL = {WS_NL_CHARS}+
-WS = {WS_CHARS}+ 
+WS = {WS_CHARS}+
 DIGIT = [0-9]
 ALPHA = [:jletter:]
 IDENTIFIER = {ALPHA} ({ALPHA} | {DIGIT} | [":.-"])*
@@ -42,13 +42,13 @@ VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
 <YYINITIAL> "/**"               { yybegin(AFTER_ASTERISKS); return mGDOC_COMMENT_START; }
 
 <TOP_LEVEL> {
-  {WS_NL}                       { return TokenType.WHITE_SPACE; } 
+  {WS_NL}                       { return TokenType.WHITE_SPACE; }
   "*"                           { yybegin(ASTERISKS); return mGDOC_ASTERISKS; }
 }
 
 <ASTERISKS> {
   "*"                           { return mGDOC_ASTERISKS; }
-  [^]                           { yypushback(1); yybegin(AFTER_ASTERISKS); }                                  
+  [^]                           { yypushback(1); yybegin(AFTER_ASTERISKS); }
 }
 
 <AFTER_ASTERISKS, COMMENT_DATA> {
@@ -59,7 +59,7 @@ VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
 <TOP_LEVEL, AFTER_ASTERISKS, COMMENT_DATA> {
   "{"                           { yybegin(AFTER_BRACE); return mGDOC_INLINE_TAG_START; }
   "}"                           { yybegin(COMMENT_DATA); return mGDOC_INLINE_TAG_END; }
-  .                             { yybegin(COMMENT_DATA); return mGDOC_COMMENT_DATA; }      
+  .                             { yybegin(COMMENT_DATA); return mGDOC_COMMENT_DATA; }
 }
 
 <TOP_LEVEL, AFTER_ASTERISKS, AFTER_BRACE> {
@@ -83,18 +83,13 @@ VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
   {WS}                          { yybegin(COMMENT_DATA); return TokenType.WHITE_SPACE; }
   {VALUE_IDENTIFIER}            { return mGDOC_TAG_VALUE_TOKEN; }
   ","                           { return mGDOC_TAG_VALUE_COMMA; }
-  "<"                           { yybegin(TAG_VALUE_IN_ANGLES); return mGDOC_TAG_VALUE_LT; }
+  "<"{IDENTIFIER}">"            { yybegin(COMMENT_DATA); return mGDOC_TAG_VALUE_TOKEN; }
   "("                           { yybegin(TAG_VALUE_IN_PAREN); return mGDOC_TAG_VALUE_LPAREN; }
   "#"                           { return mGDOC_TAG_VALUE_SHARP_TOKEN; }
-  [^]                           { yypushback(1); yybegin(COMMENT_DATA); }    
+  [^]                           { yypushback(1); yybegin(COMMENT_DATA); }
 }
 
-<TAG_VALUE_IN_ANGLES>  { 
-  {IDENTIFIER}                  { return mGDOC_TAG_VALUE_TOKEN; }
-  ">"                           { yybegin(COMMENT_DATA); return mGDOC_TAG_VALUE_GT; }
-}
-
-<TAG_VALUE_IN_PAREN> { 
+<TAG_VALUE_IN_PAREN> {
   {WS_NL}                       { return TokenType.WHITE_SPACE; }
   {VALUE_IDENTIFIER}            { return mGDOC_TAG_VALUE_TOKEN; }
   ","                           { return mGDOC_TAG_VALUE_COMMA; }

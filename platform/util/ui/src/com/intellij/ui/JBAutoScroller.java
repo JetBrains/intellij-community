@@ -174,6 +174,7 @@ public final class JBAutoScroller implements ActionListener {
     }
 
     protected int getScrollDelta(int low, int high, int value) {
+      if (low > high) return low;
       return value - MathUtil.clamp(value, low, high);
     }
   }

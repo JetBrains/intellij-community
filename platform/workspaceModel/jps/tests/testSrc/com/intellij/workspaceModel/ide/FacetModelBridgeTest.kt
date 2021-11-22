@@ -54,7 +54,7 @@ class FacetModelBridgeTest {
 
   @Before
   fun registerFacetType() {
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({}, disposableRule.disposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposableRule.disposable, {})
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }

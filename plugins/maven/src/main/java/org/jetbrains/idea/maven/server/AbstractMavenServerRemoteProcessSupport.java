@@ -1,14 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.MavenImportEventProcessor;
+import org.jetbrains.idea.maven.execution.MavenSpyEventsBuffer;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.security.TokenReader;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -25,16 +29,26 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
   protected final Project myProject;
   protected final Integer myDebugPort;
   @Nullable protected Consumer<ProcessEvent> onTerminate;
+  private final MavenImportEventProcessor myImportEventProcessor;
+  private final MavenSpyEventsBuffer myMavenSpyEventsBuffer;
 
-  public AbstractMavenServerRemoteProcessSupport(@NotNull Sdk jdk, @Nullable String vmOptions, @NotNull MavenDistribution mavenDistribution,
-                                                 @NotNull Project project, @Nullable Integer debugPort) {
+  public AbstractMavenServerRemoteProcessSupport(@NotNull Sdk jdk,
+                                                 @Nullable String vmOptions,
+                                                 @NotNull MavenDistribution mavenDistribution,
+                                                 @NotNull Project project,
+                                                 @Nullable Integer debugPort) {
     super(MavenServer.class);
     myJdk = jdk;
     myOptions = vmOptions;
     myDistribution = mavenDistribution;
     myProject = project;
     myDebugPort = debugPort;
+
+    myImportEventProcessor = new MavenImportEventProcessor(project);
+    AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
+    myMavenSpyEventsBuffer = new MavenSpyEventsBuffer((l, k) -> myDecoder.escapeText(l, k, myImportEventProcessor));
   }
+
 
 
   @Override
@@ -80,6 +94,8 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
       eventConsumer.accept(event);
     }
 
+    myImportEventProcessor.finish();
+
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project p : openProjects) {
       ReadAction.run(() -> {
@@ -93,5 +109,13 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
         manager.terminateImport(event.getExitCode());
       });
     }
+  }
+
+  @Override
+  protected void logText(@NotNull Object configuration,
+                         @NotNull ProcessEvent event,
+                         @NotNull Key outputType) {
+    super.logText(configuration, event, outputType);
+    myMavenSpyEventsBuffer.addText(event.getText(), outputType);
   }
 }

@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 
 public class JdkBulkMethodInfoProvider implements BulkMethodInfoProvider {
   private static final BulkMethodInfo[] INFOS = {
-    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_COLLECTION, "add", "addAll"),
-    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_MAP, "put", "putAll")
+    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_COLLECTION, "add", "addAll", CommonClassNames.JAVA_UTIL_COLLECTION),
+    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_MAP, "put", "putAll", CommonClassNames.JAVA_UTIL_MAP),
   };
 
   @NotNull

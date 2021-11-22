@@ -1,11 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.propertyBased
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.impl.ClassConversion
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
@@ -21,7 +18,8 @@ internal fun getEntityManipulation(workspace: WorkspaceEntityStorageBuilderImpl)
     RemoveSomeEntity.create(workspace),
     EntityManipulation.addManipulations(workspace),
     EntityManipulation.modifyManipulations(workspace),
-    ChangeEntitySource.create(workspace)
+    ChangeEntitySource.create(workspace),
+    EntitiesBySource.create(workspace),
   )
 }
 
@@ -45,6 +43,7 @@ internal interface EntityManipulation {
       ChildWithOptionalParentManipulation,
       OoParentManipulation,
       OoChildManipulation,
+      OoChildWithNullableParentManipulation,
 
       // Entities with abstractions
       MiddleEntityManipulation,
@@ -54,6 +53,20 @@ internal interface EntityManipulation {
       // Do not enable at the moment. A lot of issues about entities with persistentId
       //NamedEntityManipulation
     )
+  }
+}
+
+private class EntitiesBySource(private val storage: WorkspaceEntityStorageBuilderImpl) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    val source = env.generateValue(sources, null)
+
+    // Check no exceptions.
+    // XXX Can we check anything else?
+    storage.entitiesBySource { it == source }
+  }
+
+  companion object {
+    fun create(workspace: WorkspaceEntityStorageBuilderImpl): Generator<EntitiesBySource> = Generator.constant(EntitiesBySource(workspace))
   }
 }
 
@@ -119,21 +132,25 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
   abstract fun modifyEntity(env: ImperativeCommand.Environment): List<M.() -> Unit>
 
   final override fun performCommand(env: ImperativeCommand.Environment) {
+    @Suppress("UNCHECKED_CAST")
     val modifiableClass = ClassConversion.entityDataToModifiableEntity(ClassConversion.entityToEntityData(entityClass)).java as Class<M>
 
     val entityId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, entityClass.java.toClassId()), null)
     if (entityId == null) return
 
-    val entity = storage.entityDataByIdOrDie(entityId).createEntity(storage) as E
+    @Suppress("UNCHECKED_CAST") val entity = storage.entityDataByIdOrDie(entityId).createEntity(storage) as E
 
-    val modifications = env.generateValue(Generator.sampledFrom(modifyEntity(env)), null)
+    val modifyEntityAlternatives = modifyEntity(env)
+    if (modifyEntityAlternatives.isNotEmpty()) {
+      val modifications = env.generateValue(Generator.sampledFrom(modifyEntityAlternatives), null)
 
-    try {
-      storage.modifyEntity(modifiableClass, entity, modifications)
-      env.logMessage("$entity modified")
-    }
-    catch (e: PersistentIdAlreadyExistsException) {
-      env.logMessage("Cannot modify ${entityClass.simpleName} entity. Persistent id ${e.id} already exists")
+      try {
+        storage.modifyEntity(modifiableClass, entity, modifications)
+        env.logMessage("$entity modified")
+      }
+      catch (e: PersistentIdAlreadyExistsException) {
+        env.logMessage("Cannot modify ${entityClass.simpleName} entity. Persistent id ${e.id} already exists")
+      }
     }
 
     env.logMessage("----------------------------------")
@@ -235,6 +252,35 @@ private object OoChildManipulation : EntityManipulation {
     return object : ModifyEntity<OoChildEntity, ModifiableOoChildEntity>(OoChildEntity::class, storage) {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableOoChildEntity.() -> Unit> {
         return listOf(modifyStringProperty(ModifiableOoChildEntity::childProperty, env))
+      }
+    }
+  }
+
+  private fun selectParent(storage: WorkspaceEntityStorageBuilderImpl, env: ImperativeCommand.Environment): OoParentEntity? {
+    val parents = storage.entities(OoParentEntity::class.java).filter { it.child == null }.toList()
+    if (parents.isEmpty()) return null
+
+    return env.generateValue(Generator.sampledFrom(parents), null)
+  }
+}
+
+private object OoChildWithNullableParentManipulation : EntityManipulation {
+  override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
+    return object : AddEntity(storage, "OoChildWithNullableParent") {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        val parentEntity = selectParent(storage, env) ?: return null to "Cannot select parent"
+        return storage.addOoChildWithNullableParentEntity(parentEntity, source) to "Selected parent: $parentEntity"
+      }
+    }
+  }
+
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+    return object : ModifyEntity<OoChildWithNullableParentEntity, ModifiableOoChildWithNullableParentEntity>(
+      OoChildWithNullableParentEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableOoChildWithNullableParentEntity.() -> Unit> {
+        return emptyList()
       }
     }
   }

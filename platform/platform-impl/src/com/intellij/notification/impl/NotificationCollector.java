@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
@@ -134,7 +134,9 @@ public final class NotificationCollector {
                                                                     @Nullable String displayId) {
     ArrayList<EventPair<?>> data = new ArrayList<>();
     data.add(ID.with(id));
-    data.add(ADDITIONAL.with(new ObjectEventData(NOTIFICATION_ID.with(Strings.isNotEmpty(displayId) ? displayId : UNKNOWN))));
+    if (Strings.isNotEmpty(displayId)) {
+      data.add(ADDITIONAL.with(new ObjectEventData(NOTIFICATION_ID.with(displayId))));
+    }
     data.add(NOTIFICATION_GROUP_ID.with(Strings.isNotEmpty(groupId) ? groupId : UNKNOWN));
     PluginInfo pluginInfo = getPluginInfo(groupId);
     if (pluginInfo != null) {

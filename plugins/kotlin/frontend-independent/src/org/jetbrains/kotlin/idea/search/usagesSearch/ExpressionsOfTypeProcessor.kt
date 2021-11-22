@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.search.excludeFileTypes
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
@@ -58,7 +59,7 @@ class ExpressionsOfTypeProcessor(
 
     companion object {
         @get:TestOnly
-        var mode = if (ApplicationManager.getApplication().isUnitTestMode) Mode.ALWAYS_SMART else Mode.PLAIN_WHEN_NEEDED
+        var mode = if (isUnitTestMode()) Mode.ALWAYS_SMART else Mode.PLAIN_WHEN_NEEDED
 
         @get:TestOnly
         var testLog: MutableCollection<String>? = null
@@ -319,16 +320,14 @@ class ExpressionsOfTypeProcessor(
                     true, true, false
                 ).findAll()
 
-                val classes = (inheritanceClasses + declarationClass).filter {
-                    it !is KtLightClass
-                }
+                val classes = (inheritanceClasses + declarationClass).filter { it !is KtLightClass }
 
                 val searchRequestCollector = SearchRequestCollector(SearchSession())
                 val resultProcessor = StaticMemberRequestResultProcessor(member, classes)
 
                 val memberName = runReadAction { member.name }
                 for (klass in classes) {
-                    val request = klass.name + "." + declarationName
+                    val request = runReadAction { klass.name } + "." + declarationName
 
                     testLog { "Searched references to static $memberName in non-Java files by request $request" }
                     searchRequestCollector.searchWord(

@@ -327,45 +327,64 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-26354
   public void testAttrsPostInit() {
-    doTestByText("import attr\n" +
-                 "\n" +
-                 "@attr.s\n" +
-                 "class C:\n" +
-                 "    x = attr.ib()\n" +
-                 "    y = attr.ib(init=False)\n" +
-                 "\n" +
-                 "    def __attrs_<caret>");
+    runWithAdditionalClassEntryInSdkRoots(
+      "../packages",
+      () -> {
+        doTestByText(
+          "import attr\n" +
+          "\n" +
+          "@attr.s\n" +
+          "class C:\n" +
+          "    x = attr.ib()\n" +
+          "    y = attr.ib(init=False)\n" +
+          "\n" +
+          "    def __attrs_<caret>"
+        );
 
-    myFixture.checkResult("import attr\n" +
-                          "\n" +
-                          "@attr.s\n" +
-                          "class C:\n" +
-                          "    x = attr.ib()\n" +
-                          "    y = attr.ib(init=False)\n" +
-                          "\n" +
-                          "    def __attrs_post_init__(self):");
+        myFixture.checkResult(
+          "import attr\n" +
+          "\n" +
+          "@attr.s\n" +
+          "class C:\n" +
+          "    x = attr.ib()\n" +
+          "    y = attr.ib(init=False)\n" +
+          "\n" +
+          "    def __attrs_post_init__(self):"
+        );
+      }
+    );
   }
 
   // PY-26354
   public void testAttrsPostInitNoInit() {
-    assertEmpty(
-      doTestByText("import attr\n" +
-                   "\n" +
-                   "@attr.s(init=False)\n" +
-                   "class C:\n" +
-                   "    x = attr.ib()\n" +
-                   "    y = attr.ib(init=False)\n" +
-                   "\n" +
-                   "    def __attrs_<caret>")
+    runWithAdditionalClassEntryInSdkRoots(
+      "../packages",
+      () -> assertEmpty(
+        doTestByText(
+          "import attr\n" +
+          "\n" +
+          "@attr.s(init=False)\n" +
+          "class C:\n" +
+          "    x = attr.ib()\n" +
+          "    y = attr.ib(init=False)\n" +
+          "\n" +
+          "    def __attrs_<caret>"
+        )
+      )
     );
   }
 
   // PY-26354
   public void testAttrsValidatorParameters() {
-    final String testName = getTestName(true);
-    myFixture.configureByFile(testName + ".py");
-    myFixture.completeBasicAllCarets(null);
-    myFixture.checkResultByFile(testName + ".after.py");
+    runWithAdditionalClassEntryInSdkRoots(
+      "../packages",
+      () -> {
+        final String testName = getTestName(true);
+        myFixture.configureByFile(testName + ".py");
+        myFixture.completeBasicAllCarets(null);
+        myFixture.checkResultByFile(testName + ".after.py");
+      }
+    );
   }
 
   //PY-28332

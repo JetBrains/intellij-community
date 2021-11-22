@@ -61,6 +61,9 @@ public class VersionMatcherTest {
     assertTrue(isMatching("1.9-20131007220022+0000", TestModelBuilderService_between_v_1_8_and_1_9_NotBase.class));
     assertFalse(isMatching("1.10", TestModelBuilderService_between_v_1_8_and_1_9_NotBase.class));
     assertFalse(isMatching("1.10-20131007220022+0000", TestModelBuilderService_between_v_1_8_and_1_9_NotBase.class));
+
+    assertTrue(isMatching("1.1", Not_1_0.class));
+    assertFalse(isMatching("1.0", Not_1_0.class));
   }
 
   @TargetVersions("1.8")
@@ -139,6 +142,9 @@ public class VersionMatcherTest {
     }
   }
 
+  @TargetVersions("!1.0")
+  public static class Not_1_0 {
+  }
 
   private static boolean isMatching(String version, Class<?> aClass) {
     final TargetVersions annotation = aClass.getAnnotation(TargetVersions.class);

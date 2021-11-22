@@ -8,6 +8,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParam
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.refactoring.suggested.SuggestedRefactoringUI
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
@@ -29,7 +30,7 @@ object KotlinSuggestedRefactoringUI : SuggestedRefactoringUI() {
         fun createCodeFragment() = factory.createExpressionCodeFragment("", declaration)
 
         if (data.newSignature.receiverType != null && data.oldSignature.receiverType == null) {
-            result.add(NewParameterData("<receiver>", createCodeFragment(), false/*TODO*/))
+            result.add(NewParameterData(KotlinBundle.message("extract.new.parameter.name.receiver"), createCodeFragment(), false/*TODO*/))
         }
 
         fun isNewParameter(parameter: Parameter) = data.oldSignature.parameterById(parameter.id) == null

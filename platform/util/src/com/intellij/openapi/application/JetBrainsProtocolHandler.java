@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +13,7 @@ import java.util.*;
  */
 public final class JetBrainsProtocolHandler {
   public static final String PROTOCOL = "jetbrains://";
-  public static final @NonNls String FRAGMENT_PARAM_NAME = "__fragment";
+  public static final String FRAGMENT_PARAM_NAME = "__fragment";
   public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
 
   private static String ourMainParameter = null;
@@ -22,6 +21,7 @@ public final class JetBrainsProtocolHandler {
   private static Map<String, String> ourParameters = Collections.emptyMap();
   private static boolean initialized = false;
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void processJetBrainsLauncherParameters(@NotNull String url) {
     System.setProperty(JetBrainsProtocolHandler.class.getName(), url);
 
@@ -30,10 +30,9 @@ public final class JetBrainsProtocolHandler {
 
     String path = uri.getPath();
     List<String> urlParts = Arrays.asList(path.split("/"));
-    // expect at least platform prefix and command name
     if (urlParts.size() < 2) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.print("Wrong URL: " + PROTOCOL + url);
+      // expecting at least platform prefix and a command name
+      System.err.println("Wrong URL: " + PROTOCOL + url);
       return;
     }
 
@@ -70,7 +69,7 @@ public final class JetBrainsProtocolHandler {
     }
   }
 
-  public static @Nullable @NonNls String getCommand() {
+  public static @Nullable String getCommand() {
     init();
     return ourCommand;
   }
@@ -99,10 +98,6 @@ public final class JetBrainsProtocolHandler {
   public static @NotNull Map<String, String> getParameters() {
     init();
     return ourParameters;
-  }
-
-  public static boolean isShutdownCommand() {
-    return "shutdown".equals(getCommand());
   }
 
   public static String @NotNull [] checkForJetBrainsProtocolCommand(String @NotNull [] args) {

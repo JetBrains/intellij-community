@@ -113,6 +113,7 @@ public final class MethodBytecodeUtil {
           //noinspection AssignmentToForLoopParameter
           ++i;
           break;
+        case 17:  // Symbol.CONSTANT_DYNAMIC_TAG
         case 18:  // Symbol.CONSTANT_INVOKE_DYNAMIC_TAG
           bootstrapMethods.add(classReader.readShort(index));
       }

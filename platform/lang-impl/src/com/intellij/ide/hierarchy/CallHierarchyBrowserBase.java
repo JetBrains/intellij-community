@@ -11,6 +11,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +22,16 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  public static final String CALLEE_TYPE = "Callees of {0}";
-  public static final String CALLER_TYPE = "Callers of {0}";
+  /**
+   * @deprecated use {@link #getCalleeType()}
+   */
+  @Deprecated
+  @NonNls public static final String CALLEE_TYPE = "Callees of {0}";
+  /**
+   * @deprecated use {@link #getCallerType()}
+   */
+  @Deprecated
+  @NonNls public static final String CALLER_TYPE = "Callers of {0}";
 
   public CallHierarchyBrowserBase(@NotNull Project project, @NotNull PsiElement method) {
     super(project, method);
@@ -66,15 +76,15 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   @Override
   protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
-    map.put(CALLER_TYPE, CallHierarchyBrowserBase::getCallerType);
-    map.put(CALLEE_TYPE, CallHierarchyBrowserBase::getCalleeType);
+    map.put(getCallerType(), CallHierarchyBrowserBase::getCallerType);
+    map.put(getCalleeType(), CallHierarchyBrowserBase::getCalleeType);
     return map;
   }
 
   private final class ChangeViewTypeActionBase extends ToggleAction {
-    private final String myTypeName;
+    private final @Nls String myTypeName;
 
-    private ChangeViewTypeActionBase(@NlsActions.ActionText String shortDescription, @NlsActions.ActionDescription String longDescription, Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(@NlsActions.ActionText String shortDescription, @NlsActions.ActionDescription String longDescription, Icon icon, @Nls String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
@@ -105,12 +115,12 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
   }
 
-  public static @NotNull String getCalleeType() {
+  public static @NotNull @Nls String getCalleeType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callees.of");
   }
 
-  public static @NotNull String getCallerType() {
+  public static @NotNull @Nls String getCallerType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callers.of");
   }

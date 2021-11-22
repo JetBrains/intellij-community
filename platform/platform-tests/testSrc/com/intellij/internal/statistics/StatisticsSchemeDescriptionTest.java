@@ -3,12 +3,12 @@ package com.intellij.internal.statistics;
 
 import com.intellij.internal.statistic.FUCounterCollectorTestCase;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.LogEvent;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.fus.reporting.model.lion3.LogEvent;
 import junit.framework.TestCase;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;

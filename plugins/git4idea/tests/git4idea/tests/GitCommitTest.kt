@@ -7,15 +7,18 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.vcs.commit.CommitExceptionWithActions
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCheckinExplicitMovementProvider
 import git4idea.checkin.isCommitRenamesSeparately
+import git4idea.config.GitConfigUtil
 import git4idea.config.GitVersion
+import git4idea.i18n.GitBundle
 import git4idea.test.*
 import org.junit.Assume.assumeTrue
 import java.io.File
 
-class GitStagingCommitTest : GitSingleRepoTest() {
+class GitCommitTest : GitSingleRepoTest() {
   private val myMovementProvider = MyExplicitMovementProvider()
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitCheckinEnvironment::class.java.name)
@@ -863,6 +866,26 @@ class GitStagingCommitTest : GitSingleRepoTest() {
     }
   }
 
+  fun `test gpg failure notification action`() {
+    tac("a.java", "old content")
+
+    git.config(repo, "--local", GitConfigUtil.GPG_COMMIT_SIGN, "true")
+    git.config(repo, "--local", GitConfigUtil.GPG_COMMIT_SIGN_KEY, "NON_EXISTENT_KEY")
+
+    overwrite("a.java", "new content")
+    val changes = assertChangesWithRefresh {
+      modified("a.java")
+    }
+
+    val exceptions = tryCommit(changes).orEmpty()
+    assertEquals(exceptions.toString(), 1, exceptions.size)
+
+    val actions = (exceptions.single() as? CommitExceptionWithActions)?.actions ?: emptyList()
+    assertEquals(actions.toString(), 1, actions.size)
+
+    val action = actions.single()
+    assertEquals(GitBundle.message("gpg.error.see.documentation.link.text"), action.templateText)
+  }
 
   private fun `assume version where git reset returns 0 exit code on success `() {
     assumeTrue("Not testing: git reset returns 1 and fails the commit process in ${vcs.version}",

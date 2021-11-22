@@ -20,6 +20,10 @@ class BigDecimalEquals {
     }
   }
 
+  boolean x(BigDecimal upper, BigDecimal lower) {
+    return Objects.equals(upper, lower);
+  }
+
   boolean test(int x, BigDecimal d1, BigDecimal d2) {
     return switch(x) {
       default -> d1.equals(d2);

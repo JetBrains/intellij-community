@@ -1449,6 +1449,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
+    if (!myHolder.hasErrorResults() && resultForIncompleteCode != null && HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) {
+      myHolder.add(HighlightUtil.checkPatternVariableRequired(expression, resultForIncompleteCode));
+    }
+
     if (!myHolder.hasErrorResults() && resultForIncompleteCode != null) {
       myHolder.add(HighlightUtil.checkExpressionRequired(expression, resultForIncompleteCode));
     }

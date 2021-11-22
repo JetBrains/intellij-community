@@ -42,7 +42,7 @@ public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTo
 
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (file instanceof XmlFile && (file.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {
+    if (file instanceof XmlFile && file.isPhysical()) {
       DomFileElement<MavenDomProjectModel> model =
         DomManager.getDomManager(file.getProject()).getFileElement((XmlFile)file, MavenDomProjectModel.class);
 

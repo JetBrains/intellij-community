@@ -62,7 +62,7 @@ class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Projec
     }
 
     return sequenceOf(lastReleaseAnnotations, snapshotAnnotations,
-                      latestTrunkSnapshotAnnotations).filterNotNull().maxBy { it.annotationsBuild }
+                      latestTrunkSnapshotAnnotations).filterNotNull().maxByOrNull { it.annotationsBuild }
   }
 
   private fun tryDownload(

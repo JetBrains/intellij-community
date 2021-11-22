@@ -15,14 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -58,39 +55,6 @@ public class ProjectStructureProblemDescription {
     myProblemType = problemType;
     myProblemLevel = level;
     myCanShowPlace = canShowPlace;
-  }
-
-  /**
-   * @deprecated use the constructor with {@link HtmlChunk} for description.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                                            @Nullable @DetailedDescription String description,
-                                            @NotNull PlaceInProjectStructure place,
-                                            @NotNull ProjectStructureProblemType problemType,
-                                            @NotNull List<? extends ConfigurationErrorQuickFix> fixes) {
-    this(message, description, place, problemType, ProblemLevel.PROJECT, fixes, true);
-  }
-
-  /**
-   * @deprecated use the constructor with {@link HtmlChunk} for description.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                                            @Nullable @DetailedDescription String description,
-                                            @NotNull PlaceInProjectStructure place,
-                                            @NotNull ProjectStructureProblemType problemType,
-                                            @NotNull ProblemLevel level,
-                                            @NotNull List<? extends ConfigurationErrorQuickFix> fixes, final boolean canShowPlace) {
-    this(message,
-         description != null ? HtmlChunk.raw(description) : HtmlChunk.empty(),
-         place,
-         problemType,
-         level,
-         fixes,
-         canShowPlace);
   }
 
   public ProblemLevel getProblemLevel() {

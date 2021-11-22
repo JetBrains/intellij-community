@@ -128,4 +128,18 @@ public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingT
 
     return jdkVersion;
   }
+
+  protected void assertCopied(String path) {
+    assertTrue(new File(myProjectPom.getParent().getPath(), path).exists());
+  }
+
+  protected void assertCopied(String path, String content) throws IOException {
+    final File file = new File(myProjectPom.getParent().getPath(), path);
+    assertTrue(file.exists());
+    assertEquals(content, FileUtil.loadFile(file));
+  }
+
+  protected void assertNotCopied(String path) {
+    assertFalse(new File(myProjectPom.getParent().getPath(), path).exists());
+  }
 }

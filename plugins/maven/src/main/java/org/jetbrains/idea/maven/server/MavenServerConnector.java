@@ -142,4 +142,13 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   public List<String> getMultimoduleDirectories() {
     return new ArrayList<>(myMultimoduleDirectories);
   }
+
+  @Override
+  public String toString() {
+    return "MavenServerConnector{" +
+           "myDistribution=" + myDistribution.getMavenHome() +
+           ", myJdk=" + myJdk.getName() +
+           ", myMultimoduleDirectories=" + myMultimoduleDirectories +
+           '}';
+  }
 }

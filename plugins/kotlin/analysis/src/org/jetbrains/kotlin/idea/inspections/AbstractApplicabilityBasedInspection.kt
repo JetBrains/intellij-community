@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -42,10 +44,12 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
 
     open fun inspectionHighlightType(element: TElement): ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 
+    @InspectionMessage
     abstract fun inspectionText(element: TElement): String
 
     abstract val defaultFixText: String
 
+    @IntentionName
     open fun fixText(element: TElement) = defaultFixText
 
     abstract fun isApplicable(element: TElement): Boolean
@@ -54,7 +58,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
 
     open val startFixInWriteAction = true
 
-    private inner class LocalFix(val text: String) : LocalQuickFix {
+    private inner class LocalFix(@IntentionName val text: String) : LocalQuickFix {
         override fun startInWriteAction() = startFixInWriteAction
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

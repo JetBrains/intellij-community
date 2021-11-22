@@ -16,7 +16,7 @@ fun test(javaClass: JavaClass) {
 }
 
 fun f(): A = TODO()
-fun g() = A()
+fun g() = A(1, "2", Any())
 fun h() = g()
 
 fun listOfA() = listOf<A>(A(1, "", ""))

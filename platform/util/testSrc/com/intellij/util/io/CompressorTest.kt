@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.testFramework.rules.TempDirectory
@@ -10,9 +10,12 @@ import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.nio.charset.StandardCharsets
 import java.util.jar.Attributes
 import java.util.jar.JarFile
 import java.util.jar.Manifest
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
 class CompressorTest {
@@ -20,11 +23,13 @@ class CompressorTest {
 
   @Test fun simpleZip() {
     val zip = tempDir.newFile("test.zip")
+    val data = tempDir.newFile("file.txt", "789".toByteArray())
     Compressor.Zip(zip).use {
       it.addFile("file1.txt", "123".toByteArray())
       it.addFile("file2.txt", ByteArrayInputStream("456".toByteArray()))
+      it.addFile("file3.txt", data)
     }
-    assertZip(zip, "file1.txt" to "123", "file2.txt" to "456")
+    assertZip(zip, "file1.txt" to "123", "file2.txt" to "456", "file3.txt" to "789")
   }
 
   @Test fun simpleZipWithFilters() {
@@ -40,6 +45,16 @@ class CompressorTest {
     assertZip(zip, "file1.txt" to "123", "file2.txt" to "456")
   }
 
+  @Test fun streamZip() {
+    val zip = tempDir.newFile("test.zip")
+    FileOutputStream(zip).use { os ->
+      Compressor.Zip(os).withLevel(ZipEntry.STORED).use {
+        it.addFile("file.txt", "123".toByteArray())
+      }
+    }
+    assertZip(zip, "file.txt" to "123")
+  }
+
   @Test fun recursiveZip() {
     val dir = tempDir.newDirectory("dir")
     tempDir.newFile("dir/f1").writeText("1")
@@ -52,13 +67,12 @@ class CompressorTest {
     tempDir.newFile("dir/d2/f22").writeText("22")
 
     val zip = tempDir.newFile("test.zip")
-    Compressor.Zip(zip).use { it.addDirectory(dir) }
+    Compressor.Zip(zip).filter { entryName, _ -> entryName != "d1/d11" }.use { it.addDirectory(dir) }
     assertZip(
       zip,
-      "d1/" to "", "d1/d11/" to "", "d2/" to "",
+      "d1/" to "", "d2/" to "",
       "f1" to "1", "f2" to "2",
       "d1/f11" to "11", "d1/f12" to "12",
-      "d1/d11/f111" to "111", "d1/d11/f112" to "112",
       "d2/f21" to "21", "d2/f22" to "22")
   }
 
@@ -100,14 +114,14 @@ class CompressorTest {
 
   private fun assertZip(zip: File, vararg expected: Pair<String, String>) {
     val actual = ZipInputStream(FileInputStream(zip)).use {
-      generateSequence(it::getNextEntry).map { entry -> entry.name to String(it.readBytes()).trim() }.toList()
+      generateSequence(it::getNextEntry).map { entry -> entry.name to it.readBytes().toString(StandardCharsets.UTF_8).trim() }.toList()
     }
     assertThat(actual).containsExactlyInAnyOrder(*expected)
   }
 
   private fun assertTar(tar: File, vararg expected: Pair<String, String>) {
     val actual = TarArchiveInputStream(GzipCompressorInputStream(FileInputStream(tar))).use {
-      generateSequence(it::getNextTarEntry).map { entry -> entry.name to String(it.readBytes()).trim() }.toList()
+      generateSequence(it::getNextTarEntry).map { entry -> entry.name to it.readBytes().toString(StandardCharsets.UTF_8).trim() }.toList()
     }
     assertThat(actual).containsExactlyInAnyOrder(*expected)
   }

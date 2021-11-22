@@ -3,7 +3,7 @@
   <resource-bundle>messages.PyBundle</resource-bundle>
 
   <content>
-    <module name="intellij.pycharm.community.customization.impl/training"/>
+    <module name="intellij.pycharm.community.ide.impl/training"/>
   </content>
   <projectListeners>
     <listener class="com.jetbrains.python.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
@@ -24,7 +24,7 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
                          instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         groupWeight="5"/>
+                         groupWeight="5"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
                          bundle="messages.PyBundle"
@@ -35,18 +35,10 @@
                             implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
                             order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
 
-    <projectConfigurable groupId="build"
-                         id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.BuildoutModulesConfigurable.display.name"
-                         instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
-
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
-    <directoryProjectConfigurator implementation="com.jetbrains.python.buildout.BuildoutFacetConfigurator" id="buildout"
-                                  order="after sourceRoot"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.PlatformInspectionProfileConfigurator"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.newProject.welcome.PyWelcomeConfigurator" id="welcome" order="last"/>
 
@@ -67,7 +59,6 @@
     <!-- Console -->
     <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
-    <toolWindowExtractorMode id="Python Console" mode="mirror"/>
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
 

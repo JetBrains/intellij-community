@@ -165,9 +165,6 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         final PsiMethod method = assertHint.getMethod();
-        if (method == null) {
-          return;
-        }
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) {
           return;

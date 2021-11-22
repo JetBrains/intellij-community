@@ -322,7 +322,7 @@
   <action id="PreviousOccurence"/>
   <action id="EditSource"/>
   <action id="EditSourceInNewWindow"/>
-  <action id="Debugger.EditTypeSource"/>
+  <action id="XDebugger.JumpToTypeSource"/>
   <action id="CopyElement"/>
   <action id="CheckinProject"/>
   <action id="GoGenerateFileAction"/>

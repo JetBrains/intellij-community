@@ -7,6 +7,7 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
@@ -131,6 +132,7 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
         override fun startInWriteAction() = false
 
         companion object {
+            @Nls
             private val actionName = KotlinBundle.message("fix.unused.receiver.parameter.remove")
 
             private fun configureChangeSignature() = object : KotlinChangeSignatureConfiguration {

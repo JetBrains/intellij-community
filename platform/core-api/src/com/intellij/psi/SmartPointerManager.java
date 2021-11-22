@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to create references to PSI elements that can survive a reparse and return the corresponding
+ * Allows creating references to PSI elements that can survive a reparse and return the corresponding
  * element in the PSI tree after the reparse.
  */
 public abstract class SmartPointerManager {

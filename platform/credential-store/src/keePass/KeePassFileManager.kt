@@ -8,17 +8,14 @@ import com.intellij.credentialStore.kdbx.KdbxPassword.Companion.createAndClear
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.NlsContexts.DialogTitle
-import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
-import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import java.awt.Component
@@ -26,12 +23,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.security.SecureRandom
-import javax.swing.JPasswordField
 
-internal open class KeePassFileManager(private val file: Path,
-                                       masterKeyFile: Path,
-                                       private val masterKeyEncryptionSpec: EncryptionSpec,
-                                       private val secureRandom: Lazy<SecureRandom>) {
+open class KeePassFileManager(private val file: Path,
+                              masterKeyFile: Path,
+                              private val masterKeyEncryptionSpec: EncryptionSpec,
+                              private val secureRandom: Lazy<SecureRandom>) {
   private val masterKeyFileStorage = MasterKeyFileStorage(masterKeyFile)
 
   fun clear() {
@@ -74,9 +70,10 @@ internal open class KeePassFileManager(private val file: Path,
     }
     catch (e: Exception) {
       LOG.warn(e)
-      Messages.showMessageDialog(event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)!!,
-                                 CredentialStoreBundle.message("kee.pass.dialog.message"),
-                                 CredentialStoreBundle.message("kee.pass.dialog.title.cannot.import"), Messages.getErrorIcon())
+      MessagesService.getInstance().showMessageDialog(project = null, parentComponent = event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
+                                                      title = CredentialStoreBundle.message("kee.pass.dialog.title.cannot.import"),
+                                                      message = CredentialStoreBundle.message("kee.pass.dialog.message"),
+                                                      icon = UIUtil.getErrorIcon(), doNotAskOption = null, options = arrayOf());
     }
   }
 
@@ -89,12 +86,13 @@ internal open class KeePassFileManager(private val file: Path,
       }
     }
     else {
-      saveDatabase(file, KeePassDatabase(), generateRandomMasterKey(masterKeyEncryptionSpec, secureRandom.value), masterKeyFileStorage, secureRandom.value)
+      saveDatabase(file, KeePassDatabase(), generateRandomMasterKey(masterKeyEncryptionSpec, secureRandom.value), masterKeyFileStorage,
+                   secureRandom.value)
     }
   }
 
   private fun doImportOrUseExisting(file: Path, event: AnActionEvent?): Boolean {
-    val contextComponent = event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val contextComponent = event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
 
     // check master key file in parent dir of imported file
     val possibleMasterKeyFile = file.parent.resolve(MASTER_KEY_FILE_NAME)
@@ -109,7 +107,8 @@ internal open class KeePassFileManager(private val file: Path,
       }
     }
 
-    if (masterPassword == null && !requestMasterPassword(CredentialStoreBundle.message("kee.pass.dialog.request.master.title"), contextComponent = contextComponent) {
+    if (masterPassword == null && !requestMasterPassword(CredentialStoreBundle.message("kee.pass.dialog.request.master.title"),
+                                                         contextComponent = contextComponent) {
         try {
           loadKdbx(file, KdbxPassword(it))
           masterPassword = it
@@ -130,56 +129,28 @@ internal open class KeePassFileManager(private val file: Path,
   }
 
   fun askAndSetMasterKey(event: AnActionEvent?, @Nls(capitalization = Sentence) topNote: String? = null): Boolean {
-    val contextComponent = event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val contextComponent = event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
 
     // to open old database, key can be required, so, to avoid showing 2 dialogs, check it before
     val db = try {
-      if (file.exists()) loadKdbx(file, KdbxPassword(this.masterKeyFileStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true))) else KeePassDatabase()
+      if (file.exists()) loadKdbx(file, KdbxPassword(
+        this.masterKeyFileStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true)))
+      else KeePassDatabase()
     }
     catch (e: IncorrectMasterPasswordException) {
       // ok, old key is required
       return requestCurrentAndNewKeys(contextComponent)
     }
 
-    return requestMasterPassword(CredentialStoreBundle.message("kee.pass.dialog.title.set.master.password"), topNote = topNote, contextComponent = contextComponent) {
+    return requestMasterPassword(CredentialStoreBundle.message("kee.pass.dialog.title.set.master.password"), topNote = topNote,
+                                 contextComponent = contextComponent) {
       saveDatabase(file, db, createMasterKey(it), masterKeyFileStorage, secureRandom.value)
       null
     }
   }
 
   protected open fun requestCurrentAndNewKeys(contextComponent: Component?): Boolean {
-    val currentPasswordField = JPasswordField()
-    val newPasswordField = JPasswordField()
-    val panel = panel {
-      row(CredentialStoreBundle.message("kee.pass.row.current.password")) { currentPasswordField().focused() }
-      row(CredentialStoreBundle.message("kee.pass.row.new.password")) { newPasswordField() }
-
-      commentRow(CredentialStoreBundle.message("kee.pass.row.comment"))
-    }
-
-    return dialog(title = CredentialStoreBundle.message("kee.pass.dialog.default.title"), panel = panel, parent = contextComponent) {
-      val errors = SmartList<ValidationInfo>()
-      val current = checkIsEmpty(currentPasswordField, errors)
-      val new = checkIsEmpty(newPasswordField, errors)
-
-      if (errors.isEmpty()) {
-        try {
-          if (doSetNewMasterPassword(current!!, new!!)) {
-            return@dialog errors
-          }
-        }
-        catch (e: IncorrectMasterPasswordException) {
-          errors.add(ValidationInfo(CredentialStoreBundle.message("kee.pass.validation.info.current.password.incorrect"), currentPasswordField))
-          new?.fill(0.toChar())
-        }
-      }
-      else {
-        current?.fill(0.toChar())
-        new?.fill(0.toChar())
-      }
-
-      errors
-    }.showAndGet()
+    return CredentialStoreUiService.getInstance().showChangeMasterPasswordDialog(contextComponent, ::doSetNewMasterPassword)
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
@@ -191,43 +162,15 @@ internal open class KeePassFileManager(private val file: Path,
 
   private fun createMasterKey(value: CharArray) = createMasterKey(value.toByteArrayAndClear())
 
-  private fun createMasterKey(value: ByteArray, isAutoGenerated: Boolean = false) = MasterKey(value, isAutoGenerated, masterKeyEncryptionSpec)
+  private fun createMasterKey(value: ByteArray, isAutoGenerated: Boolean = false) = MasterKey(value, isAutoGenerated,
+                                                                                              masterKeyEncryptionSpec)
 
-  private fun checkIsEmpty(field: JPasswordField, errors: MutableList<ValidationInfo>): CharArray? {
-    val chars = field.getTrimmedChars()
-    if (chars == null) {
-      errors.add(ValidationInfo(CredentialStoreBundle.message("kee.pass.validation.info.current.password.incorrect.current.empty"), field))
-    }
-    return chars
-  }
 
   protected open fun requestMasterPassword(@DialogTitle title: String,
                                            @Nls(capitalization = Sentence) topNote: String? = null,
                                            contextComponent: Component? = null,
                                            @DialogMessage ok: (value: ByteArray) -> String?): Boolean {
-    val passwordField = JPasswordField()
-    val panel = panel {
-      topNote?.let {
-        noteRow(it)
-      }
-      row(CredentialStoreBundle.message("kee.pass.row.master.password")) { passwordField().focused() }
-    }
-
-    return dialog(title = title, panel = panel, parent = contextComponent) {
-      val errors = SmartList<ValidationInfo>()
-      val value = checkIsEmpty(passwordField, errors)
-      if (errors.isEmpty()) {
-        val result = value!!.toByteArrayAndClear()
-        ok(result)?.let {
-          errors.add(ValidationInfo(it, passwordField))
-        }
-        if (!errors.isEmpty()) {
-          result.fill(0)
-        }
-      }
-      errors
-    }
-      .showAndGet()
+    return CredentialStoreUiService.getInstance().showRequestMasterPasswordDialog(title, topNote, contextComponent, ok)
   }
 
   fun saveMasterKeyToApplyNewEncryptionSpec() {

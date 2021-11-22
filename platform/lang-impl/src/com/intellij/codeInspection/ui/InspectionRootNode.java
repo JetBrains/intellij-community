@@ -16,13 +16,31 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.InspectionsBundle;
+
 public class InspectionRootNode extends InspectionTreeNode {
+  private boolean myIsSingleInspectionRun;
+
   protected InspectionRootNode(InspectionTreeModel model) {
     super(null);
   }
 
   @Override
   public String getPresentableText() {
-    return "InspectionViewTree";
+    return myIsSingleInspectionRun ? InspectionsBundle.message("inspection.results") : InspectionsBundle.message("inspections.results");
+  }
+
+  @Override
+  protected boolean doesNeedInternProblemLevels() {
+    return true;
+  }
+
+  @Override
+  public boolean appearsBold() {
+    return true;
+  }
+
+  public void setSingleInspectionRun(boolean singleInspectionRun) {
+    myIsSingleInspectionRun = singleInspectionRun;
   }
 }

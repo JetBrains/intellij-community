@@ -1,24 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.actions;
 
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmValue;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
 public interface CreateFieldRequest extends ActionRequest {
-
-  /**
-   * @return name of the field to be created
-   */
   @NotNull
   String getFieldName();
 
-  /**
-   * @return expected types of the field to be created
-   */
   @NotNull
   List<ExpectedType> getFieldType();
 
@@ -34,6 +29,15 @@ public interface CreateFieldRequest extends ActionRequest {
    */
   @NotNull
   JvmSubstitutor getTargetSubstitutor();
+
+  /**
+   * The field initializer. Currently, only value initializers are supported.
+   */
+  @Nullable
+  JvmValue getInitializer();
+
+  @NotNull
+  Collection<AnnotationRequest> getAnnotations();
 
   /**
    * Implementation are free to render any modifiers as long as they don't contradict with requested ones.

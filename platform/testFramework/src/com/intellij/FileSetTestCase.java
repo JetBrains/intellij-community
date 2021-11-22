@@ -89,6 +89,7 @@ public abstract class FileSetTestCase extends TestSuite {
     return testFile.getName();
   }
 
+  @SuppressWarnings({"JUnitTestCaseWithNoTests", "UnconstructableJUnitTestCase"})
   private class ActualTest extends LightPlatformTestCase {
     private final File myTestFile;
     private final String myTestName;
@@ -133,7 +134,7 @@ public abstract class FileSetTestCase extends TestSuite {
 
       String result = content;
 
-      assertTrue("No data found in source file", !input.isEmpty());
+      assertFalse("No data found in source file", input.isEmpty());
 
       while (StringUtil.startsWithChar(result, '-') || StringUtil.startsWithChar(result, '\n') || StringUtil.startsWithChar(result, '\r')) {
         result = result.substring(1);

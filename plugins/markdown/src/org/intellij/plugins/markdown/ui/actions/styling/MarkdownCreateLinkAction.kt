@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
@@ -21,14 +22,19 @@ import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.LocalFileUrl
 import com.intellij.util.Urls
 import com.intellij.util.io.exists
-import icons.MarkdownIcons
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
+  private val wrapActionName: String
+    get() = MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.text")
+  private val unwrapActionName: String
+    get() = MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.unwrap.text")
+
   override fun isSelected(e: AnActionEvent): Boolean {
     val editor = MarkdownActionUtil.findMarkdownTextEditor(e)
     val file = e.getData(CommonDataKeys.PSI_FILE)
@@ -45,15 +51,17 @@ class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
     return when (caretsWithLinks.count()) {
       0 -> {
         e.presentation.isEnabled = !editor.isViewer
-        e.presentation.text = MarkdownBundle.message(
-          "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.text")
+        e.presentation.text = wrapActionName
+        e.presentation.description = MarkdownBundle.message(
+          "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.description")
         false
       }
 
       editor.caretModel.caretCount -> {
         e.presentation.isEnabled = !editor.isViewer
-        e.presentation.text = MarkdownBundle.message(
-          "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.unwrap.text")
+        e.presentation.text = unwrapActionName
+        e.presentation.description = MarkdownBundle.message(
+          "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.unwrap.description")
         true
       }
 
@@ -100,18 +108,22 @@ class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
     val selectionStart = caret.selectionStart
     val selectionEnd = caret.selectionEnd
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      caret.removeSelection()
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    val fileArray = file?.let { arrayOf(it) } ?: emptyArray()
+    WriteCommandAction.writeCommandAction(project, *fileArray)
+      .withName(wrapActionName)
+      .run<Nothing> {
+        caret.removeSelection()
 
-      editor.document.replaceString(selectionStart, selectionEnd, "[$selected]()")
-      caret.moveToOffset(selectionEnd + 3)
+        editor.document.replaceString(selectionStart, selectionEnd, "[$selected]()")
+        caret.moveToOffset(selectionEnd + 3)
 
-      getLinkDestinationInClipboard(editor)?.let { linkDestination ->
-        val linkStartOffset = caret.offset
-        editor.document.insertString(linkStartOffset, linkDestination)
-        caret.setSelection(linkStartOffset, linkStartOffset + linkDestination.length)
+        getLinkDestinationInClipboard(editor)?.let { linkDestination ->
+          val linkStartOffset = caret.offset
+          editor.document.insertString(linkStartOffset, linkDestination)
+          caret.setSelection(linkStartOffset, linkStartOffset + linkDestination.length)
+        }
       }
-    }
   }
 
   private fun getLinkDestinationInClipboard(editor: Editor): String? =
@@ -119,9 +131,16 @@ class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
       when (Urls.parse(path, asLocalIfNoScheme = true)) {
         null -> false
         is LocalFileUrl -> {
+          val relativePath = try {
+            Path.of(path)
+          }
+          catch (e: InvalidPathException) {
+            return@takeIf false
+          }
+
           val dir = FileDocumentManager.getInstance().getFile(editor.document)?.parent
-          val relativePath = dir?.let { Path.of(it.path) }?.resolve(path)
-          relativePath?.exists() ?: false
+          val absolutePath = dir?.let { Path.of(it.path) }?.resolve(relativePath)
+          absolutePath?.exists() ?: false
         }
         else -> true
       }
@@ -141,17 +160,21 @@ class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
     val selectionStart = maxOf(start, minOf(newEnd, caret.selectionStart - 1))
     val selectionEnd = maxOf(start, minOf(newEnd, caret.selectionEnd - 1))
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      if (selectionStart == selectionEnd) {
-        caret.removeSelection() // so that the floating toolbar is hidden; must be done before text replacement
-        caret.moveCaretRelatively(-1, 0, false, false)
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    val fileArray = file?.let { arrayOf(it) } ?: emptyArray()
+    WriteCommandAction.writeCommandAction(project, *fileArray)
+      .withName(unwrapActionName)
+      .run<Nothing> {
+        if (selectionStart == selectionEnd) {
+          caret.removeSelection() // so that the floating toolbar is hidden; must be done before text replacement
+          caret.moveCaretRelatively(-1, 0, false, false)
+        }
+
+        editor.document.replaceString(start, linkElement.endOffset, linkText)
+
+        if (selectionStart != selectionEnd)
+          caret.setSelection(selectionStart, selectionEnd)
       }
-
-      editor.document.replaceString(start, linkElement.endOffset, linkText)
-
-      if (selectionStart != selectionEnd)
-        caret.setSelection(selectionStart, selectionEnd)
-    }
   }
 
   private fun Caret.getSelectedLinkElement(file: PsiFile): PsiElement? {

@@ -1,0 +1,5 @@
+[kotlinInterfaceDerivedLocalClasses.0.kt] Unclassified 7 open class A : X {
+[kotlinInterfaceDerivedLocalClasses.1.kt] Unclassified 14 open class Z : A() {
+[kotlinInterfaceDerivedLocalClasses.1.kt] Unclassified 18 class U : Z() {
+[kotlinInterfaceDerivedLocalClasses.1.kt] Unclassified 5 open class B : A() {
+[kotlinInterfaceDerivedLocalClasses.1.kt] Unclassified 9 open class C : Y {

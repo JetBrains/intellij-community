@@ -173,13 +173,13 @@ public final class HintUtil {
     return label;
   }
 
-  @NotNull
-  public static JComponent createErrorLabel(@NotNull @HintText String text) {
+  public static @NotNull JComponent createErrorLabel(@NotNull @HintText String text) {
     return createErrorLabel(text, null, null);
   }
 
-  @NotNull
-  private static HintLabel createLabel(@HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
+  @ApiStatus.Internal
+  public static @NotNull HintLabel createLabel(@HintText String text, @Nullable Icon icon,
+                                               @NotNull Color color, @NotNull HintHint hintHint) {
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
     label.setIcon(icon);
@@ -248,7 +248,8 @@ public final class HintUtil {
     }
   }
 
-  private static final class HintLabel extends JPanel {
+  @ApiStatus.Internal
+  public static final class HintLabel extends JPanel {
     private JEditorPane myPane;
     private SimpleColoredComponent myColored;
     private JLabel myIcon;

@@ -26,9 +26,12 @@ public class JrtHandler extends ArchiveHandler {
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
+  public void clearCaches() {
+    super.clearCaches();
+    clearJrtFs();
+  }
 
+  private void clearJrtFs() {
     synchronized (this) {
       FileSystem fs = SoftReference.dereference(myFileSystem);
       if (fs != null) {

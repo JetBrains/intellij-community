@@ -27,6 +27,9 @@
 
     <projectService serviceImplementation="com.intellij.copyright.CopyrightManager"/>
     <externalSystemConfigurationHandler implementation="com.maddyhome.idea.copyright.import.CopyrightConfigurationHandler"/>
+    <actionOnSaveInfoProvider id="copyrightInfoProvider"
+                              implementation="com.maddyhome.idea.copyright.actions.CopyrightOnSaveInfoProvider"/>
+    <actionOnSave id="copyrightOnSaveAction" implementation="com.maddyhome.idea.copyright.actions.CopyrightOnSaveAction"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.copyright">

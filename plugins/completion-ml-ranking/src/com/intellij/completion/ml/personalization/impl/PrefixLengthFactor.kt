@@ -50,7 +50,7 @@ class PrefixLengthUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBase(f
 class MostFrequentPrefixLength : UserFactorBase<PrefixLengthReader>("mostFrequentPrefixLength",
                                                                     UserFactorDescriptions.PREFIX_LENGTH_ON_COMPLETION) {
     override fun compute(reader: PrefixLengthReader): String? {
-        return reader.getCountsByPrefixLength().maxBy { it.value }?.key?.toString()
+        return reader.getCountsByPrefixLength().maxByOrNull { it.value }?.key?.toString()
     }
 }
 

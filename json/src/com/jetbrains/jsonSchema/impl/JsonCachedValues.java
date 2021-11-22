@@ -8,6 +8,7 @@ import com.intellij.json.psi.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -220,16 +221,36 @@ public final class JsonCachedValues {
   static JsonSchemaObject computeSchemaForFile(@NotNull PsiFile file, @NotNull JsonSchemaService service) {
     final PsiFile originalFile = CompletionUtil.getOriginalOrSelf(file);
     JsonSchemaObject value = CachedValuesManager.getCachedValue(originalFile, OBJECT_FOR_FILE_KEY, () -> {
-      VirtualFile virtualFile = originalFile.getVirtualFile();
-      VirtualFile schemaFile = virtualFile == null ? null : getSchemaFile(virtualFile, service);
-      JsonSchemaObject schemaObject = virtualFile == null ? null : service.getSchemaObject(virtualFile);
-      PsiFile psiFile = schemaFile == null || !schemaFile.isValid() ? null : originalFile.getManager().findFile(schemaFile);
-      JsonSchemaObject object = schemaObject == null ? JsonSchemaObject.NULL_OBJ : schemaObject;
+      Pair<PsiFile, JsonSchemaObject> schema = getPlainSchemaFile(originalFile, service);
+      if (schema.second == null) {
+        schema = getDynamicSchemaFile(originalFile, service);
+      }
+
+      PsiFile psiFile = schema.first;
+      JsonSchemaObject object = schema.second == null ? JsonSchemaObject.NULL_OBJ : schema.second;
       return psiFile == null
              ? CachedValueProvider.Result.create(object, originalFile, service)
              : CachedValueProvider.Result.create(object, originalFile, psiFile, service);
     });
     return value == JsonSchemaObject.NULL_OBJ ? null : value;
+  }
+
+  private static @NotNull Pair<PsiFile, JsonSchemaObject> getPlainSchemaFile(@NotNull PsiFile originalFile,
+                                                                             @NotNull JsonSchemaService service) {
+    VirtualFile virtualFile = originalFile.getVirtualFile();
+    VirtualFile schemaFile = virtualFile == null ? null : getSchemaFile(virtualFile, service);
+    JsonSchemaObject schemaObject = virtualFile == null ? null : service.getSchemaObject(virtualFile);
+    PsiFile psiFile = schemaFile == null || !schemaFile.isValid() ? null : originalFile.getManager().findFile(schemaFile);
+    return new Pair<>(psiFile, schemaObject);
+  }
+
+  private static @NotNull Pair<PsiFile, JsonSchemaObject> getDynamicSchemaFile(@NotNull PsiFile originalFile,
+                                                                               @NotNull JsonSchemaService service) {
+    JsonSchemaServiceImpl serviceImpl = (JsonSchemaServiceImpl)service;
+    VirtualFile dynamicSchema = serviceImpl.getDynamicSchemaForFile(originalFile);
+    if (dynamicSchema == null) return new Pair<>(null, null);
+    PsiFile schemaPsiFile = originalFile.getManager().findFile(dynamicSchema);
+    return new Pair<>(schemaPsiFile, getSchemaObject(dynamicSchema, originalFile.getProject()));
   }
 
   static VirtualFile getSchemaFile(@NotNull VirtualFile sourceFile, @NotNull JsonSchemaService service) {

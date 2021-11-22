@@ -466,6 +466,10 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     return virtualFile;
   }
 
+  public @Nullable ProjectData getParentProject() {
+    return myParentProject;
+  }
+
   public void setParentProject(@Nullable ProjectData parentProject) {
     myParentProject = parentProject;
     isCreatingNewLinkedProject = myParentProject == null;
@@ -495,11 +499,11 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     myProjectId = projectId;
   }
 
-  protected boolean isCreatingNewProject() {
+  public boolean isCreatingNewProject() {
     return isCreatingNewProject;
   }
 
-  protected void setCreatingNewProject(boolean creatingNewProject) {
+  public void setCreatingNewProject(boolean creatingNewProject) {
     isCreatingNewProject = creatingNewProject;
   }
 
@@ -559,6 +563,10 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   @Override
   public Project createProject(String name, String path) {
     return setupCreatedProject(super.createProject(name, path));
+  }
+
+  public boolean isUseKotlinDsl() {
+    return myUseKotlinDSL;
   }
 
   public void setUseKotlinDsl(boolean useKotlinDSL) {

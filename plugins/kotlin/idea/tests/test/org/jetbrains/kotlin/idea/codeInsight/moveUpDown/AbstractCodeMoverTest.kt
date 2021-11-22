@@ -72,7 +72,7 @@ abstract class AbstractCodeMoverTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByFile(fileName())
 
         val fileText = FileUtil.loadFile(File(path), true)
-        val direction = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MOVE: ") ?: error("No MOVE directive found")
+        val direction = InTextDirectivesUtils.stringWithDirective(fileText, "MOVE")
 
         val action = when (direction) {
             "up" -> MoveStatementUpAction()

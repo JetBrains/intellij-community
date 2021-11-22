@@ -5,7 +5,7 @@ Reports instantiation of utility classes using the <code>new</code> keyword.
   In utility classes, all fields and methods are <code>static</code>.
   Instantiation of such classes is most likely unnecessary and indicates a mistake.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class MyUtils {
     public static double cube(double x) {
       return x * x * x;
@@ -17,7 +17,7 @@ Reports instantiation of utility classes using the <code>new</code> keyword.
       MyUtils utils = new MyUtils();
     }
   }
-</pre>
+</code></pre>
 <p>
   To prevent utility classes from being instantiated,
   it's recommended to use a <code>private</code> constructor.

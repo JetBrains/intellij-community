@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
 import com.intellij.dupLocator.util.NodeFilter
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -16,7 +17,6 @@ import com.intellij.structuralsearch.impl.matcher.compiler.WordOptimizer
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.structuralsearch.getCommentText
 import org.jetbrains.kotlin.idea.structuralsearch.handler.CommentedDeclarationHandler
 import org.jetbrains.kotlin.idea.structuralsearch.withinHierarchyTextFilterSet
@@ -34,13 +34,16 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
     private val mySubstitutionPattern = Pattern.compile("\\b(_____\\w+)\\b")
 
     fun compile(topLevelElements: Array<out PsiElement>?) {
-        val optimizer = KotlinWordOptimizer()
-        val pattern = myCompilingVisitor.context.pattern
+        val context = myCompilingVisitor.context
+
+        // When dumb the index is not used while editing pattern (e.g. no warning when zero hits in project).
+        val optimizer = if (DumbService.isDumb(context.project)) null else KotlinWordOptimizer()
+        val pattern = context.pattern
         if (topLevelElements == null) return
 
         for (element in topLevelElements) {
             element.accept(this)
-            element.accept(optimizer)
+            optimizer?.let { element.accept(it) }
             pattern.setHandler(element, TopLevelMatchingHandler(pattern.getHandler(element)))
         }
     }
@@ -65,13 +68,6 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
         override fun visitProperty(property: KtProperty) {
             if (!handleWord(property.name, CODE, myCompilingVisitor.context)) return
             super.visitProperty(property)
-        }
-
-        override fun visitConstantExpression(expression: KtConstantExpression) {
-            val type = expression.elementType
-            if (type == KtNodeTypes.BOOLEAN_CONSTANT || type == KtNodeTypes.NULL)
-                if (!handleWord(expression.text, CODE, myCompilingVisitor.context)) return
-            super.visitConstantExpression(expression)
         }
 
         override fun visitReferenceExpression(expression: KtReferenceExpression) {
@@ -321,14 +317,14 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
         constructor.setAbsenceOfMatchHandlerIfApplicable()
     }
 
-    override fun visitWhenEntry(jetWhenEntry: KtWhenEntry) {
-        super.visitWhenEntry(jetWhenEntry)
-        val condition = jetWhenEntry.firstChild.firstChild
+    override fun visitWhenEntry(ktWhenEntry: KtWhenEntry) {
+        super.visitWhenEntry(ktWhenEntry)
+        val condition = ktWhenEntry.firstChild.firstChild
         if (condition is KtNameReferenceExpression) {
             val handler = getHandler(condition)
             if (handler !is SubstitutionHandler) return
 
-            setHandler(jetWhenEntry, SubstitutionHandler(handler.name, false, handler.minOccurs, handler.maxOccurs, false))
+            setHandler(ktWhenEntry, SubstitutionHandler(handler.name, false, handler.minOccurs, handler.maxOccurs, false))
             condition.parent.resetCountFilter()
             condition.resetCountFilter()
             condition.firstChild.resetCountFilter()

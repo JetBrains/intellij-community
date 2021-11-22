@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.preview
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.ui.preview.jcef.IncrementalDOM
+import org.intellij.plugins.markdown.ui.preview.jcef.IncrementalDOMBuilder
 import java.io.File
 
 class MarkdownIncrementalDOMTest : BasePlatformTestCase() {
@@ -30,7 +30,7 @@ class MarkdownIncrementalDOMTest : BasePlatformTestCase() {
     val html = File(testDataPath, "$name.html").readText().trimIndent()
     val expectedJs = File(testDataPath, "$name.js").readText().trimIndent()
 
-    val js = IncrementalDOM.generateDomBuildCalls(html).trimIndent()
+    val js = IncrementalDOMBuilder(html).generateDomBuildCalls()
     TestCase.assertEquals(expectedJs, js)
   }
 }

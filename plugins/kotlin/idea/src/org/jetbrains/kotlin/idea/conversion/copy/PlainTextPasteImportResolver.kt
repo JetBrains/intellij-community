@@ -21,11 +21,16 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+/**
+ * Tested with TextJavaToKotlinCopyPasteConversionTestGenerated
+ */
 class PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, val targetFile: KtFile) {
     private val file = dataForConversion.file
     private val project = targetFile.project
@@ -197,21 +202,25 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
             }
 
 
-            val elementsWithUnresolvedRef = runReadAction {
+            val smartPointerManager = SmartPointerManager.getInstance(file.project)
+            val elementsWithUnresolvedRef = project.runReadActionInSmartMode {
                 PsiTreeUtil.collectElements(file) { element ->
                     element.reference != null
                             && element.reference is PsiQualifiedReference
                             && element.reference?.resolve() == null
-                }
+                }.map { smartPointerManager.createSmartPsiElementPointer(it) }
             }
 
-            val reversed = elementsWithUnresolvedRef.reversedArray()
+            val reversed = elementsWithUnresolvedRef.reversed()
+            val progressIndicator = ProgressManager.getInstance().progressIndicator
+            progressIndicator?.isIndeterminate = false
             reversed.forEachIndexed { index, value ->
-                ProgressManager.getInstance().progressIndicator?.fraction = 1.0 * index / reversed.size
-                val reference = value.reference as PsiQualifiedReference
-                if (!tryResolveReference(reference)) {
-                    runReadAction { reference.referenceName }?.let {
-                        failedToResolveReferenceNames += it
+                progressIndicator?.fraction = 1.0 * index / reversed.size
+                runReadAction { value.element?.reference?.safeAs<PsiQualifiedReference>() }?.let { reference ->
+                    if (!tryResolveReference(reference)) {
+                        runReadAction { reference.referenceName }?.let {
+                            failedToResolveReferenceNames += it
+                        }
                     }
                 }
             }

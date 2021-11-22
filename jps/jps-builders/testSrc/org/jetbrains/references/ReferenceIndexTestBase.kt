@@ -201,7 +201,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
 
   private fun getTestDataPath() = testDataRootPath + "/" + getTestName(true) + "/"
 
-  private fun Int.asName(nameEnumerator: NameEnumerator): String = nameEnumerator.getName(this)
+  private fun Int.asName(nameEnumerator: NameEnumerator): String = nameEnumerator.valueOf(this)!!
 
   private fun CompilerRef.asText(nameEnumerator: NameEnumerator): String =
       when (this) {

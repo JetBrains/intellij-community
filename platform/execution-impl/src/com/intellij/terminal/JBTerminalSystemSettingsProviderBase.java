@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.CursorShape;
@@ -91,9 +92,6 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   @Override
   public @NotNull TerminalActionPresentation getClearBufferActionPresentation() {
     List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.ClearBuffer");
-    if (strokes.isEmpty()) {
-      return super.getClearBufferActionPresentation();
-    }
     return new TerminalActionPresentation(IdeBundle.message("terminal.action.ClearBuffer.text"), strokes);
   }
 
@@ -242,6 +240,16 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   @Override
   public boolean useAntialiasing() {
     return true; // we return true here because all the settings are checked again in UiSettings.setupAntialiasing
+  }
+
+  @Override
+  public boolean copyOnSelect() {
+    return SystemInfo.isLinux;
+  }
+
+  @Override
+  public boolean pasteOnMiddleMouseClick() {
+    return true;
   }
 
   @Override

@@ -1,5 +1,7 @@
 @JAnn("abc")
-fun test1() {}
+fun test1() {
+}
 
 @JAnn(value = "abc")
-fun test2() {}
+fun test2() {
+}

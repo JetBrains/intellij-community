@@ -18,7 +18,6 @@ package git4idea.remote;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.AuthData;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,24 +38,11 @@ public interface GitHttpAuthDataProvider {
 
   @Nullable
   default AuthData getAuthData(@NotNull Project project, @NotNull String url) {
-    return getAuthData(url);
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nullable
-  default AuthData getAuthData(@NotNull String url) {
     return null;
   }
 
   default void forgetPassword(@NotNull Project project, @NotNull String url, @NotNull AuthData authData) {
-    //noinspection deprecation
-    forgetPassword(url);
   }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default void forgetPassword(@NotNull String url) {}
 
   /**
    * @return true  - if provider does not show any prompts except internal password storage access {@link com.intellij.ide.passwordSafe.PasswordSafe},

@@ -171,10 +171,6 @@
     <option name="ENABLE_SWING_INSPECTOR" value="false"/>
     <option name="ENV_VARIABLES"/>
     <option name="PASS_PARENT_ENVS" value="true"/>
-    <module name="titled"/>
-    <envs/>
-    <RunnerSettings RunnerId="Run"/>
-    <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
   <configuration name="Renamer" type="Application" factoryName="Application" folderName="1">

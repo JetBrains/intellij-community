@@ -2,6 +2,7 @@ package test
 
 abstract class C internal constructor(override val something1: Int) : B(), I {
     private var mySomething6 = 0
+
     override val something2: Int
         get() = 0
     override var something3: Int

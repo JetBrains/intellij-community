@@ -117,7 +117,7 @@ public class GitUntrackedFilesHolder implements Disposable {
   }
 
   /**
-   * Marks files as possibly untracked to be checked on the next {@link #retrieveUntrackedFilePaths} call.
+   * Marks files as possibly untracked to be checked on the next {@link #update()} call.
    *
    * @param files files that are possibly untracked.
    */

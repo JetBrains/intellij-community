@@ -1,15 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
 import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,9 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
-import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
+import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT;
+import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
 
-@State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"))
+@State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"), category = SettingsCategory.TOOLS)
 public final class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
   @NotNull private final EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
   private State myState = new State();
@@ -76,13 +76,6 @@ public final class VcsLogApplicationSettings implements PersistentStateComponent
         List<String> order = myState.COLUMN_ID_ORDER;
         if (order != null && !order.isEmpty()) {
           return order;
-        }
-        List<Integer> oldOrder = myState.COLUMN_ORDER;
-        if (oldOrder != null && !oldOrder.isEmpty()) {
-          List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumnDeprecated.getVcsLogColumnEx(it).getId());
-          myState.COLUMN_ID_ORDER = oldIdOrder;
-          myState.COLUMN_ORDER = new ArrayList<>();
-          return oldIdOrder;
         }
         return ContainerUtil.map(Arrays.asList(Root.INSTANCE, Commit.INSTANCE, Author.INSTANCE, Date.INSTANCE), VcsLogColumn::getId);
       })
@@ -155,9 +148,6 @@ public final class VcsLogApplicationSettings implements PersistentStateComponent
     public boolean SHOW_DIFF_PREVIEW = false;
     public boolean DIFF_PREVIEW_VERTICAL_SPLIT = true;
     public boolean PREFER_COMMIT_DATE = false;
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-    public List<Integer> COLUMN_ORDER = new ArrayList<>();
     public List<String> COLUMN_ID_ORDER = new ArrayList<>();
     public Map<String, Boolean> COLUMN_ID_VISIBILITY = new HashMap<>();
     public Map<String, Boolean> CUSTOM_BOOLEAN_PROPERTIES = new HashMap<>();

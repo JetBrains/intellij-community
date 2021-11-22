@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.html;
 
 import com.intellij.openapi.Disposable;
@@ -8,10 +8,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider;
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider;
@@ -20,15 +22,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.ArrayUtilRt.EMPTY_FILE_ARRAY;
-
-public class MarkdownCodeFencePluginCache implements Disposable {
+public final class MarkdownCodeFencePluginCache implements Disposable {
   @NotNull public static final String MARKDOWN_FILE_PATH_KEY = "markdown-md5-file-path";
 
   @NotNull private final Alarm myAlarm = new Alarm(this);
@@ -45,18 +43,25 @@ public class MarkdownCodeFencePluginCache implements Disposable {
       scheduleClearCache();
     }
 
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+    final var listener = new BulkFileListener() {
       @Override
-      public void fileDeleted(@NotNull VirtualFileEvent event) {
-        if (FileTypeRegistry.getInstance().isFileOfType(event.getFile(), MarkdownFileType.INSTANCE)) {
-          myAdditionalCacheToDelete.addAll(processSourceFileToDelete(event.getFile(), ContainerUtil.emptyList()));
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        final var fileTypeRegistry = FileTypeRegistry.getInstance();
+        for (final var event: events) {
+          if (event instanceof VFileDeleteEvent) {
+            final var file = event.getFile();
+            if (file != null && fileTypeRegistry.isFileOfType(file, MarkdownFileType.INSTANCE)) {
+              myAdditionalCacheToDelete.addAll(processSourceFileToDelete(file, ContainerUtil.emptyList()));
+            }
+          }
         }
       }
-    }, this);
+    };
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, listener);
   }
 
   private static List<File> getPluginSystemPaths() {
-    return MarkdownCodeFencePluginGeneratingProvider.getAll().stream()
+    return MarkdownCodeFencePluginGeneratingProvider.Companion.getAll().stream()
       .filter(MarkdownCodeFenceCacheableProvider.class::isInstance)
       .map(MarkdownCodeFenceCacheableProvider.class::cast)
       .map(provider -> provider.getCacheRootPath().toFile())
@@ -91,7 +96,7 @@ public class MarkdownCodeFencePluginCache implements Disposable {
 
   private static File @NotNull [] getChildren(@NotNull File directory) {
     File[] files = directory.listFiles();
-    return files != null ? files : EMPTY_FILE_ARRAY;
+    return files != null ? files : ArrayUtilRt.EMPTY_FILE_ARRAY;
   }
 
   private static boolean isCachedSourceFile(@NotNull File sourceFileDir, @NotNull VirtualFile sourceFile) {

@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.groovy;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
@@ -15,7 +14,7 @@ import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.template.GroovyTemplateContextType;
@@ -43,10 +42,9 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
     return PATTERN_CONTEXTS;
   }
 
-  @NotNull
   @Override
-  protected LanguageFileType getFileType() {
-    return GroovyFileType.GROOVY_FILE_TYPE;
+  public boolean isMyLanguage(@NotNull Language language) {
+    return language == GroovyLanguage.INSTANCE;
   }
 
   @NotNull

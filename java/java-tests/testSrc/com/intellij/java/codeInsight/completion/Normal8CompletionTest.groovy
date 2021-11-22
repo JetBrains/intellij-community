@@ -17,9 +17,12 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.util.containers.ContainerUtil
 
 /**
  * @author anna
@@ -548,5 +551,23 @@ class X {
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ["peek", "peek"]
   }
+
+
+  @NeedsIndex.ForStandardLibrary
+  void testNewClassGenericImport() {
+    myFixture.configureByText("Test.java", "import java.util.List;class UseClass {void test() {List<String> list = <caret>}}")
+    LookupElement[] elements = myFixture.completeBasic()
+    LookupElement arrayList = ContainerUtil.find(elements, { e -> e.getLookupString().equals("new ArrayList") })
+    assertNotNull(arrayList)
+    LookupElementPresentation presentation = renderElement(arrayList)
+    assertEquals("new ArrayList", presentation.getItemText())
+    assertEquals("<>()", presentation.getTailText())
+    assertEquals("ArrayList<String>", presentation.getTypeText())
+
+    selectItem(arrayList)
+    myFixture.checkResult("import java.util.ArrayList;\n" +
+                          "import java.util.List;class UseClass {void test() {List<String> list = new ArrayList<>()}}")
+  }
+
 
 }

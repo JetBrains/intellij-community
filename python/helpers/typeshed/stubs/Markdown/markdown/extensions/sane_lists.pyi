@@ -1,5 +1,3 @@
-from typing import Any, Pattern
-
 from markdown.blockprocessors import OListProcessor, UListProcessor
 from markdown.extensions import Extension
 

@@ -369,6 +369,15 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   }
 
   @Override
+  public @NotNull DfType meetRelation(@NotNull RelationType relationType,
+                                      @NotNull DfType other) {
+    if ((relationType == RelationType.EQ || relationType == RelationType.IS) && isLocal() && myConstraint.isComparedByEquals()) {
+      return dropLocality().meetRelation(relationType, other);
+    }
+    return super.meetRelation(relationType, other);
+  }
+
+  @Override
   public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
     if (relationType == RelationType.EQ || relationType == RelationType.IS) {
       DfReferenceType result = this;

@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 
@@ -23,20 +24,13 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
   override fun setUp() {
     super.setUp()
     if (testLauncherAPISupported()) {
-      Registry.get("gradle.testLauncherAPI.enabled").setValue(true)
+      Registry.get("gradle.testLauncherAPI.enabled").setValue(true, testRootDisposable)
     }
   }
 
-  override fun tearDown() {
-    runAll(
-      { Registry.get("gradle.testLauncherAPI.enabled").setValue(false) },
-      { super.tearDown() }
-    )
-  }
-
   @Test
+  @TargetVersions("!6.9")
   fun test() {
-
     val gradleSupportsJunitPlatform = isGradleNewerOrSameAs("4.6")
     createProjectSubFile("src/main/java/my/pack/AClass.java",
                          "package my.pack;\n" +

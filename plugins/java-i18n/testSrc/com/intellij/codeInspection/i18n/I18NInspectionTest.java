@@ -1,6 +1,4 @@
-/*
- * Copyright (c) 2005 JetBrains s.r.o. All Rights Reserved.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.openapi.application.PluginPathManager;
@@ -86,6 +84,16 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testAnnotationArgument() { doTest(); }
   public void testAssertionStmt() { doTest(); }
+  public void testPropertyKeyAnnotated() {
+    String oldPattern = myTool.nonNlsCommentPattern;
+    try {
+      myTool.setNonNlsLiteralPattern("");
+      doTest();
+    }
+    finally {
+      myTool.setNonNlsLiteralPattern(oldPattern);
+    }
+  }
   public void testExceptionCtor() { doTest(); }
   public void testSpecifiedExceptionCtor() {
     boolean old = myTool.ignoreForExceptionConstructors;

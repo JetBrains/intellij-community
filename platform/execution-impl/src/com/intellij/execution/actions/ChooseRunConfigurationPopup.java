@@ -24,7 +24,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -210,7 +210,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       popup.myPopup.cancel();
       confirmed = MessageDialogBuilder.yesNo(CommonBundle.message("title.confirmation"),
                                              ExecutionBundle.message("are.you.sure.you.want.to.delete.0", configurationSettings.getName()))
-                    .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
+                    .doNotAsk(new DoNotAskOption.Adapter() {
                       @Override
                       public void rememberChoice(boolean isSelected, int exitCode) {
                         runManagerConfig.setDeletionFromPopupRequiresConfirmation(!isSelected);

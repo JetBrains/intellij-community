@@ -3,6 +3,7 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel;
+import com.intellij.formatting.service.AbstractDocumentFormattingService;
 import com.intellij.ide.ui.search.ComponentHighlightingListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -219,6 +220,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
         prepareForReformat(psiFile);
 
+        Document document = myEditor.getDocument();
+        AbstractDocumentFormattingService.setDocument(psiFile, document);
+
         applySettingsToModel();
         final Ref<PsiFile> formatted = Ref.create();
         CodeStyle.doWithTemporarySettings(
@@ -229,7 +233,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
             myEditor.getSettings().setTabSize(settings.getTabSize(getFileType()));
             formatted.set(doReformat(project, psiFile));
           });
-        Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), formatted.get().getText());
         DocumentReference docRef = DocumentReferenceManager.getInstance().create(document);
         UndoManager.getInstance(project).nonundoableActionPerformed(docRef, false);

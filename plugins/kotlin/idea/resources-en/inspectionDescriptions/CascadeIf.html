@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports <code>if</code> statements with three or more branches that can be replaced with a <code>when</code> expression.
+Reports <code>if</code> statements with three or more branches that can be replaced with the <code>when</code> expression.
 <p><b>Example:</b></p>
 <pre><code>
   fun checkIdentifier(id: String) {
@@ -16,7 +16,7 @@ Reports <code>if</code> statements with three or more branches that can be repla
       }
   }
 </code></pre>
-<p>A quick-fix is suggested to convert <code>if</code> expression to a <code>when</code> one:</p>
+<p>A quick-fix converts the <code>if</code> expression to <code>when</code>:</p>
 <pre><code>
   fun checkIdentifier(id: String) {
       fun Char.isIdentifierStart() = this in 'A'..'z'

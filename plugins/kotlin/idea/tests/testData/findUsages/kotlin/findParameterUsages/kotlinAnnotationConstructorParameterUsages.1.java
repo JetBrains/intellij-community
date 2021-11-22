@@ -1,1 +1,3 @@
-@KotlinAnnForJava(p = "a") public class JavaClassForKotlin {}
+@KotlinAnnForJava(p = "a")
+public class JavaClassForKotlin {
+}

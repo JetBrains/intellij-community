@@ -265,7 +265,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
         return myTextField.getText();
       }
 
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return myModel.getHelpId();
       }
 

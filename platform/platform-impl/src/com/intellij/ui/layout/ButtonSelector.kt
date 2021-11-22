@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.impl.ActionToolbarBorder
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
@@ -48,7 +49,7 @@ class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
 
 private const val LEFT_RIGHT_PADDING: Int = 8
 private const val TOP_BOTTOM_PADDING: Int = 2
-private const val BUTTONS_MARGIN: Int = 2
+private const val BUTTONS_MARGIN: Int = 0
 
 private class ButtonSelector(
   action: ButtonSelectorAction<*>,
@@ -69,8 +70,7 @@ private class ButtonSelector(
   override fun getPreferredSize(): Dimension {
     val old = super.getPreferredSize()
     val proposedHeight = old.height + TOP_BOTTOM_PADDING * 2
-    val height = if (forceFieldHeight) max(30, proposedHeight) else proposedHeight
-    return Dimension(old.width + LEFT_RIGHT_PADDING * 2, height)
+    return Dimension(old.width + LEFT_RIGHT_PADDING * 2, calcHeight(forceFieldHeight, proposedHeight))
   }
 }
 
@@ -83,16 +83,17 @@ class ButtonSelectorToolbar @JvmOverloads constructor(
 
   init {
     setForceMinimumSize(true)
+    ActionToolbarBorder.setOutlined(this, true)
   }
 
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()
-    return Dimension(size.width, max(30, size.height)) // there can be non-default font-size
+    return Dimension(size.width, calcHeight(forceFieldHeight, size.height)) // there can be non-default font-size
   }
 
   override fun getMinimumSize(): Dimension {
     val size = super.getMinimumSize()
-    return Dimension(size.width, max(30, size.height)) // there can be non-default font-size
+    return Dimension(size.width, calcHeight(forceFieldHeight, size.height)) // there can be non-default font-size
   }
 
   init {
@@ -107,4 +108,8 @@ class ButtonSelectorToolbar @JvmOverloads constructor(
     presentation: Presentation,
     minimumSize: Dimension
   ): ActionButton = ButtonSelector(action as ButtonSelectorAction<*>, presentation, place, minimumSize, forceFieldHeight)
+}
+
+private fun calcHeight(forceFieldHeight: Boolean, height: Int): Int {
+  return if (forceFieldHeight) max(30, height) else height
 }

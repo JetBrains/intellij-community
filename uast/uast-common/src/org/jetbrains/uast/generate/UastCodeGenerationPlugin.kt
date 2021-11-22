@@ -47,7 +47,7 @@ interface UastElementFactory {
 
   fun createSimpleReference(variable: UVariable, context: PsiElement?): USimpleNameReferenceExpression?
 
-  fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression?
+  fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression?
 
   fun createParenthesizedExpression(expression: UExpression,
                                     context: PsiElement?): UParenthesizedExpression?
@@ -78,9 +78,13 @@ interface UastElementFactory {
                            kind: UastCallKind,
                            context: PsiElement? = null): UCallExpression?
 
+  fun createCallableReferenceExpression(receiver: UExpression?, methodName: String, context: PsiElement?): UCallableReferenceExpression?
+
   fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression?, context: PsiElement?): UIfExpression?
 
   fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression?
+
+  fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression?
 
   fun createNullLiteral(context: PsiElement?): ULiteralExpression?
 }

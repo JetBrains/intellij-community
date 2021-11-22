@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,10 +20,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  public static final String TYPE_HIERARCHY_TYPE = "Class {0}";
-  public static final String SUBTYPES_HIERARCHY_TYPE = "Subtypes of {0}";
-  public static final String SUPERTYPES_HIERARCHY_TYPE = "Supertypes of {0}";
-
   private boolean myIsInterface;
 
   private final MyDeleteProvider myDeleteElementProvider = new MyDeleteProvider();
@@ -33,7 +30,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected abstract boolean isInterface(@NotNull PsiElement psiElement);
 
-  protected void createTreeAndSetupCommonActions(@NotNull Map<? super String, ? super JTree> trees, @NotNull String groupId) {
+  protected void createTreeAndSetupCommonActions(@NotNull Map<? super @Nls String, ? super JTree> trees, @NotNull String groupId) {
     BaseOnThisTypeAction baseOnThisTypeAction = createBaseOnThisAction();
     JTree tree1 = createTree(true);
     PopupHandler.installPopupMenu(tree1, groupId, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP);
@@ -66,9 +63,9 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   @Override
   protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
-    map.put(TYPE_HIERARCHY_TYPE, TypeHierarchyBrowserBase::getTypeHierarchyType);
-    map.put(SUBTYPES_HIERARCHY_TYPE, TypeHierarchyBrowserBase::getSubtypesHierarchyType);
-    map.put(SUPERTYPES_HIERARCHY_TYPE, TypeHierarchyBrowserBase::getSupertypesHierarchyType);
+    map.put(getTypeHierarchyType(), TypeHierarchyBrowserBase::getTypeHierarchyType);
+    map.put(getSubtypesHierarchyType(), TypeHierarchyBrowserBase::getSubtypesHierarchyType);
+    map.put(getSupertypesHierarchyType(), TypeHierarchyBrowserBase::getSupertypesHierarchyType);
     return map;
   }
 
@@ -150,7 +147,8 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, String viewType) {
+    @Nls
+    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, @Nls String viewType) {
       if (((TypeHierarchyBrowserBase)browser).myIsInterface && getTypeHierarchyType().equals(viewType)) {
         return getSubtypesHierarchyType();
       }
@@ -158,18 +156,19 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getTypeHierarchyType() {
+  public static @Nls @NotNull String getTypeHierarchyType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.class");
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getSubtypesHierarchyType() {
+  @Nls
+  public static @NotNull String getSubtypesHierarchyType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.subtypes");
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getSupertypesHierarchyType() {
+  public static @Nls @NotNull String getSupertypesHierarchyType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.supertypes");
   }
 }

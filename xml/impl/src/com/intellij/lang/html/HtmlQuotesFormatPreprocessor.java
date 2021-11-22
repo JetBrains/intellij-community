@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
@@ -59,7 +60,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
         HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, postFormatProcessorHelper);
         Document document = converter.getDocument();
         if (document != null) {
-          DocumentUtil.executeInBulk(document, true, converter);
+          DocumentUtil.executeInBulk(document, converter);
         }
         return postFormatProcessorHelper.getResultTextRange();
       }
@@ -169,7 +170,8 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     }
 
     public static void runOnElement(@NotNull CodeStyleSettings.QuoteStyle quoteStyle, @NotNull PsiElement element) {
-      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(CodeStyle.getDefaultSettings());
+      CommonCodeStyleSettings settings = CodeStyle.getSettings(element.getContainingFile()).getCommonSettings(HTMLLanguage.INSTANCE);
+      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(settings);
       postFormatProcessorHelper.setResultTextRange(element.getTextRange());
       new HtmlQuotesConverter(quoteStyle, element, postFormatProcessorHelper).run();
     }

@@ -10,7 +10,7 @@ import git4idea.repo.GitRepositoryChangeListener;
 import org.jetbrains.annotations.NotNull;
 
 public class JpsCachesProjectStateListener implements GitRepositoryChangeListener {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.JpsCachesProjectStateListener");
+  private static final Logger LOG = Logger.getInstance(JpsCachesProjectStateListener.class);
   private String previousCommitId = "";
 
   @Override

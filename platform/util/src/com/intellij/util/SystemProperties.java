@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Utility wrappers for accessing system properties.
@@ -56,15 +57,28 @@ public final class SystemProperties {
     return value != null ? Boolean.parseBoolean(value) : defaultValue;
   }
 
+  /**
+   * Sets (or clears, when the {@code value} is {@code null}) the given property, and returns a previous value.
+   */
+  public static @Nullable String setProperty(@NotNull String key, @Nullable String value) {
+    return value != null ? System.setProperty(key, value) : System.clearProperty(key);
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated please use {@link Boolean#getBoolean(String)} or {@link #getBooleanProperty(String, boolean)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean is(String key) {
     return getBooleanProperty(key, false);
   }
 
+  /** @deprecated 1. trivial 2. bad practice */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean has(String key) {
     return System.getProperty(key) != null;
   }
 
-  //<editor-fold desc="Deprecated stuff.">
   /** @deprecated please use {@link System#lineSeparator()} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")

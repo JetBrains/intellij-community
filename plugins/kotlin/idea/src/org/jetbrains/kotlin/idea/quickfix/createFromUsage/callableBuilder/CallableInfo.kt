@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassInfo
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getResolvableApproximations
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -53,9 +54,9 @@ abstract class TypeInfo(val variance: Variance) {
                 } ?: containingDeclarationForPseudocode
 
                 throw KotlinExceptionWithAttachments(stackException.message, stackException)
-                    .withAttachment("original_expression.txt", originalElement.text)
-                    .withAttachment("containing_declaration.txt", containingDeclarationForPseudocode?.text)
-                    .withAttachment("enclosing_declaration.txt", enclosingPseudocodeDeclaration?.text)
+                    .withPsiAttachment("original_expression.txt", originalElement)
+                    .withPsiAttachment("containing_declaration.txt", containingDeclarationForPseudocode)
+                    .withPsiAttachment("enclosing_declaration.txt", enclosingPseudocodeDeclaration)
             }
         ).flatMap { it.getPossibleSupertypes(variance, builder) }
     }
@@ -276,9 +277,11 @@ class PropertyInfo(
     possibleContainers: List<KtElement> = Collections.emptyList(),
     typeParameterInfos: List<TypeInfo> = Collections.emptyList(),
     val isLateinitPreferred: Boolean = false,
+    val isConst: Boolean = false,
     isForCompanion: Boolean = false,
+    val annotations: List<KtAnnotationEntry> = emptyList(),
     modifierList: KtModifierList? = null,
-    val withInitializer: Boolean = false
+    val initializer: KtExpression? = null
 ) : CallableInfo(name, receiverTypeInfo, returnTypeInfo, possibleContainers, typeParameterInfos, isForCompanion, modifierList) {
     override val kind: CallableKind get() = CallableKind.PROPERTY
     override val parameterInfos: List<ParameterInfo> get() = Collections.emptyList()
@@ -301,9 +304,11 @@ class PropertyInfo(
         writable,
         possibleContainers,
         typeParameterInfos,
+        isConst,
         isLateinitPreferred,
         isForCompanion,
+        annotations,
         modifierList,
-        withInitializer
+        initializer
     )
 }

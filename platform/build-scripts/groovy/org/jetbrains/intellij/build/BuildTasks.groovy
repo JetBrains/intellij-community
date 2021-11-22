@@ -14,12 +14,16 @@ import java.nio.file.Path
 @CompileStatic
 abstract class BuildTasks {
   /**
-   * Builds sources.zip archive containing the project source files keeping the original layout
+   * Builds sources.zip archive containing the project source files keeping the original layout.
+   * @deprecated it makes little sense to produce an archive which content is just a subset of files in Git repository. Archives produced
+   * by {@link #zipSourcesOfModules} are more suitable to be attached as sources to other projects, because they put source files according to
+   * their packages, not locations in Git repository.
    */
   abstract void zipProjectSources()
 
   /**
-   * Builds archive containing production source roots of the project modules
+   * Builds archive containing production source roots of the project modules. If {@code includeLibraries} is {@code true}, the produced
+   * archive also includes sources of project-level libraries on which platform API modules from {@code modules} list depend on.
    */
   abstract void zipSourcesOfModules(Collection<String> modules, Path targetFile, boolean includeLibraries = false)
 

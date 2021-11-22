@@ -7,7 +7,6 @@ import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -45,7 +44,9 @@ import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.DialogWithEditor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -221,7 +222,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
     private inner class Context(val callableInfo: CallableInfo) {
         val skipReturnType: Boolean
-        val jetFileToEdit: KtFile
+        val ktFileToEdit: KtFile
         val containingFileEditor: Editor
         val containingElement: PsiElement
         val dialogWithEditor: DialogWithEditor?
@@ -268,8 +269,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             }
 
             dialogWithEditor = if (containingElement is KtElement) {
-                jetFileToEdit = containingElement.containingKtFile
-                containingFileEditor = if (jetFileToEdit != config.currentFile) {
+                ktFileToEdit = containingElement.containingKtFile
+                containingFileEditor = if (ktFileToEdit != config.currentFile) {
                     FileEditorManager.getInstance(project).selectedTextEditor!!
                 } else {
                     config.currentEditor!!
@@ -289,8 +290,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     additionalColumnsCount = config.currentEditor!!.settings.getRightMargin(project)
                     additionalLinesCount = 5
                 }
-                jetFileToEdit = PsiDocumentManager.getInstance(project).getPsiFile(containingFileEditor.document) as KtFile
-                jetFileToEdit.analysisContext = config.currentFile
+                ktFileToEdit = PsiDocumentManager.getInstance(project).getPsiFile(containingFileEditor.document) as KtFile
+                ktFileToEdit.analysisContext = config.currentFile
                 dialog
             }
 
@@ -411,7 +412,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     Variance.INVARIANT,
                     Name.identifier(parameterNames[it]),
                     it,
-                    jetFileToEdit.getResolutionFacade().frontendService()
+                    ktFileToEdit.getResolutionFacade().frontendService()
                 )
             }
 
@@ -541,7 +542,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                     val targetParent = applicableParents.singleOrNull()
                                     if (!(targetParent is KtClass && targetParent.isEnum())) {
                                         throw KotlinExceptionWithAttachments("Enum class expected: ${targetParent?.let { it::class.java }}")
-                                            .withAttachment("targetParent", targetParent?.text)
+                                            .withPsiAttachment("targetParent", targetParent)
                                     }
                                     val hasParameters = targetParent.primaryConstructorParameters.isNotEmpty()
                                     psiFactory.createEnumEntry("$safeName${if (hasParameters) "()" else " "}")
@@ -564,6 +565,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     }
                     CallableKind.PROPERTY -> {
                         val isVar = (callableInfo as PropertyInfo).writable
+                        val const = if (callableInfo.isConst) "const " else ""
                         val valVar = if (isVar) "var" else "val"
                         val accessors = if (isExtension && !isExpectClassMember) {
                             buildString {
@@ -573,8 +575,12 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                 }
                             }
                         } else ""
-                        psiFactory.createProperty("$modifiers$valVar<> $header$accessors")
+                        psiFactory.createProperty("$modifiers$const$valVar<> $header$accessors")
                     }
+                }
+
+                if (callableInfo is PropertyInfo) {
+                    callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
                 }
 
                 val newInitializer = pointerOfAssignmentToReplace?.element
@@ -586,7 +592,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 val container = if (containingElement is KtClass && callableInfo.isForCompanion) {
                     containingElement.getOrCreateCompanionObject()
                 } else containingElement
-                val declarationInPlace = placeDeclarationInContainer(declaration, container, config.originalElement, jetFileToEdit)
+                val declarationInPlace = placeDeclarationInContainer(declaration, container, config.originalElement, ktFileToEdit)
 
                 if (declarationInPlace is KtSecondaryConstructor) {
                     val containingClass = declarationInPlace.containingClassOrObject!!
@@ -738,7 +744,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     TypeExpression.ForDelegationSpecifier(candidates)
                 }
                 else -> throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
-                    .withAttachment("declaration", declaration.text)
+                    .withPsiAttachment("declaration", declaration)
             }
             if (elementToReplace == null) return null
 
@@ -765,7 +771,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 is KtObjectDeclaration -> return null
                 !is KtTypeParameterListOwner -> {
                     throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
-                        .withAttachment("declaration", declaration.text)
+                        .withPsiAttachment("declaration", declaration)
                 }
             }
 
@@ -804,9 +810,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             assert(parameterList.size == callableInfo.parameterInfos.size)
 
             val typeParameters = ArrayList<TypeExpression>()
-            for ((parameter, jetParameter) in callableInfo.parameterInfos.zip(parameterList)) {
+            for ((parameter, ktParameter) in callableInfo.parameterInfos.zip(parameterList)) {
                 val parameterTypeExpression = TypeExpression.ForTypeReference(typeCandidates[parameter.typeInfo]!!)
-                val parameterTypeRef = jetParameter.typeReference!!
+                val parameterTypeRef = ktParameter.typeReference!!
                 builder.replaceElement(parameterTypeRef, parameterTypeExpression)
 
                 // add parameter name to the template
@@ -822,7 +828,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
                 // add expression to builder
                 val parameterNameExpression = ParameterNameExpression(possibleNames, parameterTypeToNamesMap)
-                val parameterNameIdentifier = jetParameter.nameIdentifier!!
+                val parameterNameIdentifier = ktParameter.nameIdentifier!!
                 builder.replaceElement(parameterNameIdentifier, parameterNameExpression)
 
                 typeParameters.add(parameterTypeExpression)
@@ -831,7 +837,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         }
 
         private fun replaceWithLongerName(typeRefs: List<KtTypeReference>, theType: KotlinType) {
-            val psiFactory = KtPsiFactory(jetFileToEdit.project)
+            val psiFactory = KtPsiFactory(ktFileToEdit.project)
             val fullyQualifiedReceiverTypeRefs = theType.renderLong(typeParameterNameMap).map { psiFactory.createType(it) }
             (typeRefs zip fullyQualifiedReceiverTypeRefs).forEach { (shortRef, longRef) -> shortRef.replace(longRef) }
         }
@@ -893,6 +899,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
             val descriptor = OpenFileDescriptor(project, targetClass.containingFile.virtualFile)
             val targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true)!!
+            targetEditor.selectionModel.removeSelection()
 
             when (newJavaMember) {
                 is PsiMethod -> CreateFromUsageUtils.setupEditor(newJavaMember, targetEditor)
@@ -942,13 +949,13 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(containingFileEditor.document)
 
             val caretModel = containingFileEditor.caretModel
-            caretModel.moveToOffset(jetFileToEdit.node.startOffset)
+            caretModel.moveToOffset(ktFileToEdit.node.startOffset)
 
             val declaration = declarationPointer.element ?: return
 
             val declarationMarker = containingFileEditor.document.createRangeMarker(declaration.textRange)
 
-            val builder = TemplateBuilderImpl(jetFileToEdit)
+            val builder = TemplateBuilderImpl(ktFileToEdit)
             if (declaration is KtProperty) {
                 setupValVarTemplate(builder, declaration)
             }
@@ -987,11 +994,11 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                         PsiDocumentManager.getInstance(project).commitDocument(containingFileEditor.document)
 
                         dialogWithEditor?.close(DialogWrapper.OK_EXIT_CODE)
-                        if (brokenOff && !ApplicationManager.getApplication().isUnitTestMode) return
+                        if (brokenOff && !isUnitTestMode()) return
 
                         // file templates
                         val newDeclaration = PsiTreeUtil.findElementOfClassAtOffset(
-                            jetFileToEdit,
+                            ktFileToEdit,
                             declarationMarker.startOffset,
                             declaration::class.java,
                             false
@@ -1008,13 +1015,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             if (newDeclaration is KtProperty) {
                                 newDeclaration.getter?.let { setupDeclarationBody(it) }
 
-                                if (newDeclaration.getter == null
-                                    && newDeclaration.initializer == null
-                                    && callableInfo is PropertyInfo
-                                    && callableInfo.withInitializer
-                                    && !callableInfo.isLateinitPreferred
-                                ) {
-                                    newDeclaration.initializer = KtPsiFactory(newDeclaration).createExpression("TODO(\"initialize me\")")
+                                if (callableInfo is PropertyInfo && callableInfo.initializer != null) {
+                                    newDeclaration.initializer = callableInfo.initializer
                                 }
                             }
 
@@ -1052,7 +1054,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         }
 
         fun showDialogIfNeeded() {
-            if (!ApplicationManager.getApplication().isUnitTestMode && dialogWithEditor != null && !finished) {
+            if (!isUnitTestMode() && dialogWithEditor != null && !finished) {
                 dialogWithEditor.show()
             }
         }
@@ -1170,7 +1172,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
             insertMember(null, container, declaration, sibling)
         }
         else -> throw KotlinExceptionWithAttachments("Invalid containing element: ${container::class.java}")
-            .withAttachment("container", container.text)
+            .withPsiAttachment("container", container)
     }
 
     when (declaration) {

@@ -7,7 +7,7 @@ from _typeshed import (
     StrOrBytesPath,
 )
 from asyncio import AbstractEventLoop
-from typing import Any, Callable, Optional, Union, overload
+from typing import Any, Callable, Union, overload
 from typing_extensions import Literal
 
 from ..base import AiofilesContextManager
@@ -23,14 +23,14 @@ def open(
     file: _OpenFile,
     mode: OpenTextMode = ...,
     buffering: int = ...,
-    encoding: Optional[str] = ...,
-    errors: Optional[str] = ...,
-    newline: Optional[str] = ...,
+    encoding: str | None = ...,
+    errors: str | None = ...,
+    newline: str | None = ...,
     closefd: bool = ...,
-    opener: Optional[_Opener] = ...,
+    opener: _Opener | None = ...,
     *,
-    loop: Optional[AbstractEventLoop] = ...,
-    executor: Optional[Any] = ...,
+    loop: AbstractEventLoop | None = ...,
+    executor: Any | None = ...,
 ) -> AiofilesContextManager[None, None, AsyncTextIOWrapper]: ...
 
 # Unbuffered binary: returns a FileIO
@@ -43,26 +43,26 @@ def open(
     errors: None = ...,
     newline: None = ...,
     closefd: bool = ...,
-    opener: Optional[_Opener] = ...,
+    opener: _Opener | None = ...,
     *,
-    loop: Optional[AbstractEventLoop] = ...,
-    executor: Optional[Any] = ...,
+    loop: AbstractEventLoop | None = ...,
+    executor: Any | None = ...,
 ) -> AiofilesContextManager[None, None, AsyncFileIO]: ...
 
 # Buffered binary reading/updating: AsyncBufferedReader
 @overload
 def open(
     file: _OpenFile,
-    mode: Union[OpenBinaryModeReading, OpenBinaryModeUpdating],
+    mode: OpenBinaryModeReading | OpenBinaryModeUpdating,
     buffering: Literal[-1, 1] = ...,
     encoding: None = ...,
     errors: None = ...,
     newline: None = ...,
     closefd: bool = ...,
-    opener: Optional[_Opener] = ...,
+    opener: _Opener | None = ...,
     *,
-    loop: Optional[AbstractEventLoop] = ...,
-    executor: Optional[Any] = ...,
+    loop: AbstractEventLoop | None = ...,
+    executor: Any | None = ...,
 ) -> AiofilesContextManager[None, None, AsyncBufferedReader]: ...
 
 # Buffered binary writing: AsyncBufferedIOBase
@@ -75,10 +75,10 @@ def open(
     errors: None = ...,
     newline: None = ...,
     closefd: bool = ...,
-    opener: Optional[_Opener] = ...,
+    opener: _Opener | None = ...,
     *,
-    loop: Optional[AbstractEventLoop] = ...,
-    executor: Optional[Any] = ...,
+    loop: AbstractEventLoop | None = ...,
+    executor: Any | None = ...,
 ) -> AiofilesContextManager[None, None, AsyncBufferedIOBase]: ...
 
 # Buffering cannot be determined: fall back to _UnknownAsyncBinaryIO
@@ -91,8 +91,8 @@ def open(
     errors: None = ...,
     newline: None = ...,
     closefd: bool = ...,
-    opener: Optional[_Opener] = ...,
+    opener: _Opener | None = ...,
     *,
-    loop: Optional[AbstractEventLoop] = ...,
-    executor: Optional[Any] = ...,
+    loop: AbstractEventLoop | None = ...,
+    executor: Any | None = ...,
 ) -> AiofilesContextManager[None, None, _UnknownAsyncBinaryIO]: ...

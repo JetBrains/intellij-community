@@ -51,11 +51,11 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
                             logLine: MavenLogEntry,
                             logEntryReader: MavenLogEntryReader,
                             messageConsumer: Consumer<in BuildEvent?>): Boolean {
-    if (logLine.line.startsWith("Source option 5 is no longer supported. Use 6 or later")
+    if (logLine.line.startsWith("Source option 5 is no longer supported.")
         || logLine.line.startsWith("Source option 1.5 is no longer supported.")) {
       val targetLine = logEntryReader.readLine()
 
-      if (targetLine != null && !targetLine.line.startsWith("Target option 1.5 is no longer supported. Use 1.6 or later.")) {
+      if (targetLine != null && !targetLine.line.startsWith("Target option 1.5 is no longer supported.")) {
         logEntryReader.pushBack()
       }
 

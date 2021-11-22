@@ -315,10 +315,7 @@ public final class VcsRepositoryManager implements Disposable {
     for (VcsRoot root : myVcsManager.getAllVcsRoots()) {
       VirtualFile rootPath = root.getPath();
       if (!knownRoots.contains(rootPath)) {
-        AbstractVcs vcs = root.getVcs();
-        VcsRepositoryCreator repositoryCreator = getRepositoryCreator(vcs);
-        if (repositoryCreator == null) continue;
-        Repository repository = repositoryCreator.createRepositoryIfValid(myProject, rootPath, this);
+        Repository repository = tryCreateRepository(myProject, root.getVcs(), rootPath, this);
         if (repository != null) {
           newRootsMap.put(rootPath, repository);
         }
@@ -340,11 +337,17 @@ public final class VcsRepositoryManager implements Disposable {
     return invalidRepos;
   }
 
-  private static @Nullable VcsRepositoryCreator getRepositoryCreator(final @Nullable AbstractVcs vcs) {
-    if (vcs == null) {
+  private static @Nullable Repository tryCreateRepository(@NotNull Project project,
+                                                          @Nullable AbstractVcs vcs,
+                                                          @NotNull VirtualFile rootPath,
+                                                          @NotNull Disposable disposable) {
+    if (vcs == null) return null;
+    return EP_NAME.computeSafeIfAny(creator -> {
+      if (creator.getVcsKey().equals(vcs.getKeyInstanceMethod())) {
+        return creator.createRepositoryIfValid(project, rootPath, disposable);
+      }
       return null;
-    }
-    return EP_NAME.findFirstSafe(creator -> creator.getVcsKey().equals(vcs.getKeyInstanceMethod()));
+    });
   }
 
   public @NotNull String toString() {

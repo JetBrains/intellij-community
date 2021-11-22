@@ -20,6 +20,7 @@ import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.method.MethodHierarchyTreeStructure;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -29,6 +30,11 @@ import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestBase;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_1_8; // default methods are needed
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

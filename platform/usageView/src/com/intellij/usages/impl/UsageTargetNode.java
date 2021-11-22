@@ -11,11 +11,6 @@ class UsageTargetNode extends Node {
   }
 
   @Override
-  public String tree2string(int indent, @NotNull String lineSeparator) {
-    return getTarget().getName();
-  }
-
-  @Override
   protected boolean isDataValid() {
     return getTarget().isValid();
   }

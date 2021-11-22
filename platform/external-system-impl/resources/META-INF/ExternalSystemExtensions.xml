@@ -46,6 +46,8 @@
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity"/>
     <notificationGroup id="External System Auto-Link Notification Group" displayType="STICKY_BALLOON"/>
+    <projectService serviceInterface="com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectSettings"
+                    serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectSettings"/>
 
     <!--Project structure management services-->
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
@@ -53,7 +55,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
                     serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl"/>
-    <externalSystemSettingsListener implementation="com.intellij.openapi.externalSystem.service.project.autoimport.ExternalProjectsSettingsWatcher"/>
+    <externalSystemSettingsListener
+      implementation="com.intellij.openapi.externalSystem.service.project.autoimport.ExternalProjectsSettingsWatcher"/>
     <projectService serviceInterface="com.intellij.openapi.project.ExternalStorageConfigurationManager"
                     serviceImplementation="com.intellij.openapi.project.ExternalStorageConfigurationManagerImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage"/>

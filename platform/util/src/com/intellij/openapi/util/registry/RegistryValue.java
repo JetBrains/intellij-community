@@ -100,10 +100,20 @@ public class RegistryValue {
   }
 
   public @Nullable @NlsSafe String getSelectedOption() {
-    for (String option : getOptions(asString())) {
-      if (option.endsWith("*")) {
-        return Strings.trimEnd(option, "*");
+    // [opt1|opt2|selectedOpt*|opt4]
+    String value = asString();
+    int length = value.length();
+    if (length < 3 || value.charAt(0) != '[' || value.charAt(length - 1) != ']') return null;
+    int pos = 1;
+    while (pos < length) {
+      int end = value.indexOf('|', pos);
+      if (end == -1) {
+        end = length - 1;
       }
+      if (value.charAt(end - 1) == '*') {
+        return value.substring(pos, end - 1);
+      }
+      pos = end + 1;
     }
     return null;
   }

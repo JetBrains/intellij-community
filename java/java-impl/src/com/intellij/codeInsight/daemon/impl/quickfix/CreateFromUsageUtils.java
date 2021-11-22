@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
@@ -74,7 +74,7 @@ public final class CreateFromUsageUtils {
 
   static boolean isValidReference(PsiReference reference, boolean unresolvedOnly) {
     if (!(reference instanceof PsiJavaReference)) return false;
-    JavaResolveResult[] results = ((PsiJavaReference)reference).multiResolve(true);
+    JavaResolveResult[] results = ((PsiJavaReference)reference).multiResolve(false);
     if(results.length == 0) return false;
     if (!unresolvedOnly) {
       for (JavaResolveResult result : results) {
@@ -88,7 +88,7 @@ public final class CreateFromUsageUtils {
   public static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
     if (!(reference instanceof PsiJavaReference)) return false;
     try {
-      JavaResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
+      JavaResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(false);
       PsiElement result = candidate.getElement();
       return result instanceof PsiMethod && PsiUtil.isApplicable((PsiMethod)result, candidate.getSubstitutor(), call.getArgumentList());
     }

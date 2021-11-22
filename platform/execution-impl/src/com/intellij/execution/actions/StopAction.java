@@ -38,8 +38,7 @@ public class StopAction extends DumbAwareAction {
 
   private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
-           || ActionPlaces.NEW_TOOLBAR.equals(e.getPlace())
-           || ActionPlaces.STATE_WIDGET_ACTION_BAR.equals(e.getPlace())
+           || ActionPlaces.RUN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
@@ -184,8 +183,7 @@ public class StopAction extends DumbAwareAction {
       InputEvent inputEvent = e.getInputEvent();
       Component component = inputEvent != null ? inputEvent.getComponent() : null;
       if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
-                                || ActionPlaces.NEW_TOOLBAR.equals(e.getPlace())
-                                || ActionPlaces.STATE_WIDGET_ACTION_BAR.equals(e.getPlace())
+                                || ActionPlaces.RUN_TOOLBAR.equals(e.getPlace())
                                 || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace()))) {
         popup.showUnderneathOf(component);
       }

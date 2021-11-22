@@ -29,7 +29,7 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
         className = "SpringApiIcons",
         packageName = "com.intellij.spring",
       )
-      "intellij.spring.mvc" -> IntellijIconClassGeneratorModuleConfig(
+      "intellij.spring.mvc.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringMvcApiIcons",
         packageName = "com.intellij.spring.mvc",
       )

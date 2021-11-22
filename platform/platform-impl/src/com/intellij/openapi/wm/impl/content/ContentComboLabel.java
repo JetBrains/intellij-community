@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.rd.GraphicsExKt;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.PopupState;
@@ -82,7 +83,7 @@ final class ContentComboLabel extends ContentLabel {
 
   void update() {
     setBorder(isToDrawCombo() ? JBUI.Borders.empty(0, 8) : JBUI.Borders.empty());
-    updateTextAndIcon(getContent(), true);
+    updateTextAndIcon(getContent(), true, Registry.is("ide.experimental.ui"));
     updateAdditionalActions();
   }
 

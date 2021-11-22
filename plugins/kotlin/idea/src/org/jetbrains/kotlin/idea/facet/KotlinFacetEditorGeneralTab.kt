@@ -6,6 +6,7 @@ import com.intellij.facet.ui.*
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.ThreeStateCheckBox
@@ -260,6 +261,7 @@ class KotlinFacetEditorGeneralTab(
                 }
             }
             if (overridingArguments.isNotEmpty() || redundantArguments.isNotEmpty()) {
+                @NlsSafe
                 val message = buildString {
                     if (overridingArguments.isNotEmpty()) {
                         append(
@@ -389,12 +391,13 @@ class KotlinFacetEditorGeneralTab(
                 editor.targetPlatformsCurrentlySelected?.componentPlatforms?.map { it.oldFashionedDescription.trim() }?.joinToString(", ")
                     ?: "<none>"
             editor.dependsOnLabel.isVisible = configuration.settings.dependsOnModuleNames.isNotEmpty()
-            editor.dependsOnLabel.text = configuration.settings.dependsOnModuleNames.joinToString(", ", "Depends on: ", ".")
+            editor.dependsOnLabel.text =
+                KotlinBundle.message("facets.editor.general.tab.label.depends.on.0", configuration.settings.dependsOnModuleNames.joinToString())
 
             editor.targetPlatformSelectSingleCombobox.selectedItem = configuration.settings.targetPlatform?.let {
                 val index = editor.targetPlatformWrappers.indexOf(TargetPlatformWrapper(it))
                 if (index >= 0) {
-                    editor.targetPlatformWrappers.get(index)
+                    editor.targetPlatformWrappers[index]
                 } else {
                     null
                 }

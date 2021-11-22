@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import kotlin.system.measureTimeMillis
@@ -100,7 +101,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         val text = TextBlockTransferable.convertLineSeparators(editor, (values.single() as MyTransferableData).text, values)
 
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
-        val targetFile = psiDocumentManager.getPsiFile(editor.document) as? KtFile ?: return
+        val targetFile = psiDocumentManager.getPsiFile(editor.document).safeAs<KtFile>()?.takeIf { it.virtualFile.isWritable } ?: return
         psiDocumentManager.commitDocument(editor.document)
 
         val useNewJ2k = checkUseNewJ2k(targetFile)

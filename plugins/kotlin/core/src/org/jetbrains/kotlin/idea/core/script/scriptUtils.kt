@@ -35,6 +35,10 @@ fun scriptingWarnLog(message: String) {
     logger.warn("[KOTLIN_SCRIPTING] $message")
 }
 
+fun scriptingWarnLog(message: String, throwable: Throwable?) {
+    logger.warn("[KOTLIN_SCRIPTING] $message", throwable)
+}
+
 fun scriptingErrorLog(message: String, throwable: Throwable?) {
     logger.error("[KOTLIN_SCRIPTING] $message", throwable)
 }

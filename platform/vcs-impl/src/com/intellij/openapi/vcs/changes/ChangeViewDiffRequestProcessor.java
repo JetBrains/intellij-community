@@ -56,6 +56,10 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   protected abstract void selectChange(@NotNull Wrapper change);
 
+  protected boolean showAllChangesForEmptySelection() {
+    return true;
+  }
+
   //
   // Update
   //
@@ -139,6 +143,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     if (isDisposed()) return;
 
     List<Wrapper> selectedChanges = getSelectedChanges().collect(Collectors.toList());
+    if (selectedChanges.isEmpty() && showAllChangesForEmptySelection()) selectedChanges = getAllChanges().collect(Collectors.toList());
 
     Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
     if (fromModelRefresh &&
@@ -186,19 +191,6 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return myCurrentChange;
   }
 
-  /**
-   * In case of conflict, will select first change with this file path
-   */
-  @Deprecated
-  protected void selectFilePath(@NotNull FilePath filePath) {
-    Wrapper changeToSelect = ContainerUtil.find(getAllChanges().iterator(), change -> change.getFilePath().equals(filePath));
-
-    if (changeToSelect != null) {
-      myCurrentChange = changeToSelect;
-      selectChange(changeToSelect);
-    }
-  }
-
   @Override
   protected boolean hasNextChange(boolean fromUpdate) {
     PrevNextDifferenceIterable strategy = getSelectionStrategy(fromUpdate);
@@ -231,15 +223,22 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   @Nullable
   private PrevNextDifferenceIterable getSelectionStrategy(boolean fromUpdate) {
     if (myCurrentChange == null) return null;
+
     List<Wrapper> selectedChanges = toListIfNotMany(getSelectedChanges(), fromUpdate);
     if (selectedChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
-    if (selectedChanges.isEmpty()) return null;
-    if (selectedChanges.size() == 1) {
-      List<Wrapper> allChanges = toListIfNotMany(getAllChanges(), fromUpdate);
-      if (allChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
-      return new ChangesNavigatable(allChanges, selectedChanges.get(0), true);
+    if (selectedChanges.size() > 1) {
+      return new ChangesNavigatable(selectedChanges, selectedChanges.get(0), false);
     }
-    return new ChangesNavigatable(selectedChanges, selectedChanges.get(0), false);
+    if (selectedChanges.isEmpty() && !showAllChangesForEmptySelection()) {
+      return null;
+    }
+
+    List<Wrapper> allChanges = toListIfNotMany(getAllChanges(), fromUpdate);
+    if (allChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
+    if (allChanges.isEmpty()) return null;
+
+    Wrapper selection = selectedChanges.isEmpty() ? allChanges.get(0) : selectedChanges.get(0);
+    return new ChangesNavigatable(allChanges, selection, true);
   }
 
   private class ChangesNavigatable implements PrevNextDifferenceIterable {
@@ -358,9 +357,15 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   protected static class ChangeWrapper extends Wrapper {
     @NotNull protected final Change change;
+    @Nullable protected final ChangesBrowserNode.Tag nodeTag;
 
     public ChangeWrapper(@NotNull Change change) {
+      this(change, null);
+    }
+
+    public ChangeWrapper(@NotNull Change change, @Nullable ChangesBrowserNode.Tag nodeTag) {
       this.change = change;
+      this.nodeTag = nodeTag;
     }
 
     @NotNull
@@ -383,6 +388,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @Override
     public String getPresentableName() {
       return getFilePath().getName();
+    }
+
+    @Override
+    public @Nullable ChangesBrowserNode.Tag getTag() {
+      return nodeTag;
     }
 
     @Nullable
@@ -409,12 +419,12 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       if (getClass() != o.getClass()) return false;
 
       ChangeWrapper wrapper = (ChangeWrapper)o;
-      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change);
+      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change) && Objects.equals(wrapper.nodeTag, nodeTag);
     }
 
     @Override
     public int hashCode() {
-      return change.hashCode();
+      return Objects.hash(change, nodeTag);
     }
   }
 

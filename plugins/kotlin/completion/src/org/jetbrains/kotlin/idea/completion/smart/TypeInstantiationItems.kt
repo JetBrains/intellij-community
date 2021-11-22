@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.collectSyntheticStaticMembersAndConstructors
 import org.jetbrains.kotlin.idea.completion.*
+import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionCompositeDeclarativeInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
@@ -233,8 +234,7 @@ class TypeInstantiationItems(
                     argumentsOnly = true
                 )
 
-                1 -> (lookupElementFactory.insertHandlerProvider
-                    .insertHandler(visibleConstructors.single()) as KotlinFunctionInsertHandler.Normal).copy(argumentsOnly = true)
+                1 -> lookupElementFactory.insertHandlerProvider.insertHandler(visibleConstructors.single(), argumentsOnly = true)
 
                 else -> KotlinFunctionInsertHandler.Normal(
                     CallType.DEFAULT,
@@ -253,11 +253,18 @@ class TypeInstantiationItems(
                 shortenReferences(context, context.startOffset, context.tailOffset)
             }
 
-            if (baseInsertHandler.inputValueArguments) {
-                lookupElement = lookupElement.keepOldArgumentListOnTab()
-            }
-            if (baseInsertHandler.lambdaInfo != null) {
-                lookupElement.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
+            run {
+                val (inputValueArgs, isLambda) = when (baseInsertHandler) {
+                    is KotlinFunctionInsertHandler.Normal -> baseInsertHandler.inputValueArguments to (baseInsertHandler.lambdaInfo != null)
+                    is KotlinFunctionCompositeDeclarativeInsertHandler -> baseInsertHandler.inputValueArguments to baseInsertHandler.isLambda
+                    else -> false to false
+                }
+                if (inputValueArgs) {
+                    lookupElement = lookupElement.keepOldArgumentListOnTab()
+                }
+                if (isLambda) {
+                    lookupElement.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
+                }
             }
             lookupElement = lookupElement.assignSmartCompletionPriority(SmartCompletionItemPriority.INSTANTIATION)
         }

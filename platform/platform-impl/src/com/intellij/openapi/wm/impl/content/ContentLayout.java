@@ -3,13 +3,14 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 
 abstract class ContentLayout {
@@ -83,8 +84,9 @@ abstract class ContentLayout {
   public abstract String getNextContentActionName();
 
   protected boolean shouldShowId() {
-    JComponent component = myUi.window.getComponentIfInitialized();
-    return component != null && !"true".equals(component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL));
+    return !"true".equals(UIUtil.getClientProperty(
+      ComponentUtil.findParentByCondition(myUi.getComponent(), c -> UIUtil.getClientProperty(c, ToolWindowContentUi.HIDE_ID_LABEL) != null),
+      ToolWindowContentUi.HIDE_ID_LABEL));
   }
 
   boolean isIdVisible() {

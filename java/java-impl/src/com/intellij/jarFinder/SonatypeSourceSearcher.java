@@ -2,6 +2,7 @@
 package com.intellij.jarFinder;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +28,7 @@ public class SonatypeSourceSearcher extends SourceSearcher {
     throws SourceSearchException {
     try {
       indicator.setIndeterminate(true);
-      indicator.setText(IdeBundle.message("progress.message.connecting.to", "https://oss.sonatype.org"));
+      indicator.setText(IdeCoreBundle.message("progress.message.connecting.to", "https://oss.sonatype.org"));
 
       indicator.checkCanceled();
 

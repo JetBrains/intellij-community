@@ -53,7 +53,7 @@ public interface FilePropertyPusher<T> {
   ExtensionPointName<FilePropertyPusher<?>> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
 
   default void initExtra(@NotNull Project project) {
-    initExtra(project, project.getMessageBus());
+    project.getMessageBus();
   }
 
   default void afterRootsChanged(@NotNull Project project) {}
@@ -98,7 +98,6 @@ public interface FilePropertyPusher<T> {
   @Deprecated
   @SuppressWarnings("unused")
   default void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
-    initExtra(project, bus);
   }
 
   /**
@@ -123,15 +122,5 @@ public interface FilePropertyPusher<T> {
   default boolean acceptsFile(@NotNull VirtualFile file) {
     return false;
   }
-
-  /**
-   * @deprecated use {@link #initExtra(Project)}
-   */
-  @Deprecated
-  @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default void initExtra(@NotNull Project project, @NotNull MessageBus bus) {
-  }
-
   //</editor-fold>
 }

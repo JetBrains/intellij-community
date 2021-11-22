@@ -41,7 +41,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
   }
 
   fun `test no notification after branch checkout`() {
-    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler())
+    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler(project))
 
     worker.checkoutNewBranch("new", listOf(repo))
     val file1Name = "file1.txt"

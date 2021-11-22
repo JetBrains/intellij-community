@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  * Service for reformatting code fragments, getting names for elements
- * according to the user's code style and working with import statements and full-qualified names.
+ * according to the user's code style, and working with import statements and full-qualified names.
  *
  * @see com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
  * @see com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
@@ -128,7 +128,7 @@ public abstract class CodeStyleManager  {
   public abstract void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException;
 
   /**
-   * Re-formats a ranges of text in the specified file. This method works faster than
+   * Re-formats ranges of text in the specified file. This method works faster than
    * {@link #reformatRange(PsiElement, int, int)} but invalidates the
    * PSI structure for the file.
    *
@@ -270,7 +270,7 @@ public abstract class CodeStyleManager  {
    * that are executed sequentially. That is done primarily for ability to show progress dialog during formatting (formatting
    * is always performed from EDT, hence, the GUI freezes if we perform formatting as a single big iteration).
    * <p/>
-   * However, there are situation when we don't want to use such an approach - for example, the IDE sometimes inserts dummy
+   * However, there are situations when we don't want to use such an approach - for example, the IDE sometimes inserts dummy
    * text into file in order to calculate formatting-specific data and removes it after that. We don't want to allow Swing events
    * dispatching during that in order to not show that dummy text to the end-user.
    * <p/>
@@ -283,7 +283,7 @@ public abstract class CodeStyleManager  {
 
   /**
    * Disables automatic formatting of modified PSI elements, runs the specified operation
-   * and re-enables the formatting. Can be used to improve performance of PSI write
+   * and re-enables the formatting. Can be used to improve the performance of PSI write
    * operations.
    *
    * @param r the operation to run.

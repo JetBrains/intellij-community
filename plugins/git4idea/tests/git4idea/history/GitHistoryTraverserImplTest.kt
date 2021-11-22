@@ -119,7 +119,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
       val fileCommits = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.File(filePath))
 
       val authorCommitsWithFile = authorCommitIds.intersect(fileCommits)
-      val actualLastCommitByUserWithFile = authorCommitsWithFile.map { indexedRoot.loadTimedCommit(it) }.maxBy { it.timestamp }!!
+      val actualLastCommitByUserWithFile = authorCommitsWithFile.map { indexedRoot.loadTimedCommit(it) }.maxByOrNull { it.timestamp }!!
       val expectedCommitByUserWithFile = GitHistoryUtils.collectCommitsMetadata(project, repo.root, lastCommitByUserWithFile)!!.single()
       assertEquals(expectedCommitByUserWithFile.commitTime, actualLastCommitByUserWithFile.timestamp)
     }

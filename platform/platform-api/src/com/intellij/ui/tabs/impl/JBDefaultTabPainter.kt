@@ -3,7 +3,7 @@ package com.intellij.ui.tabs.impl
 
 import com.intellij.openapi.rd.fill2DRect
 import com.intellij.openapi.rd.paint2DLine
-import com.intellij.openapi.util.registry.ExperimentalUI
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition

@@ -8,7 +8,9 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.util.function.Consumer
@@ -42,6 +44,7 @@ class KotlincOutputParser : BuildOutputParser {
 
     val fileExtension = file.extension.toLowerCase()
     if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) { //NON-NLS
+      @NlsSafe
       val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
       return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
     }
@@ -91,6 +94,7 @@ class KotlincOutputParser : BuildOutputParser {
       return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), message, details), consumer)
     }
     else {
+      @NlsSafe
       val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
       return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
     }
@@ -139,7 +143,9 @@ class KotlincOutputParser : BuildOutputParser {
     else -> MessageEvent.Kind.SIMPLE
   }
 
+  @Contract(pure = true)
   private fun String.substringAfterAndTrim(index: Int) = substring(index + 1).trim()
+  @Contract(pure = true)
   private fun String.substringBeforeAndTrim(index: Int) = substring(0, index).trim()
   private fun String.colon() = indexOf(COLON)
   private fun String.colon(skip: Int): Int {

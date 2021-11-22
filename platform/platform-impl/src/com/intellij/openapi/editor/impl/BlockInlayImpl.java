@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -105,6 +106,15 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
   @Override
   public int getAsInt() {
     return myHeightInPixels;
+  }
+
+  @Override
+  public @NotNull InlayProperties getProperties() {
+    return new InlayProperties()
+      .relatesToPrecedingText(isRelatedToPrecedingText())
+      .showAbove(myShowAbove)
+      .showWhenFolded(myShowWhenFolded)
+      .priority(myPriority);
   }
 
   @Override

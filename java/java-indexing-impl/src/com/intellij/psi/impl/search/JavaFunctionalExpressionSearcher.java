@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -39,10 +39,7 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch.SearchParamet
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.ThreeState;
@@ -62,6 +59,9 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   @Override
   public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
+    if (ReadAction.compute(() -> p.getEffectiveSearchScope()) == GlobalSearchScope.EMPTY_SCOPE) {
+      return;
+    }
     Session session = ReadAction.compute(() -> new Session(p, consumer));
     session.processResults();
     if (!session.filesLookedInside.isEmpty() && LOG.isDebugEnabled()) {
@@ -91,6 +91,11 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
           PsiMethod saMethod = Objects.requireNonNull(LambdaUtil.getFunctionalInterfaceMethod(samClass));
           PsiType samType = saMethod.getReturnType();
           if (samType == null) continue;
+          if (session.method != null && 
+              !saMethod.equals(session.method) && 
+              !MethodSignatureUtil.isSuperMethod(saMethod, session.method)) {
+            continue;
+          }
 
           SearchScope scope = psiSearchHelper.getUseScope(samClass).intersectWith(session.scope);
           descriptors.add(new SamDescriptor(samClass, saMethod, samType, GlobalSearchScopeUtil.toGlobalSearchScope(scope, project)));
@@ -458,10 +463,12 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     private final AtomicInteger sureExprsAfterLightCheck = new AtomicInteger();
     private final AtomicInteger exprsToHeavyCheck = new AtomicInteger();
     private final Set<VirtualFile> filesLookedInside = ContainerUtil.newConcurrentSet();
+    private final @Nullable PsiMethod method;
 
     public Session(@NotNull SearchParameters parameters, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
       this.consumer = consumer;
       elementToSearch = parameters.getElementToSearch();
+      method = parameters.getMethod();
       project = parameters.getProject();
       psiManager = PsiManager.getInstance(project);
       scope = parameters.getEffectiveSearchScope();

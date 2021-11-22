@@ -8,7 +8,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,18 +50,13 @@ class JavaHomeFinderWsl extends JavaHomeFinderBasic {
       return myDistro.getWindowsPath(value);
     }
     else {
-      Map<String, String> mntRoots = myDistro.getDriveMountDirs();
+      String mntRoot = myDistro.getMntRoot();
       String converted = Stream.of(value.split(":"))
-        .filter(p -> !DEFAULT_PATHS.contains(p) && !inMountedRoots(p, mntRoots))
+        .filter(p -> !DEFAULT_PATHS.contains(p) && !p.startsWith(mntRoot))
         .map(myDistro::getWindowsPath)
-        .filter(Objects::nonNull)
         .collect(Collectors.joining(File.pathSeparator));
       return converted.isEmpty() ? null : converted;
     }
-  }
-
-  private static boolean inMountedRoots(String p, Map<String, String> roots) {
-    return roots.entrySet().stream().anyMatch(e -> p.startsWith(e.getKey()));
   }
 
   @Override

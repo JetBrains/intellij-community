@@ -1,0 +1,9 @@
+{
+    "usages": [
+        "Main.kt",
+        "Read.kt",
+        "Write.kt",
+        "JavaRead.java",
+        "JavaWrite.java"
+    ]
+}

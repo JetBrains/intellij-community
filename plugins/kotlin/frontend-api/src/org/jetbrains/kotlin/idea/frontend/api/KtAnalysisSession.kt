@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.frontend.api
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtCall
@@ -163,6 +164,7 @@ abstract class KtAnalysisSession(final override val token: ValidityToken) : Vali
         psiReceiverExpression
     )
 
+    @NlsSafe
     fun KtType.render(options: KtTypeRendererOptions = KtTypeRendererOptions.DEFAULT): String =
         typeRenderer.render(this, options)
 

@@ -134,7 +134,7 @@ class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAc
             return callableMemberDescriptors.filter { !it.isOverridable }
         }
 
-        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction {
             val declaration = diagnostic.psiElement.getNonStrictParentOfType<KtDeclaration>()!!
             return MakeOverriddenMemberOpenFix(declaration)
         }

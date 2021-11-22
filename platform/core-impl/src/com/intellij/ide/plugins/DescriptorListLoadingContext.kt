@@ -67,12 +67,12 @@ class DescriptorListLoadingContext constructor(
     get() = threadLocalXmlFactory.get()[0]!!.visitedFiles
 
   fun checkOptionalConfigShortName(configFile: String, descriptor: IdeaPluginDescriptor): Boolean {
-    val pluginId = descriptor.pluginId ?: return false
     val configNames = optionalConfigNames
     if (configNames == null || configFile.startsWith("intellij.")) {
       return false
     }
 
+    val pluginId = descriptor.pluginId
     val oldPluginId = configNames.put(configFile, pluginId)
     if (oldPluginId == null || oldPluginId == pluginId) {
       return false

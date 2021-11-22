@@ -36,7 +36,7 @@ class ComposeMppModuleTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.compose.mpp.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.mpp.description")
 
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator == MppModuleConfigurator && projectKind == ProjectKind.COMPOSE
 
     override fun Writer.getIrsToAddToBuildFile(module: ModuleIR): List<BuildSystemIR> = irsList {

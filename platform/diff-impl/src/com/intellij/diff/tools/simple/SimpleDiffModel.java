@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.util.DiffUtil;
@@ -23,8 +23,11 @@ public class SimpleDiffModel {
 
   @NotNull private final List<SimpleDiffChangeUi> myPresentations = new ArrayList<>();
 
+  @NotNull private final SimpleAlignedDiffModel myAlignedDiffModel;
+
   public SimpleDiffModel(@NotNull SimpleDiffViewer viewer) {
     myViewer = viewer;
+    myAlignedDiffModel = new SimpleAlignedDiffModel(viewer);
   }
 
   @NotNull
@@ -51,6 +54,7 @@ public class SimpleDiffModel {
 
       SimpleDiffChangeUi changeUi = myViewer.createUi(change);
       changeUi.installHighlighter(previousChange);
+      myAlignedDiffModel.alignChange(change);
       myPresentations.add(changeUi);
     }
 
@@ -66,6 +70,7 @@ public class SimpleDiffModel {
     myValidChanges.clear();
     myAllChanges.clear();
     myPresentations.clear();
+    myAlignedDiffModel.clear();
     myIsContentsEqual = ThreeState.UNSURE;
   }
 

@@ -3,6 +3,7 @@ package com.intellij.execution.wsl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.impl.wsl.WslConstants
 
 data class WslPath(val distributionId: String, val linuxPath: String) {
   val distribution: WSLDistribution by lazy {
@@ -14,8 +15,8 @@ data class WslPath(val distributionId: String, val linuxPath: String) {
     fun parseWindowsUncPath(windowsUncPath : String) : WslPath? {
       if (!WSLUtil.isSystemCompatible()) return null
       var path = FileUtil.toSystemDependentName(windowsUncPath)
-      if (!path.startsWith(WSLDistribution.UNC_PREFIX)) return null
-      path = StringUtil.trimStart(path, WSLDistribution.UNC_PREFIX)
+      if (!path.startsWith(WslConstants.UNC_PREFIX)) return null
+      path = StringUtil.trimStart(path, WslConstants.UNC_PREFIX)
       val index = path.indexOf('\\')
       if (index <= 0) return null
       return WslPath(path.substring(0, index), FileUtil.toSystemIndependentName(path.substring(index)))

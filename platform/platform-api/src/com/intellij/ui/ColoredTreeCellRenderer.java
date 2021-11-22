@@ -36,7 +36,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   private boolean myFocused;
   private boolean myFocusedCalculated;
 
-  protected boolean myUsedCustomSpeedSearchHighlighting = false;
+  protected boolean myUsedCustomSpeedSearchHighlighting;
 
   protected JTree myTree;
 

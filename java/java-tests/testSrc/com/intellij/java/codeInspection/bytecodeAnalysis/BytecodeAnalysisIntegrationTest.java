@@ -106,15 +106,18 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
 
     checkHasGutter("org.apache.velocity.util.ExceptionUtils",
                    "<html><i>Inferred</i> annotations available. Full signature:<p>\n" +
-                   "<b><i>@Contract('null,_,_->null')</i></b> \n" +
-                   "Throwable <b>createWithCause</b>(Class,\n String,\n Throwable)</html>");
+                   "<b><i><span style=\"color:#808000;\">@</span><span style=\"color:#808000;\">Contract</span><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"null,_,_->null\"</span><span style=\"\">)</span></i></b> \n" +
+                   "<span style=\"color:#000000;\">Throwable</span> <span style=\"color:#000000;\">createWithCause</span><span style=\"\">(</span><span style=\"color:#000000;\">Class</span><span style=\"\">,\n" +
+                   " </span> <span style=\"color:#000000;\">String</span><span style=\"\">,\n" +
+                   " </span> <span style=\"color:#000000;\">Throwable</span><span style=\"\">)</span></html>");
   }
 
   public void testExternalAnnoGutter() {
     checkHasGutter("java.lang.String",
-                   "<html>External and <i>inferred</i> annotations available. Full signature:<p>\n" +
-                   "<b><i>@Contract(pure = true)</i></b> \n" +
-                   "<b>String</b>(<b>@NotNull</b> String)</html>");
+                   "<html>External annotations available. Full signature:<p>\n" +
+                   "<b><span style=\"color:#808000;\">@</span><span style=\"color:#808000;\">Contract</span><span style=\"\">(</span><span style=\"\">pure</span><span style=\"\"> = </span><span style=\"color:#000080;font-weight:bold;\">true</span><span style=\"\">)</span></b> \n" +
+                   "<span style=\"color:#000000;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">char</span><span style=\"\">[]</span><span style=\"\">,\n" +
+                   " </span> <span style=\"color:#000080;font-weight:bold;\">boolean</span><span style=\"\">)</span></html>");
   }
 
   private void checkHasGutter(String className, String expectedText) {

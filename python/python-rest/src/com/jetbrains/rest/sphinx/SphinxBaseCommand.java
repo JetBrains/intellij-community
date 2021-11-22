@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.ReSTService;
-import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
@@ -170,10 +169,6 @@ public class SphinxBaseCommand {
     PythonCommandLineState.initPythonPath(cmd, true, pathList, sdkHomePath);
 
     PythonSdkType.patchCommandLineForVirtualenv(cmd, sdk);
-    BuildoutFacet facet = BuildoutFacet.getInstance(module);
-    if (facet != null) {
-      facet.patchCommandLineForBuildout(cmd);
-    }
 
     return cmd;
   }

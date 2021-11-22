@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
+    <orderEntry type="library" name="Velocity" level="project" />
   </component>
 </module>

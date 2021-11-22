@@ -78,6 +78,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
   @Nullable private String mySdkHomePath;
+  private PydevConsoleRunner myRunner;
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
 
@@ -451,6 +452,14 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void whenInitialized(Runnable runnable) {
     myInitialized.doWhenDone(runnable);
+  }
+
+  public void setRunner(PydevConsoleRunner runner) {
+    myRunner = runner;
+  }
+
+  public PydevConsoleRunner getRunner() {
+    return myRunner;
   }
 
   @Nullable

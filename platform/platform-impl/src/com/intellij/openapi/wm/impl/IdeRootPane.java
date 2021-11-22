@@ -14,7 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.ExperimentalUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader;
@@ -241,11 +241,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   void updateMainMenuActions() {
-    ((IdeMenuBar)menuBar).updateMenuActions(true);
+    ((IdeMenuBar)menuBar).updateMenuActions(false);
     menuBar.repaint();
 
     if (myCustomFrameTitlePane != null) {
-      myCustomFrameTitlePane.updateMenuActions(true);
+      myCustomFrameTitlePane.updateMenuActions(false);
       myCustomFrameTitlePane.repaint();
     }
   }

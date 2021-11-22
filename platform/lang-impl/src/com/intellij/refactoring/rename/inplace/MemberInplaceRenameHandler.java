@@ -23,7 +23,7 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
@@ -67,7 +67,7 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   public InplaceRefactoring doRename(@NotNull PsiElement elementToRename,
                                      @NotNull Editor editor,
                                      @Nullable DataContext dataContext) {
-    Component contextComponent = ObjectUtils.notNull(dataContext != null ? PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) : null, editor.getComponent());
+    Component contextComponent = ObjectUtils.notNull(dataContext != null ? PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext) : null, editor.getComponent());
     String newName = dataContext != null ? PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext) : null;
     PsiElement newElementToRename = null;
     if (elementToRename instanceof PsiNameIdentifierOwner) {

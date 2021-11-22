@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -42,6 +42,7 @@ public final class HighlightUtils {
    * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
    * Please use {@link #highlightElement(PsiElement, Editor)} instead.
    */
+  @Deprecated
   public static void highlightElement(@NotNull PsiElement element) {
     highlightElements(Collections.singleton(element));
   }

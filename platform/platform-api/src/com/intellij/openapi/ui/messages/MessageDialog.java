@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.openapi.ui.Messages.wrapToScrollPaneIfNeeded;
-
 public class MessageDialog extends DialogWrapper {
   protected @NlsContexts.DialogMessage @Nullable String myMessage;
   protected String[] myOptions;
@@ -53,7 +51,7 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        boolean canBeParent) {
     this(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, canBeParent, null);
   }
@@ -66,7 +64,7 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        boolean canBeParent,
                        @Nullable String helpId) {
     super(project, parentComponent, canBeParent, IdeModalityType.IDE);
@@ -99,7 +97,7 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        @Nullable String helpId) {
     setTitle(title);
     if (Messages.isMacSheetEmulation()) {
@@ -239,7 +237,7 @@ public class MessageDialog extends DialogWrapper {
     JPanel panel = createIconPanel();
     if (myMessage != null) {
       JTextPane messageComponent = createMessageComponent(myMessage);
-      panel.add(wrapToScrollPaneIfNeeded(messageComponent, 100, 15), BorderLayout.CENTER);
+      panel.add(Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15), BorderLayout.CENTER);
     }
     return panel;
   }

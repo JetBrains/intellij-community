@@ -23,7 +23,7 @@ object ComposeWebModuleTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.compose.web.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.web.description")
 
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.js && projectKind == ProjectKind.COMPOSE
 
     override fun isApplicableTo(

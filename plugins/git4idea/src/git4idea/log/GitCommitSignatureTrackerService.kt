@@ -10,21 +10,26 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.ui.ScrollingUtil
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
 import com.intellij.vcs.log.ui.table.column.isVisible
+import com.intellij.vcs.log.util.contains
+import com.intellij.vcs.log.util.expandBy
+import com.intellij.vcs.log.util.limitedBy
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.swing.JScrollPane
+import javax.swing.event.ChangeListener
 import javax.swing.event.TableModelEvent
 import javax.swing.event.TableModelListener
-import kotlin.math.min
 
 @Service(Service.Level.PROJECT)
 internal class GitCommitSignatureTrackerService {
@@ -51,7 +56,8 @@ internal class GitCommitSignatureTrackerService {
 
 private val LOG = logger<GitCommitSignatureTracker>()
 
-private const val TRACK_SIZE = 50
+private const val TRACKED_ROWS_DELTA = 15
+private const val TRACKED_ROWS_DELAY = 300L
 
 private class GitCommitSignatureTracker(
   private val table: VcsLogGraphTable,
@@ -61,7 +67,8 @@ private class GitCommitSignatureTracker(
   private val project: Project get() = table.logData.project
   private val model: GraphTableModel get() = table.model
 
-  private val scope = CoroutineScope(onUiThread().coroutineDispatchingContext())
+  // `later()` is important here to ensure [VcsLogGraphTable] is already wrapped with scroll pane
+  private val scope = CoroutineScope(onUiThread().later().coroutineDispatchingContext())
     .also { Disposer.register(this) { it.cancel() } }
 
   private val commitSignatures = mutableMapOf<CommitId, GitCommitSignature>()
@@ -73,30 +80,34 @@ private class GitCommitSignatureTracker(
 
   override fun dispose() = Unit
 
+  @Suppress("EXPERIMENTAL_API_USAGE")
   fun track() {
     scope.launch(CoroutineName("Git Commit Signature Tracker - ${table.id}")) {
-      val trackedEvents =
-        combine(table.modelChangedFlow(), table.columnVisibilityFlow(column)) { _, isColumnVisible -> isColumnVisible }
+      val trackedRowsFlow =
+        combine(table.modelChangedFlow(), table.visibleRowsFlow(TRACKED_ROWS_DELTA)) { _, rowsRange -> rowsRange }
 
-      trackedEvents.collectLatest { isColumnVisible ->
-        if (!isColumnVisible) return@collectLatest
-        update()
+      combine(
+        trackedRowsFlow.debounce(TRACKED_ROWS_DELAY),
+        table.columnVisibilityFlow(column),
+        ::Pair
+      ).collectLatest { (rowsRange, isColumnVisible) ->
+        if (rowsRange.isEmpty() || !isColumnVisible) return@collectLatest
+        update(rowsRange)
       }
     }
   }
 
-  private suspend fun update() =
+  private suspend fun update(rowsRange: IntRange) =
     try {
-      doUpdate()
+      doUpdate(rowsRange)
     }
     catch (e: VcsException) {
       LOG.warn("Failed to load commit signatures", e)
     }
 
   @Throws(VcsException::class)
-  private suspend fun doUpdate() {
-    val size = min(TRACK_SIZE, table.rowCount)
-    val rows = IntArray(size) { it }
+  private suspend fun doUpdate(rowsRange: IntRange) {
+    val rows = rowsRange.toList().toIntArray()
     val rootCommits = model.getCommitIds(rows).groupBy { it.root }
 
     for ((root, commits) in rootCommits) {
@@ -143,4 +154,39 @@ private fun VcsLogGraphTable.columnVisibilityFlow(column: VcsLogColumn<*>): Flow
   }
 
   return flow.distinctUntilChanged()
+}
+
+@Suppress("EXPERIMENTAL_API_USAGE")
+private fun VcsLogGraphTable.visibleRowsFlow(delta: Int): Flow<IntRange> =
+  visibleRowsFlow()
+    .scan(IntRange.EMPTY) { currentRangeWithDelta, newRange ->
+      if (newRange in currentRangeWithDelta) currentRangeWithDelta
+      else newRange.expandBy(delta).limitedBy(0 until rowCount)
+    }
+    .drop(1) // skip initial `IntRange.EMPTY` from `scan`
+    .distinctUntilChanged()
+
+@Suppress("EXPERIMENTAL_API_USAGE")
+private fun VcsLogGraphTable.visibleRowsFlow(): Flow<IntRange> {
+  val viewport = parent ?: return emptyFlow()
+  val scrollPane = viewport.parent as? JScrollPane ?: return emptyFlow()
+
+  val flow = callbackFlow {
+    val emit = { offer(getVisibleRows()) }
+    val listener = ChangeListener { emit() }
+
+    emit() // initial value
+
+    scrollPane.verticalScrollBar.model.addChangeListener(listener)
+    awaitClose { scrollPane.verticalScrollBar.model.removeChangeListener(listener) }
+  }
+
+  return flow.distinctUntilChanged()
+}
+
+private fun VcsLogGraphTable.getVisibleRows(): IntRange {
+  val visibleRows = ScrollingUtil.getVisibleRows(this)
+  if (visibleRows.first < 0 || visibleRows.second < 0) return IntRange.EMPTY
+
+  return visibleRows.first..visibleRows.second
 }

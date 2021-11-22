@@ -9,7 +9,7 @@ class IntroduceVariableUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("introduce.variable.inplace", 2)
+    private val GROUP = EventLogGroup("introduce.variable.inplace", 3)
 
     @JvmField
     val changed = EventFields.Boolean("changed")
@@ -25,7 +25,7 @@ class IntroduceVariableUsagesCollector : CounterUsagesCollector() {
     val settingsOnPerform = GROUP.registerVarargEvent("settingsOnHide", varType, finalState)
 
     @JvmField
-    val settingsOnShow = GROUP.registerVarargEvent("settingsOnShow", varType, finalState)
+    val settingsOnShow = GROUP.registerVarargEvent("settingsOnShow", EventFields.InputEvent, varType, finalState)
 
   }
 }

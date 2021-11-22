@@ -28,7 +28,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   public abstract Collection<Change> getChanges();
 
   /**
-   * Logical id that identifies the changelist and should survive name changing.
+   * Logical id that identifies the changelist and should survive name change.
    */
   @NotNull
   @NonNls
@@ -63,13 +63,6 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   public boolean isBlank() {
     return hasDefaultName() && getData() == null;
   }
-
-  /**
-   * @deprecated use {@link ChangeListManager#editName}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void setName(@NotNull String name);
 
   /**
    * @deprecated use {@link ChangeListManager#editComment}

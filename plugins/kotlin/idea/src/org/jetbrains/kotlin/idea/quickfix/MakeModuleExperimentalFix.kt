@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.CompilerSettings
@@ -40,7 +40,7 @@ open class MakeModuleExperimentalFix(
     private val compilerArgument = "-X$experimentalPrefix=$annotationFqName"
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val modelsProvider = IdeModifiableModelsProviderImpl(project)
+        val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
         try {
             val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false, commitModel = true)
             val facetSettings = facet.configuration.settings

@@ -4,8 +4,8 @@ package com.intellij.ide.plugins
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.getErrorsAsString
-import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.util.JpsPathUtil.urlToPath
 import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Path
@@ -13,32 +13,46 @@ import java.nio.file.Path
 class PluginModelTest {
   @Test
   fun check() {
-    val modules = IntelliJProjectConfiguration.loadIntelliJProject(PluginModelValidator.homePath).modules.map { module ->
-      object : PluginModelValidator.Module {
-        override val name: String
-          get() = module.name
-
-        override fun getSourceRoots(): List<Path> {
-          return module.sourceRoots.asSequence()
-            .filter { !it.rootType.isForTests }
-            .map { Path.of(JpsPathUtil.urlToPath(it.url)) }
-            .toList()
-        }
-      }
-    }
-    val validator = PluginModelValidator()
-    val errors = validator.validate(modules)
-    if (!errors.isEmpty()) {
-      System.err.println(getErrorsAsString(errors, includeStackTrace = false))
-      Assert.fail()
-    }
-
+    val validator = validatePluginModel()
     if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-      val communityPath = Path.of(PlatformTestUtil.getCommunityPath())
-      val out = communityPath.resolve(System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
+      val out = Path.of(PlatformTestUtil.getCommunityPath(),
+                        System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
       validator.writeGraph(out)
-      println("\nGraph is written to $out")
+      println()
+      println("Graph is written to $out")
       println("Drop file to https://plugingraph.ij.pages.jetbrains.team/ to visualize.")
     }
+  }
+}
+
+fun validatePluginModel(): PluginModelValidator {
+  val modules = IntelliJProjectConfiguration.loadIntelliJProject(homePath.toString())
+    .modules
+    .map { wrap(it) }
+
+  val validator = PluginModelValidator(modules)
+  val errors = validator.errorsAsString
+  if (!errors.isEmpty()) {
+    System.err.println(errors)
+    Assert.fail()
+  }
+  return validator
+}
+
+private fun wrap(module: JpsModule): PluginModelValidator.Module {
+  return object : PluginModelValidator.Module {
+    override val name: String
+      get() = module.name
+
+    override val sourceRoots: List<Path>
+      get() {
+        return module.sourceRoots
+          .asSequence()
+          .filter { !it.rootType.isForTests }
+          .map { it.url }
+          .map(::urlToPath)
+          .map(Path::of)
+          .toList()
+      }
   }
 }

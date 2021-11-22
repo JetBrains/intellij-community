@@ -247,7 +247,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
 
       tree.requestFocusInWindow()
-      val settings = runManager.selectedConfiguration
+      val settings = getSelectedConfiguration()
       if (settings != null) {
         if (selectConfiguration(settings.configuration)) {
           return@invokeLater
@@ -258,6 +258,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
       drawPressAddButtonMessage(null)
     }, ModalityState.stateForComponent(wholePanel!!))
+  }
+
+  protected open fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
+    return runManager.selectedConfiguration
   }
 
   private fun selectConfiguration(configuration: RunConfiguration): Boolean {
@@ -383,23 +387,26 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private fun installUpdateListeners(info: SingleConfigurationConfigurable<RunConfiguration>) {
     var changed = false
     info.editor.addSettingsEditorListener { editor ->
-      update()
-      val configuration = info.configuration
-      if (configuration is LocatableConfiguration) {
-        if (configuration.isGeneratedName && !changed) {
-          try {
-            val snapshot = editor.snapshot.configuration as LocatableConfiguration
-            val generatedName = snapshot.suggestedName()
-            if (generatedName != null && generatedName.isNotEmpty()) {
-              info.nameText = generatedName
-              changed = false
+      ApplicationManager.getApplication().invokeLater(
+        {
+          update()
+          val configuration = info.configuration
+          if (configuration is LocatableConfiguration) {
+            if (configuration.isGeneratedName && !changed) {
+              try {
+                val snapshot = editor.snapshot.configuration as LocatableConfiguration
+                val generatedName = snapshot.suggestedName()
+                if (generatedName != null && generatedName.isNotEmpty()) {
+                  info.nameText = generatedName
+                  changed = false
+                }
+              }
+              catch (ignore: ConfigurationException) {
+              }
             }
           }
-          catch (ignore: ConfigurationException) {
-          }
-        }
-      }
-      setupDialogBounds()
+          setupDialogBounds()
+        }, { isDisposed })
     }
 
     info.addNameListener(object : DocumentAdapter() {

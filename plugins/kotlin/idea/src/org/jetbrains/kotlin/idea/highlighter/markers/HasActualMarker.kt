@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -26,7 +27,12 @@ private fun ModuleDescriptor?.getPlatformName(): String? {
     // TODO(dsavvinov): use better description
     return when {
         platform.isCommon() -> "common"
-        else -> platform.single().platformName
+        else -> {
+            assert(platform.componentPlatforms.map { it.platformName }.toSet().size == 1) {
+                "Expected the same platform name for component platforms in non-common module"
+            }
+            platform.first().platformName
+        }
     }
 }
 
@@ -55,8 +61,10 @@ class ActualExpectedPsiElementCellRenderer : DefaultPsiElementCellRenderer() {
     override fun getContainerText(element: PsiElement?, name: String?) = ""
 }
 
+@Nls
 fun KtDeclaration.navigateToActualTitle() = KotlinBundle.message("highlighter.title.choose.actual.for", name.toString())
 
+@Nls
 fun KtDeclaration.navigateToActualUsagesTitle() = KotlinBundle.message("highlighter.title.actuals.for", name.toString())
 
 fun buildNavigateToActualDeclarationsPopup(element: PsiElement?): NavigationPopupDescriptor? {

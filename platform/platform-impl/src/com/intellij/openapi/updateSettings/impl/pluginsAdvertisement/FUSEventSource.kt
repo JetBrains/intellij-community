@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.BrowserUtil
@@ -52,6 +52,11 @@ private val OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent(
   SOURCE_FIELD,
 )
 
+private val LEARN_MORE_EVENT = GROUP.registerEvent(
+  "learn.more",
+  SOURCE_FIELD,
+)
+
 private val IGNORE_EXTENSIONS_EVENT = GROUP.registerEvent(
   "ignore.extensions",
   SOURCE_FIELD,
@@ -67,7 +72,7 @@ enum class FUSEventSource {
   NOTIFICATION;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
-    isIgnoreUltimate = true
+    isIgnoreIdeSuggestion = true
     IGNORE_ULTIMATE_EVENT.log(project, this)
   }
 
@@ -87,9 +92,15 @@ enum class FUSEventSource {
   ) = INSTALL_PLUGINS_EVENT.log(project, plugins, this)
 
   @JvmOverloads
-  fun openDownloadPageAndLog(project: Project? = null) {
-    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/idea/download/"))
+  fun openDownloadPageAndLog(project: Project? = null, url: String) {
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
     OPEN_DOWNLOAD_PAGE_EVENT.log(project, this)
+  }
+
+  @JvmOverloads
+  fun learnMoreAndLog(project: Project? = null) {
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/products.html#type=ide"))
+    LEARN_MORE_EVENT.log(project, this)
   }
 
   @JvmOverloads

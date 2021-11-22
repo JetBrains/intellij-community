@@ -58,7 +58,10 @@ class EditorHistoryManagerTest {
     }
 
     val threadDumpBefore = ThreadDumper.dumpThreadsToString()
-    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(virtualFile)).ensureCollected()
+
+    fun createWatcher() = GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(virtualFile))
+    createWatcher().ensureCollected()
+
     val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile)
     if (document != null) {
       fail<Any>("Document wasn't collected, see heap dump at ${publishHeapDump(EditorHistoryManagerTest::class.java.name)}")

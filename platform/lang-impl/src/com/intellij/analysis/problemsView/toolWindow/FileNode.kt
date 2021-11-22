@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.icons.AllIcons
@@ -16,13 +16,14 @@ import java.util.Objects.hash
 
 class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
 
+  override val descriptor
+    get() = project?.let { OpenFileDescriptor(it, file) }
+
   override fun getLeafState() = if (parentDescriptor is Root) LeafState.NEVER else LeafState.DEFAULT
 
-  override fun getName() = file.presentableName ?: file.name
+  override fun getName() = file.presentableName
 
   override fun getVirtualFile() = file
-
-  override fun getDescriptor() = project?.let { OpenFileDescriptor(it, file) }
 
   override fun update(project: Project, presentation: PresentationData) {
     presentation.addText(name, REGULAR_ATTRIBUTES)

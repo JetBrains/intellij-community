@@ -187,7 +187,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     else if (type instanceof PyUnionType) {
       return ((PyUnionType)type).map(member -> transformTypeFromAssertion(member, transformToDefinition, context, null));
     }
-    else if (type instanceof PyClassType && "types.Union".equals(((PyClassType)type).getClassQName()) && typeElement != null) {
+    else if (type instanceof PyClassType && "types.UnionType".equals(((PyClassType)type).getClassQName()) && typeElement != null) {
       final Ref<PyType> typeFromTypingProvider = PyTypingTypeProvider.getType(typeElement, context);
       if (typeFromTypingProvider != null) {
         return transformTypeFromAssertion(typeFromTypingProvider.get(), transformToDefinition, context, null);

@@ -35,21 +35,21 @@ class RenameKotlinFileProcessor : RenamePsiFileProcessor() {
         allRenames: MutableMap<PsiElement, String>,
         scope: SearchScope
     ) {
-        val jetFile = element as? KtFile ?: return
+        val ktFile = element as? KtFile ?: return
         if (FileTypeManager.getInstance().getFileTypeByFileName(newName) != KotlinFileType.INSTANCE) {
             return
         }
 
         val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
 
-        val fileInfo = JvmFileClassUtil.getFileClassInfoNoResolve(jetFile)
+        val fileInfo = JvmFileClassUtil.getFileClassInfoNoResolve(ktFile)
         if (!fileInfo.withJvmName) {
             val facadeFqName = fileInfo.facadeClassFqName
-            val project = jetFile.project
+            val project = ktFile.project
             val facadeClass = JavaPsiFacade.getInstance(project)
                 .findClass(facadeFqName.asString(), GlobalSearchScope.moduleScope(module)) as? KtLightClass
             if (facadeClass != null) {
-                allRenames[FileRenamingPsiClassWrapper(facadeClass, jetFile)] = PackagePartClassUtils.getFilePartShortName(newName)
+                allRenames[FileRenamingPsiClassWrapper(facadeClass, ktFile)] = PackagePartClassUtils.getFilePartShortName(newName)
             }
         }
     }

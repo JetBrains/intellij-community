@@ -1,0 +1,2 @@
+slumber.API.__init__
+slumber.Resource.as_raw

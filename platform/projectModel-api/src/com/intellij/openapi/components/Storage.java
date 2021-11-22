@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +61,11 @@ public @interface Storage {
 
   /**
    * Whether to apply save threshold policy (defaults to {@code true} if {@link #roamingType()} is set to {@link RoamingType#DISABLED}).
+   * <p>
+   * If the threshold is enabled, calls of {@link Application#saveSettings()} will save the component at most once in 5 minutes, but if user
+   * explicitly invokes 'Save All' action, the component will be saved immediately. Use this attribute to disable the threshold for components
+   * which configuration may be read from external processes, and therefore it's important to save them immediately.
+   * </p>
    */
   ThreeState useSaveThreshold() default ThreeState.UNSURE;
 

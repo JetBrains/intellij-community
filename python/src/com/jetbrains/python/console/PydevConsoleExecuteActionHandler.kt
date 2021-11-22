@@ -119,7 +119,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       }
     })
 
-    val prompt = "In[$myIpythonInputPromptCount]:"
+    val prompt = "In [$myIpythonInputPromptCount]:"
     val indentPrompt = PyConsoleUtil.IPYTHON_INDENT_PROMPT.padStart(prompt.length)
     myConsoleView.prompt = prompt
     myConsoleView.indentPrompt = indentPrompt

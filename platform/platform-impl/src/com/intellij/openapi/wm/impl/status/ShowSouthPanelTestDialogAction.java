@@ -55,11 +55,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       init();
     }
 
-    @Override
-    protected void dispose() {
-      super.dispose();
-    }
-
     @Nullable
     @Override
     protected JComponent createCenterPanel() {

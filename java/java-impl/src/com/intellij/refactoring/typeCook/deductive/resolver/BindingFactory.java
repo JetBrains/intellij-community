@@ -30,8 +30,8 @@ import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -78,35 +78,16 @@ public class BindingFactory {
   }
 
   private class BindingImpl extends Binding {
-    private final TIntObjectHashMap<PsiType> myBindings;
+    private final Int2ObjectMap<PsiType> myBindings = new Int2ObjectOpenHashMap<>();
     private boolean myCyclic;
 
     BindingImpl(final PsiTypeVariable var, final PsiType type) {
-      myBindings = new TIntObjectHashMap<>();
       myCyclic = type instanceof PsiTypeVariable;
 
       myBindings.put(var.getIndex(), type);
     }
 
-    BindingImpl(final int index, final PsiType type) {
-      myBindings = new TIntObjectHashMap<>();
-      myCyclic = type instanceof PsiTypeVariable;
-
-      myBindings.put(index, type);
-
-      if (type instanceof Bottom) {
-        final Set<PsiTypeVariable> cluster = myFactory.getClusterOf(index);
-
-        if (cluster != null) {
-          for (PsiTypeVariable var : cluster) {
-            myBindings.put(var.getIndex(), type);
-          }
-        }
-      }
-    }
-
     BindingImpl() {
-      myBindings = new TIntObjectHashMap<>();
       myCyclic = false;
     }
 
@@ -575,22 +556,12 @@ public class BindingFactory {
 
     @Override
     public int getWidth() {
-      class MyProcecure implements TObjectProcedure<PsiType> {
-        int width;
-        @Override
-        public boolean execute(PsiType type) {
-          if (substitute(type)  != null) width++;
-          return true;
-        }
-
-        public int getWidth() {
-          return width;
-        }
+      int width= 0;
+      for (Int2ObjectMap.Entry<PsiType> entry : myBindings.int2ObjectEntrySet()) {
+        PsiType type = entry.getValue();
+        if (substitute(type)  != null) width++;
       }
-
-      MyProcecure procedure = new MyProcecure();
-      myBindings.forEachValue(procedure);
-      return procedure.getWidth();
+      return width;
     }
 
     @Override

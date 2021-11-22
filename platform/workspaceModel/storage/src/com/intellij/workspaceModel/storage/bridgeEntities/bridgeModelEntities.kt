@@ -165,7 +165,7 @@ class JavaModuleSettingsEntity(
   val module: ModuleEntity by moduleDelegate
 
   companion object {
-    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, JavaModuleSettingsEntity>(ModuleEntity::class.java)
+    val moduleDelegate = OneToOneChild.NotNull<JavaModuleSettingsEntity, ModuleEntity>(ModuleEntity::class.java)
   }
 }
 
@@ -186,7 +186,7 @@ class ModuleCustomImlDataEntity(
   val module: ModuleEntity by moduleDelegate
 
   companion object {
-    val moduleDelegate = OneToOneChild.NotNull< ModuleCustomImlDataEntity, ModuleEntity>(ModuleEntity::class.java, true)
+    val moduleDelegate = OneToOneChild.NotNull< ModuleCustomImlDataEntity, ModuleEntity>(ModuleEntity::class.java)
   }
 }
 
@@ -270,7 +270,7 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   }
 }
 
-open class SourceRootEntity(
+class SourceRootEntity(
   val url: VirtualFileUrl,
   val rootType: String
 ) : WorkspaceEntityBase() {
@@ -456,12 +456,12 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAsse
   }
 }
 
-open class ContentRootEntity(
+class ContentRootEntity(
   val url: VirtualFileUrl,
   val excludedUrls: List<VirtualFileUrl>,
   val excludedPatterns: List<String>
 ) : WorkspaceEntityBase() {
-  open val module: ModuleEntity by moduleDelegate
+  val module: ModuleEntity by moduleDelegate
   val sourceRoots: Sequence<SourceRootEntity> by sourceRootDelegate
 
   companion object {
@@ -502,15 +502,15 @@ class SourceRootOrderEntity(
   val contentRootEntity: ContentRootEntity by contentRootDelegate
 
   companion object {
-    val contentRootDelegate = OneToOneChild.NotNull<SourceRootOrderEntity, ContentRootEntity>(ContentRootEntity::class.java, true)
+    val contentRootDelegate = OneToOneChild.NotNull<SourceRootOrderEntity, ContentRootEntity>(ContentRootEntity::class.java)
   }
 }
 
 class ModifiableSourceRootOrderEntity : ModifiableWorkspaceEntityBase<SourceRootOrderEntity>() {
   var orderOfSourceRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 
-  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class.java, ContentRootEntity::class.java,
-                                                                           true)
+  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class.java, ContentRootEntity::class.java
+  )
 }
 
 fun ContentRootEntity.getSourceRootOrder() = referrers(SourceRootOrderEntity::contentRootEntity).firstOrNull()
@@ -658,7 +658,7 @@ class LibraryPropertiesEntity(
   val library: LibraryEntity by libraryDelegate
 
   companion object {
-    val libraryDelegate = OneToOneChild.NotNull<LibraryPropertiesEntity, LibraryEntity>(LibraryEntity::class.java, true)
+    val libraryDelegate = OneToOneChild.NotNull<LibraryPropertiesEntity, LibraryEntity>(LibraryEntity::class.java)
   }
 }
 
@@ -677,7 +677,7 @@ class SdkEntity(
   val library: LibraryEntity by libraryDelegate
 
   companion object {
-    val libraryDelegate = OneToOneChild.NotNull<SdkEntity, LibraryEntity>(LibraryEntity::class.java, true)
+    val libraryDelegate = OneToOneChild.NotNull<SdkEntity, LibraryEntity>(LibraryEntity::class.java)
   }
 }
 
@@ -715,7 +715,7 @@ class ExternalSystemModuleOptionsEntity(
   val module: ModuleEntity by moduleDelegate
 
   companion object {
-    val moduleDelegate = OneToOneChild.NotNull<ExternalSystemModuleOptionsEntity, ModuleEntity>(ModuleEntity::class.java, true)
+    val moduleDelegate = OneToOneChild.NotNull<ExternalSystemModuleOptionsEntity, ModuleEntity>(ModuleEntity::class.java)
   }
 }
 
@@ -806,7 +806,7 @@ class ArtifactEntity(
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
   override fun persistentId(): ArtifactId = ArtifactId(name)
 
-  val rootElement: CompositePackagingElementEntity by rootElementDelegate
+  val rootElement: CompositePackagingElementEntity? by rootElementDelegate
 
   val customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
 

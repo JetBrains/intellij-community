@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -290,6 +291,9 @@ public final class XLineBreakpointManager {
     }
 
     private boolean isInsideGutter(EditorMouseEvent e, Editor editor) {
+      if (ExperimentalUI.isNewUI() && e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
+        return true;
+      }
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA && e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
         return false;
       }

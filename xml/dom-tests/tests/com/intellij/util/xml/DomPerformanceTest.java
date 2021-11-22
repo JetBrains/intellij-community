@@ -19,6 +19,7 @@ import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -26,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -38,38 +38,36 @@ import java.util.List;
 @HardwareAgentRequired
 public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
-    MyElement element = createElement("<root xmlns=\"http://www.w3.org/1999/xhtml\"/>", MyElement.class);
-
-    final MyElement child = element.addChildElement();
-    child.getAttr().setValue("239");
-    child.getChild239().getAttr().setValue("42");
-    child.getChild().getAttr().setValue("42xx");
-    child.getChild2().getAttr().setValue("42yy");
-    child.addChildElement().getChild().addFooChild().getAttr().setValue("xxx");
-    child.addChildElement().addFooChild().getAttr().setValue("yyy");
-    child.addChildElement().addFooChild().addBarChild().addBarChild().addChildElement().getChild().getAttr().setValue("xxx");
-    child.addChildElement().addBarComposite().setValue("ssss");
-    child.addBarChild().getChild2().getAttr().setValue("234178956023");
+    Ref<MyElement> ref = new Ref<>();
 
     PlatformTestUtil.startPerformanceTest("creating", 40_000, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      for (int i = 0; i < 239; i++) {
-        element.addChildElement().copyFrom(child);
-      }
-    })).attempts(1).assertTiming();
+        MyElement element = createElement("<root xmlns=\"http://www.w3.org/1999/xhtml\"/>", MyElement.class);
+        MyElement child = element.addChildElement();
+        child.getAttr().setValue("239");
+        child.getChild239().getAttr().setValue("42");
+        child.getChild().getAttr().setValue("42xx");
+        child.getChild2().getAttr().setValue("42yy");
+        child.addChildElement().getChild().addFooChild().getAttr().setValue("xxx");
+        child.addChildElement().addFooChild().getAttr().setValue("yyy");
+        child.addChildElement().addFooChild().addBarChild().addBarChild().addChildElement().getChild().getAttr().setValue("xxx");
+        child.addChildElement().addBarComposite().setValue("ssss");
+        child.addBarChild().getChild2().getAttr().setValue("234178956023");
+        for (int i = 0; i < 239; i++) {
+          element.addChildElement().copyFrom(child);
+        }
+        ref.set(element);
+    }))
+      .assertTiming();
 
-    final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
+    MyElement newElement = createElement(DomUtil.getFile(ref.get()).getText(), MyElement.class);
 
-    PlatformTestUtil.startPerformanceTest("visiting", 450, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        newElement.acceptChildren(new DomElementVisitor() {
-          @Override
-          public void visitDomElement(DomElement element) {
-            element.acceptChildren(this);
-          }
-        });
-      }
-    }).assertTiming();
+    PlatformTestUtil.startPerformanceTest("visiting", 450, () ->
+      newElement.acceptChildren(new DomElementVisitor() {
+        @Override
+        public void visitDomElement(DomElement element) {
+          element.acceptChildren(this);
+        }
+      })).assertTiming();
   }
 
   public void testShouldntParseNonDomFiles() throws Throwable {

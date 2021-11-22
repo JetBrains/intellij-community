@@ -24,7 +24,7 @@ public final class PyMatchStatementControlFlowBuilder {
     myBaseVisitor = baseVisitor;
   }
 
-  public final void build(@NotNull PyMatchStatement matchStatement) {
+  public void build(@NotNull PyMatchStatement matchStatement) {
     myBuilder.startNode(matchStatement);
     PyExpression subject = matchStatement.getSubject();
     if (subject != null) {

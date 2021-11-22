@@ -538,7 +538,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-
+  public boolean ENABLE_SECOND_REFORMAT;
   // endregion
 
   //----------------------------------------------------------------------------------------

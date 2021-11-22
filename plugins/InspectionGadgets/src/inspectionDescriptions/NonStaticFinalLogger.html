@@ -1,9 +1,8 @@
 <html>
 <body>
-Reports the logger fields on classes that are not declared static and final.
+Reports logger fields that are not declared <code>static</code> and/or <code>final</code>.
 Ensuring that every class logger is effectively constant and bound to that class
-simplifies the task of providing a unified logging implementation for an application. Interfaces,
-enumerations, annotations, and inner classes are not reported by this inspection.
+simplifies the task of providing a unified logging implementation for an application.
 <p>A quick-fix is provided to change the logger modifiers to <code>static final</code>.</p>
 <p><b>Example:</b></p>
 <pre><code>

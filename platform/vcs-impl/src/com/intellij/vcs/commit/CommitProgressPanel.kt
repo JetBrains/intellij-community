@@ -46,6 +46,7 @@ import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
 import kotlin.properties.Delegates.observable
+import kotlin.properties.ReadWriteProperty
 
 private fun JBLabel.setError(@NlsContexts.Label errorText: String) {
   text = errorText
@@ -71,19 +72,15 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
   private val failuresPanel = FailuresPanel()
   private val label = JBLabel().apply { isVisible = false }
 
-  override var isEmptyMessage: Boolean by observable(false) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
-    update()
-  }
+  override var isEmptyMessage by stateFlag()
+  override var isEmptyChanges by stateFlag()
+  override var isDumbMode by stateFlag()
 
-  override var isEmptyChanges: Boolean by observable(false) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
-    update()
-  }
-
-  override var isDumbMode: Boolean by observable(false) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
-    update()
+  protected fun stateFlag(): ReadWriteProperty<Any?, Boolean> {
+    return observable(false) { _, oldValue, newValue ->
+      if (oldValue == newValue) return@observable
+      update()
+    }
   }
 
   fun setup(commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent) {

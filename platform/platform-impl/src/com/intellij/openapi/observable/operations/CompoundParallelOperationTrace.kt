@@ -2,16 +2,12 @@
 package com.intellij.openapi.observable.operations
 
 import com.intellij.openapi.diagnostic.Logger
-import java.util.concurrent.CopyOnWriteArrayList
 
-class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) {
+class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) : AbstractObservableOperationTrace() {
 
   private val traces = LinkedHashMap<Id, Int>()
 
-  private val beforeOperationListeners = CopyOnWriteArrayList<() -> Unit>()
-  private val afterOperationListeners = CopyOnWriteArrayList<() -> Unit>()
-
-  fun isOperationCompleted(): Boolean {
+  override fun isOperationCompleted(): Boolean {
     synchronized(this) {
       return traces.isEmpty()
     }
@@ -25,7 +21,7 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
     }
     if (isOperationCompletedBeforeStart) {
       debug("Operation is started")
-      beforeOperationListeners.forEach { it() }
+      fireOperationStarted()
     }
   }
 
@@ -37,7 +33,7 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
     }
     if (isOperationCompletedAfterFinish) {
       debug("Operation is finished")
-      afterOperationListeners.forEach { it() }
+      fireOperationFinished()
     }
   }
 
@@ -57,31 +53,11 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
     return taskCounter == 1
   }
 
-  fun beforeOperation(listener: Listener) {
-    beforeOperation(listener::listen)
-  }
-
-  fun beforeOperation(listener: () -> Unit) {
-    beforeOperationListeners.add(listener)
-  }
-
-  fun afterOperation(listener: Listener) {
-    afterOperation(listener::listen)
-  }
-
-  fun afterOperation(listener: () -> Unit) {
-    afterOperationListeners.add(listener)
-  }
-
   private fun debug(message: String) {
     if (LOG.isDebugEnabled) {
       val debugPrefix = if (debugName == null) "" else "$debugName: "
       LOG.debug("$debugPrefix$message")
     }
-  }
-
-  interface Listener {
-    fun listen()
   }
 
   companion object {

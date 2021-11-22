@@ -383,6 +383,8 @@ public interface Document extends UserDataHolder {
    *
    * @see com.intellij.util.DocumentUtil#executeInBulk(Document, boolean, Runnable)
    * @see BulkAwareDocumentListener
+   * @deprecated use {@link com.intellij.util.DocumentUtil#executeInBulk(com.intellij.openapi.editor.Document, boolean, java.lang.Runnable)} instead
    */
+  @Deprecated
   default void setInBulkUpdate(boolean value) {}
 }

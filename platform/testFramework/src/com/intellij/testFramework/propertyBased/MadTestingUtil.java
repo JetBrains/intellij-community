@@ -37,12 +37,8 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.SoftFactoryMap;
-import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.GenerationEnvironment;
@@ -55,8 +51,10 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -402,7 +400,7 @@ public final class MadTestingUtil {
      */
     for (boolean roulette : new boolean[]{true, false}) {
       out.println("Testing " + (roulette ? "roulette" : "plain") + " generator");
-      TObjectLongHashMap<String> fileMap = new TObjectLongHashMap<>();
+      ObjectIntHashMap<String> fileMap = new ObjectIntHashMap<>();
       Generator<File> generator = randomFiles(root.getPath(), filter, roulette);
       MadTestingAction action = env -> {
         long lastTime = System.nanoTime(), startTime = lastTime;
@@ -437,17 +435,17 @@ public final class MadTestingUtil {
   }
 
   @NotNull
-  private static String getHistogramReport(TObjectLongHashMap<String> fileMap, int iteration) {
+  private static String getHistogramReport(ObjectIntHashMap<String> fileMap, int iteration) {
     long[] stops = {1, 2, 3, 5, 10, 20, 30, 50, 100, 200, Long.MAX_VALUE};
     int[] histogram = new int[stops.length];
-    fileMap.forEachValue(count -> {
+    for (ObjectIntMap.Entry<String> entry : fileMap.entries()) {
+      int count = entry.getValue();
       int pos = Arrays.binarySearch(stops, count);
       if (pos < 0) {
         pos = -pos - 1;
       }
       histogram[pos]++;
-      return true;
-    });
+    }
     StringBuilder report = new StringBuilder();
     for (int i = 0; i < stops.length; i++) {
       String range = i == 0 || stops[i - 1] == stops[i] - 1 ? String.valueOf(stops[i]) :

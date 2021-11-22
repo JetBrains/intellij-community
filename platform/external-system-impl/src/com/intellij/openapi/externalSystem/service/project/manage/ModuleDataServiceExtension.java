@@ -7,7 +7,11 @@ import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Experimental
+/**
+ * @deprecated useless
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
 public interface ModuleDataServiceExtension {
   void importModule(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull Module module, @NotNull ModuleData data);
 }

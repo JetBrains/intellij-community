@@ -136,10 +136,9 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
 
   /**
    * Override to e.g. add libraries to artifacts.
-   *
-   * @param module         Module.
+   *  @param module         Module.
    * @param addedLibraries Framework libraries.
    */
-  public void processAddedLibraries(final Module module, final List<Library> addedLibraries) {
+  public void processAddedLibraries(final Module module, final List<? extends Library> addedLibraries) {
   }
 }

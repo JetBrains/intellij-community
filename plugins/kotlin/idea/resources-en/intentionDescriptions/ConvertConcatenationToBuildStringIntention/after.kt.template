@@ -1,0 +1,5 @@
+val s = buildString {
+    append("foo=$foo,")
+    append("bar=$bar,")
+    append("baz=$baz")
+}

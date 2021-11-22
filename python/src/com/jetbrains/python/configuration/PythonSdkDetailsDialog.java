@@ -146,7 +146,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private static JBList<Sdk> buildSdkList(@NotNull ListSelectionListener selectionListener) {
     final JBList<Sdk> result = new JBList<>();
     result.setCellRenderer(new PySdkListCellRenderer());
-    result.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    result.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     result.addListSelectionListener(selectionListener);
     new ListSpeedSearch<>(result);
     return result;
@@ -181,7 +181,22 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void updateOkButton() {
-    super.setOKActionEnabled(myModified || myProjectSdksModel.isModified() || getOriginalSelectedSdk() != getSdk());
+    super.setOKActionEnabled(myModified || myProjectSdksModel.isModified() || isAnotherSdkSelected());
+  }
+
+  /**
+   * Checks whether the selection has changed from the initial one.
+   * <p>
+   * Note that multiple selection is ambiguous to treat it as the indication for the current project interpreter.
+   *
+   * @return {@code true} if the selection has changed and {@code false} otherwise
+   */
+  private boolean isAnotherSdkSelected() {
+    if (mySdkList.getSelectedValuesList().size() > 1) {
+      return false;
+    }
+    Sdk originalSelectedSdk = getOriginalSelectedSdk();
+    return originalSelectedSdk != null && originalSelectedSdk != getSdk();
   }
 
   @Override
@@ -225,7 +240,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   @Nullable
   private Sdk getEditableSelectedSdk() {
-    return mySdkList.getSelectedValue();
+    return getTheOnlyItemOrNull(mySdkList.getSelectedValuesList());
+  }
+
+  @Nullable
+  private static <T> T getTheOnlyItemOrNull(@NotNull List<T> collection) {
+    if (collection.size() == 1) {
+      return collection.get(0);
+    }
+    else {
+      return null;
+    }
   }
 
   private void refreshSdkList() {
@@ -343,9 +368,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void removeSdk() {
-    final Sdk selectedSdk = getEditableSelectedSdk();
-    if (selectedSdk != null) {
-      myProjectSdksModel.removeSdk(selectedSdk);
+    final List<Sdk> selectedSdks = mySdkList.getSelectedValuesList();
+    if (!selectedSdks.isEmpty()) {
+      selectedSdks.forEach(selectedSdk -> myProjectSdksModel.removeSdk(selectedSdk));
       refreshSdkList();
       final Sdk currentSdk = getSdk();
       if (currentSdk != null) {

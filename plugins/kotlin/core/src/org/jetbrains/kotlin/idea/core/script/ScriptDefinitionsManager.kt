@@ -61,7 +61,7 @@ import kotlin.script.experimental.jvm.util.ClasspathExtractionException
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-class LoadScriptDefinitionsStartupActivity : StartupActivity {
+class LoadScriptDefinitionsStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
         if (isUnitTestMode()) {
             // In tests definitions are loaded synchronously because they are needed to analyze script
@@ -231,7 +231,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     override fun getDefaultDefinition(): ScriptDefinition {
         val standardScriptDefinitionContributor = ScriptDefinitionContributor.find<StandardScriptDefinitionContributor>(project)
-            ?: error("StandardScriptDefinitionContributor should be registered is plugin.xml")
+            ?: error("StandardScriptDefinitionContributor should be registered in plugin.xml")
         return ScriptDefinition.FromLegacy(getScriptingHostConfiguration(), standardScriptDefinitionContributor.getDefinitions().last())
     }
 
@@ -242,7 +242,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         val fileTypeManager = FileTypeManager.getInstance()
 
         val newExtensions = getKnownFilenameExtensions().toSet().filter {
-            val fileTypeByExtension = fileTypeManager.getFileTypeByExtension(it)
+            val fileTypeByExtension = fileTypeManager.getFileTypeByFileName("xxx.$it")
             val notKnown = fileTypeByExtension != KotlinFileType.INSTANCE
             if (notKnown) {
                 scriptingWarnLog("extension $it file type [${fileTypeByExtension.name}] is not registered as ${KotlinFileType.INSTANCE.name}")
@@ -286,7 +286,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
             // Assuming that direct ClasspathExtractionException is the result of versions mismatch and missing subsystems, e.g. kotlin plugin
             // so, it only results in warning, while other errors are severe misconfigurations, resulting it user-visible error
             if (t.cause is ClasspathExtractionException || t is ClasspathExtractionException) {
-                scriptingWarnLog("Cannot load script definitions from $this: ${t.cause?.message ?: t.message}")
+                scriptingWarnLog("Cannot load script definitions from $this: ${t.cause?.message ?: t.message}", t)
             } else {
                 scriptingErrorLog("[kts] cannot load script definitions using $this", t)
             }
@@ -381,7 +381,7 @@ fun loadDefinitionsFromTemplatesByPaths(
         } catch (e: ClassNotFoundException) {
             // Assuming that direct ClassNotFoundException is the result of versions mismatch and missing subsystems, e.g. gradle
             // so, it only results in warning, while other errors are severe misconfigurations, resulting it user-visible error
-            scriptingWarnLog("Cannot load script definition class $templateClassName")
+            scriptingWarnLog("Cannot load script definition class $templateClassName", e)
             null
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e

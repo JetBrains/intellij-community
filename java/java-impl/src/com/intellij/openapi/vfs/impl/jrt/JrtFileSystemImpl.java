@@ -107,7 +107,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
             if (homePath != null) {
               ArchiveHandler handler = myHandlers.remove(homePath);
               if (handler != null) {
-                handler.dispose();
+                handler.clearCaches();
                 VirtualFile root = findFileByPath(composeRootPath(homePath));
                 if (root != null) {
                   ((NewVirtualFile)root).markDirtyRecursively();
@@ -158,6 +158,6 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
     ArchiveHandler handler = myHandlers.remove(localPath);
     if (handler == null) throw new IllegalArgumentException(localPath + " not in " + myHandlers.keySet());
-    handler.dispose();
+    handler.clearCaches();
   }
 }

@@ -127,7 +127,7 @@ public abstract class MavenConsole {
 
     if (throwable != null) {
       String throwableText = ExceptionUtil.getThrowableText(throwable);
-      if (Registry.is("maven.print.import.stacktraces") || ApplicationManager.getApplication().isUnitTestMode()) {
+      if (Registry.is("maven.print.import.stacktraces") || ApplicationManager.getApplication().isUnitTestMode()) { //NO-UT-FIX
         doPrint(LINE_SEPARATOR + composeLine(MavenServerConsole.LEVEL_ERROR, throwableText), type);
       }
       else {

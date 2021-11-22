@@ -18,6 +18,7 @@ package com.intellij.testIntegration;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ public interface TestFinder {
   /**
    * Finds tests for given class.
    *
-   * @param element may by of any language but not specific to a current test finder domain language
+   * @param element may be of any language but not specific to a current test finder domain language
    * @return found tests for class
    */
   @NotNull
@@ -51,11 +52,23 @@ public interface TestFinder {
   /**
    * Finds classes for given test.
    *
-   * @param element may by of any language but not specific to a current test finder domain language
+   * @param element may be of any language but not specific to a current test finder domain language
    * @return found classes for test
    */
   @NotNull
   Collection<PsiElement> findClassesForTest(@NotNull PsiElement element);
 
   boolean isTest(@NotNull PsiElement element);
+
+  /**
+   * Checks whether the given test should be navigated to immediately instead of showing it in a popup with only itself and the relevant
+   * test creators. This check is only performed when there is exactly 1 test found from {@link #findTestsForClass(PsiElement)}.
+   *
+   * @param element may be of any language and is not specific to the current test finder's domain language.
+   * @return true if the test should be navigated to immediately.
+   */
+  @ApiStatus.Experimental
+  default boolean navigateToTestImmediately(@NotNull PsiElement element) {
+    return false;
+  }
 }

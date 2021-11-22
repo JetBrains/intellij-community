@@ -26,15 +26,6 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
     this(null, null, false);
   }
 
-  /**
-   * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected LineAnnotationAspectAdapter(@Nullable String id) {
-    this(id, null, false);
-  }
-
   protected LineAnnotationAspectAdapter(@Nullable String id, @NlsContexts.ListItem @Nullable String displayName) {
     this(id, displayName, false);
   }

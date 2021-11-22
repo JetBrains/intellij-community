@@ -21,36 +21,20 @@ public interface CustomFoldRegionRenderer {
   /**
    * This defines horizontal size of custom fold region's placeholder. Returned value will define the result of
    * {@link CustomFoldRegion#getWidthInPixels()} and the width of {@code targetRegion} parameter passed to renderer's
-   * {@link #paint(CustomFoldRegion, Graphics, Rectangle, TextAttributes)} method.
+   * {@link #paint(CustomFoldRegion, Graphics2D, Rectangle2D, TextAttributes)} method.
    */
   int calcWidthInPixels(@NotNull CustomFoldRegion region);
 
   /**
    * This defines vertical size of custom fold region's placeholder. Returned value will define the result of
    * {@link CustomFoldRegion#getWidthInPixels()} and the height of {@code targetRegion} parameter passed to renderer's
-   * {@link #paint(CustomFoldRegion, Graphics, Rectangle, TextAttributes)} method. Minimum possible height currently is equal to
+   * {@link #paint(CustomFoldRegion, Graphics2D, Rectangle2D, TextAttributes)} method. Minimum possible height currently is equal to
    * {@link Editor#getLineHeight()}, returned values, smaller than that, are automatically adjusted.
    */
   int calcHeightInPixels(@NotNull CustomFoldRegion region);
 
   /**
-   * Renderer implementation should override this to define the appearance of custom fold region's placeholder.
-   * <p>
-   * For precise positioning on HiDPI screens, override {@link #paint(CustomFoldRegion, Graphics2D, Rectangle2D, TextAttributes)} instead.
-   *
-   * @param targetRegion region where painting should be performed, location of this rectangle is calculated by editor implementation,
-   *                     dimensions of the rectangle match placeholder's width and height (provided by
-   *                     {@link #calcWidthInPixels(CustomFoldRegion)} and {@link #calcHeightInPixels(CustomFoldRegion)})
-   * @param textAttributes attributes of surrounding text
-   */
-  default void paint(@NotNull CustomFoldRegion region,
-                     @NotNull Graphics g,
-                     @NotNull Rectangle targetRegion,
-                     @NotNull TextAttributes textAttributes) {}
-
-  /**
-   * Renderer implementation should override this to define the appearance of custom element. Either this method or
-   * {@link #paint(CustomFoldRegion, Graphics, Rectangle, TextAttributes)} needs to be overridden only.
+   * Defines the appearance of custom element.
    *
    * @param targetRegion region where painting should be performed, location of this rectangle is calculated by editor implementation,
    *                     dimensions of the rectangle approximately match element's width and height (provided by
@@ -58,14 +42,10 @@ public interface CustomFoldRegionRenderer {
    *                     they can differ somewhat due to rounding to whole number of device pixels.
    * @param textAttributes attributes of surrounding text
    */
-  default void paint(@NotNull CustomFoldRegion region,
-                     @NotNull Graphics2D g,
-                     @NotNull Rectangle2D targetRegion,
-                     @NotNull TextAttributes textAttributes) {
-    paint(region, (Graphics)g,
-          new Rectangle((int)targetRegion.getX(), (int)targetRegion.getY(), region.getWidthInPixels(), region.getHeightInPixels()),
-          textAttributes);
-  }
+  void paint(@NotNull CustomFoldRegion region,
+             @NotNull Graphics2D g,
+             @NotNull Rectangle2D targetRegion,
+             @NotNull TextAttributes textAttributes);
 
   /**
    * Enables custom fold region to have a custom context menu in editor (displayed on mouse right click).

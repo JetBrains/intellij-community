@@ -175,29 +175,29 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
   }
 
   @Override
-  public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
-    doPaint(inlay.getEditor(), g, targetRegion, textAttributes);
+  public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+    doPaint(inlay.getEditor(), g, r.x, r.y, r.width, r.height, textAttributes);
   }
 
   @Override
   public void paint(@NotNull CustomFoldRegion region,
-                    @NotNull Graphics g,
-                    @NotNull Rectangle targetRegion,
+                    @NotNull Graphics2D g,
+                    @NotNull Rectangle2D r,
                     @NotNull TextAttributes textAttributes) {
-    doPaint(region.getEditor(), g, targetRegion, textAttributes);
+    doPaint(region.getEditor(), g, (int)r.getX(), (int)r.getY(), (int)r.getWidth(), (int)r.getHeight(), textAttributes);
   }
 
   private void doPaint(@NotNull Editor editor,
                        @NotNull Graphics g,
-                       @NotNull Rectangle targetRegion,
+                       int x, int y, int width, int height,
                        @NotNull TextAttributes textAttributes) {
     int startX = calcInlayStartX();
-    int endX = targetRegion.x + targetRegion.width;
+    int endX = x + width;
     if (startX >= endX) return;
     int margin = scale(TOP_BOTTOM_MARGINS);
-    int filledHeight = targetRegion.height - margin * 2;
+    int filledHeight = height - margin * 2;
     if (filledHeight <= 0) return;
-    int filledStartY = targetRegion.y + margin;
+    int filledStartY = y + margin;
 
     Color defaultBgColor = ((EditorEx)editor).getBackgroundColor();
     Color currentBgColor = textAttributes.getBackgroundColor();

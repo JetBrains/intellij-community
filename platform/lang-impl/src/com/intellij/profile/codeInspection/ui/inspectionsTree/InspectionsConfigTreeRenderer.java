@@ -63,9 +63,6 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
   private static @NlsContexts.Label String getHint(final Descriptor descriptor) {
     final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper();
 
-    if (toolWrapper.getTool() instanceof InspectionToolWrapperWithHint) {
-      return ((InspectionToolWrapperWithHint)toolWrapper.getTool()).getHint();
-    }
     if (toolWrapper instanceof LocalInspectionToolWrapper ||
         toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).worksInBatchModeOnly()) {
       return null;

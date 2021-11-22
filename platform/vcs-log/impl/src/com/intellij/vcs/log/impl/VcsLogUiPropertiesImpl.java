@@ -6,7 +6,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,11 +49,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
       return (T)result;
     }
     if (property instanceof TableColumnWidthProperty) {
-      TableColumnWidthProperty tableColumnWidthProperty = (TableColumnWidthProperty)property;
-      if (!state.COLUMN_WIDTH.isEmpty()) {
-        tableColumnWidthProperty.moveOldSettings(state.COLUMN_WIDTH, state.COLUMN_ID_WIDTH);
-        state.COLUMN_WIDTH = new HashMap<>();
-      }
       Integer savedWidth = state.COLUMN_ID_WIDTH.get(property.getName());
       if (savedWidth == null) {
         return (T)Integer.valueOf(-1);
@@ -175,9 +169,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     public Map<String, Boolean> HIGHLIGHTERS = new TreeMap<>();
     public Map<String, List<String>> FILTERS = new TreeMap<>();
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
     public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
   }
 

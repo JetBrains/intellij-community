@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias
 
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -34,7 +35,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.TypeUtils
 
 sealed class IntroduceTypeAliasAnalysisResult {
-    class Error(val message: String) : IntroduceTypeAliasAnalysisResult()
+    class Error(@NlsContexts.DialogMessage val message: String) : IntroduceTypeAliasAnalysisResult()
     class Success(val descriptor: IntroduceTypeAliasDescriptor) : IntroduceTypeAliasAnalysisResult()
 }
 

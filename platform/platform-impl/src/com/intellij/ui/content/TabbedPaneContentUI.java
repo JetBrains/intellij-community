@@ -227,7 +227,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
       protected class MyPopupHandler extends PopupHandler {
         @Override
         public void invokePopup(Component comp, int x, int y) {
-          if (myManager.getContentCount() == 0) return;
+          if (myManager.isEmpty()) return;
           showPopup(x, y);
         }
       }

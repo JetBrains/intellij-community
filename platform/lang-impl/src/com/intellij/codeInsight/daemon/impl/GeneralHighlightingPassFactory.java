@@ -33,8 +33,9 @@ final class GeneralHighlightingPassFactory implements MainHighlightingPassFactor
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(document);
     // no applying to the editor - for read-only analysis only
     return new GeneralHighlightingPass(file.getProject(), file, document, 0, file.getTextLength(),
-                                       true, new ProperTextRange(0, document.getTextLength()), null, highlightInfoProcessor);
+                                       true, visibleRange, null, highlightInfoProcessor);
   }
 }

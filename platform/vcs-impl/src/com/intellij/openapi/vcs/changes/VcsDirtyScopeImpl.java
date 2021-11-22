@@ -12,11 +12,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,7 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   @NotNull private final AbstractVcs myVcs;
   private final boolean myWasEverythingDirty;
 
-  @Nullable private final Hash.Strategy<FilePath> myHashingStrategy;
+  private final @Nullable HashingStrategy<FilePath> myHashingStrategy;
   private final boolean myCaseSensitive;
 
   public VcsDirtyScopeImpl(@NotNull AbstractVcs vcs) {
@@ -179,7 +179,7 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   private @NotNull Set<FilePath> newFilePathsSet() {
-    return myHashingStrategy == null ? new HashSet<>() : new ObjectOpenCustomHashSet<>(myHashingStrategy);
+    return myHashingStrategy == null ? new HashSet<>() : CollectionFactory.createCustomHashingStrategySet(myHashingStrategy);
   }
 
   @NotNull

@@ -8,6 +8,7 @@ import com.intellij.openapi.module.impl.scopes.JdkScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
@@ -45,7 +46,6 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.project.forcedTargetPlatform
@@ -129,13 +129,13 @@ class MoveConflictChecker(
                 else -> null
             }
 
-            is KotlinDirectoryBasedMoveTarget -> {
+            is KotlinDirectoryMoveTarget, is KotlinMoveTargetForDeferredFile -> {
                 val packageFqName = targetContainerFqName ?: return null
-                val targetModuleDescriptor = targetScope?.let { getModuleDescriptor(it) ?: return null }
+                val targetModuleDescriptor = targetFileOrDir?.let { getModuleDescriptor(it) ?: return null }
                     ?: resolutionFacade.moduleDescriptor
                 MutablePackageFragmentDescriptor(targetModuleDescriptor, packageFqName).withSource(fakeFile)
-            }
 
+            }
             else -> null
         }
     }
@@ -239,13 +239,13 @@ class MoveConflictChecker(
                     CommonRefactoringUtil.htmlEmphasize(usageModule.name)
                 )
             }
-            conflicts.putValue(referencedElement, CommonRefactoringUtil.capitalize(message))
+            conflicts.putValue(referencedElement, StringUtil.capitalize(message))
         }
     }
 
     private fun checkModuleConflictsInUsages(externalUsages: MutableSet<UsageInfo>, conflicts: MultiMap<PsiElement, String>) {
         val newConflicts = MultiMap<PsiElement, String>()
-        val targetScope = moveTarget.targetScope ?: return
+        val targetScope = moveTarget.targetFileOrDir ?: return
 
         analyzeModuleConflictsInUsages(project, externalUsages, targetScope, newConflicts)
         if (!newConflicts.isEmpty) {
@@ -288,7 +288,7 @@ class MoveConflictChecker(
         internalUsages: MutableSet<UsageInfo>,
         conflicts: MultiMap<PsiElement, String>
     ) {
-        val targetScope = moveTarget.targetScope ?: return
+        val targetScope = moveTarget.targetFileOrDir ?: return
         val targetModule = targetScope.getModule(project) ?: return
         val resolveScope = targetModule.getScopeWithPlatformAwareDependencies()
 
@@ -378,7 +378,7 @@ class MoveConflictChecker(
                     scopeDescription,
                     CommonRefactoringUtil.htmlEmphasize(targetModule.name)
                 )
-                conflicts.putValue(target, CommonRefactoringUtil.capitalize(message))
+                conflicts.putValue(target, StringUtil.capitalize(message))
                 referencesToSkip += refExpr
             }
         }
@@ -789,9 +789,8 @@ class MoveConflictChecker(
                 return KotlinJavaPsiFacade.getInstance(project).findPackage(fqName.asString(), GlobalSearchScope.moduleScope(module))
             }
 
-            return (this as? KotlinDirectoryBasedMoveTarget)?.directory?.getPackage()
-                ?: targetFile?.toPsiDirectory(project)?.getPackage()
-                ?: targetFile?.toPsiFile(project)?.containingDirectory?.getPackage()
+            return (this as? KotlinDirectoryMoveTarget)?.targetFileOrDir?.toPsiDirectory(project)?.getPackage()
+                ?: (this as? KotlinMoveTargetForDeferredFile)?.targetFileOrDir?.toPsiDirectory(project)?.getPackage()
                 ?: tryGetPackageFromTargetContainer()
         }
 

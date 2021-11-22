@@ -92,10 +92,10 @@ class WorkspaceBuilderChangeLog {
     else {
       when (existingChange) {
         is ChangeEntry.AddEntity<*> -> changeLog.remove(removedEntityId)
-        is ChangeEntry.RemoveEntity -> LOG.error("Trying to remove the entity twice. $removedEntityId")
         is ChangeEntry.ChangeEntitySource<*> -> changeLog[removedEntityId] = removeEvent
         is ChangeEntry.ReplaceEntity<*> -> changeLog[removedEntityId] = removeEvent
         is ChangeEntry.ReplaceAndChangeSource<*> -> changeLog[removedEntityId] = removeEvent
+        is ChangeEntry.RemoveEntity -> Unit
       }
     }
   }

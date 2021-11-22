@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -34,7 +34,7 @@ final class InterfaceExtensionImplementationClassResolver implements Implementat
           // Android Studio: Exclude android-ndk from this check.
           && !idString.equals("com.android.tools.ndk")) {
         ExtensionPointImpl.LOG.error(componentManager.createError("Created extension classloader is not equal to plugin's one.\n" +
-                                                                  "See https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md\n" +
+                                                                  "See https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md#internalignoredependencyviolation\n" +
                                                                   "(\n" +
                                                                   "  className=" + className + ",\n" +
                                                                   "  extensionInstanceClassloader=" + result.getClassLoader() + ",\n" +

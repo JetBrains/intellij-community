@@ -62,7 +62,7 @@
             class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NavigateLogToSelectedBranchAction"/>
     <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
             icon="AllIcons.Actions.ArrowCollapse"/>
-    <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain">
+    <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain" class="com.intellij.ide.actions.NonTrivialActionGroup">
       <separator key="group.Git.Log.Branches.Settings.Separator.text"/>
       <action id="Git.Log.Branches.Change.Branch.Filter.On.Selection"
               class="git4idea.ui.branch.dashboard.BranchesDashboardActions$ChangeBranchFilterAction"/>
@@ -377,7 +377,21 @@
       <reference id="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
-      <reference id="Vcs.ShowDiffWithLocal.Before"/>
+    </group>
+    <group id="Git.Stash.ChangesBrowser.ContextMenu">
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.ShowDiffWithLocal.Before"/>
+      <reference ref="Vcs.EditSource"/>
+      <reference ref="Vcs.OpenRepositoryVersion"/>
+      <reference ref="Vcs.ApplySelectedChanges"/>
+    </group>
+
+    <group id="Git.Experimental.Branch.Popup.Actions">
+      <reference ref="Vcs.UpdateProject"/>
+      <reference ref="CheckinProject"/>
+      <reference ref="Git.Commit.Stage"/>
+      <reference ref="Vcs.Push"/>
+      <reference ref="Vcs.QuickListPopupAction"/>
     </group>
   </actions>
 
@@ -465,7 +479,7 @@
                  description="Do not record stage operations in the undo stack of the document"/>
     <registryKey key="git.show.full.branch.name.instead.current.selected"
                  description="Show full branch names instead of Current/Selected"
-                 defaultValue="false"/>
+                 defaultValue="true"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -626,6 +640,7 @@
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
+    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="git4idea.stash.ui.GitCompareWithLocalFromStashAction"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
@@ -662,5 +677,7 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="git4idea.index.CommitModeListener" topic="com.intellij.vcs.commit.CommitModeManager$CommitModeListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="git4idea.actions.GitQuickActionsToolbarPopup$MyGitRepositoryListener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
   </projectListeners>
 </idea-plugin>

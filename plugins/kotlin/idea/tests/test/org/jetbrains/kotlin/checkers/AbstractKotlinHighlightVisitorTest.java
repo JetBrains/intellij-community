@@ -3,25 +3,36 @@
 package org.jetbrains.kotlin.checkers;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
+import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils;
+import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor;
 import org.jetbrains.kotlin.idea.highlighter.NameHighlighter;
+import org.jetbrains.kotlin.idea.refactoring.ElementSelectionUtilsKt;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
 import org.jetbrains.kotlin.psi.KtDeclaration;
+import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid;
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
+import org.jetbrains.kotlin.test.InTextDirectivesUtils;
 
 import java.io.File;
+import java.util.Arrays;
 
 import static org.jetbrains.kotlin.resolve.lazy.ResolveSession.areDescriptorsCreatedForDeclaration;
 
 public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCodeInsightFixtureTestCase {
+    public static final String SUPPRESS_HIGHLIGHTING_DIRECTIVE = "SUPPRESS_HIGHLIGHTING";
+
     public void doTest(@NotNull VirtualFile file) throws Exception {
         myFixture.configureFromExistingVirtualFile(file);
         checkHighlighting(true, false, false);
@@ -58,11 +69,26 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
 
     protected long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
         PsiFile file = getFile();
+        KtFile ktFile = file instanceof KtFile ? (KtFile) file : null;
+        String text = file.getText();
+        boolean suppressHighlight = InTextDirectivesUtils.isDirectiveDefined(text, "// " + SUPPRESS_HIGHLIGHTING_DIRECTIVE);
         return KotlinLightCodeInsightFixtureTestCaseKt
-                .withCustomCompilerOptions(file.getText(), getProject(), getModule(), () -> {
+                .withCustomCompilerOptions(text, getProject(), getModule(), () -> {
                     try {
-                        if (file instanceof KtFile && ((KtFile) file).isScript() && myFixture instanceof JavaCodeInsightTestFixtureImpl) {
+                        if (ktFile != null && ktFile.isScript() && myFixture instanceof JavaCodeInsightTestFixtureImpl) {
                             ((JavaCodeInsightTestFixtureImpl) myFixture).canChangeDocumentDuringHighlighting(true);
+                        }
+                        if (suppressHighlight && ktFile != null) {
+                            ElementSelectionUtilsKt.selectElement(myFixture.getEditor(), ktFile, Arrays.asList(
+                                    CodeInsightUtils.ElementKind.EXPRESSION), new Function1<PsiElement, Unit>() {
+                                @Override
+                                public Unit invoke(PsiElement element) {
+                                    if (element instanceof KtElement) {
+                                        AbstractKotlinHighlightVisitor.suppressHighlight((KtElement) element);
+                                    }
+                                    return Unit.INSTANCE;
+                                }
+                            });
                         }
                         return myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
                     }

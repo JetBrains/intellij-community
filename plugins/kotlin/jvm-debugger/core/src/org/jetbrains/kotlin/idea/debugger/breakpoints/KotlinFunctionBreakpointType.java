@@ -92,7 +92,9 @@ public class KotlinFunctionBreakpointType
             buffer.append(breakpoint.getProperties().myMethodName);
         }
 
-        return buffer.toString();
+        @SuppressWarnings("HardCodedStringLiteral")
+        String s = buffer.toString();
+        return s;
     }
 
     @Nullable
@@ -114,6 +116,9 @@ public class KotlinFunctionBreakpointType
         JavaMethodBreakpointProperties properties = new JavaMethodBreakpointProperties();
         if (Registry.is("debugger.emulate.method.breakpoints")) {
             properties.EMULATED = true; // create all new emulated
+        }
+        if (Registry.is("debugger.method.breakpoints.entry.default")) {
+            properties.WATCH_EXIT = false;
         }
         return properties;
     }

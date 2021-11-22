@@ -5,18 +5,13 @@ import com.google.gson.Gson
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
-import org.apache.tools.tar.TarEntry
-import org.apache.tools.tar.TarInputStream
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.impl.ArchiveUtils
 
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.zip.GZIPInputStream
-import java.util.zip.ZipFile
 
 /**
  * Validates that paths specified in product-info.json file are correct
@@ -36,7 +31,7 @@ class ProductInfoValidator {
     String productJsonPath = joinPaths(pathInArchive, ProductInfoGenerator.FILE_NAME)
 
     Path archiveFile = Paths.get(archivePath)
-    String entryData = loadEntry(archiveFile, productJsonPath)
+    String entryData = ArchiveUtils.loadEntry(archiveFile, productJsonPath)
     if (entryData == null) {
       context.messages.error("Failed to validate product-info.json: cannot find '$productJsonPath' in $archivePath")
     }
@@ -98,7 +93,7 @@ class ProductInfoValidator {
     }
 
     String pathFromProductJson = relativePathToProductJson + path
-    if (!installationDirectories.any { new File(it, pathFromProductJson).exists() } && !installationArchives.any { archiveContainsEntry(it.first, joinPaths(it.second, pathFromProductJson)) }) {
+    if (!installationDirectories.any { new File(it, pathFromProductJson).exists() } && !installationArchives.any { ArchiveUtils.archiveContainsEntry(it.first, joinPaths(it.second, pathFromProductJson)) }) {
       context.messages.error("Incorrect path to $description '$path' in $relativePathToProductJson/product-info.json: the specified file doesn't exist in directories $installationDirectories " +
                              "and archives ${installationArchives.collect { "$it.first/$it.second" }}")
     }
@@ -106,57 +101,5 @@ class ProductInfoValidator {
 
   private static String joinPaths(String parent, String child) {
     return FileUtil.toCanonicalPath("$parent/$child", '/' as char).dropWhile { it == '/' as char }
-  }
-
-  static boolean archiveContainsEntry(String archivePath, String entryPath) {
-    File archiveFile = new File(archivePath)
-    if (archiveFile.name.endsWith(".zip")) {
-      return new ZipFile(archiveFile).withCloseable {
-        it.getEntry(entryPath) != null
-      }
-    }
-
-    if (archiveFile.name.endsWith(".tar.gz")) {
-      return archiveFile.withInputStream {
-        TarInputStream inputStream = new TarInputStream(new GZIPInputStream(it))
-        TarEntry entry
-        String altEntryPath = "./$entryPath"
-        while (null != (entry = inputStream.nextEntry)) {
-          if (entry.name == entryPath || entry.name == altEntryPath) {
-            return true
-          }
-        }
-        return false
-      }
-    }
-    return false
-  }
-
-  private static @Nullable String loadEntry(Path archiveFile, String entryPath) {
-    if (archiveFile.fileName.toString().endsWith(".zip")) {
-      ZipFile zipFile = new ZipFile(archiveFile.toFile())
-      try {
-        InputStream inputStream = zipFile.getInputStream(zipFile.getEntry(entryPath))
-        return inputStream == null ? null : new String(inputStream.readAllBytes(), StandardCharsets.UTF_8)
-      }
-      finally {
-        zipFile.close()
-      }
-    }
-    else if (archiveFile.fileName.toString().endsWith(".tar.gz")) {
-      TarInputStream inputStream = new TarInputStream(new GZIPInputStream(Files.newInputStream(archiveFile)))
-      try {
-        TarEntry entry
-        while (null != (entry = inputStream.getNextEntry())) {
-          if (entry.name == entryPath) {
-            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8)
-          }
-        }
-      }
-      finally {
-        inputStream.close()
-      }
-    }
-    return null
   }
 }

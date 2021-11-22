@@ -15,7 +15,52 @@ import java.time.Duration
 data class SshConnectionConfigPatch(
   var hostKeyVerifier: HostKeyVerifier?,
   var serverAliveInterval: Duration?,
+  var proxyParams: ProxyParams?,
 ) {
+
+  data class ProxyParams(
+    var proxyHost: String,
+    var proxyPort: Int,
+    var proxyType: Type,
+    var authData: ProxyAuthData?,
+  ) {
+
+    constructor() : this("", -1, Type.NO_PROXY, null)
+
+    fun withProxyHost(value: String): ProxyParams = apply { proxyHost = value }
+    fun withProxyPort(value: Int): ProxyParams = apply { proxyPort = value }
+    fun withProxyType(value: Type): ProxyParams = apply { proxyType = value }
+    fun withProxyAuthData(value: ProxyAuthData) = apply { authData = value }
+
+    enum class Type {
+
+      NO_PROXY,
+
+      HTTP,
+
+      SOCKS,
+
+      IDE_WIDE_PROXY
+
+    }
+
+    data class ProxyAuthData(
+      var username: String,
+      var password: String,
+      var authType: ProxyAuthType,
+    ) {
+
+      constructor() : this("", "", ProxyAuthType.NO_AUTHORIZATION)
+
+      enum class ProxyAuthType {
+
+        NO_AUTHORIZATION,
+
+        USER_AND_PASSWORD,
+
+      }
+    }
+  }
   /**
    * @param hashKnownHosts Indicates that host names and addresses should be hashed while being added to the known hosts file.
    * @param strictHostKeyChecking How the SSH client should react on a host key which's not mentioned in the known hosts file.
@@ -33,13 +78,16 @@ data class SshConnectionConfigPatch(
   constructor() : this(
     hostKeyVerifier = null,
     serverAliveInterval = null,
+    proxyParams = null,
   )
 
   fun withHostKeyVerifier(value: HostKeyVerifier): SshConnectionConfigPatch = apply { hostKeyVerifier = value }
   fun withServerAliveInterval(value: Duration): SshConnectionConfigPatch = apply { serverAliveInterval = value }
+  fun withProxyParameters(value: ProxyParams): SshConnectionConfigPatch = apply { proxyParams = value }
 
   fun deepCopy(): SshConnectionConfigPatch = copy(
     hostKeyVerifier = hostKeyVerifier?.copy(),
+    proxyParams = proxyParams?.copy(),
   )
 }
 

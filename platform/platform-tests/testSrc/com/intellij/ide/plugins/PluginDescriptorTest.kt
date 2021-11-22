@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("UsePropertyAccessSyntax")
+@file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -41,7 +41,7 @@ private fun loadDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins
   val paths: List<Path> = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
     for (file in paths) {
-      val descriptor = loadDescriptor(file, false, context) ?: continue
+      val descriptor = loadDescriptor(file, context) ?: continue
       context.result.add(descriptor, false)
     }
   }
@@ -201,7 +201,7 @@ class PluginDescriptorTest {
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
-    assertThat(pluginSet.allPlugins.toList()).map(Function { it.id }).containsOnly(foo.pluginId)
+    assertThat(pluginSet.allPlugins.toList()).map(Function { it.pluginId }).containsOnly(foo.pluginId)
     assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
@@ -291,7 +291,7 @@ class PluginDescriptorTest {
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
-    assertThat(pluginSet.allPlugins.toList()).map(Function { it.id }).containsOnly(foo.pluginId)
+    assertThat(pluginSet.allPlugins.toList()).map(Function { it.pluginId }).containsOnly(foo.pluginId)
     assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
@@ -309,7 +309,7 @@ class PluginDescriptorTest {
     assertThat(foo.version).isEqualTo("1.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
-    assertThat(pluginSet.allPlugins.toList()).map(Function { it.id }).containsOnly(foo.pluginId)
+    assertThat(pluginSet.allPlugins.toList()).map(Function { it.pluginId }).containsOnly(foo.pluginId)
     assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
@@ -519,7 +519,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
   if (id != null) {
     raw.id = id.idString
   }
-  val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = id)
+  val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = id, moduleName = null)
   result.readExternal(
     raw = raw,
     isSub = false,
@@ -543,7 +543,7 @@ fun createFromDescriptor(path: Path,
                                  includeBase = null,
                                  readInto = null,
                                  locationSource = path.toString())
-  val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = null)
+  val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = null, moduleName = null)
   result.readExternal(raw = raw,
                       pathResolver = pathResolver,
                       context = context,

@@ -3,7 +3,7 @@
 Reports <code>Serializable</code> classes whose <code>serialVersionUID</code> field
 is not declared <code>private static final long</code>.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class SampleClass implements Serializable {
     private long serialVersionUID = 1; // field of a Serializable class is not declared 'private static final long'
 
@@ -11,7 +11,7 @@ is not declared <code>private static final long</code>.
         System.out.println(serialVersionUID);
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 
 </body>

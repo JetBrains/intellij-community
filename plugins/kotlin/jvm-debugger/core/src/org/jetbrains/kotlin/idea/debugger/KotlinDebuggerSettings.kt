@@ -31,7 +31,7 @@ class KotlinDebuggerSettings : XDebuggerSettings<KotlinDebuggerSettings>("kotlin
             listOf(
                 SimpleConfigurable.create(
                     "reference.idesettings.debugger.kotlin.stepping",
-                    "Kotlin",
+                    KotlinDebuggerCoreBundle.message("configurable.name.kotlin"),
                     KotlinSteppingConfigurableUi::class.java,
                     this
                 )
@@ -40,7 +40,7 @@ class KotlinDebuggerSettings : XDebuggerSettings<KotlinDebuggerSettings>("kotlin
             listOf(
                 SimpleConfigurable.create(
                     "reference.idesettings.debugger.kotlin.data.view",
-                    "Kotlin",
+                    KotlinDebuggerCoreBundle.message("configurable.name.kotlin"),
                     KotlinDelegatedPropertyRendererConfigurableUi::class.java,
                     this
                 )

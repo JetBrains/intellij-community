@@ -4,15 +4,15 @@ internal class Customer(first: String, last: String) {
     val firstName: String
     val lastName: String
 
-    private fun doSmthBefore() {}
-    private fun doSmthAfter() {}
-
     init {
         doSmthBefore()
         firstName = first
         lastName = last
         doSmthAfter()
     }
+
+    private fun doSmthBefore() {}
+    private fun doSmthAfter() {}
 }
 
 internal class CustomerBuilder {

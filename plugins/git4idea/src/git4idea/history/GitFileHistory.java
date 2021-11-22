@@ -123,8 +123,6 @@ public final class GitFileHistory {
   @Nullable
   private Pair<String, FilePath> getFirstCommitParentAndPathIfRename(@NotNull @NonNls String commit,
                                                                      @NotNull FilePath filePath) throws VcsException {
-    // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
-    // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
     GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.SHOW);
     GitLogParser<GitLogFullRecord> parser = GitLogParser.createDefaultParser(myProject, GitLogParser.NameStatus.STATUS,
                                                                              HASH, COMMIT_TIME, PARENTS);
@@ -137,7 +135,6 @@ public final class GitFileHistory {
     List<GitLogFullRecord> records = parser.parse(output);
 
     if (records.isEmpty()) return null;
-    // we have information about all changed files of the commit. Extracting information about the file we need.
     for (int i = 0; i < records.size(); i++) {
       GitLogFullRecord record = records.get(i);
       List<Change> changes = record.parseChanges(myProject, myRoot);

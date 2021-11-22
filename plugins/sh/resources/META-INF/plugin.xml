@@ -22,7 +22,7 @@ Adds support for working with shell script files
 </li></ul>]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType language="Shell Script" extensions="sh;bash;zsh" hashBangs="sh;bash;zsh" fieldName="INSTANCE" name="Shell Script"
+    <fileType language="Shell Script" extensions="bash;sh;zsh" hashBangs="sh;bash;zsh" fieldName="INSTANCE" name="Shell Script"
               implementationClass="com.intellij.sh.ShFileType"/>
     <backgroundPostStartupActivity implementation="com.intellij.sh.fileType.ShShebangFileTypeDetectorActivity"/>
     <lang.syntaxHighlighter language="Shell Script" implementationClass="com.intellij.sh.highlighter.ShSyntaxHighlighter"/>
@@ -84,17 +84,19 @@ Adds support for working with shell script files
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
 
-    <statistics.counterUsagesCollector groupId="sh.shell.script" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.sh.statistics.ShCounterUsagesCollector"/>
 
     <highlightUsagesHandlerFactory implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
     <renameHandler implementation="com.intellij.sh.rename.ShRenameHandler"/>
     <intentionAction>
       <className>com.intellij.sh.rename.ShRenameAllOccurrencesIntention</className>
-      <category>Shell script</category>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.sh.ShExplainShellIntention</className>
-      <category>Shell script</category>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
     <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="sh.shell.script"/>
   </extensions>

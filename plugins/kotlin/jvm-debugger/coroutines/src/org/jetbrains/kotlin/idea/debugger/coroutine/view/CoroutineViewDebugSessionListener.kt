@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 class CoroutineViewDebugSessionListener(
     private val session: XDebugSession,
@@ -54,7 +54,7 @@ class CoroutineViewDebugSessionListener(
     }
 
     private fun requestClear() {
-        if (ApplicationManager.getApplication().isUnitTestMode) { // no delay in tests
+        if (isUnitTestMode()) { // no delay in tests
             xCoroutineView.resetRoot()
         } else {
             xCoroutineView.alarm.cancelAndRequest()

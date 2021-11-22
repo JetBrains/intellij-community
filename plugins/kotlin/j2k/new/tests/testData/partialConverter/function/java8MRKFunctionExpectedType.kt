@@ -55,13 +55,13 @@ internal class Java8Class {
         TODO("_root_ide_package_")
     }
 
+    init {
+        TODO("_root_ide_package_")
+    }
+
     companion object {
         fun staticFun(): Int {
             return 1
         }
-    }
-
-    init {
-        TODO("_root_ide_package_")
     }
 }

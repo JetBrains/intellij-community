@@ -1,11 +1,11 @@
-from typing import Any, Iterable, List, Pattern
+from typing import Any, Pattern
 
 from . import util
 
 def build_preprocessors(md, **kwargs): ...
 
 class Preprocessor(util.Processor):
-    def run(self, lines: List[str]) -> List[str]: ...
+    def run(self, lines: list[str]) -> list[str]: ...
 
 class NormalizeWhitespace(Preprocessor): ...
 
@@ -19,5 +19,5 @@ class HtmlBlockPreprocessor(Preprocessor):
 
 class ReferencePreprocessor(Preprocessor):
     TITLE: str = ...
-    RE: Pattern
-    TITLE_RE: Pattern
+    RE: Pattern[str]
+    TITLE_RE: Pattern[str]

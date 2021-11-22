@@ -1,6 +1,9 @@
 <component name="libraryTable">
   <library name="Gradle" type="repository">
     <properties maven-id="org.jetbrains.intellij.deps:gradle-api:7.1" />
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/plugins/gradle/anno" />
+    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/7.1/gradle-api-7.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/7.1/gradle-api-impldep-7.1.jar!/" />

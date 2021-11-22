@@ -389,7 +389,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       synchronized (myInitLock) {
         result = mySplitters;
         if (result == null) {
-          result = new EditorsSplitters(this, true, this);
+          result = new EditorsSplitters(this);
+          DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myProject, result, false);
+          DockManager.getInstance(myProject).register(dockable, this);
+          Disposer.register(this, dockable);
+
           mySplitters = result;
         }
       }
@@ -417,7 +421,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    *         file's status
    */
   @NotNull
-  Color getFileColor(@NotNull VirtualFile file) {
+  public Color getFileColor(@NotNull VirtualFile file) {
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : UIUtil.getLabelForeground();
     if (statusColor == null) statusColor = UIUtil.getLabelForeground();

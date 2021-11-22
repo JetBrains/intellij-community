@@ -11,12 +11,11 @@ import training.learn.course.LessonProperties
 import training.learn.exceptons.LessonPreparationException
 
 abstract class GitLesson(@NonNls id: String, @Nls name: String) : KLesson(id, name) {
-  protected abstract val branchName: String
   override val properties = LessonProperties(availableSince = "212")
 
   override fun prepare(project: Project) {
     if (GitExecutableManager.getInstance().testGitExecutableVersionValid(project)) {
-      GitProjectUtil.restoreGitLessonsFiles(project, branchName)
+      GitProjectUtil.restoreGitLessonsFiles(project)
     }
     else throw LessonPreparationException("Git is not installed or version is invalid")
   }

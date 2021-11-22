@@ -54,6 +54,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
       if (panel != null) {
         row {
           component(panel)
+            .constraints(CCFlags.growX)
         }
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
@@ -10,7 +10,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -168,14 +167,6 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       }
     };
   }
-
-  @Override
-  public boolean isMyLanguage(@NotNull Language language) {
-    return language.isKindOf(getFileType().getLanguage());
-  }
-
-  @NotNull
-  protected abstract LanguageFileType getFileType();
 
   @Override
   public void checkReplacementPattern(@NotNull Project project, @NotNull ReplaceOptions options) {}

@@ -265,51 +265,51 @@ final class JavaPredefinedConfigurations {
                                 getMetadataType(), JavaFileType.INSTANCE),
 
       // J2EE templates
-      createLegacyNonRecursiveConfiguration(SSRBundle.message("predefined.configuration.struts.1.1.actions"), "Struts 1.1 actions",
-                                            "public class '_StrutsActionClass extends '_ParentClass*:Action {\n" +
-                                            "  public ActionForward '_AnActionMethod:*execute (ActionMapping '_action,\n" +
-                                            "                                 ActionForm '_form,\n" +
-                                            "                                 HttpServletRequest '_request,\n" +
-                                            "                                 HttpServletResponse '_response);\n" +
-                                            "}", getJ2EEType(), JavaFileType.INSTANCE, null),
-      createLegacyNonRecursiveConfiguration(SSRBundle.message("predefined.configuration.entity.ejb"), "entity ejb",
-                                            "class 'EntityBean implements EntityBean {\n" +
-                                            "  EntityContext '_Context?;\n\n" +
-                                            "  public void setEntityContext(EntityContext '_Context2);\n\n" +
-                                            "  public '_RetType ejbCreate('_CreateType '_CreateDcl*);\n" +
-                                            "  public void ejbActivate();\n\n" +
-                                            "  public void ejbLoad();\n\n" +
-                                            "  public void ejbPassivate();\n\n" +
-                                            "  public void ejbRemove();\n\n" +
-                                            "  public void ejbStore();\n" +
-                                            "}", getJ2EEType(), JavaFileType.INSTANCE, null),
-      createLegacyNonRecursiveConfiguration(SSRBundle.message("predefined.configuration.session.ejb"), "session ejb",
-                                            "class 'SessionBean implements SessionBean {\n" +
-                                            "  SessionContext '_Context?;\n\n" +
-                                            "  public void '_setSessionContext(SessionContext '_Context2);\n\n" +
-                                            "  public '_RetType ejbCreate('_CreateParameterType '_CreateParameterDcl*);\n" +
-                                            "  public void ejbActivate();\n\n" +
-                                            "  public void ejbPassivate();\n\n" +
-                                            "  public void ejbRemove();\n" +
-                                            "}", getJ2EEType(), JavaFileType.INSTANCE, null),
-      createLegacyNonRecursiveConfiguration(SSRBundle.message("predefined.configuration.ejb.interface"), "ejb interface",
-                                            "interface 'EjbInterface extends EJBObject {\n" +
-                                            "  '_Type '_Method+('_ParameterType '_Param*);\n" +
-                                            "}", getJ2EEType(), JavaFileType.INSTANCE, null),
-      createLegacyNonRecursiveConfiguration(SSRBundle.message("predefined.configuration.servlets"), "servlets",
-                                            "public class 'Servlet extends '_ParentClass:*HttpServlet {\n" +
-                                            "  public void '_InitServletMethod?:init ();\n" +
-                                            "  public void '_DestroyServletMethod?:destroy ();\n" +
-                                            "  void '_ServiceMethod?:*service (HttpServletRequest '_request, HttpServletResponse '_response);\n" +
-                                            "  void '_SpecificServiceMethod*:do.* (HttpServletRequest '_request2, HttpServletResponse '_response2); \n" +
-                                            "}", getJ2EEType(), JavaFileType.INSTANCE, null),
-      createLegacyNonRecursiveConfiguration(SSRBundle.message("predefined.configuration.filters"), "filters",
-                                            "public class 'Filter implements Filter {\n" +
-                                            "  public void '_DestroyFilterMethod?:*destroy ();\n" +
-                                            "  public void '_InitFilterMethod?:*init ();\n" +
-                                            "  public void '_FilteringMethod:*doFilter (ServletRequest '_request,\n" +
-                                            "    ServletResponse '_response,FilterChain '_chain);\n" +
-                                            "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+      createLegacyConfiguration(SSRBundle.message("predefined.configuration.struts.1.1.actions"), "Struts 1.1 actions",
+                                "public class '_StrutsActionClass extends '_ParentClass*:Action {\n" +
+                                "  public ActionForward '_AnActionMethod:*execute (ActionMapping '_action,\n" +
+                                "                                 ActionForm '_form,\n" +
+                                "                                 HttpServletRequest '_request,\n" +
+                                "                                 HttpServletResponse '_response);\n" +
+                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+      createLegacyConfiguration(SSRBundle.message("predefined.configuration.entity.ejb"), "entity ejb",
+                                "class 'EntityBean implements EntityBean {\n" +
+                                "  EntityContext '_Context?;\n\n" +
+                                "  public void setEntityContext(EntityContext '_Context2);\n\n" +
+                                "  public '_RetType ejbCreate('_CreateType '_CreateDcl*);\n" +
+                                "  public void ejbActivate();\n\n" +
+                                "  public void ejbLoad();\n\n" +
+                                "  public void ejbPassivate();\n\n" +
+                                "  public void ejbRemove();\n\n" +
+                                "  public void ejbStore();\n" +
+                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+      createLegacyConfiguration(SSRBundle.message("predefined.configuration.session.ejb"), "session ejb",
+                                "class 'SessionBean implements SessionBean {\n" +
+                                "  SessionContext '_Context?;\n\n" +
+                                "  public void '_setSessionContext(SessionContext '_Context2);\n\n" +
+                                "  public '_RetType ejbCreate('_CreateParameterType '_CreateParameterDcl*);\n" +
+                                "  public void ejbActivate();\n\n" +
+                                "  public void ejbPassivate();\n\n" +
+                                "  public void ejbRemove();\n" +
+                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+      createLegacyConfiguration(SSRBundle.message("predefined.configuration.ejb.interface"), "ejb interface",
+                                "interface 'EjbInterface extends EJBObject {\n" +
+                                "  '_Type '_Method+('_ParameterType '_Param*);\n" +
+                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+      createLegacyConfiguration(SSRBundle.message("predefined.configuration.servlets"), "servlets",
+                                "public class 'Servlet extends '_ParentClass:*HttpServlet {\n" +
+                                "  public void '_InitServletMethod?:init ();\n" +
+                                "  public void '_DestroyServletMethod?:destroy ();\n" +
+                                "  void '_ServiceMethod?:*service (HttpServletRequest '_request, HttpServletResponse '_response);\n" +
+                                "  void '_SpecificServiceMethod*:do.* (HttpServletRequest '_request2, HttpServletResponse '_response2); \n" +
+                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
+      createLegacyConfiguration(SSRBundle.message("predefined.configuration.filters"), "filters",
+                                "public class 'Filter implements Filter {\n" +
+                                "  public void '_DestroyFilterMethod?:*destroy ();\n" +
+                                "  public void '_InitFilterMethod?:*init ();\n" +
+                                "  public void '_FilteringMethod:*doFilter (ServletRequest '_request,\n" +
+                                "    ServletResponse '_response,FilterChain '_chain);\n" +
+                                "}", getJ2EEType(), JavaFileType.INSTANCE, null),
 
       // Misc types
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.serializable.classes.and.their.serialization.implementation"),
@@ -326,10 +326,10 @@ final class JavaPredefinedConfigurations {
                                 "class '_Class implements '_Interface:*Cloneable {\n" +
                                 "  Object 'CloningMethod:*clone ();\n" +
                                 "}", getMiscType(), JavaFileType.INSTANCE),
-      createLegacyNonRecursiveConfiguration(SSRBundle.message("predefined.configuration.junit.test.cases"), "junit test cases",
-                                            "public class 'TestCase extends '_TestCaseClazz:*TestCase {\n" +
-                                            "  public void '_testMethod+:test.* ();\n" +
-                                            "}", getMiscType(), JavaFileType.INSTANCE, null),
+      createLegacyConfiguration(SSRBundle.message("predefined.configuration.junit.test.cases"), "junit test cases",
+                                "public class 'TestCase extends '_TestCaseClazz:*TestCase {\n" +
+                                "  public void '_testMethod+:test.* ();\n" +
+                                "}", getMiscType(), JavaFileType.INSTANCE, null),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.singletons"), "singletons",
                                 "class 'Class {\n" +
                                 "  private 'Class('_ParameterType '_Parameter*) {\n" +

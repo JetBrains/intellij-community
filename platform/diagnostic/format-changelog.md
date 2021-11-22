@@ -1,3 +1,13 @@
+#35
+
+* Rename `entities loading` to `loading entities from files`
+* Rename `project model changes saving (in queue)` to `applying loaded changes (in queue)`
+* Rename `project model changes saving` to `applying loaded changes`
+* Rename `project libraries loading` to `libraries instantiation`
+* Rename `events modules added` to `firing modules_added event`
+* Rename `module cache loading` to `cache loading`
+* Rename `events sending after modules are loaded` to `postponed events sending`
+
 #34
 
 * Add `module cache loading`

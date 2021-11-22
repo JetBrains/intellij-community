@@ -15,6 +15,45 @@ import kotlin.reflect.KClass
 
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
 
+inline fun PsiElement.findParentInFile(withSelf: Boolean = false, predicate: (PsiElement) -> Boolean): PsiElement? {
+  var current = when {
+    withSelf -> this
+    this is PsiFile -> return null
+    else -> parent
+  }
+
+  while (current != null) {
+    if (predicate(current)) return current
+    if (current is PsiFile) break
+    current = current.parent
+  }
+  return null
+}
+
+inline fun PsiElement.findTopmostParentInFile(withSelf: Boolean = false, predicate: (PsiElement) -> Boolean): PsiElement? {
+  var answer: PsiElement? = null
+  var current = when {
+    withSelf -> this
+    this is PsiFile -> return null
+    else -> parent
+  }
+
+  while (current != null) {
+    if (predicate(current)) answer = current
+    if (current is PsiFile) break
+    current = current.parent
+  }
+  return answer
+}
+
+inline fun <reified T : PsiElement> PsiElement.findParentOfType(strict: Boolean = true): T? {
+  return findParentInFile(!strict) { it is T } as? T
+}
+
+inline fun <reified T : PsiElement> PsiElement.findTopmostParentOfType(strict: Boolean = true): T? {
+  return findTopmostParentInFile(!strict) { it is T } as? T
+}
+
 inline fun <reified T : PsiElement> PsiElement.parentOfType(withSelf: Boolean = false): T? {
   return PsiTreeUtil.getParentOfType(this, T::class.java, !withSelf)
 }

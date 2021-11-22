@@ -1,5 +1,5 @@
 // "Assign to property" "false"
-// ACTION: Convert assignment to assignment expression
+// ACTION: Converts the assignment statement to an expression
 // ERROR: Val cannot be reassigned
 class Test {
     var foo = "1"

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.scale.JBUIScale;
@@ -565,7 +566,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @NotNull
     @Override
     public Alignment getAlignment() {
-      return Alignment.RIGHT;
+      return ExperimentalUI.isNewUI() ? Alignment.LINE_NUMBERS : Alignment.RIGHT;
     }
 
     @Override

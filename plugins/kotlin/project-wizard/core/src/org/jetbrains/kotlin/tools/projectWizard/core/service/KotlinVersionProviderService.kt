@@ -2,8 +2,6 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.core.service
 
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
@@ -38,19 +36,9 @@ abstract class KotlinVersionProviderService : WizardService {
         "dev" in version.toString().toLowerCase() -> KotlinVersionKind.DEV
         "m" in version.toString().toLowerCase() -> KotlinVersionKind.M
         else -> KotlinVersionKind.STABLE
-
-
     }
 
     companion object {
-        @NonNls
-        const val SNAPSHOT_TAG = "snapshot"
-
-        fun getKotlinVersionFromCompiler() =
-            KotlinCompilerVersion.getVersion()
-                ?.takeUnless { it.contains(SNAPSHOT_TAG, ignoreCase = true) }
-                ?.let { Version.fromString(it.substringBefore("-release")) }
-
         fun getBuildSystemPluginRepository(
             versionKind: KotlinVersionKind,
             devRepository: Repository

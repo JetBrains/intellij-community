@@ -1,0 +1,3 @@
+version = "20.0"
+python2 = true
+requires = ["types-cryptography"]

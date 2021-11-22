@@ -117,6 +117,12 @@ abstract class TaskContext : LearningDslBase {
    */
   open fun <T : Any> stateRequired(requiredState: TaskRuntimeContext.() -> T?): Future<T> = CompletableFuture()
 
+  /**
+   * Check that IDE state is as expected and check it by timer.
+   * Need to consider merge this method with [stateCheck].
+   */
+  open fun timerCheck(delayMillis: Int = 200, checkState: TaskRuntimeContext.() -> Boolean): CompletableFuture<Boolean> = CompletableFuture()
+
   open fun addFutureStep(p: DoneStepContext.() -> Unit) = Unit
 
   open fun addStep(step: CompletableFuture<Boolean>) = Unit

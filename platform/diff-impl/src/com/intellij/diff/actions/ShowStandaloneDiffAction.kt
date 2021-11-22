@@ -21,6 +21,10 @@ class ShowStandaloneDiffAction : ExtendableAction(EP_NAME), DumbAware {
       "com.intellij.diff.actions.ShowStandaloneDiffAction.ExtensionProvider")
   }
 
+  init {
+    isEnabledInModalContext = true
+  }
+
   override fun commonUpdate(e: AnActionEvent) {
     val project = e.project
 

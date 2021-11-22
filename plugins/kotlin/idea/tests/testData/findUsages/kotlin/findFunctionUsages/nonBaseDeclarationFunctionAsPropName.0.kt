@@ -2,7 +2,7 @@
 // CHECK_SUPER_METHODS_YES_NO_DIALOG: no
 // OPTIONS: usages
 
-class SomeXImpl: SomeX {
+class SomeXImpl : SomeX {
     override fun <caret>getSmth(): String = TODO()
 }
 

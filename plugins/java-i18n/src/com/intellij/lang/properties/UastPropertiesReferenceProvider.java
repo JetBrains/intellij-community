@@ -3,6 +3,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.codeInspection.i18n.NlsInfo;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.util.Ref;
@@ -35,7 +36,7 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
   public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression element,
                                                                 @NotNull PsiLanguageInjectionHost host,
                                                                 @NotNull ProcessingContext context) {
-    UExpression parent = NlsInfo.goUp(element, false);
+    UExpression parent = StringFlowUtil.goUp(element, false, NlsInfo.factory());
     if (!canBePropertyKeyRef(parent)) {
       return PsiReference.EMPTY_ARRAY;
     }

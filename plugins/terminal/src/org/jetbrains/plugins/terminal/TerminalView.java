@@ -115,7 +115,7 @@ public final class TerminalView implements Disposable {
       @Override
       public void toolWindowShown(@NotNull ToolWindow toolWindow) {
         if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId()) && myToolWindow == toolWindow &&
-            toolWindow.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
+            toolWindow.isVisible() && toolWindow.getContentManager().isEmpty()) {
           // open a new session if all tabs were closed manually
           createNewSession(myTerminalRunner, null, true, true);
         }

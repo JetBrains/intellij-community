@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -176,7 +176,9 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       familyName.equals("Extract If Condition") ||
       // Cutting the message at different points is possible like
       // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
-      familyName.equals("Simplify boolean expression");
+      familyName.equals("Simplify boolean expression") ||
+      // A parenthesized enum switch case label is a compilation error
+      familyName.equals("Create enum switch branches");
   }
 
   @NotNull

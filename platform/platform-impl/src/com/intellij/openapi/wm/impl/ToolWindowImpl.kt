@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -20,10 +20,10 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.ExperimentalUI
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.Content
@@ -118,6 +118,14 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   internal fun getOrCreateDecoratorComponent(): JComponent {
     ensureContentManagerInitialized()
     return decorator!!
+  }
+
+  fun createCellDecorator() : InternalDecoratorImpl {
+    val cellContentManager = ContentManagerImpl(canCloseContent, toolWindowManager.project, parentDisposable, ContentManagerImpl.ContentUiProducer { contentManager, componentGetter ->
+      ToolWindowContentUi(this, contentManager, componentGetter.get())
+    })
+    contentManager.value.addNestedManager(cellContentManager)
+    return InternalDecoratorImpl(this, cellContentManager.ui as ToolWindowContentUi, cellContentManager.component)
   }
 
   private fun createContentManager(): ContentManagerImpl {
@@ -601,7 +609,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       }
 
       addAction(toggleToolbarGroup).setAsSecondary(true)
-      addSeparator()
       add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
       if (ExperimentalUI.isNewToolWindowsStripes()) {
         add(SquareStripeButton.createMoveGroup(project, null, toolWindow))

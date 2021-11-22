@@ -31,7 +31,7 @@ class CoroutinePreflightFrame(
     val frame: StackFrameProxyImpl,
     val threadPreCoroutineFrames: List<StackFrameProxyImpl>,
     val mode: SuspendExitMode,
-    firstFrameVariables: List<JavaValue> = coroutineInfoData.topFrameVariables()
+    firstFrameVariables: List<JavaValue>
 ) : CoroutineStackFrame(frame, null, firstFrameVariables) {
 
     override fun isInLibraryContent() = false

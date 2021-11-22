@@ -134,11 +134,10 @@ class PySdkPathsTest {
     )
       .also { module.pythonSdk = it }
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
-    Disposer.register(projectModel.project, sdk)
 
     mockPythonPluginDisposable()
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }
-    PyConfigurableInterpreterList.getInstance(projectModel.project).model.addSdk(sdk)
+    runWriteActionAndWait { ProjectJdkTable.getInstance().addJdk(sdk) }
 
     val editableSdk = PyConfigurableInterpreterList.getInstance(projectModel.project).model.findSdk(sdk.name)
     editableSdk!!.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
@@ -165,6 +164,8 @@ class PySdkPathsTest {
     updateSdkPaths(sdk) // since editableSdk was created after additional data had been created for sdk, they share the same data
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
+
+    runWriteActionAndWait { ProjectJdkTable.getInstance().removeJdk(sdk) }
   }
 
   @Test
@@ -186,8 +187,7 @@ class PySdkPathsTest {
     )
       .also { module.pythonSdk = it }
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
-    Disposer.register(projectModel.project, sdk)
-    PyConfigurableInterpreterList.getInstance(projectModel.project).model.addSdk(sdk)
+    runWriteActionAndWait { ProjectJdkTable.getInstance().addJdk(sdk) }
 
     val editableSdk = PyConfigurableInterpreterList.getInstance(projectModel.project).model.findSdk(sdk.name)
     editableSdk!!.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
@@ -220,6 +220,8 @@ class PySdkPathsTest {
     updateSdkPaths(sdk) // after updateJdk call editableSdk and sdk share the same data
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
+
+    runWriteActionAndWait { ProjectJdkTable.getInstance().removeJdk(sdk) }
   }
 
   @Test

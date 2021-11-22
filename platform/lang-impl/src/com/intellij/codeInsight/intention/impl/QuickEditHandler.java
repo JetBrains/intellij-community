@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -51,7 +51,6 @@ import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.FocusManager;
@@ -81,7 +80,7 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
   private EditorWindow mySplittedWindow;
   private boolean myCommittingToOriginal;
 
-  private final InjectedFileChangesHandler myEditChangesHandler;
+  private final @NotNull InjectedFileChangesHandler myEditChangesHandler;
 
   public static final Key<String> REPLACEMENT_KEY = Key.create("REPLACEMENT_KEY");
 
@@ -125,8 +124,6 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
     myNewDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(myNewFile), "doc for file " + myNewFile.getName());
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new MyQuietHandler());
     myOrigCreationStamp = myOrigDocument.getModificationStamp(); // store creation stamp for UNDO tracking
-    myOrigDocument.addDocumentListener(this, this);
-    myNewDocument.addDocumentListener(this, this);
     EditorFactory editorFactory = Objects.requireNonNull(EditorFactory.getInstance());
     // not FileEditorManager listener because of RegExp checker and alike
     editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
@@ -178,6 +175,9 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
     });
 
     initGuardedBlocks(shreds);
+
+    myOrigDocument.addDocumentListener(this, this);
+    myNewDocument.addDocumentListener(this, this);
   }
 
   private static final Key<Set<QuickEditHandler>> QUICK_EDIT_HANDLERS = Key.create("QUICK_EDIT_HANDLERS");

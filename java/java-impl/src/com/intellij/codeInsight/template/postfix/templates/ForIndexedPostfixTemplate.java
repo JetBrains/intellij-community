@@ -7,28 +7,18 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.*;
 
 public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTemplate {
-  /**
-   * @deprecated use {@link JavaPostfixTemplatesUtils}
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
-    element -> IS_ITERABLE_OR_ARRAY.value(element) || IS_NUMBER.value(element);
-    
   protected ForIndexedPostfixTemplate(@NotNull String templateName, @NotNull String templateText, @NotNull String example,
                                       @NotNull JavaPostfixTemplateProvider provider) {
     super(templateName, templateText, example,

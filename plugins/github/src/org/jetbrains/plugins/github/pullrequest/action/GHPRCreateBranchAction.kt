@@ -83,7 +83,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
         ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.changesData.fetchHeadBranch(), indicator)
 
         indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
-        GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
+        GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, indicator))
           .checkout(localBranch, false, listOf(repository))
       }
     }.queue()
@@ -106,7 +106,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
           ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.changesData.fetchHeadBranch(), indicator)
 
           indicator.text = GithubBundle.message("pull.request.branch.checkout.create.task.indicator")
-          GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
+          GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, indicator))
             .createBranch(options.name, mapOf(repository to sha))
           if (options.setTracking) {
             trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)
@@ -125,7 +125,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
           ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.changesData.fetchHeadBranch(), indicator)
 
           indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
-          GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
+          GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, indicator))
             .checkoutNewBranchStartingFrom(options.name, sha, listOf(repository))
           if (options.setTracking) {
             trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)

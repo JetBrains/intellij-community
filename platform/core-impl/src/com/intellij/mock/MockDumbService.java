@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -37,8 +37,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void waitForSmartMode() {
-  }
+  public void waitForSmartMode() { }
 
   @Override
   public void queueTask(@NotNull DumbModeTask task) {
@@ -53,8 +52,7 @@ public class MockDumbService extends DumbService {
   public void cancelAllTasksAndWait() { }
 
   @Override
-  public void completeJustSubmittedTasks() {
-  }
+  public void completeJustSubmittedTasks() { }
 
   @Override
   public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
@@ -74,8 +72,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void showDumbModeActionBalloon(@NotNull String balloonText,
-                                        @NotNull Runnable runWhenSmartAndBalloonUnhidden) {
+  public void showDumbModeActionBalloon(@NotNull String balloonText, @NotNull Runnable runWhenSmartAndBalloonUnhidden) {
     throw new UnsupportedOperationException();
   }
 
@@ -85,8 +82,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void setAlternativeResolveEnabled(boolean enabled) {
-  }
+  public void setAlternativeResolveEnabled(boolean enabled) { }
 
   @Override
   public boolean isAlternativeResolveEnabled() {
@@ -115,6 +111,11 @@ public class MockDumbService extends DumbService {
 
   @Override
   public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+    runnable.run();
+  }
+
+  @Override
+  public void runWithWaitForSmartModeDisabled(@NotNull Runnable runnable) {
     runnable.run();
   }
 }

@@ -3,7 +3,7 @@ package com.intellij.util
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
@@ -65,7 +65,7 @@ private fun getBestPositionInsideGutter(context: DataContext, location: Rectangl
 }
 
 private fun getBestBalloonPositionInsideEditor(context: DataContext): RelativePoint? {
-  val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context)
+  val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
   val editor = CommonDataKeys.EDITOR.getData(context) ?: return null
   val contentComponent = editor.contentComponent
   if (contentComponent !== component) return null
@@ -134,7 +134,7 @@ private fun getBestBalloonPositionInsideComponent(context: DataContext): Relativ
 }
 
 private inline fun <reified C : JComponent> getFocusComponent(context: DataContext): C? {
-  val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context)
+  val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
   if (component is C) return component
   val project = CommonDataKeys.PROJECT.getData(context)
   val frame = project?.let { WindowManager.getInstance().getFrame(it) }

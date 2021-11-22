@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInspection.*;
@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
+import com.siyeh.ig.bugs.FormatDecode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,11 +63,17 @@ public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool
     if (parent instanceof PsiExpressionList)  {
       final PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiMethodCallExpression && IGNORE_SUSPICIOUS_METHOD_CALLS) {
+        PsiType operandType = operand.getType();
         final String message = SuspiciousMethodCallUtil
-          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<>(), 0);
+          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operandType, true, new ArrayList<>(), 0);
         if (message != null) {
           return null;
         }
+        
+        if (FormatDecode.isSuspiciousFormatCall((PsiMethodCallExpression)gParent, cast)) {
+          return null;
+        }
+        
       }
     }
 

@@ -13,6 +13,7 @@ import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
 import java.util.*;
@@ -90,6 +91,8 @@ public final class CompileScopeUtil {
     switch (set.getType()) {
       case TEST: return JavaModuleBuildTargetType.TEST;
       case PRODUCTION: return JavaModuleBuildTargetType.PRODUCTION;
+      case RESOURCES: return ResourcesTargetType.PRODUCTION;
+      case RESOURCES_TEST: return ResourcesTargetType.TEST;
       default: return null;
     }
   }

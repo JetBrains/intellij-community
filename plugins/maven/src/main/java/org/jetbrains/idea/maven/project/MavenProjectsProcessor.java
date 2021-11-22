@@ -57,7 +57,7 @@ public class MavenProjectsProcessor {
 
   public void scheduleTask(MavenProjectsProcessorTask task) {
     synchronized (myQueue) {
-      if (!isProcessing && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!isProcessing && !MavenUtil.isMavenUnitTestModeEnabled()) {
         isProcessing = true;
         startProcessing(task);
         return;
@@ -76,7 +76,7 @@ public class MavenProjectsProcessor {
   public void waitForCompletion() {
     if (isStopped) return;
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (MavenUtil.isMavenUnitTestModeEnabled()) {
       while (true) {
         MavenProjectsProcessorTask task;
         synchronized (myQueue) {

@@ -14,6 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.getEffectiveTargetName
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
@@ -38,8 +39,8 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiPackage
+import com.intellij.psi.search.ExecutionSearchScopes
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
@@ -55,8 +56,8 @@ import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.ge
 import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getStartClassFqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.util.application.runReadActionInSmartMode
-import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils.getFilePartShortName
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
+import org.jetbrains.kotlin.idea.util.jvmName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -72,7 +73,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
     override fun getValidModules(): Collection<Module> = ModuleManager.getInstance(project).modules.toList()
 
-    override fun getSearchScope(): GlobalSearchScope? = GlobalSearchScopes.executionScope(modules.toList())
+    override fun getSearchScope(): GlobalSearchScope? = ExecutionSearchScopes.executionScope(modules.toList())
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration?> {
         val group = SettingsEditorGroup<KotlinRunConfiguration>()
@@ -280,7 +281,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun needPrepareTarget(): Boolean {
-        return defaultTargetName != null || runsUnderWslJdk()
+        return getEffectiveTargetName(project) != null || runsUnderWslJdk()
     }
 
     override fun getShortenCommandLine(): ShortenCommandLine? {
@@ -361,13 +362,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         private fun KtNamedFunction.isAMainCandidate(): Boolean {
             if (isLocal) return false
 
-            val jvmName = annotationEntries.filter {
-                it.shortName?.asString() == "JvmName"
-            }.mapNotNull {
-                it.valueArguments.singleOrNull()?.getArgumentExpression()
-                    .safeAs<KtStringTemplateExpression>()?.entries?.singleOrNull()
-            }.singleOrNull()?.text
-
+            val jvmName = jvmName
             if (!(name == "main" && jvmName == null || jvmName == "main")) return false
 
             // method annotated with @JvmName("main") could be a candidate as well
@@ -379,7 +374,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                         // Array<String>
                         valueParameter?.typeReference?.typeElement?.run {
                             // to handle `Array` or `Array?`
-                            safeAs<KtUserType>() ?: safeAs<KtNullableType>()?.innerType.safeAs<KtUserType>()
+                            safeAs<KtUserType>() ?: safeAs<KtNullableType>()?.innerType.safeAs()
                         }?.run {
                             referencedName == "Array" &&
                                     typeArgumentList?.arguments?.singleOrNull()?.run {

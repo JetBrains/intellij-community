@@ -117,3 +117,10 @@ internal object KtArgumentPostfixTemplate : ConstantStringBasedPostfixTemplate(
         template.addVariable("call", "", "", true)
     }
 }
+
+internal object KtWithPostfixTemplate : ConstantStringBasedPostfixTemplate(
+    "with",
+    "with(expr) {}",
+    "with(\$expr$) {\n\$END$\n}",
+    createExpressionSelector()
+)

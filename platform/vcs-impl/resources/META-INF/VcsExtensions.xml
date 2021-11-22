@@ -73,8 +73,12 @@
     <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Simple"/>
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Unified"/>
+
+    <diff.DiffExtension implementation="com.intellij.diff.tools.combined.CombinedDiffRequestProcessor$CombinedDiffViewerBuilder"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
@@ -211,7 +215,7 @@
     <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
 
     <keymapExtension implementation="com.intellij.openapi.vcs.impl.VcsKeymapExtension"/>
-    <fileType name="PATCH" implementationClass="com.intellij.openapi.vcs.changes.patch.PatchFileType" fieldName="INSTANCE" extensions="patch;diff" />
+    <fileType name="PATCH" implementationClass="com.intellij.openapi.vcs.changes.patch.PatchFileType" fieldName="INSTANCE" extensions="diff;patch" />
     <virtualFileSystem key="vcs" implementationClass="com.intellij.openapi.vcs.vfs.VcsFileSystem"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
     <fileDocumentManagerListener implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
@@ -270,6 +274,7 @@
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl$MyStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.roots.VcsRootScanner$DetectRootsStartupActivity"/>
+    <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyFileDocumentManagerListener"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
     <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
@@ -292,7 +297,7 @@
 
     <searchScopesProvider implementation="com.intellij.vcs.changes.ChangeListsSearchScopeProvider"/>
 
-    <generalEditorOptionsExtension instance="com.intellij.options.VcsGeneralEditorOptionsExtension" />
+    <generalVcsSettingsExtension instance="com.intellij.options.VcsGeneralEditorOptionsExtension" />
 
     <modelScopeItemPresenter implementation="com.intellij.analysis.VcsScopeItemPresenter" id="vcs_scope" order="after module_scope" />
 
@@ -307,7 +312,6 @@
     <statistics.notificationIdsHolder implementation="com.intellij.openapi.vcs.VcsNotificationIdsHolder"/>
 
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.openapi.vcs.changes.ShowDiffInEditorTooltipInstaller"/>
-    <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
     <registryKey key="patch.context.line.count" defaultValue="3" description="Number of context lines for creating patches"/>
 
     <advancedSetting id="vcs.annotations.preload" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>

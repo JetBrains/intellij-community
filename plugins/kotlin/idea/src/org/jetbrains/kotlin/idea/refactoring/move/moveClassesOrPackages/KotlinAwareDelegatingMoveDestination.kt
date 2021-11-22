@@ -38,7 +38,7 @@ class KotlinAwareDelegatingMoveDestination(
         if (targetPackage == null || targetDirectory == null) return
 
         val project = targetDirectory.project
-        val moveTarget = KotlinDirectoryMoveTarget(FqName(targetPackage.qualifiedName), targetDirectory)
+        val moveTarget = KotlinDirectoryMoveTarget(FqName(targetPackage.qualifiedName), targetDirectory.virtualFile)
         val packagesIndex = KotlinExactPackagesIndex.getInstance()
         val directoriesToMove = elements.flatMapTo(LinkedHashSet<PsiDirectory>()) {
             (it as? PsiPackage)?.directories?.toList() ?: emptyList()

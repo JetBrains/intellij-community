@@ -156,34 +156,14 @@ public abstract class PopupHandler extends MouseAdapter {
   public static @NotNull PopupHandler installRowSelectionTablePopup(@NotNull JTable table,
                                                                     @NotNull ActionGroup group,
                                                                     @NotNull String place) {
-    return (PopupHandler)installRowSelectionTablePopup(table, group, place, null);
-  }
-
-  /** @deprecated use {@link #installFollowingSelectionTreePopup(JTree, ActionGroup, String)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @NotNull MouseListener installRowSelectionTablePopup(@NotNull JTable table,
-                                                                     @NotNull ActionGroup group,
-                                                                     @NotNull String place,
-                                                                     @Nullable ActionManager actionManager) {
-    return installConditionalPopup(table, group, place, actionManager, (comp, x, y) ->
+    return installConditionalPopup(table, group, place, null, (comp, x, y) ->
       Arrays.binarySearch(table.getSelectedRows(), table.rowAtPoint(new Point(x, y))) > -1);
   }
 
   public static @NotNull PopupHandler installSelectionListPopup(@NotNull JList<?> list,
                                                                 @NotNull ActionGroup group,
                                                                 @NotNull String place) {
-    return (PopupHandler)installSelectionListPopup(list, group, place, null);
-  }
-
-  /** @deprecated use {@link #installSelectionListPopup(JList, ActionGroup, String)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @NotNull MouseListener installSelectionListPopup(@NotNull JList<?> list,
-                                                                 @NotNull ActionGroup group,
-                                                                 @NotNull String place,
-                                                                 @Nullable ActionManager actionManager) {
-    return installConditionalPopup(list, group, place, actionManager, (comp, x, y) -> ListUtil.isPointOnSelection(list, x, y));
+    return installConditionalPopup(list, group, place, null, (comp, x, y) -> ListUtil.isPointOnSelection(list, x, y));
   }
 
   private static @NotNull PopupHandler installConditionalPopup(@NotNull JComponent component,

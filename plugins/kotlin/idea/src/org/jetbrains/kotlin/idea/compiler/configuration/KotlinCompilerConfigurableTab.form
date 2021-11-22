@@ -71,7 +71,7 @@
               </grid>
             </constraints>
             <properties>
-              <text value="lib"/>
+              <text resource-bundle="messages/KotlinBundle" key="kotlin.compiler.lib"/>
             </properties>
           </component>
           <component id="97317" class="com.intellij.util.ui.ThreeStateCheckBox" binding="copyRuntimeFilesCheckBox" custom-create="true">

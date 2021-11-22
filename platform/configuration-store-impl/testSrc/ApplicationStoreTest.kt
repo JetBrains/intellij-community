@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("UsePropertyAccessSyntax")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -10,24 +12,21 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.io.exists
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
-import com.intellij.util.io.*
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.picocontainer.MutablePicoContainer
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -181,7 +180,7 @@ internal class ApplicationStoreTest {
         )
     }
     finally {
-      (ApplicationManager.getApplication().picoContainer as MutablePicoContainer).unregisterComponent(A::class.java)
+      (ApplicationManager.getApplication() as ComponentManagerImpl).unregisterComponent(A::class.java)
     }
   }
 
@@ -226,7 +225,7 @@ internal class ApplicationStoreTest {
     }
   }
 
-  private fun createComponentData(foo: String) = """<component name="A" foo="$foo" />"""
+  private fun createComponentData(fooValue: String, componentName: String = "A") = """<component name="$componentName" foo="$fooValue" />"""
 
   @Test
   fun `remove data from deprecated storage if another component data exists`() = runBlocking<Unit> {
@@ -417,7 +416,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test
-  fun `test per-os components are stored in subfolder`() = runBlocking<Unit> {
+  fun `test per-os components are stored in subfolder`() = runBlocking {
     val component = PerOsComponent()
     componentStore.initComponent(component, null, null)
     component.foo = "bar"
@@ -431,7 +430,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test
-  fun `test per-os component is read from deprecated top-level storage and moved to new location`() = runBlocking<Unit> {
+  fun `test per-os component is read from deprecated top-level storage and moved to new location`() = runBlocking {
     writeConfig("peros.xml", "<application>${createComponentData("new")}</application>")
 
     testAppConfig.refreshVfs()
@@ -459,6 +458,29 @@ internal class ApplicationStoreTest {
     val component = PerOsComponent()
     componentStore.initComponent(component, null, null)
     assertThat(component.foo).isEqualTo("new")
+  }
+
+  @Test
+  fun `can keep xml file name when deprecating roaming type`() = runBlocking {
+
+    @State(name = "Comp", storages = [
+      Storage("old.xml", roamingType = RoamingType.PER_OS, deprecated = true),
+      Storage("old.xml", roamingType = RoamingType.DEFAULT)])
+    class Comp : FooComponent()
+
+    val os = getPerOsSettingsStorageFolderName()
+    writeConfig("$os/old.xml", """<application>${createComponentData("old", "Comp")}</application>""")
+    testAppConfig.refreshVfs()
+
+    val component = Comp()
+    componentStore.initComponent(component, null, null)
+    assertThat(component.foo).isEqualTo("old")
+
+    componentStore.save()
+
+    val fs = testAppConfig.fileSystem
+    assertFalse("$os/old.xml was not removed", testAppConfig.resolve(fs.getPath(os, "old.xml")).exists())
+    assertTrue("New old.xml without os prefix not found", testAppConfig.resolve("old.xml").exists())
   }
 
   @State(name = "A", storages = [Storage(value = "peros.xml", roamingType = RoamingType.PER_OS)])

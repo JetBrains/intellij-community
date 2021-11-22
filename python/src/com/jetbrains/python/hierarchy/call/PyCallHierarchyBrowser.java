@@ -17,6 +17,7 @@ import com.jetbrains.python.hierarchy.PyHierarchyUtils;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,7 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<? super String, ? super JTree> type2TreeMap) {
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> type2TreeMap) {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_CALL_HIERARCHY_POPUP);
 
     JTree callerTree = createHierarchyTree(group);

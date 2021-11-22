@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.tools.projectWizard.templates.mpp
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
@@ -31,7 +30,7 @@ class MobileMppTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.mpp.mobile.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.mpp.mobile.description")
 
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator == MppModuleConfigurator
 
 

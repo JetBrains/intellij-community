@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -1166,13 +1166,6 @@ public final class UIUtil {
   public static @NotNull Icon getTreeSelectedExpandedIcon() {
     Icon icon = UIManager.getIcon("Tree.expandedSelectedIcon");
     return icon != null ? icon : getTreeExpandedIcon();
-  }
-
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static Border getTableHeaderCellBorder() {
-    return UIManager.getBorder("TableHeader.cellBorder");
   }
 
   public static Color getWindowColor() {
@@ -3350,20 +3343,20 @@ public final class UIUtil {
     return getTableSelectionForeground(true);
   }
 
-  /**
-   * @deprecated use {@link JreHiDpiUtil#isJreHiDPIEnabled()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean isJreHiDPIEnabled() {
-    return JreHiDpiUtil.isJreHiDPIEnabled();
-  }
-
   public static void doNotScrollToCaret(@NotNull JTextComponent textComponent) {
     textComponent.setCaret(new DefaultCaret() {
       @Override
-      protected void adjustVisibility(Rectangle nloc) {}
+      protected void adjustVisibility(Rectangle nloc) { }
     });
+  }
+
+  public static void convertToLabel(@NotNull JEditorPane editorPane) {
+    editorPane.setEditable(false);
+    editorPane.setFocusable(false);
+    editorPane.setOpaque(false);
+    editorPane.setBorder(null);
+    editorPane.setContentType("text/html");
+    editorPane.setEditorKit(getHTMLEditorKit());
   }
 
   /**
@@ -3574,5 +3567,17 @@ public final class UIUtil {
     });
     ObjectUtils.consumeIfCast(focusOwner.getParent(), JTable.class, table -> TableUtil.stopEditing(table));
     ObjectUtils.consumeIfCast(focusOwner.getParent(), JTree.class, tree -> tree.stopEditing());
+  }
+
+  public static String colorToHex(final Color color) {
+    return to2DigitsHex(color.getRed())
+           + to2DigitsHex(color.getGreen())
+           + to2DigitsHex(color.getBlue());
+  }
+
+  private static String to2DigitsHex(int i) {
+    String s = Integer.toHexString(i);
+    if (s.length() < 2) s = "0" + s;
+    return s;
   }
 }

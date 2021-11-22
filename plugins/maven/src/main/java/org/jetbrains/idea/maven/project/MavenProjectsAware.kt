@@ -2,23 +2,18 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.autoimport.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
+import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 
 class MavenProjectsAware(
@@ -65,24 +60,21 @@ class MavenProjectsAware(
     context: ExternalSystemSettingsFilesReloadContext,
     action: (Pair<List<VirtualFile>, List<VirtualFile>>) -> Unit
   ) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment &&
-        !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      action(partitionSettingsFiles(context))
-      return
-    }
-    ReadAction.nonBlocking(Callable { partitionSettingsFiles(context) })
-      .expireWith(manager)
-      .finishOnUiThread(ModalityState.defaultModalityState(), action)
-      .submit(backgroundExecutor)
+    ReadAsyncSupplier.Builder { partitionSettingsFiles(context) }
+      .build(backgroundExecutor)
+      .supply(action, manager)
   }
 
   private fun partitionSettingsFiles(context: ExternalSystemSettingsFilesReloadContext): Pair<List<VirtualFile>, List<VirtualFile>> {
-    val localFileSystem = LocalFileSystem.getInstance()
-    val created = context.created.mapNotNull { localFileSystem.findFileByPath(it) }
-    val projectsFiles = projectsTree.projectsFiles
-    val updated = projectsFiles.filter { it.path in context.updated }
-    val deleted = projectsFiles.filter { it.path in context.deleted }
-    return created + updated to deleted
+    val updated = mutableListOf<VirtualFile>()
+    val deleted = mutableListOf<VirtualFile>()
+    for (projectsFile in projectsTree.projectsFiles) {
+      val path = projectsFile.path
+      if (path in context.created) updated.add(projectsFile)
+      if (path in context.updated) updated.add(projectsFile)
+      if (path in context.deleted) deleted.add(projectsFile)
+    }
+    return updated to deleted
   }
 
   private fun hasPomFile(rootDirectory: String): Boolean {

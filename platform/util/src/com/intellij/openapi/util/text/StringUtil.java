@@ -1583,26 +1583,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull @NonNls String formatDurationPadded(long millis, @NotNull String unitSeparator) {
-    return Formats.formatDurationPadded(millis, unitSeparator);
-  }
-
-  /**
-   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull @NonNls String formatDurationApproximate(long duration) {
-    return Formats.formatDurationApproximate(duration);
-  }
-
-  /**
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
    * Returns {@code null} if failed to match appropriate heuristic.
    *

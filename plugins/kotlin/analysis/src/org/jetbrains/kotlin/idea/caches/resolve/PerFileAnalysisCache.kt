@@ -11,7 +11,9 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.findParentInFile
+import com.intellij.psi.util.findTopmostParentInFile
+import com.intellij.psi.util.findTopmostParentOfType
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
@@ -19,9 +21,8 @@ import org.jetbrains.kotlin.context.GlobalContext
 import org.jetbrains.kotlin.context.withModule
 import org.jetbrains.kotlin.context.withProject
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.diagnostics.DiagnosticSink
-import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
+import org.jetbrains.kotlin.diagnostics.*
+import org.jetbrains.kotlin.diagnostics.PositioningStrategies.DECLARATION_WITH_BODY
 import org.jetbrains.kotlin.frontend.di.createContainerForLazyBodyResolve
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.trackers.clearInBlockModifications
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.project.IdeaModuleStructureOracle
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.*
@@ -43,6 +45,7 @@ import org.jetbrains.kotlin.storage.guarded
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.checkWithAttachment
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
@@ -67,9 +70,9 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         checkWithAttachment(element.containingFile == file, {
             "Expected $file, but was ${element.containingFile} for ${if (element.isValid) "valid" else "invalid"} $element "
         }) {
-            it.withAttachment("element.kt", element.text)
-            it.withAttachment("file.kt", element.containingFile.text)
-            it.withAttachment("original.kt", file.text)
+            it.withPsiAttachment("element.kt", element)
+            it.withPsiAttachment("file.kt", element.containingFile)
+            it.withPsiAttachment("original.kt", file)
         }
     }
 
@@ -123,7 +126,7 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             // step 3: perform analyze of analyzableParent as nothing has been cached yet
             val result = analyze(analyzableParent, null, localCallback)
 
-            // some of diagnostics could be not handled with a callback - send out the rest
+            // some diagnostics could be not handled with a callback - send out the rest
             callback?.let { c ->
                 result.bindingContext.diagnostics.filterNot { it in localDiagnostics }.forEach(c::callback)
             }
@@ -327,10 +330,12 @@ private class StackedCompositeBindingContextTrace(
     val stackedContext = StackedCompositeBindingContext()
 
     /**
-     * All diagnostics from parentContext apart those diagnostics those belongs to the element or its descendants
+     * All diagnostics from parentContext apart this diagnostics this belongs to the element or its descendants
      */
-    val parentDiagnosticsApartElement: Collection<Diagnostic> = parentContext.diagnostics.all().filter { d ->
-        d.psiElement.parentsWithSelf.none { it == element }
+    val parentDiagnosticsApartElement: Collection<Diagnostic> = run {
+        val all = parentContext.diagnostics.all()
+        val filtered = all.filter { it.psiElement == element && selfDiagnosticToHold(it) } + all.filter { it.psiElement.parentsWithSelf.none { e -> e == element } }
+        filtered
     }
 
     inner class StackedCompositeBindingContext : BindingContext {
@@ -386,29 +391,40 @@ private class StackedCompositeBindingContextTrace(
         super.clear()
         stackedContext.cachedDiagnostics = null
     }
+
+    companion object {
+        private fun selfDiagnosticToHold(d: Diagnostic): Boolean {
+            @Suppress("MoveVariableDeclarationIntoWhen")
+            val positioningStrategy = d.factory.safeAs<DiagnosticFactoryWithPsiElement<*, *>>()?.positioningStrategy
+            return when (positioningStrategy) {
+                DECLARATION_WITH_BODY -> false
+                else -> true
+            }
+        }
+    }
 }
 
 private object KotlinResolveDataProvider {
-    private val topmostElementTypes = arrayOf<Class<out PsiElement?>?>(
-        KtNamedFunction::class.java,
-        KtAnonymousInitializer::class.java,
-        KtProperty::class.java,
-        KtImportDirective::class.java,
-        KtPackageDirective::class.java,
-        KtCodeFragment::class.java,
-        // TODO: Non-analyzable so far, add more granular analysis
-        KtAnnotationEntry::class.java,
-        KtTypeConstraint::class.java,
-        KtSuperTypeList::class.java,
-        KtTypeParameter::class.java,
-        KtParameter::class.java,
-        KtTypeAlias::class.java
-    )
-
     fun findAnalyzableParent(element: KtElement): KtElement? {
         if (element is KtFile) return element
 
-        val topmostElement = KtPsiUtil.getTopmostParentOfTypes(element, *topmostElementTypes) as KtElement?
+        @Suppress("MoveVariableDeclarationIntoWhen")
+        val topmostElement = element.findTopmostParentInFile {
+            it is KtNamedFunction ||
+            it is KtAnonymousInitializer ||
+            it is KtProperty ||
+            it is KtImportDirective ||
+            it is KtPackageDirective ||
+            it is KtCodeFragment ||
+            // TODO: Non-analyzable so far, add more granular analysis
+            it is KtAnnotationEntry ||
+            it is KtTypeConstraint ||
+            it is KtSuperTypeList ||
+            it is KtTypeParameter ||
+            it is KtParameter ||
+            it is KtTypeAlias
+        } as KtElement?
+
         // parameters and supertype lists are not analyzable by themselves, but if we don't count them as topmost, we'll stop inside, say,
         // object expressions inside arguments of super constructors of classes (note that classes themselves are not topmost elements)
         val analyzableElement = when (topmostElement) {
@@ -416,7 +432,7 @@ private object KotlinResolveDataProvider {
             is KtTypeConstraint,
             is KtSuperTypeList,
             is KtTypeParameter,
-            is KtParameter -> PsiTreeUtil.getParentOfType(topmostElement, KtClassOrObject::class.java, KtCallableDeclaration::class.java)
+            is KtParameter -> topmostElement.findParentInFile { it is KtClassOrObject || it is KtCallableDeclaration } as? KtElement?
             else -> topmostElement
         }
         // Primary constructor should never be returned
@@ -425,7 +441,7 @@ private object KotlinResolveDataProvider {
         if (analyzableElement is KtClassInitializer) return analyzableElement.containingDeclaration
         return analyzableElement
         // if none of the above worked, take the outermost declaration
-            ?: PsiTreeUtil.getTopmostParentOfType(element, KtDeclaration::class.java)
+            ?: element.findTopmostParentOfType<KtDeclaration>()
             // if even that didn't work, take the whole file
             ?: element.containingFile as? KtFile
     }

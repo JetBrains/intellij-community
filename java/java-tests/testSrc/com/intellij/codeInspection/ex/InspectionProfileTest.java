@@ -633,7 +633,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   public void testStoredMemberVisibility() throws Exception {
     InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(JDOMUtil.load("<profile version=\"1.0\">\n" +
-                                               "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                               "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" checkParameterExcludingHierarchy=\"false\">\n" +
                                                "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                                                "    <option name=\"FIELD\" value=\"true\" />\n" +
                                                "    <option name=\"METHOD\" value=\"true\" />\n" +
@@ -655,7 +655,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     });
     String mergedText = "<profile version=\"1.0\">\n" +
                             "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                            "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                            "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" checkParameterExcludingHierarchy=\"false\">\n" +
                             "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                             "    <option name=\"FIELD\" value=\"true\" />\n" +
                             "    <option name=\"METHOD\" value=\"true\" />\n" +

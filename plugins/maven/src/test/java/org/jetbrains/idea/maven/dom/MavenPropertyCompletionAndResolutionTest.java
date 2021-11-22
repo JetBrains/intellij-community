@@ -12,12 +12,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.TemporaryDirectory;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 import org.junit.Test;
 
@@ -755,6 +753,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
                      "<modules>" +
                      "   <module>m1</module>" +
                      "</modules>" +
@@ -773,7 +772,6 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     createModulePom("m1", "<parent>" +
                           "    <groupId>test</groupId>" +
                           "    <artifactId>project</artifactId>" +
-                          "    " +
                           "    <version>1</version>" +
                           "  </parent>" +
                           "<artifactId>m1</artifactId>" +

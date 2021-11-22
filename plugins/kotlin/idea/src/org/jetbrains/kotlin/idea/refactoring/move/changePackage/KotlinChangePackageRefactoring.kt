@@ -28,7 +28,7 @@ class KotlinChangePackageRefactoring(val file: KtFile) {
             MoveDeclarationsDescriptor(
                 project = project,
                 moveSource = MoveSource(file),
-                moveTarget = KotlinDirectoryMoveTarget(newFqName, file.containingDirectory!!),
+                moveTarget = KotlinDirectoryMoveTarget(newFqName, file.containingDirectory!!.virtualFile),
                 delegate = MoveDeclarationsDelegate.TopLevel
             )
         )

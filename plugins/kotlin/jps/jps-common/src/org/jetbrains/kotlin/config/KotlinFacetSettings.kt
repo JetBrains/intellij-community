@@ -156,7 +156,7 @@ data class ExternalSystemNativeMainRunTask(
 class KotlinFacetSettings {
     companion object {
         // Increment this when making serialization-incompatible changes to configuration data
-        val CURRENT_VERSION = 4
+        val CURRENT_VERSION = 5
         val DEFAULT_VERSION = 0
     }
 
@@ -250,6 +250,8 @@ class KotlinFacetSettings {
 
     var implementedModuleNames: List<String> = emptyList() // used for first implementation of MPP, aka 'old' MPP
     var dependsOnModuleNames: List<String> = emptyList() // used for New MPP and later implementations
+
+    var additionalVisibleModuleNames: Set<String> = emptySet()
 
     var productionOutputPath: String? = null
     var testOutputPath: String? = null

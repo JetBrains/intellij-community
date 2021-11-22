@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.toolwindow
 
 import com.intellij.diagnostic.logging.LogConsoleBase
@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction
 import com.intellij.internal.statistic.actions.scheme.EditEventsTestSchemeAction
 import com.intellij.internal.statistic.eventLog.EventLogListenersManager
 import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
-import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
 import com.intellij.openapi.Disposable
@@ -23,6 +22,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.FilterComponent
 import com.intellij.ui.JBColor
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.BorderFactory

@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 

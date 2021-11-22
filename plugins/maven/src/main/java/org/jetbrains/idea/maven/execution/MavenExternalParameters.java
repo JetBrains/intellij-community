@@ -103,7 +103,8 @@ public final class MavenExternalParameters {
     Sdk jdk = getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings);
     params.setJdk(jdk);
 
-    final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
+    File mavenWrapperFile = getMavenWrapper(project, parameters.getWorkingDirPath(), coreSettings);
+    final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration, mavenWrapperFile);
     final String mavenVersion = MavenUtil.getMavenVersion(mavenHome);
     if(mavenVersion == null) {
       throw new ExecutionException(MavenProjectBundle.message("dialog.message.maven.home.directory.invalid", mavenHome));
@@ -162,6 +163,14 @@ public final class MavenExternalParameters {
     return params;
   }
 
+  @Nullable
+  private static File getMavenWrapper(@Nullable Project project,
+                              @NotNull String workingDirPath,
+                              @NotNull MavenGeneralSettings coreSettings) {
+    return (project != null && MavenUtil.isWrapper(coreSettings))
+           ? MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirPath).getMavenHome() : null;
+  }
+
   static @Nullable String getRunVmOptions(@Nullable MavenRunnerSettings runnerSettings,
                                           @Nullable Project project,
                                           @NotNull String workingDirPath) {
@@ -173,11 +182,17 @@ public final class MavenExternalParameters {
 
   @NotNull
   public static String readJvmConfigOptions(@NotNull String multiModuleDir) {
+    return Optional.ofNullable(getJvmConfig(multiModuleDir))
+      .map(jdkOpts -> toVmString(jdkOpts))
+      .orElse("");
+  }
+
+  @Nullable
+  public static VirtualFile getJvmConfig(@NotNull String multiModuleDir) {
     return Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(multiModuleDir))
       .map(baseDir -> baseDir.findChild(".mvn"))
       .map(mvn -> mvn.findChild("jvm.config"))
-      .map(jdkOpts -> toVmString(jdkOpts))
-      .orElse("");
+      .orElse(null);
   }
 
   private static String toVmString(VirtualFile jdkOpts) {
@@ -432,7 +447,7 @@ public final class MavenExternalParameters {
 
   @NotNull
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
-    return resolveMavenHome(coreSettings, null, null);
+    return resolveMavenHome(coreSettings, null, null, null);
   }
 
   /**
@@ -446,8 +461,9 @@ public final class MavenExternalParameters {
   @NlsSafe
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings,
                                         @Nullable Project project,
-                                        @Nullable MavenRunConfiguration runConfiguration) throws ExecutionException {
-    final File file = MavenUtil.resolveMavenHomeDirectory(coreSettings.getMavenHome());
+                                        @Nullable MavenRunConfiguration runConfiguration,
+                                        @Nullable File mavenWrapperFile) throws ExecutionException {
+    final File file = mavenWrapperFile != null ? mavenWrapperFile : MavenUtil.resolveMavenHomeDirectory(coreSettings.getMavenHome());
 
     if (file == null) {
       throw createExecutionException(RunnerBundle.message("external.maven.home.no.default"),

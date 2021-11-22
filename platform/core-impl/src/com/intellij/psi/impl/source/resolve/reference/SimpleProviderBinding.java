@@ -7,13 +7,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 class SimpleProviderBinding implements ProviderBinding {
-  private final List<ProviderInfo<ElementPattern<?>>> myProviderPairs = new SmartList<>();
+  private final List<ProviderInfo<ElementPattern<?>>> myProviderPairs = ContainerUtil.createLockFreeCopyOnWriteList();
 
   void registerProvider(@NotNull PsiReferenceProvider provider, @NotNull ElementPattern<?> pattern, double priority) {
     myProviderPairs.add(new ProviderInfo<>(provider, pattern, priority));

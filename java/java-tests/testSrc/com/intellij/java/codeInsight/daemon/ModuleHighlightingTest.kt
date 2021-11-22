@@ -52,7 +52,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testFileDuplicateInTestRoot() {
     addTestFile("module-info.java", """module M.test { }""")
-    highlight("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
+    highlight("""module M { }""")
   }
 
   fun testWrongFileLocation() {

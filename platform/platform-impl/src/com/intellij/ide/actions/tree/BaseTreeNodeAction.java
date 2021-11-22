@@ -3,7 +3,7 @@ package com.intellij.ide.actions.tree;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +44,6 @@ abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
   }
 
   private static Object getSourceComponent(@NotNull AnActionEvent e) {
-    return e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    return e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
   }
 }

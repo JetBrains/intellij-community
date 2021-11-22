@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="junit5_rt" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Launcher" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library name="jupiter" type="repository">
         <properties maven-id="org.junit.jupiter:junit-jupiter-engine:5.7.0" />

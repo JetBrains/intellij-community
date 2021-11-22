@@ -281,12 +281,12 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testLargeConsolePerformance() {
     withCycleConsoleNoFolding(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
-      PlatformTestUtil.startPerformanceTest("console print", 11_000, () -> {
+      PlatformTestUtil.startPerformanceTest("console print", 15_000, () -> {
         console.clear();
-        for (int i=0; i<10_000_000; i++) {
+        for (int i=0; i<20_000_000; i++) {
           console.print("hello\n", ConsoleViewContentType.NORMAL_OUTPUT);
-          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         console.waitAllRequests();
       }).assertTiming());
   }

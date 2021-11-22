@@ -141,11 +141,11 @@ public final class UITheme {
       theme.providerClassLoader = provider;
     }
 
+    initializeNamedColors(theme);
+
     if (theme.icons == null || theme.icons.isEmpty()) {
       return theme;
     }
-
-    initializeNamedColors(theme);
 
     theme.patcher = new IconPathPatcher() {
       @Nullable
@@ -305,7 +305,7 @@ public final class UITheme {
       Map.entry("Checkbox.Background.Selected.Dark", "#43494A"),
       Map.entry("Checkbox.Border.Selected", "#4B97D9"),
       Map.entry("Checkbox.Border.Selected.Dark", "#6B6B6B"),
-      Map.entry("Checkbox.Foreground.Selected", "#FFFFFF"),
+      Map.entry("Checkbox.Foreground.Selected", "#FEFEFE"),
       Map.entry("Checkbox.Foreground.Selected.Dark", "#A7A7A7"),
       Map.entry("Checkbox.Focus.Thin.Selected", "#ACCFF7"),
       Map.entry("Checkbox.Focus.Thin.Selected.Dark", "#466D94"),

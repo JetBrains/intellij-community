@@ -3,8 +3,12 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.CollectionFactory;
 import gnu.trove.TObjectHashingStrategy;
 
+/**
+ * @deprecated use {@link CollectionFactory#createCaseInsensitiveStringSet()} and other create*() methods
+ */
 public final class CharSequenceHashingStrategy implements TObjectHashingStrategy<CharSequence> {
   public static final CharSequenceHashingStrategy CASE_SENSITIVE = new CharSequenceHashingStrategy(true);
   public static final CharSequenceHashingStrategy CASE_INSENSITIVE = new CharSequenceHashingStrategy(false);

@@ -9,7 +9,7 @@ import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,7 @@ final class RunDashboardActionUtils {
     Project project = e.getProject();
     if (project == null) return JBIterable.empty();
 
-    JBIterable<Object> roots = JBIterable.of(e.getData(PlatformDataKeys.SELECTED_ITEMS));
+    JBIterable<Object> roots = JBIterable.of(e.getData(PlatformCoreDataKeys.SELECTED_ITEMS));
     Set<RunDashboardRunConfigurationNode> result = new LinkedHashSet<>();
     if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
 

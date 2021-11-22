@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -278,7 +277,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testSourceSetModuleNamesForDeduplicatedMainModule() throws Exception {
-    IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(myProject);
+    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
     modelsProvider.newModule(getProjectPath() + "/app.iml", StdModuleTypes.JAVA.getId());
     modelsProvider.newModule(getProjectPath() + "/my_group.app.main.iml", StdModuleTypes.JAVA.getId());
     edt(() -> ApplicationManager.getApplication().runWriteAction(modelsProvider::commit));
@@ -309,7 +308,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   }
 
   @Test
-  public void testImportProjectWithExistingFakeModule() {
+  public void testImportProjectWithExistingFakeModule() throws IOException {
     // After first opening of the project, IJ creates a fake module at the project root
     edt(() -> {
       ApplicationManager.getApplication().runWriteAction(() -> {
@@ -325,7 +324,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     Module module = ModuleManager.getInstance(myProject).findModuleByName("project");
     assertFalse(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module));
 
-    assertNoThrowable(() -> importProject());
+    importProject("");
 
     Module moduleAfter = ModuleManager.getInstance(myProject).findModuleByName("project");
     assertTrue(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, moduleAfter));

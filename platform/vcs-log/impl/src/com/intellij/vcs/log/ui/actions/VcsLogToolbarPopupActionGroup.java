@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -12,7 +13,6 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import org.jetbrains.annotations.NotNull;
 
 public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
@@ -33,7 +33,7 @@ public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.getDataContext(),
                                                                           JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
-                                                                          VcsLogActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
+                                                                          ActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
     myPopupState.prepareToShow(popup);
     PopupUtil.showForActionButtonEvent(popup, e);
   }

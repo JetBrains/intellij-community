@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLLanguage;
@@ -28,7 +29,7 @@ import java.util.Objects;
 public abstract class YamlDocumentationProviderBase implements DocumentationProvider {
 
   @Override
-  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (!(element instanceof DocumentationElement)) {
       return null;
     }
@@ -75,6 +76,7 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
    * If the field isn't given, only the documentation for the type should be returned.
    */
   @Nullable
+  @Nls
   protected abstract String getDocumentation(@NotNull Project project, @NotNull YamlMetaType type, @Nullable Field field);
 
   @Nullable
@@ -217,6 +219,7 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
     }
 
     @Nullable
+    @Nls
     public String getDocumentation() {
       return YamlDocumentationProviderBase.this.getDocumentation(myProject, myType, myField);
     }

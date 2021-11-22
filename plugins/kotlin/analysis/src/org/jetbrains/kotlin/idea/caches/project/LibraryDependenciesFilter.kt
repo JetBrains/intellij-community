@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.caches.project
 
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 
-internal fun interface LibraryDependenciesFilter {
+@IntellijInternalApi
+fun interface LibraryDependenciesFilter {
     operator fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate>
 }
 
@@ -15,7 +17,8 @@ internal fun interface LibraryDependenciesFilter {
  * jvm, js -> jvm, js, native {OK} (at least all platforms present)
  * jvm, js, native -> jvm, js {NO} (missing native platform)
  */
-internal object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
+@IntellijInternalApi
+object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         return candidates.filterTo(mutableSetOf()) { candidate -> platform representsSubsetOf candidate.platform }
     }
@@ -30,7 +33,8 @@ internal object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
  * source module analysis, since it is present there anyways (and by definition is the perfect fit for that source set)
  * see: https://youtrack.jetbrains.com/issue/KT-40814
  */
-internal object SharedNativeLibraryToNativeInteropFallbackDependenciesFilter : LibraryDependenciesFilter {
+@IntellijInternalApi
+object SharedNativeLibraryToNativeInteropFallbackDependenciesFilter : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         /* Filter only works on shared native dependee libraries to interop dependency libraries */
         if (!platform.isSharedNative()) return emptySet()
@@ -87,7 +91,8 @@ private fun SimplePlatform.representsSubsetOf(to: SimplePlatform): Boolean {
 
 /* Operators on LibraryDependenciesFilter */
 
-internal infix fun LibraryDependenciesFilter.union(other: LibraryDependenciesFilter): LibraryDependenciesFilter {
+@IntellijInternalApi
+infix fun LibraryDependenciesFilter.union(other: LibraryDependenciesFilter): LibraryDependenciesFilter {
     if (this is LibraryDependenciesFilterUnion && other is LibraryDependenciesFilterUnion) {
         return LibraryDependenciesFilterUnion(this.filters + other.filters)
     }
@@ -100,7 +105,8 @@ internal infix fun LibraryDependenciesFilter.union(other: LibraryDependenciesFil
     return LibraryDependenciesFilterUnion(listOf(this, other))
 }
 
-internal class LibraryDependenciesFilterUnion(
+@IntellijInternalApi
+class LibraryDependenciesFilterUnion(
     val filters: List<LibraryDependenciesFilter>
 ) : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {

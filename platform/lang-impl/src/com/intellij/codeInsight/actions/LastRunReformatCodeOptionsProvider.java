@@ -27,6 +27,7 @@ public class LastRunReformatCodeOptionsProvider {
   private static final String REARRANGE_ENTRIES_KEY    = "LayoutCode.rearrangeEntries";
   private static final String CODE_CLEANUP_KEY         = "LayoutCode.codeCleanup";
   private static final String PROCESS_CHANGED_TEXT_KEY = "LayoutCode.processChangedText";
+  private static final String DO_NOT_KEEP_LINE_BREAKS_KEY = "LayoutCode.doNotKeepLineBreaks";
 
   private final PropertiesComponent myPropertiesComponent;
 
@@ -89,6 +90,14 @@ public class LastRunReformatCodeOptionsProvider {
     // Android Studio: Default rearrange=true for XML files
     //return myPropertiesComponent.getBoolean(key);
     return myPropertiesComponent.getBoolean(key, language == StdLanguages.XML);
+  }
+
+  public boolean isDoNotKeepLineBreaks() {
+    return myPropertiesComponent.getBoolean(DO_NOT_KEEP_LINE_BREAKS_KEY);
+  }
+
+  public void setDoNotKeepLineBreaks(boolean value) {
+    myPropertiesComponent.setValue(DO_NOT_KEEP_LINE_BREAKS_KEY, value);
   }
 
   private static String getRearrangeCodeKeyFor(@NotNull Language language) {

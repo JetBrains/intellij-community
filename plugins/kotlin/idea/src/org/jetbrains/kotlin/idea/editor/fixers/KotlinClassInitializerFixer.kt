@@ -15,7 +15,7 @@ class KotlinClassInitializerFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSm
 
         if (psiElement.openBraceNode == null) {
             val offset = psiElement.node.findChildByType(KtTokens.INIT_KEYWORD)?.textRange?.endOffset ?: return
-            editor.document.insertString(offset, "{}")
+            editor.document.insertString(offset, "{\n}")
         }
     }
 }

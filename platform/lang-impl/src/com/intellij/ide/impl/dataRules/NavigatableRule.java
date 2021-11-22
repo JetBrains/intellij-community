@@ -19,7 +19,7 @@ package com.intellij.ide.impl.dataRules;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -44,7 +44,7 @@ public class NavigatableRule implements GetDataRule {
       return EditSourceUtil.getDescriptor(element);
     }
 
-    final Object selection = PlatformDataKeys.SELECTED_ITEM.getData(dataProvider);
+    final Object selection = PlatformCoreDataKeys.SELECTED_ITEM.getData(dataProvider);
     if (selection instanceof Navigatable) {
       return selection;
     }

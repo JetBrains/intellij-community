@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports the calls of the JUnit's <code>assertEquals()</code> method that
-can be replaced with the equivalent <code>assertSame()</code> method.
-This is possible when the arguments are instances of a final class that does not override
+Reports JUnit <code>assertEquals()</code> calls that
+can be replaced with an equivalent <code>assertSame()</code> call.
+This is possible when the arguments are instances of a <code>final</code> class that does not override
 the <code>Object.equals()</code> method and makes it explicit that the object identity is compared.
-<p>Suggests replacing <code>assertEquals()</code> with </p> <code>assertSame()</code>.</p>
+<p>Suggests replacing <code>assertEquals()</code> with <code>assertSame()</code>.</p>
 <p><b>Example:</b></p>
 <pre><code>
   @Test

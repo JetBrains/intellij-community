@@ -46,7 +46,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="cpp" extensions="c;cpp;h;hpp;cc" description="C/C++" name="C++"
+    <filetype binary="false" default_extension="cpp" extensions="c;cc;cpp;h;hpp" description="C/C++" name="C++"
               icon="AllIcons.FileTypes.Custom">
       <highlighting>
         <options>
@@ -248,7 +248,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="jsp" extensions="jsp;jsf;jspf;tag;tagf" description="JSP (syntax highlighting only)"
+    <filetype binary="false" default_extension="jsp" extensions="jsf;jsp;jspf;tag;tagf" description="JSP (syntax highlighting only)"
               name="JSP" icon="AllIcons.FileTypes.Jsp">
       <highlighting>
         <options>

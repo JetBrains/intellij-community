@@ -16,6 +16,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -102,7 +103,7 @@ class MoveDeclarationsCopyPasteProcessor : CopyPastePostProcessor<MoveDeclaratio
             }
         }
 
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             putCookie()
         } else {
             // in real application we put cookie later to allow all other paste handlers do their work (because modificationCount will change)

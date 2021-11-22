@@ -317,6 +317,9 @@
       "key": "FileColor.Yellow"
     },
     {
+      "key": "FileColor.Gray"
+    },
+    {
       "key": "FlameGraph.frameForeground",
       "description": "Java profiler flame graph",
       "deprecated": true
@@ -974,6 +977,10 @@
       "description": "Inactive tool window header"
     },
     {
+      "key": "ToolWindow.Header.padding",
+      "since": "2021.3"
+    },
+    {
       "key": "ToolWindow.HeaderCloseButton.background"
     },
     {
@@ -1013,6 +1020,14 @@
     {
       "key": "ToolWindow.HeaderTab.underlinedTabInactiveBackground",
       "since": "2019.2"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.padding",
+      "since": "2021.3"
+    },
+    {
+      "key": "ToolWindow.Background",
+      "since": "2021.3"
     },
     {
       "key": "Tooltip.separatorColor",
@@ -1201,14 +1216,42 @@
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },
     {
-      "key": "StateWidget.activeBackground",
-      "description": "Background of the state widget when at least one of the registered processes is active",
-      "since": "2021.1"
+      "key": "RunToolbar.Run.activeBackground",
+      "description": "Background of the run toolbar widget when at least one of the run processes is active",
+      "since": "2021.3"
+    },
+    {
+      "key": "RunToolbar.Debug.activeBackground",
+      "description": "Background of the run toolbar widget when at least one of the debug processes is active",
+      "since": "2021.3"
+    },
+    {
+      "key": "RunToolbar.Profile.activeBackground",
+      "description": "Background of the run toolbar widget when at least one of the profile processes is active",
+      "since": "2021.3"
+    },
+    {
+      "key": "DragAndDrop.areaBackground",
+      "description": "Drag & Drop area background"
+    },
+    {
+      "deprecated": true,
+      "key": "DragAndDrop.areaBorderColor",
+      "description": "Use DragAndDrop.borderColor instead"
+    },
+    {
+      "key": "DragAndDrop.areaForeground",
+      "description": "Drag & Drop area foreground"
     },
     {
       "key": "DragAndDrop.borderColor",
       "description": "Drop position highlighting (line/rectangle) for drag-n-drop in trees and lists",
       "since": "2021.2"
+    },
+    {
+      "key": "DragAndDrop.rowBackground",
+      "description": "Drop position highlighting (rectangle) for drag-n-drop in trees and lists",
+      "since": "2021.3"
     },
     {
       "key": "Label.successForeground",

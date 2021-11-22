@@ -9,7 +9,9 @@ import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
-import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
+import org.intellij.markdown.flavours.gfm.GFMElementTypes
+import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
+import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.MarkdownParser
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -64,7 +66,7 @@ object KDocRenderer {
     }
 
     private fun KDocLink.createHyperlink(to: StringBuilder) {
-        DocumentationManagerUtil.createHyperlink(to, getLinkText(), getLinkText(), false)
+        DocumentationManagerUtil.createHyperlink(to, getLinkText(), getLinkText(), false, true)
     }
 
     private fun KDocLink.getTargetElement(): PsiElement? {
@@ -128,7 +130,7 @@ object KDocRenderer {
                 val tag = iterator.next()
                 val subjectName = tag.getSubjectName()
                 if (subjectName != null) {
-                    DocumentationManagerUtil.createHyperlink(this, subjectName, subjectName, false)
+                    DocumentationManagerUtil.createHyperlink(this, subjectName, subjectName, false, true)
                 } else {
                     append(tag.getContent())
                 }
@@ -148,7 +150,7 @@ object KDocRenderer {
                 val subjectName = getSubjectName()
                 if (subjectName != null) {
                     append("<p><code>")
-                    DocumentationManagerUtil.createHyperlink(this@renderSection, subjectName, subjectName, false)
+                    DocumentationManagerUtil.createHyperlink(this@renderSection, subjectName, subjectName, false, true)
                     append("</code> - ${markdownToHtml(getContent().trimStart())}")
                 }
             }
@@ -182,7 +184,7 @@ object KDocRenderer {
     }
 
     private fun markdownToHtml(markdown: String, allowSingleParagraph: Boolean = false): String {
-        val markdownTree = MarkdownParser(CommonMarkFlavourDescriptor()).buildMarkdownTreeFromString(markdown)
+        val markdownTree = MarkdownParser(GFMFlavourDescriptor()).buildMarkdownTreeFromString(markdown)
         val markdownNode = MarkdownNode(markdownTree, null, markdown)
 
         // Avoid wrapping the entire converted contents in a <p> tag if it's just a single paragraph
@@ -235,6 +237,7 @@ object KDocRenderer {
                 MarkdownElementTypes.LIST_ITEM -> wrapChildren("li")
                 MarkdownElementTypes.EMPH -> wrapChildren("em")
                 MarkdownElementTypes.STRONG -> wrapChildren("strong")
+                GFMElementTypes.STRIKETHROUGH -> wrapChildren("del")
                 MarkdownElementTypes.ATX_1 -> wrapChildren("h1")
                 MarkdownElementTypes.ATX_2 -> wrapChildren("h2")
                 MarkdownElementTypes.ATX_3 -> wrapChildren("h3")
@@ -269,7 +272,7 @@ object KDocRenderer {
                     if (linkLabelContent != null) {
                         val label = linkLabelContent.joinToString(separator = "") { it.text }
                         val linkText = node.child(MarkdownElementTypes.LINK_TEXT)?.toHtml() ?: label
-                        DocumentationManagerUtil.createHyperlink(sb, label, linkText, true)
+                        DocumentationManagerUtil.createHyperlink(sb, label, linkText, true, true)
                     } else {
                         sb.append(node.text)
                     }
@@ -292,7 +295,8 @@ object KDocRenderer {
                 MarkdownTokenTypes.RPAREN,
                 MarkdownTokenTypes.LBRACKET,
                 MarkdownTokenTypes.RBRACKET,
-                MarkdownTokenTypes.EXCLAMATION_MARK -> {
+                MarkdownTokenTypes.EXCLAMATION_MARK,
+                GFMTokenTypes.CHECK_BOX -> {
                     sb.append(nodeText)
                 }
                 MarkdownTokenTypes.CODE_LINE -> {
@@ -326,6 +330,38 @@ object KDocRenderer {
                     }
                 }
 
+                GFMTokenTypes.TILDE -> {
+                    if (node.parent?.type != GFMElementTypes.STRIKETHROUGH) {
+                        sb.append(node.text)
+                    }
+                }
+
+                GFMElementTypes.TABLE -> {
+                    val alignment: List<String> = getTableAlignment(node)
+                    var addedBody = false
+                    sb.append("<table>")
+
+                    for (child in node.children) {
+                        if (child.type == GFMElementTypes.HEADER) {
+                            sb.append("<thead>")
+                            processTableRow(sb, child, "th", alignment)
+                            sb.append("</thead>")
+                        } else if (child.type == GFMElementTypes.ROW) {
+                            if (!addedBody) {
+                                sb.append("<tbody>")
+                                addedBody = true
+                            }
+
+                            processTableRow(sb, child, "td", alignment)
+                        }
+                    }
+
+                    if (addedBody) {
+                        sb.append("</tbody>")
+                    }
+                    sb.append("</table>")
+                }
+
                 else -> {
                     processChildren()
                 }
@@ -341,4 +377,31 @@ object KDocRenderer {
     }
 
     private fun String.htmlEscape(): String = replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    private fun processTableRow(sb: StringBuilder, node: MarkdownNode, cellTag: String, alignment: List<String>) {
+        sb.append("<tr>")
+        for ((i, child) in node.children.filter { it.type == GFMTokenTypes.CELL }.withIndex()) {
+            val alignValue = alignment.getOrElse(i) { "" }
+            val alignTag = if (alignValue.isEmpty()) "" else " align=\"$alignValue\""
+            sb.append("<$cellTag$alignTag>")
+            sb.append(child.toHtml())
+            sb.append("</$cellTag>")
+        }
+        sb.append("</tr>")
+    }
+
+    private fun getTableAlignment(node: MarkdownNode): List<String> {
+        val separatorRow = node.child(GFMTokenTypes.TABLE_SEPARATOR)
+            ?: return emptyList()
+
+        return separatorRow.text.split('|').filterNot { it.isBlank() }.map {
+            val trimmed = it.trim()
+            val left = trimmed.startsWith(':')
+            val right = trimmed.endsWith(':')
+            if (left && right) "center"
+            else if (right) "right"
+            else if (left) "left"
+            else ""
+        }
+    }
 }

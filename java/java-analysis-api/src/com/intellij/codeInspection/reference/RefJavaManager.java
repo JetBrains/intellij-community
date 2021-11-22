@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
@@ -27,7 +27,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @NonNls public static final String FIELD = "field";
   @NonNls static final String PARAMETER = "parameter";
   @NonNls static final String JAVA_MODULE = "java.module";
-  @NonNls static final String PACKAGE = "package";
+  @NonNls public static final String PACKAGE = "package";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
 
 

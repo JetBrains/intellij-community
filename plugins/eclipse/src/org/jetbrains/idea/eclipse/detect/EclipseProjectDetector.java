@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 
 import java.io.File;
@@ -81,10 +82,13 @@ class EclipseProjectDetector extends ProjectDetector {
 
         List<String> projects = new ArrayList<>();
         new EclipseProjectDetector().collectProjectPaths(projects);
-        PropertiesComponent.getInstance().setValue(property, "");
+        HashSet<String> set = new HashSet<>(projects);
+        if (!PropertiesComponent.getInstance().isValueSet(property)) {
+          EclipseProjectDetectorUsagesCollector.logProjectsDetected(set.size());
+          PropertiesComponent.getInstance().setValue(property, "");
+        }
         projects.removeAll(manager.getRecentPaths());
         if (projects.isEmpty()) return;
-        HashSet<String> set = new HashSet<>(projects);
         if (group == null) {
           group = new ProjectGroup(groupName);
           group.setBottomGroup(true);
@@ -103,6 +107,13 @@ class EclipseProjectDetector extends ProjectDetector {
     });
   }
 
+  @Override
+  public void logRecentProjectOpened(@Nullable ProjectGroup projectGroup) {
+    if (projectGroup != null && EclipseBundle.message("eclipse.projects").equals(projectGroup.getName())) {
+      EclipseProjectDetectorUsagesCollector.logProjectOpened(false);
+    }
+  }
+
   static void collectProjects(List<String> projects, Path path) {
     File file = path.toFile();
     if (!file.exists()) return;
@@ -113,8 +124,7 @@ class EclipseProjectDetector extends ProjectDetector {
         scanForProjects(workspace, projects);
       }
     }
-    catch (IOException e) {
-      LOG.info(e);
+    catch (IOException ignore) {
     }
   }
 

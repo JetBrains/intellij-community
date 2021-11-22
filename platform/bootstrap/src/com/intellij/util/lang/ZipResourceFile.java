@@ -2,7 +2,6 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.Murmur3_32Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,7 @@ import java.util.jar.Manifest;
 
 @SuppressWarnings("SuspiciousPackagePrivateAccess")
 public final class ZipResourceFile implements ResourceFile {
-  private static final int MANIFEST_HASH_CODE = Murmur3_32Hash.MURMUR3_32.hashString(JarFile.MANIFEST_NAME, 0, JarFile.MANIFEST_NAME.length());
+  private static final int MANIFEST_HASH_CODE = 0x4099_fd89;  // = Murmur3_32Hash.MURMUR3_32.hashString(JarFile.MANIFEST_NAME)
 
   private final ImmutableZipFile zipFile;
 
@@ -61,10 +60,7 @@ public final class ZipResourceFile implements ResourceFile {
   @Override
   public @Nullable Attributes loadManifestAttributes() throws IOException {
     ImmutableZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME, MANIFEST_HASH_CODE);
-    if (entry != null) {
-      return new Manifest(new ByteArrayInputStream(entry.getData(zipFile))).getMainAttributes();
-    }
-    return null;
+    return entry == null ? null : new Manifest(new ByteArrayInputStream(entry.getData(zipFile))).getMainAttributes();
   }
 
   @Override
@@ -88,15 +84,14 @@ public final class ZipResourceFile implements ResourceFile {
     };
   }
 
-  @NotNull
-  private ClasspathCache.LoaderDataBuilder computePackageIndex() {
+  private @NotNull ClasspathCache.LoaderDataBuilder computePackageIndex() {
     ClasspathCache.LoaderDataBuilder builder = new ClasspathCache.LoaderDataBuilder(false);
     for (ImmutableZipEntry entry : zipFile.getRawNameSet()) {
       if (entry == null) {
         continue;
       }
 
-      String name = entry.getName();
+      String name = entry.name;
       if (name.endsWith(ClassPath.CLASS_EXTENSION)) {
         builder.addClassPackageFromName(name);
       }
@@ -239,7 +234,7 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public int getContentLength() {
-      return entry.getUncompressedSize();
+      return entry.uncompressedSize;
     }
   }
 
@@ -284,11 +279,12 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public int getContentLength() {
-      return entry.getUncompressedSize();
+      return entry.uncompressedSize;
     }
 
     @Override
     public JarFile getJarFile() throws IOException {
+      //noinspection LoggerInitializedWithForeignClass
       Logger.getInstance(ZipResourceFile.class).warn("Do not use URL connection as JarURLConnection");
       return new JarFile(path.toFile());
     }

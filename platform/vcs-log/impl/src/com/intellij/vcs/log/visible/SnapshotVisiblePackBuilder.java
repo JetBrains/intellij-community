@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -47,7 +48,7 @@ public class SnapshotVisiblePackBuilder {
   private VisiblePack build(@NotNull DataPackBase oldPack,
                             @NotNull VisibleGraphImpl<Integer> oldGraph,
                             @NotNull VcsLogFilterCollection filters,
-                            @Nullable Object data) {
+                            @Nullable Map<Key, Object> data) {
     int visibleRow = VISIBLE_RANGE;
     int visibleRange = VISIBLE_RANGE;
     PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo(visibleRow, visibleRange);

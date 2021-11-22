@@ -10,7 +10,7 @@ public interface StubBuilder {
 
   /**
    * Return true if {@code node} can't contain stubs, false you can't be sure about that.
-   * Implementing this method allows to speed up indexing and some PSI operations (e.g. involving stub-AST switch)
+   * Implementing this method allows speeding up indexing and some PSI operations (e.g. involving stub-AST switch)
    * by reducing the number of the AST nodes the platform walks to find all stubbed ones.<p></p>
    *
    * Typical implementations usually check {@code node.getElementType()}. They may also check {@code node}'s text.

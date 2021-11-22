@@ -84,8 +84,9 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      ModalityUiUtil.invokeLaterIfNeeded(() -> ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments(),
-                                         ModalityState.NON_MODAL, project.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.getDisposed(),
+                                         () -> ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments()
+      );
     }
   }
 
@@ -281,11 +282,18 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       .collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond(), (c1, c2) -> c1));
   }
 
+  /**
+   * @return readonly map of current mappings. to modify mappings use {@link #setPointerMapping(Map)}
+   */
+  @NotNull
+  public Map<? extends VirtualFilePointer, ? extends Charset> getAllPointersMappings() {
+    return Collections.unmodifiableMap(myMapping);
+  }
+
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
     ApplicationManager.getApplication().assertIsWriteThread();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
-    final Map<VirtualFilePointer, Charset> oldMap = new HashMap<>(myMapping);
 
     // ChangeFileEncodingAction should not start progress "reload files..."
     suppressReloadDuring(() -> {
@@ -301,27 +309,47 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
           if (!fileIndex.isInContent(virtualFile)) continue;
           VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(virtualFile, this, null);
 
-          if (!virtualFile.isDirectory() && !Comparing.equal(charset, oldMap.get(pointer))) {
-            Document document;
-            byte[] bytes;
-            try {
-              document = FileDocumentManager.getInstance().getDocument(virtualFile);
-              if (document == null) throw new IOException();
-              bytes = virtualFile.contentsToByteArray();
-            }
-            catch (IOException e) {
-              continue;
-            }
-            // ask whether to reload/convert when in doubt
-            boolean changed = new ChangeFileEncodingAction().chosen(document, null, virtualFile, bytes, charset);
-
-            if (!changed) continue;
-          }
+          if (!fileEncodingChanged(virtualFile, myMapping.get(pointer), charset)) continue;
           newMap.put(pointer, charset);
         }
       }
     });
 
+    updateMapping(newMap);
+  }
+
+
+  public void setPointerMapping(@NotNull Map<? extends VirtualFilePointer, ? extends Charset> mapping) {
+    ApplicationManager.getApplication().assertIsWriteThread();
+    FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
+    final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
+
+    // ChangeFileEncodingAction should not start progress "reload files..."
+    suppressReloadDuring(() -> {
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      for (Map.Entry<? extends VirtualFilePointer, ? extends Charset> entry : mapping.entrySet()) {
+        VirtualFilePointer filePointer = entry.getKey();
+        Charset charset = entry.getValue();
+        if (charset == null) throw new IllegalArgumentException("Null charset for " + filePointer + "; mapping: " + mapping);
+        if (filePointer == null) {
+          myProjectCharset = charset;
+        }
+        else {
+          final VirtualFile virtualFile = filePointer.getFile();
+          if (virtualFile != null) {
+            if (!fileIndex.isInContent(virtualFile)
+                || !fileEncodingChanged(virtualFile, myMapping.get(filePointer), charset)) continue;
+          }
+          newMap.put(filePointer, charset);
+        }
+      }
+    });
+
+    updateMapping(newMap);
+  }
+
+  private void updateMapping(Map<VirtualFilePointer, Charset> newMap) {
+    Map<VirtualFilePointer, Charset> oldMap = new HashMap<>(myMapping);
     myMapping.clear();
     myMapping.putAll(newMap);
 
@@ -363,6 +391,26 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     }
 
     myModificationTracker.incModificationCount();
+  }
+
+  private static boolean fileEncodingChanged(@NotNull VirtualFile virtualFile,
+                                             @Nullable Charset oldCharset,
+                                             @NotNull Charset newCharset) {
+    if (!virtualFile.isDirectory() && !Comparing.equal(newCharset, oldCharset)) {
+      Document document;
+      byte[] bytes;
+      try {
+        document = FileDocumentManager.getInstance().getDocument(virtualFile);
+        if (document == null) throw new IOException();
+        bytes = virtualFile.contentsToByteArray();
+      }
+      catch (IOException e) {
+        return false;
+      }
+      // ask whether to reload/convert when in doubt
+      return new ChangeFileEncodingAction().chosen(document, null, virtualFile, bytes, newCharset);
+    }
+    return true;
   }
 
   @NotNull

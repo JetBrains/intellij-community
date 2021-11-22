@@ -12,12 +12,15 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.NonBlockingReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -48,11 +51,13 @@ internal class CompletionSessionsCounter : LookupManagerListener {
         return
       }
 
-      if (oldLookup.items.any { it.psiElement is PsiMethod || it.psiElement is PsiClass } &&
-          counter.incrementAndGet() >= MIN_SESSIONS_COUNT) {
-        properties.setValue(NOTIFICATION_EXPIRED_KEY, true)
-        TrainingNotification(project, JavaLanguage.INSTANCE).notify(project)
-      }
+      ReadAction.nonBlocking {
+        if (oldLookup.items.any { it.psiElement is PsiMethod || it.psiElement is PsiClass } &&
+            counter.incrementAndGet() >= MIN_SESSIONS_COUNT) {
+          properties.setValue(NOTIFICATION_EXPIRED_KEY, true)
+          TrainingNotification(project, JavaLanguage.INSTANCE).notify(project)
+        }
+      }.submit(AppExecutorUtil.getAppExecutorService())
     }
   }
 

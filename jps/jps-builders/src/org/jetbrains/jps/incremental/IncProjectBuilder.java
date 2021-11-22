@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -74,6 +75,8 @@ public final class IncProjectBuilder {
   // so, not possible to distinguish case
   // "classpath.index doesn't exist because deleted on module file change" vs "classpath.index doesn't exist because was not created"
   private static final String UNMODIFIED_MARK_FILE_NAME = ".unmodified";
+
+  private static final int FLUSH_INVOCATIONS_TO_SKIP = 10;
 
   //private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", "false"));
@@ -371,7 +374,7 @@ public final class IncProjectBuilder {
 
   private static boolean isParallelBuild(CompileContext context) {
     return Boolean.parseBoolean(context.getBuilderParameter(BuildParametersKeys.IS_AUTOMAKE)) ?
-      BuildRunner.PARALLEL_BUILD_AUTOMAKE_ENABLED : BuildRunner.PARALLEL_BUILD_ENABLED;
+           BuildRunner.isParallelBuildAutomakeEnabled() : BuildRunner.isParallelBuildEnabled();
   }
 
   private void runBuild(final CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
@@ -848,14 +851,15 @@ public final class IncProjectBuilder {
       }
       else {
         // non-parallel build
-        ProjectDescriptor pd = context.getProjectDescriptor();
+        final ProjectDescriptor pd = context.getProjectDescriptor();
+        final Runnable flushCommand = Utils.asCountedRunnable(FLUSH_INVOCATIONS_TO_SKIP, () -> pd.dataManager.flush(true));
         for (BuildTargetChunk chunk : pd.getBuildTargetIndex().getSortedTargetChunks(context)) {
           try {
             buildChunkIfAffected(context, context.getScope(), chunk, buildProgress);
           }
           finally {
             pd.dataManager.closeSourceToOutputStorages(Collections.singleton(chunk));
-            pd.dataManager.flush(true);
+            flushCommand.run();
           }
         }
       }
@@ -871,6 +875,7 @@ public final class IncProjectBuilder {
     private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
     private int mySelfScore = 0;
     private int myDepsScore = 0;
+    private int myIndex = 0;
 
     private BuildChunkTask(BuildTargetChunk chunk) {
       myChunk = chunk;
@@ -921,12 +926,14 @@ public final class IncProjectBuilder {
     private final Object myQueueLock = new Object();
     private final CountDownLatch myTasksCountDown;
     private final List<BuildChunkTask> myTasks;
+    private final Runnable myFlushCommand;
 
     private BuildParallelizer(CompileContext context, BuildProgress buildProgress) {
       myContext = context;
       myBuildProgress = buildProgress;
       final ProjectDescriptor pd = myContext.getProjectDescriptor();
       final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
+      myFlushCommand = Utils.asCountedRunnable(FLUSH_INVOCATIONS_TO_SKIP, () -> pd.dataManager.flush(true));
 
       List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(myContext);
       myTasks = new ArrayList<>(chunks.size());
@@ -936,13 +943,14 @@ public final class IncProjectBuilder {
         myTasks.add(task);
         for (BuildTarget<?> target : chunk.getTargets()) {
           targetToTask.put(target, task);
-          task.mySelfScore += 1;
         }
+        task.mySelfScore = chunk.getTargets().size();
       }
 
-      Map<BuildTarget<?>, Collection<BuildTarget<?>>> transitiveDependencyCache = new HashMap<>(myTasks.size());
-
+      int taskCounter = 0;
       for (BuildChunkTask task : myTasks) {
+        task.myIndex = taskCounter;
+        taskCounter++;
         for (BuildTarget<?> target : task.getChunk().getTargets()) {
           for (BuildTarget<?> dependency : targetIndex.getDependencies(target, myContext)) {
             BuildChunkTask depTask = targetToTask.get(dependency);
@@ -950,16 +958,47 @@ public final class IncProjectBuilder {
               task.addDependency(depTask);
             }
           }
-          for (BuildTarget<?> dependency : getTransitiveDeps(targetIndex, target, myContext, transitiveDependencyCache)) {
-            BuildChunkTask depTask = targetToTask.get(dependency);
-            if (depTask != null && depTask != task) {
-              depTask.myDepsScore += task.mySelfScore;
-            }
-          }
         }
       }
 
+      Map<BuildChunkTask, ? extends Queue<BuildChunkTask>> taskToDependants = collectTaskToDependants(context, targetIndex, targetToTask);
+
+      // bitset stores indexes of transitively dependant tasks
+      HashMap<BuildChunkTask, BitSet> chunkToTransitive = new HashMap<>();
+      for (BuildChunkTask task : Lists.reverse(myTasks)) {
+        Queue<BuildChunkTask> dependantTasks = taskToDependants.get(task);
+        Set<BuildChunkTask> directDependants = new HashSet<>(dependantTasks != null ? dependantTasks : Collections.emptyList());
+        BitSet transitiveDependants = new BitSet();
+        for (BuildChunkTask directDependant : directDependants) {
+          BitSet dependantChunkTransitiveDependants = chunkToTransitive.get(directDependant);
+          transitiveDependants.or(dependantChunkTransitiveDependants);
+          transitiveDependants.set(directDependant.myIndex);
+        }
+        chunkToTransitive.put(task, transitiveDependants);
+        task.myDepsScore = transitiveDependants.cardinality();
+      }
+
       myTasksCountDown = new CountDownLatch(myTasks.size());
+    }
+
+    @NotNull
+    private Map<BuildChunkTask, ? extends Queue<BuildChunkTask>> collectTaskToDependants(CompileContext context,
+                                                                                         BuildTargetIndex targetIndex,
+                                                                                         Map<BuildTarget<?>, BuildChunkTask> targetToTask) {
+      ConcurrentHashMap<BuildChunkTask, ConcurrentLinkedQueue<BuildChunkTask>> taskToDependants = new ConcurrentHashMap<>(myTasks.size());
+      myTasks.parallelStream().forEach(task -> {
+        BuildTargetChunk chunk = task.getChunk();
+        for (BuildTarget<?> target : chunk.getTargets()) {
+          Collection<BuildTarget<?>> dependencies = targetIndex.getDependencies(target, context);
+          for (BuildTarget<?> dependency : dependencies) {
+            BuildChunkTask dependencyTask = targetToTask.get(dependency);
+            if (dependencyTask != task) {
+              taskToDependants.computeIfAbsent(dependencyTask, __ -> new ConcurrentLinkedQueue<>()).add(task);
+            }
+          }
+        }
+      });
+      return taskToDependants;
     }
 
     public void buildInParallel() throws IOException, ProjectBuildException {
@@ -1030,7 +1069,7 @@ public final class IncProjectBuilder {
             }
             finally {
               myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
-              myProjectDescriptor.dataManager.flush(true);
+              myFlushCommand.run();
             }
           }
           catch (Throwable e) {
@@ -1051,35 +1090,6 @@ public final class IncProjectBuilder {
         }
       });
     }
-  }
-
-  private static Iterable<? extends BuildTarget<?>> getTransitiveDeps(BuildTargetIndex index,
-                                                                      BuildTarget<?> target,
-                                                                      CompileContext context,
-                                                                      Map<BuildTarget<?>, Collection<BuildTarget<?>>> cache) {
-    if (cache.containsKey(target)) {
-      return cache.get(target);
-    }
-    Set<BuildTarget<?>> result = new HashSet<>();
-    LinkedList<BuildTarget<?>> queue = new LinkedList<>();
-    queue.add(target);
-    result.add(target);
-    while (!queue.isEmpty()) {
-      BuildTarget next = queue.pop();
-      Collection<BuildTarget<?>> transitive = cache.get(next);
-      if (transitive != null) {
-        result.addAll(transitive);
-      }
-      else {
-        Collection<BuildTarget<?>> dependencies = index.getDependencies(next, context);
-        for (BuildTarget<?> dependency : dependencies) {
-          if (dependency != target && result.add(dependency)) queue.add(dependency);
-        }
-      }
-    }
-    result.remove(target);
-    cache.put(target, result);
-    return result;
   }
 
   private void buildChunkIfAffected(CompileContext context, CompileScope scope, BuildTargetChunk chunk,
@@ -1174,8 +1184,8 @@ public final class IncProjectBuilder {
     }
 
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final Set<String> affectedOutputs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    final Set<String> affectedSources = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> affectedOutputs = CollectionFactory.createFilePathSet();
+    final Set<String> affectedSources = CollectionFactory.createFilePathSet();
 
     final List<SourceToOutputMapping> mappings = new ArrayList<>();
     for (T target : targets) {

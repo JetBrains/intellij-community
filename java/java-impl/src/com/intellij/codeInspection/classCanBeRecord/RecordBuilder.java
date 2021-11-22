@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -83,7 +83,7 @@ class RecordBuilder {
   PsiClass build() {
     PsiJavaFile psiFile = (PsiJavaFile)PsiFileFactory.getInstance(myOriginClass.getProject())
       .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, myRecordText.toString(), false, false);
-    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_15_PREVIEW);
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_16);
     PsiClass psiRecord = psiFile.getClasses()[0];
     CodeStyleManager.getInstance(myOriginClass.getProject()).reformat(psiRecord);
     return psiRecord;

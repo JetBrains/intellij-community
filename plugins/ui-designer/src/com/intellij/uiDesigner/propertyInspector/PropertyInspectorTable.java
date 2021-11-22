@@ -282,11 +282,11 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     else if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }
-    else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    else if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       GuiEditor designer = myProject.isDisposed() ? null : DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
       return designer == null ? null : designer.getEditor();
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
     else {

@@ -1,0 +1,11 @@
+{
+    "usages": [
+        "ClosedRangeUsage.kt",
+        "ClosedFloatingPointRangeUsage.kt",
+        "MyClosedFloatingPointRangeUsage.kt"
+    ],
+    "shouldBeUsage": [
+        "ClosedFloatingPointRangeUsage.java",
+        "MyClosedFloatingPointRangeUsage.java"
+    ]
+}

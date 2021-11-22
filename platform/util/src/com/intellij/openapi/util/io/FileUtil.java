@@ -13,7 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.FilePathHashingStrategy;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.*;
@@ -43,9 +43,18 @@ public class FileUtil extends FileUtilRt {
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
 
+  /**
+   * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
+   */
   @Deprecated
-  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = FilePathHashingStrategy.create();
+  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = 
+    SystemInfoRt.isFileSystemCaseSensitive
+    ? TObjectHashingStrategy.CANONICAL
+    : CaseInsensitiveStringHashingStrategy.INSTANCE;
 
+  /**
+   * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
+   */
   @Deprecated
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
     new TObjectHashingStrategy<File>() {
@@ -1376,6 +1385,19 @@ public class FileUtil extends FileUtilRt {
 
   public static void setExecutable(@NotNull File file) throws IOException {
     NioFiles.setExecutable(file.toPath());
+  }
+
+  public static @Nullable String loadFileOrNull(@NotNull String path) {
+    return loadFileOrNull(new File(path));
+  }
+
+  public static @Nullable String loadFileOrNull(@NotNull File file) {
+    try {
+      return loadFile(file);
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   @NotNull

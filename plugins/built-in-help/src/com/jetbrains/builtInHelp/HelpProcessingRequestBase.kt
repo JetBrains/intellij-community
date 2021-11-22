@@ -10,18 +10,10 @@ abstract class HelpProcessingRequestBase : HelpRequestHandlerBase() {
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
 
-    val query = urlDecoder.parameters()["q"]
+    val num: String? = urlDecoder.parameters()["num"]?.get(0)
 
-    if (query.isNullOrEmpty()) return false
-
-    val num = try {
-      Integer.parseInt(urlDecoder.parameters()["num"]?.get(0))
-    }
-    catch (ne: Exception) {
-      100
-    }
-
-    val dataToSend = getProcessedData(query[0], num).toByteArray(Charsets.UTF_8)
+    val dataToSend = getProcessedData(urlDecoder.parameters()["q"]?.get(0)!!,
+                                      if (num != null) Integer.valueOf(num) else 100).toByteArray(Charsets.UTF_8)
 
     sendData(dataToSend, "data.json", request, context.channel(), request.headers())
     return true

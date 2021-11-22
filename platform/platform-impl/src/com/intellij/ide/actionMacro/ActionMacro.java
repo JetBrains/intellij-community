@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
@@ -85,7 +85,7 @@ public final class ActionMacro {
         myActions.add(new IdActionDescriptor(action.getAttributeValue(ATTRIBUTE_ID)));
       }
       else if (ELEMENT_SHORTCUT.equals(action.getName())) {
-        myActions.add(new ShortcutActionDesciption(action.getAttributeValue(ATTRIBUTE_TEXT)));
+        myActions.add(new ShortcutActionDescription(action.getAttributeValue(ATTRIBUTE_TEXT)));
       }
     }
   }
@@ -114,9 +114,9 @@ public final class ActionMacro {
         actionNode = new Element(ELEMENT_ACTION);
         actionNode.setAttribute(ATTRIBUTE_ID, ((IdActionDescriptor)action).getActionId());
       }
-      else if (action instanceof ShortcutActionDesciption) {
+      else if (action instanceof ShortcutActionDescription) {
         actionNode = new Element(ELEMENT_SHORTCUT);
-        actionNode.setAttribute(ATTRIBUTE_TEXT, ((ShortcutActionDesciption)action).getText());
+        actionNode.setAttribute(ATTRIBUTE_TEXT, ((ShortcutActionDescription)action).getText());
       }
 
 
@@ -132,11 +132,11 @@ public final class ActionMacro {
   }
 
   @Override
-  protected Object clone() {
+  protected ActionMacro clone() {
     ActionMacro copy = new ActionMacro(myName);
     for (int i = 0; i < myActions.size(); i++) {
       ActionDescriptor action = myActions.get(i);
-      copy.myActions.add((ActionDescriptor)action.clone());
+      copy.myActions.add(action.clone());
     }
 
     return copy;
@@ -172,10 +172,10 @@ public final class ActionMacro {
   }
 
   public void appendShortcut(String text) {
-    myActions.add(new ShortcutActionDesciption(text));
+    myActions.add(new ShortcutActionDescription(text));
   }
 
-  public void appendKeytyped(char c, int keyCode, @JdkConstants.InputEventMask int modifiers) {
+  public void appendKeyPressed(char c, int keyCode, @JdkConstants.InputEventMask int modifiers) {
     ActionDescriptor lastAction = myActions.size() > 0 ? myActions.get(myActions.size() - 1) : null;
     if (lastAction instanceof TypedDescriptor) {
       ((TypedDescriptor)lastAction).addChar(c, keyCode, modifiers);
@@ -190,7 +190,7 @@ public final class ActionMacro {
   }
 
   public interface ActionDescriptor {
-    Object clone();
+    ActionDescriptor clone();
 
     void playBack(DataContext context);
 
@@ -209,7 +209,7 @@ public final class ActionMacro {
       myKeyCodes.addAll(keyCodes);
       myModifiers.addAll(modifiers);
 
-      assert myKeyCodes.size() == myModifiers.size() : "codes=" + myKeyCodes.toString() + " modifiers=" + myModifiers.toString();
+      assert myKeyCodes.size() == myModifiers.size() : "codes=" + myKeyCodes + " modifiers=" + myModifiers;
     }
 
     public TypedDescriptor(char c, int keyCode, @JdkConstants.InputEventMask int modifiers) {
@@ -229,7 +229,7 @@ public final class ActionMacro {
     }
 
     @Override
-    public Object clone() {
+    public TypedDescriptor clone() {
       return new TypedDescriptor(myText, myKeyCodes, myModifiers);
     }
 
@@ -293,17 +293,17 @@ public final class ActionMacro {
     }
   }
 
-  public static class ShortcutActionDesciption implements ActionDescriptor {
+  public static class ShortcutActionDescription implements ActionDescriptor {
 
     private final String myKeyStroke;
 
-    public ShortcutActionDesciption(String stroke) {
+    public ShortcutActionDescription(String stroke) {
       myKeyStroke = stroke;
     }
 
     @Override
-    public Object clone() {
-      return new ShortcutActionDesciption(myKeyStroke);
+    public ShortcutActionDescription clone() {
+      return new ShortcutActionDescription(myKeyStroke);
     }
 
     @Override
@@ -342,7 +342,7 @@ public final class ActionMacro {
     }
 
     @Override
-    public Object clone() {
+    public IdActionDescriptor clone() {
       return new IdActionDescriptor(actionId);
     }
 

@@ -2,10 +2,7 @@
 package com.intellij.usages
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.util.PathUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
@@ -14,7 +11,7 @@ import com.intellij.util.xmlb.annotations.Transient
  * Passed params will be used as default values, so, do not use constructor if instance will be used as a state (unless you want to change defaults)
  */
 @Suppress("PropertyName")
-@State(name = "UsageViewSettings", storages = [Storage("usageView.xml")], reportStatistic = true)
+@State(name = "UsageViewSettings", storages = [Storage("usageView.xml")], reportStatistic = true, category = SettingsCategory.UI)
 open class UsageViewSettings(
   isGroupByFileStructure: Boolean = true,
   isGroupByModule: Boolean = true,

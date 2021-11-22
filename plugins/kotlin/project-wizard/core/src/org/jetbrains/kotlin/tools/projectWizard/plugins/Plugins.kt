@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins
 
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.Plugin
 import org.jetbrains.kotlin.tools.projectWizard.core.buildPersistenceList
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.Project
 import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.*
 
 object Plugins {
-    val allPlugins = { context: Context ->
+    val allPlugins: (Context) -> List<Plugin> = { context: Context ->
         val buildSystemService = context.read {
             service<BuildSystemAvailabilityWizardService>()
         }

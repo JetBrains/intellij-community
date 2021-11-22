@@ -601,26 +601,6 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
   }
 
   @Test
-  public void testUnresolvedExtensionsAfterImport() {
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<build>" +
-                            " <extensions>" +
-                            "   <extension>" +
-                            "     <groupId>xxx</groupId>" +
-                            "     <artifactId>yyy</artifactId>" +
-                            "     <version>1</version>" +
-                            "    </extension>" +
-                            "  </extensions>" +
-                            "</build>");
-
-    MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Unresolved build extension: 'xxx:yyy:1'");
-  }
-
-  @Test
   public void testUnresolvedExtensionsAfterResolve() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -828,19 +808,6 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
     assertProblems(root, "'profiles.xml' has syntax errors");
   }
 
-  @Test
-  public void testInvalidMavenConfig() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
-    createProjectSubFile(".mvn/maven.config", "bad command line");
-    importProjectWithErrors();
-    assertModules("project");
-
-    MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "Unrecognized maven.config entries: [bad, command, line]");
-  }
-
   private void importProjectWithErrors(@Language(value = "XML", prefix = "<project>", suffix = "</project>") String s) {
     createProjectPom(s);
     importProjectWithErrors();
@@ -852,6 +819,14 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
       actualProblems.add(each.getDescription());
     }
     assertOrderedElementsAreEqual(actualProblems, expectedProblems);
+  }
+
+  private static void assertContainsProblems(MavenProject project, String... expectedProblems) {
+    List<String> actualProblems = new ArrayList<>();
+    for (MavenProjectProblem each : project.getProblems()) {
+      actualProblems.add(each.getDescription());
+    }
+    assertContainsElements(actualProblems, expectedProblems);
   }
 
   private List<MavenProject> getRootProjects() {

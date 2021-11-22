@@ -23,6 +23,8 @@ Groovy script
               PsiElement(identifier)('String')
           PsiErrorElement:'>' expected
             <empty list>
+    Permits clause
+      <empty list>
     PsiElement(new line)('\n')
     PsiErrorElement:'>' or '{' expected, got ','
       <empty list>

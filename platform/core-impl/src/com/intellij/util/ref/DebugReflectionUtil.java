@@ -7,11 +7,11 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FList;
-import it.unimi.dsi.fastutil.Hash;
+import com.intellij.util.containers.HashingStrategy;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 
 public final class DebugReflectionUtil {
   private static final Map<Class<?>, Field[]> allFields =
-    Collections.synchronizedMap(new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<Class<?>>() {
+    Collections.synchronizedMap(CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<Class<?>>() {
       // default strategy seems to be too slow
       @Override
       public int hashCode(@Nullable Class<?> aClass) {

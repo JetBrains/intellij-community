@@ -35,31 +35,6 @@
         <option name="BACKGROUND" value="743D3D" />
       </value>
     </option>
-    <option name="BUILDOUT.KEY">
-      <value>
-        <option name="FOREGROUND" value="FF6600" />
-      </value>
-    </option>
-    <option name="BUILDOUT.KEY_VALUE_SEPARATOR">
-      <value>
-        <option name="FOREGROUND" value="FF6600" />
-      </value>
-    </option>
-    <option name="BUILDOUT.LINE_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="9933CC" />
-      </value>
-    </option>
-    <option name="BUILDOUT.SECTION_NAME">
-      <value>
-        <option name="FOREGROUND" value="339999" />
-      </value>
-    </option>
-    <option name="BUILDOUT.VALUE">
-      <value>
-        <option name="FOREGROUND" value="66FF00" />
-      </value>
-    </option>
     <option name="COFFEESCRIPT.BAD_CHARACTER">
       <value>
         <option name="BACKGROUND" value="6E3B3B" />

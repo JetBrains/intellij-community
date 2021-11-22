@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
@@ -23,7 +24,11 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
   private final String myFileName;
 
   public ImportTestsFromHistoryAction(Project project, String name) {
-    super(StringUtil.escapeMnemonics(getPresentableText(project, name)), getPresentableText(project, name), getIcon(project, name));
+    this(project, name, null);
+  }
+
+  public ImportTestsFromHistoryAction(Project project, String name, @Nullable Executor executor) {
+    super(StringUtil.escapeMnemonics(getPresentableText(project, name)), getPresentableText(project, name), getIcon(project, name), executor);
     myFileName = name;
   }
 

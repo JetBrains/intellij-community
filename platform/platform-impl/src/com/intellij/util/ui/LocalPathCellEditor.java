@@ -74,6 +74,9 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
       @Override
       public void actionPerformed(ActionEvent e) {
         String initial = (String)getCellEditorValue();
+        if (StringUtil.isEmpty(initial)) {
+          initial = getDefaultPath();
+        }
         VirtualFile initialFile = StringUtil.isNotEmpty(initial) ? LocalFileSystem.getInstance().findFileByPath(initial) : null;
         FileChooser.chooseFile(getFileChooserDescriptor(), myProject, table, initialFile, file -> {
           String path = file.getPresentableUrl();
@@ -84,6 +87,10 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
         });
       }
     };
+  }
+
+  protected String getDefaultPath() {
+    return null;
   }
 
   public FileChooserDescriptor getFileChooserDescriptor() {

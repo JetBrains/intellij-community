@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
 import kotlin.Unit;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinJvmBundle;
@@ -30,7 +31,7 @@ public class CopyIntoPanel {
         this(project, defaultPath, null);
     }
 
-    public CopyIntoPanel(@Nullable Project project, @NotNull String defaultPath, @Nullable String labelText) {
+    public CopyIntoPanel(@Nullable Project project, @NotNull String defaultPath, @Nls @Nullable String labelText) {
         copyIntoField.addBrowseFolderListener(
                 KotlinJvmBundle.message("copy.into.title"),
                 KotlinJvmBundle.message("copy.into.description"),

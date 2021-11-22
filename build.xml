@@ -26,6 +26,9 @@
       <propertyref name="compile.parallel.max.threads"/>
       <propertyref prefix="intellij.build."/>
     </propertyset>
+    <propertyset id="intellij.test.properties">
+      <propertyref prefix="pass."/>
+    </propertyset>
   </target>
 
   <macrodef name="call_gant">
@@ -45,6 +48,9 @@
         <sysproperty key="gant.target" value="@{target}"/>
         <sysproperty key="idea.home.path" value="${project.home}"/>
         <syspropertyset refid="intellij.build.properties"/>
+        <syspropertyset refid="intellij.test.properties"/>
+        <!-- required for TeamCity  -->
+        <sysproperty key="agent.home.dir" value="${agent.home.dir}"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>
       </java>

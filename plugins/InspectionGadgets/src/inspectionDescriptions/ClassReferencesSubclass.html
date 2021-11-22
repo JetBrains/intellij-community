@@ -3,17 +3,17 @@
 Reports classes which contain references to one of their subclasses.
 Such references may be confusing and violate several rules of object-oriented design.
 <p>Example:</p>
-<pre>
+<pre><code>
   class Entity {
     // Warning: the class references its subclass
     void compare(SimpleEntity entity) {
-      ...    
+      ...
     }
   }
   class SimpleEntity extends Entity {
     ...
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

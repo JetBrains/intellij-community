@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.workspaceModel.storage.ClassConversion
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId

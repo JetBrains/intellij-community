@@ -116,6 +116,12 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
   }
 
   @Override
+  public boolean isEnabled() {
+    // tables without scroll pane do not repaint rows correctly (BasicTableUI.paint:1868-1872)
+    return super.isEnabled() && myComponent.getParent() instanceof JViewport;
+  }
+
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     JTableHeader header = myComponent.getTableHeader();

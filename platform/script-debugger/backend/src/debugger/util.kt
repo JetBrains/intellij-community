@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.io.CharSequenceBackedByChars
+import com.intellij.util.text.CharSequenceBackedByChars
 import com.intellij.util.io.addChannelListener
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel

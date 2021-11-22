@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.ide.ui.UIThemeMetadata;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
@@ -25,7 +26,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
 
   @Nullable
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> resolve = resolve(element);
     if (resolve == null) return null;
 
@@ -39,7 +40,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
   }
 
   @Override
-  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> resolve = resolve(element);
     if (resolve == null) return null;
 
@@ -79,7 +80,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
         final PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createTypeByFQClassName(source);
 
         StringBuilder typeBuilder = new StringBuilder();
-        JavaDocInfoGenerator.generateType(typeBuilder, type, element);
+        JavaDocInfoGeneratorFactory.create(element.getProject(), null, false).generateType(typeBuilder, type, element);
         return typeBuilder.toString(); //NON-NLS
       });
     }

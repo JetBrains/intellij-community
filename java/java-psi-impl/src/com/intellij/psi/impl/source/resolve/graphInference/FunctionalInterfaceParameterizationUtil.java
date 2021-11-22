@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,12 +15,8 @@ public final class FunctionalInterfaceParameterizationUtil {
   private static final Logger LOG = Logger.getInstance(FunctionalInterfaceParameterizationUtil.class);
 
   public static boolean isWildcardParameterized(@Nullable PsiType classType) {
+    classType = LambdaUtil.normalizeFunctionalType(classType);
     if (classType == null) return false;
-    if (classType instanceof PsiIntersectionType) {
-      for (PsiType type : ((PsiIntersectionType)classType).getConjuncts()) {
-        if (!isWildcardParameterized(type)) return false;
-      }
-    }
     if (classType instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult result = ((PsiClassType)classType).resolveGenerics();
       final PsiClass aClass = result.getElement();
@@ -49,6 +45,7 @@ public final class FunctionalInterfaceParameterizationUtil {
 
   @Nullable
   public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr, boolean performFinalCheck) {
+    psiClassType = LambdaUtil.normalizeFunctionalType(psiClassType);
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
     }
@@ -63,14 +60,6 @@ public final class FunctionalInterfaceParameterizationUtil {
    */
   private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr, boolean performFinalCheck) {
     final PsiParameter[] lambdaParams = expr.getParameterList().getParameters();
-    if (psiClassType instanceof PsiIntersectionType) {
-      for (PsiType psiType : ((PsiIntersectionType)psiClassType).getConjuncts()) {
-        final PsiType functionalType = getFunctionalTypeExplicit(psiType, expr, performFinalCheck);
-        if (functionalType != null) return functionalType;
-      }
-      return null;
-    }
-
     LOG.assertTrue(psiClassType instanceof PsiClassType, "Unexpected type: " + psiClassType);
     final PsiType[] parameters = ((PsiClassType)psiClassType).getParameters();
     final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)psiClassType).resolveGenerics();

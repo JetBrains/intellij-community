@@ -22,12 +22,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadReferenceProxy {
   private static final Logger LOG = Logger.getInstance(ThreadReferenceProxyImpl.class);
   // cached data
   private String myName;
-  private int                       myFrameCount = -1;
+  private volatile int myFrameCount = -1;
   // stack frames, 0 - bottom
   private final LinkedList<StackFrameProxyImpl> myFramesFromBottom = new LinkedList<>();
   //cache build on the base of myFramesFromBottom 0 - top, initially nothing is cached
@@ -202,6 +204,56 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       }
     }
     return myFrameCount;
+  }
+
+  public CompletableFuture<Integer> frameCountAsync() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    checkValid();
+    if (myFrameCount == -1) {
+      ThreadReference threadReference = getThreadReference();
+      return DebuggerUtilsAsync.frameCount(threadReference)
+        .exceptionally(throwable -> {
+          Throwable unwrap = DebuggerUtilsAsync.unwrap(throwable);
+          if (unwrap instanceof ObjectCollectedException) {
+            return 0;
+          }
+          else if (unwrap instanceof IncompatibleThreadStateException) {
+            final boolean isSuspended;
+            try {
+              isSuspended = threadReference.isSuspended();
+            }
+            catch (Throwable ignored) {
+              // unable to determine whether the thread is actually suspended, so propagating original exception
+              throw new CompletionException(EvaluateExceptionUtil.createEvaluateException(unwrap));
+            }
+            if (!isSuspended) {
+              // give up because it seems to be really resumed
+              throw new CompletionException(EvaluateExceptionUtil.createEvaluateException(unwrap));
+            }
+            else {
+              // JDI bug: although isSuspended() == true, frameCount() may throw IncompatibleThreadStateException
+              // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4783403
+              // unfortunately, impossible to get this information at the moment, so assume the frame count is null
+              return 0;
+            }
+          }
+          else if (unwrap instanceof InternalException) {
+            LOG.info(unwrap);
+            return 0;
+          }
+          else {
+            if (!getVirtualMachine().canBeModified()) { // do not care in read only vms
+              LOG.debug(unwrap);
+              return 0;
+            }
+            else {
+              throw (RuntimeException)throwable;
+            }
+          }
+        })
+        .thenApply(r -> myFrameCount = r);
+    }
+    return CompletableFuture.completedFuture(myFrameCount);
   }
 
   /**

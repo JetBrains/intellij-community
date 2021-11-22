@@ -22,11 +22,9 @@ public final class ClassPathUtil {
   public static @NotNull Collection<String> getUtilClassPath() {
     @SuppressWarnings("UnnecessaryFullyQualifiedName") Class<?>[] classes = {
       PathManager.class,                                  // module 'intellij.platform.util'
-      Strings.class,                                      // module 'intellij.platform.util.strings'
+      Strings.class,                                      // module 'intellij.platform.util.base'
       XmlDomReader.class,                                 // module 'intellij.platform.util.xmlDom'
-      FList.class,                                        // module 'intellij.platform.util.collections'
       MinusculeMatcher.class,                             // module 'intellij.platform.util.text.matching'
-      StartUpMeasurer.class,                              // module 'intellij.platform.util.diagnostic'
       com.intellij.openapi.util.SystemInfoRt.class,       // module 'intellij.platform.util.rt'
       com.intellij.util.lang.UrlClassLoader.class,        // module 'intellij.platform.util.classLoader'
       org.intellij.lang.annotations.Flow.class,           // jetbrains-annotations-java5

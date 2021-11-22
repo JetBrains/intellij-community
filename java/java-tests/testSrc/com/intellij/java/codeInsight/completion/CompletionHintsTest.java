@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.registry.Registry;
@@ -1707,6 +1708,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
   private void checkResultWithInlays(String text) {
     waitForParameterInfo();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultWithInlays(text);
   }
 

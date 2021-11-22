@@ -23,12 +23,14 @@ interface
 long
 native
 new
+non-sealed
 null
 package
 private
 protected
 public
 return
+sealed
 short
 static
 strictfp

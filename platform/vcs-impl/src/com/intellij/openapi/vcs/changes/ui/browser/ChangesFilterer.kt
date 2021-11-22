@@ -174,10 +174,10 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
 
   private fun updatePresentation() {
     ModalityUiUtil.invokeLaterIfNeeded(
-      {
-        updateQueue.cancelAllUpdates()
-        listener.updateChanges()
-      }, ModalityState.any())
+      ModalityState.any()) {
+      updateQueue.cancelAllUpdates()
+      listener.updateChanges()
+    }
   }
 
   private fun resetFilter(): ProgressIndicator {
@@ -247,8 +247,8 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
       val content1 = bRev.content ?: return true
       val content2 = aRev.content ?: return true
 
-      val diffContent1 = DiffContentFactory.getInstance().create(project, content1, bRev.file.fileType)
-      val diffContent2 = DiffContentFactory.getInstance().create(project, content2, aRev.file.fileType)
+      val diffContent1 = DiffContentFactory.getInstance().create(project, content1, bRev.file)
+      val diffContent2 = DiffContentFactory.getInstance().create(project, content2, aRev.file)
 
       val provider = DiffIgnoredRangeProvider.EP_NAME.extensions.find {
         it.accepts(project, diffContent1) &&

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.MathUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -30,8 +29,6 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.IoErrorText;
 import com.sun.jna.*;
-import com.sun.jna.platform.mac.SystemB;
-import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -102,13 +99,13 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
-    // Temporary disable notification for Rider only for 212 release because we don't have M1 build yet.
-    if (isUnderRosetta() && !PlatformUtils.isRider()) {
-      NotificationAction downloadAction =
-        NotificationAction.createSimpleExpiring(
-          IdeBundle.message("bundled.jre.m1.arch.message.download"), () ->
-            BrowserUtil.browse("https://developer.android.com/studio")  // Android Studio: b/191780967
-          );
+    if (!CpuArch.isEmulated()) return;
+    LOG.info(CpuArch.CURRENT + " appears to be emulated");
+
+    if (SystemInfo.isMac && CpuArch.isIntel64()) {
+      NotificationAction downloadAction = NotificationAction.createSimpleExpiring(
+        IdeBundle.message("bundled.jre.m1.arch.message.download"),
+        () -> BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide"));
       showNotification("bundled.jre.m1.arch.message", true, downloadAction, ApplicationNamesInfo.getInstance().getFullProductName());
     }
 
@@ -160,27 +157,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
       catch (ExecutionException e) {
         LOG.debug(e);
       }
-    }
-
-    return false;
-  }
-
-  private static boolean isUnderRosetta() {
-    // Use "sysctl.proc_translated" to check if running in Rosetta
-    // See https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment#Determine-Whether-Your-App-Is-Running-as-a-Translated-Binary
-    // for more details
-
-    if (!SystemInfo.isMac || !CpuArch.isIntel64()) {
-      return false;
-    }
-
-    IntByReference size = new IntByReference(SystemB.INT_SIZE);
-    Pointer p = new Memory(size.getValue());
-
-    if (SystemB.INSTANCE.sysctlbyname(
-      "sysctl.proc_translated", p, size, null, 0) != -1)
-    {
-      return p.getInt(0) == 1;
     }
 
     return false;

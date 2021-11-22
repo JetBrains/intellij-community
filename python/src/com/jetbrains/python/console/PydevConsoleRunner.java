@@ -20,6 +20,7 @@ import com.google.common.collect.Collections2;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -231,6 +232,8 @@ public interface PydevConsoleRunner {
 
   void run(boolean requestEditorFocus);
 
+  void reRun(boolean requestEditorFocus, String title);
+
   PydevConsoleCommunication getPydevConsoleCommunication();
 
   void addConsoleListener(PydevConsoleRunnerImpl.ConsoleListener consoleListener);
@@ -240,6 +243,9 @@ public interface PydevConsoleRunner {
   PyConsoleProcessHandler getProcessHandler();
 
   PythonConsoleView getConsoleView();
+
+  @Nullable
+  default AnAction createRerunAction() { return null; }
 
   @TestOnly
   void setSdk(Sdk sdk);

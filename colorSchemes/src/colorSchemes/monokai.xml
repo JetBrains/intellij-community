@@ -22,31 +22,6 @@
         <option name="BACKGROUND" value="743D3D" />
       </value>
     </option>
-    <option name="BUILDOUT.KEY">
-      <value>
-        <option name="FOREGROUND" value="F92672" />
-      </value>
-    </option>
-    <option name="BUILDOUT.KEY_VALUE_SEPARATOR">
-      <value>
-        <option name="FOREGROUND" value="F92672" />
-      </value>
-    </option>
-    <option name="BUILDOUT.LINE_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="75715E" />
-      </value>
-    </option>
-    <option name="BUILDOUT.SECTION_NAME">
-      <value>
-        <option name="FOREGROUND" value="AE81FF" />
-      </value>
-    </option>
-    <option name="BUILDOUT.VALUE">
-      <value>
-        <option name="FOREGROUND" value="E6DB74" />
-      </value>
-    </option>
     <option baseAttributes="TEXT" name="CLASS_NAME_ATTRIBUTES" />
     <option name="CLASS_REFERENCE">
       <value>

@@ -16,6 +16,7 @@
 package org.jetbrains.ide;
 
 import com.intellij.ide.XmlRpcServer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -47,6 +48,10 @@ public class XmlRpcServerImpl implements XmlRpcServer {
   public XmlRpcServerImpl() {
   }
 
+  public static XmlRpcServerImpl getInstance() {
+    return (XmlRpcServerImpl)ApplicationManager.getApplication().getService(XmlRpcServer.class);
+  }
+
   static final class XmlRpcRequestHandler extends HttpRequestHandler {
     @Override
     public boolean isSupported(@NotNull FullHttpRequest request) {
@@ -55,7 +60,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
 
     @Override
     public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
-      return SERVICE.getInstance().process(urlDecoder.path(), request, context, null);
+      return getInstance().process(urlDecoder.path(), request, context, null);
     }
   }
 
@@ -74,7 +79,6 @@ public class XmlRpcServerImpl implements XmlRpcServer {
     handlerMapping.remove(name);
   }
 
-  @Override
   public boolean process(@NotNull String path, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context, @Nullable Map<String, Object> handlers) {
     if (!(path.isEmpty() || (path.length() == 1 && path.charAt(0) == '/') || path.equalsIgnoreCase("/rpc2"))) { //NON-NLS
       return false;

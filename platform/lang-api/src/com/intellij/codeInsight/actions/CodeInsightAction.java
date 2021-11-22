@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Dmitry Avdeev
  */
-public abstract class CodeInsightAction extends AnAction implements UpdateInBackground {
+public abstract class CodeInsightAction extends AnAction implements UpdateInBackground, PerformWithDocumentsCommitted {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -64,12 +64,6 @@ public abstract class CodeInsightAction extends AnAction implements UpdateInBack
         action.run();
       }
     }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()), editor.getDocument());
-  }
-
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    super.beforeActionPerformedUpdate(e);
   }
 
   @Override

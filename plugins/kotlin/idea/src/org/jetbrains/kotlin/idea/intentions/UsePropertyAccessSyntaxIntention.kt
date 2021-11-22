@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jdom.Element
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.shouldNotConvertToProperty
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -48,7 +49,6 @@ import org.jetbrains.kotlin.resolve.calls.context.ContextDependency
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo
-import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
 import org.jetbrains.kotlin.resolve.calls.util.DelegatingCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
@@ -65,18 +65,21 @@ import javax.swing.JComponent
 class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtCallExpression>(UsePropertyAccessSyntaxIntention::class),
     CleanupLocalInspectionTool {
 
-    val fqNameList = mutableListOf<FqNameUnsafe>()
+    val fqNameList = NotPropertiesServiceImpl.default.map(::FqNameUnsafe).toMutableList()
 
     @Suppress("CAN_BE_PRIVATE")
-    var fqNameStrings: List<String>
-        get() = fqNameList.map { it.asString() }
-        set(value) {
-            fqNameList.clear()
-            value.mapTo(fqNameList, ::FqNameUnsafe)
-        }
+    var fqNameStrings = NotPropertiesServiceImpl.default.toMutableList()
 
-    init {
-        fqNameStrings = NotPropertiesServiceImpl.default
+    override fun readSettings(node: Element) {
+        super.readSettings(node)
+        fqNameList.clear()
+        fqNameStrings.mapTo(fqNameList, ::FqNameUnsafe)
+    }
+
+    override fun writeSettings(node: Element) {
+        fqNameStrings.clear()
+        fqNameList.mapTo(fqNameStrings) { it.asString() }
+        super.writeSettings(node)
     }
 
     override fun createOptionsPanel(): JComponent? {
@@ -282,7 +285,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
             callToConvert = (firstStatement as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
                 ?: firstStatement as? KtCallExpression
                         ?: throw KotlinExceptionWithAttachments("Unexpected contents of function after conversion: ${callParent::class.java}")
-                    .withAttachment("callParent", callParent.text)
+                    .withPsiAttachment("callParent", callParent)
         }
 
         val qualifiedExpression = callToConvert.getQualifiedExpressionForSelector()

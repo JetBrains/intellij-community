@@ -32,7 +32,7 @@ public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConf
   public boolean isModified() {
     VcsContentAnnotationSettings settings = VcsContentAnnotationSettings.getInstance(myProject);
     if (myHighlightRecentlyChanged.isSelected() != settings.isShow()) return true;
-    if (! Comparing.equal(myHighlightInterval.getValue(), settings.getLimitDays())) return true;
+    if (!Comparing.equal(myHighlightInterval.getValue(), settings.getLimitDays())) return true;
     return false;
   }
 
@@ -40,7 +40,7 @@ public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConf
   public void apply() {
     VcsContentAnnotationSettings settings = VcsContentAnnotationSettings.getInstance(myProject);
     settings.setShow(myHighlightRecentlyChanged.isSelected());
-    settings.setLimit(((Number)myHighlightInterval.getValue()).intValue());
+    settings.setLimitDays(((Number)myHighlightInterval.getValue()).intValue());
   }
 
   @Override

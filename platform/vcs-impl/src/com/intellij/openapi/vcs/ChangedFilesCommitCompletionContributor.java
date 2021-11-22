@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -71,20 +72,20 @@ public class ChangedFilesCommitCompletionContributor extends CompletionContribut
       FilePath beforePath = ChangesUtil.getBeforePath(change);
       FilePath afterPath = ChangesUtil.getAfterPath(change);
       if (afterPath != null) {
-        addFilePathName(resultSet, afterPath, false);
+        addFilePathName(project, resultSet, afterPath, false);
         addLanguageSpecificElements(project, count, prefixed, afterPath);
       }
       if (beforePath != null) {
         if (afterPath == null || !beforePath.getName().equals(afterPath.getName())) {
-          addFilePathName(resultSet, beforePath, true);
+          addFilePathName(project, resultSet, beforePath, true);
         }
       }
     }
   }
 
-  private static void addFilePathName(CompletionResultSet resultSet, FilePath filePath, boolean strikeout) {
+  private static void addFilePathName(Project project, CompletionResultSet resultSet, FilePath filePath, boolean strikeout) {
     resultSet.addElement(LookupElementBuilder.create(filePath.getName())
-                           .withIcon(filePath.getFileType().getIcon())
+                           .withIcon(VcsUtil.getIcon(project, filePath))
                            .withStrikeoutness(strikeout));
   }
 

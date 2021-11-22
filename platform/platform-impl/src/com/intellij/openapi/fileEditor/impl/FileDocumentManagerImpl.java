@@ -553,6 +553,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         unbindFileFromDocument(file, document);
         // to avoid weird inconsistencies when file opened in an editor tab got renamed to unknown extension and then typed into
         closeAllEditorsFor(file);
+        myMultiCaster.afterDocumentUnbound(file, document);
       }
       else if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor()) && isBinaryWithDecompiler(file)) {
         reloadFromDisk(document);
@@ -724,6 +725,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     else {
       unbindFileFromDocument(file, document);
       myMultiCaster.fileWithNoDocumentChanged(file);
+      myMultiCaster.afterDocumentUnbound(file, document);
     }
     myUnsavedDocuments.remove(document);
   }

@@ -6,13 +6,13 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import java.util.*
 
 open class NotificationMessageCollector(
     private val project: Project,
     private val groupDisplayId: String,
-    private val title: String
+    @NlsContexts.NotificationTitle private val title: String
 ) {
     private val messages = ArrayList<String>()
 

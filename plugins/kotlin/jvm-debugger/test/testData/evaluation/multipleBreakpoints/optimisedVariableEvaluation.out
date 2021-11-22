@@ -2,12 +2,12 @@
 LineBreakpoint created at optimisedVariableEvaluation.kt:13
 LineBreakpoint created at optimisedVariableEvaluation.kt:19
 LineBreakpoint created at optimisedVariableEvaluation.kt:27
-LineBreakpoint created at optimisedVariableEvaluation.kt:32
+LineBreakpoint created at optimisedVariableEvaluation.kt:33
 Run Java
 Connected to the target VM
 optimisedVariableEvaluation.kt:27
 Compile bytecode for a
-optimisedVariableEvaluation.kt:32
+optimisedVariableEvaluation.kt:33
 Compile bytecode for a
 optimisedVariableEvaluation.kt:13
 Compile bytecode for a

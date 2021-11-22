@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// SUGGESTED_NAMES: ints, intList, list
 // OPTIONS: true, true, false, false, false
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int

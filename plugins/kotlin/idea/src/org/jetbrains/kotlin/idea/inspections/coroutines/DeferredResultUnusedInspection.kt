@@ -20,10 +20,15 @@ class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false
                 (!inspection.standardOnly || expression.calleeExpression?.text in shortNames),
     callChecker = fun(resolvedCall, inspection): Boolean {
         if (inspection !is DeferredResultUnusedInspection) return false
+
+        val resultingDescriptor = resolvedCall.resultingDescriptor
+        val fqName = resultingDescriptor.fqNameOrNull()
+        if (fqName in fqNamesThatShouldNotBeReported) return false
+
         return if (inspection.standardOnly) {
-            resolvedCall.resultingDescriptor.fqNameOrNull() in fqNamesAll
+            fqName in fqNamesAll
         } else {
-            val returnTypeClassifier = resolvedCall.resultingDescriptor.returnType?.constructor?.declarationDescriptor
+            val returnTypeClassifier = resultingDescriptor.returnType?.constructor?.declarationDescriptor
             val importableFqName = returnTypeClassifier?.importableFqName
             importableFqName == deferred || importableFqName == deferredExperimental
         }
@@ -53,5 +58,8 @@ class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false
         private val deferred = FqName("$COROUTINE_PACKAGE.Deferred")
 
         private val deferredExperimental = FqName("$COROUTINE_EXPERIMENTAL_PACKAGE.Deferred")
+
+        private val fqNamesThatShouldNotBeReported =
+            listOf("kotlin.test.assertNotNull", "kotlin.requireNotNull", "kotlin.checkNotNull").map { FqName(it) }
     }
 }

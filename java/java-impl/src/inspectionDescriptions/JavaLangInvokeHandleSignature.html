@@ -1,7 +1,8 @@
 <html>
 <body>
-Reports the cases in which the signature of a <code>MethodHandle</code> or the type of a <code>VarHandle</code> doesn't match the actual method or field.
-<p>It also checks that the arguments provided to the <code>MethodHandle.invoke()</code>, <code>VarHandle.set()</code>, and so on, match the method signature or field type, otherwise it will result in an exception.
+Reports <code>MethodHandle</code> and <code>VarHandle</code> factory method calls that don't match any method or field.
+<p>Also reports arguments to <code>MethodHandle.invoke()</code> and similar methods, that don't match the <code>MethodHandle</code> signature
+  and arguments to <code>VarHandle.set()</code> that don't match the <code>VarHandle</code> type.
   <!-- tooltip end -->
 
 <p>Examples:</p>

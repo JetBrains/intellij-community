@@ -8,7 +8,7 @@ class PeriodTracker {
   private val durations: MutableList<Long> = mutableListOf()
 
   fun minDuration(currentPeriod: Long?): Long? {
-    val pastMin = durations.min()
+    val pastMin = durations.minOrNull()
     if (pastMin == null) return currentPeriod
     if (currentPeriod != null) {
       return min(pastMin, currentPeriod)
@@ -18,7 +18,7 @@ class PeriodTracker {
   }
 
   fun maxDuration(currentPeriod: Long?): Long? {
-    val pastMax = durations.max()
+    val pastMax = durations.maxOrNull()
     if (pastMax == null) return currentPeriod
     if (currentPeriod != null) {
       return max(pastMax, currentPeriod)

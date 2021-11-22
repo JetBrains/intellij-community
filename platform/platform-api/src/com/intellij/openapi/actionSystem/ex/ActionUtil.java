@@ -20,13 +20,17 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -180,7 +184,7 @@ public final class ActionUtil {
    *   without leaving inconsistent data behind, this exception doesn't need to be caught and processed.
    */
   public static <T> T underModalProgress(@NotNull Project project,
-                                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                         @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                          @NotNull Computable<T> computable) throws ProcessCanceledException {
     DumbService dumbService = DumbService.getInstance(project);
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
@@ -208,9 +212,12 @@ public final class ActionUtil {
   }
 
   public static boolean lastUpdateAndCheckDumb(@NotNull AnAction action, @NotNull AnActionEvent e, boolean visibilityMatters) {
+    Project project = e.getProject();
+    if (project != null && PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(action)) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
     performDumbAwareUpdate(false, action, e, true);
 
-    Project project = e.getProject();
     if (project != null && DumbService.getInstance(project).isDumb() && !action.isDumbAware()) {
       if (Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
         return false;
@@ -247,7 +254,7 @@ public final class ActionUtil {
     IndexNotReadyException indexError = null;
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, event);
-    Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component != null && !UIUtil.isShowing(component) &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) {
       String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
@@ -393,7 +400,7 @@ public final class ActionUtil {
   }
 
   /**
-   * Convenience method for merging not null properties from a registered action
+   * Convenience method for merging non-null properties from a registered action
    *
    * @param action action to merge to
    * @param actionId action id to merge from

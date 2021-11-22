@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.importing.MavenProjectModelModifier;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
-public class LanguageLevelPluginQuickFix extends LanguageLevelQuickFix{
+public class LanguageLevelPluginQuickFix extends LanguageLevelQuickFix {
   static final String COMPILER_SOURCE = "source";
   static final String COMPILER_TARGET = "target";
 
@@ -53,5 +53,4 @@ public class LanguageLevelPluginQuickFix extends LanguageLevelQuickFix{
     builder.replaceElement(psiTarget, "variableTarget", getExpression(prevTarget, option), true);
     return builder.buildInlineTemplate();
   }
-
 }

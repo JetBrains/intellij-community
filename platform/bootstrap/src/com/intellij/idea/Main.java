@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.BootstrapBundle;
@@ -37,7 +37,7 @@ public final class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
-  // reserved (doesn't seem to ever be used): public static final int OUT_OF_MEMORY = 9;
+  public static final int UNKNOWN_COMMAND = 9;
   // reserved (permanently if launchers will perform the check): public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
@@ -48,6 +48,7 @@ public final class Main {
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String CWM_HOST_COMMAND = "cwmHost";
+  public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
 
   private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.idea.StartupUtil";
   private static final String AWT_HEADLESS = "java.awt.headless";
@@ -111,7 +112,7 @@ public final class Main {
     startupTimings.put("classloader init", System.nanoTime());
     PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
-    if (args.length > 0 && CWM_HOST_COMMAND.equals(args[0])) {
+    if (args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
       // AWT can only use builtin and system class loaders to load classes, so set the system loader to something that can find projector libs
       Class<ClassLoader> aClass = ClassLoader.class;
       MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);
@@ -136,8 +137,7 @@ public final class Main {
     }
     catch (IOException e) {
       showMessage("Plugin Installation Error",
-                  "The IDE failed to install some plugins.\n\n" +
-                  "Most probably, this happened because of a change in a serialization format.\n" +
+                  "The IDE failed to install or update some plugins.\n" +
                   "Please try again, and if the problem persists, please report it\n" +
                   "to https://jb.gg/ide/critical-startup-errors\n\n" +
                   "The cause: " + e, false);

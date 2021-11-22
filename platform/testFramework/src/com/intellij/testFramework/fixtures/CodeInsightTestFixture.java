@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -165,6 +165,15 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   PsiFile configureByText(@NotNull String fileName, @NotNull String text);
 
   /**
+   * Creates a file with specified name and text content.
+   *
+   * @param fileName the name of the file (which is used to determine the file type based on the registered filename patterns)
+   * @param text     the text to write into the file
+   * @return the virtual file created from the specified text
+   */
+  VirtualFile createFile(@NotNull String fileName, @NotNull String text);
+
+  /**
    * Loads the specified file from the test project directory into the in-memory editor.
    *
    * @param filePath the path of the file to load, relative to the test project source root.
@@ -223,6 +232,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void enableInspections(InspectionProfileEntry @NotNull ... inspections);
 
+  @SuppressWarnings("unchecked")
   void enableInspections(Class<? extends LocalInspectionTool> @NotNull ... inspections);
 
   void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections);
@@ -688,6 +698,16 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
 
+  /**
+   * Get elements found by the Goto Symbol action called with the given pattern
+   * @param pattern           a pattern to search for elements
+   * @param searchEverywhere  indicates whether "include non-project classes" checkbox is selected
+   * @param contextForSorting a PsiElement used for "proximity sorting" of the results. The sorting will be disabled if null given.
+   * @return a list of the results (likely PsiElements) found for the given pattern
+   */
+  @NotNull
+  List<Object> getGotoSymbolResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
+  
   /**
    * Get breadcrumbs to be generated for the current cursor position in the loaded file
    * @return a list of the breadcrumbs in the order from the topmost element crumb to the deepest

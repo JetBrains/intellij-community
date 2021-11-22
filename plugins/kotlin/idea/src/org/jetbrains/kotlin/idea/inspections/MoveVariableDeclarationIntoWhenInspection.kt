@@ -20,10 +20,7 @@ import org.jetbrains.kotlin.idea.intentions.loopToCallChain.countUsages
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.previousStatement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
-import org.jetbrains.kotlin.psi.psiUtil.siblings
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 class MoveVariableDeclarationIntoWhenInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
@@ -110,18 +107,21 @@ private class VariableDeclarationIntoWhenFix(
         val newElement = property.copy() as? KtProperty ?: return
         val toReplace = transform(newElement) ?: return
 
-        val lastChild = newElement.lastChild
-        if (lastChild is PsiComment && lastChild.node.elementType == KtTokens.EOL_COMMENT) {
+        val tailComments = newElement.allChildren.toList().takeLastWhile { it is PsiWhiteSpace || it is PsiComment }
+        if (tailComments.isNotEmpty()) {
             val leftBrace = subjectExpression.siblings(withItself = false).firstOrNull { it.node.elementType == KtTokens.LBRACE }
-            val whiteSpaceBeforeComment = lastChild.prevSibling?.takeIf { it is PsiWhiteSpace }
             if (leftBrace != null) {
-                subjectExpression.parent.addAfter(lastChild, leftBrace)
-                if (whiteSpaceBeforeComment != null) {
-                    subjectExpression.parent.addAfter(whiteSpaceBeforeComment, leftBrace)
+                tailComments.reversed().forEach {
+                    subjectExpression.parent.addAfter(it, leftBrace)
+                    it.delete()
                 }
             }
-            whiteSpaceBeforeComment?.delete()
-            lastChild.delete()
+        }
+        val docComment = newElement.docComment
+        if (docComment != null) {
+            val whenExpression = subjectExpression.parent
+            whenExpression.parent.addBefore(docComment, whenExpression)
+            docComment.delete()
         }
 
         val resultElement = subjectExpression.replace(toReplace)

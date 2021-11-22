@@ -17,7 +17,6 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,16 +30,6 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   public PsiElementFinderImpl(Project project) {
     myProject = project;
     myFileManager = JavaFileManager.getInstance(project);
-  }
-
-  /**
-   * @deprecated use {@link #PsiElementFinderImpl(Project)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public PsiElementFinderImpl(Project project, JavaFileManager javaFileManager) {
-    myProject = project;
-    myFileManager = javaFileManager;
   }
 
   @Override

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.StatusText
 import java.awt.Graphics
 import java.awt.LayoutManager
@@ -9,7 +10,7 @@ import javax.swing.JPanel
 
 class PanelWithStatusText(
     layout: LayoutManager,
-    private val statusText: String,
+    @NlsContexts.StatusText private val statusText: String,
     var isStatusTextVisible: Boolean = false
 ) : JPanel(layout) {
 

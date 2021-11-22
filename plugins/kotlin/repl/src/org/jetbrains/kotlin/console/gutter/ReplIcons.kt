@@ -3,11 +3,12 @@
 package org.jetbrains.kotlin.console.gutter
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
 import javax.swing.Icon
 
-data class IconWithTooltip(val icon: Icon, val tooltip: String?)
+data class IconWithTooltip(val icon: Icon, @NlsContexts.Tooltip val tooltip: String?)
 
 object ReplIcons {
     val BUILD_WARNING_INDICATOR: IconWithTooltip = IconWithTooltip(AllIcons.General.Warning, null)

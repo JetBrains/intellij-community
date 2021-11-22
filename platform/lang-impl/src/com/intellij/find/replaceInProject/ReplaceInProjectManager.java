@@ -401,7 +401,7 @@ public final class ReplaceInProjectManager {
     int[] replacedCount = {0};
     boolean[] success = {true};
     boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
-      FindBundle.message("find.replace.all.confirmation.title"),
+      FindBundle.message("find.replace.all.progress.title"),
       myProject,
       null,
       indicator -> {
@@ -468,7 +468,7 @@ public final class ReplaceInProjectManager {
       }
 
       final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
-      if (!document.isWritable()) return false;
+      if (document == null || !document.isWritable()) return false;
 
       return ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
         final int textOffset = segment.getStartOffset();

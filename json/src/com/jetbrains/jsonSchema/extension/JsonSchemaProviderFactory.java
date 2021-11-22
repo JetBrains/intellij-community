@@ -1,13 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.List;
@@ -29,17 +36,32 @@ public interface JsonSchemaProviderFactory {
    *                      See {@link Class#getResource(String)} for more details
    * @return VirtualFile instance, or null if not found
    */
-  static VirtualFile getResourceFile(@NotNull Class baseClass, @NonNls @NotNull String resourcePath) {
+  static @Nullable VirtualFile getResourceFile(@NotNull Class<?> baseClass, @NonNls @NotNull String resourcePath) {
     URL url = baseClass.getResource(resourcePath);
     if (url == null) {
       LOG.error("Cannot find resource " + resourcePath);
       return null;
     }
     VirtualFile file = VfsUtil.findFileByURL(url);
-    if (file == null) {
-      LOG.error("Cannot find file by " + resourcePath);
-      return null;
+    if (file != null) {
+      return file;
     }
-    return file;
+    LOG.info("File not found by " + url + ", performing refresh...");
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
+      VirtualFile refreshed = WriteAction.compute(() -> {
+        return VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtilCore.convertFromUrl(url));
+      });
+      if (refreshed != null) {
+        LOG.info("Refreshed " + url + " successfully");
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          JsonSchemaService service = project.getService(JsonSchemaService.class);
+          service.reset();
+        }
+      }
+      else {
+        LOG.error("Cannot refresh and find file by " + resourcePath);
+      }
+    });
+    return null;
   }
 }

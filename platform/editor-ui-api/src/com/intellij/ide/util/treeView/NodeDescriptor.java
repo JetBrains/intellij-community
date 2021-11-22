@@ -21,12 +21,6 @@ public abstract class NodeDescriptor<E> {
   protected @NlsSafe String myName;
   @Nullable protected Icon myClosedIcon;
 
-  /**
-   * @deprecated Unused. Left for API compatibility.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected Icon myOpenIcon;
   protected Color myColor;
 
   private int myIndex = -1;

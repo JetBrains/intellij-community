@@ -2,35 +2,43 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.asNullable
 import org.jetbrains.kotlin.tools.projectWizard.core.safe
 import org.jetbrains.kotlin.tools.projectWizard.core.service.EapVersionDownloader
 import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProviderService
-import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProviderService.Companion.SNAPSHOT_TAG
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 
+@NonNls
+private const val SNAPSHOT_TAG = "snapshot"
+
 class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWizardService {
     override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
         if (projectKind == ProjectKind.COMPOSE) {
-            return kotlinVersionWithDefaultValues(Versions.KOTLIN_VERSION_FOR_COMPOSE)
+            val version = Versions.KOTLIN_VERSION_FOR_COMPOSE
+            return kotlinVersionWithDefaultValues(version)
         }
         val version = getPatchedKotlinVersion()
             ?: getKotlinVersionFromCompiler()
             ?: VersionsDownloader.downloadLatestEapOrStableKotlinVersion()
             ?: Versions.KOTLIN
+
+        val jvmTargetVersions = JvmTarget.values().map { it.description }.toSet()
         return kotlinVersionWithDefaultValues(version)
     }
 
     private fun getPatchedKotlinVersion() =
-        if (ApplicationManager.getApplication().isInternal) {
+        if (isApplicationInternalMode()) {
             System.getProperty(KOTLIN_COMPILER_VERSION_TAG)?.let { Version.fromString(it) }
         } else {
             null
@@ -38,6 +46,11 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
 
     companion object {
         private const val KOTLIN_COMPILER_VERSION_TAG = "kotlin.compiler.version"
+
+        private fun getKotlinVersionFromCompiler() =
+            KotlinCompilerVersion.getVersion()
+                ?.takeUnless { it.contains(SNAPSHOT_TAG, ignoreCase = true) }
+                ?.let { Version.fromString(it.substringBefore("-release")) }
     }
 }
 

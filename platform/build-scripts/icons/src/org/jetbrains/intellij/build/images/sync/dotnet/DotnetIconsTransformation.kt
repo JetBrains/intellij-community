@@ -41,11 +41,11 @@ internal object DotnetIconsTransformation {
 
   private fun transform(icons: List<DotnetIcon>) {
     val transformed = ArrayList<DotnetIcon>(2)
-    icons.filterOnly(dotnetLightSuffices).minWith(dotnetLightComparator)?.changeSuffix("")?.also {
+    icons.filterOnly(dotnetLightSuffices).minWithOrNull(dotnetLightComparator)?.changeSuffix("")?.also {
       transformed += it
     }
     if (hasRiderDarkPart(icons)) {
-        icons.filterOnly(dotnetDarkSuffices).minWith(dotnetDarkComparator)?.changeSuffix(ideaDarkSuffix)?.also {
+        icons.filterOnly(dotnetDarkSuffices).minWithOrNull(dotnetDarkComparator)?.changeSuffix(ideaDarkSuffix)?.also {
             transformed += it
         }
     }

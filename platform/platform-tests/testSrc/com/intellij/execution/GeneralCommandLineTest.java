@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -24,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
@@ -420,6 +422,16 @@ public class GeneralCommandLineTest {
     }
     catch (ProcessNotCreatedException ignored) { }
     Assertions.assertThat(temp).doesNotExist();
+  }
+
+  @Test
+  public void shortCommandLookup() throws Exception {
+    String mark = String.valueOf(new Random().nextInt());
+    String command = SystemInfo.isWindows ? "@echo " + mark + '\n' : "#!/bin/sh\necho " + mark + '\n';
+    File script = tempDir.newFile("test_dir/script.cmd", command.getBytes(StandardCharsets.UTF_8));
+    NioFiles.setExecutable(script.toPath());
+    String output = execAndGetOutput(createCommandLine(script.getName()).withEnvironment(Map.of("PATH", script.getParent())));
+    assertEquals(mark + '\n', StringUtil.convertLineSeparators(output));
   }
 
   private @NotNull String execAndGetOutput(@NotNull GeneralCommandLine commandLine) throws ExecutionException {

@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -163,9 +164,9 @@ object SourceNavigationHelper {
                 }
             }
             else -> throw KotlinExceptionWithAttachments("Unexpected container of ${if (navigationKind == NavigationKind.CLASS_FILES_TO_SOURCES) "decompiled" else "source"} declaration: ${decompiledContainer::class.java.simpleName}")
-                .withAttachment("declaration", declaration.text)
-                .withAttachment("container", decompiledContainer.text)
-                .withAttachment("file", declaration.containingFile.text)
+                .withPsiAttachment("declaration", declaration)
+                .withPsiAttachment("container", decompiledContainer)
+                .withPsiAttachment("file", declaration.containingFile)
         }
 
         if (candidates.isEmpty()) {

@@ -248,7 +248,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val elem = sourceRootElement.clone()
           elem.removeAttribute(URL_ATTRIBUTE)
           elem.removeAttribute(SOURCE_ROOT_TYPE_ATTRIBUTE)
-          builder.addCustomSourceRootPropertiesEntity(sourceRoot, JDOMUtil.write(elem))
+          if (!elem.isEmpty()) {
+            builder.addCustomSourceRootPropertiesEntity(sourceRoot, JDOMUtil.write(elem))
+          }
         }
       }
 
@@ -364,6 +366,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val module = mainEntities.singleOrNull()
     if (module != null && acceptsSource(module.entitySource)) {
       saveModuleEntities(module, entities, storage, writer)
+    }
+    else {
+      writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
+      writer.saveComponent(fileUrl.url, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
     }
 
     @Suppress("UNCHECKED_CAST")

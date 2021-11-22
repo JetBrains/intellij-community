@@ -3,13 +3,18 @@
 package org.jetbrains.kotlin.idea.caches
 
 import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.model.ModelBranch
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.psi.PsiJavaModule
 import com.intellij.reference.SoftReference
 import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
+import org.jetbrains.kotlin.load.kotlin.KotlinClassFinder
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
+import org.jetbrains.kotlin.load.kotlin.VirtualFileKotlinClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.name.ClassId
@@ -52,7 +57,7 @@ class IDEKotlinBinaryClassCache {
         file: VirtualFile,
         fileContent: ByteArray?
     ): KotlinJvmBinaryClass? {
-        val kotlinBinaryClass = KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, fileContent)?.toKotlinJvmBinaryClass()
+        val kotlinBinaryClass = binaryClassResult(file, fileContent)?.toKotlinJvmBinaryClass()
 
         val isKotlinBinaryClass = kotlinBinaryClass != null
         if (file is VirtualFileWithId) {
@@ -65,6 +70,20 @@ class IDEKotlinBinaryClassCache {
         }
 
         return kotlinBinaryClass
+    }
+
+    private fun binaryClassResult(file: VirtualFile, fileContent: ByteArray?): KotlinClassFinder.Result? {
+        if (ModelBranch.getFileBranch(file) != null) {
+            if (file.fileType !== JavaClassFileType.INSTANCE) return null
+            if (file.name == PsiJavaModule.MODULE_INFO_CLS_FILE) return null
+
+            return runReadAction {
+                @Suppress("DEPRECATION")
+                VirtualFileKotlinClass.create(file, fileContent)
+            }
+        }
+
+        return KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, fileContent)
     }
 
     fun getKotlinBinaryClassHeaderData(file: VirtualFile, fileContent: ByteArray? = null): KotlinBinaryClassHeaderData? {

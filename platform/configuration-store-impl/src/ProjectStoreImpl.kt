@@ -19,7 +19,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.write
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectStoreWithJpsContentReader
@@ -197,7 +196,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
 }
 
 abstract class ProjectStoreFactoryImpl : ProjectStoreFactory {
-  final override fun createDefaultProjectStore(project: Project) = DefaultProjectStoreImpl(project)
+  final override fun createDefaultProjectStore(project: Project): IComponentStore = DefaultProjectStoreImpl(project)
 }
 
 internal class PlatformLangProjectStoreFactory : ProjectStoreFactoryImpl() {

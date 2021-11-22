@@ -409,9 +409,14 @@ public class WhiteSpace {
               }
             }
           }
-          if (getLineFeeds() == 1 && !spaceProperty.shouldKeepLineFeeds() && spaceProperty.getMinLineFeeds() == 0) {
-            setLineFeeds(0);
-            mySpaces = 0;
+          if (getLineFeeds() == 1 && spaceProperty.getMinLineFeeds() == 0) {
+            if (spaceProperty.shouldKeepLineFeeds()) {
+              KeptLineFeedsCollector.registerLineFeed(this);
+            }
+            else {
+              setLineFeeds(0);
+              mySpaces = 0;
+            }
           }
 
           if (getLineFeeds() > 0 && getLineFeeds() < spaceProperty.getPrefLineFeeds()) {

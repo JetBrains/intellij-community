@@ -1,5 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -10,15 +12,17 @@ import java.awt.*;
  * finally calculating the component preferred height, based on the chosen width. *
  */
 public interface WidthBasedLayout {
+
   int getPreferredWidth();
+
   int getPreferredHeight(int width);
 
-  static int getPreferredWidth(Component component) {
+  static int getPreferredWidth(@Nullable Component component) {
     return component == null ? 0 : component instanceof WidthBasedLayout ? ((WidthBasedLayout)component).getPreferredWidth()
                                                                          : component.getPreferredSize().width;
   }
 
-  static int getPreferredHeight(Component component, int width) {
+  static int getPreferredHeight(@Nullable Component component, int width) {
     return component == null ? 0 : component instanceof WidthBasedLayout ? ((WidthBasedLayout)component).getPreferredHeight(width)
                                                                          : component.getPreferredSize().height;
   }

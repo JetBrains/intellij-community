@@ -87,7 +87,12 @@ private static final long serialVersionUID = 0L;
             errFile_ = s;
             break;
           }
-          case 50: {
+          case 48: {
+
+            redirectErrorStream_ = input.readBool();
+            break;
+          }
+          case 58: {
             if (!((mutable_bitField0_ & 0x00000002) != 0)) {
               environ_ = com.google.protobuf.MapField.newMapField(
                   EnvironDefaultEntryHolder.defaultEntry);
@@ -132,7 +137,7 @@ private static final long serialVersionUID = 0L;
   protected com.google.protobuf.MapField internalGetMapField(
       int number) {
     switch (number) {
-      case 6:
+      case 7:
         return internalGetEnviron();
       default:
         throw new RuntimeException(
@@ -334,7 +339,18 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int ENVIRON_FIELD_NUMBER = 6;
+  public static final int REDIRECT_ERROR_STREAM_FIELD_NUMBER = 6;
+  private boolean redirectErrorStream_;
+  /**
+   * <code>bool redirect_error_stream = 6;</code>
+   * @return The redirectErrorStream.
+   */
+  @java.lang.Override
+  public boolean getRedirectErrorStream() {
+    return redirectErrorStream_;
+  }
+
+  public static final int ENVIRON_FIELD_NUMBER = 7;
   private static final class EnvironDefaultEntryHolder {
     static final com.google.protobuf.MapEntry<
         java.lang.String, java.lang.String> defaultEntry =
@@ -361,7 +377,7 @@ private static final long serialVersionUID = 0L;
     return internalGetEnviron().getMap().size();
   }
   /**
-   * <code>map&lt;string, string&gt; environ = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 7;</code>
    */
 
   @java.lang.Override
@@ -379,7 +395,7 @@ private static final long serialVersionUID = 0L;
     return getEnvironMap();
   }
   /**
-   * <code>map&lt;string, string&gt; environ = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 7;</code>
    */
   @java.lang.Override
 
@@ -387,7 +403,7 @@ private static final long serialVersionUID = 0L;
     return internalGetEnviron().getMap();
   }
   /**
-   * <code>map&lt;string, string&gt; environ = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 7;</code>
    */
   @java.lang.Override
 
@@ -400,7 +416,7 @@ private static final long serialVersionUID = 0L;
     return map.containsKey(key) ? map.get(key) : defaultValue;
   }
   /**
-   * <code>map&lt;string, string&gt; environ = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 7;</code>
    */
   @java.lang.Override
 
@@ -444,12 +460,15 @@ private static final long serialVersionUID = 0L;
     if (!getErrFileBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, errFile_);
     }
+    if (redirectErrorStream_ != false) {
+      output.writeBool(6, redirectErrorStream_);
+    }
     com.google.protobuf.GeneratedMessageV3
       .serializeStringMapTo(
         output,
         internalGetEnviron(),
         EnvironDefaultEntryHolder.defaultEntry,
-        6);
+        7);
     unknownFields.writeTo(output);
   }
 
@@ -479,6 +498,10 @@ private static final long serialVersionUID = 0L;
     if (!getErrFileBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, errFile_);
     }
+    if (redirectErrorStream_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(6, redirectErrorStream_);
+    }
     for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
          : internalGetEnviron().getMap().entrySet()) {
       com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
@@ -487,7 +510,7 @@ private static final long serialVersionUID = 0L;
           .setValue(entry.getValue())
           .build();
       size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, environ__);
+          .computeMessageSize(7, environ__);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -514,6 +537,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getOutFile())) return false;
     if (!getErrFile()
         .equals(other.getErrFile())) return false;
+    if (getRedirectErrorStream()
+        != other.getRedirectErrorStream()) return false;
     if (!internalGetEnviron().equals(
         other.internalGetEnviron())) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
@@ -539,6 +564,9 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getOutFile().hashCode();
     hash = (37 * hash) + ERR_FILE_FIELD_NUMBER;
     hash = (53 * hash) + getErrFile().hashCode();
+    hash = (37 * hash) + REDIRECT_ERROR_STREAM_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getRedirectErrorStream());
     if (!internalGetEnviron().getMap().isEmpty()) {
       hash = (37 * hash) + ENVIRON_FIELD_NUMBER;
       hash = (53 * hash) + internalGetEnviron().hashCode();
@@ -654,7 +682,7 @@ private static final long serialVersionUID = 0L;
     protected com.google.protobuf.MapField internalGetMapField(
         int number) {
       switch (number) {
-        case 6:
+        case 7:
           return internalGetEnviron();
         default:
           throw new RuntimeException(
@@ -665,7 +693,7 @@ private static final long serialVersionUID = 0L;
     protected com.google.protobuf.MapField internalGetMutableMapField(
         int number) {
       switch (number) {
-        case 6:
+        case 7:
           return internalGetMutableEnviron();
         default:
           throw new RuntimeException(
@@ -708,6 +736,8 @@ private static final long serialVersionUID = 0L;
 
       errFile_ = "";
 
+      redirectErrorStream_ = false;
+
       internalGetMutableEnviron().clear();
       return this;
     }
@@ -745,6 +775,7 @@ private static final long serialVersionUID = 0L;
       result.inFile_ = inFile_;
       result.outFile_ = outFile_;
       result.errFile_ = errFile_;
+      result.redirectErrorStream_ = redirectErrorStream_;
       result.environ_ = internalGetEnviron();
       result.environ_.makeImmutable();
       onBuilt();
@@ -820,6 +851,9 @@ private static final long serialVersionUID = 0L;
       if (!other.getErrFile().isEmpty()) {
         errFile_ = other.errFile_;
         onChanged();
+      }
+      if (other.getRedirectErrorStream() != false) {
+        setRedirectErrorStream(other.getRedirectErrorStream());
       }
       internalGetMutableEnviron().mergeFrom(
           other.internalGetEnviron());
@@ -1267,6 +1301,37 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private boolean redirectErrorStream_ ;
+    /**
+     * <code>bool redirect_error_stream = 6;</code>
+     * @return The redirectErrorStream.
+     */
+    @java.lang.Override
+    public boolean getRedirectErrorStream() {
+      return redirectErrorStream_;
+    }
+    /**
+     * <code>bool redirect_error_stream = 6;</code>
+     * @param value The redirectErrorStream to set.
+     * @return This builder for chaining.
+     */
+    public Builder setRedirectErrorStream(boolean value) {
+      
+      redirectErrorStream_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bool redirect_error_stream = 6;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearRedirectErrorStream() {
+      
+      redirectErrorStream_ = false;
+      onChanged();
+      return this;
+    }
+
     private com.google.protobuf.MapField<
         java.lang.String, java.lang.String> environ_;
     private com.google.protobuf.MapField<java.lang.String, java.lang.String>
@@ -1294,7 +1359,7 @@ private static final long serialVersionUID = 0L;
       return internalGetEnviron().getMap().size();
     }
     /**
-     * <code>map&lt;string, string&gt; environ = 6;</code>
+     * <code>map&lt;string, string&gt; environ = 7;</code>
      */
 
     @java.lang.Override
@@ -1312,7 +1377,7 @@ private static final long serialVersionUID = 0L;
       return getEnvironMap();
     }
     /**
-     * <code>map&lt;string, string&gt; environ = 6;</code>
+     * <code>map&lt;string, string&gt; environ = 7;</code>
      */
     @java.lang.Override
 
@@ -1320,7 +1385,7 @@ private static final long serialVersionUID = 0L;
       return internalGetEnviron().getMap();
     }
     /**
-     * <code>map&lt;string, string&gt; environ = 6;</code>
+     * <code>map&lt;string, string&gt; environ = 7;</code>
      */
     @java.lang.Override
 
@@ -1333,7 +1398,7 @@ private static final long serialVersionUID = 0L;
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
     /**
-     * <code>map&lt;string, string&gt; environ = 6;</code>
+     * <code>map&lt;string, string&gt; environ = 7;</code>
      */
     @java.lang.Override
 
@@ -1354,7 +1419,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>map&lt;string, string&gt; environ = 6;</code>
+     * <code>map&lt;string, string&gt; environ = 7;</code>
      */
 
     public Builder removeEnviron(
@@ -1373,7 +1438,7 @@ private static final long serialVersionUID = 0L;
       return internalGetMutableEnviron().getMutableMap();
     }
     /**
-     * <code>map&lt;string, string&gt; environ = 6;</code>
+     * <code>map&lt;string, string&gt; environ = 7;</code>
      */
     public Builder putEnviron(
         java.lang.String key,
@@ -1385,7 +1450,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>map&lt;string, string&gt; environ = 6;</code>
+     * <code>map&lt;string, string&gt; environ = 7;</code>
      */
 
     public Builder putAllEnviron(

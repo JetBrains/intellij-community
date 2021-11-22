@@ -42,18 +42,11 @@ class Invoker {
     val a1 = JavaClassOverrideOnly::<warning descr="Method 'overrideOnlyMethod()' can only be overridden">overrideOnlyMethod</warning>
     val b1 = JavaInterfaceOverrideOnly::<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>
 
+    val c = KotlinClass::<warning descr="Method 'overrideOnlyMethod()' can only be overridden">overrideOnlyMethod</warning>
+    val d = KotlinInterface::<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>
 
-    /*
-    KT-31326: Kotlin UCallableReferenceExpression resolves to null for compiled Kotlin class
-    Here warnings like above for JavaClass and JavaInterface must be generated.
-
-    TODO: add <warnings> when Kotlin UAST is fixed.
-     */
-    val c = KotlinClass::overrideOnlyMethod
-    val d = KotlinInterface::implementOnlyMethod
-
-    val c1 = KotlinClassOverrideOnly::overrideOnlyMethod
-    val d1 = KotlinInterfaceOverrideOnly::implementOnlyMethod
+    val c1 = KotlinClassOverrideOnly::<warning descr="Method 'overrideOnlyMethod()' can only be overridden">overrideOnlyMethod</warning>
+    val d1 = KotlinInterfaceOverrideOnly::<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>
   }
 }
 

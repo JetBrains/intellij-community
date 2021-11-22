@@ -5,10 +5,11 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.*
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -49,7 +50,7 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
         val importsToRemove = DeprecatedSymbolUsageFix.importDirectivesToBeRemoved(file)
         for (import in importsToRemove) {
             val removeImportFix = RemoveImportFix(import)
-            val problemDescriptor = createProblemDescriptor(import, removeImportFix.text, listOf(removeImportFix), file, manager)
+            val problemDescriptor = createProblemDescriptor(import, removeImportFix.text, listOf(removeImportFix), manager)
             problemDescriptors.add(problemDescriptor)
         }
 
@@ -99,7 +100,7 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
         return AbstractKotlinHighlightVisitor.createQuickFixes(this).filterIsInstance<CleanupFix>()
     }
 
-    private class Wrapper(val intention: IntentionAction, file: KtFile) : IntentionWrapper(intention, file) {
+    private class Wrapper(val intention: IntentionAction) : IntentionWrapper(intention) {
         override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
             if (intention.isAvailable(
                     project,
@@ -112,27 +113,30 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
         }
     }
 
-    private fun Diagnostic.toProblemDescriptor(fixes: Collection<CleanupFix>, file: KtFile, manager: InspectionManager): ProblemDescriptor =
-        createProblemDescriptor(psiElement, DefaultErrorMessages.render(this), fixes, file, manager)
+    private fun Diagnostic.toProblemDescriptor(fixes: Collection<CleanupFix>, file: KtFile, manager: InspectionManager): ProblemDescriptor {
+        // TODO: i18n DefaultErrorMessages.render
+        @NlsSafe val message = DefaultErrorMessages.render(this)
+        return createProblemDescriptor(psiElement, message, fixes, manager)
+    }
 
     private fun createProblemDescriptor(
         element: PsiElement,
-        message: String,
+        @Nls message: String,
         fixes: Collection<CleanupFix>,
-        file: KtFile,
         manager: InspectionManager
     ): ProblemDescriptor {
         return manager.createProblemDescriptor(
             element,
             message,
             false,
-            fixes.map { Wrapper(it, file) }.toTypedArray(),
+            fixes.map { Wrapper(it) }.toTypedArray(),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING
         )
     }
 
     private class RemoveImportFix(import: KtImportDirective) : KotlinQuickFixAction<KtImportDirective>(import), CleanupFix {
         override fun getFamilyName() = KotlinBundle.message("remove.deprecated.symbol.import")
+        @Nls
         override fun getText() = familyName
 
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {

@@ -70,7 +70,7 @@ public class MavenImportingSettings implements Cloneable {
 
   @NotNull @NlsSafe private String vmOptionsForImporter = "";
 
-  @NotNull @NlsSafe private String jdkForImporter = MavenRunnerSettings.USE_INTERNAL_JAVA;
+  @NotNull @NlsSafe private String jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 

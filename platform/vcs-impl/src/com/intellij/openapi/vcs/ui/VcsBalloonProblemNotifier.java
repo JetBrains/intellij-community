@@ -3,13 +3,13 @@ package com.intellij.openapi.vcs.ui;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +22,8 @@ import javax.swing.event.HyperlinkEvent;
  * Use the special method or supply additional parameter to the constructor to show the balloon over the Version Control View.
  */
 public class VcsBalloonProblemNotifier implements Runnable {
-  public static final NotificationGroup
-    NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Common Version Control Messages", ChangesViewContentManager.TOOLWINDOW_ID);
+  public static final NotificationGroup NOTIFICATION_GROUP =
+    NotificationGroupManager.getInstance().getNotificationGroup("Common Version Control Messages");
   private final Project myProject;
   private final @NotificationContent String myMessage;
   private final MessageType myMessageType;

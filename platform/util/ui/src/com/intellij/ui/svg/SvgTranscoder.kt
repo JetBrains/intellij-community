@@ -110,8 +110,12 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
         val image = render((transcoder.width + 0.5f).toInt(), (transcoder.height + 0.5f).toInt(), transform, gvtRoot)
 
+        // Take into account the image size rounding and correct the original user size in order to compensate the inaccuracy.
+        val effectiveUserWidth = image.width / scale;
+        val effectiveUserHeight = image.height / scale;
+
         // outDimensions should contain the base size
-        outDimensions?.setSize(docWidth.toDouble() / normalizingScale, docHeight.toDouble() / normalizingScale)
+        outDimensions?.setSize(effectiveUserWidth.toDouble() / normalizingScale, effectiveUserHeight.toDouble() / normalizingScale)
         return image
       }
       catch (e: TranscoderException) {

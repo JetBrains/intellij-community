@@ -27,13 +27,16 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.CodeStyleSettingsTracker;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -161,7 +164,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void assertExcludes(String moduleName, String... expectedExcludes) {
     ContentEntry contentRoot = getContentRoot(moduleName);
-    doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), expectedExcludes);
+    doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), false, expectedExcludes);
   }
 
   protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
@@ -175,6 +178,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   private static void doAssertContentFolders(ContentEntry e, final List<? extends ContentFolder> folders, String... expected) {
+    doAssertContentFolders(e, folders, true, expected);
+  }
+
+  private static void doAssertContentFolders(ContentEntry e,
+                                             final List<? extends ContentFolder> folders,
+                                             boolean checkOrder,
+                                             String... expected) {
     List<String> actual = new ArrayList<>();
     for (ContentFolder f : folders) {
       String rootUrl = e.getUrl();
@@ -188,7 +198,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       actual.add(folderUrl);
     }
 
-    assertOrderedElementsAreEqual(actual, Arrays.asList(expected));
+    if (checkOrder) {
+      assertOrderedElementsAreEqual(actual, Arrays.asList(expected));
+    } else {
+      assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
+    }
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {
@@ -421,6 +435,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myProjectsManager.scheduleImportInTests(files);
       myProjectsManager.importProjects();
     });
+
+    Promise<?> promise = myProjectsManager.waitForImportCompletion();
+    while (promise.getState() == Promise.State.PENDING) {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        UIUtil.dispatchAllInvocationEvents();
+      });
+    }
+    
 
     if (failOnReadingError) {
       for (MavenProject each : myProjectsTree.getProjects()) {

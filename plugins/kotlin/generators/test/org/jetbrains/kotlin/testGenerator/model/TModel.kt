@@ -21,7 +21,7 @@ object Patterns {
         return "^(.+)\\.$escapedExtension\$".toRegex()
     }
 
-    val DIRECTORY: Regex = "^([^\\.]+)$".toRegex()
+    val DIRECTORY: Regex = "^([^.]+)$".toRegex()
 
     val TEST: Regex = forExtension("test")
     val KT: Regex = forExtension("kt")

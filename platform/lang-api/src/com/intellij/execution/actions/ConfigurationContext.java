@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
@@ -11,10 +11,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -53,6 +50,7 @@ public class ConfigurationContext {
   public static final Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
 
   private final Location<PsiElement> myLocation;
+  private final Editor myEditor;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized;
   private boolean myMultipleSelection;
@@ -83,10 +81,10 @@ public class ConfigurationContext {
     Module module = null;
     if (sharedContext == null ||
         sharedContext.getLocation() == null ||
-        (calculatedLocation = calcLocation(dataContext, module = LangDataKeys.MODULE.getData(dataContext))).getFirst() == null ||
+        (calculatedLocation = calcLocation(dataContext, module = PlatformCoreDataKeys.MODULE.getData(dataContext))).getFirst() == null ||
         !Comparing.equal(sharedContext.getLocation().getPsiElement(), calculatedLocation.getFirst().getPsiElement())) {
       if (calculatedLocation==null) {
-        module = LangDataKeys.MODULE.getData(dataContext);
+        module = PlatformCoreDataKeys.MODULE.getData(dataContext);
         calculatedLocation = calcLocation(dataContext, module);
       }
       sharedContext = new ConfigurationContext(dataContext, calculatedLocation.getFirst(), module, calculatedLocation.getSecond(), place);
@@ -103,7 +101,7 @@ public class ConfigurationContext {
   private ConfigurationContext(final DataContext dataContext, Location<PsiElement> location, Module module, boolean multipleSelection, String place) {
     RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
     if (configuration == null) {
-      ExecutionEnvironment environment = dataContext.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+      ExecutionEnvironment environment = dataContext.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
       if (environment != null) {
         myConfiguration = environment.getRunnerAndConfigurationSettings();
         if (myConfiguration != null) {
@@ -112,6 +110,7 @@ public class ConfigurationContext {
         }
       }
     }
+    myEditor = CommonDataKeys.EDITOR.getData(dataContext);
     myRuntimeConfiguration = configuration;
     myDataContext = dataContext;
     myModule = module;
@@ -154,6 +153,7 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
     myDataContext = this::getDefaultData;
+    myEditor = null;
     myPlace = null;
   }
 
@@ -161,6 +161,7 @@ public class ConfigurationContext {
     //noinspection unchecked
     myLocation = location;
     myModule = location.getModule();
+    myEditor = null;
     myRuntimeConfiguration = null;
     myDataContext = this::getDefaultData;
     myPlace = null;
@@ -168,14 +169,19 @@ public class ConfigurationContext {
 
   private Object getDefaultData(String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return myLocation.getProject();
-    if (LangDataKeys.MODULE.is(dataId)) return myModule;
+    if (PlatformCoreDataKeys.MODULE.is(dataId)) return myModule;
     if (Location.DATA_KEY.is(dataId)) return myLocation;
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return myLocation.getPsiElement();
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) return ContainerUtil.ar(myLocation.getPsiElement());
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return PsiUtilCore.getVirtualFile(myLocation.getPsiElement());
+    if (CommonDataKeys.EDITOR.is(dataId)) return myEditor; 
     return null;
   }
 
+  public DataContext getDefaultDataContext() {
+    return this::getDefaultData; 
+  }
+  
   public boolean containsMultipleSelection() {
     return myMultipleSelection;
   }

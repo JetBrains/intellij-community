@@ -1,9 +1,9 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtClass
 // OPTIONS: derivedClasses
-interface Z: A {
+open class Z : A() {
 
 }
 
-object O1: A()
+object O1 : A()
 
-object O2: Z
+object O2 : Z()

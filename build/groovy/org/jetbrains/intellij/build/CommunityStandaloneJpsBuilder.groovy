@@ -29,10 +29,8 @@ final class CommunityStandaloneJpsBuilder {
           module("intellij.platform.util")
           module("intellij.platform.util.classLoader")
           module("intellij.platform.util.text.matching")
-          module("intellij.platform.util.collections")
-          module("intellij.platform.util.strings")
+          module("intellij.platform.util.base")
           module("intellij.platform.util.xmlDom")
-          module("intellij.platform.util.diagnostic")
         }
 
         jar("jps-launcher.jar") {
@@ -80,14 +78,17 @@ final class CommunityStandaloneJpsBuilder {
         jar("devkit-jps.jar") { module("intellij.devkit.jps") }
         jar("java-langInjection-jps.jar") { module("intellij.java.langInjection.jps") }
 
+        jar("space-java-jps.jar") { module("intellij.space.java.jps") }
+
         for (String name in List.of(
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-          "jetbrains-annotations-java5", "qdox-java-parser", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib-jdk8",
+          "jetbrains-annotations-java5", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib-jdk8",
           "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml"
         )) {
           projectLibrary(name)
         }
+        moduleLibrary("intellij.platform.jps.build", "qdox-java-parser")
         for (JpsLibrary library in context.findRequiredModule("intellij.java.aetherDependencyResolver").libraryCollection.libraries) {
           jpsLibrary(library)
         }

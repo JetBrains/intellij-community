@@ -35,7 +35,6 @@ import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.CharUtils;
 import com.pty4j.PtyProcess;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,14 +121,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private static String encodeColor(@NotNull Color color) {
     return ((char)CharUtils.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
            color.getBlue() + "m";
-  }
-
-  /**
-   * @deprecated use {@link #withEnterKeyDefaultCodeEnabled(boolean)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setAutoNewLineMode(@SuppressWarnings("unused") boolean enabled) {
   }
 
   @NotNull
@@ -353,7 +344,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     @Override
     protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
-      return new TerminalStarter(terminal, connector, myDataStream) {
+      return new TerminalStarter(terminal, connector, myDataStream, myTerminalWidget.getTypeAheadManager()) {
         @Override
         public byte[] getCode(int key, int modifiers) {
           if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {

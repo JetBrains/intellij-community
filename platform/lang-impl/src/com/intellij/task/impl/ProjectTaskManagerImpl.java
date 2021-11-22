@@ -346,12 +346,12 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
 
     private void notify(@NotNull Result result) {
-      ModalityUiUtil.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
         if (!myProject.isDisposed()) {
           myEventPublisher.finished(result);
         }
         myPromise.setResult(result);
-      }, ModalityState.defaultModalityState());
+      });
     }
   }
 

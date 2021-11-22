@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -121,9 +121,19 @@ public final class DiffDrawUtil {
                                         int start2, int end2,
                                         @Nullable Color fillColor,
                                         @Nullable Color borderColor) {
+    drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, fillColor, borderColor, false);
+  }
+
+  public static void drawCurveTrapezium(@NotNull Graphics2D g,
+                                        int x1, int x2,
+                                        int start1, int end1,
+                                        int start2, int end2,
+                                        @Nullable Color fillColor,
+                                        @Nullable Color borderColor,
+                                        boolean alignedSides) {
     if (fillColor != null) {
       g.setColor(fillColor);
-      g.fill(makeCurvePath(x1, x2, start1, start2, end1 + 1, end2 + 1));
+      g.fill(makeCurvePath(x1, x2, start1, start2, end1 + (alignedSides ? 0 : 1), end2 + (alignedSides ? 0 : 1)));
 
       // 'g.fill' above draws thin line when used with high slopes. Here we ensure that background is never less than 1px thick.
       Stroke oldStroke = g.getStroke();
@@ -473,6 +483,7 @@ public final class DiffDrawUtil {
     private boolean excludedInGutter = false;
     private boolean hideWithoutLineNumbers = false;
     private boolean hideStripeMarkers = false;
+    private boolean alignedSides = false;
 
     public LineHighlighterBuilder(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type) {
       this.editor = editor;
@@ -525,6 +536,12 @@ public final class DiffDrawUtil {
     }
 
     @NotNull
+    public LineHighlighterBuilder withAlignedSides(boolean aligned) {
+      this.alignedSides = aligned;
+      return this;
+    }
+
+    @NotNull
     public List<RangeHighlighter> done() {
       List<RangeHighlighter> highlighters = new ArrayList<>();
 
@@ -562,27 +579,27 @@ public final class DiffDrawUtil {
       highlighters.add(highlighter);
 
       highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, editorMode, gutterMode,
-                                                                   hideWithoutLineNumbers, isEmptyRange, isFirstLine, isLastLine));
+                                                                   hideWithoutLineNumbers, isEmptyRange, isFirstLine, isLastLine, alignedSides));
 
       if (isEmptyRange) {
-        if (isFirstLine) {
-          highlighters.addAll(new LineMarkerBuilder(editor, 0, SeparatorPlacement.TOP)
-                                .withDefaultRenderer(type, true, dottedLine, highlighter)
-                                .done());
+        LineMarkerBuilder builder = isFirstLine ? new LineMarkerBuilder(editor, 0, SeparatorPlacement.TOP)
+                                                : new LineMarkerBuilder(editor, startLine - 1, SeparatorPlacement.BOTTOM);
+        if (!alignedSides) {
+          builder.withDefaultRenderer(type, true, dottedLine, highlighter);
         }
-        else {
-          highlighters.addAll(new LineMarkerBuilder(editor, startLine - 1, SeparatorPlacement.BOTTOM)
-                                .withDefaultRenderer(type, true, dottedLine, highlighter)
-                                .done());
-        }
+        highlighters.addAll(builder.done());
       }
       else if (editorMode.border != BorderType.NONE) {
-        highlighters.addAll(new LineMarkerBuilder(editor, startLine, SeparatorPlacement.TOP)
-                              .withDefaultRenderer(type, false, dottedLine, highlighter)
-                              .done());
-        highlighters.addAll(new LineMarkerBuilder(editor, endLine - 1, SeparatorPlacement.BOTTOM)
-                              .withDefaultRenderer(type, false, dottedLine, highlighter)
-                              .done());
+        LineMarkerBuilder firstLineBuilder = new LineMarkerBuilder(editor, startLine, SeparatorPlacement.TOP);
+        if (!alignedSides) {
+          firstLineBuilder.withDefaultRenderer(type, false, dottedLine, highlighter);
+        }
+        highlighters.addAll(firstLineBuilder.done());
+        LineMarkerBuilder secondLineBuilder = new LineMarkerBuilder(editor, endLine - 1, SeparatorPlacement.BOTTOM);
+        if (!alignedSides) {
+          secondLineBuilder.withDefaultRenderer(type, false, dottedLine, highlighter);
+        }
+        highlighters.addAll(secondLineBuilder.done());
       }
 
       if (stripeAttributes != null) {

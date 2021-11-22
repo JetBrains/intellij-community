@@ -6,6 +6,8 @@ import com.intellij.ide.plugins.newui.TwoLineProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.SdkEditorAdditionalOptionsProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -33,6 +35,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -271,18 +274,19 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private void setHomePathValue(@NlsSafe String absolutePath) {
     myHomeComponent.setText(absolutePath);
-    final Color fg;
+    JTextField textField = myHomeComponent.getTextField();
     if (absolutePath != null && !absolutePath.isEmpty() && mySdk.getSdkType().isLocalSdk(mySdk)) {
       final File homeDir = new File(absolutePath);
       boolean homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
-      fg = homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory
-           ? UIUtil.getFieldForegroundColor()
-           : PathEditor.INVALID_COLOR;
+      ReadAction.nonBlocking(() -> homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory
+                                   ? UIUtil.getFieldForegroundColor()
+                                   : PathEditor.INVALID_COLOR)
+        .finishOnUiThread(ModalityState.stateForComponent(myHomeComponent), textField::setForeground)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
     else {
-      fg = UIUtil.getFieldForegroundColor();
+      textField.setForeground(UIUtil.getFieldForegroundColor());
     }
-    myHomeComponent.getTextField().setForeground(fg);
   }
 
   private void doSelectHomePath() {

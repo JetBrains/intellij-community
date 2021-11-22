@@ -12,10 +12,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -64,7 +64,7 @@ public final class MavenServerManager implements Disposable {
   }
 
   public void cleanUp(MavenServerConnector connector) {
-    synchronized (myMultimoduleDirToConnectorMap){
+    synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.entrySet().removeIf(e -> e.getValue() == connector);
     }
   }
@@ -123,11 +123,12 @@ public final class MavenServerManager implements Disposable {
     Sdk jdk = getJdk(project, settings);
 
     MavenServerConnector connector = doGetOrCreateConnector(project, multimoduleDirectory, jdk);
-    if(connector.isNew()) {
+    if (connector.isNew()) {
       connector.connect();
-    } else {
+    }
+    else {
       if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
-        MavenLog.LOG.info("Maven connector in " + multimoduleDirectory + " is incompatible, restarting");
+        MavenLog.LOG.info("Maven connector " + connector + " is incompatible, restarting");
         connector.shutdown(false);
         connector = this.doGetOrCreateConnector(project, multimoduleDirectory, jdk);
         connector.connect();
@@ -181,14 +182,12 @@ public final class MavenServerManager implements Disposable {
     Integer debugPort = getDebugPort(project);
     MavenServerConnector connector;
     if (MavenUtil.isProjectTrustedEnoughToImport(project, false)) {
-      MavenLog.LOG.info("Creating new maven connector for " + project + " in " + multimoduleDirectory);
-      connector =
-        new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
+      connector = new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
+      MavenLog.LOG.info("Created new maven connector " + connector);
     }
     else {
       MavenLog.LOG.warn("Project " + project + " not trusted enough. Will not start maven for it");
-      connector =
-        new DummyMavenServerConnector(project, this, jdk, vmOptions, distribution, multimoduleDirectory);
+      connector = new DummyMavenServerConnector(project, this, jdk, vmOptions, distribution, multimoduleDirectory);
     }
     registerDisposable(project, connector);
     return connector;
@@ -196,7 +195,7 @@ public final class MavenServerManager implements Disposable {
 
   private void registerDisposable(Project project, MavenServerConnector connector) {
     Disposer.register(MavenDisposable.getInstance(project), () -> {
-      ApplicationManager.getApplication().executeOnPooledThread(()->{
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
         synchronized (myMultimoduleDirToConnectorMap) {
           connector.shutdown(false);
         }
@@ -263,9 +262,12 @@ public final class MavenServerManager implements Disposable {
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
       return true;
     }
-    JavaSdkVersion version = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
-    if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
-      return true;
+    SdkTypeId sdkType = jdk.getSdkType();
+    if (sdkType instanceof JavaSdk) {
+      JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(jdk);
+      if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
+        return true;
+      }
     }
     return false;
   }
@@ -305,8 +307,7 @@ public final class MavenServerManager implements Disposable {
     return new File(root.getParent(), "intellij.maven.server.eventListener");
   }
 
-  @Nullable
-  public String getMavenVersion(@Nullable String mavenHome) {
+  public static @Nullable String getMavenVersion(@Nullable String mavenHome) {
     return MavenUtil.getMavenVersion(getMavenHomeFile(mavenHome));
   }
 
@@ -330,7 +331,7 @@ public final class MavenServerManager implements Disposable {
    */
   //TODO: WSL
   public static List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
-    if(!distribution.isValid()) {
+    if (!distribution.isValid()) {
       MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
       throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().getAbsolutePath() + " is not valid");
     }
@@ -429,9 +430,11 @@ public final class MavenServerManager implements Disposable {
                                              @NotNull String multiModuleProjectDirectory) {
 
     return new MavenEmbedderWrapper(project, null) {
+      private MavenServerConnector myConnector;
+
       @NotNull
       @Override
-      protected MavenServerEmbedder create() throws RemoteException {
+      protected synchronized MavenServerEmbedder create() throws RemoteException {
         MavenServerSettings settings = convertSettings(project, MavenProjectsManager.getInstance(project).getGeneralSettings());
         if (alwaysOnline && settings.isOffline()) {
           settings = settings.clone();
@@ -439,8 +442,16 @@ public final class MavenServerManager implements Disposable {
         }
 
         settings.setProjectJdk(MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk()));
-        return MavenServerManager.this.getConnector(project, multiModuleProjectDirectory)
-          .createEmbedder(new MavenEmbedderSettings(settings, workingDirectory, multiModuleProjectDirectory));
+        myConnector = MavenServerManager.this.getConnector(project, multiModuleProjectDirectory);
+        return myConnector.createEmbedder(new MavenEmbedderSettings(settings, workingDirectory, multiModuleProjectDirectory));
+      }
+
+      @Override
+      protected synchronized void cleanup() {
+        super.cleanup();
+        if (myConnector != null) {
+          myConnector.shutdown(false);
+        }
       }
     };
   }
@@ -483,15 +494,6 @@ public final class MavenServerManager implements Disposable {
     };
   }
 
-  /**
-   * @deprecated use {@link MavenServerManager#createIndexer(Project)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public MavenIndexerWrapper createIndexer() {
-    return createIndexer(ProjectManager.getInstance().getDefaultProject());
-  }
-
   public void addDownloadListener(MavenServerDownloadListener listener) {
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.addDownloadListener(listener));
@@ -510,9 +512,11 @@ public final class MavenServerManager implements Disposable {
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
     result.setMavenHome(settings.getEffectiveMavenHome());
-    result.setUserSettingsFile(transformer == RemotePathTransformerFactory.Transformer.ID? settings.getEffectiveUserSettingsIoFile() : null);
-    result.setGlobalSettingsFile(transformer == RemotePathTransformerFactory.Transformer.ID? settings.getEffectiveGlobalSettingsIoFile() : null);
-    result.setLocalRepository(transformer == RemotePathTransformerFactory.Transformer.ID? settings.getEffectiveLocalRepository(): null);
+    result.setUserSettingsFile(
+      transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveUserSettingsIoFile() : null);
+    result.setGlobalSettingsFile(
+      transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveGlobalSettingsIoFile() : null);
+    result.setLocalRepository(transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveLocalRepository() : null);
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
     result.setSnapshotUpdatePolicy(
       settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
@@ -520,7 +524,7 @@ public final class MavenServerManager implements Disposable {
   }
 
   public boolean isUseMaven2() {
-    return  false;
+    return false;
   }
 
 
@@ -533,7 +537,7 @@ public final class MavenServerManager implements Disposable {
   public static File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
     //will be removed after IDEA-205421
-    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && ApplicationManager.getApplication().isUnitTestMode()) {
+    if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && MavenUtil.isMavenUnitTestModeEnabled()) {
       return resolveEmbeddedMaven2HomeForTests().getMavenHome();
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
@@ -544,29 +548,10 @@ public final class MavenServerManager implements Disposable {
     return MavenUtil.isValidMavenHome(home) ? home : null;
   }
 
-  /**
-   * @deprecated use MavenImportingSettings.setVmOptionsForImporter
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public String getMavenEmbedderVMOptions() {
-    return "";
-  }
-
-
-  /**
-   * @deprecated use MavenImportingSettings.setVmOptionsForImporter
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
-  }
-
 
   @NotNull
   private static LocalMavenDistribution resolveEmbeddedMaven2HomeForTests() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!MavenUtil.isMavenUnitTestModeEnabled()) {
       throw new IllegalStateException("Maven2 is for test purpose only");
     }
 

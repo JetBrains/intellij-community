@@ -4,20 +4,20 @@ Reports <code>switch</code> statements and expressions with too few <code>case</
 and
 <code>else if</code> statements.
 <p>Example (minimum branches == 3):</p>
-<pre>
+<pre><code>
   switch (expression) {
     case "foo" -&gt; foo();
     case "bar" -&gt; bar();
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   if ("foo".equals(expression)) {
     foo();
   } else if ("bar".equals(expression)) {
     bar();
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <p>Use the <b>Minimum number of branches</b> field to specify the minimum expected number of <code>case</code> labels.</p>

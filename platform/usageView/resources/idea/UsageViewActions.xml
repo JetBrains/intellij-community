@@ -1,8 +1,9 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <actionPromoter implementation="com.intellij.usages.impl.UsageViewActionPromoter" />
+    <actionPromoter implementation="com.intellij.usages.impl.UsageViewActionPromoter"/>
+    <postStartupActivity implementation="com.intellij.usages.impl.rules.UsageFilteringRulesActivity"/>
   </extensions>
-  <actions>
+  <actions resource-bundle="messages.UsageViewBundle">
     <group id="UsageGroupingActionGroup">
       <action class="com.intellij.usages.impl.actions.GroupByModuleTypeAction" id="UsageGrouping.Module"/>
       <action class="com.intellij.usages.impl.actions.GroupByScopeAction" id="UsageGrouping.Scope"/>
@@ -11,8 +12,22 @@
       <action class="com.intellij.usages.impl.actions.FlattenModulesAction" id="UsageGrouping.FlattenModules"/>
       <action class="com.intellij.usages.impl.UsageGroupingRuleProviderImpl$GroupByFileStructureAction" id="UsageGrouping.FileStructure"/>
       <action class="com.intellij.usages.impl.actions.GroupByDirectoryStructureAction" id="UsageGrouping.DirectoryStructure"/>
-
       <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
+    </group>
+    <group id="UsageFilteringActionGroup">
+      <action id="UsageFiltering.ReadAccess"
+              icon="com.intellij.icons.AllIcons.Actions.ShowReadAccess"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="UsageFiltering.WriteAccess"
+              icon="com.intellij.icons.AllIcons.Actions.ShowWriteAccess"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="UsageFiltering.GeneratedCode"
+              icon="com.intellij.icons.AllIcons.Actions.GeneratedFolder"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="UsageFiltering.Imports"
+              icon="com.intellij.icons.AllIcons.Actions.ShowImportStatements"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <add-to-group group-id="Other.KeymapGroup" anchor="after" relative-to-action="UsageGroupingActionGroup"/>
     </group>
   </actions>
 </idea-plugin>

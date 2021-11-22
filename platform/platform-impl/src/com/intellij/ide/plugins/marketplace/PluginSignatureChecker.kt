@@ -76,16 +76,19 @@ internal object PluginSignatureChecker {
     pluginFile: File,
     certificates: List<Certificate> = emptyList()
   ): Boolean {
-    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
+    val jbCert = jetbrainsCertificate
+                 ?: return processSignatureCheckerVerdict(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
     val isRevoked = try {
       isJetBrainsCertificateRevoked()
     }
     catch (e: IllegalArgumentException) {
-      return processSignatureWarning(descriptor, e.message ?: IdeBundle.message("jetbrains.certificate.invalid"))
+      val message = e.message ?: IdeBundle.message("jetbrains.certificate.invalid")
+      return processSignatureCheckerVerdict(descriptor, message)
     }
     if (isRevoked) {
       LOG.info("Plugin ${pluginFile.name} has revoked JetBrains certificate")
-      return processRevokedCertificate(descriptor)
+      val message = IdeBundle.message("plugin.signature.checker.revoked.cert", descriptor.name)
+      return processSignatureCheckerVerdict(descriptor, message)
     }
     val allCerts = certificates + jbCert
     return isSignedBy(descriptor, pluginFile, showAcceptDialog = true, *allCerts.toTypedArray())
@@ -132,7 +135,7 @@ internal object PluginSignatureChecker {
   ): Boolean {
     val errorMessage = verifyPluginAndGetErrorMessage(descriptor, pluginFile, *certificate)
     if (errorMessage != null && showAcceptDialog) {
-      return processSignatureWarning(descriptor, errorMessage)
+      return processSignatureCheckerVerdict(descriptor, errorMessage)
     }
     if (errorMessage != null) {
       return false
@@ -140,15 +143,17 @@ internal object PluginSignatureChecker {
     return true
   }
 
+  @Nls
+  @ExperimentalUnsignedTypes
   private fun verifyPluginAndGetErrorMessage(descriptor: IdeaPluginDescriptor, file: File, vararg certificates: Certificate): String? {
     return when (val verificationResult = ZipVerifier.verify(file)) {
       is InvalidSignatureResult -> {
         PluginManagerUsageCollector.signatureCheckResult(descriptor, SignatureVerificationResult.INVALID_SIGNATURE)
-        verificationResult.errorMessage
+        IdeBundle.message("plugin.invalid.signature.result", descriptor.name, verificationResult.errorMessage)
       }
       is MissingSignatureResult -> {
         PluginManagerUsageCollector.signatureCheckResult(descriptor, SignatureVerificationResult.MISSING_SIGNATURE)
-        IdeBundle.message("plugin.signature.not.signed")
+        getSignatureWarningMessage(descriptor)
       }
       is SuccessfulVerificationResult -> {
         val isSigned = certificates.any { certificate ->
@@ -156,7 +161,7 @@ internal object PluginSignatureChecker {
         }
         if (!isSigned) {
           PluginManagerUsageCollector.signatureCheckResult(descriptor, SignatureVerificationResult.WRONG_SIGNATURE)
-          IdeBundle.message("plugin.signature.not.signed.by")
+          getSignatureWarningMessage(descriptor)
         }
         else {
           PluginManagerUsageCollector.signatureCheckResult(descriptor, SignatureVerificationResult.SUCCESSFUL)
@@ -166,14 +171,17 @@ internal object PluginSignatureChecker {
     }
   }
 
-  private fun processRevokedCertificate(descriptor: IdeaPluginDescriptor): Boolean {
-    val message = IdeBundle.message("plugin.signature.checker.revoked.cert", descriptor.name)
-    return processSignatureCheckerVerdict(descriptor, message)
-  }
-
-  private fun processSignatureWarning(descriptor: IdeaPluginDescriptor, errorMessage: String): Boolean {
-    val message = IdeBundle.message("plugin.signature.checker.untrusted.message", descriptor.name, errorMessage)
-    return processSignatureCheckerVerdict(descriptor, message)
+  @Nls
+  private fun getSignatureWarningMessage(descriptor: IdeaPluginDescriptor): String {
+    val vendor = if (descriptor.organization.isNullOrBlank()) descriptor.vendor else descriptor.organization
+    val vendorMessage = if (vendor.isNullOrBlank()) vendor else IdeBundle.message("jetbrains.certificate.vendor", vendor)
+    return IdeBundle.message(
+      "plugin.signature.not.signed",
+      descriptor.name,
+      descriptor.pluginId.idString,
+      descriptor.version,
+      vendorMessage
+    )
   }
 
   private fun processSignatureCheckerVerdict(descriptor: IdeaPluginDescriptor, @Nls message: String): Boolean {

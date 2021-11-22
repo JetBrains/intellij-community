@@ -184,7 +184,7 @@ class KotlinInplaceParameterIntroducer(
 
     override fun suggestNames(replaceAll: Boolean, variable: KtParameter?) = suggestedNames
 
-    override fun createFieldToStartTemplateOn(replaceAll: Boolean, names: Array<out String>): KtParameter? {
+    override fun createFieldToStartTemplateOn(replaceAll: Boolean, names: Array<out String>): KtParameter {
         return runWriteAction {
             with(descriptor) {
                 val parameterList = callable.getValueParameterList()

@@ -5,12 +5,12 @@ import java.lang.Thread.sleep
 
 class LambdaAssignmentCheck {
     fun returnSuspend(): suspend () -> Unit = {
-        Thread.<warning descr="Inappropriate blocking method call">sleep</warning>(1)
+        Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(1)
     }
 
     fun assignToSuspendType() {
         val suspendType: suspend () -> Unit = {
-            Thread.<warning descr="Inappropriate blocking method call">sleep</warning>(2)
+            Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(2)
         }
     }
 

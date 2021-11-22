@@ -95,6 +95,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   public UserDefinedJsonSchemaConfiguration addProjectSchema() {
     UserDefinedJsonSchemaConfiguration configuration = new UserDefinedJsonSchemaConfiguration(createUniqueName(STUB_SCHEMA_NAME),
                                                                                      JsonSchemaVersion.SCHEMA_4, "", false, null);
+    configuration.setGeneratedName(configuration.getName());
     addCreatedMappings(configuration);
     return configuration;
   }

@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.debugger.sequence.psi.impl
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.StreamCallChecker
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.receiverType
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.resolveType
+import org.jetbrains.kotlin.idea.core.receiverType
+import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.types.KotlinType
 
@@ -24,7 +24,7 @@ class PackageBasedCallChecker(private val supportedPackage: String) : StreamCall
         shouldSupportResult: Boolean
     ): Boolean {
         val resultType = expression.resolveType()
-        return shouldSupportResult == isSupportedType(resultType)
+        return resultType != null &&  shouldSupportResult == isSupportedType(resultType)
     }
 
     private fun checkReceiverSupported(expression: KtCallExpression): Boolean {

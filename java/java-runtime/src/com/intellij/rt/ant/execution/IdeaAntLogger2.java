@@ -101,7 +101,11 @@ public final class IdeaAntLogger2 extends DefaultLogger {
 
   @Override
   public synchronized void taskStarted(BuildEvent event) {
-    final String taskName = event.getTask().getTaskName();
+    final Task task = event.getTask();
+    String taskName = task.getTaskName();
+    if (taskName == null) {
+      taskName = task.getClass().getSimpleName();
+    }
     getTaskCallStack().push(taskName);
     myTaskPriority.sendMessage(TASK, event.getPriority(), taskName);
   }

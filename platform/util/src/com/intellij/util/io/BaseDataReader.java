@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,9 +56,7 @@ public abstract class BaseDataReader {
   @ApiStatus.Internal
   protected void startWithoutChangingThreadName() {
     if (myFinishedFuture == null) {
-      myFinishedFuture = executeOnPooledThread(() -> {
-        doRun();
-      });
+      myFinishedFuture = executeOnPooledThread(() -> doRun());
     }
   }
 
@@ -101,7 +98,7 @@ public abstract class BaseDataReader {
    * (Async approach like {@link java.nio.channels.SelectableChannel} is not supported for process's streams,
    * although some native api may be used).
    * Thread stays blocked by {@link InputStream#read()} until some data arrived or stream is closed (because of process death).
-   * It may lead to issues like <code>IDEA-32376</code>: you can't unlock blocked thread (at least non-daemon) otherwise than by killing
+   * It may lead to issues like {@code IDEA-32376}: you can't unlock blocked thread (at least non-daemon) otherwise than by killing
    * process (and you may want to keep it running). {@link Thread#interrupt()} doesn't work here.
    * This approach is good for short-living processes.
    * If you know for sure that process will end soon (i.e. helper process) you can enable this behaviour using {@link #BLOCKING} policy.
@@ -113,7 +110,7 @@ public abstract class BaseDataReader {
    * <ol>
    * <li>Check {@link InputStream#available()}</li>
    * <li>If not zero then {@link InputStream#read()}} which is guaranteed not to block </li>
-   * <li>If <code>processTerminated</code> flag set then exit loop</li>
+   * <li>If {@code processTerminated} flag set then exit loop</li>
    * <li>Sleep for a while</li>
    * <li>Repeat</li>
    * </ol>
@@ -133,19 +130,11 @@ public abstract class BaseDataReader {
     int sleepTimeWhenWasActive = 1;
     int sleepTimeWhenIdle = 5;
 
-    SleepingPolicy NON_BLOCKING = new SleepingPolicy() {
-      @Override
-      public int getTimeToSleep(boolean wasActive) {
-        return wasActive ? sleepTimeWhenWasActive : sleepTimeWhenIdle;
-      }
-    };
+    SleepingPolicy NON_BLOCKING = wasActive -> wasActive ? sleepTimeWhenWasActive : sleepTimeWhenIdle;
 
-    SleepingPolicy BLOCKING = new SleepingPolicy() {
-      @Override
-      public int getTimeToSleep(boolean wasActive) {
-        // in the blocking mode we need to sleep only when we have reached the end of the stream, so it can be a long sleeping
-        return 50;
-      }
+    SleepingPolicy BLOCKING = __ -> {
+      // in the blocking mode we need to sleep only when we have reached the end of the stream, so it can be a long sleeping
+      return 50;
     };
 
 
@@ -229,46 +218,4 @@ public abstract class BaseDataReader {
       LOG.error(e);
     }
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #start(String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected void start() {
-    DeprecatedMethodException.report("Use start(String) instead");
-    start("");
-  }
-
-  /** @deprecated use one of default policies (recommended) or implement your own */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("NonAtomicOperationOnVolatileField")
-  public static class AdaptiveSleepingPolicy implements SleepingPolicy {
-    private static final int maxSleepTimeWhenIdle = 200;
-    private static final int maxIterationsWithCurrentSleepTime = 50;
-
-    private volatile int myIterationsWithCurrentTime;
-    private volatile int myCurrentSleepTime = sleepTimeWhenIdle;
-
-    @Override
-    public int getTimeToSleep(boolean wasActive) {
-      int currentSleepTime = myCurrentSleepTime; // volatile read
-      if (wasActive) currentSleepTime = sleepTimeWhenWasActive;
-      else if (currentSleepTime == sleepTimeWhenWasActive) {
-        currentSleepTime = sleepTimeWhenIdle;
-        myIterationsWithCurrentTime = 0;
-      }
-      else {
-        int iterationsWithCurrentTime = ++myIterationsWithCurrentTime;
-        if (iterationsWithCurrentTime >= maxIterationsWithCurrentSleepTime) {
-          myIterationsWithCurrentTime = 0;
-          currentSleepTime = Math.min(2* currentSleepTime, maxSleepTimeWhenIdle);
-        }
-      }
-
-      myCurrentSleepTime = currentSleepTime; // volatile write
-      return currentSleepTime;
-    }
-  }
-  //</editor-fold>
 }

@@ -15,7 +15,6 @@ public final class PathClassLoader extends UrlClassLoader {
   private static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY = file -> new ZipResourceFile(file);
 
   private static final boolean isParallelCapable = registerAsParallelCapable();
-  private static final ClassLoader appClassLoader = PathClassLoader.class.getClassLoader();
 
   private final BytecodeTransformer transformer;
 
@@ -51,19 +50,6 @@ public final class PathClassLoader extends UrlClassLoader {
 
     transformer = null;
     registerInClassLoaderValueMap(parent, this);
-
-    // who knows
-    assert appClassLoader != this;
-  }
-
-  @Override
-  protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
-    if (name.startsWith("com.intellij.util.lang.")) {
-      return appClassLoader.loadClass(name);
-    }
-    else {
-      return super.findClass(name);
-    }
   }
 
   @Override

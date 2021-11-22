@@ -173,7 +173,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
 
   @Override
   @NotNull
-  public String getSuccessMessage() {
+  protected String getSuccessMessage() {
     throw new UnsupportedOperationException();
   }
 

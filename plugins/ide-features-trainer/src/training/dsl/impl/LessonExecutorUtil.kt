@@ -196,6 +196,11 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
     return CompletableFuture()
   }
 
+  override fun timerCheck(delayMillis: Int, checkState: TaskRuntimeContext.() -> Boolean): CompletableFuture<Boolean> {
+    hasDetection = true
+    return CompletableFuture()
+  }
+
   override fun addFutureStep(p: DoneStepContext.() -> Unit) {
     hasDetection = true
   }

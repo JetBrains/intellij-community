@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,6 +131,7 @@ final class DynamicEditorActionHandler extends EditorActionHandler {
         }
       }
       catch (Exception e) {
+        if (ExceptionUtil.causedBy(e, ExtensionNotApplicableException.class)) continue;
         Logger.getInstance(EditorActionHandlerBean.class).error(new PluginException(e, bean.pluginDescriptor.getPluginId()));
         continue;
       }

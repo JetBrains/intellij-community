@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.ShadowedDeclarationsFilter
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
@@ -511,7 +512,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
                     " (parameterIndex: ${info.parameterIndex}) :call.valueArguments: ${call.valueArguments} call.callType: ${call.callType}" },
             attachments = {
                 info.call?.let { c ->
-                    it.withAttachment("file.kt", c.callElement.containingFile.text)
+                    it.withPsiAttachment("file.kt", c.callElement.containingFile)
                 }
                 it.withAttachment("info.txt", info)
             }

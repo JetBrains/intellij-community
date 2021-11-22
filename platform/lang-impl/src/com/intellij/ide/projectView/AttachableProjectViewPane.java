@@ -100,11 +100,6 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     };
   }
 
-  @Override
-  public Object getData(@NotNull String dataId) {
-    return super.getData(dataId);
-  }
-
   protected void processDroppedDirectories(@NotNull List<VirtualFile> dirs) {
     if (dirs.isEmpty()) return;
     Module[] modules = ModuleManager.getInstance(myProject).getModules();

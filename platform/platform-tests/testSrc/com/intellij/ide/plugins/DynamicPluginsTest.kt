@@ -22,7 +22,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginId
@@ -45,7 +45,6 @@ import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.io.Ksuid
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
-import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
@@ -56,11 +55,12 @@ class DynamicPluginsTest {
   companion object {
     val receivedNotifications = mutableListOf<UISettings>()
     val receivedNotifications2 = mutableListOf<UISettings>()
-
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
   }
+
+  // per test
+  @Rule
+  @JvmField
+  val projectRule = ProjectRule()
 
   @Rule
   @JvmField
@@ -111,7 +111,7 @@ class DynamicPluginsTest {
 
     DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir())
     val newDescriptor = loadDescriptorInTest(path)
-    ClassLoaderConfigurator(PluginManagerCore.getPluginSet().enablePlugin(newDescriptor)).configure(newDescriptor)
+    ClassLoaderConfigurator(PluginManagerCore.getPluginSet().enablePlugin(newDescriptor)).configureModule(newDescriptor)
     DynamicPlugins.loadPlugin(newDescriptor)
     try {
       assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNotNull()
@@ -201,7 +201,7 @@ class DynamicPluginsTest {
       Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null),
     )
     assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor))
-      .isEqualTo("Plugin ${descriptor.id} is not unload-safe because of extension to non-dynamic EP $epName")
+      .isEqualTo("Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName")
   }
 
   @Test
@@ -298,9 +298,9 @@ class DynamicPluginsTest {
         """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
       .module("intellij.foo.sub",
               PluginBuilder()
-                              .extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
-                              .packagePrefix("foo1")
-                              .pluginDependency(barBuilder.id)
+                .extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
+                .packagePrefix("foo1")
+                .pluginDependency(barBuilder.id)
       )
     loadPluginWithText(fooBuilder).use {
       val ep = ApplicationManager.getApplication().extensionArea.getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("foo.barExtension")
@@ -309,7 +309,7 @@ class DynamicPluginsTest {
         val extension = ep!!.extensionList.single()
         assertThat(extension.key).isEqualTo("foo")
         assertThat(extension.pluginDescriptor)
-          .isEqualTo(PluginManagerCore.getPluginSet().findEnabledPlugin(PluginId.findId(fooBuilder.id)!!)!!)
+          .isEqualTo(PluginManagerCore.getPluginSet().findEnabledModule("intellij.foo.sub")!!)
       }
       assertThat(ep!!.extensionList).isEmpty()
     }
@@ -415,9 +415,9 @@ class DynamicPluginsTest {
   @Test
   fun testProjectService() {
     val project = projectRule.project
-    loadExtensionWithText("""
-      <projectService serviceImplementation="${MyProjectService::class.java.name}"/>
-    """.trimIndent()).use {
+    loadPluginWithText(PluginBuilder().extensions("""
+        <projectService serviceImplementation="${MyProjectService::class.java.name}"/>
+      """), inMemoryFs.fs).use {
       assertThat(project.getService(MyProjectService::class.java)).isNotNull()
     }
   }
@@ -610,7 +610,7 @@ private class MyStartupActivity : StartupActivity.DumbAware {
 @InternalIgnoreDependencyViolation
 private class MyProjectService {
   companion object {
-    val LOG = Logger.getInstance(MyProjectService::class.java)
+    val LOG = logger<MyProjectService>()
   }
 
   init {

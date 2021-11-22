@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -15,6 +14,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -247,7 +248,7 @@ open class KotlinIntroduceParameterHandler(
         val nameValidator = CollectingNameValidator(targetParent.getValueParameters().mapNotNull { it.name }, bodyValidator ?: { true })
 
         val suggestedNames = SmartList<String>().apply {
-            if (physicalExpression is KtProperty && !ApplicationManager.getApplication().isUnitTestMode) {
+            if (physicalExpression is KtProperty && !isUnitTestMode()) {
                 addIfNotNull(physicalExpression.name)
             }
             addAll(KotlinNameSuggester.suggestNamesByType(replacementType, nameValidator, "p"))
@@ -286,7 +287,7 @@ open class KotlinIntroduceParameterHandler(
             INTRODUCE_PARAMETER,
             null,
             fun() {
-                val isTestMode = ApplicationManager.getApplication().isUnitTestMode
+                val isTestMode = isUnitTestMode()
                 val haveLambdaArgumentsToReplace = occurrencesToReplace.any { range ->
                     range.elements.any { it is KtLambdaExpression && it.parent is KtLambdaArgument }
                 }
@@ -520,7 +521,7 @@ open class KotlinIntroduceLambdaParameterHandler(
             }
 
             val dialog = createDialog(project, editor, lambdaExtractionDescriptor) ?: return
-            if (ApplicationManager.getApplication()!!.isUnitTestMode) {
+            if (isUnitTestMode()) {
                 dialog.performRefactoring()
             } else {
                 dialog.showWithTransaction()
@@ -546,5 +547,9 @@ open class KotlinIntroduceLambdaParameterHandler(
     }
 }
 
-val INTRODUCE_PARAMETER: String = KotlinBundle.message("name.introduce.parameter1")
-val INTRODUCE_LAMBDA_PARAMETER: String = KotlinBundle.message("name.introduce.lambda.parameter")
+val INTRODUCE_PARAMETER: String
+    @Nls
+    get() = KotlinBundle.message("name.introduce.parameter1")
+val INTRODUCE_LAMBDA_PARAMETER: String
+    @Nls
+    get() = KotlinBundle.message("name.introduce.lambda.parameter")

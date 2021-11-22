@@ -7,10 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginUtil;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -49,7 +46,6 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +62,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -646,12 +643,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void disablePlugin() {
     IdeaPluginDescriptor plugin = selectedCluster().plugin;
     if (plugin != null) {
-      confirmDisablePlugins(myProject, Collections.singleton(plugin));
+      confirmDisablePlugins(myProject, List.of(plugin));
     }
   }
 
-  public static void confirmDisablePlugins(@Nullable Project project, @NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
-    boolean hasDependents = morePluginsAffected(pluginsToDisable);
+  public static void confirmDisablePlugins(@Nullable Project project,
+                                           @NotNull List<? extends IdeaPluginDescriptor> pluginsToDisable) {
+    if (pluginsToDisable.isEmpty()) {
+      return;
+    }
+
+    Set<PluginId> pluginIdsToDisable = pluginsToDisable.stream()
+      .map(IdeaPluginDescriptor::getPluginId)
+      .collect(Collectors.toUnmodifiableSet());
+    boolean hasDependents = morePluginsAffected(pluginIdsToDisable);
 
     boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
 
@@ -659,9 +664,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (pluginsToDisable.size() == 1) {
       IdeaPluginDescriptor plugin = pluginsToDisable.iterator().next();
       message = "<html>" +
-                DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) + "<br/>" +
-                DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") + "<br/><br/>" +
-                DiagnosticBundle.message(canRestart ? "error.dialog.disable.plugin.can.restart" : "error.dialog.disable.plugin.no.restart") +
+                DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) +
+                "<br/>" +
+                DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") +
+                "<br/><br/>" +
+                DiagnosticBundle.message(
+                  canRestart ? "error.dialog.disable.plugin.can.restart" : "error.dialog.disable.plugin.no.restart") +
                 "</html>";
     }
     else {
@@ -689,29 +697,29 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     if (doDisable) {
-      for (IdeaPluginDescriptor plugin: pluginsToDisable) {
-        PluginManagerCore.disablePlugin(plugin.getPluginId());
-      }
+      PluginEnabler.HEADLESS.disablePlugins(pluginsToDisable);
       if (doRestart) {
         ApplicationManager.getApplication().restart();
       }
     }
   }
 
-  private static boolean morePluginsAffected(@NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
+  private static boolean morePluginsAffected(@NotNull Set<PluginId> pluginIdsToDisable) {
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     for (IdeaPluginDescriptor rootDescriptor : PluginManagerCore.getPlugins()) {
-      if (!rootDescriptor.isEnabled() || pluginsToDisable.contains(rootDescriptor)) {
+      if (!rootDescriptor.isEnabled() || pluginIdsToDisable.contains(rootDescriptor.getPluginId())) {
         continue;
       }
 
-      if (!PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, descriptor -> {
-        if (!descriptor.isEnabled()) {
-          // if disabled, no need to process it's dependencies
-          return FileVisitResult.SKIP_SUBTREE;
-        }
-        return pluginsToDisable.contains(descriptor) ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
-      })) {
+      if (!PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor,
+                                                               pluginIdMap,
+                                                               (pluginId, descriptor) ->
+                                                                 Objects.requireNonNull(descriptor).isEnabled() ?
+                                                                 pluginIdsToDisable.contains(pluginId) ?
+                                                                 FileVisitResult.TERMINATE :
+                                                                 FileVisitResult.CONTINUE :
+                                                                 FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */
+      )) {
         return true;
       }
     }
@@ -892,14 +900,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         return pair("*** exception class was changed or removed", detailsText);
       }
     }
-  }
-
-  /** @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead, and take the plugin name and version from the returned instance */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @Nullable Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
-    IdeaPluginDescriptor plugin = getPlugin(event);
-    return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
   }
 
   public static @Nullable IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {

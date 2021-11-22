@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.xml.util.XmlStringUtil.wrapInHtml
@@ -60,7 +60,7 @@ internal class GitApplyChangesProcess(private val project: Project,
                                       forceAutoCommit: Boolean,
                                       @Nls private val operationName: String,
                                       @Nls private val appliedWord: String,
-                                      private val command: (GitRepository, Hash, autoCommit: Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
+                                      private val command: (GitRepository, VcsCommitMetadata, autoCommit: Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
                                       private val abortCommand: GitAbortOperationAction,
                                       private val emptyCommitDetector: (GitCommandResult) -> Boolean,
                                       private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
@@ -132,7 +132,7 @@ internal class GitApplyChangesProcess(private val project: Project,
     try {
       val startHash = GitUtil.getHead(repository)
 
-      val result = command(repository, commit.id, autoCommit,
+      val result = command(repository, commit, autoCommit,
                            listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
 
       if (result.success()) {

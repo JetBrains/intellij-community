@@ -1414,7 +1414,7 @@ public final class ExpectedTypesProvider {
       int result = CommaTailType.INSTANCE.processTail(editor, tailOffset);
       if (myOriginalCall.isValid()) {
         PsiDocumentManager.getInstance(myOriginalCall.getProject()).commitDocument(editor.getDocument());
-        if (myOriginalCall.isValid()) ParameterHintsPass.syncUpdate(myOriginalCall, editor);
+        if (myOriginalCall.isValid()) ParameterHintsPass.asyncUpdate(myOriginalCall, editor);
       }
       return result;
     }

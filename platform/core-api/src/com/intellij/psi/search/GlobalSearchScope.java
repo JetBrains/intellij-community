@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreBundle;
@@ -11,9 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.impl.IntersectionFileEnumeration;
@@ -27,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Project model-aware search scope.
@@ -82,7 +81,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   /**
-   * Returns descriptions of unloaded modules content of whose might be included into this scope if they had been loaded. Actually search in
+   * Returns descriptions of unloaded modules whose content might be included in this scope if they had been loaded. Actually, search in
    * unloaded modules isn't performed, so this method is used to determine whether a warning about possible missing results should be shown.
    */
   @NotNull
@@ -268,7 +267,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public String toString() {
-      return "NOT: "+myBaseScope;
+      return "NOT: (" + myBaseScope + ")";
     }
   }
 
@@ -276,7 +275,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Returns module scope including sources and tests, excluding libraries and dependencies.
    *
    * @param module the module to get the scope.
-   * @return scope including sources and tests, excluding libraries and dependencies.
+   * @return the scope, including sources and tests, excluding libraries and dependencies.
    */
   @NotNull
   @Contract(pure = true)
@@ -288,7 +287,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Returns module scope including sources, tests, and libraries, excluding dependencies.
    *
    * @param module the module to get the scope.
-   * @return scope including sources, tests, and libraries, excluding dependencies.
+   * @return the scope, including sources, tests, and libraries, excluding dependencies.
    */
   @NotNull
   @Contract(pure = true)
@@ -300,7 +299,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Returns module scope including sources, tests, and dependencies, excluding libraries.
    *
    * @param module the module to get the scope.
-   * @return scope including sources, tests, and dependencies, excluding libraries.
+   * @return the scope, including sources, tests, and dependencies, excluding libraries.
    */
   @NotNull
   @Contract(pure = true)
@@ -365,10 +364,19 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   /**
-   * Optimization. By default FilesScope makes a decision about searching in libraries by checking that
-   * at least one file is placed out of module roots. So if you're sure about files placement you can explicitly say FilesScope whether
+   * Lazy files scope: can be created (e.g., to display in UI) but the files won't be loaded until it's actually used
+   */
+  @Contract(pure = true)
+  public static @NotNull GlobalSearchScope filesScope(@NotNull Project project, @NotNull Supplier<? extends Collection<? extends VirtualFile>> files) {
+    return new LazyFilesScope(project, files);
+  }
+
+  /**
+   * Optimization. By default, FilesScope makes a decision about searching in libraries by checking that
+   * at least one file is placed out of module roots.
+   * So if you're sure about file placement, you can explicitly say FilesScope whether
    * it should include libraries or not in order to avoid checking each file.
-   * Also, if you have a lot of files it might be faster to always search in libraries.
+   * Also, if you have a lot of files, it might be faster to always search in libraries.
    */
   @NotNull
   @Contract(pure = true)
@@ -756,7 +764,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public String toString() {
-      return "(restricted by file types: "+Arrays.asList(myFileTypes)+" in "+ myBaseScope + ")";
+      return "Restricted by file types: " + Arrays.asList(myFileTypes) + " in (" + myBaseScope + ")";
     }
 
     @Override
@@ -831,7 +839,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public String toString() {
-      return "File :"+myVirtualFile;
+      return "File: " + myVirtualFile;
     }
 
     @NotNull
@@ -880,25 +888,21 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
   }
 
-  public static class FilesScope extends GlobalSearchScope implements VirtualFileEnumeration {
-    private final CompactVirtualFileSet myFiles;
-    private volatile Boolean myHasFilesOutOfProjectRoots;
 
-    private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files) {
-      this(project, files, null);
-    }
+  private abstract static class AbstractFilesScope extends GlobalSearchScope implements VirtualFileEnumeration {
+    volatile Boolean myHasFilesOutOfProjectRoots;
 
     // Optimization
-    private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots) {
+    AbstractFilesScope(@Nullable Project project, @Nullable Boolean hasFilesOutOfProjectRoots) {
       super(project);
-      myFiles = new CompactVirtualFileSet(files);
-      myFiles.freeze();
       myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
     }
 
+    abstract @NotNull VirtualFileSet getFiles();
+
     @Override
     public boolean contains(@NotNull final VirtualFile file) {
-      return myFiles.contains(file);
+      return getFiles().contains(file);
     }
 
     @Override
@@ -913,12 +917,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean equals(Object o) {
-      return this == o || o instanceof FilesScope && myFiles.equals(((FilesScope)o).myFiles);
+      return this == o || o instanceof AbstractFilesScope && getFiles().equals(((AbstractFilesScope)o).getFiles());
     }
 
     @Override
     public int calcHashCode() {
-      return myFiles.hashCode();
+      return getFiles().hashCode();
     }
 
     private boolean hasFilesOutOfProjectRoots() {
@@ -927,30 +931,85 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         Project project = getProject();
         myHasFilesOutOfProjectRoots = result =
           project != null && !project.isDefault() &&
-          ContainerUtil.find(myFiles, file -> FileIndexFacade.getInstance(project).getModuleForFile(file) != null) == null;
+          ContainerUtil.find(getFiles(), file -> FileIndexFacade.getInstance(project).getModuleForFile(file) != null) == null;
       }
       return result;
     }
 
     @Override
-    public String toString() {
-      List<VirtualFile> files = ContainerUtil.getFirstItems(new ArrayList<>(myFiles), 20);
-      return "Files: ("+ files +"); search in libraries: " + (myHasFilesOutOfProjectRoots != null ? myHasFilesOutOfProjectRoots : "unknown");
-    }
-
-    @Override
     public boolean contains(int fileId) {
-      return myFiles.containsId(fileId);
+      return ((CompactVirtualFileSet)getFiles()).containsId(fileId);
     }
 
     @Override
     public int[] asInts() {
-      return myFiles.onlyFileIds();
+      return ((CompactVirtualFileSet)getFiles()).onlyInternalFileIds();
     }
 
     @Override
     public @NotNull Iterable<VirtualFile> asIterable() {
-      return Collections.unmodifiableSet(myFiles);
+      return Collections.unmodifiableSet(getFiles());
+    }
+  }
+
+  public static class FilesScope extends AbstractFilesScope {
+    private final VirtualFileSet myFiles;
+
+    private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files) {
+      this(project, files, null);
+    }
+
+    // Optimization
+    private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots) {
+      super(project, hasFilesOutOfProjectRoots);
+      myFiles = VfsUtilCore.createCompactVirtualFileSet(files);
+      myFiles.freeze();
+    }
+
+    @Override
+    public @NotNull VirtualFileSet getFiles() {
+      return myFiles;
+    }
+
+    @Override
+    public String toString() {
+      return "Files: [" +
+             StringUtil.join(myFiles, ", ") +
+             "]; search in libraries: " +
+             (myHasFilesOutOfProjectRoots != null ? myHasFilesOutOfProjectRoots : "unknown");
+    }
+  }
+
+  private static class LazyFilesScope extends AbstractFilesScope {
+    private volatile VirtualFileSet myFiles;
+    private @NotNull Supplier<? extends Collection<? extends VirtualFile>> myFilesSupplier;
+
+    private LazyFilesScope(@Nullable Project project, @NotNull Supplier<? extends Collection<? extends VirtualFile>> files) {
+      super(project, null);
+      myFilesSupplier = files;
+    }
+
+    @Override
+    public @NotNull VirtualFileSet getFiles() {
+      if (myFiles == null) {
+        synchronized (this) {
+          if (myFiles == null) {
+            VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet(myFilesSupplier.get());
+            fileSet.freeze();
+            myFilesSupplier = null;
+            myFiles = fileSet;
+          }
+        }
+      }
+      return myFiles;
+    }
+
+    @Override
+    public String toString() {
+      return "Files: [" +
+             (myFiles == null ? "(not loaded yet)" : StringUtil.join(myFiles, ", ")) +
+             "]; search in libraries: " +
+             (myHasFilesOutOfProjectRoots != null ? myHasFilesOutOfProjectRoots : "unknown");
     }
   }
 }

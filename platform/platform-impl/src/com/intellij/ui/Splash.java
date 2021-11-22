@@ -104,11 +104,6 @@ public final class Splash extends Window {
     }
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-  }
-
   private static @NotNull Image loadImage(@NotNull String path, @NotNull ApplicationInfoEx appInfo) {
     float scale = JBUIScale.sysScale();
     if (isCacheNeeded(scale)) {

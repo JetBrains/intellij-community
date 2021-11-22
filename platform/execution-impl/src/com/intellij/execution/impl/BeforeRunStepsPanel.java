@@ -93,12 +93,11 @@ public final class BeforeRunStepsPanel extends JPanel {
           clonedTasks.add(task);
           myModel.setElementAt(task, selection.getIndex());
         }
-        final BeforeRunTaskProvider<BeforeRunTask<?>> providerForUpdate = selection.getProvider();
+        RunConfigurationOptionUsagesCollector.logEditBeforeRunTask(
+          myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), task.getProviderId().getClass());
         selection.getProvider().configureTask(button.getDataContext(), myRunConfiguration, task)
           .onSuccess(changed -> {
             if (changed) {
-              RunConfigurationOptionUsagesCollector.logEditBeforeRunTask(
-                myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), providerForUpdate.getClass());
               updateText();
             }
           });
@@ -200,9 +199,7 @@ public final class BeforeRunStepsPanel extends JPanel {
   }
 
   private void updateText() {
-    int count = (myShowSettingsBeforeRunCheckBox.isSelected() ? 1 : 0)
-      + (myActivateToolWindowBeforeRunCheckBox.isSelected() ? 1 : 0)
-      + myModel.getSize();
+    int count = myModel.getSize();
     String title = ExecutionBundle.message("before.launch.panel.title");
     String suffix = count == 0 || isVisible() ? "" : ExecutionBundle.message("before.launch.panel.title.suffix", count);
     myListener.titleChanged(title + suffix);
@@ -291,7 +288,7 @@ public final class BeforeRunStepsPanel extends JPanel {
     }
     DataContext dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, myRunConfiguration.getProject())
-      .add(PlatformDataKeys.CONTEXT_COMPONENT, myPanel)
+      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, myPanel)
       .build();
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.before.run.task.name"), actionGroup,
                                                                           dataContext, false, false, false, null,

@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
@@ -30,6 +31,8 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
 
   public void testPatternMatchingInSwitch() {
     doTest();
+    IntentionAction action = myFixture.getAvailableIntention("Remove 'default' branch");
+    assertNotNull(action);
   }
 
   public void testPatternMatchingWithGuard() {
@@ -56,11 +59,15 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
+  public void testFallthroughPatternMatchingSwitch() {
+    doTest();
+  }
+
   public void testGuardedPatterns() {
     doTest();
   }
 
-  public void testFallthroughPatternMatchingSwitch() {
+  public void testSwitchExprHasResult() {
     doTest();
   }
 
@@ -84,10 +91,6 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
-  public void testSwitchExprHasResult() {
-    doTest();
-  }
-
   public void testMultipleReferencesToPatternVariable() {
     doTest();
   }
@@ -96,10 +99,18 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
+  public void testFallthroughDefault() {
+    doTest();
+  }
+
   public void testUnusedPatternVariable() {
     myFixture.enableInspections(new UnusedDeclarationInspection());
     doTest();
     assertNotNull(myFixture.getAvailableIntention("Rename 's' to 'ignored'"));
+  }
+
+  public void testMalformedReferenceExpression() {
+    doTest();
   }
 
   private void doTest() {

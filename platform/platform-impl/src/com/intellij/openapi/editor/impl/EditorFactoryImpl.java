@@ -105,12 +105,10 @@ public class EditorFactoryImpl extends EditorFactory {
   @NonNls
   public static void throwNotReleasedError(@NotNull Editor editor) {
     if (editor instanceof EditorImpl) {
-      ((EditorImpl)editor).throwEditorNotDisposedError("Editor of " + editor.getClass() + " hasn't been released:");
+      ((EditorImpl)editor).throwDisposalError("Editor " + editor + " hasn't been released:");
     }
-    else {
-      throw new RuntimeException("Editor of " + editor.getClass() +
-                                 " and the following text hasn't been released:\n" + editor.getDocument().getText());
-    }
+    throw new RuntimeException("Editor of " + editor.getClass() +
+                               " and the following text hasn't been released:\n" + editor.getDocument().getText());
   }
 
   @Override

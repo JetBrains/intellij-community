@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -18,7 +19,8 @@ import java.util.Map;
  */
 @State(
   name = "LineMarkerSettings",
-  storages = @Storage("gutter.xml")
+  storages = @Storage("gutter.xml"),
+  category = SettingsCategory.CODE
 )
 public class LineMarkerSettingsImpl extends LineMarkerSettings implements PersistentStateComponent<LineMarkerSettingsImpl> {
 

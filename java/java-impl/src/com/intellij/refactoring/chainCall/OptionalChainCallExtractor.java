@@ -24,7 +24,7 @@ public class OptionalChainCallExtractor implements ChainCallExtractor {
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ifPresent", "map", "flatMap").parameterCount(1);
 
   @Override
-  public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType) {
+  public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, @NotNull PsiExpression expression, PsiType expressionType) {
     if (expressionType instanceof PsiPrimitiveType) return false;
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     return qualifier != null && NEXT_CALL.test(call);

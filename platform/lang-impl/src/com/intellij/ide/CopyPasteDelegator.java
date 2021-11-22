@@ -2,9 +2,7 @@
 
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -82,7 +80,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     return myEditable;
   }
 
-  class MyEditable implements CutProvider, CopyProvider, PasteProvider {
+  class MyEditable implements CutProvider, CopyProvider, PasteProvider, UpdateInBackground {
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
       PsiElement[] elements = validate(getSelectedElements(dataContext));
@@ -144,7 +142,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
       return DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> {
         try {
-          final Module module = LangDataKeys.MODULE.getData(dataContext);
+          final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
           PsiElement target = getPasteTarget(dataContext, module);
           if (isCopied[0]) {
             pasteAfterCopy(elements, module, target, true);

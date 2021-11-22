@@ -9,6 +9,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public final class MarkdownPreviewSettings {
   public static final MarkdownPreviewSettings DEFAULT = new MarkdownPreviewSettings();
 
@@ -43,6 +44,10 @@ public final class MarkdownPreviewSettings {
 
   @NotNull
   public TextEditorWithPreview.Layout getSplitEditorLayout() {
+    //noinspection ConstantConditions
+    if (mySplitEditorLayout == null) {
+      mySplitEditorLayout = TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW;
+    }
     return mySplitEditorLayout;
   }
 

@@ -7,7 +7,6 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyTypedElement;
 import org.jetbrains.annotations.NotNull;
@@ -246,6 +245,18 @@ public final class TypeEvalContext {
   }
 
   private boolean inOrigin(@NotNull PsiElement element) {
-    return myConstraints.myOrigin == element.getContainingFile() || myConstraints.myOrigin == FileContextUtil.getContextFile(element);
+    return myConstraints.myOrigin == element.getContainingFile() || myConstraints.myOrigin == getContextFile(element);
+  }
+
+  private static PsiFile getContextFile(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    PsiElement context = file.getContext();
+    if (context == null) {
+      return file;
+    }
+    else {
+      return getContextFile(context);
+    }
   }
 }

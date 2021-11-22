@@ -8,16 +8,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.ShBundle;
-import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.stream.Stream;
 
 public class ShQuickFixIntention implements IntentionAction {
-  @NonNls private static final String FEATURE_ACTION_ID = "QuickFixUsed";
   private final ShShellcheckExternalAnnotator.Fix fix;
   private final long timestamp;
   private final @IntentionName String message;
@@ -74,7 +71,6 @@ public class ShQuickFixIntention implements IntentionAction {
       // applying replacements from right to left not to break offsets in document
       .sorted(Comparator.comparingInt(it -> -it.endOffset))
       .forEach(it -> document.replaceString(it.startOffset, it.endOffset, it.replacement));
-    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
   }
 
   private static int calcOffset(Document document, int line, int column) {

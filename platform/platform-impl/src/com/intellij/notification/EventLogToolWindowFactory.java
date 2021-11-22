@@ -77,7 +77,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
       public Object getData(@NotNull @NonNls String dataId) {
-        return PlatformDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
+        return PlatformCoreDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
       }
     };
     panel.setContent(editorPanel);

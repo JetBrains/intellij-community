@@ -151,8 +151,8 @@ internal object SourceRootPropertiesHelper {
   internal fun loadCustomRootProperties(entity: SourceRootEntity, rootType: JpsModuleSourceRootType<out JpsElement>): JpsElement {
     val elementFactory = JpsElementFactory.getInstance()
 
-    val customSourceRoot = entity.asCustomSourceRoot() ?: return elementFactory.createDummyElement()
-    if (customSourceRoot.propertiesXmlTag.isEmpty()) return rootType.createDefaultProperties()
+    val customSourceRoot = entity.asCustomSourceRoot()
+    if (customSourceRoot == null || customSourceRoot.propertiesXmlTag.isEmpty()) return rootType.createDefaultProperties()
 
     val serializer = findSerializer(rootType)
     if (serializer == null) {

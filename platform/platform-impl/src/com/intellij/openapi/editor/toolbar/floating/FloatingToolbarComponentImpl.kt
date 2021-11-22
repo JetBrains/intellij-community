@@ -59,7 +59,7 @@ class FloatingToolbarComponentImpl(
     try {
       if (graphics is Graphics2D) {
         val alpha = visibilityController.opacity
-        graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, alpha)
+        graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
       }
       super.paintChildren(graphics)
     }

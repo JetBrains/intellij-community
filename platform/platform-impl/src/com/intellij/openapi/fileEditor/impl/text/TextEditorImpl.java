@@ -171,14 +171,6 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     return myComponent.isEditorValid();
   }
 
-  @Override
-  public void selectNotify() {
-  }
-
-  @Override
-  public void deselectNotify() {
-  }
-
   public void updateModifiedProperty() {
     myComponent.updateModifiedProperty();
   }

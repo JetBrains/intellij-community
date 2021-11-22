@@ -7,7 +7,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager
@@ -16,11 +16,12 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.NO_PROGRESS_SYNC
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
@@ -96,11 +97,34 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
   }
 
   fun getJUnitTestsExecutionTree(): String {
-    return getTestsExecutionTree()
-      .replace("()", "") // removes trailing () for test methods in junit 5
-      .split("\n").joinToString("\n") { // removes package for tests classes in junit 4
-        if (it.contains("-")) it.substringBefore("-") + "-" + it.substringAfter("-").split(".").last() else it
+    val flattenTree = getTestsExecutionTree()
+      // removes trailing () for test methods in junit 5
+      .replace("()", "")
+      .split("\n")
+      // removes package for tests classes in junit 4
+      .map { if (it.trim().startsWith("-")) it.substringBefore("-") + "-" + it.substringAfter("-").split(".").last() else it }
+      .toMutableList()
+    partitionLeaves(flattenTree)
+      .map { flattenTree.subList(it.first, it.last + 1) }
+      .forEach { it.sortWith(NaturalComparator.INSTANCE) }
+    return flattenTree.joinToString("\n")
+  }
+
+  private fun partitionLeaves(flattenTree: List<String>) = sequence {
+    var left = -1
+    for ((i, node) in flattenTree.withIndex()) {
+      val isLeaf = !node.trim().startsWith("-")
+      if (isLeaf && left == -1) {
+        left = i
       }
+      else if (!isLeaf && left != -1) {
+        yield(left until i)
+        left = -1
+      }
+    }
+    if (left != -1) {
+      yield(left until flattenTree.size)
+    }
   }
 
   fun execute(gradleArguments: String) {
@@ -109,7 +133,7 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
       scriptParameters = gradleArguments
       externalSystemIdString = SYSTEM_ID.id
     }
-    ExternalSystemUtil.runTask(settings, EXECUTOR_ID, myProject, SYSTEM_ID, null, MODAL_SYNC)
+    ExternalSystemUtil.runTask(settings, EXECUTOR_ID, myProject, SYSTEM_ID, null, NO_PROGRESS_SYNC)
   }
 
   fun performRerunFailedTestsAction(): Boolean = invokeAndWaitIfNeeded {
@@ -117,7 +141,7 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
     rerunAction.setModelProvider { testExecutionConsole.resultsViewer }
     val actionEvent = TestActionEvent(
       SimpleDataContext.builder()
-        .add(LangDataKeys.EXECUTION_ENVIRONMENT, testExecutionEnvironment)
+        .add(ExecutionDataKeys.EXECUTION_ENVIRONMENT, testExecutionEnvironment)
         .add(CommonDataKeys.PROJECT, myProject)
         .build())
     rerunAction.update(actionEvent)

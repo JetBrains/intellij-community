@@ -35,7 +35,7 @@ public class IFileElementType extends ILazyParseableElementType {
   }
 
   /**
-   * Allows to construct file element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
+   * Allows constructing file element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
    */
   public IFileElementType(@NonNls @NotNull final String debugName, @Nullable final Language language, boolean register) {
     super(debugName, language, register);

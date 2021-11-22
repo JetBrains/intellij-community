@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -181,6 +181,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
                                       myPanel.isReplaceAllOccurences(),
                                       myPanel.getReplaceFieldsWithGetters(), myMustBeFinal || myPanel.isGenerateFinal(),
                                       isGenerateDelegate(),
+                                      false,
                                       getType(),
                                       parametersToRemove);
     final Runnable runnable = () -> {

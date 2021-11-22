@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -132,8 +132,8 @@ public final class JUnitUtil {
     final PsiMethod psiMethod = location.getPsiElement();
     final PsiClass aClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : psiMethod.getContainingClass();
     if (checkClass && (aClass == null || !isTestClass(aClass, checkAbstract, true))) return false;
-    if (isTestAnnotated(psiMethod, false)) return !psiMethod.hasModifierProperty(PsiModifier.STATIC);
-    if (MetaAnnotationUtil.isMetaAnnotated(psiMethod, Collections.singletonList(CUSTOM_TESTABLE_ANNOTATION))) return true;
+    if (isTestAnnotated(psiMethod, true)) return !psiMethod.hasModifierProperty(PsiModifier.STATIC);
+    if (aClass != null && MetaAnnotationUtil.isMetaAnnotatedInHierarchy(aClass, Collections.singletonList(CUSTOM_TESTABLE_ANNOTATION))) return true;
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
@@ -373,12 +373,14 @@ public final class JUnitUtil {
     return getTestCaseClassOrNull(scope, module.getProject());
   }
 
+  @NotNull
   public static PsiClass getTestCaseClass(final Module module) throws NoJUnitException {
     if (module == null) throw new NoJUnitException();
     final GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, true);
     return getTestCaseClass(scope, module.getProject());
   }
 
+  @NotNull
   public static PsiClass getTestCaseClass(final SourceScope scope) throws NoJUnitException {
     if (scope == null) throw new NoJUnitException();
     return getTestCaseClass(scope.getLibrariesScope(), scope.getProject());
@@ -392,14 +394,15 @@ public final class JUnitUtil {
     }
   }
 
-  private static PsiClass getTestCaseClass(final GlobalSearchScope scope, final Project project) throws NoJUnitException {
+  @NotNull
+  private static PsiClass getTestCaseClass(@NotNull final GlobalSearchScope scope, @NotNull final Project project) throws NoJUnitException {
     PsiClass testCaseClass = getTestCaseClassOrNull(scope, project);
     if (testCaseClass == null) throw new NoJUnitException(scope.getDisplayName());
     return testCaseClass;
   }
 
   @Nullable
-  private static PsiClass getTestCaseClassOrNull(final GlobalSearchScope scope, final Project project) {
+  private static PsiClass getTestCaseClassOrNull(@NotNull final GlobalSearchScope scope, @NotNull final Project project) {
     return JavaPsiFacade.getInstance(project).findClass(TEST_CASE_CLASS, scope);
   }
 

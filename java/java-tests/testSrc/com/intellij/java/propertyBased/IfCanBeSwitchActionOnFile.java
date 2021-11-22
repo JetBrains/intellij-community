@@ -3,7 +3,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIfStatement;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.migration.IfCanBeSwitchInspection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -17,7 +17,7 @@ public final class IfCanBeSwitchActionOnFile extends InvokeIntentionAtElement {
   private static final class IfCanBeSwitchPolicy extends JavaIntentionPolicy {
     @Override
     protected boolean shouldSkipIntention(@NotNull String actionText) {
-      return !actionText.equals(InspectionGadgetsBundle.message("if.can.be.switch.problem.descriptor"));
+      return !actionText.equals(IfCanBeSwitchInspection.getReplaceWithSwitchFixName());
     }
   }
 }

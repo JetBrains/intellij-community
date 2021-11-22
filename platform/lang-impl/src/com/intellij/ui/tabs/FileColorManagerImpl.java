@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
@@ -33,8 +33,9 @@ public final class FileColorManagerImpl extends FileColorManager {
     "Orange", JBColor.namedColor("FileColor.Orange", new JBColor(0xf6e9dc, 0x806052)),
     "Rose", JBColor.namedColor("FileColor.Rose", new JBColor(0xf2dcda, 0x6e535b)),
     "Violet", JBColor.namedColor("FileColor.Violet", new JBColor(0xe6e0f1, 0x534a57)),
-    "Yellow", JBColor.namedColor("FileColor.Yellow", new JBColor(0xffffe4, 0x4f4b41))
-  );
+    "Yellow", JBColor.namedColor("FileColor.Yellow", new JBColor(0xffffe4, 0x4f4b41)),
+    "Gray", JBColor.namedColor("FileColor.Gray", new JBColor(0xf5f5f5, 0x45484a))
+    );
 
   public FileColorManagerImpl(@NotNull Project project) {
     myProject = project;

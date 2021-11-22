@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server.impl
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
@@ -8,7 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -23,7 +23,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.jar.Attributes
 import java.util.jar.JarFile
 
@@ -84,7 +83,7 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
     }
 
   companion object {
-    private val LOG = Logger.getInstance(BuildProcessClasspathManager::class.java)
+    private val LOG = logger<BuildProcessClasspathManager>()
 
     private fun findClassesRoot(relativePath: String, plugin: IdeaPluginDescriptor, baseFile: Path): String? {
       val jarFile = baseFile.resolve("lib/$relativePath")

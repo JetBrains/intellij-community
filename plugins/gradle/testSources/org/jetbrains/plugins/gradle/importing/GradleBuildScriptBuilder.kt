@@ -4,14 +4,19 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.AbstractGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJavaLibraryPlugin
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
 import java.util.function.Consumer
 import kotlin.apply as applyKt
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-class GradleBuildScriptBuilder(gradleVersion: GradleVersion) : AbstractGradleBuildScriptBuilder<GradleBuildScriptBuilder>(gradleVersion) {
+open class GradleBuildScriptBuilder(
+  gradleVersion: GradleVersion
+) : AbstractGradleBuildScriptBuilder<GradleBuildScriptBuilder>(gradleVersion) {
+
   override val scriptBuilder = GroovyScriptBuilder()
 
   override fun apply(action: GradleBuildScriptBuilder.() -> Unit) = applyKt(action)
@@ -26,6 +31,43 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion) : AbstractGradleBui
         else -> call("tasks.create", string(name), code(type), configure = configure)
       }
     }
+
+  // Note: These are Element building functions
+  fun project(name: String) = call("project", name)
+  fun project(name: String, configuration: String) = call("project", "path" to name, "configuration" to configuration)
+
+  fun project(name: String, configure: Consumer<GradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
+  fun project(name: String, configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("project", name) {
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+      }
+    }
+
+  fun configure(expression: Expression, configure: Consumer<GradleBuildScriptBuilder>) = configure(expression) { configure.accept(this) }
+  fun configure(expression: Expression, configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("configure", expression) {
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+      }
+    }
+
+  fun allprojects(configure: Consumer<GradleBuildScriptBuilder>) = allprojects { configure.accept(this) }
+  fun allprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("allprojects") {
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+      }
+    }
+
+  fun subprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("subprojects") {
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+      }
+    }
+
+  fun subprojects(configure: Consumer<GradleBuildScriptBuilder>) = subprojects { configure.accept(this) }
 
   fun withGradleIdeaExtPluginIfCan() = apply {
     val localDirWithJar = System.getenv("GRADLE_IDEA_EXT_PLUGIN_DIR")?.let(::File)
@@ -79,6 +121,21 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion) : AbstractGradleBui
         }
       }
     }
+  }
+
+  private inner class GradleBuildScriptChildBuilder : GradleBuildScriptBuilder(gradleVersion) {
+
+    override fun withJavaPlugin() =
+      applyPlugin("'java'")
+
+    override fun withJavaLibraryPlugin() =
+      if (isSupportedJavaLibraryPlugin(gradleVersion))
+        applyPlugin("'java-library'")
+      else
+        applyPlugin("'java'")
+
+    override fun withIdeaPlugin() =
+      applyPlugin("'idea'")
   }
 
   companion object {

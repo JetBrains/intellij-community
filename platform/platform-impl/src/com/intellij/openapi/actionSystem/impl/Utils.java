@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.ide.impl.DataContextUtils;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,9 +15,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
@@ -55,7 +55,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class Utils {
+public final class Utils extends DataContextUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
 
   public static final AnAction EMPTY_MENU_FILLER = new EmptyAction();
@@ -64,7 +64,7 @@ public final class Utils {
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
-    Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof EdtDataContext) {
       return new PreCachedDataContext(component);
     }
@@ -461,6 +461,7 @@ public final class Utils {
     if (async) {
       ActionUpdater.cancelAllUpdates("'" + place + "' invoked");
       AsyncPromise<T> promise = ActionUpdater.newPromise(place);
+      ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
       ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
         try {
           Ref<T> ref = Ref.create();
@@ -482,7 +483,7 @@ public final class Utils {
           };
           boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
           ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-          EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+          ProgressIndicator indicator = parentIndicator == null ? new EmptyProgressIndicator() : new SensitiveProgressWrapper(parentIndicator);
           promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().computePrioritized(() -> {
             ProgressManager.getInstance().executeProcessUnderProgress(!inReadAction ? runnable : () ->
@@ -502,6 +503,7 @@ public final class Utils {
       result = runLoopAndWaitForFuture(promise, null, false, () -> {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
+        if (parentIndicator != null) parentIndicator.checkCanceled();
       });
     }
     else {
@@ -522,6 +524,8 @@ public final class Utils {
     while (!promise.isDone()) {
       try {
         pumpRunnable.run();
+      }
+      catch (ProcessCanceledException ignore) {
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -550,10 +554,6 @@ public final class Utils {
       result[0] = supplier.getAsBoolean();
     });
     return result[0];
-  }
-
-  public static boolean isFrozenDataContext(DataContext context) {
-    return context instanceof PreCachedDataContext && ((PreCachedDataContext)context).isFrozenDataContext();
   }
 
   static void performWithRetries(@NotNull Runnable runnable, @NotNull BooleanSupplier expire) {

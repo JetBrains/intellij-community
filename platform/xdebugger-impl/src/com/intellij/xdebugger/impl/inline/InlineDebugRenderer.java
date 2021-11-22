@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -53,7 +53,6 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final boolean myCustomNode;
   private final XDebugSession mySession;
   private final XValueNodeImpl myValueNode;
-  private final Editor myEditor;
   private final XDebuggerTreeCreator myTreeCreator;
   private boolean isHovered = false;
   private int myRemoveXCoordinate = Integer.MAX_VALUE;
@@ -61,15 +60,11 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final XSourcePosition myPosition;
   private SimpleColoredText myPresentation;
 
-  InlineDebugRenderer(XValueNodeImpl valueNode,
-                      @NotNull XSourcePosition position,
-                      @NotNull XDebugSession session,
-                      Editor editor) {
+  InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull XSourcePosition position, @NotNull XDebugSession session) {
     myPosition = position;
     mySession = session;
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
-    myEditor = editor;
     updatePresentation();
     myTreeCreator = new XDebuggerTreeCreator(session.getProject(),
                                              session.getDebugProcess().getEditorsProvider(),
@@ -134,7 +129,7 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     Point point = new Point(bounds.x, bounds.y + bounds.height);
 
     inlayRenderer.myPopupIsShown = true;
-    XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, myEditor, point, myPosition, mySession, () -> {
+    XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, inlay.getEditor(), point, myPosition, mySession, () -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         inlayRenderer.myPopupIsShown = false;
       });
@@ -317,5 +312,17 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
       return hoveredInlineAttr;
     }
     return inlinedAttributes;
+  }
+
+  boolean isCustomNode() {
+    return myCustomNode;
+  }
+
+  XValueNodeImpl getValueNode() {
+    return myValueNode;
+  }
+
+  XSourcePosition getPosition() {
+    return myPosition;
   }
 }

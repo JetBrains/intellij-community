@@ -11,15 +11,16 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.ui.table.JBTable
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
+import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
@@ -30,7 +31,6 @@ import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.ui.LearningUiHighlightingManager
-import java.awt.Component
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -40,13 +40,15 @@ import javax.swing.KeyStroke
 
 class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessonsBundle.message("git.interactive.rebase.lesson.name")) {
   override val existedFile = "git/martian_cat.yml"
-  override val branchName = "fixes"
+  private val branchName = "fixes"
 
   private var backupRebaseDialogLocation: Point? = null
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
+    checkoutBranch(branchName)
+
     task("ActivateVersionControlToolWindow") {
       text(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it)))
       stateCheck {
@@ -88,15 +90,14 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       showWarningIfGitWindowClosed()
     }
 
-    task("Git.Interactive.Rebase") {
+    task {
       text(GitLessonsBundle.message("git.interactive.rebase.choose.interactive.rebase",
                                     strong(interactiveRebaseMenuItemText)))
-      trigger(it)
+      val rebasingDialogTitle = GitBundle.message("rebase.interactive.dialog.title")
+      triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
+        ui.title?.contains(rebasingDialogTitle) == true
+      }
       restoreByUi(delayMillis = defaultRestoreDelay)
-    }
-
-    task {
-      highlightCommitInRebaseDialog(4)
     }
 
     lateinit var movingCommitText: String
@@ -107,8 +108,9 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         }
       }
       text(GitLessonsBundle.message("git.interactive.rebase.select.one.commit"))
+      highlightCommitInRebaseDialog(4)
       triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
-        if (isInsideRebaseDialog(ui)) {
+        if (ui !is VcsLogGraphTable) {
           movingCommitText = ui.model.getValueAt(4, 1).toString()
           ui.selectedRow == 4
         }
@@ -121,22 +123,26 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       val moveUpShortcut = CommonShortcuts.MOVE_UP.shortcuts.first() as KeyboardShortcut
       text(GitLessonsBundle.message("git.interactive.rebase.move.commit", LessonUtil.rawKeyStroke(moveUpShortcut.firstKeyStroke)))
       triggerByPartOfComponent(highlightInside = true, usePulsation = false) { ui: JBTable ->
-        if (isInsideRebaseDialog(ui)) {
+        if (ui !is VcsLogGraphTable) {
           ui.getCellRect(1, 1, false).apply { height = 1 }
         }
         else null
       }
       triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
-        isInsideRebaseDialog(ui) && ui.model.getValueAt(1, 1).toString() == movingCommitText
+        ui.model.getValueAt(1, 1).toString() == movingCommitText
       }
-      restoreByUi(openRebaseDialogTaskId)
+      restoreState {
+        Thread.currentThread().stackTrace.find {
+          it.className.contains("GitInteractiveRebaseUsingLog")
+        } == null
+      }
     }
 
     task {
       val fixupShortcut = KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK)
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.fixup", LessonUtil.rawKeyStroke(fixupShortcut),
                                     strong(GitBundle.message("rebase.entry.action.name.fixup"))))
-      triggerByUiComponentAndHighlight { ui: BasicOptionButtonUI.ArrowButton -> isInsideRebaseDialog(ui) }
+      triggerByUiComponentAndHighlight { _: BasicOptionButtonUI.ArrowButton -> true }
       trigger("git4idea.rebase.interactive.dialog.FixupAction")
     }
 
@@ -144,7 +150,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.select.three.commits", LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)))
       highlightSubsequentCommitsInRebaseDialog(startRowIncl = 2, endRowExcl = 5)
       triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
-        isInsideRebaseDialog(ui) && ui.similarCommitsSelected()
+        ui.similarCommitsSelected()
       }
     }
 
@@ -152,7 +158,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       val squashShortcut = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_DOWN_MASK)
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.squash",
                                     LessonUtil.rawKeyStroke(squashShortcut), strong(GitBundle.message("rebase.entry.action.name.squash"))))
-      triggerByUiComponentAndHighlight { ui: BasicOptionButtonUI.MainButton -> isInsideRebaseDialog(ui) }
+      triggerByUiComponentAndHighlight { _: BasicOptionButtonUI.MainButton -> true }
       trigger("git4idea.rebase.interactive.dialog.SquashAction")
       restoreState {
         val table = previous.ui as? JBTable ?: return@restoreState false
@@ -161,7 +167,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     }
 
     task {
-      triggerByUiComponentAndHighlight(false, false) { ui: CommitMessage -> isInsideRebaseDialog(ui) }
+      triggerByUiComponentAndHighlight(false, false) { _: CommitMessage -> true }
     }
 
     task {
@@ -189,11 +195,6 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     backupRebaseDialogLocation = null
   }
 
-  private fun isInsideRebaseDialog(component: Component): Boolean {
-    val dialog = UIUtil.getParentOfType(JDialog::class.java, component)
-    return dialog?.title?.contains(GitBundle.message("rebase.interactive.dialog.title")) == true
-  }
-
   private fun TaskContext.highlightCommitInRebaseDialog(rowInd: Int) {
     highlightSubsequentCommitsInRebaseDialog(rowInd, rowInd + 1, highlightInside = true)
   }
@@ -203,7 +204,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
                                                                    highlightInside: Boolean = false,
                                                                    usePulsation: Boolean = false) {
     triggerByPartOfComponent(highlightInside = highlightInside, usePulsation = usePulsation) { ui: JBTable ->
-      if (isInsideRebaseDialog(ui)) {
+      if (ui !is VcsLogGraphTable) {
         val rect = ui.getCellRect(startRowIncl, 1, false)
         rect.height *= endRowExcl - startRowIncl
         rect
@@ -233,6 +234,6 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
 
   private fun VcsLogData.getCommitMetadata(hash: Hash): VcsCommitMetadata {
     val index = getCommitIndex(hash, roots.single())
-    return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index, listOf(index))
+    return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index)
   }
 }

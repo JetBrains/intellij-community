@@ -5,7 +5,7 @@ import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.ide.actions.CreateTemplateInPackageAction;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -65,7 +65,7 @@ public class NewActionAction extends CreateElementActionBase implements UpdateIn
       return false;
     }
 
-    Module module = dataContext.getData(LangDataKeys.MODULE);
+    Module module = dataContext.getData(PlatformCoreDataKeys.MODULE);
     if (module == null || !PsiUtil.isPluginModule(module)) {
       return false;
     }

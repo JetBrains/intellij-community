@@ -56,15 +56,15 @@ public final class SimpleTextAttributes {
 
   public static final SimpleTextAttributes SYNTHETIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBColor.blue);
 
-  public static final SimpleTextAttributes GRAY_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, Color.GRAY);
-  public static final SimpleTextAttributes GRAY_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
-  public static final SimpleTextAttributes GRAY_SMALL_ATTRIBUTES = new SimpleTextAttributes(STYLE_SMALLER, Color.GRAY);
+  public static final SimpleTextAttributes GRAY_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBColor.GRAY);
+  public static final SimpleTextAttributes GRAY_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, JBColor.GRAY);
+  public static final SimpleTextAttributes GRAY_SMALL_ATTRIBUTES = new SimpleTextAttributes(STYLE_SMALLER, JBColor.GRAY);
 
   public static final SimpleTextAttributes DARK_TEXT = new SimpleTextAttributes(STYLE_PLAIN, new Color(112, 112, 164));
   public static final SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, new JBColor(Gray._0, Gray._187));
   public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES =
     new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground(true));
-  public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
+  public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, JBColor.GRAY);
 
   public static final SimpleTextAttributes LINK_PLAIN_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.Foreground.ENABLED);
   public static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.Foreground.ENABLED);

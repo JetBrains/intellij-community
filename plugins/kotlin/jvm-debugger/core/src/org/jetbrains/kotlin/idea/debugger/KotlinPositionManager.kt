@@ -7,7 +7,7 @@ import com.intellij.debugger.NoDataException
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerUtils.*
+import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
 import com.intellij.debugger.engine.PositionManagerEx
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
@@ -36,8 +36,10 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedLambdaName
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
 import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
@@ -199,33 +201,10 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
     private fun Pair<Location, Location>.contains(location: Location) = location in first..second
 
     private fun Method.getInlineFunctionBorders(sourceFileName: String): List<Pair<Location, Location>> {
-        val localVariables = safeVariables() ?: return emptyList()
-        return localVariables
-            .asSequence()
-            .filter { it.isInlineFunctionLocalVariable(name()) }
+        return getInlineFunctionLocalVariables()
             .mapNotNull { it.getBorders() }
             .filter { it.first.safeSourceName() == sourceFileName }
             .toList()
-    }
-
-    private fun LocalVariable.isInlineFunctionLocalVariable(methodName: String) =
-        name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
-        name().substringAfter(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) != methodName
-
-    private fun LocalVariable.getBorders(): Pair<Location, Location>? {
-        val scopeStart = getFieldValue<Location>("scopeStart") ?: return null
-        val scopeEnd = getFieldValue<Location>("scopeEnd") ?: return null
-        return Pair(scopeStart, scopeEnd)
-    }
-
-    private inline fun <reified T> Any.getFieldValue(fieldName: String): T? {
-        try {
-            val field = javaClass.declaredFields.firstOrNull { it.name == fieldName } ?: return null
-            field.isAccessible = true
-            return field.get(this) as? T
-        } catch (ex: Exception) {
-            return null
-        }
     }
 
     class KotlinReentrantSourcePosition(delegate: SourcePosition) : DelegateSourcePosition(delegate)
@@ -270,7 +249,15 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
         val currentLocationClassName =
             JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.replace('/', '.')
 
-        for (literal in literalsOrFunctions) {
+        return literalsOrFunctions.getAppropriateLiteralBasedOnDeclaringClassName(location, currentLocationClassName) ?:
+               literalsOrFunctions.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
+    }
+
+    private fun List<KtFunction>.getAppropriateLiteralBasedOnDeclaringClassName(
+        location: Location,
+        currentLocationClassName: String
+    ): KtFunction? {
+        for (literal in this) {
             if (InlineUtil.isInlinedArgument(literal, literal.analyze(BodyResolveMode.PARTIAL), true)) {
                 if (isInsideInlineArgument(literal, location, myDebugProcess as DebugProcessImpl)) {
                     return literal
@@ -289,6 +276,34 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
             }
         }
 
+        return null
+    }
+
+    private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
+        val method = location.safeMethod() ?: return null
+        if (!method.name().isGeneratedLambdaName()) {
+            return null
+        }
+
+        val lambdas = location.declaringType().methods()
+            .filter {
+                it.name().isGeneratedLambdaName() &&
+                DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
+            }
+
+        return getSamLambdaWithIndex(lambdas.indexOf(method))
+    }
+
+    private fun List<KtFunction>.getSamLambdaWithIndex(index: Int): KtFunction? {
+        var samLambdaCounter = 0
+        for (literal in this) {
+            if (literal.isSamLambda()) {
+                if (samLambdaCounter == index) {
+                    return literal
+                }
+                samLambdaCounter++
+            }
+        }
         return null
     }
 
@@ -402,6 +417,42 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
                 )
             }
         })
+    }
+}
+
+internal fun Method.getInlineFunctionNamesAndBorders(): Map<LocalVariable, ClosedRange<Location>> {
+    return getInlineFunctionLocalVariables()
+        .mapNotNull {
+            val borders = it.getBorders()
+            if (borders === null) null else it to borders.first..borders.second
+        }
+        .toMap()
+}
+
+private fun Method.getInlineFunctionLocalVariables(): Sequence<LocalVariable> {
+    val localVariables = safeVariables() ?: return emptySequence()
+    return localVariables
+        .asSequence()
+        .filter { it.isInlineFunctionLocalVariable(name()) }
+}
+
+private fun LocalVariable.isInlineFunctionLocalVariable(methodName: String) =
+    name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
+    name().substringAfter(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) != methodName
+
+private fun LocalVariable.getBorders(): Pair<Location, Location>? {
+    val scopeStart = getFieldValue<Location>("scopeStart") ?: return null
+    val scopeEnd = getFieldValue<Location>("scopeEnd") ?: return null
+    return Pair(scopeStart, scopeEnd)
+}
+
+private inline fun <reified T> Any.getFieldValue(fieldName: String): T? {
+    try {
+        val field = javaClass.declaredFields.firstOrNull { it.name == fieldName } ?: return null
+        field.isAccessible = true
+        return field.get(this) as? T
+    } catch (ex: Exception) {
+        return null
     }
 }
 

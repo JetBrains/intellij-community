@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
@@ -56,6 +56,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.VOLATILE, GrModifierFlags.VOLATILE_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.DEF, GrModifierFlags.DEF_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.DEFAULT, GrModifierFlags.DEFAULT_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.SEALED, GrModifierFlags.SEALED_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.NON_SEALED, GrModifierFlags.NON_SEALED_MASK);
 
 
     PRIORITY.put(GrModifier.PUBLIC,           0);
@@ -66,6 +68,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     PRIORITY.put(GrModifier.ABSTRACT,         1);
     PRIORITY.put(GrModifier.DEFAULT,          1);
     PRIORITY.put(GrModifier.FINAL,            2);
+    PRIORITY.put(GrModifier.SEALED,           2);
+    PRIORITY.put(GrModifier.NON_SEALED,       2);
     PRIORITY.put(GrModifier.NATIVE,           3);
     PRIORITY.put(GrModifier.SYNCHRONIZED,     3);
     PRIORITY.put(GrModifier.STRICTFP,         3);
@@ -86,6 +90,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.NATIVE, GroovyTokenTypes.kNATIVE);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.DEF, GroovyTokenTypes.kDEF);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.VOLATILE, GroovyTokenTypes.kVOLATILE);
+    NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.SEALED, GroovyTokenTypes.kSEALED);
+    NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.NON_SEALED, GroovyTokenTypes.kNON_SEALED);
   }
 
   public GrModifierListImpl(@NotNull ASTNode node) {

@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
@@ -283,8 +284,10 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     }
 
     MavenArchetype archetype = dialog.getArchetype();
-    MavenIndicesManager.getInstance(findProject()).addArchetype(archetype);
-    updateArchetypesList(archetype);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      MavenIndicesManager.getInstance(findProject()).addArchetype(archetype);
+      ApplicationManager.getApplication().invokeLater(() -> updateArchetypesList(archetype));
+    });
   }
 
   @Override

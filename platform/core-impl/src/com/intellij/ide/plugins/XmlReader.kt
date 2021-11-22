@@ -34,14 +34,17 @@ import javax.xml.stream.events.XMLEvent
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 
-fun readModuleDescriptor(inputStream: InputStream,
+/**
+ * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
+ */
+fun readModuleDescriptor(input: InputStream,
                          readContext: ReadModuleContext,
                          pathResolver: PathResolver,
                          dataLoader: DataLoader,
                          includeBase: String?,
                          readInto: RawPluginDescriptor?,
                          locationSource: String?): RawPluginDescriptor {
-  return readModuleDescriptor(reader = createNonCoalescingXmlStreamReader(inputStream, locationSource),
+  return readModuleDescriptor(reader = createNonCoalescingXmlStreamReader(input, locationSource),
                               readContext = readContext,
                               pathResolver = pathResolver,
                               dataLoader = dataLoader,
@@ -691,7 +694,7 @@ private fun readContent(reader: XMLStreamReader2,
     }
     reader.skipElement()
   }
-  descriptor.content = PluginContentDescriptor(Java11Shim.INSTANCE.copyOf(items))
+  descriptor.content = PluginContentDescriptor(Java11Shim.INSTANCE.copyOfCollection(items))
   assert(reader.isEndElement)
 }
 

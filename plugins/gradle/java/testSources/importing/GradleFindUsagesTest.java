@@ -82,8 +82,8 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     createProjectSubFile("buildSrc/build.gradle", "allprojects {\n" +
                                                   "    apply plugin: 'groovy'\n" +
                                                   "    dependencies {\n" +
-                                                  "        compile gradleApi()\n" +
-                                                  "        compile localGroovy()\n" +
+                                                  "        implementation gradleApi()\n" +
+                                                  "        implementation localGroovy()\n" +
                                                   "    }\n" +
                                                   "    repositories {\n" +
                                                   "        mavenCentral()\n" +
@@ -91,7 +91,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
                                                   "\n" +
                                                   "    if (it != rootProject) {\n" +
                                                   "        rootProject.dependencies {\n" +
-                                                  "            runtime project(path)\n" +
+                                                  "            runtimeOnly project(path)\n" +
                                                   "        }\n" +
                                                   "    }\n" +
                                                   "}\n");

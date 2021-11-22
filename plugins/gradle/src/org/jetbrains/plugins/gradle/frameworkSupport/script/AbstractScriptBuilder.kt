@@ -6,12 +6,12 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statem
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
 import java.util.*
 
-abstract class AbstractScriptBuilder : ScriptBuilder {
+abstract class AbstractScriptBuilder(private val indent: Int = 0) : ScriptBuilder {
   private val lines = ArrayList<String>()
 
   override fun generate(root: BlockElement): String {
     lines.clear()
-    root.statements.forEach { add(it, 0, true) }
+    root.statements.forEach { add(it, indent, true) }
     val joiner = StringJoiner("\n")
     lines.forEach(joiner::add)
     return joiner.toString()

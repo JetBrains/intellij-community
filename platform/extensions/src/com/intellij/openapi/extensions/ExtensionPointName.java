@@ -99,7 +99,6 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * to access project-level and module-level extensions
    */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public @NotNull ExtensionPoint<T> getPoint(@Nullable AreaInstance areaInstance) {
     return getPointImpl(areaInstance);
   }

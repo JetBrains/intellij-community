@@ -23,14 +23,14 @@ import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.Templa
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.interceptTemplate
 
 abstract class JsClientTemplate : Template() {
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.js
 
     override fun isApplicableTo(
         reader: Reader,
         module: Module
     ): Boolean = when (module.configurator) {
-        JsBrowserTargetConfigurator -> true
+        JsBrowserTargetConfigurator, MppLibJsBrowserTargetConfigurator -> true
         BrowserJsSinglePlatformModuleConfigurator -> {
             with(reader) {
                 inContextOfModuleConfigurator(module, module.configurator) {
@@ -42,7 +42,7 @@ abstract class JsClientTemplate : Template() {
     }
 
     override fun Reader.createRunConfigurations(module: ModuleIR): List<WizardRunConfiguration> = buildList {
-        if (module.originalModule.kind == ModuleKind.singleplatformJsBrowser) {
+        if (module.originalModule.kind == ModuleKind.singlePlatformJsBrowser) {
             +WizardGradleRunConfiguration(
                 org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle.message("module.template.js.simple.run.configuration.dev"),
                 "browserDevelopmentRun",
@@ -57,7 +57,7 @@ abstract class JsClientTemplate : Template() {
     }
 
     override fun Reader.createInterceptors(module: ModuleIR): List<TemplateInterceptor> = buildList {
-        +interceptTemplate(KtorServerTemplate()) {
+        +interceptTemplate(KtorServerTemplate) {
             applicableIf { buildFileIR ->
                 if (module !is MultiplatformModuleIR) return@applicableIf false
                 val tasks = buildFileIR.irsOfTypeOrNull<GradleConfigureTaskIR>() ?: return@applicableIf true

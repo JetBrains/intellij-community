@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -204,12 +205,32 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   }
 
   @Override
+  public void triggerFeatureUsedByAction(@NotNull String actionId) {
+    triggerFeatureUsed(registry -> registry.findFeatureByAction(actionId));
+  }
+
+  @Override
+  public void triggerFeatureUsedByIntention(@NotNull Class<?> intentionClass) {
+    triggerFeatureUsed(registry -> registry.findFeatureByIntention(intentionClass));
+  }
+
+  @Override
   public void triggerFeatureShown(String featureId) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     if (registry != null) {
       FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
       if (descriptor != null) {
         descriptor.triggerShown();
+      }
+    }
+  }
+
+  private static void triggerFeatureUsed(Function<ProductivityFeaturesRegistry, FeatureDescriptor> featureGetter) {
+    ProductivityFeaturesRegistry featuresRegistry = ProductivityFeaturesRegistry.getInstance();
+    if (featuresRegistry != null) {
+      FeatureDescriptor feature = featureGetter.fun(featuresRegistry);
+      if (feature != null) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(feature.getId());
       }
     }
   }

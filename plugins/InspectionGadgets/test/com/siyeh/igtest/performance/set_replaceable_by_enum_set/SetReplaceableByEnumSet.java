@@ -5,7 +5,7 @@ import java.util.Set;
 
 public class SetReplaceableByEnumSet {
     public static void main(String[] args) {   
-        final HashSet<MyEnum> myEnums = new <warning descr="'HashSet<MyEnum>' replaceable with 'EnumSet'">HashSet<MyEnum></warning>();
+        final HashSet<MyEnum> myEnums = new <warning descr="'HashSet<MyEnum>' can be replaced with 'EnumSet'">HashSet<MyEnum></warning>();
     }
 
     enum MyEnum{

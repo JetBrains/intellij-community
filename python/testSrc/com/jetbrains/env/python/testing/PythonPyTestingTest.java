@@ -614,8 +614,64 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
   @Test
   public void testMultipleCases() {
-    runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(getFrameworkId(), PyTestConfiguration.class));
+    runPythonTest(new CreateConfigurationMultipleCasesTask<>(getFrameworkId(), PyTestConfiguration.class));
+  }
+
+  @Test
+  public void testFileStartsWithDirName() {
+    runPythonTest(new CreateConfigurationTestTask<>(getFrameworkId(), PyTestConfiguration.class) {
+      private static final String FOLDER_NAME = "test";
+
+      @Override
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
+        markFolderAsTestRoot(FOLDER_NAME);
+        super.runTestOn(sdkHome, existingSdk);
+      }
+
+      @Override
+      protected void checkConfiguration(@NotNull final PyTestConfiguration configuration, @NotNull final PsiElement elementToRightClickOn) {
+        assertEquals("Wrong target created", "test_test.TestFoo", configuration.getTarget().getTarget());
+      }
+
+      @NotNull
+      @Override
+      protected List<PsiElement> getPsiElementsToRightClickOn() {
+        var file = (PyFile)myFixture.configureByFile(FOLDER_NAME + "/test_test.py");
+        var clazz = file.findTopLevelClass("TestFoo");
+        assert clazz != null : "No test found";
+        return Collections.singletonList(clazz);
+      }
+    });
+  }
+
+  /**
+   * PY-49932
+   */
+  @Test
+  public void testFilesSameName() {
+    runPythonTest(new CreateConfigurationTestTask<>(getFrameworkId(), PyTestConfiguration.class) {
+      private static final String FOLDER_NAME = "same_names";
+
+      @Override
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
+        markFolderAsTestRoot(FOLDER_NAME);
+        super.runTestOn(sdkHome, existingSdk);
+      }
+
+      @Override
+      protected void checkConfiguration(@NotNull final PyTestConfiguration configuration, @NotNull final PsiElement elementToRightClickOn) {
+        assertEquals("Wrong target fore newly created element", "true.test_something.test_test", configuration.getTarget().getTarget());
+      }
+
+      @NotNull
+      @Override
+      protected List<PsiElement> getPsiElementsToRightClickOn() {
+        var file = (PyFile)myFixture.configureByFile(FOLDER_NAME + "/true/test_something.py");
+        PyFunction test = file.findTopLevelFunction("test_test");
+        assert test != null : "No test_test found";
+        return Collections.singletonList(test);
+      }
+    });
   }
 
   /**
@@ -624,59 +680,58 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    */
   @Test
   public void testConfigurationByContext() {
-    runPythonTest(
-      new CreateConfigurationTestTask<>(getFrameworkId(), PyTestConfiguration.class) {
+    runPythonTest(new CreateConfigurationTestTask<>(getFrameworkId(), PyTestConfiguration.class) {
 
 
-        @NotNull
-        private PyFunction getFunction(@NotNull final String folder) {
-          final PyFile file = (PyFile)myFixture.configureByFile(String.format("configurationByContext/%s/test_foo.py", folder));
-          assert file != null;
-          final PyFunction function = file.findTopLevelFunction("test_test");
-          assert function != null;
-          return function;
+      @NotNull
+      private PyFunction getFunction(@NotNull final String folder) {
+        final PyFile file = (PyFile)myFixture.configureByFile(String.format("configurationByContext/%s/test_foo.py", folder));
+        assert file != null;
+        final PyFunction function = file.findTopLevelFunction("test_test");
+        assert function != null;
+        return function;
+      }
+
+      @Override
+      protected void checkConfiguration(@NotNull final PyTestConfiguration configuration,
+                                        @NotNull final PsiElement elementToRightClickOn) {
+
+
+        PyFunction bar = getFunction("bar");
+        final PyTestConfiguration sameConfig = createConfigurationByElement(bar, PyTestConfiguration.class);
+        assertEquals("Same element must provide same config", sameConfig, configuration);
+
+        PyFunction foo = getFunction("foo");
+        final PyTestConfiguration differentConfig = createConfigurationByElement(foo, PyTestConfiguration.class);
+        //Although targets are same, working dirs are different
+        assert differentConfig.getTarget().equals(configuration.getTarget());
+
+        assertNotEquals("Function from different folder must provide different config", differentConfig, configuration);
+
+        try {
+          // Test "custom symbol" mode: instead of QN we must get custom with additional arguments pointing to file and symbol
+          ((PyTestConfiguration)RunManager.getInstance(getProject())
+            .getConfigurationTemplate(new PyTestFactory(PythonTestConfigurationType.getInstance()))
+            .getConfiguration())
+            .setWorkingDirectory(bar.getContainingFile().getParent().getVirtualFile().getPath());
+          PyTestConfiguration customConfiguration = createConfigurationByElement(foo, PyTestConfiguration.class);
+          assertEquals(PyRunTargetVariant.CUSTOM, customConfiguration.getTarget().getTargetType());
+          assertEquals(foo.getContainingFile().getVirtualFile().getPath() + "::test_test", customConfiguration.getAdditionalArguments());
         }
-
-        @Override
-        protected void checkConfiguration(@NotNull final PyTestConfiguration configuration,
-                                          @NotNull final PsiElement elementToRightClickOn) {
-
-
-          PyFunction bar = getFunction("bar");
-          final PyTestConfiguration sameConfig = createConfigurationByElement(bar, PyTestConfiguration.class);
-          assertEquals("Same element must provide same config", sameConfig, configuration);
-
-          PyFunction foo = getFunction("foo");
-          final PyTestConfiguration differentConfig = createConfigurationByElement(foo, PyTestConfiguration.class);
-          //Although targets are same, working dirs are different
-          assert differentConfig.getTarget().equals(configuration.getTarget());
-
-          assertNotEquals("Function from different folder must provide different config", differentConfig, configuration);
-
-          try {
-            // Test "custom symbol" mode: instead of QN we must get custom with additional arguments pointing to file and symbol
-            ((PyTestConfiguration)RunManager.getInstance(getProject())
-              .getConfigurationTemplate(new PyTestFactory(PythonTestConfigurationType.getInstance()))
-              .getConfiguration())
-              .setWorkingDirectory(bar.getContainingFile().getParent().getVirtualFile().getPath());
-            PyTestConfiguration customConfiguration = createConfigurationByElement(foo, PyTestConfiguration.class);
-            assertEquals(PyRunTargetVariant.CUSTOM, customConfiguration.getTarget().getTargetType());
-            assertEquals(foo.getContainingFile().getVirtualFile().getPath() + "::test_test", customConfiguration.getAdditionalArguments());
-          }
-          finally {
-            ((PyTestConfiguration)RunManager.getInstance(getProject())
-              .getConfigurationTemplate(new PyTestFactory(PythonTestConfigurationType.getInstance()))
-              .getConfiguration())
-              .setWorkingDirectory(null);
-          }
+        finally {
+          ((PyTestConfiguration)RunManager.getInstance(getProject())
+            .getConfigurationTemplate(new PyTestFactory(PythonTestConfigurationType.getInstance()))
+            .getConfiguration())
+            .setWorkingDirectory(null);
         }
+      }
 
-        @NotNull
-        @Override
-        protected List<PsiElement> getPsiElementsToRightClickOn() {
-          return Collections.singletonList(getFunction("bar"));
-        }
-      });
+      @NotNull
+      @Override
+      protected List<PsiElement> getPsiElementsToRightClickOn() {
+        return Collections.singletonList(getFunction("bar"));
+      }
+    });
   }
 
   /**

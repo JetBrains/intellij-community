@@ -32,7 +32,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import kotlin.Unit;
 import one.util.streamex.StreamEx;
@@ -226,7 +226,7 @@ public final class PushLog extends JPanel implements DataProvider {
     collapseAll.registerCustomShortcutSet(ActionManager.getInstance().getAction(ACTION_COLLAPSE_ALL).getShortcutSet(), myTree);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    PopupHandler.installPopupMenu(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
+    PopupHandler.installPopupMenu(myTree, VcsLogActionIds.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
     myChangesBrowser = new SimpleChangesBrowser(project, false, false) {
       @NotNull

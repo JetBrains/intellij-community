@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
+import com.intellij.ide.impl.FreezingDataContext;
 import com.intellij.ide.impl.dataRules.FileEditorRule;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.*;
@@ -37,7 +38,7 @@ import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
 /**
  * @author gregsh
  */
-class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier {
+class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier, FreezingDataContext {
 
   private static int ourPrevMapEventCount;
   private static final Map<Component, Map<String, Object>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
@@ -97,7 +98,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return this instanceof InjectedDataContext ? this : new InjectedDataContext(myCachedData, myUserData, myMissedKeysIfFrozen);
   }
   
-  boolean isFrozenDataContext() {
+  @Override
+  public boolean isFrozenDataContext() {
     return myMissedKeysIfFrozen != null;
   }
 
@@ -148,10 +150,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
 
     ArrayList<Object> slowProviders = new ArrayList<>();
-    cachedData.put(PlatformDataKeys.CONTEXT_COMPONENT.getName(), component);
+    cachedData.put(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName(), component);
     cachedData.put(PlatformDataKeys.MODALITY_STATE.getName(), ModalityState.stateForComponent(component));
-    cachedData.put(PlatformDataKeys.IS_MODAL_CONTEXT.getName(), IdeKeyEventDispatcher.isModalContext(component));
-    cachedData.put(PlatformDataKeys.SLOW_DATA_PROVIDERS.getName(), slowProviders);
+    cachedData.put(PlatformCoreDataKeys.IS_MODAL_CONTEXT.getName(), IdeKeyEventDispatcher.isModalContext(component));
+    cachedData.put(PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getName(), slowProviders);
 
     DataKey<?>[] keys = DataKey.allKeys();
     BitSet computed = new BitSet(keys.length);
@@ -160,19 +162,19 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       if (dataProvider == null) continue;
       for (int i = 0; i < keys.length; i++) {
         DataKey<?> key = keys[i];
-        if (key == PlatformDataKeys.IS_MODAL_CONTEXT ||
-            key == PlatformDataKeys.CONTEXT_COMPONENT ||
+        if (key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+            key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
             key == PlatformDataKeys.MODALITY_STATE) {
           continue;
         }
         boolean alreadyComputed = computed.get(i);
-        Object data = !alreadyComputed || key == PlatformDataKeys.SLOW_DATA_PROVIDERS ?
+        Object data = !alreadyComputed || key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS ?
                       dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key)) : null;
         if (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR) data = validateEditor((Editor)data, component);
         if (data == null) continue;
 
         computed.set(i, true);
-        if (key == PlatformDataKeys.SLOW_DATA_PROVIDERS) {
+        if (key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS) {
           ContainerUtil.addAll(slowProviders, (Iterable<?>)data);
           continue;
         }
@@ -182,10 +184,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     for (int i = 0; i < keys.length; i++) {
       DataKey<?> key = keys[i];
       if (computed.get(i) ||
-          key == PlatformDataKeys.IS_MODAL_CONTEXT ||
-          key == PlatformDataKeys.CONTEXT_COMPONENT ||
+          key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+          key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
           key == PlatformDataKeys.MODALITY_STATE ||
-          key == PlatformDataKeys.SLOW_DATA_PROVIDERS) {
+          key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS) {
         continue;
       }
       cachedData.put(key.getName(), NullResult.Initial);
@@ -202,14 +204,14 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static final GetDataRule ourFileEditorRule = new FileEditorRule();
 
   private static @Nullable GetDataRule getFastDataRule(@NotNull DataKey<?> key) {
-    return key == PlatformDataKeys.FILE_EDITOR ? ourFileEditorRule : null;
+    return key == PlatformCoreDataKeys.FILE_EDITOR ? ourFileEditorRule : null;
   }
 
   @Override
   public String toString() {
     return (this instanceof InjectedDataContext ? "injected:" : "") +
            (myMissedKeysIfFrozen != null ? "frozen:" : "") +
-           "component=" + getData(PlatformDataKeys.CONTEXT_COMPONENT);
+           "component=" + getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
   }
 
   @Override

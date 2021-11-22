@@ -1,4 +1,4 @@
-// LANGUAGE_VERSION: 1.4
+// API_VERSION: 1.4
 // WITH_RUNTIME
 
 data class OrderItem(val name: String, val price: Double, val count: Int)

@@ -29,7 +29,8 @@ import java.util.regex.Pattern
 
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
-internal fun targetPresentation(itemPresentation: ItemPresentation): TargetPresentation {
+@ApiStatus.Internal
+fun targetPresentation(itemPresentation: ItemPresentation): TargetPresentation {
   return TargetPresentation
     .builder(itemPresentation.presentableText ?: "")
     .icon(itemPresentation.getIcon(false))

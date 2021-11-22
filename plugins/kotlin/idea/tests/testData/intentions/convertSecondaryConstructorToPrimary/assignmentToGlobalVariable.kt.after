@@ -1,0 +1,9 @@
+var state: String = "Fail"
+
+class A(x: String) {
+    val p: String = x
+
+    init {
+        state = x
+    }
+}

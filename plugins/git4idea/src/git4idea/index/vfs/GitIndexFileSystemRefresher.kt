@@ -9,6 +9,9 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -22,8 +25,11 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.encoding.EncodingManager
+import com.intellij.openapi.vfs.encoding.EncodingManagerListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -76,6 +82,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
         }
       }
     })
+    connection.subscribe(EncodingManagerListener.ENCODING_MANAGER_CHANGES, MyEncodingManagerListener())
   }
 
   fun getFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile? {
@@ -302,4 +309,31 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private data class Key(val root: VirtualFile, val filePath: FilePath)
+
+  /**
+   * See com.intellij.lang.properties.Native2AsciiListener
+   */
+  private inner class MyEncodingManagerListener : EncodingManagerListener {
+    override fun propertyChanged(eventDocument: Document?, propertyName: String, oldValue: Any?, newValue: Any?) {
+      if (EncodingManager.PROP_NATIVE2ASCII_SWITCH == propertyName ||
+          EncodingManager.PROP_PROPERTIES_FILES_ENCODING == propertyName) {
+        ApplicationManager.getApplication().invokeLater {
+          ApplicationManager.getApplication().runWriteAction {
+            reloadCachedPropertiesFiles()
+          }
+        }
+      }
+    }
+
+    private fun reloadCachedPropertiesFiles() {
+      val virtualFiles = cache.asMap().values.filter { it.fileType == StdFileTypes.PROPERTIES }
+      for (file in virtualFiles) {
+        val document = FileDocumentManager.getInstance().getCachedDocument(file)
+        if (document != null) FileDocumentManager.getInstance().saveDocument(document)
+
+        file.setCharset(null)
+      }
+      FileDocumentManager.getInstance().reloadFiles(*VfsUtil.toVirtualFileArray(virtualFiles))
+    }
+  }
 }

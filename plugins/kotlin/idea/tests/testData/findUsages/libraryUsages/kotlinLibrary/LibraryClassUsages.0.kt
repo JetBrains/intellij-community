@@ -7,11 +7,11 @@ package usages
 
 import library.*
 
-class X: A {
-    constructor(n: Int): super(n)
+class X : A {
+    constructor(n: Int) : super(n)
 }
 
-class Y(): A(1)
+class Y() : A(1)
 
 fun test() {
     val a: <caret>A = A()

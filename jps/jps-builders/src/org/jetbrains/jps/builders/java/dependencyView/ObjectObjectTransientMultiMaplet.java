@@ -1,21 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectObjectProcedure;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author Eugene Zhuravlev
  */
 public final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
-  private final THashMap<K, Collection<V>> myMap;
-  private final BuilderCollectionFactory<V> myCollectionFactory;
+  private final Map<K, Collection<V>> myMap;
+  private final Supplier<? extends Collection<V>> myCollectionFactory;
 
-  public ObjectObjectTransientMultiMaplet(TObjectHashingStrategy<K> hashingStrategy, BuilderCollectionFactory<V> collectionFactory) {
-    myMap = new THashMap<>(hashingStrategy);
+  public ObjectObjectTransientMultiMaplet(HashingStrategy<K> hashingStrategy, Supplier<? extends Collection<V>> collectionFactory) {
+    myMap = CollectionFactory.createCustomHashingStrategyMap(hashingStrategy);
     myCollectionFactory = collectionFactory;
   }
 
@@ -31,12 +34,9 @@ public final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> ext
 
   @Override
   public void putAll(ObjectObjectMultiMaplet<K, V> m) {
-    m.forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(K key, Collection<V> value) {
-        put(key, value);
-        return true;
-      }
+    m.forEachEntry((key, value) -> {
+      put(key, value);
+      return true;
     });
   }
 
@@ -65,7 +65,7 @@ public final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> ext
   public void put(final K key, final V value) {
     final Collection<V> collection = myMap.get(key);
     if (collection == null) {
-      final Collection<V> x = myCollectionFactory.create();
+      final Collection<V> x = myCollectionFactory.get();
       x.add(value);
       myMap.put(key, x);
     }
@@ -105,18 +105,17 @@ public final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> ext
 
   @Override
   public void replaceAll(ObjectObjectMultiMaplet<K, V> m) {
-    m.forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(K key, Collection<V> value) {
-        replace(key, value);
-        return true;
-      }
+    m.forEachEntry((key, value) -> {
+      replace(key, value);
+      return true;
     });
   }
 
   @Override
-  public void forEachEntry(TObjectObjectProcedure<K, Collection<V>> procedure) {
-    myMap.forEachEntry(procedure);
+  public void forEachEntry(@NotNull PairProcessor<? super K, ? super Collection<V>> procedure) {
+    for (Map.Entry<K, Collection<V>> entry : myMap.entrySet()) {
+      if (!procedure.process(entry.getKey(), entry.getValue())) break;
+    }
   }
 
   @Override

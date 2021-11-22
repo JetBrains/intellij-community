@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.WhatsNewAction;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -27,7 +28,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,11 +92,11 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     myWriteProtected = false;
     myLicenseInfo = getLicensingInfo(myLoadedResult);
     myTestPatch = patchFile;
-    myWhatsNewAction = project == null ? null : new AbstractAction("[T] What's New") {
+    String whatsNewUrl = myLoadedResult.getNewBuild().getBlogPost();
+    myWhatsNewAction = project == null || whatsNewUrl == null ? null : new AbstractAction("[T] What's New") {
       @Override
       public void actionPerformed(ActionEvent e) {
-        BuildInfo newBuild = myLoadedResult.getNewBuild();
-        WhatsNewAction.openWhatsNewFile(project, newBuild.getBlogPost(), newBuild.getMessage());
+        WhatsNewAction.openWhatsNewPage(project, whatsNewUrl);
         close(OK_EXIT_CODE);
       }
     };
@@ -125,7 +125,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
 
     Date expiration = la.getLicenseExpirationDate();
     if (expiration != null) {
-      return pair(IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration)), Boolean.FALSE);
+      return pair(IdeBundle.message("updates.interim.build", NlsMessages.formatDateLong(expiration)), Boolean.FALSE);
     }
     else {
       return null;

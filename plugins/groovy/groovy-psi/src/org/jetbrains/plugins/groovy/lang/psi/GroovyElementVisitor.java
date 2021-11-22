@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import org.jetbrains.annotations.NotNull;
@@ -302,6 +302,10 @@ public abstract class GroovyElementVisitor {
 
   public void visitImplementsClause(@NotNull GrImplementsClause implementsClause) {
     visitElement(implementsClause);
+  }
+
+  public void visitPermitsClause(@NotNull GrPermitsClause permitsClause) {
+    visitElement(permitsClause);
   }
 
   public void visitTypeArgumentList(@NotNull GrTypeArgumentList typeArgumentList) {

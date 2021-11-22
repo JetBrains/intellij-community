@@ -342,8 +342,11 @@ public final class PluginDownloader {
     if (myOldFile != null) {
       IdeaPluginDescriptorImpl installedPlugin = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(myDescriptor.getPluginId());
       // yes, if no installed plugin by id, it means that something goes wrong, so do not try to install and load
-      if (installedPlugin == null || !DynamicPlugins.unloadPlugin(descriptor,
-                                       new DynamicPlugins.UnloadPluginOptions().withDisable(false).withUpdate(true).withWaitForClassloaderUnload(true))) {
+      if (installedPlugin == null || !DynamicPlugins.INSTANCE.unloadPlugin(descriptor,
+                                                                           new DynamicPlugins.UnloadPluginOptions()
+                                                                             .withDisable(false)
+                                                                             .withUpdate(true)
+                                                                             .withWaitForClassloaderUnload(true))) {
         return false;
       }
     }

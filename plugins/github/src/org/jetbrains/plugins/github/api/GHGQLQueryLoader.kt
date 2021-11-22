@@ -2,19 +2,16 @@
 package org.jetbrains.plugins.github.api
 
 import com.google.common.annotations.VisibleForTesting
-import com.google.common.cache.CacheBuilder
 import com.intellij.collaboration.api.graphql.CachingGraphQLQueryLoader
 import com.intellij.util.io.isDirectory
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 object GHGQLQueryLoader: CachingGraphQLQueryLoader() {
   @VisibleForTesting
   fun findAllQueries(): List<String> {
-    val url = GHGQLQueryLoader::class.java.classLoader.getResource("graphql/query")
+    val url = GHGQLQueryLoader::class.java.classLoader.getResource("graphql/query")!!
     val directory = Paths.get(url.toURI())
     return Files.walk(directory)
       .filter { !it.isDirectory() }

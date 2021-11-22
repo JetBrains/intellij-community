@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.grazie.async
 
-import com.intellij.grazie.speller.Speller
+import ai.grazie.spell.Speller
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.spellchecker.engine.SpellCheckerEngineListener
 
@@ -16,19 +17,25 @@ internal class GrazieAsyncSpeller(project: Project, private val create: () -> Sp
 
   init {
     AsyncUtils.run(project) {
-      if (!project.isDisposed) {
-        speller = create()
-        project.messageBus.syncPublisher(SpellCheckerEngineListener.TOPIC).onSpellerInitialized()
+      speller = create()
+
+      ReadAction.run<Throwable> {
+        if (!project.isDisposed) {
+          project.messageBus.syncPublisher(SpellCheckerEngineListener.TOPIC).onSpellerInitialized()
+        }
       }
     }
   }
+
+  val isCreated: Boolean
+    get() = speller != null
 
   override fun isAlien(word: String): Boolean {
     return speller?.isAlien(word) ?: true
   }
 
-  override fun isMisspelled(word: String): Boolean {
-    return speller?.isMisspelled(word) ?: false
+  override fun isMisspelled(word: String, caseSensitive: Boolean): Boolean {
+    return speller?.isMisspelled(word, caseSensitive) ?: false
   }
 
   override fun suggestAndRank(word: String, max: Int): Map<String, Double> {

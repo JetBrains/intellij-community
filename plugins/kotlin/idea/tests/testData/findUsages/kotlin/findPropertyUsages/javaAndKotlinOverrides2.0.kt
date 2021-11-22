@@ -2,7 +2,7 @@
 // OPTIONS: overrides
 open class A<T>(open var <caret>foo: T)
 
-open class B: A<String>("") {
+open class B : A<String>("") {
     override var foo: String
         get() {
             println("get")
@@ -19,8 +19,8 @@ open class B: A<String>("") {
     }
 }
 
-open class D: A<String>("") {
+open class D : A<String>("") {
     override var foo: String = ""
 }
 
-open class E<T>(override var foo: T): A<T>(foo)
+open class E<T>(override var foo: T) : A<T>(foo)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
@@ -7,6 +7,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.LogEventAction
+import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledFuture
@@ -19,14 +22,15 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val bucket: String,
                                      private val recorderVersion: String,
                                      private val writer: StatisticsEventLogWriter,
-                                     private val systemEventIdProvider: StatisticsSystemEventIdProvider) : StatisticsEventLogger, Disposable {
+                                     private val systemEventIdProvider: StatisticsSystemEventIdProvider,
+                                     private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet())
+) : StatisticsEventLogger, Disposable {
   protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId", 1)
 
   private var lastEvent: FusEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
   private var eventMergeTimeoutMs: Long
-  private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time"))
   private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
 
   init {
@@ -45,10 +49,13 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       CompletableFuture.runAsync(Runnable {
         val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
         if (!validator.isGroupAllowed(group)) return@Runnable
-        val event = validator.validate(group.id, group.version.toString(), build, sessionId, bucket, eventTime, recorderVersion, eventId,
-                                       data, isState)
-        if (event != null) {
-          log(event, System.currentTimeMillis(), eventId, data)
+        val event = LogEvent(sessionId, build, bucket, eventTime,
+          LogEventGroup(group.id, group.version.toString()),
+          recorderVersion,
+          LogEventAction(eventId, isState, HashMap(data))).escape()
+        val validatedEvent = validator.validateEvent(event)
+        if (validatedEvent != null) {
+          log(validatedEvent, System.currentTimeMillis(), eventId, data)
         }
       }, logExecutor)
     }
@@ -81,15 +88,15 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     lastEvent?.let {
       val event = it.validatedEvent.event
       if (event.isEventGroup()) {
-        event.addData("last", lastEventTime)
+        event.data["last"] = lastEventTime
       }
-      event.addData("created", lastEventCreatedTime)
+      event.data["created"] = lastEventCreatedTime
       var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
-      event.addData("system_event_id", systemEventId)
+      event.data["system_event_id"] = systemEventId
       systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
 
       if (headless) {
-        event.addData("system_headless", true)
+        event.data["system_headless"] = true
       }
       writer.log(it.validatedEvent)
       ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)

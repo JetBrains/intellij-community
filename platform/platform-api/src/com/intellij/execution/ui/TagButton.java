@@ -27,10 +27,11 @@ import java.util.function.Function;
 
 public class TagButton extends JBLayeredPane implements Disposable {
   protected final JButton myButton;
-  private final InplaceButton myCloseButton;
+  protected static final int ourInset = JBUI.scale(3);
   private final @Nls String myText;
 
   public static final Function<JComponent, JComponent> COMPONENT_VALIDATOR_TAG_PROVIDER = e -> ((TagButton)e).myButton;
+  protected final InplaceButton myCloseButton;
 
   public TagButton(@Nls String text, Consumer<AnActionEvent> action) {
     myText = text;
@@ -120,12 +121,11 @@ public class TagButton extends JBLayeredPane implements Disposable {
     myButton.setMargin(JBUI.emptyInsets());
     Dimension size = myButton.getPreferredSize();
     Dimension iconSize = myCloseButton.getPreferredSize();
-    int inset = JBUI.scale(3);
-    Dimension tagSize = new Dimension(size.width + iconSize.width - inset * 2, size.height);
+    Dimension tagSize = new Dimension(size.width + iconSize.width - ourInset * 2, size.height);
     setPreferredSize(tagSize);
     myButton.setBounds(new Rectangle(tagSize));
     myButton.setMargin(JBUI.insetsRight(iconSize.width));
-    Point p = new Point(tagSize.width - iconSize.width - inset * 3,
+    Point p = new Point(tagSize.width - iconSize.width - ourInset * 3,
                         (tagSize.height - iconSize.height) / 2 + JBUI.scale(1));
     myCloseButton.setBounds(new Rectangle(p, iconSize));
   }

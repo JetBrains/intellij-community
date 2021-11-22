@@ -6,9 +6,8 @@ This guide explains the contribution process established in the Kotlin IntelliJ 
 Please read the document carefully before submitting requests.
 
 Here are links to other related projects you might want to contribute to:
-
+- Kotlin IDE plugin for platforms prior to 2021.2: [JetBrains/intellij-kotlin](https://github.com/JetBrains/intellij-kotlin)
 - Kotlin compiler and runtime libraries: [JetBrains/kotlin](https://github.com/JetBrains/kotlin)
-- IntelliJ IDEA Community: [JetBrains/intellij-community](https://github.com/JetBrains/intellij-community)
 
 ## Contents
 
@@ -73,6 +72,7 @@ It's essential to know
 about [PSI](https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/psi.html), the source code model used in IntelliJ IDEA.
 To inspect PSI, you can use either the built-in [Psi Viewer](https://www.jetbrains.com/help/idea/psi-viewer.html) available 
 in the "internal" mode, or an external plugin called [PsiViewer](https://plugins.jetbrains.com/plugin/227-psiviewer).
+For debugging purposes consider using `PsiTreeUtilsKt.printTree` function.
 
 ### 4.2. Kotlin-specific information
 

@@ -30,7 +30,7 @@ public class ConvertToBasicLatinTest extends LightJavaCodeInsightFixtureTestCase
 
   private void doTest() {
     myFixture.configureByFiles(getTestName(false) + ".java");
-    final IntentionAction singleIntention = myFixture.findSingleIntention(JavaI18nBundle.message("inspection.convert.to.basic.latin"));
+    final IntentionAction singleIntention = myFixture.findSingleIntention(JavaI18nBundle.message("inspection.non.basic.latin.character.quickfix"));
     myFixture.launchAction(singleIntention);
     myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);
   }

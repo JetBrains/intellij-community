@@ -24,7 +24,7 @@ public class JBInsets extends Insets {
     super(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right));
   }
 
-  private JBInsets(int topBottom, int leftRight, @SuppressWarnings("unused") boolean _scaled) {
+  private JBInsets(int topBottom, int leftRight) {
     super(topBottom, leftRight, topBottom, leftRight);
   }
 
@@ -40,7 +40,7 @@ public class JBInsets extends Insets {
   public static JBInsets create(int topBottom, int leftRight) {
     int topBottomScaled = JBUIScale.scale(topBottom);
     int leftRightScaled = JBUIScale.scale(leftRight);
-    return new JBInsets(topBottomScaled, leftRightScaled, true);
+    return new JBInsets(topBottomScaled, leftRightScaled);
   }
 
   @NotNull

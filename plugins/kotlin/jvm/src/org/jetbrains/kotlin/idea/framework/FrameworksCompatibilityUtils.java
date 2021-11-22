@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.KotlinJvmBundle;
 
@@ -27,7 +28,7 @@ public class FrameworksCompatibilityUtils {
             @NotNull Set<? extends LibraryKind> frameworkLibraryKinds,
             @NotNull String presentableName
     ) {
-        List<OrderEntry> existingEntries = new ArrayList<OrderEntry>();
+        List<OrderEntry> existingEntries = new ArrayList<>();
 
         for (OrderEntry entry : rootModel.getOrderEntries()) {
             if (!(entry instanceof LibraryOrderEntry)) continue;
@@ -48,10 +49,14 @@ public class FrameworksCompatibilityUtils {
         );
     }
 
-    private static void removeWithConfirm(ModifiableRootModel rootModel, List<OrderEntry> orderEntries, String message, String title) {
+    private static void removeWithConfirm(
+            ModifiableRootModel rootModel,
+            List<OrderEntry> orderEntries,
+            @NlsContexts.DialogMessage String message,
+            @NlsContexts.DialogTitle String title
+    ) {
         if (!orderEntries.isEmpty()) {
             int result = Messages.showYesNoDialog(message, title, Messages.getWarningIcon());
-
 
             if (result == 0) {
                 for (OrderEntry entry : orderEntries) {

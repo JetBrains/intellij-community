@@ -26,7 +26,11 @@ class PerformanceStressTest : UsefulTestCase() {
         testRootDisposable.registerLoadingErrorsHeadlessNotifier()
     }
 
-    fun testFindUsages() {
+    fun testFindUsages() = doFindUsagesTest(false)
+
+    fun testFindUsagesWithCompilerReferenceIndex() = doFindUsagesTest(true)
+
+    private fun doFindUsagesTest(withCompilerIndex: Boolean) {
         // 1. Create 2 classes with the same name, but in a different packages
         // 2. Create 50 packages with a class that uses 50 times one of class from p.1
         // 3. Use one of the classes from p.1 in the only one class at p.2
@@ -36,7 +40,7 @@ class PerformanceStressTest : UsefulTestCase() {
         val numberOfFuns = 50
         val numberOfPackagesWithCandidates = 50
 
-        val name = "findUsages${numberOfFuns}_$numberOfPackagesWithCandidates"
+        val name = "findUsages${numberOfFuns}_$numberOfPackagesWithCandidates" + if (withCompilerIndex) "_with_cri" else ""
         suite(
             suiteName = name,
             config = PerformanceSuite.StatsScopeConfig(name = name)
@@ -48,7 +52,6 @@ class PerformanceStressTest : UsefulTestCase() {
 
                     descriptor {
                         name(name)
-                        buildGradle(IDEA_TEST_DATA_DIR.resolve("perfTest/simpleTemplate/"))
 
                         for (index in 1..2) {
                             kotlinFile("DataClass") {
@@ -84,8 +87,12 @@ class PerformanceStressTest : UsefulTestCase() {
                     }
 
                     profile(DefaultProfile)
+                    if (withCompilerIndex) {
+                        withCompiler()
+                        rebuildProject()
+                    }
 
-                    fixture("src/main/java/pkg1/DataClass.kt").use { fixture ->
+                    fixture("src/pkg1/DataClass.kt").use { fixture ->
                         val typingConfig = PerformanceSuite.CursorConfig(fixture, marker = "DataClass")
 
                         with(config) {

@@ -4,6 +4,7 @@ package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.Nls;
 
 public final class ViewSupertypesHierarchyAction extends ChangeViewTypeActionBase {
   public ViewSupertypesHierarchyAction() {
@@ -12,7 +13,7 @@ public final class ViewSupertypesHierarchyAction extends ChangeViewTypeActionBas
   }
 
   @Override
-  protected String getTypeName() {
+  protected @Nls String getTypeName() {
     return TypeHierarchyBrowserBase.getSupertypesHierarchyType();
   }
 }

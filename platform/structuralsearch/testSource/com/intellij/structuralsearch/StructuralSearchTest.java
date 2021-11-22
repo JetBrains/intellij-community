@@ -1915,18 +1915,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "  char b;\n" +
                 "  int c; // comment2\n" +
                 "}";
-    assertEquals("Find field by dcl with comment",2,findMatchesCount(s1, "'_Type '_Variable = '_Value?; //'Comment"));
+    assertEquals("Find field by dcl with comment", 2, findMatchesCount(s1, "'_Type '_Variable = '_Value?; //'Comment"));
 
-    String s1_2 = "class A {\n" +
+    String s2 = "class A {\n" +
                   "  // comment\n" +
                   "  int a;\n" +
                   "  char b;\n" +
                   "  // comment2\n" +
                   "  int c;\n" +
                   "}";
-    String s2_2 = "//'Comment\n" +
-                  "'_Type '_Variable = '_Value?;";
-    assertEquals("Find field by dcl with comment 2",2,findMatchesCount(s1_2,s2_2));
+    assertEquals("Find field by dcl with comment 2", 2, findMatchesCount(s2, "//'Comment\n'_Type '_Variable = '_Value?;"));
+
+    String s3 = "// comment\n" +
+                "class A {}" +
+                "class B {}" +
+                "class C {}";
+    assertEquals("Find class with comment", 1, findMatchesCount(s3, "//'_comment\nclass '_X {}"));
   }
 
   public void testSearchingEmptyModifiers() {
@@ -2631,6 +2635,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(source, pattern3);
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "@SuppressWarnings(\\\"NONE\\\") @Deprecated");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
   }
 
   public void testInvalidPatternWarnings() {
@@ -2681,12 +2690,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final CompiledPattern pattern = compilePattern("class A extends '_B* {}", true);
     assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints(options, pattern));
     assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options, compilePattern("'_a?.'_b?", true)));
-    //assertNull(checkApplicableConstraints(options, compilePattern("case '_a* :", true)));
+    assertNull(checkApplicableConstraints(options, compilePattern("case '_a* :", true)));
     assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options, compilePattern("int '_a:* ;", true)));
     assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options, compilePattern("void '_a:* ();", true)));
     assertEquals("MINIMUM ZERO not applicable for st", checkApplicableConstraints(options, compilePattern("if (true) '_st{0,0};", true)));
     assertEquals("MAXIMUM UNLIMITED not applicable for st", checkApplicableConstraints(options, compilePattern("while (true) '_st+;", true)));
     assertNull(checkApplicableConstraints(options, compilePattern("class A { '_body* }", false)));
+    assertEquals("MINIMUM ZERO not applicable for var", checkApplicableConstraints(options, compilePattern("'_a instanceof ('_Type '_var{0,0})", true)));
   }
 
   private CompiledPattern compilePattern(String criteria, boolean checkForErrors) {
@@ -3352,10 +3362,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                                                              "  case '_c :" +
                                                                              "    '_st*;" +
                                                                              "}"));
-    //assertEquals("should find switch with 2 cases", 2, findMatchesCount(in, "switch ('_a) {" +
-    //                                                                        "  case '_c1 :" +
-    //                                                                        "  case '_c2? :" +
-    //                                                                        "}"));
+    assertEquals("should find switch with 2 cases", 2, findMatchesCount(in, "switch ('_a) {" +
+                                                                            "  case '_c1 :" +
+                                                                            "  case '_c2? :" +
+                                                                            "}"));
     assertEquals("should find swith with one case and default", 2, findMatchesCount(in, "switch ('_a) {" +
                                                                                         "  case '_c :" +
                                                                                         "    '_st1*;" +
@@ -3364,7 +3374,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                                                                         "  }"));
     assertEquals("should find defaults", 3, findMatchesCount(in, "default:"));
     assertEquals("should find cases", 5, findMatchesCount(in, "case '_a :"));
-    //assertEquals("should find cases & defaults", 8, findMatchesCount(in, "case '_a? :"));
+    assertEquals("should find cases & defaults", 8, findMatchesCount(in, "case '_a? :"));
     assertEquals("should match switch containing 2 statements", 3, findMatchesCount(in, "switch ('_x) {" +
                                                                                         "  '_st{2,2};" +
                                                                                         "}"));
@@ -3505,7 +3515,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}";
     assertEquals("find instanceof", 3, findMatchesCount(in, "'_operand instanceof '_Type"));
     assertEquals("find pattern matching instanceof", 2, findMatchesCount(in, "'_operand instanceof '_Type '_var"));
-    // TODO get back
-    //assertEquals("find plain instanceof", 1, findMatchesCount(in, "'_operand instanceof '_Type '_var{0,0}"));
+    assertEquals("find plain instanceof", 1, findMatchesCount(in, "'_operand instanceof '_Type '_var{0,0}"));
+    String in2 = "class X {" +
+                 "  void x(Object o) {" +
+                 "    if (0 instanceof String s) {}" +
+                 "    if (0 instanceof (String s)) {}" +
+                 "    if (0 instanceof (String s)) {}" +
+                 "  }" +
+                 "}";
+    assertEquals("find parenthesized test pattern", 2, findMatchesCount(in2, "'_operand instanceof ('_Type '_var)"));
+    assertEquals("find all pattern variables", 3, findMatchesCount(in2, "'_operand instanceof '_Type '_var"));
   }
 }

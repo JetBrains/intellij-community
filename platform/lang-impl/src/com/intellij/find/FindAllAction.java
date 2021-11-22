@@ -26,22 +26,21 @@ public final class FindAllAction extends AnAction implements ShortcutProvider, D
   @Override
   public void update(final @NotNull AnActionEvent e) {
     Project project = e.getProject();
-    Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    Editor editor = search != null ? search.getEditor() : null;
 
     e.getPresentation().setIcon(getIcon(project));
-    e.getPresentation().setEnabled(editor != null && project != null && search != null &&
+    e.getPresentation().setEnabled(editor != null && project != null &&
                                    !project.isDisposed() && search.hasMatches() &&
-                                   PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
+                      PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
   }
 
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
-    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
     if (project.isDisposed()) return;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(search.getEditor().getDocument());
     if (file == null) return;
 
     FindModel oldModel = FindManager.getInstance(project).getFindInFileModel();

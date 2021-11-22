@@ -314,6 +314,12 @@ public class HyperlinkLabel extends HighlightableComponent {
     return accessibleContext;
   }
 
+  @Override
+  public void removeNotify() {
+    myMouseHover = false;
+    super.removeNotify();
+  }
+
   /**
    * Hyperlink accessibility: "HYPERLINK" role and expose a "click" action.
    * @see AbstractButton.AccessibleAbstractButton

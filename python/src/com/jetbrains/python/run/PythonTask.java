@@ -32,7 +32,6 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -213,11 +212,6 @@ public class PythonTask {
 
     List<String> pythonPath = setupPythonPath();
     PythonCommandLineState.initPythonPath(cmd, true, pythonPath, homePath);
-
-    BuildoutFacet facet = BuildoutFacet.getInstance(myModule);
-    if (facet != null) {
-      facet.patchCommandLineForBuildout(cmd);
-    }
 
     return cmd;
   }

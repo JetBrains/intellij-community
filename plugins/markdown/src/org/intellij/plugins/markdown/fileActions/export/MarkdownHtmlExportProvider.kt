@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.fileActions.export
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.TextComponentAccessors
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.RecentsManager
@@ -39,6 +39,8 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     get() = format
 
   override fun exportFile(project: Project, mdFile: VirtualFile, outputFile: String) {
+    saveSettings(project)
+
     val preview = MarkdownFileEditorUtils.findMarkdownPreviewEditor(project, mdFile, true) ?: return
     val htmlPanel = preview.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER) ?: return
 
@@ -97,17 +99,14 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
         childComponent.history = resDirRecent
       }
 
-      val savedSettings = service<MarkdownHtmlExportSettings>().getResourceSavingSettings()
-      childComponent.text = savedSettings.resourceDir.ifEmpty {
-        FileUtil.join(suggestedTargetFile.parent, suggestedTargetFile.nameWithoutExtension, "images")
-      }
+      childComponent.text = FileUtil.join(suggestedTargetFile.parent, suggestedTargetFile.nameWithoutExtension)
 
       addBrowseFolderListener(
         MarkdownBundle.message("markdown.import.export.dialog.target.directory"),
         MarkdownBundle.message("markdown.import.export.dialog.target.directory.description"),
         project,
         FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-        TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
+        TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
       )
     }
 

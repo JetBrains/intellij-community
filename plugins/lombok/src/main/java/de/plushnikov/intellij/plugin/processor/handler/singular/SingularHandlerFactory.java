@@ -1,56 +1,39 @@
 package de.plushnikov.intellij.plugin.processor.handler.singular;
 
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.union;
+import static java.util.Set.of;
 
 public final class SingularHandlerFactory {
 
-  private static final String[] JAVA_MAPS = new String[]{CommonClassNames.JAVA_UTIL_MAP, SingularCollectionClassNames.JAVA_UTIL_SORTED_MAP, SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_MAP,};
-  private static final String[] JAVA_SETS = new String[]{CommonClassNames.JAVA_UTIL_SET, SingularCollectionClassNames.JAVA_UTIL_SORTED_SET, SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_SET};
-  private static final String[] GUAVA_COLLECTIONS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_COLLECTION, SingularCollectionClassNames.GUAVA_IMMUTABLE_LIST};
-  private static final String[] GUAVA_SETS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_SET, SingularCollectionClassNames.GUAVA_IMMUTABLE_SORTED_SET};
-  private static final String[] GUAVA_MAPS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_MAP, SingularCollectionClassNames.GUAVA_IMMUTABLE_BI_MAP, SingularCollectionClassNames.GUAVA_IMMUTABLE_SORTED_MAP};
-  private static final String[] GUAVA_TABLE = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_TABLE};
+  private static final Set<String> COLLECTION_TYPES =
+    union(
+      of(SingularCollectionClassNames.JAVA_LANG_ITERABLE,
+         SingularCollectionClassNames.JAVA_UTIL_COLLECTION,
+         SingularCollectionClassNames.JAVA_UTIL_LIST),
+      of(SingularCollectionClassNames.JAVA_SETS));
 
-  private static final Set<String> COLLECTION_TYPES = new HashSet<>() {{
-    addAll(toSet(SingularCollectionClassNames.JAVA_LANG_ITERABLE, SingularCollectionClassNames.JAVA_UTIL_COLLECTION,
-                 SingularCollectionClassNames.JAVA_UTIL_LIST));
-    addAll(toSet(JAVA_SETS));
-  }};
+  private static final Set<String> GUAVA_COLLECTION_TYPES =
+    union(
+      of(SingularCollectionClassNames.GUAVA_COLLECTIONS),
+      of(SingularCollectionClassNames.GUAVA_SETS));
 
-  private static final Set<String> GUAVA_COLLECTION_TYPES = new HashSet<>() {{
-    addAll(toSet(GUAVA_COLLECTIONS));
-    addAll(toSet(GUAVA_SETS));
-  }};
+  private static final Set<String> MAP_TYPES = of(SingularCollectionClassNames.JAVA_MAPS);
+  private static final Set<String> GUAVA_MAP_TYPES = of(SingularCollectionClassNames.GUAVA_MAPS);
+  private static final Set<String> GUAVA_TABLE_TYPES = of(SingularCollectionClassNames.GUAVA_TABLE);
 
-  private static final Set<String> MAP_TYPES = new HashSet<>() {{
-    addAll(toSet(JAVA_MAPS));
-  }};
-  private static final Set<String> GUAVA_MAP_TYPES = new HashSet<>() {{
-    addAll(toSet(GUAVA_MAPS));
-  }};
-  private static final Set<String> GUAVA_TABLE_TYPES = new HashSet<>() {{
-    addAll(toSet(GUAVA_TABLE));
-  }};
-  private static final Set<String> VALID_SINGULAR_TYPES = new HashSet<>() {{
-    addAll(COLLECTION_TYPES);
-    addAll(MAP_TYPES);
-    addAll(GUAVA_COLLECTION_TYPES);
-    addAll(GUAVA_MAP_TYPES);
-    addAll(GUAVA_TABLE_TYPES);
-  }};
-
-  private static Set<String> toSet(String... from) {
-    return new HashSet<>(Arrays.asList(from));
-  }
+  private static final Set<String> VALID_SINGULAR_TYPES =
+    union(COLLECTION_TYPES,
+          union(
+            union(MAP_TYPES, GUAVA_COLLECTION_TYPES),
+            union(GUAVA_MAP_TYPES, GUAVA_TABLE_TYPES)));
 
   public static boolean isInvalidSingularType(@Nullable String qualifiedName) {
     return qualifiedName == null || !containsOrAnyEndsWith(VALID_SINGULAR_TYPES, qualifiedName);

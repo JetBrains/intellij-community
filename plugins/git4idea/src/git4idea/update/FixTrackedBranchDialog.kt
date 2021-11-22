@@ -230,7 +230,7 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
 
     listOf(UpdateMethod.MERGE, UpdateMethod.REBASE).forEach { method ->
       val radioButton = JRadioButton(method.presentation).apply {
-        mnemonic = method.name[0].toInt()
+        mnemonic = method.methodName[0].toInt()
         model.isSelected = updateMethod == method
         addActionListener {
           updateMethod = method

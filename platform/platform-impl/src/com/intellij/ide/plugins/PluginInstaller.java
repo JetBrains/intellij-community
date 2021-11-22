@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -101,8 +102,8 @@ public final class PluginInstaller {
         .withWaitForClassloaderUnload(true);
 
       uninstalledWithoutRestart = parentComponent != null ?
-                                  DynamicPlugins.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
-                                  DynamicPlugins.unloadPlugin(pluginDescriptor, options);
+                                  DynamicPlugins.INSTANCE.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
+                                  DynamicPlugins.INSTANCE.unloadPlugin(pluginDescriptor, options);
     }
 
     Path pluginPath = pluginDescriptor.getPluginPath();
@@ -216,12 +217,13 @@ public final class PluginInstaller {
     PluginStateManager.addStateListener(listener);
   }
 
-  static boolean installFromDisk(@Nullable Project project,
-                                 @NotNull File file) {
+  static boolean installFromDisk(@NotNull File file,
+                                 @Nullable Project project,
+                                 @Nullable JComponent parent) {
     return installFromDisk(new InstalledPluginsTableModel(project),
                            PluginEnabler.HEADLESS,
                            file,
-                           null,
+                           parent,
                            PluginInstaller::installPluginFromCallbackData);
   }
 
@@ -241,6 +243,12 @@ public final class PluginInstaller {
       }
 
       if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of(pluginDescriptor))) {
+        return false;
+      }
+
+      if (!PluginManagerFilters.getInstance().allowInstallingPlugin(pluginDescriptor)) {
+        String message = IdeBundle.message("dialog.message.plugin.is.not.allowed", pluginDescriptor.getName());
+        MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
         return false;
       }
 
@@ -292,7 +300,7 @@ public final class PluginInstaller {
                                                                           CustomPluginRepositoryService.getInstance()
                                                                             .getCustomRepositoryPlugins(),
                                                                           pluginEnabler,
-                                                                          ProgressManager.getInstance().getProgressIndicator());
+                                                                          indicator);
             operation.setAllowInstallWithoutRestart(true);
 
             return operation.checkMissingDependencies(pluginDescriptor, null) ?
@@ -415,7 +423,7 @@ public final class PluginInstaller {
 
   static void chooseAndInstall(@Nullable Project project,
                                @Nullable JComponent parent,
-                               @NotNull BiConsumer<@NotNull ? super File, @Nullable ? super JComponent> callback) {
+                               @NotNull BiConsumer<? super File, ? super JComponent> callback) {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
 
       {
@@ -424,7 +432,11 @@ public final class PluginInstaller {
       }
 
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        if (file == null) {
+          return false;
+        }
+
         final String extension = file.getExtension();
         return Comparing.strEqual(extension, "jar") || Comparing.strEqual(extension, "zip");
       }

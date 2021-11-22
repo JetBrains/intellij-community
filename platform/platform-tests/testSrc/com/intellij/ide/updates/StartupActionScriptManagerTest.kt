@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -15,7 +15,6 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.io.IOException
-import java.io.ObjectOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.streams.toList
@@ -38,16 +37,7 @@ class StartupActionScriptManagerTest {
     StartupActionScriptManager.addActionCommands(listOf())
     assertThat(scriptFile).isRegularFile
     StartupActionScriptManager.executeActionScript()
-    assertThat(scriptFile).exists()
-  }
-
-  @Test fun `reading empty file in old format`() {
-    ObjectOutputStream(Files.newOutputStream(scriptFile)).use {
-      it.writeObject(ArrayList<StartupActionScriptManager.ActionCommand>())
-    }
-    assertThat(scriptFile).isRegularFile
-    StartupActionScriptManager.executeActionScript()
-    assertThat(scriptFile).exists()
+    assertThat(scriptFile).doesNotExist()
   }
 
   @Test fun `executing 'copy' command`() {

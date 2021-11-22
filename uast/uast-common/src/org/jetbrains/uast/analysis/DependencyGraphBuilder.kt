@@ -363,6 +363,9 @@ internal class DependencyGraphBuilder private constructor(
     val visitor = createVisitor(child)
 
     for (expression in node.expressions) {
+      if (expression.getExpressionType() != null) { // it is real expression, not statement
+        registerEmptyDependency(expression)
+      }
       expression.accept(visitor)
     }
 
@@ -477,6 +480,10 @@ internal class DependencyGraphBuilder private constructor(
     scope.clearPotentialReferences(TEMP_VAR_NAME)
   }
 
+  private fun registerEmptyDependency(element: UElement) {
+    dependents.putIfAbsent(element, mutableSetOf())
+  }
+
   private fun registerDependency(dependent: Dependent, dependency: Dependency) {
     if (dependency !is Dependency.PotentialSideEffectDependency) {
       for (el in dependency.elements) {
@@ -582,8 +589,11 @@ private class LocalScopeContext(
 
   fun setLastPotentialUpdate(variable: String, updateElement: UElement) {
     lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(
-      SideEffectChangeCandidate(updateElement, DependencyEvidence(),
-                                dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable))
+      SideEffectChangeCandidate(
+        updateElement,
+        DependencyEvidence(),
+        dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable)
+      )
     )
     for ((reference, evidenceAndWitness) in referencesModel.getAllPossiblyEqualReferences(variable)) {
       val (evidence, witness) = evidenceAndWitness

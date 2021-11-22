@@ -1,5 +1,3 @@
-from typing import Optional
-
 from cryptography.hazmat.backends.interfaces import HMACBackend
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 
@@ -10,9 +8,9 @@ class TOTP(object):
         length: int,
         algorithm: HashAlgorithm,
         time_step: int,
-        backend: Optional[HMACBackend] = ...,
+        backend: HMACBackend | None = ...,
         enforce_key_length: bool = ...,
     ): ...
     def generate(self, time: int) -> bytes: ...
-    def get_provisioning_uri(self, account_name: str, issuer: Optional[str]) -> str: ...
+    def get_provisioning_uri(self, account_name: str, issuer: str | None) -> str: ...
     def verify(self, totp: bytes, time: int) -> None: ...

@@ -141,7 +141,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
 
   @Override
   public String getDialogDescription() {
-    return JavaRefactoringBundle.message("rename.variables.with.the.following.names.to");
+    return JavaRefactoringBundle.message("title.rename.variables.with.the.following.names.to");
   }
 
   @Override

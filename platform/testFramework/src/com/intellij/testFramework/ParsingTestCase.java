@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -16,7 +16,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -29,7 +29,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
@@ -115,7 +114,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     appContainer.registerComponentInstance(SchemeManagerFactory.class, new MockSchemeManagerFactory());
     MockEditorFactory editorFactory = new MockEditorFactory();
     appContainer.registerComponentInstance(EditorFactory.class, editorFactory);
-    app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY,
+    app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(FileDocumentManagerBase.HARD_REF_TO_DOCUMENT_KEY,
                                                                                    editorFactory::createDocument));
     app.registerService(PluginUtil.class, new PluginUtilImpl());
 
@@ -269,32 +268,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   /* Sanity check against thoughtlessly copy-pasting actual test results as the expected test data. */
   protected void ensureNoErrorElements() {
-    myFile.accept(new PsiRecursiveElementVisitor() {
-      private static final int TAB_WIDTH = 8;
-
-      @Override
-      public void visitErrorElement(@NotNull PsiErrorElement element) {
-        // Very dump approach since a corresponding Document is not available.
-        String text = myFile.getText();
-        String[] lines = StringUtil.splitByLinesKeepSeparators(text);
-
-        int offset = element.getTextOffset();
-        LineColumn position = StringUtil.offsetToLineColumn(text, offset);
-        int lineNumber = position != null ? position.line : -1;
-        int column = position != null ? position.column : 0;
-
-        String line = StringUtil.trimTrailing(lines[lineNumber]);
-        // Sanitize: expand indentation tabs, replace the rest with a single space
-        int numIndentTabs = StringUtil.countChars(line.subSequence(0, column), '\t', 0, true);
-        int indentedColumn = column + numIndentTabs * (TAB_WIDTH - 1);
-        String lineWithNoTabs = StringUtil.repeat(" ", numIndentTabs * TAB_WIDTH) + line.substring(numIndentTabs).replace('\t', ' ');
-        String errorUnderline = StringUtil.repeat(" ", indentedColumn) + StringUtil.repeat("^", Math.max(1, element.getTextLength()));
-
-        fail(String.format("Unexpected error element: %s:%d:%d\n\n%s\n%s\n%s",
-                           myFile.getName(), lineNumber + 1, column,
-                           lineWithNoTabs, errorUnderline, element.getErrorDescription()));
-      }
-    });
+    ParsingTestUtil.ensureNoErrorElements(myFile);
   }
 
   protected void doTest(boolean checkResult) {
@@ -436,7 +410,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   private static void printAstTypeNamesTree(ASTNode node, StringBuffer buffer, int indent) {
     buffer.append(" ".repeat(indent));
-    buffer.append(node.getElementType().toString()).append("\n");
+    buffer.append(node.getElementType()).append("\n");
     indent += 2;
     ASTNode childNode = node.getFirstChildNode();
 

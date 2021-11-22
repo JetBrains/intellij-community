@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.*;
@@ -46,9 +46,20 @@ import java.util.Arrays;
 public abstract class AbstractImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractImportTestsAction.class);
   public static final String TEST_HISTORY_SIZE = "test_history_size";
+  private final Executor myExecutor;
 
-  public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
+  public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text,
+                                 @Nullable @NlsActions.ActionDescription String description,
+                                 @Nullable Icon icon) {
+    this(text, description, icon, null);
+  }
+
+  public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text,
+                                   @Nullable @NlsActions.ActionDescription String description,
+                                   @Nullable Icon icon,
+                                   @Nullable Executor executor) {
     super(text, description, icon);
+    myExecutor = executor;
   }
 
 
@@ -80,15 +91,21 @@ public abstract class AbstractImportTestsAction extends AnAction {
       return;
     }
 
-    doImport(project, file, null);
+    doImport(project, file, null, myExecutor != null ? myExecutor : DefaultRunExecutor.getRunExecutorInstance());
   }
 
   public static void doImport(Project project,
                               VirtualFile file,
                               Long executionId) {
+    doImport(project, file, executionId, DefaultRunExecutor.getRunExecutorInstance());
+  }
+
+  private static void doImport(Project project,
+                               VirtualFile file,
+                               Long executionId,
+                               Executor executor) {
     try {
       final ImportRunProfile profile = new ImportRunProfile(file, project);
-      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
       ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
       ExecutionTarget target = profile.getTarget();
       if (target != null) {

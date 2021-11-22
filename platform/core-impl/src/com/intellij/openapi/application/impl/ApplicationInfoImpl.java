@@ -93,7 +93,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private final List<PluginId> essentialPluginsIds = new ArrayList<>();
   private String myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
   private String myJetBrainsTvUrl;
-  private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
 
   private String mySubscriptionFormId;
@@ -103,6 +102,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
   private List<ProgressSlide> progressSlides = Collections.emptyList();
+  private XmlElement myFeedbackForm;
 
   private String myDefaultLightLaf;
   private String myDefaultDarkLaf;
@@ -252,6 +252,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
         case "feedback": {
           myFeedbackUrl = child.getAttributeValue("url");
+          if (child.getAttributeValue("zendesk-form-id") != null) {
+            myFeedbackForm = child;
+          }
         }
         break;
 
@@ -297,14 +300,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
-        case "evaluation": {
-          String url = getAttributeValue(child, "license-url");
-          if (url != null) {
-            myEvalLicenseUrl = url.trim();
-          }
-        }
-        break;
-
         case "licensing": {
           String url = getAttributeValue(child, "key-conversion-url");
           if (url != null) {
@@ -335,6 +330,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
             myDefaultDarkLaf = laf.trim();
           }
         }
+
         break;
       }
     }
@@ -606,11 +602,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   public @Nullable String getWelcomeWizardDialog() { return myWelcomeScreenDialog; }
 
   @Override
-  public String getPackageCode() {
-    return null;
-  }
-
-  @Override
   public boolean isEAP() {
     return myEAP;
   }
@@ -742,11 +733,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   @Override
   public String getJetBrainsTvUrl() {
     return myJetBrainsTvUrl;
-  }
-
-  @Override
-  public String getEvalLicenseUrl() {
-    return myEvalLicenseUrl;
   }
 
   @Override
@@ -941,6 +927,11 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   @Override
   public @Nullable String getDefaultDarkLaf() {
     return myDefaultDarkLaf;
+  }
+
+  public @Nullable ZenDeskForm getFeedbackForm() {
+    XmlElement v = myFeedbackForm;
+    return v == null ? null : ZenDeskForm.parse(v);
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {

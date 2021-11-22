@@ -5,7 +5,7 @@ open class B {
 
     }
 
-    constructor(a: Int): this() {
+    constructor(a: Int) : this() {
 
     }
 }

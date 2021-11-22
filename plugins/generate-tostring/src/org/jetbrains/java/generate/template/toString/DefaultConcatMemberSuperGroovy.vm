@@ -18,7 +18,7 @@ $classname{
 #end
 #set( $i = $i + 1 )
 #end
-#if( $class.hasSuper )
+#if( $class.hasSuper && !$helper.isAbstractSuperMethod($class, "toString", $project) )
 #if( $i > 0 ),
 #end
     super=${d}{super.toString()}##
@@ -26,7 +26,7 @@ $classname{
 
 }"""
 #else
-#if( $class.hasSuper )
+#if( $class.hasSuper && !$helper.isAbstractSuperMethod($class, "toString", $project))
     return "$classname{##
 super=${d}{super.toString()}##
 }"

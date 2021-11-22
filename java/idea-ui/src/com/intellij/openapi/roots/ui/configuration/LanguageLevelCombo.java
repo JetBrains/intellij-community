@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.Project;
@@ -14,6 +14,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -95,6 +96,7 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
     repaint();
   }
 
+  @Nullable
   public LanguageLevel getSelectedLevel() {
     Object item = getSelectedItem();
     return item instanceof LanguageLevel ? (LanguageLevel)item : getDefaultLevel();

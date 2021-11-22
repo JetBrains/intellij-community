@@ -1536,9 +1536,13 @@ public final class EditorPainter implements TextDrawingCallback {
         painter.paintBeforeLineStart(it.getBeforeLineStartBackgroundAttributes(), false, maxColumn, x, y);
       }
       if (it == null || it.getEndOffset() != visualLineEndOffset) {
-        it = new IterationState(myEditor, visualLineEndOffset == offset
-                                          ? visualLineEndOffset : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
-                                visualLineEndOffset, myCaretData, false, false, false, false);
+        it = new IterationState(myEditor,
+                                visualLineEndOffset == offset ? visualLineEndOffset
+                                                              : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
+                                visualLineEndOffset,
+                                !visLineIterator.isCustomFoldRegionLine() || Registry.is("highlight.caret.line.at.custom.fold")
+                                ? myCaretData : null,
+                                false, false, false, false);
       }
       if (!it.atEnd()) {
         it.advance();

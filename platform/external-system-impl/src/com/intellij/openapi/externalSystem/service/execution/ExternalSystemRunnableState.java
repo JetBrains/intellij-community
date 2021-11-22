@@ -218,15 +218,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-      final String greeting;
-      final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings.toString());
-      if (mySettings.getTaskNames().size() > 1) {
-        greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", startDateTime, settingsDescription) + "\n";
-      }
-      else {
-        greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, settingsDescription) + "\n";
-      }
+      final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
+      final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
       processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
+
       try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
           @Override
@@ -303,13 +298,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
           @Override
           public void onEnd(@NotNull ExternalSystemTaskId id) {
             final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-            final String farewell;
-            if (mySettings.getTaskNames().size() > 1) {
-              farewell = ExternalSystemBundle.message("run.text.ended.multiple.task", endDateTime, settingsDescription);
-            }
-            else {
-              farewell = ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, settingsDescription);
-            }
+            final String farewell = ExternalSystemBundle.message("run.text.ended.task", endDateTime, settingsDescription);
             processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
             ExternalSystemRunConfiguration.foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);

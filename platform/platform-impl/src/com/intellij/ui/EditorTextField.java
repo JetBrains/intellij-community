@@ -700,8 +700,8 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
-    if (ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, (Component)this) != null && (StartupUiUtil
-                                                                                                                                .isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+    if (ComponentUtil.getParentOfType(CellRendererPane.class, this) != null &&
+        (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       return getParent().getBackground();
     }
 

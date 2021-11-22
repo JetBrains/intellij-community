@@ -50,7 +50,7 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -441,7 +441,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           LOG.error(e);
           return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
         }
-      }), null, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, ApplicationManager.getApplication().isUnitTestMode());
+      }), null, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, ApplicationManager.getApplication().isUnitTestMode());
     }
 
     @NotNull
@@ -636,7 +636,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         if (myScheduled.isEmpty()) return;
 
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(() -> launchRediff(false), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+        myAlarm.addRequest(() -> launchRediff(false), ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
       }
 
       @RequiresEdt
@@ -649,7 +649,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<Document> documents = ThreeSide.map((side) -> getEditor(side).getDocument());
         final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
-        int waitMillis = trySync ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
+        int waitMillis = trySync ? ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
         ProgressIndicator progress = BackgroundTaskUtil.executeAndTryWait(indicator -> performRediff(scheduled, data, indicator), null, waitMillis, false);
 
         if (progress.isRunning()) {

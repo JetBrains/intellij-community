@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.ui.UISettings;
@@ -905,7 +905,7 @@ public final class TreeUtil {
    * @see AbstractTreeNode#isAlwaysExpand
    */
   private static boolean isAlwaysExpand(@NotNull TreePath path) {
-    AbstractTreeNode<?> node = getLastUserObject(AbstractTreeNode.class, path);
+    AbstractTreeNode<?> node = getAbstractTreeNode(path);
     return node != null && node.isAlwaysExpand();
   }
 
@@ -1329,6 +1329,10 @@ public final class TreeUtil {
   @Nullable
   public static <T> T getLastUserObject(@NotNull Class<T> type, @Nullable TreePath path) {
     return path == null ? null : getUserObject(type, path.getLastPathComponent());
+  }
+
+  public static @Nullable AbstractTreeNode<?> getAbstractTreeNode(@Nullable TreePath path) {
+    return getLastUserObject(AbstractTreeNode.class, path);
   }
 
   @Nullable

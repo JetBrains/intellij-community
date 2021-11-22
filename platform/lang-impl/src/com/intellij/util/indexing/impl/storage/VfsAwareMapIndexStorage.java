@@ -2,7 +2,6 @@
 
 package com.intellij.util.indexing.impl.storage;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,7 +34,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
                                  final int cacheSize,
                                  final boolean readOnly
   ) throws IOException {
-    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, true, readOnly, null);
+    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, true, readOnly, false, null);
     myBuildKeyHashToVirtualFileMapping = false;
   }
 
@@ -44,8 +43,17 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
                                  @NotNull DataExternalizer<Value> valueExternalizer,
                                  final int cacheSize,
                                  boolean keyIsUniqueForIndexedFile,
-                                 boolean buildKeyHashToVirtualFileMapping) throws IOException {
-    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, false, false, null);
+                                 boolean buildKeyHashToVirtualFileMapping,
+                                 boolean enableWal) throws IOException {
+    super(storageFile,
+          keyDescriptor,
+          valueExternalizer,
+          cacheSize,
+          keyIsUniqueForIndexedFile,
+          false,
+          false,
+          enableWal,
+          null);
     myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
     initMapAndCache();
   }
@@ -61,11 +69,6 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
     else {
       myKeyHashToVirtualFileMapping = null;
     }
-  }
-
-  @Override
-  protected void checkCanceled() {
-    ProgressManager.checkCanceled();
   }
 
   @Override

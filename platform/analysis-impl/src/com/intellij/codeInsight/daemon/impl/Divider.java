@@ -29,7 +29,7 @@ public final class Divider {
   public static final class DividedElements {
     private final long modificationStamp;
     private final @NotNull TextRange restrictRange;
-    private final @NotNull TextRange priorityRange;
+    final @NotNull TextRange priorityRange;
     public final List<PsiElement> inside = new ArrayList<>();
     final List<ProperTextRange> insideRanges = new ArrayList<>();
     public final List<PsiElement> outside = new ArrayList<>();
@@ -68,15 +68,18 @@ public final class Divider {
     long modificationStamp = root.getModificationStamp();
     DividedElements cached = SoftReference.dereference(root.getUserData(DIVIDED_ELEMENTS_KEY));
     DividedElements elements;
-    if (cached == null || cached.modificationStamp != modificationStamp || !cached.restrictRange.equals(restrictRange) || !cached.priorityRange.contains(priorityRange)) {
+    if (cached != null &&
+        cached.modificationStamp == modificationStamp &&
+        cached.restrictRange.equals(restrictRange) &&
+        cached.priorityRange.contains(priorityRange)) {
+      elements = cached;
+    }
+    else {
       elements = new DividedElements(modificationStamp, restrictRange, priorityRange);
       divideInsideAndOutsideInOneRoot(root, restrictRange, priorityRange, elements.inside, elements.insideRanges, elements.outside,
                                       elements.outsideRanges, elements.parents,
                                       elements.parentRanges, true);
       root.putUserData(DIVIDED_ELEMENTS_KEY, new java.lang.ref.SoftReference<>(elements));
-    }
-    else {
-      elements = cached;
     }
     processor.process(elements);
   }

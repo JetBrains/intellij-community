@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -200,7 +200,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       .add(CommonDataKeys.VIRTUAL_FILE, selectedFile)
       .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, selectedFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {selectedFile})
       .add(CommonDataKeys.PROJECT, getProject())
-      .add(PlatformDataKeys.CONTEXT_COMPONENT, editor == null ? null : editor.getComponent())
+      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor == null ? null : editor.getComponent())
       .setParent(parent)
       .build();
   }

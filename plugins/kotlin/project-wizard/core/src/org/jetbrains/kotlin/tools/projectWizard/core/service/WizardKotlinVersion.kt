@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 
 data class WizardKotlinVersion(
-  val version: Version,
-  val kind: KotlinVersionKind,
-  val repository: Repository,
-  val buildSystemPluginRepository: (BuildSystemType) -> Repository?,
+    val version: Version,
+    val kind: KotlinVersionKind,
+    val repository: Repository,
+    val buildSystemPluginRepository: (BuildSystemType) -> Repository?,
 )

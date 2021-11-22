@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
@@ -8,7 +8,7 @@ import com.intellij.codeInsight.intention.impl.IntentionListStep
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
-import com.intellij.openapi.actionSystem.PlatformDataKeys.SELECTED_ITEM
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -32,7 +32,7 @@ internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
     val node = event.getData(SELECTED_ITEM) as? ProblemNode
     val problem = node?.problem
     with(event.presentation) {
-      isVisible = getApplication().isInternal || event.getData(ProblemsViewPanel.SELECTED) is HighlightingPanel
+      isVisible = getApplication().isInternal || ProblemsView.getSelectedPanel(event.project) is HighlightingPanel
       isEnabled = isVisible && when (problem) {
         is HighlightingProblem -> isEnabled(event, problem)
         else -> false
@@ -63,7 +63,7 @@ internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
   private fun show(event: AnActionEvent, popup: JBPopup) {
     val mouse = event.inputEvent as? MouseEvent ?: return popup.showInBestPositionFor(event.dataContext)
     val point = mouse.locationOnScreen
-    val panel = event.getData(ProblemsViewPanel.SELECTED)
+    val panel = ProblemsView.getSelectedPanel(event.project)
     val button = mouse.source as? ActionButton
     if (panel != null && button != null) {
       point.translate(-mouse.x, -mouse.y)
@@ -102,9 +102,9 @@ internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
 
   private fun getCachedIntentions(event: AnActionEvent, problem: HighlightingProblem, showEditor: Boolean): CachedIntentions? {
     val psi = event.getData(PSI_FILE) ?: return null
-    val panel = event.getData(ProblemsViewPanel.SELECTED) ?: return null
+    val panel = ProblemsView.getSelectedPanel(event.project) ?: return null
     if (!panel.isShowing) return null
-    val editor = panel.preview.preview ?: getEditor(psi, showEditor) ?: return null
+    val editor = panel.preview ?: getEditor(psi, showEditor) ?: return null
     val markers = problem.info?.quickFixActionMarkers ?: return null
 
     val info = ShowIntentionsPass.IntentionsInfo()

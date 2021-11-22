@@ -17,8 +17,10 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 class CompilerModuleExtensionBridge(
   private val module: ModuleBridge,
@@ -27,7 +29,7 @@ class CompilerModuleExtensionBridge(
 ) : CompilerModuleExtension(), ModuleExtensionBridge {
 
   private var changed = false
-  private val virtualFileManager = com.intellij.workspaceModel.storage.url.VirtualFileUrlManager.getInstance(module.project)
+  private val virtualFileManager = VirtualFileUrlManager.getInstance(module.project)
 
   private val javaSettings
     get() = entityStorage.current.findModuleEntity(module)?.javaSettings
@@ -76,12 +78,13 @@ class CompilerModuleExtensionBridge(
   override fun isChanged(): Boolean = changed
   override fun dispose() = Unit
 
-  private fun updateJavaSettings(updater: com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity.() -> Unit) {
+  private fun updateJavaSettings(updater: ModifiableJavaModuleSettingsEntity.() -> Unit) {
     if (diff == null) {
       error("Read-only $javaClass")
     }
 
-    val moduleEntity = entityStorage.current.findModuleEntity(module) ?: error("Could not find entity for $module")
+    val moduleEntity = entityStorage.current.findModuleEntity(module)
+                       ?: error("Could not find entity for $module, ${module.hashCode()}, diff: ${entityStorage.base}")
     val moduleSource = moduleEntity.entitySource
 
     val oldJavaSettings = javaSettings ?: diff.addJavaModuleSettingsEntity(
@@ -94,7 +97,7 @@ class CompilerModuleExtensionBridge(
       source = moduleSource
     )
 
-    diff.modifyEntity(com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity::class.java, oldJavaSettings, updater)
+    diff.modifyEntity(ModifiableJavaModuleSettingsEntity::class.java, oldJavaSettings, updater)
     changed = true
   }
 

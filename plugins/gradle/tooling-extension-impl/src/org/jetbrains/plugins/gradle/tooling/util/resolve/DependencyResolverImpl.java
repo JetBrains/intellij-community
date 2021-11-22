@@ -62,20 +62,6 @@ public final class DependencyResolverImpl implements DependencyResolver {
   @NotNull
   private final SourceSetCachedFinder mySourceSetFinder;
 
-  /**
-   * @deprecated use constructor below
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public DependencyResolverImpl(@NotNull Project project,
-                                boolean isPreview,
-                                boolean downloadJavadoc,
-                                boolean downloadSources,
-                                SourceSetCachedFinder sourceSetFinder) {
-    this(project, downloadJavadoc, downloadSources, sourceSetFinder);
-  }
-
   public DependencyResolverImpl(@NotNull Project project,
                                 boolean downloadJavadoc,
                                 boolean downloadSources,

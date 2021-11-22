@@ -92,7 +92,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
 
     String tooltip = XmlStringUtil.wrapInHtml(
       NonCodeAnnotationGenerator.getNonCodeHeaderAvalable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "<p>\n" +
-      JavaDocInfoGenerator.generateSignature(owner));
+      new JavaDocInfoGenerator(owner.getProject(), owner, false).generateSignature(owner));
     return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
   }

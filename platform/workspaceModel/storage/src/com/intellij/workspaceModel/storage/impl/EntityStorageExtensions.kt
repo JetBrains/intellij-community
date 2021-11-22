@@ -28,8 +28,13 @@ internal fun <Parent : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.up
 
 internal fun <Child : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
                                                                                                                  parentId: ParentEntityId,
-                                                                                                                 child: Child) {
-  refs.updateOneToAbstractOneChildOfParent(connectionId, parentId, child)
+                                                                                                                 child: Child?) {
+  if (child != null) {
+    refs.updateOneToAbstractOneChildOfParent(connectionId, parentId, child)
+  }
+  else {
+    refs.removeOneToAbstractOneRefByParent(connectionId, parentId)
+  }
 }
 
 internal fun <Child : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToOneChildOfParent(connectionId: ConnectionId,
@@ -86,6 +91,10 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToManyChi
       null
     } else entityData.createEntity(this)
   }?.filterNotNull() as? Sequence<Child> ?: emptySequence()
+}
+
+internal fun AbstractEntityStorage.extractOneToManyChildrenIds(connectionId: ConnectionId, parentId: EntityId): Sequence<EntityId> {
+  return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { EntityId(it, connectionId.childClass) } ?: emptySequence()
 }
 
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,

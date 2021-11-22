@@ -73,7 +73,8 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
             if (expr == null) return ""
             val expression = KtPsiUtil.safeDeparenthesize(expr).let {
                 when {
-                    (it as? KtDotQualifiedExpression)?.isToString() == true -> it.receiverExpression
+                    (it as? KtDotQualifiedExpression)?.isToString() == true && it.receiverExpression !is KtSuperExpression ->
+                        it.receiverExpression
                     it is KtLambdaExpression && it.parent is KtLabeledExpression -> expr
                     else -> it
                 }

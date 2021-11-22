@@ -15,6 +15,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.trimDummy
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenTopLevelDependencyInsertionHandler
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.SearchParameters
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -63,6 +64,6 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
   }
 
   protected fun createSearchParameters(parameters: CompletionParameters): SearchParameters {
-    return SearchParameters(parameters.invocationCount < 2, ApplicationManager.getApplication().isUnitTestMode)
+    return SearchParameters(parameters.invocationCount < 2, MavenUtil.isMavenUnitTestModeEnabled())
   }
 }

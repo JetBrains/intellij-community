@@ -16,10 +16,9 @@
 package net.sf.cglib.proxy;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -35,6 +34,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Generates dynamic subclasses to enable method interception. This
@@ -371,28 +371,42 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
 
   @Override
   protected ClassLoader getDefaultClassLoader() {
-    int maxIndex = -1;
-    ClassLoader bestLoader = null;
+    PluginClassLoader bestLoader = null;
     ClassLoader nonPluginLoader = null;
 
-    List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
-    NotNullLazyValue<Object2IntMap<PluginId>> idToIndex = NotNullLazyValue.createValue(() -> {
-      int count = 0;
-      Object2IntMap<PluginId > map = new Object2IntOpenHashMap<>(plugins.size());
-      for (IdeaPluginDescriptor descriptor : plugins) {
-        map.put(descriptor.getPluginId(), count++);
+    Predicate<PluginClassLoader> isBetter = new java.util.function.Predicate<>() {
+
+      private int myMaxIndex = -1;
+      private Object2IntMap<ClassLoader> myMap = null;
+
+      @Override
+      public boolean test(@NotNull PluginClassLoader loader) {
+        if (myMap == null) {
+          List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getPluginSet()
+            .getRawListOfEnabledModules();
+
+          int count = 0;
+          myMap = new Object2IntOpenHashMap<>(plugins.size());
+          for (IdeaPluginDescriptor descriptor : plugins) {
+            myMap.put(descriptor.getPluginClassLoader(), count++);
+          }
+        }
+
+        int index = myMap.applyAsInt(loader);
+        boolean result = myMaxIndex < index;
+        if (result) {
+          myMaxIndex = index;
+        }
+        return result;
       }
-      return map;
-    });
+    };
 
     if (interfaces != null && interfaces.length > 0) {
       for (Class<?> anInterface : interfaces) {
         ClassLoader loader = anInterface.getClassLoader();
-        if (loader instanceof PluginAwareClassLoader) {
-          int order = idToIndex.getValue().getInt(((PluginAwareClassLoader)loader).getPluginId());
-          if (maxIndex < order) {
-            maxIndex = order;
-            bestLoader = loader;
+        if (loader instanceof PluginClassLoader) {
+          if (isBetter.test((PluginClassLoader)loader)) {
+            bestLoader = (PluginClassLoader)loader;
           }
         }
         else if (nonPluginLoader == null) {
@@ -401,19 +415,11 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
       }
     }
 
-    ClassLoader superLoader = null;
-    if (superclass != null) {
-      superLoader = superclass.getClassLoader();
-      if (superLoader instanceof PluginAwareClassLoader &&
-          maxIndex < idToIndex.getValue().getInt(((PluginAwareClassLoader)superLoader).getPluginId())) {
-        return superLoader;
-      }
-    }
-
-    if (bestLoader != null) {
-      return bestLoader;
-    }
-    return superLoader == null ? nonPluginLoader : superLoader;
+    ClassLoader superLoader = superclass != null ? superclass.getClassLoader() : null;
+    return superLoader instanceof PluginClassLoader && isBetter.test((PluginClassLoader)superLoader) ? superLoader :
+           bestLoader != null ? bestLoader :
+           superLoader != null ? superLoader :
+           nonPluginLoader;
   }
 
   private static Signature rename(Signature sig, int index) {

@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.ThreadNameManager
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationInfo
@@ -155,11 +155,11 @@ private fun writeServiceStats(writer: JsonGenerator) {
   val component = StatItem("component")
   val service = StatItem("service")
 
-  val plugins = PluginManagerCore.getLoadedPlugins(null).sortedBy { it.pluginId }
-  for (plugin in plugins) {
-    service.app += (plugin as IdeaPluginDescriptorImpl).appContainerDescriptor.services?.size ?: 0
-    service.project += plugin.projectContainerDescriptor.services?.size ?: 0
-    service.module += plugin.moduleContainerDescriptor.services?.size ?: 0
+  val pluginSet = PluginManagerCore.getPluginSet()
+  for (plugin in pluginSet.getEnabledModules()) {
+    service.app += plugin.appContainerDescriptor.services.size
+    service.project += plugin.projectContainerDescriptor.services.size
+    service.module += plugin.moduleContainerDescriptor.services.size
 
     component.app += plugin.appContainerDescriptor.components?.size ?: 0
     component.project += plugin.projectContainerDescriptor.components?.size ?: 0
@@ -167,7 +167,7 @@ private fun writeServiceStats(writer: JsonGenerator) {
   }
 
   writer.obj("stats") {
-    writer.writeNumberField("plugin", plugins.size)
+    writer.writeNumberField("plugin", pluginSet.enabledPlugins.size)
     for (statItem in listOf(component, service)) {
       writer.obj(statItem.name) {
         writer.writeNumberField("app", statItem.app)
@@ -178,7 +178,7 @@ private fun writeServiceStats(writer: JsonGenerator) {
   }
 
   writer.array("plugins") {
-    for (plugin in plugins) {
+    for (plugin in pluginSet.enabledPlugins) {
       val classLoader = plugin.pluginClassLoader as? PluginAwareClassLoader ?: continue
       writer.obj {
         writer.writeStringField("id", plugin.pluginId.idString)

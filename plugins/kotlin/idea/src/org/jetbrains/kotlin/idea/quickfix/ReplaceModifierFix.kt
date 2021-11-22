@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -19,6 +20,7 @@ class ReplaceModifierFix(
     private val replacement: KtModifierKeywordToken
 ) : KotlinQuickFixAction<KtModifierListOwner>(element), CleanupFix {
 
+    @Nls
     private val text = KotlinBundle.message("replace.with.0", replacement.value)
 
     override fun getText() = text

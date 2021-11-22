@@ -92,11 +92,6 @@ public class CoreProjectEnvironment {
     return new MockResolveScopeManager(psiManager.getProject());
   }
 
-  public <T> void registerProjectExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName,
-                                                @NotNull Class<? extends T> aClass) {
-    CoreApplicationEnvironment.registerExtensionPoint(myProject.getExtensionArea(), extensionPointName, aClass);
-  }
-
   public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {
     //noinspection TestOnlyProblems
     name.getPoint(myProject).registerExtension(extension, myParentDisposable);

@@ -7,8 +7,8 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.GenericsUtil
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.haveReferenceToScope
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
@@ -102,6 +103,9 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   checkLocalClass(extractOptions)
 
+  val foldedParameters = ExtractMethodPipeline.foldParameters(extractOptions.inputParameters, LocalSearchScope(extractOptions.elements.toTypedArray()))
+  extractOptions = extractOptions.copy(inputParameters = foldedParameters)
+
   return ExtractMethodPipeline.withDefaultStatic(extractOptions)
 }
 
@@ -153,9 +157,7 @@ private fun findCommonType(first: PsiType, second: PsiType, nullability: Nullabi
 }
 
 private fun findOutputFromReturn(returnStatements: List<PsiStatement>): ExpressionOutput? {
-  val returnExpressions = returnStatements
-    .mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
-    .sortedBy { returnExpression -> returnExpression.startOffset }
+  val returnExpressions = returnStatements.mapNotNull(::getReturnedExpression).sortedBy { returnExpression -> returnExpression.startOffset }
 
   val context = returnExpressions.firstOrNull() ?: return null
   val manager = context.manager

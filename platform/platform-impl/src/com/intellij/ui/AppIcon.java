@@ -52,7 +52,10 @@ public abstract class AppIcon {
   @NotNull
   public static AppIcon getInstance() {
     if (ourIcon == null) {
-      if (SystemInfoRt.isMac) {
+      if (GraphicsEnvironment.isHeadless() || GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName().equals("PGraphicsEnvironment")) {
+        // PGraphicsEnvironment indicates a Projector-replaces-AWT environment, in which case any OS-specific AppIcons are not applicable
+        ourIcon = new EmptyIcon();
+      } else if (SystemInfoRt.isMac) {
         ourIcon = new MacAppIcon();
       }
       else if (SystemInfoRt.isXWindow) {

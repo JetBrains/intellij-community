@@ -185,7 +185,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
         for (Future<?> future : futuresToWait) future.get(2, TimeUnit.SECONDS);
       }
 
-      for (TimedZipHandler handler : handlers) handler.dispose();
+      for (TimedZipHandler handler : handlers) handler.clearCaches();
     }
     catch (TimeoutException e) {
       fail("Deadlock detected");

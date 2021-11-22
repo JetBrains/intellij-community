@@ -4,7 +4,7 @@ package com.jetbrains.python.namespacePackages
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.util.PlatformIcons
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
@@ -24,7 +24,7 @@ class PyMarkAsNamespacePackageAction : AnAction() {
       return
     }
 
-    val module = e.getData(LangDataKeys.MODULE) ?: return
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
     val service = PyNamespacePackagesService.getInstance(module)
     if (!PyNamespacePackagesService.isEnabled()) return
     presentation.isVisible = true
@@ -62,7 +62,7 @@ class PyMarkAsNamespacePackageAction : AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val module = e.getData(LangDataKeys.MODULE) ?: return
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
     val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
     val service = PyNamespacePackagesService.getInstance(module)
     virtualFiles.forEach { service.toggleMarkingAsNamespacePackage(it) }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.ActionManager
@@ -25,7 +26,6 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Consumer
@@ -58,7 +58,7 @@ internal object GHPRBranchesPanel {
   }
 
   private fun createLabel() = JBLabel(CollaborationToolsIcons.Branch).also {
-    GHUIUtil.overrideUIDependentProperty(it) {
+    CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
       foreground = CurrentBranchComponent.TEXT_COLOR
       background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
     }

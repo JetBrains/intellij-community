@@ -2,7 +2,7 @@
 <body>
 Reports single operations inside loops that could be replaced with a bulk method.
 <p>
-  Not only bulk methods are shorter, but in some cases they may be more performant as well.
+  Not only are bulk methods shorter, but in some cases they may be more performant as well.
 </p>
 <p><b>Example:</b></p>
 <pre><code>  void test(Collection&lt;Integer&gt; numbers) {
@@ -13,15 +13,15 @@ Reports single operations inside loops that could be replaced with a bulk method
   }
 </code></pre>
 <p>After the fix is applied:</p>
-<pre>
+<pre><code>
   void test(Collection&lt;Integer&gt; numbers) {
     List&lt;Integer&gt; result = new ArrayList&lt;>();
     result.addAll(numbers);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
-  The <b>Use Arrays.asList() to wrap arrays</b> option allows you to also look out for arrays, even if the bulk method requires a collection.
+  The <b>Use Arrays.asList() to wrap arrays</b> option allows to report arrays, even if the bulk method requires a collection.
   In this case the quick-fix will automatically wrap the array in <code>Arrays.asList()</code> call.
 </p>
 <p><small>New in 2017.1</small></p>

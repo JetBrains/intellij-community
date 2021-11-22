@@ -106,7 +106,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     val isSkipCommitChecks = isSkipCommitChecks()
 
     ui.defaultCommitActionName = when {
-      isAmend && isSkipCommitChecks -> message("action.amend.commit.anyway.text", commitText)
+      isAmend && isSkipCommitChecks -> message("action.amend.commit.anyway.text")
       isAmend && !isSkipCommitChecks -> message("amend.action.name", commitText)
       !isAmend && isSkipCommitChecks -> message("action.commit.anyway.text", commitText)
       else -> commitText

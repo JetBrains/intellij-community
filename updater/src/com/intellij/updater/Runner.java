@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.studio.updater.UpdaterService;
@@ -611,13 +611,13 @@ public class Runner {
     }
   }
 
-  private static Map<String, ValidationResult.Option> askForResolutions(
-    List<ValidationResult> problems, UpdaterUI ui
-  ) throws OperationCancelledException {
+  private static Map<String, ValidationResult.Option> askForResolutions(List<ValidationResult> problems, UpdaterUI ui) throws OperationCancelledException {
     if (problems.isEmpty()) return Collections.emptyMap();
     LOG.warning("conflicts:");
     for (ValidationResult problem : problems) {
-      LOG.warning("  " + problem.action.name() + " @ " + problem.path + ": " + problem.message);
+      String record = "  " + problem.action.name() + ' ' + problem.path + ": " + problem.message;
+      if (!problem.details.isEmpty()) record += " (" + problem.details + ')';
+      LOG.warning(record);
     }
     Map<String, ValidationResult.Option> resolutions = ui.askUser(problems);
     LOG.warning("resolutions:");

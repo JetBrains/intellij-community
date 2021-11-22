@@ -13,7 +13,7 @@ import com.intellij.ide.util.StructureViewCompositeModel;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -43,7 +43,7 @@ public class ViewStructureAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
-    FileEditor fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
+    FileEditor fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
     if (fileEditor == null) return;
 
     VirtualFile virtualFile = fileEditor.getFile();
@@ -95,7 +95,7 @@ public class ViewStructureAction extends DumbAwareAction {
       return;
     }
 
-    FileEditor fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
+    FileEditor fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() :
                     e.getData(CommonDataKeys.EDITOR);
 

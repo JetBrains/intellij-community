@@ -38,7 +38,7 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     val project = getEventProject(e)
     val editor = e.getData(CommonDataKeys.EDITOR)
-    val fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR)
+    val fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR)
 
     val place = e.place
     if (project == null ||

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -6,8 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -56,14 +56,20 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
   private PsiType getSuperType(PsiClass aClass, boolean checkImmediateSuperInterfaces) {
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return null;
 
-    final PsiClass containingClass = checkImmediateSuperInterfaces ? PsiTreeUtil.getContextOfType(this, PsiClass.class) : null;
+    PsiClass containingClass = checkImmediateSuperInterfaces ? PsiTreeUtil.getContextOfType(this, PsiClass.class) : null;
     if (containingClass != null) {
       final PsiClassType[] superTypes;
       if (containingClass.isInterface()) {
         superTypes = containingClass.getExtendsListTypes();
       }
       else if (containingClass instanceof PsiAnonymousClass) {
-        superTypes = new PsiClassType[]{((PsiAnonymousClass)containingClass).getBaseClassType()};
+        if (PsiTreeUtil.isAncestor(((PsiAnonymousClass)containingClass).getArgumentList(), this, true)) {
+          containingClass = PsiTreeUtil.getContextOfType(containingClass, PsiClass.class, true);
+          superTypes = containingClass != null ? containingClass.getSuperTypes() : PsiClassType.EMPTY_ARRAY;
+        }
+        else {
+          superTypes = new PsiClassType[]{((PsiAnonymousClass)containingClass).getBaseClassType()};
+        }
       }
       else {
         superTypes = containingClass.getImplementsListTypes();

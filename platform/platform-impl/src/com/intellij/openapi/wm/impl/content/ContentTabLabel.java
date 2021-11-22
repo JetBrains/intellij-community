@@ -27,7 +27,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-class ContentTabLabel extends ContentLabel {
+public class ContentTabLabel extends ContentLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
 
   private final LayeredIcon myActiveCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true));
@@ -137,13 +137,17 @@ class ContentTabLabel extends ContentLabel {
     }
   }
 
+  protected void closeContent() {
+    getContentManager().removeContent(myContent, true);
+  }
+
   public void update() {
     setHorizontalAlignment(SwingConstants.LEFT);
     if (myLayout.isToDrawTabs() == TabContentLayout.TabsDrawMode.HIDE) {
       setBorder(null);
     }
 
-    updateTextAndIcon(myContent, isSelected());
+    updateTextAndIcon(myContent, isSelected(), false);
   }
 
   @Override
@@ -153,8 +157,8 @@ class ContentTabLabel extends ContentLabel {
 
   @Override
   protected Color getActiveFg(boolean selected) {
-    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
-    if (contentManager != null && contentManager.getContentCount() > 1) {
+    ContentManager contentManager = getContentManager();
+    if (contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
 
@@ -172,8 +176,7 @@ class ContentTabLabel extends ContentLabel {
   }
 
   public boolean isSelected() {
-    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
-    return contentManager != null && contentManager.isSelected(myContent);
+    return getContentManager().isSelected(myContent);
   }
 
   @Override
@@ -212,10 +215,7 @@ class ContentTabLabel extends ContentLabel {
         content.setPinned(false);
         return;
       }
-      ContentManager contentManager = myUi.window.getContentManagerIfCreated();
-      if (contentManager != null) {
-        contentManager.removeContent(content, true);
-      }
+      closeContent();
     }
 
     @Override

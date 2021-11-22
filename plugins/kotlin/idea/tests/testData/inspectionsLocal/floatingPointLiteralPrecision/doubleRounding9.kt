@@ -1,0 +1,3 @@
+// WITH_RUNTIME
+
+val x = <caret>9999999999999999.1

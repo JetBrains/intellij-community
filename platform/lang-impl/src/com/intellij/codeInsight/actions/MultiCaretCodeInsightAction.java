@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see MultiCaretCodeInsightActionHandler
  */
-public abstract class MultiCaretCodeInsightAction extends AnAction implements UpdateInBackground {
+public abstract class MultiCaretCodeInsightAction extends AnAction implements UpdateInBackground, PerformWithDocumentsCommitted {
   private static final Logger LOG = Logger.getInstance(MultiCaretCodeInsightAction.class);
 
   @Override
@@ -66,12 +66,6 @@ public abstract class MultiCaretCodeInsightAction extends AnAction implements Up
     }), getCommandName(), DocCommandGroupId.noneGroupId(hostEditor.getDocument()));
 
     hostEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-  }
-
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    super.beforeActionPerformedUpdate(e);
   }
 
   @Override

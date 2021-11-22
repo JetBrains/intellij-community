@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -21,6 +22,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +69,7 @@ public class EditorImplTest extends AbstractEditorTest {
                           "\t}\n" +
                           "}</selection>");
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
-    configureSoftWraps(32);
+    configureSoftWraps(32, false);
 
     // verify initial state
     assertEquals(4, EditorUtil.getTabSize(getEditor()));
@@ -111,7 +113,7 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testNoExceptionDuringBulkModeDocumentUpdate() {
     initText("something");
     DocumentEx document = (DocumentEx)getEditor().getDocument();
-    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.setText("something\telse")));
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.setText("something\telse")));
 
     checkResultByText("something\telse");
   }
@@ -121,7 +123,7 @@ public class EditorImplTest extends AbstractEditorTest {
              "a<selection>bcdef<caret></selection>g");
     runWriteCommand(() -> {
       DocumentEx document = (DocumentEx)getEditor().getDocument();
-      DocumentUtil.executeInBulk(document, true, ()-> {
+      DocumentUtil.executeInBulk(document, ()-> {
         // delete selected text
         document.deleteString(1, 6);
         document.deleteString(4, 9);
@@ -176,7 +178,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("long long line<caret>");
     configureSoftWraps(12);
     DocumentEx document = (DocumentEx)getEditor().getDocument();
-    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "-")));
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "-")));
 
     assertEquals(new VisualPosition(1, 5), getEditor().getCaretModel().getVisualPosition());
   }
@@ -186,11 +188,11 @@ public class EditorImplTest extends AbstractEditorTest {
     DocumentEx document = (DocumentEx)getEditor().getDocument();
 
     runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "-"));
+      DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "-"));
 
       getEditor().getCaretModel().moveToOffset(9);
 
-      DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "+"));
+      DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "+"));
     });
 
 
@@ -237,7 +239,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("a<caret>bc");
     runWriteCommand(() -> {
       DocumentEx document = (DocumentEx)getEditor().getDocument();
-      DocumentUtil.executeInBulk(document, true, ()-> {
+      DocumentUtil.executeInBulk(document, ()-> {
         document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
       });
     });
@@ -315,7 +317,7 @@ public class EditorImplTest extends AbstractEditorTest {
         getEditor().getMarkupModel().addRangeHighlighter(null, 7, 8, 0, HighlighterTargetArea.EXACT_RANGE);
       }
     }, getTestRootDisposable());
-    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.insertString(3, "\n\n")));
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.insertString(3, "\n\n")));
     RangeHighlighter[] highlighters = getEditor().getMarkupModel().getAllHighlighters();
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());
@@ -402,7 +404,7 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testEditingNearInlayInBulkMode() {
     initText("a<caret>bc");
     addInlay(1);
-    runWriteCommand(()-> DocumentUtil.executeInBulk(getEditor().getDocument(), true,
+    runWriteCommand(()-> DocumentUtil.executeInBulk(getEditor().getDocument(),
                                                     ()-> getEditor().getDocument().insertString(1, " ")));
     checkResultByText("a<caret> bc");
     assertTrue(getEditor().getInlayModel().hasInlineElementAt(1));
@@ -757,5 +759,71 @@ public class EditorImplTest extends AbstractEditorTest {
                                                  0, null, null));
     mouse().clickAtXY(0, getEditor().getLineHeight() / 2);
     checkResultByText("<caret>hello\u3146");
+  }
+
+  public void testScrollingToCaretWithWideCharacters() {
+    FontLayoutService.setInstance(new MockFontLayoutService(cp -> cp == 'Z' ? 2 * TEST_CHAR_WIDTH : TEST_CHAR_WIDTH,
+                                                            TEST_LINE_HEIGHT, TEST_DESCENT));
+    initText(StringUtil.repeatSymbol('Z', 500) + "<caret>");
+    setEditorVisibleSize(100, 100);
+    type(' ');
+    Rectangle visibleArea = getEditor().getScrollingModel().getVisibleAreaOnScrollingFinished();
+    Point caretPosition = getEditor().visualPositionToXY(getEditor().getCaretModel().getVisualPosition());
+    assertTrue(visibleArea.contains(caretPosition));
+  }
+
+  public void testMouseSelectionWithBlockCaret() {
+    initText("abcdef");
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
+    getEditor().getSettings().setBlockCursor(true);
+    int y = getEditor().getLineHeight() / 2;
+
+    mouse().pressAtXY(3 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<caret>def");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<caret>def");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("ab<selection><caret>cd</selection>ef");
+    mouse().dragToXY(TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("a<selection><caret>bcd</selection>ef");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("ab<selection><caret>cd</selection>ef");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<selection><caret>d</selection>ef");
+    mouse().dragToXY(4 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<selection>d<caret>e</selection>f");
+    mouse().dragToXY(5 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<selection>de<caret>f</selection>");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("ab<selection><caret>cd</selection>ef");
+    mouse().dragToXY(5 * TEST_CHAR_WIDTH + 1, y);
+    checkResultByText("abc<selection>de<caret>f</selection>");
+  }
+
+  public void testMouseSelectionAtLineEndWithBlockCaret() {
+    initText("abc\ndef");
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
+    getEditor().getSettings().setBlockCursor(true);
+    int line1Y = getEditor().getLineHeight() / 2;
+    int line2Y = getEditor().getLineHeight() * 3 / 2;
+
+    mouse().pressAtXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("abc<caret>\ndef");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("abc<caret>\ndef");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("ab<selection><caret>c\n</selection>def");
+    mouse().dragToXY(TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("a<selection><caret>bc\n</selection>def");
+    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("ab<selection><caret>c\n</selection>def");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
+    checkResultByText("abc<selection><caret>\n</selection>def");
+    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line2Y);
+    checkResultByText("abc<selection>\ndef<caret></selection>");
+    mouse().dragToXY(1, line2Y);
+    checkResultByText("abc<selection>\n<caret>d</selection>ef");
+    mouse().dragToXY(1, line1Y);
+    checkResultByText("<selection><caret>abc\n</selection>def");
   }
 }

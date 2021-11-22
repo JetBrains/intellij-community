@@ -143,7 +143,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     repaintTrafficIcon(file, editor, progress);
   }
 
-  private final Alarm repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm repaintIconAlarm = new Alarm();
   private void repaintTrafficIcon(@NotNull final PsiFile file, @Nullable Editor editor, double progress) {
     if (ApplicationManager.getApplication().isCommandLine()) return;
 

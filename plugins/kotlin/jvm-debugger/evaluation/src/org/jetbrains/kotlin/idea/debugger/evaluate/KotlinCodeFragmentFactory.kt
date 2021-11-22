@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -32,6 +31,7 @@ import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.j2k.convertToKotlin
 import org.jetbrains.kotlin.idea.j2k.j2kText
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.j2k.AfterConversionPass
 import org.jetbrains.kotlin.psi.*
@@ -83,7 +83,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
                 val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
                 val debuggerSession = debuggerContext.debuggerSession
                 if ((debuggerSession == null || debuggerContext.suspendContext == null) &&
-                    !ApplicationManager.getApplication().isUnitTestMode
+                    !isUnitTestMode()
                 ) {
                     LOG.warn("Couldn't create fake context element for java file, debugger isn't paused on breakpoint")
                     return@putCopyableUserData emptyFile
@@ -150,7 +150,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
     }
 
     private fun getDebugProcess(project: Project, context: PsiElement?): DebugProcessImpl? {
-        return if (ApplicationManager.getApplication().isUnitTestMode) {
+        return if (isUnitTestMode()) {
             context?.getCopyableUserData(DEBUG_CONTEXT_FOR_TESTS)?.debugProcess
         } else {
             DebuggerManagerEx.getInstanceEx(project).context.debugProcess
@@ -167,7 +167,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
             override fun action() {
                 try {
                     val frameProxy = hopelessAware {
-                        if (ApplicationManager.getApplication().isUnitTestMode) {
+                        if (isUnitTestMode()) {
                             contextElement?.getCopyableUserData(DEBUG_CONTEXT_FOR_TESTS)?.frameProxy
                         } else {
                             debuggerContext.frameProxy

@@ -6,11 +6,11 @@ Reports synchronization on a local variable or parameter.
   It may be possible to improve such code, for example, by controlling access using a synchronized wrapper class or by synchronizing on a
   field.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   void bar() {
     final Object lock = new Object();
     synchronized (lock) { }
   }
-</pre>
+</code></pre>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
@@ -19,7 +19,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
 
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("notifications", 62)
+    val GROUP = EventLogGroup("notifications", 63)
 
     @JvmField
     val DISPLAY_TYPE: EnumEventField<NotificationDisplayType> = Enum("display_type", NotificationDisplayType::class.java)

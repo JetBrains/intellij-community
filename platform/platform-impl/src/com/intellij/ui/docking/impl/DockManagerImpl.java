@@ -79,16 +79,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   @Override
-  public void register(@NotNull DockContainer container) {
-    if (container instanceof Disposable) {
-      register(container, (Disposable)container);
-    }
-    else {
-      myContainers.add(container);
-    }
-  }
-
-  @Override
   public void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable) {
     myContainers.add(container);
     Disposer.register(parentDisposable, new Disposable() {
@@ -337,6 +327,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
         if (myCurrentOverContainer == null) {
           createNewDockContainerFor(myContent, point);
+          e.consume();//Marker for DragHelper: drag into separate window is not tabs reordering
         }
         else {
           myCurrentOverContainer.add(myContent, point);
@@ -597,6 +588,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     public void dispose() {
       super.dispose();
       containerToWindow.remove(myContainer);
+      if (myContainer instanceof Disposable) {
+        Disposer.dispose((Disposable)myContainer);
+      }
       for (IdeRootPaneNorthExtension each : myNorthExtensions.values()) {
         if (each instanceof Disposable) {
           Disposer.dispose((Disposable)each);

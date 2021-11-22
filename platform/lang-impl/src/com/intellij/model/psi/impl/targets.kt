@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.diagnostic.PluginException
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolReference
@@ -42,48 +43,44 @@ internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferen
     return null
   }
 
-  val withMinimalRanges: Collection<DeclarationOrReference> = chooseByRange(
-    allDeclarationsOrReferences, offset, DeclarationOrReference::rangeWithOffset
-  )
+  val withMinimalRanges: Collection<DeclarationOrReference> = try {
+    chooseByRange(allDeclarationsOrReferences, offset, DeclarationOrReference::rangeWithOffset)
+  }
+  catch (e: RangeOverlapException) {
+    val details = allDeclarationsOrReferences.joinToString(separator = "") { item ->
+      "\n${item.rangeWithOffset} : $item"
+    }
+    LOG.error("Range overlap", PluginException.createByClass(e, file.javaClass), details)
+    return null
+  }
 
-  var declaration: PsiSymbolDeclaration? = null
-  val references: MutableList<PsiSymbolReference> = ArrayList()
+  val declarations = SmartList<DeclarationOrReference.Declaration>()
+  val references = SmartList<DeclarationOrReference.Reference>()
 
   for (dr in withMinimalRanges) {
     when (dr) {
-      is DeclarationOrReference.Declaration -> {
-        if (declaration != null) {
-          LOG.error(
-            """
-            Multiple declarations with the same range are not supported.
-            Declaration: $declaration; class: ${declaration.javaClass.name}.
-            Another declaration: ${dr.declaration}; class: ${dr.declaration.javaClass.name}.
-            """.trimIndent()
-          )
-        }
-        else {
-          declaration = dr.declaration
-        }
-      }
-      is DeclarationOrReference.Reference -> {
-        references.add(dr.reference)
-      }
+      is DeclarationOrReference.Declaration -> declarations.add(dr)
+      is DeclarationOrReference.Reference -> references.add(dr)
     }
   }
 
   return DeclaredReferencedData(
-    declaredData = declaration?.let(TargetData::Declared),
+    declaredData = declarations.takeUnless { it.isEmpty() }?.let(TargetData::Declared),
     referencedData = references.takeUnless { it.isEmpty() }?.let(TargetData::Referenced)
   )
 }
 
-private sealed class DeclarationOrReference {
+internal sealed class DeclarationOrReference {
 
   abstract val rangeWithOffset: TextRange
+
+  abstract val ranges: List<TextRange>
 
   class Declaration(val declaration: PsiSymbolDeclaration) : DeclarationOrReference() {
 
     override val rangeWithOffset: TextRange get() = declaration.absoluteRange
+
+    override val ranges: List<TextRange> get() = listOf(declaration.absoluteRange)
 
     override fun toString(): String = declaration.toString()
   }
@@ -96,11 +93,13 @@ private sealed class DeclarationOrReference {
       } ?: error("One of the ranges must contain offset at this point")
     }
 
+    override val ranges: List<TextRange> get() = referenceRanges(reference)
+
     override fun toString(): String = reference.toString()
   }
 }
 
-internal fun referenceRanges(it: PsiSymbolReference): List<TextRange> {
+private fun referenceRanges(it: PsiSymbolReference): List<TextRange> {
   return if (it is EvaluatorReference) {
     it.origin.absoluteRanges
   }

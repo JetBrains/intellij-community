@@ -434,7 +434,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
       Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
       return getNavigatableArray(myProject, getFiles(changes.stream()));
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     return null;

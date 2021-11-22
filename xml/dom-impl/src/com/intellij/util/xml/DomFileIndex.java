@@ -20,12 +20,6 @@ import java.util.*;
 
 @ApiStatus.Internal
 public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomIndexKey> {
-  /**
-   * @deprecated should not be used since has no effect.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final ID<String, Void> NAME = ID.create("DomFileIndex_old");
   private static final ID<DomIndexKey, Void> INDEX_ID = ID.create("DomFileIndex");
   private static final String NULL_NAMESPACE = "-NULL-";
 

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.dsl.holders;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -11,6 +12,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.*;
@@ -35,8 +37,8 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
 
   private static final Logger LOG = Logger.getInstance(NonCodeMembersHolder.class);
 
-  public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
-  public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
+  public static final Key<@Nls String> DOCUMENTATION = Key.create("GdslDocumentation");
+  public static final Key<@NlsSafe String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
 
   private final List<PsiVariable> myVariables = new ArrayList<>();
   private final List<PsiMethod> myMethods = new ArrayList<>();

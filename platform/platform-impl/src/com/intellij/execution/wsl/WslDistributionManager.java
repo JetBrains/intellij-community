@@ -5,9 +5,9 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,6 +29,7 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   private volatile CachedDistributions myInstalledDistributions;
+  private volatile List<WSLDistribution> myLastInstalledDistributions;
   private final Map<String, WSLDistribution> myMsIdToDistributionCache = CollectionFactory.createConcurrentWeakCaseInsensitiveMap();
 
   @Override
@@ -42,6 +43,14 @@ public abstract class WslDistributionManager implements Disposable {
    */
   public @Nullable List<WSLDistribution> getCachedInstalledDistributions() {
     return getInstalledDistributionsFuture().getNow(null);
+  }
+
+  /**
+   * @return last loaded list of installed distributions or {@code null} if it hasn't been loaded yet.
+   * Please note the returned list might be out-of-date. To get the up-to-date list, please use {@link #getInstalledDistributionsFuture}.
+   */
+  public @Nullable List<WSLDistribution> getLastInstalledDistributions() {
+    return myLastInstalledDistributions;
   }
 
   /**
@@ -60,6 +69,7 @@ public abstract class WslDistributionManager implements Disposable {
       if (cachedDistributions == null) {
         cachedDistributions = new CachedDistributions(loadInstalledDistributions());
         myInstalledDistributions = cachedDistributions;
+        myLastInstalledDistributions = cachedDistributions.myInstalledDistributions;
       }
     }
     return cachedDistributions.myInstalledDistributions;
@@ -102,7 +112,7 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   public static boolean isWslPath(@NotNull String path) {
-    return FileUtilRt.toSystemDependentName(path).startsWith(WSLDistribution.UNC_PREFIX);
+    return FileUtilRt.toSystemDependentName(path).startsWith(WslConstants.UNC_PREFIX);
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {

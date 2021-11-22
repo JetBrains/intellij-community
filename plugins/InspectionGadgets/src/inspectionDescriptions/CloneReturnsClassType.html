@@ -9,7 +9,19 @@ Reports <code>clone()</code> methods with return types different from the class 
   <b>class</b> Foo <b>implements</b> Cloneable {
     <b>public</b> Object clone() {
       <b>try</b> {
-        super.clone();
+        <b>return</b> super.clone();
+      } <b>catch</b> (CloneNotSupportedException e) {
+        <b>throw new</b> AssertionError();
+      }
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  <b>class</b> Foo <b>implements</b> Cloneable {
+    <b>public</b> Foo clone() {
+      <b>try</b> {
+        <b>return</b> (Foo)super.clone();
       } <b>catch</b> (CloneNotSupportedException e) {
         <b>throw new</b> AssertionError();
       }

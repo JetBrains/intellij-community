@@ -84,6 +84,15 @@ public final class InTextDirectivesUtils {
         return !findListWithPrefixes(fileText, directive).isEmpty();
     }
 
+    @NotNull
+    public static String stringWithDirective(String fileText, String directive) {
+        String string = findStringWithPrefixes(fileText, "// " + directive + ":");
+        if (string == null) {
+            throw new IllegalStateException("'" + directive + "' directive is missed");
+        }
+        return string;
+    }
+
     @Nullable
     public static String findStringWithPrefixes(String fileText, String... prefixes) {
         List<String> strings = findListWithPrefixes(fileText, prefixes);

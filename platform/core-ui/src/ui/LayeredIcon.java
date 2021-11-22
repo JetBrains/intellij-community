@@ -60,7 +60,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     }
   }
 
-  protected LayeredIcon(LayeredIcon icon) {
+  protected LayeredIcon(@NotNull LayeredIcon icon) {
     super(icon);
     myIcons = ArrayUtil.copyOf(icon.myIcons);
     myScaledIcons = null;
@@ -84,7 +84,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
   public LayeredIcon deepCopy() {
     LayeredIcon icon = new LayeredIcon(this);
     for (int i = 0; i < icon.myIcons.length; i++) {
-      icon.myIcons[i] = IconUtil.copy(icon.myIcons[i], null);
+      icon.myIcons[i] = icon.myIcons[i] == null ? null : IconUtil.copy(icon.myIcons[i], null);
     }
     return icon;
   }

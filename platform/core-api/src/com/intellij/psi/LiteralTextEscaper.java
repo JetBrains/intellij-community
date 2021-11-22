@@ -42,7 +42,7 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
    *   E.g. if some language fragment xyz was injected into string literal expression "xyz", then rangeInsideHost = (1,4)
    * @return offset in the host PSI element, or -1 if offset is out of host range.
    * E.g. if some language fragment xyz was injected into string literal expression "xyz", then
-   *     getOffsetInHost(0)==1 (there is an 'x' at offset 0 in injected fragment,
+   *     getOffsetInHost(0)==1 (there is an 'x' at offset 0 in the injected fragment,
    *                            and that 'x' occurs in "xyz" string literal at offset 1
    *                            since string literal expression "xyz" starts with double quote)
    *     getOffsetInHost(1)==2

@@ -1,6 +1,8 @@
 <html>
 <body>
-Reports definitions of Spring @Qualifier on class fields where corresponding Lombok <code>@RequiredArgsConstructor</code> or <code>@AllArgsConstructor</code>
-doesn't copy it to the generated constructor because a of missing definition inside the lombok.config file with the <code>lombok.copyableAnnotations</code> key.
+Reports  Spring <code>@Qualifier</code> annotations on class fields that are ignored by the corresponding Lombok
+<code>@RequiredArgsConstructor</code> and <code>@AllArgsConstructor</code> annotations.
+The generated constructors will not receive the <code>@Qualifier</code> annotation without
+a <code>lombok.copyableAnnotations</code> definition inside the <code>lombok.config</code> file.
 </body>
 </html>

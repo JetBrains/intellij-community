@@ -113,7 +113,13 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
         LOG.warn("Cannot delete old terminal/history/", e);
       }
     }
+
     Path parentDir = dir.getParent();
+    if (!Files.isDirectory(parentDir)) {
+      LOG.info("Old terminal/ directory does not exist or not a directory: " + parentDir);
+      return;
+    }
+
     boolean empty = false;
     try (Stream<Path> s = Files.list(parentDir)) {
       empty = s.findAny().isEmpty();

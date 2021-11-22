@@ -13,7 +13,6 @@ import com.intellij.util.containers.ThreadLocalRandom;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ObjectStreamField;
-import java.io.Serializable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.ParameterizedType;
@@ -1372,7 +1371,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Stripped-down version of helper class used in previous version,
      * declared for the sake of serialization compatibility.
      */
-    static class Segment<K,V> extends ReentrantLock implements Serializable {
+    static class Segment<K,V> extends ReentrantLock implements java.io.Serializable {
         private static final long serialVersionUID = 2249069246763182397L;
         final float loadFactor;
         Segment(float lf) { this.loadFactor = lf; }

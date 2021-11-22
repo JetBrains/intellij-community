@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newCounterMetric
-import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
@@ -11,11 +13,11 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.util.text.nullize
 import com.intellij.vcsUtil.VcsUtil
-import java.util.*
 
 class VcsUsagesCollector : ProjectUsagesCollector() {
-  override fun getGroupId(): String = "vcs.configuration"
-  override fun getVersion(): Int = 2
+  override fun getGroup(): EventLogGroup {
+    return GROUP
+  }
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val set = HashSet<MetricEvent>()
@@ -26,11 +28,7 @@ class VcsUsagesCollector : ProjectUsagesCollector() {
 
     for (vcs in vcsManager.allActiveVcss) {
       val pluginInfo = getPluginInfo(vcs.javaClass)
-
-      val metric = newMetric("active.vcs")
-      metric.data.addPluginInfo(pluginInfo)
-      metric.data.addData("vcs", vcs.name)
-      set.add(metric)
+      set.add(ACTIVE_VCS.metric(pluginInfo, vcs.name))
     }
 
     for (mapping in vcsManager.directoryMappings) {
@@ -38,15 +36,15 @@ class VcsUsagesCollector : ProjectUsagesCollector() {
       val vcs = vcsManager.findVcsByName(vcsName)
       val pluginInfo = vcs?.let { getPluginInfo(it.javaClass) }
 
-      val metric = newMetric("mapping")
-      metric.data.addPluginInfo(pluginInfo)
-      metric.data.addData("vcs", vcsName ?: "None")
-      metric.data.addData("is_project_mapping", mapping.isDefaultMapping)
+      val data = mutableListOf<EventPair<*>>()
+      data.add(EventFields.PluginInfo.with(pluginInfo))
+      data.add(IS_PROJECT_MAPPING_FIELD.with(mapping.isDefaultMapping))
+      data.add(VCS_FIELD_WITH_NONE.with(vcsName ?: "None"))
       if (!mapping.isDefaultMapping) {
-        metric.data.addData("is_base_dir", projectBaseDir != null &&
-                                           projectBaseDir == VcsUtil.getVirtualFile(mapping.directory))
+        data.add(IS_BASE_DIR_FIELD.with(projectBaseDir != null &&
+                                        projectBaseDir == VcsUtil.getVirtualFile(mapping.directory)))
       }
-      set.add(metric)
+      set.add(MAPPING.metric(data))
     }
 
     val defaultVcs = vcsManager.findVcsByName(vcsManager.haveDefaultMapping())
@@ -64,19 +62,41 @@ class VcsUsagesCollector : ProjectUsagesCollector() {
         .filter { !explicitRoots.contains(it.path) }
 
       for (vcsRoot in projectMappedRoots) {
-        val metric = newMetric("project.mapped.root")
-        metric.data.addPluginInfo(pluginInfo)
-        metric.data.addData("vcs", defaultVcs.name)
-        metric.data.addData("is_base_dir", vcsRoot.path == projectBaseDir)
-        set.add(metric)
+        set.add(PROJECT_MAPPED_ROOTS.metric(pluginInfo, defaultVcs.name, vcsRoot.path == projectBaseDir))
       }
     }
 
-    set.add(newCounterMetric("mapped.roots", vcsManager.allVcsRoots.size))
-    set.add(newCounterMetric("changelists", clm.changeListsNumber))
-    set.add(newCounterMetric("unversioned.files", clm.unversionedFilesPaths.size))
-    set.add(newCounterMetric("ignored.files", clm.ignoredFilePaths.size))
+    set.add(MAPPED_ROOTS.metric(vcsManager.allVcsRoots.size))
+    set.add(CHANGELISTS.metric(clm.changeListsNumber))
+    set.add(UNVERSIONED_FILES.metric(clm.unversionedFilesPaths.size))
+    set.add(IGNORED_FILES.metric(clm.ignoredFilePaths.size))
 
     return set
+  }
+
+  companion object {
+    private val GROUP = EventLogGroup("vcs.configuration", 3)
+    private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
+    private val ACTIVE_VCS = GROUP.registerEvent("active.vcs", EventFields.PluginInfo,
+                                                 VCS_FIELD)
+    private val IS_PROJECT_MAPPING_FIELD = EventFields.Boolean("is_project_mapping")
+    private val IS_BASE_DIR_FIELD = EventFields.Boolean("is_base_dir")
+    private val VCS_FIELD_WITH_NONE = object : StringEventField("vcs") {
+      override val validationRule: List<String>
+        get() = listOf("{enum#vcs}", "{enum:None}")
+    }
+    private val MAPPING = GROUP.registerVarargEvent(
+      "mapping", EventFields.PluginInfo,
+      VCS_FIELD_WITH_NONE, IS_PROJECT_MAPPING_FIELD, IS_BASE_DIR_FIELD
+    )
+
+    private val PROJECT_MAPPED_ROOTS = GROUP.registerEvent(
+      "project.mapped.root", EventFields.PluginInfo,
+      VCS_FIELD, EventFields.Boolean("is_base_dir")
+    )
+    private val MAPPED_ROOTS = GROUP.registerEvent("mapped.roots", EventFields.Count)
+    private val CHANGELISTS = GROUP.registerEvent("changelists", EventFields.Count)
+    private val UNVERSIONED_FILES = GROUP.registerEvent("unversioned.files", EventFields.Count)
+    private val IGNORED_FILES = GROUP.registerEvent("ignored.files", EventFields.Count)
   }
 }

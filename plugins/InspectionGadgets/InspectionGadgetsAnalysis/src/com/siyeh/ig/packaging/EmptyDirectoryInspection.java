@@ -1,18 +1,4 @@
-/*
- * Copyright 2011-2016 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.packaging;
 
 import com.intellij.analysis.AnalysisScope;
@@ -36,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class EmptyDirectoryInspection extends BaseGlobalInspection {
 
@@ -57,9 +41,10 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
   }
 
   @Override
-  public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager,
-    @NotNull final GlobalInspectionContext context,
-    @NotNull final ProblemDescriptionsProcessor processor) {
+  public void runInspection(@NotNull AnalysisScope scope,
+                            @NotNull InspectionManager manager,
+                            @NotNull GlobalInspectionContext context,
+                            @NotNull ProblemDescriptionsProcessor processor) {
     final Project project = context.getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final SearchScope searchScope = ReadAction.compute(() -> scope.toSearchScope());
@@ -67,34 +52,27 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
       return;
     }
     final GlobalSearchScope globalSearchScope = (GlobalSearchScope)searchScope;
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    ReadAction.nonBlocking(() -> {
-      Map<RefElement, CommonProblemDescriptor> results = new HashMap<>();
-      index.iterateContent(fileOrDir -> {
-        if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(fileOrDir)) {
-          return true;
-        }
-        final VirtualFile[] children = fileOrDir.getChildren();
-        if (children.length != 0) {
-          return true;
-        }
-        final PsiDirectory directory = psiManager.findDirectory(fileOrDir);
-        final RefElement refDirectory = context.getRefManager().getReference(directory);
-        if (refDirectory == null || context.shouldCheck(refDirectory, this)) {
-          return true;
-        }
-        final String relativePath = getPathRelativeToModule(fileOrDir, project);
-        if (relativePath == null) {
-          return true;
-        }
-        results.put(refDirectory, manager.createProblemDescriptor(
-          InspectionGadgetsBundle.message("empty.directories.problem.descriptor", relativePath),
-          new EmptyPackageFix(fileOrDir.getUrl(), fileOrDir.getName())));
+    index.iterateContent(file -> {
+      if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(file)) {
         return true;
-      }, globalSearchScope);
-      return results;
-    }).executeSynchronously()
-      .forEach((element, descriptor) -> processor.addProblemElement(element, descriptor));
+      }
+      if (!file.isDirectory() || file.getChildren().length != 0) {
+        return true;
+      }
+      final PsiDirectory directory = ReadAction.compute(() -> PsiManager.getInstance(project).findDirectory(file));
+      final RefElement refDirectory = context.getRefManager().getReference(directory);
+      if (refDirectory == null || context.shouldCheck(refDirectory, this)) {
+        return true;
+      }
+      final String relativePath = getPathRelativeToModule(file, project);
+      if (relativePath == null) {
+        return true;
+      }
+      processor.addProblemElement(refDirectory, manager.createProblemDescriptor(
+        InspectionGadgetsBundle.message("empty.directories.problem.descriptor", relativePath),
+        new EmptyPackageFix(file.getUrl(), file.getName())));
+      return true;
+    }, globalSearchScope);
   }
 
   @Nullable

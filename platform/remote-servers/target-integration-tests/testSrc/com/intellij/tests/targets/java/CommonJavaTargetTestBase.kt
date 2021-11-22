@@ -309,8 +309,15 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
    *                    folders in it
    */
   protected fun initializeSampleModule(module: Module, contentRoot: VirtualFile) {
-    val libraryDescriptor = JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0")
-    AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor)
+    val libraryDescriptors = listOf(
+      JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"),
+      JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-engine", "5.3.0"),
+      JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-engine", "1.7.0"),
+      JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-launcher", "1.7.0"),
+    )
+    libraryDescriptors.forEach { libraryDescriptor ->
+      AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor)
+    }
 
     ModuleRootModificationUtil.updateModel(module) { model: ModifiableRootModel ->
       val contentEntry = model.addContentEntry(contentRoot)

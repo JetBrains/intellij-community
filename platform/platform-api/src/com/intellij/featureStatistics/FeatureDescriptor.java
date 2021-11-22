@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +21,8 @@ public class FeatureDescriptor {
   private int myDaysBetweenSuccessiveShowUps;
   private int myMinUsageCount;
   private boolean myNeedToBeShownInGuide = true;
-  private final List<LogEventDetector> myLogEventDetectors = new ArrayList<>();
+  private final List<FeatureUsageEvent.Action> myActionEvents = new ArrayList<>();
+  private final List<FeatureUsageEvent.Intention> myIntentionEvents = new ArrayList<>();
 
   private int myUsageCount;
   private long myLastTimeShown;
@@ -35,13 +36,14 @@ public class FeatureDescriptor {
   @NonNls private static final String ATTRIBUTE_SHOWN_COUNT = "shown-count";
   @NonNls private static final String ATTRIBUTE_ID = "id";
   @NonNls private static final String ATTRIBUTE_TIP_FILE = "tip-file";
-  @NonNls private static final String ATTRIBUTE_DETECTOR_TYPE = "type";
   @NonNls private static final String ATTRIBUTE_FIRST_SHOW = "first-show";
   @NonNls private static final String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
   @NonNls private static final String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
   @NonNls private static final String ATTRIBUTE_SHOW_IN_GUIDE = "show-in-guide";
+  @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ELEMENT_DEPENDENCY = "dependency";
-  @NonNls private static final String ELEMENT_EVENT_DETECTOR = "event-detector";
+  @NonNls private static final String ELEMENT_TRACK_ACTION = "track-action";
+  @NonNls private static final String ELEMENT_TRACK_INTENTION = "track-intention";
 
   FeatureDescriptor(@NotNull GroupDescriptor group, @NotNull Element featureElement) {
     myGroupId = group.getId();
@@ -86,17 +88,18 @@ public class FeatureDescriptor {
     myDaysBetweenSuccessiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), 3);
     String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
-    List<Element> eventDetectors = element.getChildren(ELEMENT_EVENT_DETECTOR);
-    for (Element eventDetectorElement : eventDetectors) {
-      @NonNls String detectorTypeStr = eventDetectorElement.getAttributeValue(ATTRIBUTE_DETECTOR_TYPE);
-      @NonNls String eventDataId = eventDetectorElement.getAttributeValue(ATTRIBUTE_ID);
-      if (detectorTypeStr != null && eventDataId != null) {
-        try {
-          LogEventDetector.Type detectorType = LogEventDetector.Type.valueOf(detectorTypeStr.toUpperCase(Locale.ROOT));
-          myLogEventDetectors.add(LogEventDetector.create(detectorType, myId, eventDataId));
-        } catch (Throwable t) {
-          LOG.error(String.format("Error on reading event-detector with event data id %s for feature %s", eventDataId, myId), t);
-        }
+    List<Element> actionEvents = element.getChildren(ELEMENT_TRACK_ACTION);
+    for (Element actionElement : actionEvents) {
+      @NonNls String actionId = actionElement.getAttributeValue(ATTRIBUTE_ID);
+      if (actionId != null) {
+        myActionEvents.add(FeatureUsageEvent.createActionEvent(myId, actionId));
+      }
+    }
+    List<Element> intentionEvents = element.getChildren(ELEMENT_TRACK_INTENTION);
+    for (Element intentionElement : intentionEvents) {
+      @NonNls String intentionClassName = intentionElement.getAttributeValue(ATTRIBUTE_CLASS_NAME);
+      if (intentionClassName != null) {
+        myIntentionEvents.add(FeatureUsageEvent.createIntentionEvent(myId, intentionClassName));
       }
     }
     List<Element> dependencies = element.getChildren(ELEMENT_DEPENDENCY);
@@ -121,8 +124,12 @@ public class FeatureDescriptor {
     return myTipFileName;
   }
 
-  public List<LogEventDetector> getLogEventDetectors() {
-    return myLogEventDetectors;
+  public List<FeatureUsageEvent.Action> getActionEvents() {
+    return myActionEvents;
+  }
+
+  public List<FeatureUsageEvent.Intention> getIntentionEvents() {
+    return myIntentionEvents;
   }
 
   @NotNull

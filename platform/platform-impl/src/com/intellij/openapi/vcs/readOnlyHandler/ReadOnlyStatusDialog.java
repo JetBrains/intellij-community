@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeBundle;
@@ -23,7 +23,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class ReadOnlyStatusDialog extends OptionsDialog {
   private static final SimpleTextAttributes BOLD_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.foreground());
@@ -35,9 +34,9 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   private JRadioButton myUsingFileSystemRadioButton;
   private JRadioButton myUsingVcsRadioButton;
   private JComboBox<String> myChangelist;
-  private List<? extends FileInfo> myFiles;
+  private List<FileInfo> myFiles;
 
-  public ReadOnlyStatusDialog(Project project, @NotNull List<? extends FileInfo> files) {
+  public ReadOnlyStatusDialog(Project project, @NotNull List<FileInfo> files) {
     super(project);
     setTitle(IdeBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;

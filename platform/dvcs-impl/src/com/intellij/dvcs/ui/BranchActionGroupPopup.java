@@ -42,10 +42,12 @@ import java.util.Objects;
 
 import static com.intellij.icons.AllIcons.General.FitContent;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
-import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
+
+  private static final String EXPERIMENTAL_UI_DIMENSION_KEY_SUFFIX = ".ExperimentalUi";
+
   static final String BRANCH_POPUP = "BranchWidget";
   private static final int BRANCH_POPUP_ROW_COUNT = 30;
   private Project myProject;
@@ -60,7 +62,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private final List<AnAction> mySettingsActions = new ArrayList<>();
   private final List<AnAction> myToolbarActions = new ArrayList<>();
 
-  public BranchActionGroupPopup(@NotNull @NlsContexts.PopupTitle String title,
+  public BranchActionGroupPopup(@Nullable @NlsContexts.PopupTitle String title,
                                 @NotNull Project project,
                                 @NotNull Condition<? super AnAction> preselectActionCondition,
                                 @NotNull ActionGroup actions,
@@ -70,7 +72,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
-    myKey = dimensionKey;
+    myKey = buildDimensionKey(dimensionKey);
     if (myKey != null) {
       setDimensionServiceKey(myKey);
       if (WindowStateService.getInstance(myProject).getSizeFor(myProject, myKey) != null) {
@@ -82,6 +84,12 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
     setMaxRowCount(BRANCH_POPUP_ROW_COUNT);
     getList().setVisibleRowCount(BRANCH_POPUP_ROW_COUNT);
+  }
+
+  @Nullable
+  private static String buildDimensionKey(@Nullable final String initialDimensionKey) {
+    if (initialDimensionKey == null) return null;
+    return ExperimentalUI.isNewVcsBranchPopup() ? initialDimensionKey + EXPERIMENTAL_UI_DIMENSION_KEY_SUFFIX : initialDimensionKey;
   }
 
   private void createTitlePanelToolbar(@NotNull String dimensionKey) {
@@ -360,20 +368,6 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
 
     @Override
-    protected SeparatorWithText createSeparator() {
-      SeparatorWithText separator = super.createSeparator();
-      separator.setTextForeground(UIUtil.getListForeground());
-      separator.setCaptionCentered(false);
-      UIUtil.addInsets(separator, DEFAULT_VGAP, UIUtil.getListCellHPadding(), 0, 0);
-      return separator;
-    }
-
-    @Override
-    protected void setSeparatorFont(Font font) {
-      super.setSeparatorFont(RelativeFont.BOLD.derive(font));
-    }
-
-    @Override
     protected void customizeComponent(JList list, Object value, boolean isSelected) {
       MoreAction more = getSpecificAction(value, MoreAction.class);
       if (more != null) {
@@ -381,7 +375,8 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
       super.customizeComponent(list, value, isSelected);
       if (mySeparatorComponent.isVisible()) {
-        ((GroupHeaderSeparator)mySeparatorComponent).setHideLine(myCurrentIndex == 0 || StringUtil.isNotEmpty(mySeparatorComponent.getCaption()));
+        boolean hideLineAboveCaption = !ExperimentalUI.isNewVcsBranchPopup() && StringUtil.isNotEmpty(mySeparatorComponent.getCaption());
+        ((GroupHeaderSeparator)mySeparatorComponent).setHideLine(myCurrentIndex == 0 || hideLineAboveCaption);
       }
 
       CustomIconProvider actionWithIconProvider = getSpecificAction(value, CustomIconProvider.class);

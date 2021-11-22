@@ -278,9 +278,14 @@
                        displayType="TOOL_WINDOW"
                        bundle="messages.JavaCompilerBundle"
                        key="notification.group.title.jps.cannot.start.compiler" />
+    <notificationGroup id="JDK resolve problems"
+                       toolWindowId="Build"
+                       displayType="BALLOON" />
 
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
+    <applicationService serviceInterface="com.intellij.execution.filters.ExceptionLineParserFactory"
+            serviceImplementation="com.intellij.execution.filters.ExceptionLineParserFactoryImpl"/>
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider" />
     <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.SetupJavaProjectFromSourcesActivity" />
@@ -435,7 +440,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.actions.JavaDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor$FixerUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.introduceVariable.IntroduceVariableUsagesCollector" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.introduceVariable.IntroduceVariableUsagesCollector" version="3"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInspection.deadCode.EntryPointsUsageCollector"/>
@@ -736,8 +741,10 @@
 
     <resolveScopeEnlarger implementation="com.intellij.ide.scratch.ScratchResolveScopeEnlarger"/>
 
-    <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
     <xdebugger.settings implementation="com.intellij.debugger.settings.JavaDebuggerSettings"/>
+
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.debugger.ui.XBreakpointGroupingByPackageRule"/>
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.debugger.ui.XBreakpointGroupingByClassRule"/>
 
     <projectConfigurable parentId="project.propDebugger" instance="com.intellij.debugger.settings.CaptureConfigurable"/>
 
@@ -761,15 +768,9 @@
     <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
     <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
-    <registryKey key="java.refactoring.extractMethod.newImplementation"
-                 defaultValue="true"
-                 description="Enable experimental extract method implementation"/>
     <registryKey key="java.refactoring.extractMethod.newDuplicatesExtractor"
-                 defaultValue="false"
-                 description="Enable experimental extract duplicates implementation"/>
-    <registryKey key="java.refactoring.extractMethod.inplace"
                  defaultValue="true"
-                 description="Enable experimental extract method inplace mode"/>
+                 description="Enable experimental extract duplicates implementation"/>
     <debugger.asyncStackTraceProvider
         implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
 
@@ -1195,6 +1196,9 @@
     <breadcrumbsInfoProvider implementation="com.intellij.lang.java.JavaBreadcrumbsInfoProvider"/>
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
     <flipCommaIntention.flipper language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaFlipper"/>
+    <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinArgumentsContext"/>
+    <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinParametersContext"/>
+    <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinRecordComponentsContext"/>
     <moveLeftRightHandler language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.JavaMoveLeftRightHandler"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover" id="declaration" order="before xml"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement" order="before declaration"/>
@@ -1919,10 +1923,20 @@
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SimplifyBooleanExpressionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.boolean</categoryKey>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.EncapsulateFieldAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.refactorings</categoryKey>
     </intentionAction>
@@ -2067,6 +2081,11 @@
       <descriptionDirectoryName>EditRangeIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.EditReassignedTextAttributesAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AnnotateIntentionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>
@@ -2139,37 +2158,7 @@
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
       <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopParametersAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopArgumentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinParametersAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinArgumentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopRecordComponentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinRecordComponentsAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.code.style</categoryKey>
+      <categoryKey>intention.category.collections</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction</className>
@@ -2190,9 +2179,10 @@
         implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true" description="Enables using bundled JetBrains Runtime for execution"/>
+    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaCodeAuthorInlayHintsProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider"/>
-    <statistics.counterUsagesCollector groupId="java.lens" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector"/>
     <notificationGroup id="Clean artifact" displayType="BALLOON"/>
     <notificationGroup id="Compiler" displayType="NONE"/>
     <notificationGroup id="Build Profiler" displayType="STICKY_BALLOON"/>
@@ -2206,6 +2196,7 @@
     <notificationGroup id="Build Script Found" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Java Preview Features" displayType="BALLOON"/>
     <notificationGroup id="Remove redundant exports/opens" displayType="BALLOON"/>
+    <notificationGroup id="Setup SDK" displayType="BALLOON"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>

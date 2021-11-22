@@ -83,7 +83,7 @@ function initGraph(graph) {
     container: document.getElementById("cy"),
     elements: graph,
     layout: layoutOptions,
-    minZoom: 0.4,
+    minZoom: 0.2,
     maxZoom: 3,
     autoungrabify: true,
 

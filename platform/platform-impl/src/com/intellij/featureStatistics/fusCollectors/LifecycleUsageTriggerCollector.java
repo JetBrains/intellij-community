@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -27,7 +27,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 59);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 60);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -151,7 +151,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
         data.add(tooManyErrorsField.with(true));
       }
 
-      IDE_ERROR.log(data.toArray(new EventPair[0]));
+      IDE_ERROR.log(data);
     }
     catch (Exception e) {
       LOG.warn(e);

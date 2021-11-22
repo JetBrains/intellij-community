@@ -1,9 +1,9 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version suffix="" major="2021" minor="2.3" />
+  <version major="2021" minor="3" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
-  <build number="IC-__BUILD__" date="__BUILD_DATE__" majorReleaseDate="20210727" />
+  <build number="IC-__BUILD__" date="__BUILD_DATE__"/> <!--majorReleaseDate="20170321"-->
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffae00" progressY="396" progressHeight="4" />
   <about url="/idea_community_about.png" foreground="ffffff" copyrightForeground="ffffff" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
   <icon ico="idea_CE.ico" svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
@@ -25,7 +25,19 @@
   <documentation url="https://www.jetbrains.com/idea/resources/"/>
   <support url="https://intellij-support.jetbrains.com/hc/en-us/requests/new?ticket_form_id=66731&amp;product=IDEA&amp;build=$BUILD&amp;os=$OS&amp;timezone=$TIMEZONE"/>
   <youtrack url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;description=$DESCR" />
-  <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+  <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
+    zendesk-form-id="360001912739" zendesk-url="https://jbsintellij.zendesk.com">
+    <field id="28147552" value="ij_idea"/>
+    <field id="28102551" value="sl_unknown"/>   <!-- country -->
+    <field id="29444529" type="rating"/>
+    <field id="28500325" type="build"/>
+    <field id="28151042" type="os"/>
+    <field id="28500645" type="timezone"/>
+    <field id="28351649" type="eval"/>
+    <field id="360021010939" type="systeminfo"/>
+    <field id="22996310" type="needsupport"/>
+    <field id="28116681" type="topic"/>
+  </feedback>
   <whatsnew url="https://www.jetbrains.com/idea/whatsnew/" eligibility="auto"/>
   <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
           mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>

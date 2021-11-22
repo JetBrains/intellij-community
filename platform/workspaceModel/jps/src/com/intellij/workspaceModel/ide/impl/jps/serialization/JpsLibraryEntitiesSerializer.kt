@@ -283,12 +283,12 @@ internal class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryEx
 internal class LibraryExternalSystemIdEntity(
   val externalSystemId: String
 ) : WorkspaceEntityBase() {
-  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class.java, true)
+  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class.java)
 }
 
 internal class ModifiableLibraryExternalSystemIdEntity : ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>() {
   var externalSystemId: String by EntityDataDelegation()
-  var library: LibraryEntity by MutableOneToOneChild.NotNull(LibraryExternalSystemIdEntity::class.java, LibraryEntity::class.java, true)
+  var library: LibraryEntity by MutableOneToOneChild.NotNull(LibraryExternalSystemIdEntity::class.java, LibraryEntity::class.java)
 }
 
 private val LibraryEntity.externalSystemId get() = referrers(LibraryExternalSystemIdEntity::library).firstOrNull()

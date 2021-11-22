@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListenerImpl;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -213,7 +213,7 @@ public abstract class CompletionPhase implements Disposable {
       }, this);
       if (indicator.isAutopopupCompletion()) {
         // lookup is not visible, we have to check ourselves if editor retains focus
-        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListenerImpl() {
+        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
           @Override
           public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
             // When ScreenReader is active the lookup gets focus on show and we should not close it.

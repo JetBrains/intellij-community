@@ -168,7 +168,7 @@ public class FontEditorDialog extends DialogWrapper {
       if (value.getFontSize() >= 0) {
         myFontSizeList.setSelectedValue(Integer.toString(value.getFontSize()), true);
         if (myFontSizeList.getSelectedIndex() < 0) {
-          myFontSizeEdit.setValue(new Integer(value.getFontSize()));
+          myFontSizeEdit.setValue(Integer.valueOf(value.getFontSize()));
         }
       }
       else {

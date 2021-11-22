@@ -2,20 +2,37 @@
 package org.intellij.plugins.markdown.extensions.common
 
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
+import org.intellij.plugins.markdown.extensions.MarkdownExtension
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
-import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
-import org.intellij.plugins.markdown.settings.MarkdownFontUtil
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 
-internal class FontStylesExtension : MarkdownJCEFPreviewExtension, ResourceProvider {
-  val cssSettings get() = MarkdownApplicationSettings.getInstance().markdownCssSettings
+internal class FontStyleExtension : MarkdownJCEFPreviewExtension, ResourceProvider {
+  private val settings
+    get() = MarkdownExtension.currentProjectSettings
 
   override val priority: MarkdownBrowserPreviewExtension.Priority
     get() = MarkdownBrowserPreviewExtension.Priority.AFTER_ALL
+
   override val styles: List<String> = listOf("font/font-settings.css")
+
   override val resourceProvider: ResourceProvider = this
+
   override fun canProvide(resourceName: String): Boolean = resourceName in styles
+
   override fun loadResource(resourceName: String): ResourceProvider.Resource {
-    return ResourceProvider.Resource(MarkdownFontUtil.getFontSizeCss(cssSettings.fontSize, cssSettings.fontFamily).toByteArray())
+    val css = getFontSizeCss(settings.fontSize, checkNotNull(settings.fontFamily))
+    return ResourceProvider.Resource(css.toByteArray())
+  }
+
+  companion object {
+    private fun getFontSizeCss(fontSize: Int, fontFamily: String): String {
+      // language=CSS
+      return """
+        div { 
+          font-size: ${fontSize}px !important; 
+          font-family: ${fontFamily} !important; 
+        }
+      """.trimIndent()
+    }
   }
 }

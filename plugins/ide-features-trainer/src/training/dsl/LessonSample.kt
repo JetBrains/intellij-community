@@ -20,13 +20,6 @@ class LessonSample(val text: String,
   fun getPosition(id: Int): LessonSamplePosition {
     return positions[id] ?: if (id == 0) LessonSamplePosition(0, 0) else error("No id $id")
   }
-
-  fun insertAtPosition(id: Int, insert: String): LessonSample {
-    val position = getPosition(id)
-    val stringBuilder = StringBuilder(text)
-    stringBuilder.insert(position.startOffset, insert)
-    return parseLessonSample(stringBuilder.toString())
-  }
 }
 
 fun createFromTemplate(template: LessonSample, insert: String): LessonSample {

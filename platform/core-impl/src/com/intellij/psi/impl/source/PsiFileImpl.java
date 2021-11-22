@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -119,6 +120,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public VirtualFile getVirtualFile() {
+    VirtualFile indexingFile = IndexingDataKeys.VIRTUAL_FILE.get(this);
+    if (indexingFile != null) return indexingFile;
     return getViewProvider().isEventSystemEnabled() || ModelBranch.getPsiBranch(this) != null ? getViewProvider().getVirtualFile() : null;
   }
 

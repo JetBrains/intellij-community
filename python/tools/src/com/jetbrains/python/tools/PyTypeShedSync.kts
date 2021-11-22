@@ -25,56 +25,6 @@ println("Syncing")
 sync(repo, bundled)
 
 val blacklist = sequenceOf(
-  "_collections",
-  "_decimal",
-  "_functools",
-  "_hotshot",
-  "_markupbase",
-  "_md5",
-  "_osx_support",
-  "_posixsubprocess",
-  "_pydecimal",
-  "_sha",
-  "_sha256",
-  "_sha512",
-  "_socket",
-  "_sre",
-  "_stat",
-  "_struct",
-  "_symtable",
-  "_threading_local",
-  "_weakref",
-  "_weakrefset",
-  "asynchat",
-  "atexit",
-  "backports",
-  "backports_abc",
-  "basehttpserver",
-  "binhex",
-  "bisect",
-  "bleach",
-  "boto",
-  "calendar",
-  "certifi",
-  "cgihttpserver",
-  "cgitb",
-  "characteristic",
-  "chunk",
-  "click",
-  "code",
-  "codeop",
-  "colorsys",
-  "commands",
-  "cookie",
-  "cookielib",
-  "copy",
-  "copy_reg",
-  "copyreg",
-  "croniter",
-  "cstringio",
-  "dataclasses",
-  "dateparser",
-  "decorator",
   "dircache",
   "dis",
   "docutils",
@@ -195,7 +145,7 @@ val blacklist = sequenceOf(
   "xmlrpclib",
   "xxlimited", // not available in runtime
   "PyYAML"
-).mapTo(hashSetOf()) { it.toLowerCase() }
+).mapTo(hashSetOf()) { it.lowercase() }
 
 println("Cleaning")
 cleanTopLevelPackages(bundled, blacklist)
@@ -235,7 +185,7 @@ fun cleanTopLevelPackages(typeshed: Path, blackList: Set<String>) {
     .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("stdlib/@python2"), it.resolve("stubs")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .filter {
-      val name = it.nameWithoutExtension().toLowerCase()
+      val name = it.nameWithoutExtension().lowercase()
 
       if (name in blackList) {
         true

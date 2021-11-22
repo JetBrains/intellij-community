@@ -68,11 +68,11 @@ object CreateTypeParameterUnmatchedTypeArgumentActionFactory :
     override fun createFixes(
         originalElementPointer: SmartPsiElementPointer<KtTypeArgumentList>,
         diagnostic: Diagnostic,
-        quickFixDataFactory: () -> CreateTypeParameterData?
+        quickFixDataFactory: (KtTypeArgumentList) -> CreateTypeParameterData?
     ): List<QuickFixWithDelegateFactory> {
         return QuickFixWithDelegateFactory factory@{
             val originalElement = originalElementPointer.element ?: return@factory null
-            val data = quickFixDataFactory() ?: return@factory null
+            val data = quickFixDataFactory(originalElement) ?: return@factory null
             CreateTypeParameterFromUsageFix(originalElement, data, false)
         }.let(::listOf)
     }

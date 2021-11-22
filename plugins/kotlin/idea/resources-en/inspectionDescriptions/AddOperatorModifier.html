@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports a function that matches one of the operator conventions but lacks the <code>operator</code> keyword.
-<p>By adding an <code>operator</code> modifier, you might allow consumers of a function for writing a more Kotlin-idiomatic code.</p>
+<p>By adding the <code>operator</code> modifier, you might allow function consumers to write idiomatic Kotlin code.</p>
 <p><b>Example:</b></p>
 <pre><code>
   class Complex(val real: Double, val imaginary: Double) {
@@ -13,7 +13,7 @@ Reports a function that matches one of the operator conventions but lacks the <c
       a.plus(b)
   }
 </code></pre>
-<p>A quick-fix is suggested to add the <code>operator</code> modifier keyword:</p>
+<p>A quick-fix adds the <code>operator</code> modifier keyword:</p>
 <pre><code>
   class Complex(val real: Double, val imaginary: Double) {
       operator fun plus(other: Complex) =

@@ -326,6 +326,11 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
   private static final PsiElementPattern.Capture<PsiElement> IN_ANNOTATION =
     psiElement().inside(psiElement(PyAnnotation.class));
 
+  public static final ElementPattern<PsiElement> IN_PATTERN =
+    or(psiElement().inside(false, psiElement(PyPattern.class), psiElement(PyStatement.class)),
+       psiElement().inside(true, psiElement(PyCaseClause.class), psiElement(PyStatement.class))
+         .andNot(psiElement().inside(false, psiElement(PyExpression.class), psiElement(PyCaseClause.class))));
+
   private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class).withLastChild(
     psiElement(PyIfPart.class)));
   private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
@@ -638,6 +643,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
       .andNot(IN_FUNCTION_HEADER)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL).andNot(TARGET_AFTER_QUALIFIER)
+      .andNot(IN_PATTERN)
       ,
       new PyKeywordCompletionProvider(PyNames.NOT, PyNames.LAMBDA)
     );
@@ -665,7 +671,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
              .andNot(IN_PARAM_LIST)
              .andNot(AFTER_QUALIFIER)
              .andNot(IN_STRING_LITERAL)
-             .andNot(TARGET_AFTER_QUALIFIER),
+             .andNot(TARGET_AFTER_QUALIFIER)
+             .andNot(IN_PATTERN),
            new PyKeywordCompletionProvider(PyNames.ASYNC));
     extend(CompletionType.BASIC,
            psiElement()

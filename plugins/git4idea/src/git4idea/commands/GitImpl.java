@@ -553,13 +553,6 @@ public class GitImpl extends GitImplBase {
     return runCommand(handler);
   }
 
-  @Override
-  @NotNull
-  public GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
-                                     GitLineHandlerListener @NotNull ... listeners) {
-    return cherryPick(repository, hash, autoCommit, true, listeners);
-  }
-
   @NotNull
   @Override
   public GitCommandResult cherryPick(@NotNull GitRepository repository,

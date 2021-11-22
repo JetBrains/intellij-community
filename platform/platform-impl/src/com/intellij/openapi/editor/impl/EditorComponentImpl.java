@@ -162,7 +162,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       if (location == null) {
         location = myEditor.getCaretModel().getLogicalPosition();
       }
-      return EditorUtil.inVirtualSpace(myEditor, location);
+      return EditorCoreUtil.inVirtualSpace(myEditor, location);
     }
     return null;
   }
@@ -947,7 +947,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       if (myCaretPos != dot) {
         ApplicationManager.getApplication().assertIsDispatchThread();
         firePropertyChange(ACCESSIBLE_CARET_PROPERTY,
-                           new Integer(myCaretPos), new Integer(dot));
+                           Integer.valueOf(myCaretPos), Integer.valueOf(dot));
 
         if (SystemInfo.isMac) {
           // For MacOSX we also need to fire a caret event to anyone listening

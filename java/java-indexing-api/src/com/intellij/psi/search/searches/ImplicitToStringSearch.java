@@ -30,7 +30,7 @@ public final class ImplicitToStringSearch extends ExtensibleQueryFactory<PsiExpr
     }
   }
 
-  public static Query<PsiExpression> search(@NotNull PsiMethod targetMethod, @NotNull SearchScope scope) {
+  public static @NotNull Query<PsiExpression> search(@NotNull PsiMethod targetMethod, @NotNull SearchScope scope) {
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(targetMethod, scope), SmartPointerManager::createPointer);
   }
 

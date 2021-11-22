@@ -13,7 +13,9 @@ import org.jetbrains.idea.maven.execution.MavenExternalParameters.resolveMavenHo
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.File
 
 class MavenSettingsCollector : ProjectUsagesCollector() {
   override fun getGroupId() = "build.maven.state"
@@ -41,7 +43,8 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     @Suppress("DEPRECATION")
     usages.add(newMetric("loggingLevel", generalSettings.loggingLevel))
     try {
-      var mavenVersion = MavenUtil.getMavenVersion(resolveMavenHome(generalSettings, project, null))
+      val mavenWrapperFile = getMavenWrapper(manager, project)
+      var mavenVersion = MavenUtil.getMavenVersion(resolveMavenHome(generalSettings, project, null, mavenWrapperFile))
       mavenVersion = mavenVersion?.let { Version.parseVersion(it)?.toCompactString() } ?: "unknown"
       usages.add(newMetric("mavenVersion", mavenVersion))
     }
@@ -92,5 +95,11 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(newBooleanMetric("skipTests", runnerSettings.isSkipTests))
     usages.add(newBooleanMetric("hasRunnerMavenProperties", !runnerSettings.mavenProperties.isNullOrEmpty()))
     return usages
+  }
+
+  private fun getMavenWrapper(manager: MavenProjectsManager,
+                              project: Project): File? {
+    return if (manager.rootProjects.size == 1)
+      MavenDistributionsCache.getInstance(project).getWrapper(manager.rootProjects.first().directory)?.mavenHome else null
   }
 }

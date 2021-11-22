@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Creates various concurrent collections (e.g maps, sets) which can be customized with {@link HashingStrategy}
+ * Creates various concurrent collections (e.g., maps, sets) which can be customized with {@link HashingStrategy}
  */
 public final class ConcurrentCollectionFactory {
   @Contract(value = " -> new", pure = true)

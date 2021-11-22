@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -81,7 +81,7 @@ public interface InlayParameterHintsProvider {
    * Text explaining exclude list patterns.
    */
   default String getBlacklistExplanationHTML() {
-    return CodeInsightBundle.message("inlay.hints.blacklist.pattern.explanation");
+    return CodeInsightBundle.message("inlay.hints.exclude.list.pattern.explanation");
   }
 
   /**

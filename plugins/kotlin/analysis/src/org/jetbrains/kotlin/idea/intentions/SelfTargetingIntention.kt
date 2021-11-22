@@ -7,14 +7,15 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -65,9 +66,13 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
 
         for (element in elementsToCheck) {
             @Suppress("UNCHECKED_CAST")
-            if (elementType.isInstance(element) && isApplicableTo(element as TElement, offset)) {
-                return element
+            if (elementType.isInstance(element)) {
+                ProgressManager.checkCanceled()
+                if (isApplicableTo(element as TElement, offset)) {
+                    return element
+                }
             }
+
             if (!allowCaretInsideElement(element) && element.textRange.containsInside(offset)) break
         }
         return null
@@ -81,7 +86,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
     protected open fun allowCaretInsideElement(element: PsiElement): Boolean = element !is KtBlockExpression
 
     final override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode()) {
             CREATE_BY_PATTERN_MAY_NOT_REFORMAT = true
         }
         try {

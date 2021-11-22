@@ -62,7 +62,7 @@ public class JdkPopupAction extends AnAction {
       showInMiddle = false;
     }
     else {
-      Component c = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      Component c = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       component = c instanceof JComponent? (JComponent)c : null;
       showInMiddle = true;
     }

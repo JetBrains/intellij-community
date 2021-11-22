@@ -26,9 +26,12 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
     super(PsiClass.class, LombokClassNames.BUILDER);
   }
 
+  /**
+   * Checks the given annotation to be supported 'Builder' annotation
+   */
   @Override
   protected boolean checkAnnotationFQN(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
-    return getHandler().checkAnnotationFQN(psiClass, psiAnnotation, psiMethod);
+    return BuilderHandler.checkAnnotationFQN(psiClass, psiAnnotation, psiMethod);
   }
 
   @Override
@@ -38,7 +41,7 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
       return true;
     }
 
-    final String innerBuilderClassName = getHandler().getBuilderClassName(psiClass, psiAnnotation, psiMethod);
+    final String innerBuilderClassName = BuilderHandler.getBuilderClassName(psiClass, psiAnnotation, psiMethod);
     return Objects.equals(nameHint, innerBuilderClassName);
   }
 

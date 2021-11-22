@@ -35,6 +35,14 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
+/**
+ * An extension to support intermediate mapping steps extraction
+ * in fluent lambda chains.
+ * <p>
+ * For example, {@code stream.map(x -> x.y().z())} can be automatically refactored to
+ * {@code stream.map(x -> x.y()).map(y -> y.z())}. Implement this extension
+ * to plug custom fluent APIs to existing refactorings.
+ */
 public interface ChainCallExtractor {
   ExtensionPointName<ChainCallExtractor> KEY = ExtensionPointName.create("com.intellij.java.refactoring.chainCallExtractor");
 
@@ -47,7 +55,7 @@ public interface ChainCallExtractor {
    * @return true if this extractor can create a mapping step from given expression
    */
   @Contract(pure = true)
-  boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType);
+  boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, @NotNull PsiExpression expression, @Nullable PsiType expressionType);
 
   /**
    * Returns chain call string representation (starting from "." like {@code .map(x -> x.getName())}).
@@ -94,8 +102,17 @@ public interface ChainCallExtractor {
     return call.getMethodExpression().getReferenceName();
   }
 
-  @Contract("null, _, _ -> null")
-  static ChainCallExtractor findExtractor(@Nullable PsiLambdaExpression lambda, PsiExpression expression, PsiType targetType) {
+  /**
+   * @param lambda lambda expression to find the suitable extractor for
+   * @param expression a subexpression from the lambda body that should be extracted
+   * @param targetType type of the new intermediate lambda parameter
+   * @return a ChainCallExtractor that supports extracting given subexpression from the given lambda; null if there's no such an extractor
+   * registered.
+   */
+  @Contract(value = "null, _, _ -> null", pure = true)
+  static ChainCallExtractor findExtractor(@Nullable PsiLambdaExpression lambda,
+                                          @NotNull PsiExpression expression,
+                                          @Nullable PsiType targetType) {
     if (lambda == null) return null;
     PsiParameterList parameters = lambda.getParameterList();
     if (parameters.getParametersCount() != 1) return null;

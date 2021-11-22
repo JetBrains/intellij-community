@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
-import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.options.ConfigurationException;
@@ -264,16 +263,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       parameterInitializer, myExpression,
       myLocalVar, isDeleteLocalVariable,
       getParameterName(), myPanel.isReplaceAllOccurences(),
-      myPanel.getReplaceFieldsWithGetters(), isDeclareFinal(), myPanel.isGenerateDelegate(), selectedType, myPanel.getParametersToRemove());
-    if (myCbCollapseToLambda.isVisible() && myCbCollapseToLambda.isSelected() && parameterInitializer != null) {
-      PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(parameterInitializer, selectedType);
-      if (lambda != null) {
-        if (lambda instanceof PsiLambdaExpression) {
-          lambda = LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference((PsiLambdaExpression)lambda);
-        }
-        processor.setParameterInitializer(lambda);
-      }
-    }
+      myPanel.getReplaceFieldsWithGetters(), isDeclareFinal(), myPanel.isGenerateDelegate(),
+      myCbCollapseToLambda.isVisible() && myCbCollapseToLambda.isSelected(), selectedType, myPanel.getParametersToRemove());
     invokeRefactoring(processor);
   }
 

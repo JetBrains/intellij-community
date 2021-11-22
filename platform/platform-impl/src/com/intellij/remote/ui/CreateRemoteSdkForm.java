@@ -145,7 +145,8 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     radioSelected(true);
   }
 
-  public void showBrowsePathsDialog(@NotNull TextFieldWithBrowseButton textFieldWithBrowseButton, @NotNull String dialogTitle) {
+  public void showBrowsePathsDialog(@NotNull TextFieldWithBrowseButton textFieldWithBrowseButton,
+                                    @NlsContexts.DialogTitle @NotNull String dialogTitle) {
     if (myConnectionType instanceof PathsBrowserDialogProvider) {
       ((PathsBrowserDialogProvider)myConnectionType).showPathsBrowserDialog(
         myProject, textFieldWithBrowseButton.getTextField(),

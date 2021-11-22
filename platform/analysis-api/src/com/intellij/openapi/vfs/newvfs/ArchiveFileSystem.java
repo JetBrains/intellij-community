@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -247,5 +248,10 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    */
   protected boolean isCorrectFileType(@NotNull VirtualFile local) {
     return FileTypeRegistry.getInstance().getFileTypeByFileName(local.getNameSequence()) == ArchiveFileType.INSTANCE;
+  }
+
+  @ApiStatus.Internal
+  public final void clearArchiveCache(@NotNull VirtualFile sampleEntry) {
+    getHandler(sampleEntry).clearCaches();
   }
 }

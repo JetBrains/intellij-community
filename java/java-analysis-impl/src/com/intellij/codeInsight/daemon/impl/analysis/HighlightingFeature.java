@@ -38,35 +38,14 @@ public enum HighlightingFeature {
   VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
   ENHANCED_SWITCH(LanguageLevel.JDK_14, "feature.enhanced.switch"),
   SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
-  RECORDS(LanguageLevel.JDK_15_PREVIEW, "feature.records") {
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
-    }
-
-    @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_16;
-    }
-  },
-  PATTERNS(LanguageLevel.JDK_15_PREVIEW, "feature.patterns.instanceof"){
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
-    }
-
-    @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_16;
-    }
-  },
+  RECORDS(LanguageLevel.JDK_16, "feature.records"),
+  PATTERNS(LanguageLevel.JDK_16, "feature.patterns.instanceof"),
   TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
   TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks") ,
-  SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes") {
+  SEALED_CLASSES(LanguageLevel.JDK_16_PREVIEW, "feature.sealed.classes") {
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel == LanguageLevel.JDK_15_PREVIEW || 
-             useSiteLevel == LanguageLevel.JDK_16_PREVIEW ||
+      return useSiteLevel == LanguageLevel.JDK_16_PREVIEW ||
              useSiteLevel.isAtLeast(LanguageLevel.JDK_17);
     }
 
@@ -75,28 +54,8 @@ public enum HighlightingFeature {
       return LanguageLevel.JDK_17;
     }
   },
-  LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"){
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
-    }
-
-    @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_16;
-    }
-  },
-  LOCAL_ENUMS(LanguageLevel.JDK_15_PREVIEW, "feature.local.enums"){
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
-    }
-
-    @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_16;
-    }
-  },
+  LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
+  LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
   PATTERNS_IN_SWITCH(LanguageLevel.JDK_17_PREVIEW, "feature.patterns.in.switch"),
   GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_17_PREVIEW, "feature.guarded.and.parenthesised.patterns");

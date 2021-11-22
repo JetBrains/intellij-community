@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring
 import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-@State(name = "KotlinRefactoringSettings", storages = [Storage("kotlinRefactoring.xml")])
+@State(name = "KotlinRefactoringSettings", storages = [Storage("kotlinRefactoring.xml")], category = SettingsCategory.CODE)
 class KotlinRefactoringSettings : PersistentStateComponent<KotlinRefactoringSettings> {
     @JvmField
     var MOVE_TO_UPPER_LEVEL_SEARCH_IN_COMMENTS = false

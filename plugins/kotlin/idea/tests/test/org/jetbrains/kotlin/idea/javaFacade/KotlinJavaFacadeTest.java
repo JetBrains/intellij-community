@@ -207,41 +207,41 @@ public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase 
     }
 
     private void doTestWrapMethod(boolean shouldBeWrapped) {
-        KtNamedFunction jetFunction = getPreparedElement(KtNamedFunction.class);
+        KtNamedFunction ktNamedFunction = getPreparedElement(KtNamedFunction.class);
 
         // Should not fail!
-        PsiMethod psiMethod = LightClassUtil.INSTANCE.getLightClassMethod(jetFunction);
+        PsiMethod psiMethod = LightClassUtil.INSTANCE.getLightClassMethod(ktNamedFunction);
 
-        checkDeclarationMethodWrapped(shouldBeWrapped, jetFunction, psiMethod);
+        checkDeclarationMethodWrapped(shouldBeWrapped, ktNamedFunction, psiMethod);
     }
 
     private void doTestWrapParameter(boolean shouldWrapGetter, boolean shouldWrapSetter) {
-        KtParameter jetParameter = getPreparedElement(KtParameter.class);
+        KtParameter ktParameter = getPreparedElement(KtParameter.class);
 
         // Should not fail!
-        LightClassUtil.PropertyAccessorsPsiMethods propertyAccessors = LightClassUtil.INSTANCE.getLightClassPropertyMethods(jetParameter);
+        LightClassUtil.PropertyAccessorsPsiMethods propertyAccessors = LightClassUtil.INSTANCE.getLightClassPropertyMethods(ktParameter);
 
-        checkDeclarationMethodWrapped(shouldWrapGetter, jetParameter, propertyAccessors.getGetter());
-        checkDeclarationMethodWrapped(shouldWrapSetter, jetParameter, propertyAccessors.getSetter());
+        checkDeclarationMethodWrapped(shouldWrapGetter, ktParameter, propertyAccessors.getGetter());
+        checkDeclarationMethodWrapped(shouldWrapSetter, ktParameter, propertyAccessors.getSetter());
     }
 
     private void doTestWrapProperty(boolean shouldWrapGetter, boolean shouldWrapSetter) {
-        KtProperty jetProperty = getPreparedElement(KtProperty.class);
+        KtProperty ktProperty = getPreparedElement(KtProperty.class);
 
         // Should not fail!
-        LightClassUtil.PropertyAccessorsPsiMethods propertyAccessors = LightClassUtil.INSTANCE.getLightClassPropertyMethods(jetProperty);
+        LightClassUtil.PropertyAccessorsPsiMethods propertyAccessors = LightClassUtil.INSTANCE.getLightClassPropertyMethods(ktProperty);
 
-        checkDeclarationMethodWrapped(shouldWrapGetter, jetProperty, propertyAccessors.getGetter());
-        checkDeclarationMethodWrapped(shouldWrapSetter, jetProperty, propertyAccessors.getSetter());
+        checkDeclarationMethodWrapped(shouldWrapGetter, ktProperty, propertyAccessors.getGetter());
+        checkDeclarationMethodWrapped(shouldWrapSetter, ktProperty, propertyAccessors.getSetter());
     }
 
     private void doTestWrapPropertyAccessor(boolean shouldWrapAccessor) {
-        KtPropertyAccessor jetPropertyAccessor = getPreparedElement(KtPropertyAccessor.class);
+        KtPropertyAccessor ktPropertyAccessor = getPreparedElement(KtPropertyAccessor.class);
 
         // Should not fail!
-        PsiMethod propertyAccessors = LightClassUtil.INSTANCE.getLightClassAccessorMethod(jetPropertyAccessor);
+        PsiMethod propertyAccessors = LightClassUtil.INSTANCE.getLightClassAccessorMethod(ktPropertyAccessor);
         checkDeclarationMethodWrapped(shouldWrapAccessor,
-                                      PsiTreeUtil.getParentOfType(jetPropertyAccessor, KtProperty.class),
+                                      PsiTreeUtil.getParentOfType(ktPropertyAccessor, KtProperty.class),
                                       propertyAccessors);
     }
 
@@ -288,7 +288,7 @@ public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase 
         // Should not fail!
         KtLightClass lightClass = toLightClass(ktClass);
 
-        assertNotNull(String.format("Failed to wrap jetClass '%s' to class", ktClass.getText()), lightClass);
+        assertNotNull(String.format("Failed to wrap ktClass '%s' to class", ktClass.getText()), lightClass);
 
         if (!(lightClass instanceof KtUltraLightClass)){
             // This invokes codegen with ClassBuilderMode = LIGHT_CLASSES

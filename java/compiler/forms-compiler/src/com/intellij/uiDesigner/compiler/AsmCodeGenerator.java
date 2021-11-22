@@ -290,7 +290,7 @@ public class AsmCodeGenerator {
     @Override
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       myFieldDescMap.put(name, desc);
-      myFieldAccessMap.put(name, new Integer(access));
+      myFieldAccessMap.put(name, Integer.valueOf(access));
       return super.visitField(access, name, desc, signature, value);
     }
 
@@ -395,7 +395,7 @@ public class AsmCodeGenerator {
       Type componentType = typeFromClassName(className);
       int componentLocal = generator.newLocal(componentType);
 
-      myIdToLocalMap.put(lwComponent.getId(), new Integer(componentLocal));
+      myIdToLocalMap.put(lwComponent.getId(), Integer.valueOf(componentLocal));
 
       InstrumentationClassFinder.PseudoClass componentClass = getComponentClass(className, myFinder);
       validateFieldBinding(lwComponent, componentClass);

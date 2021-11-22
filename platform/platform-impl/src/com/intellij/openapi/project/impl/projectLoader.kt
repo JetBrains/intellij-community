@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectLoadHelper")
 @file:ApiStatus.Internal
 package com.intellij.openapi.project.impl
@@ -22,10 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 internal fun registerComponents(project: ProjectImpl) {
   var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
   //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-  project.registerComponents(plugins = PluginManagerCore.getLoadedPlugins(null),
-                             app = ApplicationManager.getApplication(),
-                             precomputedExtensionModel = null,
-                             listenerCallbacks = null)
+  project.registerComponents()
 
   activity = activity?.endAndStart("projectComponentRegistered")
   runOnlyCorePluginExtensions(

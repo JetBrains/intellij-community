@@ -20,7 +20,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import java.io.IOException;
 public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
   // there is no volatile as we modify under write lock and read under read lock
   protected ValueContainerImpl<Value> myAdded;
-  protected TIntHashSet myInvalidated;
+  protected IntSet myInvalidated;
   protected volatile ValueContainerImpl<Value> myMerged;
   private final @Nullable Computable<? extends ValueContainer<Value>> myInitializer;
   
@@ -61,7 +62,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
     if (myAdded != null) myAdded.removeAssociatedValue(inputId);
 
-    if (myInvalidated == null) myInvalidated = new TIntHashSet(1);
+    if (myInvalidated == null) myInvalidated = new IntOpenHashSet(1);
     myInvalidated.add(inputId);
   }
 
@@ -114,7 +115,6 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
         myInvalidated.forEach(inputId -> {
           if (finalFileId2ValueMapping != null) finalFileId2ValueMapping.removeFileId(inputId);
           else newMerged.removeAssociatedValue(inputId);
-          return true;
         });
       }
 
@@ -161,10 +161,11 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   public void saveTo(DataOutput out, DataExternalizer<? super Value> externalizer) throws IOException {
     if (needsCompacting()) {
       getMergedData().saveTo(out, externalizer);
-    } else {
-      final TIntHashSet set = myInvalidated;
+    }
+    else {
+      IntSet set = myInvalidated;
       if (set != null && set.size() > 0) {
-        for (int inputId : set.toArray()) {
+        for (int inputId : myInvalidated.toIntArray()) {
           DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
         }
       }
@@ -175,5 +176,4 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       }
     }
   }
-
 }

@@ -18,7 +18,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.content.*
+import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
@@ -137,7 +138,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       override fun getData(dataId: String): Any? {
-        if (PlatformDataKeys.HELP_ID.`is`(dataId)) return executor.helpId
+        if (PlatformCoreDataKeys.HELP_ID.`is`(dataId)) return executor.helpId
         return null
       }
     })
@@ -352,12 +353,16 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getContentManagerForRunner(executor: Executor, descriptor: RunContentDescriptor?): ContentManager {
-    return getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
+    return descriptor?.attachedContent?.manager ?: getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
   }
 
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
     val contentManager = getContentManagerByToolWindowId(id)
     if (contentManager != null) {
+      if (contentManager is ContentManagerImpl && contentManager.contentCount == 0 && !contentManager.isEmpty) {
+        val activeNestedManager = contentManager.activeNestedManager
+        if (activeNestedManager != null) return activeNestedManager
+      }
       return contentManager
     }
 
@@ -512,6 +517,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     override fun closeQuery(content: Content, projectClosing: Boolean): Boolean {
       val descriptor = getRunContentDescriptorByContent(content) ?: return true
+      if (Content.TEMPORARY_REMOVED_KEY.get(content, false)) return true
       val processHandler = descriptor.processHandler
       if (processHandler == null || processHandler.isProcessTerminated) {
         return true

@@ -6,7 +6,6 @@ package org.jetbrains.kotlin.idea.actions.internal
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.ProgressManager.progress
 import com.intellij.openapi.project.Project
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.isFromJava
 import org.jetbrains.kotlin.name.FqName
@@ -145,7 +145,7 @@ class SearchNotPropertyCandidatesAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        if (!ApplicationManager.getApplication().isInternal) {
+        if (!isApplicationInternalMode()) {
             e.presentation.isVisible = false
             e.presentation.isEnabled = false
         } else {

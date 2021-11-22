@@ -36,11 +36,11 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
+import com.intellij.util.SingleAlarm
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -98,7 +98,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   private val disableUpdatingRecentInfo = AtomicBoolean()
 
-  private val nameResolver = pooledThreadSingleAlarm(50) {
+  private val nameResolver = SingleAlarm.pooledThreadSingleAlarm(50, ApplicationManager.getApplication()) {
     var paths: Set<String>
     synchronized(namesToResolve) {
       paths = HashSet(namesToResolve)
@@ -252,12 +252,15 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   protected open fun getProjectDisplayName(project: Project): String? = null
 
-  fun getProjectIcon(path: String, isDark: Boolean): Icon {
-    return projectIconHelper.getProjectIcon(path, isDark, false)
+  fun getProjectIcon(path: String): Icon {
+    return projectIconHelper.getProjectIcon(path, false)
   }
 
-  fun getProjectIcon(path: String, isDark: Boolean, generateFromName: Boolean): Icon {
-    return projectIconHelper.getProjectIcon(path, isDark, generateFromName)
+  @Deprecated("Use getProjectIcon(String, Boolean)", ReplaceWith("getProjectIcon(path, generateFromName)"))
+  fun getProjectIcon(path: String, isDark: Boolean, generateFromName: Boolean) = getProjectIcon(path, generateFromName)
+
+  fun getProjectIcon(path: String, generateFromName: Boolean): Icon {
+    return projectIconHelper.getProjectIcon(path, generateFromName)
   }
 
   fun getProjectOrAppIcon(path: String): Icon {

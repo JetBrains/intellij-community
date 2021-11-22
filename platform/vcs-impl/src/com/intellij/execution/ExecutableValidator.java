@@ -39,8 +39,8 @@ public abstract class ExecutableValidator {
   public static final int TIMEOUT_MS = Registry.intValue("vcs.executable.validator.timeout.sec", 60) * 1000;
 
   private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
-  private static final NotificationGroup ourNotificationGroup = new NotificationGroup("External Executable Critical Failures",
-                                                                                      NotificationDisplayType.STICKY_BALLOON, true);
+  private static final NotificationGroup ourNotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("External Executable Critical Failures");
   @NotNull protected final Project myProject;
 
   @NotNull private final @NlsContexts.DialogTitle String myNotificationErrorTitle;

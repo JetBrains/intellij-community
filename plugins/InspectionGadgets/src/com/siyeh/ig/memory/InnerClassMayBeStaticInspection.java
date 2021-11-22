@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,22 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.BatchQuickFix;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Query;
+import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -46,7 +50,7 @@ import java.util.List;
 
 public class InnerClassMayBeStaticInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public OrderedSet<String> ignorableAnnotations =
     new OrderedSet<>(Collections.singletonList(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED));
 
@@ -77,7 +81,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
-  private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
+  private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix implements BatchQuickFix {
 
     @Override
     @NotNull
@@ -92,57 +96,91 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiJavaToken classNameToken = (PsiJavaToken)descriptor.getPsiElement();
-      final PsiClass innerClass = (PsiClass)classNameToken.getParent();
-      if (innerClass == null) {
-        return;
-      }
-      final SearchScope useScope = innerClass.getUseScope();
-      final Query<PsiReference> query = ReferencesSearch.search(innerClass, useScope);
-      final Collection<PsiReference> references = query.findAll();
-      final List<PsiElement> elements = new ArrayList<>(references.size() + 1);
-      for (PsiReference reference : references) {
-        elements.add(reference.getElement());
-      }
-      elements.add(innerClass);
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) {
-        return;
-      }
-      WriteAction.run(() -> makeStatic(innerClass, references));
+      applyFix(project, new ProblemDescriptor[] {descriptor}, List.of(), null);
     }
 
-    private static void makeStatic(PsiClass innerClass, Collection<? extends PsiReference> references) {
-      final Project project = innerClass.getProject();
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      references.stream()
-        .sorted((r1, r2) -> PsiUtilCore.compareElementsByPosition(r2.getElement(), r1.getElement()))
-        .forEach(reference -> {
-          final PsiElement element = reference.getElement();
-          final PsiElement parent = element.getParent();
-          if (!(parent instanceof PsiNewExpression)) {
-            return;
-          }
-          final PsiNewExpression newExpression = (PsiNewExpression)parent;
-          final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-          if (classReference == null) {
-            return;
-          }
-          final PsiExpressionList argumentList = newExpression.getArgumentList();
-          if (argumentList == null) {
-            return;
-          }
-          final PsiReferenceParameterList parameterList = classReference.getParameterList();
-          final String genericParameters = parameterList != null ? parameterList.getText() : "";
-          final PsiExpression expression = factory
-            .createExpressionFromText("new " + classReference.getQualifiedName() + genericParameters + argumentList.getText(), innerClass);
-          codeStyleManager.shortenClassReferences(newExpression.replace(expression));
-        });
-      final PsiModifierList modifiers = innerClass.getModifierList();
-      if (modifiers == null) {
-        return;
+    @Override
+    public void applyFix(@NotNull Project project,
+                         CommonProblemDescriptor @NotNull [] descriptors,
+                         @NotNull List psiElementsToIgnore, @Nullable Runnable refreshViews) {
+      final List<Handler> handlers = new SmartList<>();
+      for (CommonProblemDescriptor descriptor : descriptors) {
+        final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement().getParent();
+        if (!(element instanceof PsiClass)) continue;
+        handlers.add(new Handler((PsiClass)element));
       }
-      modifiers.setModifierProperty(PsiModifier.STATIC, true);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> {
+          handlers.forEach(Handler::collectReferences);
+          List<PsiElement> elements = ContainerUtil.flatMap(handlers, handler -> handler.getElements());
+          WriteCommandAction.writeCommandAction(project, elements)
+            .withName(InspectionGadgetsBundle.message("make.static.quickfix"))
+            .withGlobalUndo()
+            .run(() -> handlers.forEach(Handler::makeStatic));
+        }, InspectionGadgetsBundle.message("make.static.quickfix"), true, project);
+    }
+
+    private static class Handler {
+
+      private final PsiClass innerClass;
+      private List<PsiElement> references = null;
+
+      Handler(PsiClass innerClass) {
+        this.innerClass = innerClass;
+      }
+
+      public List<PsiElement> getReferences() {
+        return references;
+      }
+
+      public List<PsiElement> getElements() {
+        final List<PsiElement> elements = new SmartList<>();
+        elements.add(innerClass);
+        elements.addAll(references);
+        return elements;
+      }
+
+      /** Should be called under progress */
+      void collectReferences() {
+        ReadAction.run(() -> {
+          final Collection<PsiReference> references = ReferencesSearch.search(innerClass, innerClass.getUseScope()).findAll();
+          this.references = ContainerUtil.map(references, PsiReference::getElement);
+        });
+      }
+
+      @RequiresWriteLock
+      void makeStatic() {
+        final Project project = innerClass.getProject();
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        references.stream()
+          .sorted((r1, r2) -> PsiUtilCore.compareElementsByPosition(r2, r1))
+          .forEach(reference -> {
+            final PsiElement parent = reference.getParent();
+            if (!(parent instanceof PsiNewExpression)) {
+              return;
+            }
+            final PsiNewExpression newExpression = (PsiNewExpression)parent;
+            final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+            if (classReference == null) {
+              return;
+            }
+            final PsiExpressionList argumentList = newExpression.getArgumentList();
+            if (argumentList == null) {
+              return;
+            }
+            final PsiReferenceParameterList parameterList = classReference.getParameterList();
+            final String genericParameters = parameterList != null ? parameterList.getText() : "";
+            final PsiExpression expression = factory
+              .createExpressionFromText("new " + classReference.getQualifiedName() + genericParameters + argumentList.getText(), innerClass);
+            codeStyleManager.shortenClassReferences(newExpression.replace(expression));
+          });
+        final PsiModifierList modifiers = innerClass.getModifierList();
+        if (modifiers == null) {
+          return;
+        }
+        modifiers.setModifierProperty(PsiModifier.STATIC, true);
+      }
     }
   }
 

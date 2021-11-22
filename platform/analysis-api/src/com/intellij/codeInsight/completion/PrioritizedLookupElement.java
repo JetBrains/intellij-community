@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.util.ClassConditionKey;
 
 /**
- * Using <code>PrioritizedLookupElement</code> allows to plug into 3 {@link CompletionWeigher}s: "priority", "explicitProximity" and
+ * Using <code>PrioritizedLookupElement</code> allows plugging into 3 {@link CompletionWeigher}s: "priority", "explicitProximity" and
  * "grouping". Standard weigher list includes the following ones in the specified order:
  * <ul>
  * <li>"priority", (see <code>PriorityWeigher</code> class) based on the value passed via {@link PrioritizedLookupElement#withPriority(LookupElement, double)}</li>

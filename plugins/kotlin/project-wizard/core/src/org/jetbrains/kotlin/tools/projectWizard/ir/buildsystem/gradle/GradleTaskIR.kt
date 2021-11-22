@@ -36,7 +36,7 @@ data class GradleByClassTasksAccessIR(
                 +"tasks.withType($taskClass)"
             }
             GradlePrinter.GradleDsl.KOTLIN -> {
-                +"tasks.withType<$taskClass>()"
+                +"tasks.withType<$taskClass>"
             }
         }
     }

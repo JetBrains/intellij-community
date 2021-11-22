@@ -5,6 +5,6 @@ public class TestExternalAnnotationsDetection {
   private static void testBlocking() {}
 
   private static void func() {
-    <warning descr="Inappropriate blocking method call">testBlocking</warning>();
+    <warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">testBlocking</warning>();
   }
 }

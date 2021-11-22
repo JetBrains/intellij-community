@@ -1,20 +1,20 @@
-from typing import IO, Any, Callable, Optional, Union
+from typing import IO, Any, Callable
 
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey, RSAPublicNumbers
 from paramiko.message import Message
 from paramiko.pkey import PKey
 
 class RSAKey(PKey):
-    key: Union[None, RSAPublicKey, RSAPrivateKey]
+    key: None | RSAPublicKey | RSAPrivateKey
     public_blob: None
     def __init__(
         self,
-        msg: Optional[Message] = ...,
-        data: Optional[bytes] = ...,
-        filename: Optional[str] = ...,
-        password: Optional[str] = ...,
-        key: Union[None, RSAPublicKey, RSAPrivateKey] = ...,
-        file_obj: Optional[IO[str]] = ...,
+        msg: Message | None = ...,
+        data: bytes | None = ...,
+        filename: str | None = ...,
+        password: str | None = ...,
+        key: None | RSAPublicKey | RSAPrivateKey = ...,
+        file_obj: IO[str] | None = ...,
     ) -> None: ...
     @property
     def size(self) -> int: ...
@@ -27,7 +27,7 @@ class RSAKey(PKey):
     def can_sign(self) -> bool: ...
     def sign_ssh_data(self, data: bytes) -> Message: ...
     def verify_ssh_sig(self, data: bytes, msg: Message) -> bool: ...
-    def write_private_key_file(self, filename: str, password: Optional[str] = ...) -> None: ...
-    def write_private_key(self, file_obj: IO[str], password: Optional[str] = ...) -> None: ...
+    def write_private_key_file(self, filename: str, password: str | None = ...) -> None: ...
+    def write_private_key(self, file_obj: IO[str], password: str | None = ...) -> None: ...
     @staticmethod
-    def generate(bits: int, progress_func: Optional[Callable[..., Any]] = ...) -> RSAKey: ...
+    def generate(bits: int, progress_func: Callable[..., Any] | None = ...) -> RSAKey: ...

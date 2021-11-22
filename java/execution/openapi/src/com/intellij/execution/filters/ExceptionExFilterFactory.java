@@ -41,6 +41,7 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
 
   private static class MyFilter implements Filter, FilterMixin {
     private final ExceptionInfoCache myCache;
+    private final ExceptionLineParserFactory myFactory = ExceptionLineParserFactory.getInstance();
 
     MyFilter(@NotNull Project project, @NotNull final GlobalSearchScope scope) {
       myCache = new ExceptionInfoCache(project, scope);
@@ -64,7 +65,7 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
       Map<String, ExceptionWorker.ParsedLine> visited = new HashMap<>();
       ExceptionWorker.ParsedLine emptyInfo = new ExceptionWorker.ParsedLine(TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, null, -1);
 
-      final ExceptionWorker worker = new ExceptionWorker(myCache);
+      final ExceptionLineParser worker = myFactory.create(myCache);
       for (int i = 0; i < copiedFragment.getLineCount(); i++) {
         final int lineStartOffset = copiedFragment.getLineStartOffset(i);
         final int lineEndOffset = copiedFragment.getLineEndOffset(i);
@@ -93,7 +94,7 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
       }
     }
 
-    private static ExceptionWorker.ParsedLine doParse(@NotNull ExceptionWorker worker, int lineEndOffset, @NotNull String lineText) {
+    private static ExceptionWorker.ParsedLine doParse(@NotNull ExceptionLineParser worker, int lineEndOffset, @NotNull String lineText) {
       Result result = worker.execute(lineText, lineEndOffset);
       if (result == null) return null;
       HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();

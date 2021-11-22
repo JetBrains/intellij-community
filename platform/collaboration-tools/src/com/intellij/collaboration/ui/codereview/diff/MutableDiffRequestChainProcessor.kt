@@ -66,11 +66,13 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
 
   override fun goToNextChange(fromDifferences: Boolean) {
     currentIndex += 1
+    selectCurrentChange()
     updateRequest(false, if (fromDifferences) ScrollToPolicy.FIRST_CHANGE else null)
   }
 
   override fun goToPrevChange(fromDifferences: Boolean) {
     currentIndex -= 1
+    selectCurrentChange()
     updateRequest(false, if (fromDifferences) ScrollToPolicy.LAST_CHANGE else null)
   }
 
@@ -83,7 +85,12 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
     return MyGoToChangePopupProvider().createGoToChangeAction()
   }
 
-  open fun selectFilePath(filePath: FilePath) {}
+  open fun selectFilePath(filePath: FilePath) = Unit
+
+  private fun selectCurrentChange() {
+    val producer = currentRequestProvider as? ChangeDiffRequestChain.Producer ?: return
+    selectFilePath(producer.filePath)
+  }
 
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
     override fun getChanges(): List<PresentableChange> {

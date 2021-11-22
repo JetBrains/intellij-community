@@ -3,14 +3,18 @@
 package org.jetbrains.kotlin.console.gutter
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ConsoleIndicatorRenderer(iconWithTooltip: IconWithTooltip) : GutterIconRenderer() {
+class ConsoleIndicatorRenderer(private val iconWithTooltip: IconWithTooltip) : GutterIconRenderer() {
     private val icon = iconWithTooltip.icon
-    private val tooltip = iconWithTooltip.tooltip
+    private val tooltip
+        @NlsContexts.Tooltip
+        get() = iconWithTooltip.tooltip
 
     override fun getIcon() = icon
     override fun getTooltipText() = tooltip
 
     override fun hashCode() = icon.hashCode()
-    override fun equals(other: Any?) = icon == (other as? ConsoleIndicatorRenderer)?.icon
+    override fun equals(other: Any?) = icon == other.safeAs<ConsoleIndicatorRenderer>()?.icon
 }

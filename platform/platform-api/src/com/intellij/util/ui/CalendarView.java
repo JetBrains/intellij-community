@@ -115,13 +115,13 @@ public class CalendarView extends JPanel {
 
   public void setDate(Date date) {
     myCalendar.setTime(date);
-    myYears.setValue(new Integer(myCalendar.get(Calendar.YEAR)));
+    myYears.setValue(Integer.valueOf(myCalendar.get(Calendar.YEAR)));
     myMonths.setSelectedIndex(myCalendar.get(Calendar.MONTH));
     myDays.setSelectedIndex(myCalendar.get(Calendar.DAY_OF_MONTH) - 1);
 
-    myHours.setValue(new Integer(myCalendar.get(Calendar.HOUR_OF_DAY)));
-    myMinutes.setValue(new Integer(myCalendar.get(Calendar.MINUTE)));
-    mySeconds.setValue(new Integer(myCalendar.get(Calendar.SECOND)));
+    myHours.setValue(Integer.valueOf(myCalendar.get(Calendar.HOUR_OF_DAY)));
+    myMinutes.setValue(Integer.valueOf(myCalendar.get(Calendar.MINUTE)));
+    mySeconds.setValue(Integer.valueOf(myCalendar.get(Calendar.SECOND)));
   }
 
   public JComponent getDaysCombo() {

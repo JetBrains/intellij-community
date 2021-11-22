@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.ui
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind
+import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.util.PackageUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,6 +15,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pass
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDirectory
@@ -30,6 +32,7 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinBundle.message
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
@@ -45,7 +48,7 @@ import javax.swing.event.DocumentEvent
 // Based on com.intellij.codeInsight.intention.impl.CreateClassDialog
 open class CreateKotlinClassDialog(
     private val myProject: Project,
-    title: String,
+    @Nls title: String,
     private val myClassName: String,
     targetPackageName: String,
     kind: ClassKind,
@@ -55,12 +58,12 @@ open class CreateKotlinClassDialog(
 ) : DialogWrapper(myProject, true) {
 
     private val myInformationLabel = JLabel("#")
-    private val myPackageLabel = JLabel(CodeInsightBundle.message("dialog.create.class.destination.package.label"))
+    private val myPackageLabel = JLabel(IdeDeprecatedMessagesBundle.message("dialog.create.class.destination.package.label"))
     private var myPackageComponent: ReferenceEditorComboWithBrowseButton = PackageNameReferenceEditorCombo(
         targetPackageName,
         myProject,
         RECENTS_KEY,
-        CodeInsightBundle.message("dialog.create.class.package.chooser.title")
+        IdeDeprecatedMessagesBundle.message("dialog.create.class.package.chooser.title")
     ).also {
         if (isSealed) it.isEnabled = false
     }
@@ -229,15 +232,18 @@ open class CreateKotlinClassDialog(
         myPackageComponent.setTextFieldPreferredWidth(40)
         init()
         if (!myClassNameEditable) {
-            setTitle(CodeInsightBundle.message("dialog.create.class.name", StringUtil.capitalize(kind.description), myClassName))
+            setTitle(IdeDeprecatedMessagesBundle.message("dialog.create.class.name", StringUtil.capitalize(kind.description), myClassName))
         } else {
-            myInformationLabel.text = CodeInsightBundle.message("dialog.create.class.label", kind.description)
+            myInformationLabel.text = IdeDeprecatedMessagesBundle.message("dialog.create.class.label", kind.description)
             setTitle(title)
         }
         myTfClassName.text = myClassName
         myDestinationCB.setData(myProject, getBaseDir(targetPackageName), object : Pass<String?>() {
             override fun pass(s: String?) {
-                setErrorText(s, myDestinationCB)
+                @Suppress("UnnecessaryVariable")
+                @NlsSafe
+                val text = s
+                setErrorText(text, myDestinationCB)
             }
         }, myPackageComponent.childComponent, isSealed)
     }

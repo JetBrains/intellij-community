@@ -1,3 +1,4 @@
-Unclassified 11 object C: A()
-Unclassified 13 object D: T
-Unclassified 6 object B: A()
+Unclassified 11 val C = object : A() {}
+Unclassified 13 val D = object : T() {}
+Unclassified 6 val B = object : A() {}
+Unclassified 8 open class T : A()

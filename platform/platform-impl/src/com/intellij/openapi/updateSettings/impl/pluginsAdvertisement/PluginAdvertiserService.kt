@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.org.PluginManagerFilters
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -66,6 +67,8 @@ open class PluginAdvertiserService {
       }
     }
 
+    val org = PluginManagerFilters.getInstance()
+
     //include disabled plugins
     ids.filter { (pluginId, _) ->
       PluginManagerCore.isDisabled(pluginId)
@@ -73,6 +76,8 @@ open class PluginAdvertiserService {
       PluginManagerCore.getPlugin(pluginId)?.let {
         plugin to it
       }
+    }.filter {
+      org.allowInstallingPlugin(it.second)
     }.forEach { (plugin, pluginDescriptor) ->
       disabledPlugins[plugin] = pluginDescriptor
     }
@@ -95,6 +100,8 @@ open class PluginAdvertiserService {
         || !ids.containsKey(pluginId)
         || PluginManagerCore.isDisabled(pluginId)
         || PluginManagerCore.isBrokenPlugin(loadedPlugin)
+      }.filter {
+        org.allowInstallingPlugin(it)
       }.map { PluginDownloader.createDownloader(it) }
 
     invokeLater(ModalityState.NON_MODAL) {
@@ -119,7 +126,10 @@ open class PluginAdvertiserService {
               project,
             )
 
-            PluginBooleanOptionDescriptor.togglePluginState(true, disabledDescriptors.toSet())
+            PluginBooleanOptionDescriptor.togglePluginState(
+              disabledDescriptors,
+              PluginEnableDisableAction.ENABLE_GLOBALLY,
+            )
           }
         }
         else
@@ -135,13 +145,13 @@ open class PluginAdvertiserService {
         ) to listOf(action, createIgnoreUnknownFeaturesNotification(project, plugins, disabledPlugins.values, unknownFeatures))
       }
       else if (bundledPlugin.isNotEmpty()
-               && !isIgnoreUltimate) {
+               && !isIgnoreIdeSuggestion) {
         IdeBundle.message(
           "plugins.advertiser.ultimate.features.detected",
           bundledPlugin.joinToString()
         ) to listOf(
-          NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.try.ultimate")) {
-            FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project)
+          NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.try.ultimate", PluginAdvertiserEditorNotificationProvider.ideaUltimate.name)) {
+            FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, PluginAdvertiserEditorNotificationProvider.ideaUltimate.downloadUrl)
           },
           NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
             FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)

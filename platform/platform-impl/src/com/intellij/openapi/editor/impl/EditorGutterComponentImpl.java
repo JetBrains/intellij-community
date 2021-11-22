@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.dnd.DnDDragStartBean;
@@ -49,7 +50,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.ExperimentalUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -149,7 +150,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myHasInlaysWithGutterIcons;
   private int myStartIconAreaWidth = START_ICON_AREA_WIDTH.get();
   private int myIconsAreaWidth;
-  private int myLineNumberAreaWidth;
+  private int myLineNumberAreaWidth = getInitialLineNumberWidth();
   private int myAdditionalLineNumberAreaWidth;
   @NotNull private List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   private int myTextAnnotationGuttersSize;
@@ -388,8 +389,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     // paint all backgrounds
     int gutterSeparatorX = getWhitespaceSeparatorOffset();
-    paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor);
-    paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor());
+    Color caretRowColor = getCaretRowColor();
+    paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
+    paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor(), caretRowColor);
 
     paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
@@ -416,8 +418,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       if (ExperimentalUI.isNewUI()) {
         g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-        LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
-        paintCaretRowBackground(g, gutterSeparatorX + 1, getWidth() - gutterSeparatorX);
+        float offsetX = getFoldingAreaOffset() + getFoldingAnchorWidth() - JBUIScale.scale(4f);
+        LinePainter2D.paint(g, offsetX, clip.y, offsetX, clip.y + clip.height);
       }
     }
     finally {
@@ -586,22 +588,52 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                final Rectangle clip,
                                final int x,
                                final int width,
-                               Color background) {
+                               Color background,
+                               Color caretRowColor) {
     g.setColor(background);
     g.fillRect(x, clip.y, width, clip.height);
 
-    if (!ExperimentalUI.isNewUI()) {
-      paintCaretRowBackground(g, x, width);
-    }
+    paintCaretRowBackground(g, x, width, caretRowColor);
   }
 
-  private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
-    if (!myEditor.getSettings().isCaretRowShown()) return;
-    int caretLine = myEditor.getCaretModel().getVisualPosition().line;
-    Color caretRowColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
-    if (caretRowColor != null) {
+  private Color getCaretRowColor() {
+    if (!myEditor.getSettings().isCaretRowShown()) {
+      return null;
+    }
+    if (!Registry.is("highlight.caret.line.at.custom.fold") && isCaretAtCustomFolding()) {
+      return null;
+    }
+    return myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+  }
+
+  private boolean isCaretAtCustomFolding() {
+    FoldingModelImpl foldingModel = myEditor.getFoldingModel();
+    FoldRegion[] topLevelRegions = foldingModel.fetchTopLevel();
+    if (topLevelRegions == null) {
+      return false;
+    }
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    int idx = foldingModel.getLastCollapsedRegionBefore(caretOffset);
+    if (idx >= 0) {
+      FoldRegion region = topLevelRegions[idx];
+      if (region instanceof CustomFoldRegion && region.getEndOffset() == caretOffset) {
+        return true;
+      }
+    }
+    if (idx + 1 < topLevelRegions.length) {
+      FoldRegion region = topLevelRegions[idx + 1];
+      if (region instanceof CustomFoldRegion && region.getStartOffset() <= caretOffset) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void paintCaretRowBackground(final Graphics g, final int x, final int width, Color color) {
+    if (color != null) {
+      int caretLine = myEditor.getCaretModel().getVisualPosition().line;
       int[] yRange = myEditor.visualLineToYRange(caretLine);
-      g.setColor(caretRowColor);
+      g.setColor(color);
       g.fillRect(x, yRange[0], width, yRange[1] - yRange[0]);
     }
   }
@@ -686,14 +718,36 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               g.setColor(colorUnderCaretRow);
             }
 
-            String s = String.valueOf(lineToDisplay);
-            int textOffset = isMirrored() ?
-                             offset - getLineNumberAreaWidth() - 1 :
-                             offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), s);
+            Icon icon = null;
+            if (ExperimentalUI.isNewUI()) {
+              VisualPosition visualPosition = myEditor.logicalToVisualPosition(new LogicalPosition(logicalLine, 0));
+              Optional<GutterMark> breakpoint = getGutterRenderers(visualPosition.line).stream()
+                .filter(r -> r instanceof GutterIconRenderer &&
+                             ((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS)
+                .findFirst();
+              if (breakpoint.isPresent()) {
+                icon = breakpoint.get().getIcon();
+              }
+              if (icon == null) {
+                if (Objects.equals(getClientProperty("active.line.number"), visualPosition.line)) {
+                  Object activeIcon = getClientProperty("line.number.hover.icon");
+                  if (activeIcon instanceof Icon) {
+                    icon = (Icon)activeIcon;
+                  }
+                }
+              }
+            }
 
-            g.drawString(s,
-                         textOffset,
-                         y + myEditor.getAscent());
+            if (icon != null) {
+              icon.paintIcon(this, g, offset - icon.getIconWidth(), y + (visLinesIterator.getLineHeight() - icon.getIconHeight()) / 2);
+            } else {
+              String s = String.valueOf(lineToDisplay);
+              int textOffset = isMirrored() ?
+                               offset - getLineNumberAreaWidth() - 1 :
+                               offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), s);
+
+              g.drawString(s, textOffset,y + myEditor.getAscent());
+            }
           }
         }
         visLinesIterator.advance();
@@ -1394,23 +1448,23 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       case COLLAPSED:
       case COLLAPSED_SINGLE_LINE:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawSquareWithPlusOrMinus(g, centerX, centerY, width, true, active);
+          drawSquareWithPlusOrMinus(g, centerX, centerY, width, true, active, visualLine);
         }
         break;
       case EXPANDED_SINGLE_LINE:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawSquareWithPlusOrMinus(g, centerX, centerY, width, false, active);
+          drawSquareWithPlusOrMinus(g, centerX, centerY, width, false, active, visualLine);
         }
         break;
       case EXPANDED_TOP:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawDirectedBox(g, centerX, centerY, width, height, baseHeight, active);
+          drawDirectedBox(g, centerX, centerY, width, height, baseHeight, active, visualLine);
         }
         break;
       case EXPANDED_BOTTOM:
         y += width;
         if (y - height <= clip.y + clip.height && y >= clip.y) {
-          drawDirectedBox(g, centerX, centerY, width, -height, -baseHeight, active);
+          drawDirectedBox(g, centerX, centerY, width, -height, -baseHeight, active, visualLine);
         }
         break;
     }
@@ -1422,7 +1476,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                double width,
                                double height,
                                double baseHeight,
-                               boolean active)
+                               boolean active,
+                               int visualLine)
   {
     double sw = getStrokeWidth();
     Rectangle2D rect = RectanglePainter2D.align(g,
@@ -1438,48 +1493,20 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (ExperimentalUI.isNewEditorTabs()) {
       if (height > 0) {
         if (active) {
-          UIUtil.getTreeExpandedIcon().paintIcon(this, g, (int)dxPoints[0] - getGapBetweenAreas(), (int)rect.getY());
+          Icon icon = scaleIcon(UIUtil.getTreeExpandedIcon());
+          icon.paintIcon(this, g, (int)dxPoints[0], getFoldingIconY(visualLine, icon));
         }
       }
       return;
     }
-    if (!SystemInfo.isMac && Registry.is("ide.editor.alternative.folding.icons.painting")) {
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      g.setStroke(new BasicStroke((float)getStrokeWidth(), BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND));
 
-      int ix1 = (int)Math.round(x1);
-      int ix2 = (int)Math.round(x2);
-      int[] xPoints = {ix1, ix1, ix2, ix2, (int)Math.round(centerX)};
-      int iy1 = (int)Math.round(y + baseHeight);
-      int iy2 = (int)Math.round(y);
-      int[] yPoints = {iy1, iy2, iy2, iy1, (int)Math.round(y + height + (height < 0 ? 1 : 0))};
-      //xPoints[4] -= 1;
+    g.setColor(myEditor.getBackgroundColor());
+    LinePainter2D.fillPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      if (xPoints[4] - xPoints[0] != xPoints[3] - xPoints[4]) {
-        xPoints[0] += (xPoints[4] - xPoints[0]) - (xPoints[3] - xPoints[4]);
-        xPoints[1] = xPoints[0];
-      }
+    g.setColor(getOutlineColor(active));
+    LinePainter2D.paintPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      g.setColor(myEditor.getBackgroundColor());
-      g.fillPolygon(xPoints, yPoints, 5);
-
-      g.setColor(getOutlineColor(active));
-      g.drawPolygon(xPoints, yPoints, 5);
-
-      int w = xPoints[3] - xPoints[0];
-      int off = (int)Math.round(getSquareInnerOffset(w));
-      int minusY = (int)Math.round(centerY);
-      g.drawLine(xPoints[0] + off, minusY, xPoints[3] - off, minusY);
-      config.restore();
-    } else {
-      g.setColor(myEditor.getBackgroundColor());
-      LinePainter2D.fillPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
-
-      g.setColor(getOutlineColor(active));
-      LinePainter2D.paintPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
-
-      drawLine(g, false, centerX, centerY, width, sw);
-    }
+    drawLine(g, false, centerX, centerY, width, sw);
   }
 
   private void drawLine(Graphics2D g, boolean vertical, double centerX, double centerY, double width, double strokeWidth) {
@@ -1496,13 +1523,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                          double centerY,
                                          double width,
                                          boolean plus,
-                                         boolean active) {
+                                         boolean active,
+                                         int visualLine) {
     double sw = getStrokeWidth();
     Rectangle2D rect = RectanglePainter2D.align(g,
                                                 EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
                                                 centerX, centerY, width, width, StrokeType.CENTERED, sw);
     if (ExperimentalUI.isNewEditorTabs()) {
-      UIUtil.getTreeCollapsedIcon().paintIcon(this, g, (int)rect.getX() - getGapBetweenAreas(), (int)rect.getY());
+      Icon icon = scaleIcon(UIUtil.getTreeCollapsedIcon());
+      icon.paintIcon(this, g, (int)rect.getX(), getFoldingIconY(visualLine, icon));
       return;
     }
     g.setColor(myEditor.getBackgroundColor());
@@ -1511,7 +1540,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     g.setColor(getOutlineColor(active));
     RectanglePainter2D.DRAW.paint(g, rect, null, StrokeType.CENTERED, sw, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-    if (!SystemInfo.isMac && Registry.is("ide.editor.alternative.folding.icons.painting")) {
+    if (!SystemInfo.isMac) {
       double dx1 = rect.getX();
       double dx2 = dx1 + rect.getWidth() - 1;
       int x1 = (int)Math.round(dx1);
@@ -1539,10 +1568,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
+  private int getFoldingIconY(int visualLine, Icon icon) {
+    return (int)(myEditor.visualLineToY(visualLine) + (myEditor.getLineHeight() - icon.getIconHeight()) / 2f + 0.5f);
+  }
+
   /**
    * Returns the gap between the sign and the square itself
    */
   private double getSquareInnerOffset(double width) {
+    if (ExperimentalUI.isNewEditorTabs()) return 0;
     return Math.max(width / 5, scale(2));
   }
 
@@ -1555,6 +1589,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private double getFoldingAnchorWidth2D() {
+    if (ExperimentalUI.isNewEditorTabs()) {
+      return getEditorScaleFactor() * (UIUtil.getTreeCollapsedIcon().getIconWidth() + JBUIScale.scale(10f)) ;
+    }
     return Math.min(scale(4f), myEditor.getLineHeight() / 2f - JBUIScale.scale(2f)) * 2;
   }
 
@@ -1632,7 +1669,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (!isLineNumbersShown()) return;
 
     Integer maxLineNumber = myLineNumberConverter.getMaxLineNumber(myEditor);
-    myLineNumberAreaWidth = maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber);
+    myLineNumberAreaWidth = Math.max(getInitialLineNumberWidth(), maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber));
 
     myAdditionalLineNumberAreaWidth = 0;
     if (myAdditionalLineNumberConverter != null) {
@@ -1864,6 +1901,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
+  void resetMousePointer() {
+    if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) return;
+
+    UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+  }
+
   void validateMousePointer(@NotNull MouseEvent e) {
     if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) return;
 
@@ -2012,7 +2055,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       logGutterIconClick(renderer);
 
       e.consume();
-      performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext(), info);
+      performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, DataManager.getInstance().getDataContext(this), info);
       repaint();
     }
     else {
@@ -2278,7 +2321,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         for (AnAction addAction : addActions) {
           actionGroup.add(addAction);
         }
-        JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
+        JPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup).getComponent();
         menu.show(this, e.getX(), e.getY());
       }
     }
@@ -2495,6 +2538,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (myAccessibleGutterLine != null) {
       myAccessibleGutterLine.escape(true);
     }
+  }
+
+  private static int getInitialLineNumberWidth() {
+    if (ExperimentalUI.isNewUI()) {
+      //have a placeholder for breakpoints
+      return 24;
+    }
+    return 0;
   }
 
   private static final class ClickInfo {

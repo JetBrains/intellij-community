@@ -1530,7 +1530,7 @@ public final class DiffUtil {
 
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
       if (underBulkUpdate) {
-        DocumentUtil.executeInBulk(document, true, task);
+        DocumentUtil.executeInBulk(document, task);
       }
       else {
         task.run();

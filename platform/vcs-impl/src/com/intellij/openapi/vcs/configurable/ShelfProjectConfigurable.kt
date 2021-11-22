@@ -10,7 +10,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 
@@ -26,24 +27,23 @@ class ShelfProjectConfigurable(val project: Project) : BoundSearchableConfigurab
     val shelfLocation = ComponentPanelBuilder.createCommentComponent(createPresentableShelfLocation(), true, -1, false)
     return panel {
       row {
-        checkBox(VcsBundle.message("shelve.remove.successfully.applied.files.checkbox"),
-                 { shelveManager.isRemoveFilesFromShelf }, { shelveManager.isRemoveFilesFromShelf = it })
+        checkBox(VcsBundle.message("shelve.remove.successfully.applied.files.checkbox"))
+          .bindSelected({ shelveManager.isRemoveFilesFromShelf }, { shelveManager.isRemoveFilesFromShelf = it })
           .applyToComponent { mnemonic = KeyEvent.VK_R }
       }
       row {
-        checkBox(VcsBundle.message("vcs.shelf.store.base.content"), vcsConfig::INCLUDE_TEXT_INTO_SHELF,
-                 VcsBundle.message("settings.shelf.content.larger", VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000))
+        checkBox(VcsBundle.message("vcs.shelf.store.base.content"))
+          .bindSelected(vcsConfig::INCLUDE_TEXT_INTO_SHELF)
+          .comment(VcsBundle.message("settings.shelf.content.larger", VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000))
           .applyToComponent { setMnemonic('b') }
       }
       row {
-        cell(isFullWidth = true) {
-          button(VcsBundle.message("settings.change.shelves.location")) {
-            if (ShelfStorageConfigurationDialog(project).showAndGet()) {
-              shelfLocation.text = createPresentableShelfLocation()
-            }
-          }.enabled(!project.isDefault)
-          shelfLocation().withLargeLeftGap()
-        }
+        button(VcsBundle.message("settings.change.shelves.location")) {
+          if (ShelfStorageConfigurationDialog(project).showAndGet()) {
+            shelfLocation.text = createPresentableShelfLocation()
+          }
+        }.enabled(!project.isDefault)
+        cell(shelfLocation)
       }
     }
   }

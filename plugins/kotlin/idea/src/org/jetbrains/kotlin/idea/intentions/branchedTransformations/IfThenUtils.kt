@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
@@ -24,6 +23,9 @@ import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.util.application.invokeLater
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -129,7 +131,7 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
         is KtBinaryExpression -> condition.left
         is KtIsExpression -> condition.leftHandSide
         else -> throw KotlinExceptionWithAttachments("Only binary / is expressions are supported here: ${condition?.let { it::class.java }}")
-            .withAttachment("condition", condition?.text)
+            .withPsiAttachment("condition", condition)
     }!!
     KotlinIntroduceVariableHandler.doRefactoring(
         project,
@@ -151,8 +153,8 @@ fun KtNameReferenceExpression.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor: Edi
 
     val references = ReferencesSearch.search(declaration, scope).findAll()
     if (references.size == 1) {
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
-            ApplicationManager.getApplication().invokeLater {
+        if (!isUnitTestMode()) {
+            invokeLater {
                 val handler = KotlinInlinePropertyHandler(withPrompt)
                 if (declaration.isValid && handler.canInlineElement(declaration)) {
                     TransactionGuard.getInstance().submitTransactionAndWait {
@@ -302,6 +304,11 @@ data class IfThenToSelectData(
             appendFixedText("(")
             valueArguments.forEachIndexed { index, arg ->
                 if (index != 0) appendFixedText(", ")
+                val argName = arg.getArgumentName()?.asName
+                if (argName != null) {
+                    appendName(argName)
+                    appendFixedText(" = ")
+                }
                 val argExpression = arg.getArgumentExpression()
                 if (argExpression?.evaluatesTo(receiverExpression) == true)
                     appendFixedText(parameterName)

@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
@@ -226,9 +227,19 @@ public final class EditorTestUtil {
    */
   @TestOnly
   public static boolean configureSoftWraps(Editor editor, final int charCountToWrapAt) {
+    return configureSoftWraps(editor, charCountToWrapAt, true);
+  }
+
+  /**
+   * Configures given editor to wrap at given character count.
+   *
+   * @return whether any actual wraps of editor contents were created as a result of turning on soft wraps
+   */
+  @TestOnly
+  public static boolean configureSoftWraps(Editor editor, final int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
     int charWidthInPixels = 10;
     // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
-    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
+    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, 1000, charWidthInPixels, useCustomSoftWrapIndent);
   }
 
   @TestOnly
@@ -246,7 +257,13 @@ public final class EditorTestUtil {
 
   @TestOnly
   public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels) {
+    return configureSoftWraps(editor, visibleWidthInPixels, visibleHeightInPixels, charWidthInPixels, true);
+  }
+
+  @TestOnly
+  public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels, boolean useCustomSoftWrapIndent) {
     editor.getSettings().setUseSoftWraps(true);
+    editor.getSettings().setUseCustomSoftWrapIndent(useCustomSoftWrapIndent);
     SoftWrapModelImpl model = (SoftWrapModelImpl)editor.getSoftWrapModel();
     model.setSoftWrapPainter(new SoftWrapPainter() {
       @Override
@@ -841,6 +858,12 @@ public final class EditorTestUtil {
     public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
       return myHeight;
     }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
+                      @NotNull TextAttributes textAttributes) {}
   }
 
   public static class TestWidthProvider implements SoftWrapApplianceManager.VisibleAreaWidthProvider {

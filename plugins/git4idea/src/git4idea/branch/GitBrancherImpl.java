@@ -54,7 +54,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @NotNull
   private GitBranchWorker newWorker(@NotNull ProgressIndicator indicator) {
-    return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, Git.getInstance(), indicator));
+    return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, indicator));
   }
 
   @Override

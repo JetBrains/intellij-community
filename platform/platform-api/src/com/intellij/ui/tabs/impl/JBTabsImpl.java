@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.ExperimentalUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -137,6 +137,7 @@ public class JBTabsImpl extends JComponent
   private boolean myPaintFocus;
 
   private boolean myHideTabs;
+  private boolean myHideTopPanel;
   @Nullable private Project myProject;
   @NotNull private final Disposable myParentDisposable;
 
@@ -836,7 +837,7 @@ public class JBTabsImpl extends JComponent
 
   private void addTimerUpdate() {
     if (!myListenerAdded) {
-      ActionManager.getInstance().addTimerListener(500, this);
+      ActionManager.getInstance().addTimerListener(this);
       myListenerAdded = true;
     }
   }
@@ -1185,7 +1186,7 @@ public class JBTabsImpl extends JComponent
     return myPopupGroup != null ? myPopupGroup.get() : null;
   }
 
-  String getPopupPlace() {
+  public String getPopupPlace() {
     return myPopupPlace;
   }
 
@@ -2516,7 +2517,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean isHideTabs() {
-    return myHideTabs;
+    return myHideTabs || myHideTopPanel;
   }
 
   @Override
@@ -2526,6 +2527,27 @@ public class JBTabsImpl extends JComponent
     myHideTabs = hideTabs;
 
     relayout(true, false);
+  }
+
+  /**
+   * @param hideTopPanel true if tabs and top toolbar should be hidden from a view
+   */
+  @Override
+  public void setHideTopPanel(boolean hideTopPanel) {
+    if (isHideTopPanel() == hideTopPanel) return;
+
+    myHideTopPanel = hideTopPanel;
+
+    getTabs().stream()
+      .map(TabInfo::getSideComponent)
+      .forEach(component -> component.setVisible(!myHideTopPanel));
+
+    relayout(true, true);
+  }
+
+  @Override
+  public boolean isHideTopPanel() {
+    return myHideTopPanel;
   }
 
   @Override
@@ -2932,6 +2954,10 @@ public class JBTabsImpl extends JComponent
     }
 
     return result;
+  }
+
+  public ActionGroup getNavigationActions() {
+    return myNavigationActions;
   }
 
   @Override

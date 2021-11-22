@@ -5,7 +5,7 @@ import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -577,7 +577,7 @@ public final class FormEditingUtil {
    */
   @Nullable
   public static GuiEditor getEditorFromContext(@NotNull final DataContext context) {
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
+    final FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof UIFormEditor) {
       return ((UIFormEditor)editor).getEditor();
     }

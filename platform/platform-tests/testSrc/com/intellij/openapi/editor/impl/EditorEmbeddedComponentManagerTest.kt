@@ -238,7 +238,7 @@ class EditorEmbeddedComponentManagerTest {
 
   @Test
   fun `bulk mode`() = edt {
-    DocumentUtil.executeInBulk(editor.document, true) {
+    DocumentUtil.executeInBulk(editor.document) {
       add(4, JPanel().apply { preferredSize = Dimension(19, 19) })
       WriteCommandAction.runWriteCommandAction(projectRule.project) {
         editor.document.insertString(editor.document.getLineStartOffset(3), "A new line.\n")

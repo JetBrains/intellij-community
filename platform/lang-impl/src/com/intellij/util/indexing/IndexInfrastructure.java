@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,10 +86,10 @@ public final class IndexInfrastructure {
   }
 
   public static boolean hasIndices() {
-    return !SystemProperties.is("idea.skip.indices.initialization");
+    return !Boolean.getBoolean("idea.skip.indices.initialization");
   }
 
   public static boolean isIndexesInitializationSuspended() {
-    return SystemProperties.is("idea.suspend.indexes.initialization");
+    return Boolean.getBoolean("idea.suspend.indexes.initialization");
   }
 }

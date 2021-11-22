@@ -65,7 +65,7 @@ public class ZipHandler extends ZipHandlerBase {
   }
 
   @Override
-  protected void clearCaches() {
+  public void clearCaches() {
     ourZipFileFileAccessorCache.remove(this);
     super.clearCaches();
   }

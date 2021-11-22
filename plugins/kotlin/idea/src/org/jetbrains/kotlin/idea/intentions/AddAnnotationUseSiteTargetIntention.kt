@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -10,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiComment
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -55,7 +56,7 @@ class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationE
         useSiteTargets: List<AnnotationUseSiteTarget>,
         project: Project
     ): ListPopupStep<*> {
-        return object : BaseListPopupStep<AnnotationUseSiteTarget>(KotlinBundle.message("choose.use.site.target"), useSiteTargets) {
+        return object : BaseListPopupStep<AnnotationUseSiteTarget>(KotlinBundle.message("title.choose.use.site.target"), useSiteTargets) {
             override fun isAutoSelectionEnabled() = false
 
             override fun onChosen(selectedValue: AnnotationUseSiteTarget, finalChoice: Boolean): PopupStep<*>? {
@@ -67,7 +68,11 @@ class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationE
 
             override fun getIconFor(value: AnnotationUseSiteTarget) = PlatformIcons.ANNOTATION_TYPE_ICON
 
-            override fun getTextFor(value: AnnotationUseSiteTarget) = value.renderName
+            override fun getTextFor(value: AnnotationUseSiteTarget): String {
+                @Suppress("UnnecessaryVariable")
+                @NlsSafe val renderName = value.renderName
+                return renderName
+            }
         }
     }
 }
@@ -122,7 +127,7 @@ private fun KtAnnotationEntry.applicableUseSiteTargets(): List<AnnotationUseSite
 
     val targets = applicableTargets.filter { it !in existingTargets }
 
-    return if (ApplicationManager.getApplication().isUnitTestMode) {
+    return if (isUnitTestMode()) {
         val chosenTarget = containingKtFile.findDescendantOfType<PsiComment>()
             ?.takeIf { it.text.startsWith("// CHOOSE_USE_SITE_TARGET:") }
             ?.text

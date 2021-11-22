@@ -1,10 +1,10 @@
-class A: J {
-    constructor(): super(1) {
+class A : J {
+    constructor() : super(1) {
 
     }
 }
 
-class B: J(1) {
+class B : J(1) {
 
 }
 

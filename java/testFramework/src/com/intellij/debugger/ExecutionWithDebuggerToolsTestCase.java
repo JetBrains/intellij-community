@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.*;
@@ -359,6 +359,17 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
               println("Emulated = " + emulated, ProcessOutputTypes.SYSTEM);
             }
 
+            String entry = readValue(comment, "OnEntry");
+            if (entry != null) {
+              ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).WATCH_ENTRY = Boolean.valueOf(entry);
+              println("On Entry = " + entry, ProcessOutputTypes.SYSTEM);
+            }
+
+            String exit = readValue(comment, "OnExit");
+            if (exit != null) {
+              ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).WATCH_EXIT = Boolean.valueOf(exit);
+              println("On Exit = " + exit, ProcessOutputTypes.SYSTEM);
+            }
           }
         }
         else if (comment.contains("Field")) {

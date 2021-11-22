@@ -1,20 +1,19 @@
 <html>
 <body>
-Reports any type parameters and wildcard type arguments that are explicitly declared to extend <code>java.lang.Object</code>.
-<p>Such extension is redundant as <code>java.lang.Object</code> is a supertype of all classes.</p>
-<p>Example:</p>
-<pre><code>
-  class ClassA&lt;T extends Object&gt; {}
+Reports type parameters and wildcard type arguments that are explicitly declared to extend <code>java.lang.Object</code>.
+<p>Such 'extends' clauses are redundant as <code>java.lang.Object</code> is a supertype for all classes.</p>
+<p><b>Example:</b></p>
+<pre><code>  class ClassA&lt;T extends Object&gt; {}
 </code></pre>
 <!-- tooltip end -->
-<p>Configure the inspection:</p>
 <p>
-  Use the <b>Ignore when java.lang.Object is annotated</b> option to disable the inspection if
-  <code>java.lang.Object</code> is annotated.
+  If you need to preserve the 'extends Object' clause because of annotations, disable the
+  <b>Ignore when java.lang.Object is annotated</b> option.
+  This might be useful, for example, when you use a nullness analyzer, and the 'extends Object' clause
+  holds a <code>@Nullable</code>/<code>@NotNull</code> annotation.
 </p>
-<p>Example:</p>
-<pre><code>
-  class ClassB&lt;T extends @A Object&gt; {}
+<p><b>Example:</b></p>
+<pre><code>  class MyClass&lt;T extends @NotNull Object&gt; {}
 </code></pre>
 
 </body>

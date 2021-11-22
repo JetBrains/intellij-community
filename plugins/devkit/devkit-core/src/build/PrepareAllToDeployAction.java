@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -52,7 +52,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
       enabled = true;
     }
     else if (moduleCount > 0) {
-      final Module module = e.getData(LangDataKeys.MODULE);
+      final Module module = e.getData(PlatformCoreDataKeys.MODULE);
       if (module == null || !(PluginModuleType.isOfType(module))) {
         enabled = true;
       }

@@ -194,6 +194,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
                 false,
                 false,
+                false,
                 null,
                 parametersToRemove
             ).run()
@@ -287,7 +288,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
             val targetParent = file.findElementByCommentPrefix("// SIBLING:")?.parent ?: file.parent!!
             val fileText = file.text
-            val className = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// NAME:")!!
+            val className = InTextDirectivesUtils.stringWithDirective(fileText, "NAME")
             val targetFileName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// TARGET_FILE_NAME:")
                 ?: "$className.${KotlinFileType.EXTENSION}"
             val editor = fixture.editor

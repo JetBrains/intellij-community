@@ -4,7 +4,7 @@ interface A {
     fun test(foo: Int)
 }
 
-class B(): A {
+class B() : A {
     override fun test(foo<caret>: Int) {
         println(foo) // not highlighted `foo`
     }

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Key;
@@ -13,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.List;
 
-public final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl<?>> {
+final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl<?>> {
   private static final Key<Integer> ORDER_BEFORE_DISPOSAL = Key.create("inlay.order.before.disposal");
-  public final int myPriority;
+  final int myPriority;
 
   InlineInlayImpl(@NotNull EditorImpl editor,
                   int offset,
@@ -104,6 +105,13 @@ public final class InlineInlayImpl<R extends EditorCustomElementRenderer> extend
   int getOrder() {
     Integer value = getUserData(ORDER_BEFORE_DISPOSAL);
     return value == null ? -1 : value;
+  }
+
+  @Override
+  public @NotNull InlayProperties getProperties() {
+    return new InlayProperties()
+      .relatesToPrecedingText(isRelatedToPrecedingText())
+      .priority(myPriority);
   }
 
   @Override

@@ -4,14 +4,14 @@ import kotlinx.coroutines.flow.*
 
 fun flowOnMain(): Flow<Int> = flow {
     for (i in 1..3) {
-        Thread.<warning descr="Inappropriate blocking method call">sleep</warning>(100)
+        Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(100)
         emit(i)
     }
 }.flowOn(Dispatchers.Main)
 
 fun flowSimple(): Flow<Int> = flow {
     for (i in 1..3) {
-        Thread.<warning descr="Inappropriate blocking method call">sleep</warning>(100)
+        Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(100)
         emit(i)
     }
 }

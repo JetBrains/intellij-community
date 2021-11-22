@@ -1,0 +1,3 @@
+fun Implicit() {
+    MainClass.f()
+}

@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -29,6 +31,7 @@ import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.*;
 
@@ -237,6 +240,15 @@ public class VcsUtil {
   @NotNull
   public static FilePath getFilePath(@NotNull VirtualFile parent, @NotNull @NonNls String fileName, boolean isDirectory) {
     return VcsContextFactory.SERVICE.getInstance().createFilePath(parent, fileName, isDirectory);
+  }
+
+  @Nullable
+  public static Icon getIcon(@Nullable Project project, @NotNull FilePath filePath) {
+    if (project != null && project.isDisposed()) return null;
+    VirtualFile virtualFile = filePath.getVirtualFile();
+    if (virtualFile != null) return IconUtil.getIcon(virtualFile, 0, project);
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName());
+    return fileType.getIcon();
   }
 
   /**
@@ -564,6 +576,32 @@ public class VcsUtil {
       .extensions(project)
       .map(IgnoredFileContentProvider::getFileName)
       .collect(Collectors.toSet());
+  }
+
+  @Nls
+  @NotNull
+  public static String joinWithAnd(@NotNull List<@Nls String> strings, int limit) {
+    int size = strings.size();
+    if (size == 0) return "";
+    if (size == 1) return strings.get(0);
+    if (size == 2) return VcsBundle.message("sequence.concatenation.a.and.b", strings.get(0), strings.get(1));
+
+    boolean isLimited = limit >= 2 && limit < size;
+    int listCount = (isLimited ? limit : size) - 1;
+
+    @Nls StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < listCount; i++) {
+      if (i != 0) sb.append(VcsBundle.message("sequence.concatenation.separator"));
+      sb.append(strings.get(i));
+    }
+
+    if (isLimited) {
+      sb.append(VcsBundle.message("sequence.concatenation.tail.n.others", size - limit + 1));
+    }
+    else {
+      sb.append(VcsBundle.message("sequence.concatenation.tail", strings.get(size - 1)));
+    }
+    return sb.toString();
   }
 
   @NlsSafe

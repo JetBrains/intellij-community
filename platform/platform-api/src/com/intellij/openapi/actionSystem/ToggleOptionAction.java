@@ -64,7 +64,7 @@ public class ToggleOptionAction extends ToggleAction {
 
   public interface Option {
     /**
-     * @return a not null string to override an action name
+     * @return a string to override an action name
      */
     @Nullable
     @ActionText
@@ -73,7 +73,7 @@ public class ToggleOptionAction extends ToggleAction {
     }
 
     /**
-     * @return a not null string to override an action description
+     * @return a string to override an action description
      */
     @Nullable
     @ActionDescription

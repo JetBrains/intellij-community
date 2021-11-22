@@ -57,13 +57,14 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
 
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (file instanceof XmlFile && (file.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {
+    if (file instanceof XmlFile && file.isPhysical()) {
       DomManager domManager = DomManager.getDomManager(file.getProject());
       DomFileElement<MavenDomProjectModel> model = domManager.getFileElement((XmlFile)file, MavenDomProjectModel.class);
 
 
       if (model != null) {
-        MavenDistribution distribution = MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
+        MavenDistribution distribution =
+          MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
         boolean maven35 = distribution == null || StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
         List<ProblemDescriptor> problems = new ArrayList<>(3);
 
@@ -116,10 +117,13 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
           }
         };
       }
-      XmlText[] textElements = domValue.getXmlTag().getValue().getTextElements();
-      if (textElements.length > 0) {
-        problems.add(manager.createProblemDescriptor(textElements[0], MavenDomBundle.message("inspection.property.in.parent.description"),
-                                                     fix, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+      XmlTag xmlTag = domValue.getXmlTag();
+      if (xmlTag != null) {
+        XmlText[] textElements = xmlTag.getValue().getTextElements();
+        if (textElements.length > 0) {
+          problems.add(manager.createProblemDescriptor(textElements[0], MavenDomBundle.message("inspection.property.in.parent.description"),
+                                                       fix, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+        }
       }
     }
   }

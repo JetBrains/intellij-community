@@ -258,6 +258,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     int i = 0;
     DfaValue[] args = callArguments.toArray();
     for (DfaMemoryState state : finalStates) {
+      ContractValue.flushContractTempVariables(state);
       callArguments.flush(state, factory, realMethod);
       pushResult(interpreter, state, state.pop(), args);
       result[i++] = nextState(interpreter, state);
@@ -305,6 +306,9 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     Set<DfaCallState> falseStates = new LinkedHashSet<>();
 
     for (DfaCallState callState : states) {
+      for (ContractValue condition : contract.getConditions()) {
+        callState = condition.updateState(callState);
+      }
       DfaMemoryState state = callState.getMemoryState();
       DfaCallArguments arguments = callState.getCallArguments();
       for (ContractValue contractValue : contract.getConditions()) {
@@ -314,14 +318,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         if (contract.getReturnValue().isFail() ?
             falseState.applyCondition(falseCondition) :
             falseState.applyContractCondition(falseCondition)) {
-          DfaCallArguments falseArguments = contractValue.updateArguments(arguments, true);
-          falseStates.add(callState.withMemoryState(falseState).withArguments(falseArguments));
+          falseStates.add(callState.withMemoryState(falseState).withArguments(arguments));
         }
         if (!state.applyContractCondition(condition)) {
           state = null;
           break;
         }
-        arguments = contractValue.updateArguments(arguments, false);
       }
       if (state != null) {
         DfaValue result = contract.getReturnValue().getDfaValue(factory, callState.withArguments(arguments));
@@ -391,19 +393,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue precalculated = getPrecalculatedReturnValue();
     PsiType type = getResultType();
 
-    SpecialField field = SpecialField.findSpecialField(myTargetMethod);
-    if (field != null) {
-      return field.createValue(factory, qualifierValue);
+    VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(myTargetMethod);
+    if (descriptor instanceof SpecialField || descriptor != null && qualifierValue instanceof DfaVariableValue) {
+      return descriptor.createValue(factory, qualifierValue);
     }
     if (precalculated != null) {
       return precalculated;
-    }
-
-    if (getContext() instanceof PsiMethodReferenceExpression && qualifierValue instanceof DfaVariableValue) {
-      VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(myTargetMethod);
-      if (descriptor != null) {
-        return descriptor.createValue(factory, qualifierValue);
-      }
     }
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {
@@ -454,13 +449,13 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return false;
   }
 
-  private DfaValue popQualifier(@NotNull DataFlowInterpreter runner,
+  private DfaValue popQualifier(@NotNull DataFlowInterpreter interpreter,
                                 @NotNull DfaMemoryState memState,
                                 DfaValue @Nullable [] argValues) {
     DfaValue value = memState.pop();
     if (getContext() instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression context = (PsiMethodReferenceExpression)getContext();
-      value = CheckNotNullInstruction.dereference(runner, memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
+      value = CheckNotNullInstruction.dereference(interpreter, memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
     }
     DfType dfType = memState.getDfType(value);
     if (getMutationSignature().mutatesThis() && !Mutability.fromDfType(dfType).canBeModified()) {
@@ -468,7 +463,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       // Inferred mutation annotation may infer mutates="this" if invisible state is mutated (e.g. cached hashCode is stored).
       // So let's conservatively skip the warning here. Such contract is still useful because it assures that nothing else is mutated.
       if (method != null && JavaMethodContractUtil.hasExplicitContractAnnotation(method)) {
-        runner.getListener().onCondition(new MutabilityProblem(getContext(), true), value, ThreeState.YES, memState);
+        interpreter.getListener().onCondition(new MutabilityProblem(getContext(), true), value, ThreeState.YES, memState);
         if (dfType instanceof DfReferenceType) {
           memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
         }
@@ -481,7 +476,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return value;
   }
 
-  private DfaValue @Nullable [] popCallArguments(DataFlowInterpreter runner, DfaMemoryState memState) {
+  private DfaValue @Nullable [] popCallArguments(DataFlowInterpreter interpreter, DfaMemoryState memState) {
     DfaValue[] argValues = null;
     PsiParameterList paramList = null;
     if (myTargetMethod != null) {
@@ -493,7 +488,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
           PsiType arrayType = Objects.requireNonNull(paramList.getParameter(paramCount - 1)).getType();
           DfType dfType = SpecialField.ARRAY_LENGTH.asDfType(intValue(myArgCount - paramCount + 1))
             .meet(TypeConstraints.exact(arrayType).asDfType());
-          argValues[paramCount - 1] = runner.getFactory().fromDfType(dfType);
+          argValues[paramCount - 1] = interpreter.getFactory().fromDfType(dfType);
         }
       }
     }
@@ -518,24 +513,24 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
           PsiParameter parameter = paramList.getParameter(paramIndex);
           if (parameter != null) {
             if (TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
-              arg = CheckNotNullInstruction.dereference(runner, memState, arg, NullabilityProblemKind.unboxingMethodRefParameter.problem(methodRef, null));
+              arg = CheckNotNullInstruction.dereference(interpreter, memState, arg, NullabilityProblemKind.unboxingMethodRefParameter.problem(methodRef, null));
             }
             arg = DfaUtil.boxUnbox(arg, parameter.getType());
           }
         }
         Nullability nullability = getArgRequiredNullability(paramIndex);
         if (nullability == Nullability.NOT_NULL) {
-          arg = CheckNotNullInstruction.dereference(runner, memState, arg, NullabilityProblemKind.passingToNotNullMethodRefParameter.problem(methodRef, null));
+          arg = CheckNotNullInstruction.dereference(interpreter, memState, arg, NullabilityProblemKind.passingToNotNullMethodRefParameter.problem(methodRef, null));
         } else if (nullability == Nullability.UNKNOWN) {
-          CheckNotNullInstruction.checkNotNullable(runner, memState, arg, NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.problem(methodRef, null));
+          CheckNotNullInstruction.checkNotNullable(interpreter, memState, arg, NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.problem(methodRef, null));
         }
       }
       if (myMutation.mutatesArg(paramIndex)) {
         DfType dfType = memState.getDfType(arg);
         if (!Mutability.fromDfType(dfType).canBeModified() &&
             // Empty array cannot be modified at all
-            !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(runner.getFactory(), arg)).equals(intValue(0))) {
-          runner.getListener().onCondition(new MutabilityProblem(anchor, false), arg, ThreeState.YES, memState);
+            !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(interpreter.getFactory(), arg)).equals(intValue(0))) {
+          interpreter.getListener().onCondition(new MutabilityProblem(anchor, false), arg, ThreeState.YES, memState);
           if (dfType instanceof DfReferenceType) {
             memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
           }
@@ -548,9 +543,9 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return argValues;
   }
 
-  private @NotNull DfaCallArguments popCall(@NotNull DataFlowInterpreter runner, @NotNull DfaMemoryState memState) {
-    DfaValue[] argValues = popCallArguments(runner, memState);
-    final DfaValue qualifier = popQualifier(runner, memState, argValues);
+  private @NotNull DfaCallArguments popCall(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState memState) {
+    DfaValue[] argValues = popCallArguments(interpreter, memState);
+    final DfaValue qualifier = popQualifier(interpreter, memState, argValues);
     return new DfaCallArguments(qualifier, argValues, getMutationSignature());
   }
 

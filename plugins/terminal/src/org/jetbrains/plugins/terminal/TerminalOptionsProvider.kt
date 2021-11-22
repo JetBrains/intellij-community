@@ -3,15 +3,12 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.annotations.Nls
 
-@State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
+@State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml", roamingType = RoamingType.DISABLED))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var myState = State()
 

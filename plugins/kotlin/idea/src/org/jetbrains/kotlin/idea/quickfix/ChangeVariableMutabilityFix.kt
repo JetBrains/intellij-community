@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory1
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 class ChangeVariableMutabilityFix(
     element: KtValVarKeywordOwner,
     private val makeVar: Boolean,
-    private val actionText: String? = null,
+    @Nls private val actionText: String? = null,
     private val deleteInitializer: Boolean = false
 ) : KotlinQuickFixAction<KtValVarKeywordOwner>(element) {
 
@@ -51,7 +52,7 @@ class ChangeVariableMutabilityFix(
 
     companion object {
         val VAL_WITH_SETTER_FACTORY: KotlinSingleIntentionActionFactory = object : KotlinSingleIntentionActionFactory() {
-            override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+            override fun createAction(diagnostic: Diagnostic): IntentionAction {
                 val accessor = diagnostic.psiElement as KtPropertyAccessor
                 return ChangeVariableMutabilityFix(accessor.property, true)
             }
@@ -83,7 +84,7 @@ class ChangeVariableMutabilityFix(
         }
 
         val VAR_ANNOTATION_PARAMETER_FACTORY: KotlinSingleIntentionActionFactory = object : KotlinSingleIntentionActionFactory() {
-            override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+            override fun createAction(diagnostic: Diagnostic): IntentionAction {
                 val element = diagnostic.psiElement as KtParameter
                 return ChangeVariableMutabilityFix(element, false)
             }

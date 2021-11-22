@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
@@ -95,6 +95,7 @@ public final class SystemInfo {
   public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
   public static final boolean isMacOSBigSur = isMac && isOsVersionAtLeast("10.16");
+  public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
 
   public static @NotNull String getMacOSMajorVersion() {
     return getMacOSMajorVersion(OS_VERSION);
@@ -204,11 +205,6 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final boolean isIntel64 = CpuArch.isIntel64();
-
-  /** @deprecated moved; please use {@link CpuArch#isArm64()} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final boolean isArm64 = CpuArch.isArm64();
 
   /** @deprecated trivial and mostly outdated */
   @Deprecated

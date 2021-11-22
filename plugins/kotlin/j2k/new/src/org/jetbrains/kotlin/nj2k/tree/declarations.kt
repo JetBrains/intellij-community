@@ -230,16 +230,19 @@ class JKField(
     override fun accept(visitor: JKVisitor) = visitor.visitField(this)
 }
 
-
-class JKKtInitDeclaration(block: JKBlock) : JKDeclaration() {
+sealed class JKInitDeclaration(block: JKBlock)   : JKDeclaration() {
     var block: JKBlock by child(block)
+    abstract val isStatic: Boolean
     override val name: JKNameIdentifier by child(JKNameIdentifier("<init>"))
+}
+
+class JKKtInitDeclaration(block: JKBlock) : JKInitDeclaration(block) {
+    override val isStatic: Boolean get() = false
     override fun accept(visitor: JKVisitor) = visitor.visitKtInitDeclaration(this)
 }
 
 
-class JKJavaStaticInitDeclaration(block: JKBlock) : JKDeclaration() {
-    var block: JKBlock by child(block)
-    override var name: JKNameIdentifier by child(JKNameIdentifier("<init>"))
+class JKJavaStaticInitDeclaration(block: JKBlock) : JKInitDeclaration(block) {
+    override val isStatic: Boolean get() = true
     override fun accept(visitor: JKVisitor) = visitor.visitJavaStaticInitDeclaration(this)
 }

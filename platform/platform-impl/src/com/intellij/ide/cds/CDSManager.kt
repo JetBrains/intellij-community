@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.cds
 
 import com.intellij.diagnostic.VMOptions
@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Pair.pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -24,6 +25,7 @@ import com.intellij.util.system.CpuArch
 import com.sun.management.OperatingSystemMXBean
 import com.sun.tools.attach.VirtualMachine
 import java.io.File
+import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
@@ -90,9 +92,15 @@ object CDSManager {
   }
 
   fun removeCDS() {
-    if (currentCDSArchive?.isFile != true ) return
-    VMOptions.writeDisableCDSArchiveOption()
-    LOG.warn("Disabled CDS")
+    if (currentCDSArchive?.isFile != true) return
+    try {
+      // cannot remove "-XX:+UnlockDiagnosticVMOptions" for we do not know the reason it was included
+      VMOptions.setOptions(listOf(pair("-Xshare:", null), pair("-XX:SharedArchiveFile=", null)))
+      LOG.warn("Disabled CDS")
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+    }
   }
 
   private interface CDSProgressIndicator {
@@ -171,9 +179,17 @@ object CDSManager {
     }
     if (archiveResult != CDSTaskResult.Success) return archiveResult
 
-    VMOptions.writeEnableCDSArchiveOption(paths.classesArchiveFile.absolutePath)
-    LOG.warn("Enabled CDS archive from ${paths.classesArchiveFile}, VMOptions were updated")
-    return CDSTaskResult.Success
+    try {
+      VMOptions.setOptions(listOf(pair("-Xshare:", "auto"),
+                                  pair("-XX:+UnlockDiagnosticVMOptions", ""),
+                                  pair("-XX:SharedArchiveFile=", paths.classesArchiveFile.absolutePath)))
+      LOG.warn("Enabled CDS archive from ${paths.classesArchiveFile}, VMOptions were updated")
+      return CDSTaskResult.Success
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+      return CDSTaskResult.Failed(e.message!!)
+    }
   }
 
   private val agentPath: File

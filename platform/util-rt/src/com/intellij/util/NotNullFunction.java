@@ -18,9 +18,10 @@ package com.intellij.util;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * A function whose return result is never null.
  */
 public interface NotNullFunction<Param, Result> extends NullableFunction<Param, Result> {
+  @Override
   @NotNull
   Result fun(final Param dom);
 }

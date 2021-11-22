@@ -2,6 +2,7 @@ package com.intellij.grazie.text;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +31,16 @@ public abstract class TextProblem {
   public abstract @NotNull String getShortMessage();
 
   /**
-   * @return the text/HTML for {@link ProblemDescriptor#getDescriptionTemplate()}, to be shown in tooltips and Inspection view
+   * @return the text/HTML for {@link ProblemDescriptor#getDescriptionTemplate()}, to be shown in the status bar and Inspections view
    * */
   public abstract @NotNull @InspectionMessage String getDescriptionTemplate(boolean isOnTheFly);
+
+  /**
+   * @return the text/HTML for {@link ProblemDescriptor#getTooltipTemplate()}
+   * */
+  public @NotNull @NlsContexts.Tooltip String getTooltipTemplate() {
+    return getDescriptionTemplate(true);
+  }
 
   /** @return the underlying text content where this problem was found */
   public final @NotNull TextContent getText() {

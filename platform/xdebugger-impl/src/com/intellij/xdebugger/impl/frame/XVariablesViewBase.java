@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
@@ -71,6 +71,11 @@ public abstract class XVariablesViewBase extends XDebugView {
     return myTreePanel.getTree();
   }
 
+  @Override
+  public JComponent getMainComponent() {
+    return myTreePanel.getTree();
+  }
+
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();
@@ -94,7 +99,7 @@ public abstract class XVariablesViewBase extends XDebugView {
 
   protected static void clearInlays(XDebuggerTree tree) {
     if (Registry.is("debugger.show.values.use.inlays")) {
-      XDebuggerInlayUtil.clearInlays(tree.getProject());
+      XDebuggerInlayUtil.getInstance(tree.getProject()).clearInlays();
     }
   }
 
@@ -185,7 +190,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   private static class MySelectionListener implements SelectionListener {
     private static final Collection<String> SIDE_EFFECT_PRODUCERS = Arrays.asList("exec(", "++", "--", "=");
     private static final Set<String> IGNORED_TEXTS = new HashSet<>(Arrays.asList("", ";", "()"));
-    private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private static final Alarm ALARM = new Alarm();
     private static final int EVALUATION_DELAY_MILLIS = 100;
 
     private final Editor myEditor;

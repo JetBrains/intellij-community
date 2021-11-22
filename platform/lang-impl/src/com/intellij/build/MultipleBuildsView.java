@@ -454,7 +454,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
 
   private class ProgressWatcher implements Runnable {
 
-    private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private final Alarm myRefreshAlarm = new Alarm();
     private final Set<AbstractViewManager.BuildInfo> myBuilds = ContainerUtil.newConcurrentSet();
 
     @Override

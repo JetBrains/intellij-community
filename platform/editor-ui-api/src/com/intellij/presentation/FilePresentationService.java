@@ -17,6 +17,12 @@ public interface FilePresentationService {
     return project.getService(FilePresentationService.class);
   }
 
+  static @Nullable Color getFileBackgroundColor(@Nullable Project project, @Nullable VirtualFile file) {
+    if (project == null || project.isDisposed()) return null;
+    if (file == null || !file.isValid()) return null;
+    return getInstance(project).getFileBackgroundColor(file);
+  }
+
   /**
    * @return background color of a file, taking into account extensions like {@link FileColorManager#getFileColor(VirtualFile)}
    */

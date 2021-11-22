@@ -19,7 +19,7 @@ fun takeFuns(p: MutableList<(A) -> Unit>) {
     p[0] = { val (x, y) = it }
 }
 
-fun <T> x(p1: T, p2: (T) -> Unit){}
+fun <T> x(p1: T, p2: (T) -> Unit) {}
 
 fun foo(p: A) {
     takeExtFun { val (x, y) = this }
@@ -29,7 +29,7 @@ fun foo(p: A) {
     takeFun3 { val (x, y) = it[0] }
 
     x(p) { val (x, y) = it }
-    x(p, fun (p) { val (x, y) = p })
+    x(p, fun(p) { val (x, y) = p })
 }
 
 var Any.v: (A) -> Unit
@@ -37,7 +37,7 @@ var Any.v: (A) -> Unit
     set(value) = TODO()
 
 fun f() {
-    "".v = { val (x, y ) = it }
+    "".v = { val (x, y) = it }
 }
 
 // FIR_IGNORE

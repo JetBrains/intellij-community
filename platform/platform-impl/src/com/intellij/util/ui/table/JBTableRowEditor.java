@@ -3,15 +3,16 @@ package com.intellij.util.ui.table;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -55,10 +56,9 @@ public abstract class JBTableRowEditor extends JPanel {
   }
 
   public static JPanel createLabeledPanel(@NlsContexts.Label String labelText, JComponent component) {
-    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-    final JBLabel label = new JBLabel(labelText, UIUtil.ComponentStyle.SMALL);
-    panel.add(label);
-    panel.add(component);
+    final JPanel panel = new JPanel(new BorderLayout(JBUI.scale(4), JBUI.scale(2)));
+    panel.add(new JBLabel(labelText, UIUtil.ComponentStyle.SMALL), BorderLayout.NORTH);
+    panel.add(component, BorderLayout.CENTER);
     return panel;
   }
 

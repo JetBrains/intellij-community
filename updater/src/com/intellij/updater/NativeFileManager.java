@@ -82,14 +82,14 @@ public class NativeFileManager {
         char[] sessionKey = new char[Win32RestartManager.CCH_RM_SESSION_KEY + 1];
         int error = Win32RestartManager.INSTANCE.RmStartSession(session, 0, sessionKey);
         if (error != 0) {
-          LOG.warning("Unable to start restart manager session");
+          LOG.warning("RmStartSession(): " + error);
         }
         else {
           try {
             StringArray resources = new StringArray(new WString[]{new WString(file.toString())});
             error = Win32RestartManager.INSTANCE.RmRegisterResources(session.getValue(), 1, resources, 0, Pointer.NULL, 0, null);
             if (error != 0) {
-              LOG.warning("Unable to register restart manager resource " + file.getAbsolutePath());
+              LOG.warning("RmRegisterResources('" + file + "'): " + error);
             }
             else {
               IntByReference procInfoNeeded = new IntByReference();
@@ -98,7 +98,7 @@ public class NativeFileManager {
               IntByReference procInfo = new IntByReference(infos.length);
               error = Win32RestartManager.INSTANCE.RmGetList(session.getValue(), procInfoNeeded, procInfo, info, new LongByReference());
               if (error != 0) {
-                LOG.warning("Unable to get the list of processes using " + file.getAbsolutePath());
+                LOG.warning("RmGetList('" + file + "'): " + error);
               }
               else {
                 int n = procInfo.getValue();

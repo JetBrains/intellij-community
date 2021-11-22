@@ -33,7 +33,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.util.Objects;
 
-public final class SplitButtonAction extends ActionGroup implements CustomComponentAction, UpdateInBackground {
+public class SplitButtonAction extends ActionGroup implements CustomComponentAction, UpdateInBackground {
   private final ActionGroup myActionGroup;
   private final static Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 
@@ -41,9 +41,6 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     myActionGroup = actionGroup;
     setPopup(true);
   }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {}
 
   public @NotNull ActionGroup getActionGroup() {
     return myActionGroup;
@@ -262,7 +259,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       myConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
         public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-          if (event.getDataContext().getData(PlatformDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
+          if (event.getDataContext().getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
             selectedAction = action;
             copyPresentation(event.getPresentation());
             repaint();

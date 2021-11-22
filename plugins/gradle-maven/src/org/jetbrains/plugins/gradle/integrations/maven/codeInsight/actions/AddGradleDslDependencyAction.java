@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -24,9 +10,10 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.plugins.gradle.config.GradleFileType;
+import org.jetbrains.plugins.gradle.config.GradleFileTypeKt;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.List;
 
@@ -51,7 +38,7 @@ public class AddGradleDslDependencyAction extends CodeInsightAction {
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (file instanceof PsiCompiledElement) return false;
-    if (!GroovyFileType.GROOVY_FILE_TYPE.equals(file.getFileType())) return false;
-    return !GradleConstants.SETTINGS_FILE_NAME.equals(file.getName()) && file.getName().endsWith(GradleConstants.EXTENSION);
+    if (!GradleFileType.isGradleFile(file)) return false;
+    return !GradleConstants.SETTINGS_FILE_NAME.equals(file.getName());
   }
 }

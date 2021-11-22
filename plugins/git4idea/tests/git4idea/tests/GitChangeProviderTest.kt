@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManagerGate
 import com.intellij.testFramework.vcs.MockChangelistBuilder
 import com.intellij.testFramework.vcs.MockDirtyScope
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.config.GitVersion
 import git4idea.status.GitChangeProvider
@@ -105,7 +106,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
     val builder = MockChangelistBuilder()
     changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(), MockChangeListManagerGate(changeListManager))
     val changes = builder.changes
-    val map = Object2ObjectOpenCustomHashMap<FilePath, Change>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)
+    val map = CollectionFactory.createCustomHashingStrategyMap<FilePath, Change>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)
     return changes.associateByTo(map) { ChangesUtil.getFilePath(it) }
   }
 

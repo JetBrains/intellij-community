@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -6,8 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ModalityState;
@@ -21,13 +20,15 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
@@ -96,7 +97,7 @@ public class NavBarModel {
 
   public void updateModelAsync(@NotNull DataContext dataContext, @Nullable Runnable callback) {
     if (LaterInvocator.isInModalContext() ||
-        PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
+        PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
       return;
     }
 
@@ -120,9 +121,9 @@ public class NavBarModel {
       CommonDataKeys.PSI_FILE,
       CommonDataKeys.PROJECT,
       CommonDataKeys.VIRTUAL_FILE,
-      LangDataKeys.MODULE,
+      PlatformCoreDataKeys.MODULE,
       CommonDataKeys.EDITOR,
-      PlatformDataKeys.SELECTED_ITEMS).build();
+      PlatformCoreDataKeys.SELECTED_ITEMS).build();
   }
 
   private void setModelWithUpdate(@Nullable List<Object> model) {
@@ -182,7 +183,7 @@ public class NavBarModel {
 
   private Object calculateRoot(DataContext dataContext) {
     // Narrow down the root element to the first interesting one
-    Module root = LangDataKeys.MODULE.getData(dataContext);
+    Module root = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (root != null && !ModuleType.isInternal(root)) return root;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -321,7 +322,7 @@ public class NavBarModel {
     return child;
   }
 
-  protected List<Object> getChildren(final Object object) {
+  public List<Object> getChildren(final Object object) {
     final List<Object> result = new ArrayList<>();
     PairProcessor<Object, NavBarModelExtension> processor = (o, ext) -> {
       ContainerUtil.addIfNotNull(result, o instanceof PsiElement && ext.normalizeChildren() ? normalize((PsiElement)o) : o);

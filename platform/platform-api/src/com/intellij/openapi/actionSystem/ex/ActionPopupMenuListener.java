@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to receive notifications when popup menus created from action groups are shown and closed.
+ * Allows receiving notifications when popup menus created from action groups are shown and closed.
  *
  */
 public interface ActionPopupMenuListener {

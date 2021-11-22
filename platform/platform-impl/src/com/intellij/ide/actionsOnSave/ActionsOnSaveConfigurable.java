@@ -16,7 +16,6 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +35,6 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
 
     public ActionsOnSaveConfigurableProvider(@NotNull Project project) {
       myProject = project;
-    }
-
-    @Override
-    public boolean canCreateConfigurable() {
-      return !PlatformUtils.isRider();
     }
 
     @Override

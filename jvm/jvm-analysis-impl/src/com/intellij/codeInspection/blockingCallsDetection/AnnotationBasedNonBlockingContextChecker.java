@@ -2,33 +2,33 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import one.util.streamex.StreamEx;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.UastUtils;
 
-import java.util.List;
+import java.util.Collection;
 
-public class AnnotationBasedNonBlockingContextChecker implements NonBlockingContextChecker {
+public final class AnnotationBasedNonBlockingContextChecker implements NonBlockingContextChecker {
 
-  private final List<String> myNonBlockingAnnotations;
+  private final Collection<String> myBlockingAnnotations;
+  private final Collection<String> myNonBlockingAnnotations;
 
-  public AnnotationBasedNonBlockingContextChecker(List<String> nonBlockingAnnotations) {
+  public AnnotationBasedNonBlockingContextChecker(@NotNull Collection<String> blockingAnnotations,
+                                                  @NotNull Collection<String> nonBlockingAnnotations) {
+    myBlockingAnnotations = blockingAnnotations;
     myNonBlockingAnnotations = nonBlockingAnnotations;
   }
 
   @Override
   public boolean isApplicable(@NotNull PsiFile file) {
-    return myNonBlockingAnnotations != null &&
-           StreamEx.of(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION)
-             .append(myNonBlockingAnnotations)
-             .anyMatch(annotation -> JavaPsiFacade.getInstance(file.getProject()).findClass(annotation, file.getResolveScope()) != null);
+    JavaPsiFacade javaPsi = JavaPsiFacade.getInstance(file.getProject());
+    for (String annotation : myNonBlockingAnnotations) {
+      if (javaPsi.findClass(annotation, file.getResolveScope()) != null) return true;
+    }
+    return false;
   }
 
   @Override
@@ -40,6 +40,17 @@ public class AnnotationBasedNonBlockingContextChecker implements NonBlockingCont
     if (callingMethod == null) return false;
     PsiMethod psiCallingMethod = callingMethod.getJavaPsi();
 
-    return AnnotationUtil.findAnnotation(psiCallingMethod, myNonBlockingAnnotations, false) != null;
+    if (AnnotationUtil.findAnnotation(psiCallingMethod, myNonBlockingAnnotations, false) != null) {
+      return true;
+    }
+
+    if (AnnotationUtil.findAnnotation(psiCallingMethod, myBlockingAnnotations, false) != null) {
+      // @Blocking on method overrides @NonBlocking on class
+      return false;
+    }
+
+    PsiClass containingClass = psiCallingMethod.getContainingClass();
+    return containingClass != null
+           && AnnotationUtil.findAnnotation(containingClass, myNonBlockingAnnotations, false) != null;
   }
 }

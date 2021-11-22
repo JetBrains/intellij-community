@@ -31,7 +31,7 @@ public class ChangeNotesPanel {
   };
   private final JEditorPane myEditorPane = PluginDetailsPageComponent.createDescriptionComponent(null);
   private final JEditorPane myDescriptionPane;
-  private String myText;
+  private @NlsContexts.DialogMessage String myText;
 
   public ChangeNotesPanel(@NotNull JPanel parent, @Nullable Object constraints, @NotNull JEditorPane descriptionPane) {
     myDescriptionPane = descriptionPane;

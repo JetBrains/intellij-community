@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports an attempt to return or assign an array or a <code>Collection</code>, <code>Date</code>, <code>Map</code>,
-<code>Calendar</code>, etc. field from a method parameter.
+Reports return of, or assignment from a method parameter to an array or a mutable type like
+<code>Collection</code>, <code>Date</code>, <code>Map</code>, <code>Calendar</code>, etc.
 <p>Because such types are mutable, this construct may
   result in unexpected modifications of an object's state from outside the owning class. Although this construct may be useful for
   performance reasons, it is inherently prone to bugs.</p>

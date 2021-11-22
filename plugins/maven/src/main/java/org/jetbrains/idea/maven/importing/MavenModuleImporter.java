@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.openapi.util.text.StringUtil.compareVersionNumbers;
+
 public final class MavenModuleImporter {
   public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
 
@@ -399,7 +401,7 @@ public final class MavenModuleImporter {
     if (level == null) {
       String mavenProjectReleaseLevel = mavenProject.getReleaseLevel();
       level = LanguageLevel.parse(mavenProjectReleaseLevel);
-      if (level == null) {
+      if (level == null || compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") < 0) {
         String mavenProjectSourceLevel = mavenProject.getSourceLevel();
         level = LanguageLevel.parse(mavenProjectSourceLevel);
         if (level == null && (StringUtil.isNotEmpty(mavenProjectSourceLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -126,6 +126,7 @@ public final class GroovyPsiCreator {
     //clauses
     if (elem == EXTENDS_CLAUSE) return new GrExtendsClauseImpl(node);
     if (elem == IMPLEMENTS_CLAUSE) return new GrImplementsClauseImpl(node);
+    if (elem == PERMITS_CLAUSE) return new GrPermitsClauseImpl(node);
     if (elem == THROWS_CLAUSE) return new GrThrowsClauseImpl(node);
 
     //bodies

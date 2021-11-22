@@ -49,7 +49,7 @@ public final class PsiUtil extends PsiUtilCore {
   public static final int ACCESS_LEVEL_PRIVATE = 1;
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
 
-  private static final Pattern IGNORED_NAMES = Pattern.compile("ignored?\\d*");
+  private static final Pattern IGNORED_NAMES = Pattern.compile("ignored?[A-Z]?[a-z]*\\d*");
 
   private PsiUtil() {}
 
@@ -1215,7 +1215,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @Contract("null -> null")
   @Nullable
-  public static PsiExpression skipParenthesizedExprDown(PsiExpression expression) {
+  public static PsiExpression skipParenthesizedExprDown(@Nullable PsiExpression expression) {
     while (expression instanceof PsiParenthesizedExpression) {
       expression = ((PsiParenthesizedExpression)expression).getExpression();
     }

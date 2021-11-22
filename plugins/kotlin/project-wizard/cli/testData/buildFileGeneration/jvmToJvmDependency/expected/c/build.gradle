@@ -10,7 +10,7 @@ dependencies {
 }
 
 test {
-    useJUnit()
+    useJUnitPlatform()
 }
 
 compileKotlin {

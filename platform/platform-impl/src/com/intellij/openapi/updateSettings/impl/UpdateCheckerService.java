@@ -90,18 +90,9 @@ final class UpdateCheckerService {
   private static void updateDefaultChannel(UpdateSettings settings) {
     ChannelStatus current = settings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
-
-    UpdateStrategyCustomization customization = UpdateStrategyCustomization.getInstance();
-    ChannelStatus changedChannel = customization.changeDefaultChannel(current);
-    if (changedChannel != null) {
-      settings.setSelectedChannelStatus(changedChannel);
-      LOG.info("channel set to '" + changedChannel.getCode() + "' by " + customization.getClass().getName());
-      return;
-    }
-
     boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
 
-    if (eap && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
+    if (eap && current != ChannelStatus.EAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
       if (!ConfigImportHelper.isFirstSession()) {
@@ -156,9 +147,7 @@ final class UpdateCheckerService {
 
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ourStarted.getAndSet(true)) {
-        return;
-      }
+      if (ourStarted.getAndSet(true)) return;
 
       checkIfPreviousUpdateFailed();
 
@@ -204,28 +193,18 @@ final class UpdateCheckerService {
     if (product == null) return;
 
     int lastRelease = 0;
-    String announce = null;
-    String releaseVersion = ApplicationInfo.getInstance().getShortVersion();
     for (UpdateChannel updateChannel : product.getChannels()) {
       if (updateChannel.getLicensing() == UpdateChannel.Licensing.RELEASE && updateChannel.getStatus() == ChannelStatus.RELEASE) {
         for (BuildInfo buildInfo : updateChannel.getBuilds()) {
           lastRelease = max(lastRelease, buildInfo.getNumber().getBaselineVersion());
-          announce = releaseVersion.equals(buildInfo.getVersion()) && announce == null ? buildInfo.getMessage() : announce;
         }
       }
     }
-    if (lastRelease < current.getBaselineVersion()) return;  // not yet released
-    if (lastRelease > current.getBaselineVersion()) url = null;  // "what's new" page is no longer relevant to this release
+    if (lastRelease != current.getBaselineVersion()) return;  // not an actual release
 
     PropertiesComponent.getInstance().setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
-    if (url != null || announce != null) {
-      String _url = url, _announce = announce;
-      ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewFile(project, _url, _announce));
-      IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
-    }
-    else {
-      LOG.info("neither URL nor message available for " + current);
-    }
+    ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
+    IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
   }
 
   private static void showSnapUpdateNotification(Project project, @Nullable BuildNumber previous, BuildNumber current) {

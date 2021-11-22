@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.google.common.util.concurrent.Futures;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.application.AppUIExecutor;
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.psi.PsiElement;
@@ -39,7 +41,6 @@ import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -94,7 +96,18 @@ public final class StubIndexImpl extends StubIndexEx {
       if (myStateFuture == null) {
         ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitUntilIndicesAreInitialized();
       }
-      myState = state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+      if (ProgressManager.getInstance().isInNonCancelableSection()) {
+        try {
+          state = Futures.getUnchecked(myStateFuture);
+        }
+        catch (Exception e) {
+          FileBasedIndexImpl.LOG.error(e);
+        }
+      }
+      else {
+        state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+      }
+      myState = state;
     }
     return state;
   }
@@ -485,7 +498,7 @@ public final class StubIndexImpl extends StubIndexEx {
                                                             @NotNull Project project,
                                                             @NotNull GlobalSearchScope scope) {
     IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
-    CompactVirtualFileSet fileSet = new CompactVirtualFileSet(result == null ? IntSets.emptySet() : result);
+    VirtualFileSet fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray());
     fileSet.freeze();
     return fileSet;
   }
@@ -584,7 +597,8 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   void setDataBufferingEnabled(final boolean enabled) {
-    for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
+    AsyncState state = ProgressManager.getInstance().computeInNonCancelableSection(this::getAsyncState);
+    for (UpdatableIndex<?, ?, ?> index : state.myIndices.values()) {
       index.setBufferingEnabled(enabled);
     }
   }
@@ -699,7 +713,8 @@ public final class StubIndexImpl extends StubIndexEx {
           myWrappedExtension.getValueExternalizer(),
           myWrappedExtension.getCacheSize(),
           myWrappedExtension.keyIsUniqueForIndexedFile(),
-          myWrappedExtension.traceKeyHashToVirtualFileMapping()
+          myWrappedExtension.traceKeyHashToVirtualFileMapping(),
+          myWrappedExtension.enableWal()
         );
       }
       catch (IOException e) {

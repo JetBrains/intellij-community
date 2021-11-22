@@ -19,7 +19,7 @@ package org.intellij.plugins.xpathView.search;
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -46,7 +46,7 @@ public class FindByXPathAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         final Project project = e.getProject();
-        final Module module = e.getData(LangDataKeys.MODULE);
+        final Module module = e.getData(PlatformCoreDataKeys.MODULE);
 
         if (project != null) {
             executeSearch(project, module);

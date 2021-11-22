@@ -1,8 +1,8 @@
 import sys
 from _typeshed import ReadableBuffer
-from typing import Callable, Optional, Union
+from typing import Callable
 
-from cryptography.hazmat.primitives.asymmetric.ec2 import EllipticCurve, EllipticCurvePrivateKey, EllipticCurvePublicKey
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurve, EllipticCurvePrivateKey, EllipticCurvePublicKey
 from paramiko.message import Message
 from paramiko.transport import Transport
 
@@ -19,9 +19,9 @@ class KexNistp256:
     hash_algo: Callable[[ReadableBuffer], _Hash]
     curve: EllipticCurve
     transport: Transport
-    P: Union[int, EllipticCurvePrivateKey]
-    Q_C: Optional[EllipticCurvePublicKey]
-    Q_S: Optional[EllipticCurvePublicKey]
+    P: int | EllipticCurvePrivateKey
+    Q_C: EllipticCurvePublicKey | None
+    Q_S: EllipticCurvePublicKey | None
     def __init__(self, transport: Transport) -> None: ...
     def start_kex(self) -> None: ...
     def parse_next(self, ptype: int, m: Message) -> None: ...

@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.inst.ArrayStoreInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.ThrowInstruction;
@@ -250,11 +251,14 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       if (instruction instanceof MethodCallInstruction) {
         return !((MethodCallInstruction)instruction).getMutationSignature().isPure();
       }
+      if (instruction instanceof ArrayStoreInstruction) {
+        return true;
+      }
       return false;
     }
 
     protected boolean isModificationAllowed(DfaValue variable) {
-      if (!(variable instanceof DfaVariableValue)) return true;
+      if (!(variable instanceof DfaVariableValue)) return false;
       PsiElement owner = ((DfaVariableValue)variable).getPsiVariable();
       return owner == myParameter || owner != null && PsiTreeUtil.isAncestor(myBlock, owner, false);
     }

@@ -656,7 +656,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return PsiUtilCore.toPsiElementArray(getSelectedValues().filter(PsiElement.class).toList());
     }
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       return myFileEditor;
     }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
@@ -679,7 +679,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         return selectedElements[0];
       }
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return getHelpID();
     }
     if (CommonDataKeys.PROJECT.is(dataId)) {

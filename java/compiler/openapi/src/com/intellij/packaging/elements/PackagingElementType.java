@@ -17,16 +17,6 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
   private final String myId;
   private final Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> myPresentableName;
 
-  /**
-   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
-   * Please use the constructor that accepts a messagePointer for {@link PackagingElementType#myPresentableName}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected PackagingElementType(@NotNull @NonNls String id, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
-    this(id, () -> presentableName);
-  }
-
   protected PackagingElementType(@NotNull @NonNls String id, @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName) {
     myId = id;
     myPresentableName = presentableName;

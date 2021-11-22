@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.util.*
 
 class NewKotlinFileAction : CreateFileFromTemplateAction(
@@ -59,18 +60,26 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
 
             val ktClass = createdElement.declarations.singleOrNull() as? KtNamedDeclaration
             if (ktClass != null) {
+                if (ktClass is KtClass && ktClass.isData()) {
+                    val primaryConstructor = ktClass.primaryConstructor
+                    if (primaryConstructor != null) {
+                        createdElement.editor()?.caretModel?.moveToOffset(primaryConstructor.startOffset + 1)
+                        return
+                    }
+                }
                 CreateFromTemplateAction.moveCaretAfterNameIdentifier(ktClass)
             } else {
-                val editor = FileEditorManager.getInstance(createdElement.project).selectedTextEditor ?: return
-                if (editor.document == createdElement.viewProvider.document) {
-                    val lineCount = editor.document.lineCount
-                    if (lineCount > 0) {
-                        editor.caretModel.moveToLogicalPosition(LogicalPosition(lineCount - 1, 0))
-                    }
+                val editor = createdElement.editor() ?: return
+                val lineCount = editor.document.lineCount
+                if (lineCount > 0) {
+                    editor.caretModel.moveToLogicalPosition(LogicalPosition(lineCount - 1, 0))
                 }
             }
         }
     }
+
+    private fun KtFile.editor() =
+        FileEditorManager.getInstance(this.project).selectedTextEditor?.takeIf { it.document == this.viewProvider.document }
 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
         builder.setTitle(KotlinBundle.message("action.new.file.dialog.title"))

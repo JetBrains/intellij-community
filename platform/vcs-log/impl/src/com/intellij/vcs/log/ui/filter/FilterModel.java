@@ -5,13 +5,13 @@ import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import org.apache.commons.lang.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 public abstract class FilterModel<Filter> {
@@ -72,7 +72,7 @@ public abstract class FilterModel<Filter> {
                                                            @Nullable FilterObject currentFilter) {
     F oldFilter = currentFilter == null ? null : getter.apply(currentFilter);
     F newFilter = filter == null ? null : getter.apply(filter);
-    return !ObjectUtils.equals(oldFilter, newFilter);
+    return !Objects.equals(oldFilter, newFilter);
   }
 
   public static abstract class SingleFilterModel<Filter extends VcsLogFilter> extends FilterModel<Filter> {
@@ -91,7 +91,7 @@ public abstract class FilterModel<Filter> {
 
     @Override
     public void setFilter(@Nullable Filter filter) {
-      if (ObjectUtils.equals(myFilter, filter)) return;
+      if (Objects.equals(myFilter, filter)) return;
 
       if (filter != null) {
         triggerFilterSet(myFilterKey.getName());

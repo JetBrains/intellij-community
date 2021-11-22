@@ -8,7 +8,7 @@ public final class MavenLog {
   public static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven");
 
   public static void printInTests(Throwable e) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) { // no fix
       e.printStackTrace();
     }
   }

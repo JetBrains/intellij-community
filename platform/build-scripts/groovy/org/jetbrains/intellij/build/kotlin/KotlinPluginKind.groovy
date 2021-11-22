@@ -27,10 +27,6 @@ enum KotlinPluginKind {
     "kotlin-ultimate.appcode-kmm",
     "CIDR-appcode/appcode-kmm/resources"
   ),
-  AC("AppCodeKotlinPlugin",
-     "kotlin.plugin.version",
-     "kotlin-ultimate.appcode-native",
-     "CIDR-appcode/appcode-kotlin-native/resources"),
   ROBOSCOPE(
     "RoboscopePlugin.zip", "kotlin.plugin.version",
     "util.android-studio.android-studio-roboscope-plugin",
@@ -60,7 +56,7 @@ enum KotlinPluginKind {
   }
 
   KotlinPluginKind(String name, String versionPropertyName) {
-    this(name + ".zip", "kotlin.idea", "community/plugins/kotlin/resources-descriptors",
+    this(name + ".zip", "kotlin.plugin", "community/plugins/kotlin/plugin/resources",
          [Couple.of("${name}_zip/${name}.zip" as String, "kotlin-plugin-${getVersionFromProperty(versionPropertyName)}.zip" as String)],
          versionPropertyName
     )

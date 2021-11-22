@@ -1,23 +1,32 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 public class LoggedErrorProcessor {
-  private static final LoggedErrorProcessor DEFAULT = new LoggedErrorProcessor();
+  private static LoggedErrorProcessor ourInstance = new LoggedErrorProcessor();
 
-  private static LoggedErrorProcessor ourInstance = DEFAULT;
-
-  public static @NotNull LoggedErrorProcessor getInstance() {
+  static @NotNull LoggedErrorProcessor getInstance() {
     return ourInstance;
   }
 
-  public static void setNewInstance(@NotNull LoggedErrorProcessor newInstance) {
+  private static void setNewInstance(@NotNull LoggedErrorProcessor newInstance) {
     ourInstance = newInstance;
   }
 
-  public static void restoreDefaultProcessor() {
-    ourInstance = DEFAULT;
+  /**
+   * Set the new {@link LoggedErrorProcessor} {@code newInstance}, execute {@code runnable} with it and restore the old processor afterwards
+   */
+  public static <T extends Throwable> void executeWith(@NotNull LoggedErrorProcessor newInstance, @NotNull ThrowableRunnable<T> runnable) throws T {
+    LoggedErrorProcessor oldInstance = getInstance();
+    setNewInstance(newInstance);
+    try {
+      runnable.run();
+    }
+    finally  {
+      setNewInstance(oldInstance);
+    }
   }
 
   /**

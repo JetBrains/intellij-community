@@ -3,6 +3,7 @@ package com.intellij.compiler.artifacts.propertybased
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -207,7 +208,7 @@ class ArtifactsPropertyTest {
 
       checkResult(env) {
         val manager = ArtifactManager.getInstance(projectModel.project)
-        val foundArtifact = manager.findArtifact(artifactBridge.name)!!
+        val foundArtifact = runReadAction { manager.findArtifact(artifactBridge.name) }!!
         val managerVal = codeMaker.makeVal("manager", "ArtifactManager.getInstance(project)")
         val foundArtifactVal = codeMaker.makeVal("foundArtifact",
                                                  "$managerVal.findArtifact(${codeMaker.v("chosenArtifact")}.name)!!")
@@ -217,7 +218,7 @@ class ArtifactsPropertyTest {
 
         assertElementsEquals(rootElement, foundArtifact.rootElement)
 
-        assertTreesEquals(projectModel.project, foundArtifact.rootElement, artifactEntity.rootElement)
+        assertTreesEquals(projectModel.project, foundArtifact.rootElement, artifactEntity.rootElement!!)
 
         codeMaker.scope("$foundArtifactVal.rootElement.forThisAndFullTree") {
           codeMaker.scope("if (it === ${codeMaker.v("happyResult")}.third)") {
@@ -257,14 +258,14 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        val foundArtifact = manager.findArtifact(selectedArtifact.name)!!
+        val foundArtifact = runReadAction { manager.findArtifact(selectedArtifact.name) }!!
 
         val artifactEntity = WorkspaceModel.getInstance(projectModel.project).entityStorage.current
           .entities(ArtifactEntity::class.java).find { it.name == selectedArtifact.name }!!
 
         assertElementsEquals(rootElement, foundArtifact.rootElement)
 
-        assertTreesEquals(projectModel.project, foundArtifact.rootElement, artifactEntity.rootElement)
+        assertTreesEquals(projectModel.project, foundArtifact.rootElement, artifactEntity.rootElement!!)
       }
     }
 
@@ -304,7 +305,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Add artifact via model: $artifactName")
 
       checkResult(env) {
-        val foundArtifact = ArtifactManager.getInstance(projectModel.project).findArtifact(artifactName)
+        val foundArtifact = runReadAction { ArtifactManager.getInstance(projectModel.project).findArtifact(artifactName) }
         assertNotNull(foundArtifact)
       }
     }
@@ -341,7 +342,7 @@ class ArtifactsPropertyTest {
         assertTrue(entities.any { it.name == artifactName })
 
         onManager(env) { manager ->
-          val allArtifacts = manager.artifacts
+          val allArtifacts = runReadAction{ manager.artifacts }
           assertTrue(allArtifacts.none { it.name == selectedArtifact.name })
           assertTrue(allArtifacts.any { it.name == artifactName })
         }
@@ -368,7 +369,7 @@ class ArtifactsPropertyTest {
         assertEquals(!selectedArtifact.includeInProjectBuild, artifactEntity.includeInProjectBuild)
 
         onManager(env) { manager ->
-          val artifact = manager.findArtifact(selectedArtifact.name)!!
+          val artifact = runReadAction { manager.findArtifact(selectedArtifact.name) }!!
           assertEquals(!selectedArtifact.includeInProjectBuild, artifact.isBuildOnMake)
         }
       }
@@ -395,7 +396,7 @@ class ArtifactsPropertyTest {
         assertEquals(id, artifactEntity.artifactType)
 
         onManager(env) { manager ->
-          val artifact = manager.findArtifact(selectedArtifact.name)!!
+          val artifact = runReadAction { manager.findArtifact(selectedArtifact.name)!! }
           assertEquals(id, artifact.artifactType.id)
         }
       }
@@ -419,7 +420,7 @@ class ArtifactsPropertyTest {
         assertTrue(entities.none { it.name == selectedArtifact.name })
 
         onManager(env) { manager ->
-          val allArtifacts = manager.artifacts
+          val allArtifacts = runReadAction { manager.artifacts }
           assertTrue(allArtifacts.none { it.name == selectedArtifact.name })
         }
       }
@@ -433,7 +434,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Search for artifact by type: $searchType")
 
       onManager(env) { manager ->
-        assertNotEmpty(manager.getArtifactsByType(ArtifactType.findById(searchType)!!))
+        assertNotEmpty(runReadAction { manager.getArtifactsByType(ArtifactType.findById(searchType)!!) })
       }
     }
   }
@@ -450,7 +451,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Search for artifact by name: $artifactName")
 
       onManager(env) { manager ->
-        assertNull(manager.findArtifact(artifactName))
+        assertNull(runReadAction { manager.findArtifact (artifactName) })
       }
     }
   }
@@ -468,7 +469,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Search for artifact by name: $artifactName")
 
       onManager(env) { manager ->
-        assertNotNull(manager.findArtifact(artifactName))
+        assertNotNull(runReadAction { manager.findArtifact (artifactName) })
       }
     }
   }
@@ -477,7 +478,7 @@ class ArtifactsPropertyTest {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val manager = ArtifactManager.getInstance(projectModel.project)
       env.logMessage("Get all artifacts including invalid")
-      val artifacts = manager.allArtifactsIncludingInvalid
+      val artifacts = runReadAction {  manager.allArtifactsIncludingInvalid }
       artifacts.forEach { _ ->
         // Nothing
       }
@@ -488,7 +489,7 @@ class ArtifactsPropertyTest {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val manager = ArtifactManager.getInstance(projectModel.project)
       env.logMessage("Get all artifacts")
-      val artifacts = manager.artifacts
+      val artifacts = runReadAction { manager.artifacts }
       artifacts.forEach { _ ->
         // Nothing
       }
@@ -499,7 +500,7 @@ class ArtifactsPropertyTest {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val manager = ArtifactManager.getInstance(projectModel.project)
       env.logMessage("Get all artifacts sorted")
-      val artifacts = manager.sortedArtifacts
+      val artifacts = runReadAction { manager.sortedArtifacts }
       artifacts.forEach { _ ->
         // Nothing
       }
@@ -511,7 +512,7 @@ class ArtifactsPropertyTest {
       val (artifactForRemoval, _) = selectArtifactViaBridge(env, "removing") ?: return
 
       val manager = ArtifactManager.getInstance(projectModel.project)
-      val initialArtifactsSize = manager.artifacts.size
+      val initialArtifactsSize = runReadAction { manager.artifacts }.size
 
       val removalName = artifactForRemoval.name
       invokeAndWaitIfNeeded {
@@ -523,7 +524,7 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        val newArtifactsList = manager.artifacts
+        val newArtifactsList = runReadAction { manager.artifacts }
         assertEquals(initialArtifactsSize - 1, newArtifactsList.size)
         assertTrue(newArtifactsList.none { it.name == removalName })
 
@@ -554,7 +555,7 @@ class ArtifactsPropertyTest {
         val artifactEntity = artifactEntity(projectModel.project, newArtifactName)
 
         codeMaker.addLine("assertTreesEquals(project, $bridgeVal.rootElement, $artifactEntityVal.rootElement)")
-        assertTreesEquals(projectModel.project, bridgeArtifact.rootElement, artifactEntity.rootElement)
+        assertTreesEquals(projectModel.project, bridgeArtifact.rootElement, artifactEntity.rootElement!!)
       }
     }
   }
@@ -562,7 +563,7 @@ class ArtifactsPropertyTest {
   inner class RenameArtifact : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val manager = ArtifactManager.getInstance(projectModel.project)
-      val artifacts = manager.artifacts
+      val artifacts = runReadAction { manager.artifacts }
       if (artifacts.isEmpty()) return
 
       val index = env.generateValue(Generator.integers(0, artifacts.lastIndex), null)
@@ -578,7 +579,7 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        assertEquals(newName, manager.artifacts[index].name)
+        assertEquals(newName, runReadAction{ manager.artifacts }[index].name)
 
         val artifactEntities = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.entities(ArtifactEntity::class.java)
         assertTrue(artifactEntities.any { it.name == newName })
@@ -590,7 +591,7 @@ class ArtifactsPropertyTest {
   inner class ChangeBuildOnMake : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val manager = ArtifactManager.getInstance(projectModel.project)
-      val artifacts = manager.artifacts
+      val artifacts = runReadAction {  manager.artifacts }
       if (artifacts.isEmpty()) return
 
       val index = env.generateValue(Generator.integers(0, artifacts.lastIndex), null)
@@ -605,7 +606,7 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        assertEquals(!oldBuildOnMake, manager.artifacts[index].isBuildOnMake)
+        assertEquals(!oldBuildOnMake, runReadAction{ manager.artifacts }[index].isBuildOnMake)
 
         val artifactEntities = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.entities(ArtifactEntity::class.java)
         assertTrue(artifactEntities.single { it.name == artifact.name }.includeInProjectBuild == !oldBuildOnMake)
@@ -811,7 +812,7 @@ class ArtifactsPropertyTest {
 
   private fun selectArtifactViaBridge(env: ImperativeCommand.Environment, reason: String): Pair<Artifact, ArtifactManager>? {
     val manager = ArtifactManager.getInstance(projectModel.project)
-    val artifacts = manager.artifacts
+    val artifacts = runReadAction { manager.artifacts }
     if (artifacts.isEmpty()) {
       env.logMessage("Cannot select artifact for $reason")
       return null
@@ -883,7 +884,7 @@ class ArtifactsPropertyTest {
 
   private fun assertArtifactsHaveStableStore() {
     val manager = ArtifactManager.getInstance(projectModel.project)
-    manager.artifacts.forEach {
+    runReadAction{ manager.artifacts }.forEach {
       assertTrue((it as ArtifactBridge).entityStorage is VersionedEntityStorageImpl)
     }
   }

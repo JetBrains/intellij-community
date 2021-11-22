@@ -67,7 +67,6 @@ final class KotlinPluginArtifact {
     def jpsOutPluginXml = jpsOutPluginXml(kind)
 
     switch (kind) {
-      case KotlinPluginKind.AC:
       case KotlinPluginKind.AC_KMM:
         def extendedBuild = sinceBuild.substring(0, sinceBuild.lastIndexOf('.'))
         if (!sinceBuild.matches("\\d+\\.\\d+")) {
@@ -99,7 +98,7 @@ final class KotlinPluginArtifact {
       case KotlinPluginKind.IJ_CE:
         newText = replace(
           newText,
-          "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
+          "<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->",
           "<incompatible-with>com.intellij.modules.androidstudio</incompatible-with>"
         )
         break
@@ -107,12 +106,11 @@ final class KotlinPluginArtifact {
         newText = replace(
           newText,
           "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
-          "<depends>com.intellij.modules.androidstudio</depends>"
+          "<plugin id=\"com.intellij.modules.androidstudio\"/>"
         )
         break
       case KotlinPluginKind.MI:
       case KotlinPluginKind.AC_KMM:
-      case KotlinPluginKind.AC:
       case KotlinPluginKind.ROBOSCOPE:
         break
       default:

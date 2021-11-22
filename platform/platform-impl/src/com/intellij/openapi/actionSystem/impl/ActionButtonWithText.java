@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,6 +36,8 @@ public class ActionButtonWithText extends ActionButton {
   private int myHorizontalTextPosition = SwingConstants.TRAILING;
   private int myHorizontalTextAlignment = SwingConstants.CENTER;
 
+  public static final Key<Boolean> SHORTCUT_SHOULD_SHOWN = new Key<>("SHORTCUT_SHOULD_SHOWN");
+
   public ActionButtonWithText(final AnAction action,
                               final Presentation presentation,
                               final String place,
@@ -49,6 +52,9 @@ public class ActionButtonWithText extends ActionButton {
           int oldValue = evt.getOldValue() instanceof Integer ? (Integer)evt.getOldValue() : 0;
           int newValue = evt.getNewValue() instanceof Integer ? (Integer)evt.getNewValue() : 0;
           updateMnemonic(oldValue, newValue);
+        }
+        if(evt.getPropertyName().equals(SHORTCUT_SHOULD_SHOWN.toString())) {
+          updateToolTipText();
         }
       }
     });
@@ -151,7 +157,12 @@ public class ActionButtonWithText extends ActionButton {
     if (Registry.is("ide.helptooltip.enabled")) {
       HelpTooltip.dispose(this);
       if (StringUtil.isNotEmpty(description)) {
-        new HelpTooltip().setDescription(description).installOn(this);
+        HelpTooltip tooltip = new HelpTooltip().setDescription(description);
+        Boolean property = myPresentation.getClientProperty(SHORTCUT_SHOULD_SHOWN);
+        if(property != null && property) {
+          tooltip.setShortcut(getShortcutText());
+        }
+        tooltip.installOn(this);
       }
     } else {
       setToolTipText(description);

@@ -13,8 +13,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public final class TypeConversionUtil {
     {false, false, false, false, false, false, true}, // double
   };
 
-  private static final Object2IntMap<PsiType> TYPE_TO_RANK_MAP = new Object2IntOpenHashMap<>();
+  private static final ObjectIntMap<PsiType> TYPE_TO_RANK_MAP = new ObjectIntHashMap<>();
 
   @MagicConstant(intValues = {BYTE_RANK, SHORT_RANK, CHAR_RANK, INT_RANK, FLOAT_RANK, DOUBLE_RANK, BOOL_RANK, STRING_RANK, UNKNOWN_RANK})
   @interface TypeRank {
@@ -586,8 +586,8 @@ public final class TypeConversionUtil {
       type = unboxedType;
     }
 
-    int rank = TYPE_TO_RANK_MAP.getInt(type);
-    if (rank != 0) {
+    int rank = TYPE_TO_RANK_MAP.get(type);
+    if (rank != -1) {
       return rank;
     }
     if (type.equalsToText(JAVA_LANG_STRING)) {
@@ -939,8 +939,10 @@ public final class TypeConversionUtil {
       if (!(left instanceof PsiPrimitiveType)) {
         return left instanceof PsiClassType && isBoxable((PsiClassType)left, (PsiPrimitiveType)right);
       }
-      int leftTypeIndex = TYPE_TO_RANK_MAP.getInt(left) - 1;
-      int rightTypeIndex = TYPE_TO_RANK_MAP.getInt(right) - 1;
+      int l = TYPE_TO_RANK_MAP.get(left);
+      int r = TYPE_TO_RANK_MAP.get(right);
+      int leftTypeIndex = (l==-1?0:l) - 1;
+      int rightTypeIndex = (r==-1?0:r) - 1;
       return leftTypeIndex >= 0 &&
              rightTypeIndex >= 0 &&
              rightTypeIndex < IS_ASSIGNABLE_BIT_SET.length &&
@@ -1616,10 +1618,10 @@ public final class TypeConversionUtil {
     if (target == null || source == null) return false;
     if (target.equals(source)) return true;
 
-    int sourceRank = TYPE_TO_RANK_MAP.getInt(source);
-    int targetRank = TYPE_TO_RANK_MAP.getInt(target);
-    if (sourceRank == 0 || sourceRank > MAX_NUMERIC_RANK ||
-        targetRank == 0 || targetRank > MAX_NUMERIC_RANK ||
+    int sourceRank = TYPE_TO_RANK_MAP.get(source);
+    int targetRank = TYPE_TO_RANK_MAP.get(target);
+    if (sourceRank == -1 || sourceRank > MAX_NUMERIC_RANK ||
+        targetRank == -1 || targetRank > MAX_NUMERIC_RANK ||
         !IS_ASSIGNABLE_BIT_SET[sourceRank-1][targetRank-1]) {
       return false;
     }

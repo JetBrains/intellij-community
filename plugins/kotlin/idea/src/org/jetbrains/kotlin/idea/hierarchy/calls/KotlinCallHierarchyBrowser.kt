@@ -30,7 +30,7 @@ class KotlinCallHierarchyBrowser(element: PsiElement) :
             ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).shortcutSet,
             tree1
         )
-        trees[CALLEE_TYPE] = tree1
+        trees[getCalleeType()] = tree1
 
         val tree2 = createTree(false)
         PopupHandler.installPopupMenu(
@@ -42,7 +42,7 @@ class KotlinCallHierarchyBrowser(element: PsiElement) :
             ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).shortcutSet,
             tree2
         )
-        trees[CALLER_TYPE] = tree2
+        trees[getCallerType()] = tree2
     }
 
     override fun getElementFromDescriptor(descriptor: HierarchyNodeDescriptor): PsiElement? {
@@ -59,8 +59,8 @@ class KotlinCallHierarchyBrowser(element: PsiElement) :
     ): HierarchyTreeStructure? {
         if (psiElement !is KtElement) return null
         return when (type) {
-            CALLER_TYPE -> KotlinCallerTreeStructure(psiElement, currentScopeType)
-            CALLEE_TYPE -> KotlinCalleeTreeStructure(psiElement, currentScopeType)
+            getCallerType() -> KotlinCallerTreeStructure(psiElement, currentScopeType)
+            getCalleeType() -> KotlinCalleeTreeStructure(psiElement, currentScopeType)
             else -> null
         }
     }

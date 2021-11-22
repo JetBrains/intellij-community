@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.model.Symbol
@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 class GradleProjectReferenceProvider : PsiSymbolReferenceProvider {
 
   /**
-   * Handled by [GradleProjectReferenceSearcher].
+   * Handled by [GradleProjectUsageSearcher].
    */
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> = emptyList()
 

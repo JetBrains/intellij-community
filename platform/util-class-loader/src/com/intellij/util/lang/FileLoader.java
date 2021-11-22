@@ -297,32 +297,29 @@ final class FileLoader extends Loader {
       return;
     }
 
-    //noinspection SSBasedInspection
-    Executors.newSingleThreadScheduledExecutor().schedule(() -> {
-      new Thread(() -> {
-        while (true) {
+    Executors.newSingleThreadScheduledExecutor(r -> new Thread(r,"Save classpath indexes for file loader")).schedule(() -> {
+      while (true) {
+        try {
+          Map.Entry<ClasspathCache.LoaderData, Path> entry = loaderDataToSave.takeFirst();
+          Path finalFile = entry.getValue();
+          Path tempFile = finalFile.getParent().resolve("classpath.index.tmp");
           try {
-            Map.Entry<ClasspathCache.LoaderData, Path> entry = loaderDataToSave.takeFirst();
-            Path finalFile = entry.getValue();
-            Path tempFile = finalFile.getParent().resolve("classpath.index.tmp");
+            saveToIndex(entry.getKey(), tempFile);
             try {
-              saveToIndex(entry.getKey(), tempFile);
-              try {
-                Files.move(tempFile, finalFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-              }
-              catch (AtomicMoveNotSupportedException e) {
-                Files.move(tempFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
-              }
+              Files.move(tempFile, finalFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
             }
-            catch (Exception e) {
-              LoggerRt.getInstance(FileLoader.class).warn("Cannot save classpath index for module " + finalFile.getParent().getFileName(), e);
+            catch (AtomicMoveNotSupportedException e) {
+              Files.move(tempFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
             }
           }
-          catch (InterruptedException ignored) {
-            break;
+          catch (Exception e) {
+            LoggerRt.getInstance(FileLoader.class).warn("Cannot save classpath index for module " + finalFile.getParent().getFileName(), e);
           }
         }
-      }, "Save classpath indexes for file loader").start();
+        catch (InterruptedException ignored) {
+          break;
+        }
+      }
     }, 10, TimeUnit.SECONDS);
   }
 

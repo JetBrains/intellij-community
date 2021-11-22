@@ -29,7 +29,7 @@ public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
 
     if (project == null) return;
 
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) {
       Module[] modules = ModuleManager.getInstance(project).getModules();
       module = modules.length == 0 ? null : modules [0];

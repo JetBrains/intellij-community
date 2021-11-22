@@ -111,6 +111,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null && host.isValidGroupName(name, group);
   }
 
+  public boolean isDuplicateGroupNamesAllowed(@NotNull final RegExpGroup group) {
+    final RegExpLanguageHost host = findRegExpHost(group);
+    return host != null && host.isDuplicateGroupNamesAllowed(group);
+  }
+
   public boolean supportsPerl5EmbeddedComments(@Nullable final PsiComment comment) {
     final RegExpLanguageHost host = findRegExpHost(comment);
     return host != null && host.supportsPerl5EmbeddedComments();

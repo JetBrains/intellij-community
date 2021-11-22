@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ComponentStoreImpl
@@ -41,31 +41,6 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
         }
       }
     }
-  }
-
-  fun registerListeners(project: Project) {
-    project.messageBus.connect().subscribe(Notifications.TOPIC, object : Notifications {
-      override fun notify(notification: Notification) {
-        if (!icsManager.isActive) {
-          return
-        }
-
-        if (when {
-          notification.groupId == VcsBalloonProblemNotifier.NOTIFICATION_GROUP.displayId -> {
-            val message = notification.content
-            message.startsWith("VCS Update Finished") ||
-              message == VcsBundle.message("message.text.file.is.up.to.date") ||
-              message == VcsBundle.message("message.text.all.files.are.up.to.date")
-          }
-
-          notification.groupId == VcsNotifier.NOTIFICATION_GROUP_ID.displayId && notification.title == "Push successful" -> true
-
-          else -> false
-        }) {
-          autoSync()
-        }
-      }
-    })
   }
 
   fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {

@@ -1,0 +1,10 @@
+{
+    "usages": [
+        "Main.java",
+        "JavaWrite.java",
+        "JavaRead.java",
+        "Kotlin.kt",
+        "KotlinWrite.kt",
+        "KotlinRead.kt"
+    ]
+}

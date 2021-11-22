@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.pycharm
 
 
@@ -18,11 +18,11 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     reassignAltClickToMultipleCarets = true
     useSplash = true
     productLayout.mainJarName = "pycharm.jar"
-    productLayout.additionalPlatformJars.putAll("testFramework.jar",
-                                                "intellij.platform.testFramework.core",
-                                                "intellij.platform.testFramework",
-                                                "intellij.tools.testsBootstrap",
-                                                "intellij.java.rt")
+    productLayout.withAdditionalPlatformJar("testFramework.jar",
+                                            "intellij.platform.testFramework.core",
+                                            "intellij.platform.testFramework",
+                                            "intellij.tools.testsBootstrap",
+                                            "intellij.java.rt")
 
     buildCrossPlatformDistribution = true
     mavenArtifacts.additionalModules = [

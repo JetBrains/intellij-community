@@ -11,14 +11,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
-import it.unimi.dsi.fastutil.Hash;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public final class ExpressionVariableDescriptor implements VariableDescriptor {
-  public static final Hash.Strategy<PsiExpression> EXPRESSION_HASHING_STRATEGY = new PsiExpressionStrategy();
+  public static final HashingStrategy<PsiExpression> EXPRESSION_HASHING_STRATEGY = new PsiExpressionStrategy();
 
   private final @NotNull PsiExpression myExpression;
 
@@ -57,7 +57,7 @@ public final class ExpressionVariableDescriptor implements VariableDescriptor {
     return myExpression.getText();
   }
 
-  private static class PsiExpressionStrategy implements Hash.Strategy<PsiExpression> {
+  private static class PsiExpressionStrategy implements HashingStrategy<PsiExpression> {
     private static final Logger LOG = Logger.getInstance(PsiExpressionStrategy.class);
 
     @Override

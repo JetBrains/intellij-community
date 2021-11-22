@@ -8,7 +8,6 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.ex.EditorEx
@@ -22,6 +21,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.util.application.invokeLater
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 /**
@@ -35,7 +36,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
  * returns [TestOutputHandler].
  */
 fun requestToolWindowHandler(): ScratchOutputHandler {
-    return if (ApplicationManager.getApplication().isUnitTestMode) {
+    return if (isUnitTestMode()) {
         TestOutputHandler
     } else {
         ScratchToolWindowHandlerKeeper.requestOutputHandler()
@@ -52,7 +53,7 @@ fun requestToolWindowHandler(): ScratchOutputHandler {
  * Can be called from EDT only.
  */
 fun releaseToolWindowHandler(scratchOutputHandler: ScratchOutputHandler) {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    if (!isUnitTestMode()) {
         ScratchToolWindowHandlerKeeper.releaseOutputHandler(scratchOutputHandler)
     }
 }
@@ -116,7 +117,7 @@ private class ToolWindowScratchOutputHandler(private val parentDisposable: Dispo
     }
 
     private fun printToConsole(file: ScratchFile, print: ConsoleViewImpl.() -> Unit) {
-        ApplicationManager.getApplication().invokeLater {
+        invokeLater {
             val project = file.project.takeIf { !it.isDisposed } ?: return@invokeLater
 
             val toolWindow = getToolWindow(project) ?: createToolWindow(file)
@@ -141,7 +142,7 @@ private class ToolWindowScratchOutputHandler(private val parentDisposable: Dispo
     }
 
     override fun clear(file: ScratchFile) {
-        ApplicationManager.getApplication().invokeLater {
+        invokeLater {
             val toolWindow = getToolWindow(file.project) ?: return@invokeLater
             val contents = toolWindow.contentManager.contents
             for (content in contents) {

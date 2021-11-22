@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
 import com.google.common.base.Suppliers;
@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -22,6 +23,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -38,7 +40,7 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
   private static final Logger LOG = Logger.getInstance(PythonExternalDocumentationProvider.class);
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
+  public @Nls String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     PsiNamedElement namedElement = ApplicationManager.getApplication().runReadAction((Computable<PsiNamedElement>)() -> {
       PsiElement moduleAnchor = element instanceof PsiDirectory ? element : element.getContainingFile();
       final Module module = ModuleUtilCore.findModuleForPsiElement(moduleAnchor);
@@ -86,7 +88,7 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
             continue;
           }
 
-          Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
+          Function<Document, @Nls String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
 
           if (quickDocExtractor != null) {
             final Document document = documentSupplier.get();

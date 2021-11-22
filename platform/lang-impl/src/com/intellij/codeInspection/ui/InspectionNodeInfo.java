@@ -25,7 +25,6 @@ import com.intellij.ui.components.panels.StatelessCardLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -75,8 +74,6 @@ public class InspectionNodeInfo extends JPanel {
       stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
     DescriptionEditorPaneKt.readHTML(description, DescriptionEditorPaneKt.toHTML(description, toolDescription, false));
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
-    int maxWidth = getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width;
-    pane.setMaximumSize(new Dimension(maxWidth, Integer.MAX_VALUE));
     pane.setAlignmentX(0);
 
     add(StatelessCardLayout.wrap(pane),

@@ -10,7 +10,7 @@
                     interface="com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemWorkspaceContributor"
-                    interface="com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl$Contributor"
+                    interface="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkspaceContributor"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalProjectDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"

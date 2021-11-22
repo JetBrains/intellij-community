@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.java.codeInspection;
 
@@ -71,10 +71,10 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
 
   //generate apiXXX.txt
   //configure jdk and set test project descriptor
-  private static final String PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-15";
-  private static final String JDK_HOME = "/home/me/java/jdk-16";
-  private static final LanguageLevel LANGUAGE_LEVEL = LanguageLevel.JDK_15_PREVIEW;
-  private static final String VERSION = "16";
+  private static final String PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-16";
+  private static final String JDK_HOME = "/home/me/java/jdk-17";
+  private static final LanguageLevel LANGUAGE_LEVEL = LanguageLevel.JDK_16_PREVIEW;
+  private static final String VERSION = "17";
   private static final LightProjectDescriptor API_VERSION_PROJECT_DESCRIPTOR = new LightProjectDescriptor() {
     @Override
     public @NotNull Sdk getSdk() {

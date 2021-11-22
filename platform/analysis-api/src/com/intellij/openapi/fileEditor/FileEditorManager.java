@@ -254,4 +254,11 @@ public abstract class FileEditorManager {
    * fully loaded.
    */
   public abstract void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable);
+
+  /**
+   * Refreshes the text, colors and icon of the editor tabs representing the specified file.
+   *
+   * @param file the file to refresh.
+   */
+  public void updateFilePresentation(@NotNull VirtualFile file) {}
 }

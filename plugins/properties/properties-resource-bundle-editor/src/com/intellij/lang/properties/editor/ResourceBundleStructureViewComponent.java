@@ -105,7 +105,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   public Object getData(@NotNull final String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return new ResourceBundleAsVirtualFile(myResourceBundle);
-    } else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    } else if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       return getFileEditor();
     }
     else if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
@@ -239,4 +239,3 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     return "editing.propertyFile.bundleEditor";
   }
 }
-

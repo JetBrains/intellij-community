@@ -67,8 +67,7 @@ class KotlinMethodSmartStepTarget(
             // Don't allow to choose several invoke targets in smart step into as we can't distinguish them reliably during debug
             return true
         }
-
-        return declaration === other.declaration
+        return highlightElement === other.highlightElement
     }
 
     override fun hashCode(): Int {
@@ -76,6 +75,6 @@ class KotlinMethodSmartStepTarget(
             // Predefined value to make all FunctionInvokeDescriptor targets equal
             return 42
         }
-        return declaration!!.hashCode()
+        return highlightElement.hashCode()
     }
 }

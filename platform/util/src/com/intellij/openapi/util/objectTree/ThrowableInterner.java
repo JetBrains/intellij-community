@@ -27,6 +27,9 @@ import java.util.Objects;
  */
 @ApiStatus.Internal
 public final class ThrowableInterner {
+  private ThrowableInterner() {
+  }
+
   private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new HashingStrategy<Throwable>() {
     @Override
     public int hashCode(Throwable throwable) {

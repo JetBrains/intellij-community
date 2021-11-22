@@ -3,7 +3,7 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,13 +15,13 @@ public class GotoNextIncompletePropertyAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final ResourceBundleEditor editor = (ResourceBundleEditor)e.getData(PlatformDataKeys.FILE_EDITOR);
+    final ResourceBundleEditor editor = (ResourceBundleEditor)e.getData(PlatformCoreDataKeys.FILE_EDITOR);
     LOG.assertTrue(editor != null);
     editor.selectNextIncompleteProperty();
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.FILE_EDITOR) instanceof ResourceBundleEditor);
+    e.getPresentation().setEnabled(e.getData(PlatformCoreDataKeys.FILE_EDITOR) instanceof ResourceBundleEditor);
   }
 }

@@ -61,7 +61,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   public @NotNull com.intellij.ui.icons.RowIcon deepCopy() {
     RowIcon icon = new RowIcon(this);
     for (int i = 0; i < icon.myIcons.length; i++) {
-      icon.myIcons[i] = IconUtil.copy(icon.myIcons[i], null);
+      icon.myIcons[i] = icon.myIcons[i] == null ? null : IconUtil.copy(icon.myIcons[i], null);
     }
     return icon;
   }

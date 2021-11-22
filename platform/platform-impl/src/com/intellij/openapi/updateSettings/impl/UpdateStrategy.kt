@@ -38,7 +38,7 @@ class UpdateStrategy @JvmOverloads constructor(
 
     return product.channels
              .asSequence()
-             .filter { ch -> customization.isChannelApplicableForUpdates(ch, selectedChannel) }        // filters out inapplicable channels
+             .filter { ch -> ch.status >= selectedChannel }                                            // filters out inapplicable channels
              .sortedBy { ch -> ch.status }                                                             // reorders channels (EAPs first)
              .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }                    // maps into a sequence of <build, channel> pairs
              .filter { p -> isApplicable(p.first, ignoredBuilds) }                                     // filters out inapplicable builds
@@ -68,14 +68,11 @@ class UpdateStrategy @JvmOverloads constructor(
       return UpdateChain(listOf(from, newBuild.number), single.size)
     }
 
-    val selectedChannel = settings.selectedChannelStatus
     val upgrades = MultiMap<BuildNumber, BuildNumber>()
     val sizes = mutableMapOf<Pair<BuildNumber, BuildNumber>, Int>()
     val number = Regex("\\d+")
 
-    product.channels
-      .filter { ch -> customization.canBeUsedForIntermediatePatches(ch, selectedChannel) }
-      .forEach { channel ->
+    product.channels.forEach { channel ->
       channel.builds.forEach { build ->
         val toBuild = build.number.withoutProductCode()
         build.patches.forEach { patch ->

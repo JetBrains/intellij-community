@@ -224,7 +224,7 @@ public class TestMacMessagesAction extends AnAction {
                   }
                   catch (Exception ignore) {
                   }
-                }, "");
+                }, "Dialog [0]");
                 thread.start();
                 Messages.showYesNoDialog(b, MESSAGE, TITLE, Messages.getQuestionIcon());
                 if (thread.isAlive()) {
@@ -261,7 +261,7 @@ public class TestMacMessagesAction extends AnAction {
               dialog.setModal(true);
               dialog.show();
             });
-          }, "").start();
+          }, secondDialog.getText()).start();
           Messages.showYesNoDialog(secondDialog, MESSAGE, TITLE, Messages.getQuestionIcon());
         });
         panel.add(secondDialog);
@@ -275,7 +275,7 @@ public class TestMacMessagesAction extends AnAction {
             catch (InterruptedException ignore) {
             }
             SwingUtilities.invokeLater(() -> Messages.showInfoMessage("Message", "Title"));
-          }, "").start();
+          }, secondAlert.getText()).start();
           Messages.showYesNoDialog(secondAlert, MESSAGE, TITLE, Messages.getQuestionIcon());
         });
         panel.add(secondAlert);

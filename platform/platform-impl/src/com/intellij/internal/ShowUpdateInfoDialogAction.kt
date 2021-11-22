@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
 import com.intellij.ide.util.BrowseFilesListener
@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
@@ -79,16 +80,28 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
       object : AbstractAction("&Check Updates") {
         override fun actionPerformed(e: ActionEvent?) {
           forceUpdate = false
-          doOKAction()
+          validateAndDoOkAction()
         }
       },
       object : AbstractAction("&Show Dialog") {
         override fun actionPerformed(e: ActionEvent?) {
           forceUpdate = true
-          doOKAction()
+          validateAndDoOkAction()
         }
       },
       cancelAction)
+
+    private fun validateAndDoOkAction() {
+      val info = doValidate()
+      if (info != null) {
+        IdeFocusManager.getInstance(null).requestFocus(textArea, true)
+        updateErrorInfo(listOf(info))
+        startTrackingValidation()
+      }
+      else {
+        doOKAction()
+      }
+    }
 
     override fun doValidate(): ValidationInfo? {
       val text = textArea.text?.trim() ?: ""

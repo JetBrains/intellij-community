@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 public class GitCommitsIterator implements Iterator<String> {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.git.GitRepositoryUtil");
+  private static final Logger LOG = Logger.getInstance(GitCommitsIterator.class);
 
   private static final int MAX_FETCH_SIZE = 1000;
   private static final int FETCH_SIZE = 100;

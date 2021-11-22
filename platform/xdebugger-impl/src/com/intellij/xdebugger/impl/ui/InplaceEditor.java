@@ -105,7 +105,7 @@ public abstract class InplaceEditor implements AWTEventListener {
     LOG.assertTrue(inplaceEditorComponent != null);
     setInplaceEditorBounds(inplaceEditorComponent, layeredPanePoint.x, layeredPanePoint.y, bounds.width, bounds.height);
 
-    layeredPane.add(inplaceEditorComponent, new Integer(250));
+    layeredPane.add(inplaceEditorComponent, Integer.valueOf(250));
     ComponentUtil.putClientProperty(inplaceEditorComponent, ToolWindowManagerImpl.PARENT_COMPONENT, hostComponent);
 
     myRemoveActions.add(() -> {

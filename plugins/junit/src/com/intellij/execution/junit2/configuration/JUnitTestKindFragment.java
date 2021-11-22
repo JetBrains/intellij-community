@@ -138,7 +138,8 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
   }
 
   public int getTestKind() {
-    return myTypeChooser.getItem();
+    Integer item = myTypeChooser.getItem();
+    return item == null ? 0 : item;
   }
 
   public boolean disableModuleClasspath(boolean wholeProjectSelected) {

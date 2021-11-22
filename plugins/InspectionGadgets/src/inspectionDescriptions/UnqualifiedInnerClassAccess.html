@@ -3,7 +3,7 @@
 Reports references to inner classes that are not qualified with the name
 of the enclosing class.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   import foo.Foo.Bar;
 
   class Foo {
@@ -13,9 +13,9 @@ of the enclosing class.
   class Baz {
     void f(Bar bar) {}
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class Foo {
     class Bar {}
   }
@@ -23,7 +23,7 @@ of the enclosing class.
   class Baz {
     void f(Foo.Bar bar) {}
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   Use the inspection settings to ignore references to inner classes within the same class,

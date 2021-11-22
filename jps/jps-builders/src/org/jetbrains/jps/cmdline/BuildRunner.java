@@ -3,6 +3,7 @@ package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +42,6 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 
 public final class BuildRunner {
   private static final Logger LOG = Logger.getInstance(BuildRunner.class);
-  public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
-  public static final boolean PARALLEL_BUILD_AUTOMAKE_ENABLED = PARALLEL_BUILD_ENABLED && Boolean.parseBoolean(System.getProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true"));
   private final JpsModelLoader myModelLoader;
   private List<String> myFilePaths = Collections.emptyList();
   private Map<String, String> myBuilderParams = Collections.emptyMap();
@@ -253,5 +252,13 @@ public final class BuildRunner {
       targets.addAll(next);
       current = next;
     }
+  }
+
+  public static boolean isParallelBuildEnabled() {
+    return SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false);
+  }
+
+  public static boolean isParallelBuildAutomakeEnabled() {
+    return isParallelBuildEnabled() && SystemProperties.getBooleanProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, true);
   }
 }

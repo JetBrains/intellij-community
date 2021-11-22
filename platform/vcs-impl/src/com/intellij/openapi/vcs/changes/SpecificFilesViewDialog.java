@@ -161,11 +161,11 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   }
 
   protected void refreshView() {
-    ModalityUiUtil.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.stateForComponent(myView), () -> {
       if (isVisible()) {
         initData(getFiles());
       }
-    }, ModalityState.stateForComponent(myView));
+    });
   }
 
   @NotNull
