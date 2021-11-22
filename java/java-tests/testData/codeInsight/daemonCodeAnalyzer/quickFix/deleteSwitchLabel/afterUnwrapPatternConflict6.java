@@ -1,9 +1,10 @@
 // "Remove unreachable branches" "true"
 class Test {
     Number n = 1;
-    Integer i = (Integer) n;
-    int result = i + 10;
+    int result;
     {
-      int i = 5;
+        Integer i1 = (Integer) n;
+        result = i1 + 10;
+        int i = 5;
     }
 }

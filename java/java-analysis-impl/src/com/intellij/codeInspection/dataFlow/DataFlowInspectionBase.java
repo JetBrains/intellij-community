@@ -351,7 +351,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         continue;
       }
       coveredSwitches.add(switchBlock);
-      holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"), createUnwrapSwitchLabelFix());
+      LocalQuickFix unwrapFix;
+      if (switchBlock instanceof PsiSwitchExpression && !CodeBlockSurrounder.canSurround(((PsiSwitchExpression)switchBlock))) {
+        unwrapFix = null;
+      }
+      else {
+        unwrapFix = createUnwrapSwitchLabelFix();
+      }
+      holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"), unwrapFix);
     }
     PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labelReachability.keySet().iterator().next(), PsiSwitchBlock.class);
     Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
