@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
@@ -47,10 +48,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import java.util.*
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.*
 import kotlin.math.abs
 
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
@@ -106,14 +104,15 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     createContentManager()
       .apply {
         if (ExperimentalUI.isNewToolWindowsStripes()) {
-          addContentManagerListener(UpdateBackgroundContentManager())
+          addContentManagerListener(UpdateBackgroundContentManager(decorator))
         }
       }
   }
 
-  private class UpdateBackgroundContentManager : ContentManagerListener {
+  private class UpdateBackgroundContentManager(private val decorator: InternalDecoratorImpl?) : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
-      UIUtil.setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
+      setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
+      addAdjustListener(decorator, event.content.component)
     }
   }
 
@@ -449,6 +448,22 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   companion object {
     private val LOG = logger<ToolWindowImpl>()
+    private fun setBackgroundRecursively(component: Component, bg: Color) {
+      UIUtil.forEachComponentInHierarchy(component, Consumer { c: Component ->
+        if (c !is ActionButton) {
+          c.background = bg
+        }
+      })
+    }
+
+    private fun addAdjustListener(decorator: InternalDecoratorImpl?, component: JComponent) {
+      UIUtil.findComponentOfType(component, JScrollPane::class.java)?.verticalScrollBar?.addAdjustmentListener { event ->
+        decorator?.let {
+          ClientProperty.put(it, InternalDecoratorImpl.SCROLLED_STATE, event.adjustable?.value != 0)
+          it.header?.repaint()
+        }
+      }
+    }
   }
   internal fun doSetIcon(newIcon: Icon) {
     val oldIcon = icon
@@ -555,15 +570,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     if (ExperimentalUI.isNewToolWindowsStripes()) {
       setBackgroundRecursively(contentManager.value.component, JBUI.CurrentTheme.ToolWindow.background())
+      addAdjustListener(decorator, contentManager.value.component)
     }
-  }
-
-  private fun setBackgroundRecursively(component: Component, bg: Color) {
-    UIUtil.forEachComponentInHierarchy(component, Consumer { c: Component ->
-      if (c !is ActionButton) {
-        c.background = bg
-      }
-    })
   }
 
   override fun getHelpId() = helpId

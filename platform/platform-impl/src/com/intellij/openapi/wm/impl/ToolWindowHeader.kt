@@ -16,11 +16,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.isNewUI
-import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.popup.PopupState
@@ -254,9 +251,11 @@ abstract class ToolWindowHeader internal constructor(
     var drawBottomLine = true
 
     if (isNewUI()) {
+      val scrolled = ClientProperty.isTrue(nearestDecorator, InternalDecoratorImpl.SCROLLED_STATE)
       drawBottomLine = (toolWindow.largeStripeAnchor == ToolWindowAnchor.BOTTOM
                         || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
-                        || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow))
+                        || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow)
+                        || scrolled)
 
       if (this.drawBottomLine != drawBottomLine) {
         //no active header for new UI

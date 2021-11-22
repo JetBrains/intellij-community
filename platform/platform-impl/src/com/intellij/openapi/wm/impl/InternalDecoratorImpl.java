@@ -57,6 +57,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   @ApiStatus.Internal
   static final Key<Boolean> HIDE_COMMON_TOOLWINDOW_BUTTONS = Key.create("HideCommonToolWindowButtons");
   static final Key<Boolean> INACTIVE_LOOK = Key.create("InactiveLook");
+  static final Key<Boolean> SCROLLED_STATE = Key.create("ScrolledState");
 
   public enum Mode {
     SINGLE, VERTICAL_SPLIT, HORIZONTAL_SPLIT, CELL;
@@ -806,4 +807,8 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       }
     }
   };
+
+  public ToolWindowHeader getHeader() {
+    return header;
+  }
 }
