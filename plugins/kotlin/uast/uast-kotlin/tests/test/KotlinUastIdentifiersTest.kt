@@ -43,6 +43,6 @@ class KotlinUastIdentifiersTest : AbstractKotlinIdentifiersTest() {
     fun testBrokenDataClass() = doTest("BrokenDataClass")
 
     @Test
-    fun testGenericArrayAccess() = doTest("GenericArrayAccess")
+    fun testBrokenGeneric() = doTest("BrokenGeneric")
 
 }

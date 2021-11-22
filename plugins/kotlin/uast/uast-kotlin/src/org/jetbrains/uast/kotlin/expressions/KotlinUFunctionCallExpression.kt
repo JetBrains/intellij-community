@@ -50,7 +50,7 @@ class KotlinUFunctionCallExpression(
         }
 
         when (val calleeExpression = sourcePsi.calleeExpression) {
-            null, is KtArrayAccessExpression -> null
+            null -> null
             is KtNameReferenceExpression ->
                 KotlinUIdentifier(calleeExpression.getReferencedNameElement(), this)
             is KtConstructorDelegationReferenceExpression ->
@@ -68,6 +68,7 @@ class KotlinUFunctionCallExpression(
             else -> KotlinUIdentifier(
                 sourcePsi.valueArgumentList?.leftParenthesis
                     ?: sourcePsi.lambdaArguments.singleOrNull()?.getLambdaExpression()?.functionLiteral?.lBrace
+                    ?: sourcePsi.typeArgumentList?.firstChild
                     ?: calleeExpression, this)
         }
     }
@@ -144,7 +145,7 @@ class KotlinUFunctionCallExpression(
 
                 override val resolvedName: String? get() = localCallableDeclaration.name
 
-                override fun resolve(): PsiElement? = localCallableDeclaration
+                override fun resolve(): PsiElement = localCallableDeclaration
 
             }
 
