@@ -115,7 +115,7 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
                 name = projectData.name,
                 stats = stats,
                 note = "",
-                path = projectData.path,
+                path = projectData.path.toAbsolutePath().toString(),
                 openAction = projectData.openAction,
                 fast = true
             )
