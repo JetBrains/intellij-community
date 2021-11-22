@@ -1,8 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.JUnitBundle;
+import com.intellij.execution.Location;
+import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -11,10 +14,12 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.Function;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.Arrays;
 
@@ -45,16 +50,16 @@ public class TestUniqueId extends TestObject {
       Location location = testInfo.getLocation(project, searchScope);
       if (location == null) return nodeId;
       PsiElement psiElement = location.getPsiElement();
-      PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
-      if (method != null) {
-        PsiClass containingClass = method.getContainingClass();
+      UMethod uMethod = UastContextKt.getUastParentOfType(psiElement, UMethod.class);
+      if (uMethod != null) {
+        PsiClass containingClass = uMethod.getContainingClass();
         TestFramework testFramework = containingClass != null ? TestFrameworks.detectFramework(containingClass) : null;
         if (testFramework == null || !testFramework.isTestMethod(psiElement)) {
           return nodeId;
         }
       }
       else {
-        PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
+        UClass containingClass = UastContextKt.getUastParentOfType(psiElement, UClass.class);
         if (containingClass == null || TestFrameworks.detectFramework(containingClass) == null) {
           return nodeId;
         }
