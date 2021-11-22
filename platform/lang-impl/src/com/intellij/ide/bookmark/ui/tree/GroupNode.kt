@@ -31,13 +31,11 @@ internal class GroupNode(project: Project, group: BookmarkGroup) : AbstractTreeN
   }
 
   override fun update(presentation: PresentationData) {
+    presentation.presentableText = value.name // configure speed search
     presentation.setIcon(AllIcons.Nodes.BookmarkGroup)
     if (value.isDefault) {
-      presentation.addText("${value.name}  ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      presentation.addText("${presentation.presentableText}  ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
       presentation.addText(message("default.group.marker"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    }
-    else {
-      presentation.presentableText = value.name
     }
   }
 }
