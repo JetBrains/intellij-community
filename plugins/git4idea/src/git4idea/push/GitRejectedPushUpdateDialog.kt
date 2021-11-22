@@ -45,9 +45,9 @@ class GitRejectedPushUpdateDialog(
   var shouldAutoUpdateInFuture: Boolean = false
     private set
 
-  fun show(): Int {
+  fun showAndGet(): PushRejectedExitCode {
     val exitCode: String? = MessageDialogBuilder.Message(title, makeDescription())
-      .buttons(cancelButtonText, rebaseButtonText, mergeButtonText)
+      .buttons(mergeButtonText, rebaseButtonText, cancelButtonText)
       .setDefaultAndFocusedActions(initialSettings.updateMethod)
       .help(helpButtonId)
       .doNotAsk(doNotAsk)
@@ -55,9 +55,9 @@ class GitRejectedPushUpdateDialog(
       .show(project)
 
     return when (exitCode) {
-      rebaseButtonText -> REBASE_EXIT_CODE
-      mergeButtonText -> MERGE_EXIT_CODE
-      else -> CANCEL_EXIT_CODE
+      mergeButtonText -> PushRejectedExitCode.MERGE
+      rebaseButtonText -> PushRejectedExitCode.REBASE
+      else -> PushRejectedExitCode.CANCEL
     }
   }
 
@@ -164,8 +164,10 @@ class GitRejectedPushUpdateDialog(
   }
 
   companion object {
-    const val CANCEL_EXIT_CODE: Int = 0
-    const val REBASE_EXIT_CODE: Int = 1
-    const val MERGE_EXIT_CODE: Int = 2
+    enum class PushRejectedExitCode(val exitCode: Int) {
+      MERGE(0),
+      REBASE(1),
+      CANCEL(2)
+    }
   }
 }

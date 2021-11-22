@@ -36,6 +36,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.push.GitPushParamsImpl.ForceWithLeaseReference;
+import git4idea.push.GitRejectedPushUpdateDialog.Companion.PushRejectedExitCode;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -425,8 +426,8 @@ public class GitPushOperation {
         myProject, repositories, initialSettings, rebaseOverMergeProblemDetected
       );
 
-      int exitCode = dialog.show();
-      if (exitCode != GitRejectedPushUpdateDialog.CANCEL_EXIT_CODE) {
+      PushRejectedExitCode exitCode = dialog.showAndGet();
+      if (!exitCode.equals(PushRejectedExitCode.CANCEL)) {
         mySettings.setAutoUpdateIfPushRejected(dialog.getShouldAutoUpdateInFuture());
         updateSettings.set(new PushUpdateSettings(convertUpdateMethodFromDialogExitCode(exitCode)));
       }
@@ -435,10 +436,10 @@ public class GitPushOperation {
   }
 
   @NotNull
-  private static UpdateMethod convertUpdateMethodFromDialogExitCode(int exitCode) {
+  private static UpdateMethod convertUpdateMethodFromDialogExitCode(PushRejectedExitCode exitCode) {
     switch (exitCode) {
-      case GitRejectedPushUpdateDialog.MERGE_EXIT_CODE: return UpdateMethod.MERGE;
-      case GitRejectedPushUpdateDialog.REBASE_EXIT_CODE: return UpdateMethod.REBASE;
+      case MERGE: return UpdateMethod.MERGE;
+      case REBASE: return UpdateMethod.REBASE;
       default: throw new IllegalStateException("Unexpected exit code: " + exitCode);
     }
   }
