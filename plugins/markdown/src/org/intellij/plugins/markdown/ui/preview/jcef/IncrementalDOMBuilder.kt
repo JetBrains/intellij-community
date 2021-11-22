@@ -6,6 +6,7 @@ import com.intellij.util.Urls
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Comment
+import org.jsoup.nodes.DataNode
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import java.net.URLEncoder
@@ -73,7 +74,7 @@ internal class IncrementalDOMBuilder(html: String, private val basePath: Path? =
     }
   }
 
-  private fun textElement(node: TextNode) {
+  private fun textElement(getter: () -> String) {
     with(builder) {
       // It seems like CefBrowser::executeJavaScript() is not supporting a lot of unicode
       // symbols (like emojis) in the code string (probably a limitation of CefString).
@@ -81,7 +82,7 @@ internal class IncrementalDOMBuilder(html: String, private val basePath: Path? =
       // and decoding them before executing the code. For our use case it's enough to encode
       // just the actual text content that will be displayed (only IncrementalDOM.text() calls).
       append("t(`")
-      append(encodeArgument(node.wholeText))
+      append(encodeArgument(getter.invoke()))
       append("`);")
     }
   }
@@ -106,7 +107,8 @@ internal class IncrementalDOMBuilder(html: String, private val basePath: Path? =
 
   private fun traverse(node: Node) {
     when (node) {
-      is TextNode -> textElement(node)
+      is TextNode -> textElement { node.wholeText }
+      is DataNode -> textElement { node.wholeData }
       is Comment -> Unit
       else -> {
         val preprocessed = preprocessNode(node)
