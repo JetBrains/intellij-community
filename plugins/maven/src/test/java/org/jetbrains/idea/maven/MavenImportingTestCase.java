@@ -62,7 +62,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
-  private final boolean isNewImportingProcess = Boolean.parseBoolean(System.getProperty("maven.new.importing.process"));
+  protected final boolean isNewImportingProcess = false;//Boolean.parseBoolean(System.getProperty("maven.new.importing.process"));
 
   @Override
   protected void setUp() throws Exception {
@@ -426,8 +426,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
     if(isNewImportingProcess) {
       importViaNewFlow(files, failOnReadingError, Collections.emptyList(), profiles);
+    } else {
+      doImportProjects(files, failOnReadingError, Collections.emptyList(), profiles);
     }
-    doImportProjects(files, failOnReadingError, Collections.emptyList(), profiles);
   }
 
 
@@ -449,6 +450,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     MavenResolvedContext resolvedContext = flow.resolveDependencies(readContext);
     flow.commitToWorkspaceModel(resolvedContext);
+    myProjectsTree = readContext.getProjectsTree();
 
   }
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError,
@@ -530,6 +532,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveDependenciesAndImport() {
+    if(isNewImportingProcess) {
+      importProject();
+      return;
+    }
+
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.waitForResolvingCompletion();
       myProjectsManager.performScheduledImportInTests();
@@ -537,12 +544,22 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveFoldersAndImport() {
+    if(isNewImportingProcess) {
+      importProject();
+      return;
+    }
+
     myProjectsManager.scheduleFoldersResolveForAllProjects();
     myProjectsManager.waitForFoldersResolvingCompletion();
     ApplicationManager.getApplication().invokeAndWait(() -> myProjectsManager.performScheduledImportInTests());
   }
 
   protected void resolvePlugins() {
+    if(isNewImportingProcess) {
+      importProject();
+      return;
+    }
+
     myProjectsManager.waitForPluginsResolvingCompletion();
   }
 
