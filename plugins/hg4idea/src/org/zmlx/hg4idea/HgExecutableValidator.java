@@ -37,6 +37,6 @@ public class HgExecutableValidator extends ExecutableValidator {
 
   @Override
   public boolean isExecutableValid(@NotNull String executable) {
-    return HgUtil.isExecutableValid(executable);
+    return HgUtil.isExecutableValid(myProject, executable);
   }
 }
