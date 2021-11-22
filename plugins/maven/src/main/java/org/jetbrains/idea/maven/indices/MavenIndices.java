@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -51,6 +50,7 @@ public class MavenIndices implements Disposable {
 
   private volatile @NotNull MavenIndexHolder myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
   private volatile boolean indicesInit;
+  private volatile boolean isDisposed;
 
   private final ReentrantLock updateIndicesLock = new ReentrantLock();
 
@@ -61,7 +61,7 @@ public class MavenIndices implements Disposable {
   }
 
   void updateIndicesList(@NotNull Project project) {
-    if (Disposer.isDisposed(this)) return;
+    if (isDisposed) return;
     updateIndicesLock.lock();
     try {
       Map<String, Set<String>> remoteRepositoryIdsByUrl = MavenIndexUtils.getRemoteRepositoryIdsByUrl(project);
@@ -77,17 +77,22 @@ public class MavenIndices implements Disposable {
       MavenIndex localIndex = myIndexHolder.getLocalIndex();
       List<MavenIndex> remoteIndices = myIndexHolder.getRemoteIndices();
 
+      if (isDisposed) return;
       RepositoryDiffContext context = new RepositoryDiffContext(myIndexer, myListener, myIndicesDir);
 
       RepositoryDiff<MavenIndex> localDiff = getLocalDiff(localRepository, context, localIndex);
       RepositoryDiff<List<MavenIndex>> remoteDiff = getRemoteDiff(remoteRepositoryIdsByUrl, remoteIndices, context);
 
+      boolean disposedBefore = isDisposed;
       myIndexHolder = new MavenIndexHolder(remoteDiff.newIndices, localDiff.newIndices);
       MavenLog.LOG.debug("new indices " + myIndexHolder);
+      boolean disposedAfter = isDisposed;
+
+      if (!disposedBefore && disposedAfter) closeIndices(myIndexHolder.getIndices());
 
       indicesInit = true;
 
-      closeOldIndices(localDiff, remoteDiff);
+      closeIndices(getOldIndices(localDiff, remoteDiff));
     }
     finally {
       updateIndicesLock.unlock();
@@ -102,10 +107,11 @@ public class MavenIndices implements Disposable {
     return !indicesInit;
   }
 
-  private static void closeOldIndices(@NotNull RepositoryDiff<MavenIndex> localDiff,
-                                      @NotNull RepositoryDiff<List<MavenIndex>> remoteDiff) {
-    if (localDiff.oldIndices != null) localDiff.oldIndices.finalClose(false);
-    remoteDiff.oldIndices.forEach(i -> i.finalClose(false));
+  private static List<MavenIndex> getOldIndices(@NotNull RepositoryDiff<MavenIndex> localDiff,
+                                                @NotNull RepositoryDiff<List<MavenIndex>> remoteDiff) {
+    List<MavenIndex> oldIndices = new ArrayList<>(remoteDiff.oldIndices);
+    if (localDiff.oldIndices != null) oldIndices.add(localDiff.oldIndices);
+    return oldIndices;
   }
 
   @NotNull
@@ -163,15 +169,18 @@ public class MavenIndices implements Disposable {
 
   @Override
   public void dispose() {
-    try {
-      updateIndicesLock.lock();
-      myIndexHolder.getIndices().forEach(i -> i.finalClose(false));
-    }
-    catch (Exception e) {
-      MavenLog.LOG.error("indices dispose error", e);
-    }
-    finally {
-      updateIndicesLock.unlock();
+    isDisposed = true;
+    closeIndices(myIndexHolder.getIndices());
+  }
+
+  private static void closeIndices(@NotNull List<MavenIndex> indices) {
+    for (MavenIndex each : indices) {
+      try {
+        each.finalClose(false);
+      }
+      catch (Exception e) {
+        MavenLog.LOG.error("indices dispose error", e);
+      }
     }
   }
 

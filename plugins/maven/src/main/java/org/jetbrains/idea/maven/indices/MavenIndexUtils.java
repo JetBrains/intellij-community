@@ -107,11 +107,13 @@ public class MavenIndexUtils {
 
   @NotNull
   public static Map<String, Set<String>> getRemoteRepositoryIdsByUrl(Project project) {
+    if (project.isDisposed()) return Collections.emptyMap();
     return ReadAction.compute(() -> project.isDisposed() ? Collections.emptyMap() : getRemoteRepositoriesMap(project));
   }
 
   @Nullable
   public static RepositoryInfo getLocalRepository(Project project) {
+    if (project.isDisposed()) return null;
     File repository = ReadAction
       .compute(() -> project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getLocalRepository());
     return repository == null ? null : new RepositoryInfo(LOCAL_REPOSITORY_ID, repository.getPath());
