@@ -410,9 +410,9 @@ fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
         appendExpression(callOrQualified.receiverExpression)
         appendFixedText(".")
     }
-    appendFixedText(newFunctionName)
-    call.valueArgumentList?.let { appendFixedText(it.text) }
-    call.lambdaArguments.firstOrNull()?.let { appendFixedText(it.text) }
+    appendNonFormattedText(newFunctionName)
+    call.valueArgumentList?.let { appendNonFormattedText(it.text) }
+    call.lambdaArguments.firstOrNull()?.let { appendNonFormattedText(it.text) }
 }
 
 fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
