@@ -12,13 +12,14 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.CardLayoutPanel
+import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
-import java.awt.GridLayout
 import javax.swing.*
 import javax.swing.border.Border
 
@@ -73,11 +74,9 @@ internal fun horizontalPanel(vararg components: JComponent) =
     .apply { border = JBUI.Borders.empty() }
     .apply { components.forEach(::add) }
 
-internal fun splitPanel(vararg components: JComponent) =
-  JPanel()
-    .apply { layout = GridLayout(0, components.size) }
-    .apply { border = JBUI.Borders.empty() }
-    .apply { components.forEach(::add) }
+internal fun horizontalSplitPanel(proportionKey: @NonNls String, proportion: Float, configure: OnePixelSplitter.() -> Unit) =
+  OnePixelSplitter(false, proportionKey, proportion)
+    .apply { configure() }
 
 internal fun <T> cardPanel(property: ObservableClearableProperty<T>, createPanel: (T) -> JComponent) =
   object : CardLayoutPanel<T, T, JComponent>() {

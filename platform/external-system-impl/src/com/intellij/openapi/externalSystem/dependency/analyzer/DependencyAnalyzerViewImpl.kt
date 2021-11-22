@@ -250,8 +250,8 @@ class DependencyAnalyzerViewImpl(
           )
         ))
       }
-      setContent(splitPanel(
-        toolWindowPanel {
+      setContent(horizontalSplitPanel(SPLIT_VIEW_PROPORTION_PROPERTY, 0.5f) {
+        firstComponent = toolWindowPanel {
           toolbar = toolbarPanel {
             addToLeft(dependencyTitle)
             addToRight(actionToolbarPanel(
@@ -267,8 +267,8 @@ class DependencyAnalyzerViewImpl(
               else -> ScrollPaneFactory.createScrollPane(dependencyList, true)
             }
           })
-        },
-        toolWindowPanel {
+        }
+        secondComponent = toolWindowPanel {
           toolbar = toolbarPanel {
             addToLeft(usagesTitle)
             addToRight(actionToolbarPanel(
@@ -278,7 +278,7 @@ class DependencyAnalyzerViewImpl(
           }
           setContent(ScrollPaneFactory.createScrollPane(usagesTree, true))
         }
-      ))
+      })
     }
   }
 
@@ -462,5 +462,6 @@ class DependencyAnalyzerViewImpl(
     private val SEARCH_HISTORY_PROPERTY = DependencyAnalyzerView::class.java.name + ".search"
     private val SHOW_GROUP_ID_PROPERTY = DependencyAnalyzerView::class.java.name + ".showGroupId"
     private val SHOW_AS_TREE_PROPERTY = DependencyAnalyzerView::class.java.name + ".showAsTree"
+    private val SPLIT_VIEW_PROPORTION_PROPERTY = DependencyAnalyzerView::class.java.name + ".splitProportion"
   }
 }
