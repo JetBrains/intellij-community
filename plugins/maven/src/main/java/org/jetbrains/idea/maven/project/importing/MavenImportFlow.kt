@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing
 
+import com.intellij.ide.starters.shared.MAVEN_PROJECT
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -23,14 +24,16 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
 import java.nio.file.Path
 
-class MavenImportManagerFlow {
+class MavenImportFlow {
 
 
   fun prepareNewImport(project: Project,
                        indicator: MavenProgressIndicator,
                        pomFiles: List<VirtualFile>,
                        generalSettings: MavenGeneralSettings,
-                       importingSettings: MavenImportingSettings): MavenInitialImportContext {
+                       importingSettings: MavenImportingSettings,
+                       enabledProfiles: Collection<String>,
+                       disabledProfiles: Collection<String>): MavenInitialImportContext {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(project)
     //assert(!projectManager.isMavenizedProject)
@@ -40,10 +43,13 @@ class MavenImportManagerFlow {
     }
     MavenUtil.setupProjectSdk(project)
 
-    return MavenInitialImportContext(project, pomFiles, MavenExplicitProfiles.NONE, generalSettings, importingSettings, indicator)
+    val profiles = MavenExplicitProfiles(enabledProfiles, disabledProfiles)
+    return MavenInitialImportContext(project, pomFiles, profiles, generalSettings, importingSettings, indicator)
   }
 
-  fun prepareReimport(project: Project, indicator: MavenProgressIndicator): MavenInitialImportContext {
+  fun prepareReimport(project: Project, indicator: MavenProgressIndicator,
+                      enabledProfiles: Collection<String>,
+                      disabledProfiles: Collection<String>): MavenInitialImportContext {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(project)
     assert(projectManager.isMavenizedProject)
@@ -51,7 +57,8 @@ class MavenImportManagerFlow {
     val pomFiles = projectManager.collectAllAvailablePomFiles()
     projectManager.removeIgnoredFilesPaths(MavenUtil.collectPaths(pomFiles))
 
-    return MavenInitialImportContext(project, pomFiles, MavenExplicitProfiles.NONE,
+    val profiles = MavenExplicitProfiles(enabledProfiles, disabledProfiles)
+    return MavenInitialImportContext(project, pomFiles, profiles,
                                      MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings(),
                                      MavenWorkspaceSettingsComponent.getInstance(project).settings.getImportingSettings(), indicator)
   }
@@ -62,10 +69,10 @@ class MavenImportManagerFlow {
 
     val projectsTree = loadOrCreateProjectTree(projectManager)
     MavenProjectsManager.applyStateToTree(projectsTree, projectManager)
-    projectsTree.addManagedFilesWithProfiles(context.pomFiles, MavenExplicitProfiles.NONE)
+    projectsTree.addManagedFilesWithProfiles(context.pomFiles, context.profiles)
     val toResolve = HashSet<MavenProject>()
     val errorsSet = HashSet<MavenProject>()
-    val d = Disposer.newDisposable("MavenImportManager:readMavenFiles:treeListener")
+    val d = Disposer.newDisposable("MavenImportFlow:readMavenFiles:treeListener")
     Disposer.register(projectManager, d)
     projectsTree.addListener(object : MavenProjectsTree.Listener {
       override fun projectsUpdated(updated: MutableList<Pair<MavenProject, MavenProjectChanges>>, deleted: MutableList<MavenProject>) {
@@ -115,7 +122,7 @@ class MavenImportManagerFlow {
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
     val resolveContext = ResolveContext()
-    val d = Disposer.newDisposable("MavenImportManager:resolveDependencies:treeListener")
+    val d = Disposer.newDisposable("MavenImportFlow:resolveDependencies:treeListener")
     Disposer.register(projectManager, d)
     val projectsToImport = ArrayList<MavenProject>()
     val nativeProjectStorage = ArrayList<kotlin.Pair<MavenProject, NativeMavenProjectHolder>>()
@@ -153,8 +160,17 @@ class MavenImportManagerFlow {
     return MavenPluginResolvedContext(context.project, unresolvedPlugins, context)
   }
 
-  fun downloadArtifacts(context: MavenResolvedContext): MavenPluginResolvedContext {
-    TODO();
+  fun downloadArtifacts(context: MavenResolvedContext, sources: Boolean, javadocs: Boolean): MavenArtifactDownloader.DownloadResult {
+    if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
+    val projectManager = MavenProjectsManager.getInstance(context.project)
+    val embeddersManager = projectManager.embeddersManager
+    val resolver = MavenProjectResolver(context.readContext.projectsTree)
+    val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
+                                             context.initialContext.generalSettings.isPrintErrorStackTraces)
+    return resolver.downloadSourcesAndJavadocs(context.project, context.projectsToImport, null, sources, javadocs,
+                                               embeddersManager,
+                                               consoleToBeRemoved, context.initialContext.indicator)
+
   }
 
   fun resolveFolders(context: MavenResolvedContext): MavenResolvedContext {
@@ -164,7 +180,7 @@ class MavenImportManagerFlow {
     val resolver = MavenProjectResolver(context.readContext.projectsTree)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
-    val d = Disposer.newDisposable("MavenImportManager:resolveFolders:treeListener")
+    val d = Disposer.newDisposable("MavenImportFlow:resolveFolders:treeListener")
     val projectsToImport = HashSet<MavenProject>(context.projectsToImport);
     Disposer.register(projectManager, d)
     context.readContext.projectsTree.addListener(object : MavenProjectsTree.Listener {
@@ -174,6 +190,13 @@ class MavenImportManagerFlow {
         }
       }
     }, d)
+    context.projectsToImport.forEach {
+      resolver.resolveFolders(it, context.initialContext.importingSettings,
+                              embeddersManager,
+                              consoleToBeRemoved, context.initialContext.indicator)
+    }
+
+
     Disposer.dispose(d)
     return MavenResolvedContext(context.project, context.unresolvedArtifacts, projectsToImport.toList(), context.nativeProjectHolder,
                                 context.readContext);

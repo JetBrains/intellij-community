@@ -28,7 +28,6 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,11 +36,10 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
-import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.project.importing.MavenImportManagerFlow;
+import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
 import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
 import org.jetbrains.idea.maven.project.importing.MavenReadContext;
 import org.jetbrains.idea.maven.project.importing.MavenResolvedContext;
@@ -436,9 +434,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected final void importViaNewFlow(final List<VirtualFile> files, boolean failOnReadingError,
                                   List<String> disabledProfiles, String... profiles) {
 
-    MavenImportManagerFlow flow = new MavenImportManagerFlow();
+    MavenImportFlow flow = new MavenImportFlow();
     MavenInitialImportContext initialImportContext =
-      flow.prepareNewImport(myProject, getMavenProgressIndicator(), files, getMavenGeneralSettings(), getMavenImporterSettings());
+      flow.prepareNewImport(myProject, getMavenProgressIndicator(),
+                            files,
+                            getMavenGeneralSettings(),
+                            getMavenImporterSettings(),
+                            Arrays.asList(profiles),
+                            disabledProfiles);
     MavenReadContext readContext = flow.readMavenFiles(initialImportContext);
     if(failOnReadingError) {
       assertFalse("Failed to import Maven project: " + readContext.collectProblems(), readContext.hasReadingProblems());
