@@ -28,7 +28,7 @@ object TomlFileType : LanguageFileType(TomlLanguage), FileTypeIdentifiableByVirt
     override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
 
     override fun isMyFileType(file: VirtualFile): Boolean {
-        return file.name == "config" && file.parent?.name == ".cargo" || FileTypeManager.getInstance().getFileTypeByFileName(file.name) == this
+        return file.name == "config" && file.parent?.name == ".cargo"
     }
 }
 

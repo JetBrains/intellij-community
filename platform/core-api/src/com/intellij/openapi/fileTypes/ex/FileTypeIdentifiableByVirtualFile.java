@@ -30,9 +30,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface FileTypeIdentifiableByVirtualFile extends FileType {
   /**
-   * @return true if (and only if) this particular file should be treated as belonging to this file type.
-   * Please make sure your definition is consistent with all other definitions for this file type.
-   * For example, file type should not be associated with the file name pattern (see Settings|Editor|File Types) which is not mentioned in the {@code isMyFileType()} below.
+   * @return true if this particular file should be treated as belonging to this file type.
+   * Note that this file type can be associated with other files by other means as well (e.g., "Settings|Editor|File Types|Associate file name pattern..."),
+   * so this method is just one of the possible file type definitions.
    */
   boolean isMyFileType(@NotNull VirtualFile file);
 

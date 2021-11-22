@@ -668,10 +668,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
-    if (requestedFileType instanceof FileTypeIdentifiableByVirtualFile) {
-      return ((FileTypeIdentifiableByVirtualFile)requestedFileType).isMyFileType(file);
+    if (requestedFileType instanceof FileTypeIdentifiableByVirtualFile
+        && ((FileTypeIdentifiableByVirtualFile)requestedFileType).isMyFileType(file)) {
+      return true;
     }
-    // otherwise we can skip all the mySpecialFileTypes because it's certain this file type is not one of them
+    // otherwise, we can skip all the mySpecialFileTypes because it's certain this file type is not one of them
 
     FileType fileType = getFileTypeByFileName(file.getNameSequence());
     if (fileType == UnknownFileType.INSTANCE) {
