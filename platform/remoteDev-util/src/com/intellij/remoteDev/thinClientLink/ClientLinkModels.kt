@@ -25,8 +25,5 @@ sealed class ClientToGtwMessage {
 
   @Serializable
   object Ping: ClientToGtwMessage()
-
-  @Serializable
-  object ClientAttemptingToReconnect: ClientToGtwMessage()
 }
 
