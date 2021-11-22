@@ -11,7 +11,6 @@ public class JdkBulkMethodInfoProvider implements BulkMethodInfoProvider {
   private static final BulkMethodInfo[] INFOS = {
     new BulkMethodInfo(CommonClassNames.JAVA_UTIL_COLLECTION, "add", "addAll", CommonClassNames.JAVA_UTIL_COLLECTION),
     new BulkMethodInfo(CommonClassNames.JAVA_UTIL_MAP, "put", "putAll", CommonClassNames.JAVA_UTIL_MAP),
-    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_LIST, "set", "replaceAll", "java.util.function.UnaryOperator"),
   };
 
   @NotNull
