@@ -39,7 +39,6 @@ class OptimizedImportsBuilder(
     private val apiVersion: ApiVersion,
 ) {
     companion object {
-        @get:TestOnly
         @set:TestOnly
         var testLog: StringBuilder? = null
     }
@@ -93,7 +92,7 @@ class OptimizedImportsBuilder(
             .asSequence()
             .filter { it.mayReferToSomeUnresolvedName() || it.isExistedUnresolvedName() }
             .mapNotNull { it.importPath }
-            .mapNotNullTo(importRules) { ImportRule.Add(it) }
+            .mapTo(importRules) { ImportRule.Add(it) }
 
         while (true) {
             ProgressManager.checkCanceled()
@@ -253,7 +252,7 @@ class OptimizedImportsBuilder(
 
     private fun lockImportForDescriptor(descriptor: DeclarationDescriptor, existingNames: Collection<Name>) {
         val fqName = descriptor.importDescriptorWithMapping ?: return
-        val names = data.namesToImport.getOrElse(fqName) { listOf(descriptor.name) }.intersect(existingNames)
+        val names = data.namesToImport.getOrElse(fqName) { listOf(descriptor.name) }.intersect(existingNames.toSet())
 
         val starImportPath = ImportPath(fqName.parent(), true)
         for (name in names) {
