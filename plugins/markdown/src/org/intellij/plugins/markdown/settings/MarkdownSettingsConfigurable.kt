@@ -18,11 +18,15 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
@@ -46,7 +50,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   override fun createPanel(): DialogPanel {
     if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
       return panel {
-        fullRow {
+        row {
           label(MarkdownBundle.message("markdown.settings.no.providers"))
         }
       }
@@ -58,50 +62,46 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       row(MarkdownBundle.message("markdown.settings.default.layout")) {
         comboBox(
           model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
-          prop = settings::splitLayout,
           renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
-        )
+        ).bindItem(settings::splitLayout)
       }
       row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
         comboBox(
           model = DefaultComboBoxModel(arrayOf(false, true)),
-          prop = settings::isVerticalSplit,
           renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
-        )
-      }.largeGapAfter()
-      fullRow {
-        checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"), settings::isAutoScrollEnabled)
+        ).bindItem(settings::isVerticalSplit)
+      }.bottomGap(BottomGap.SMALL)
+      row {
+        checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"))
+          .bindSelected(settings::isAutoScrollEnabled)
       }
-      fullRow {
-        checkBox(MarkdownBundle.message("markdown.settings.enable.injections"), settings::areInjectionsEnabled)
+      row {
+        checkBox(MarkdownBundle.message("markdown.settings.enable.injections"))
+          .bindSelected(settings::areInjectionsEnabled)
       }
-      fullRow {
-        checkBox(MarkdownBundle.message("markdown.settings.enable.enhance.editing.experience"), settings::isEnhancedEditingEnabled)
+      row {
+        checkBox(MarkdownBundle.message("markdown.settings.enable.enhance.editing.experience"))
+          .bindSelected(settings::isEnhancedEditingEnabled)
       }
-      fullRow {
-        checkBox(MarkdownBundle.message("markdown.settings.hide.errors"), settings::hideErrorsInCodeBlocks)
+      row {
+        checkBox(MarkdownBundle.message("markdown.settings.hide.errors"))
+          .bindSelected(settings::hideErrorsInCodeBlocks)
       }
-      fullRow {
-        checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text"), settings::isRunnerEnabled)
-      }.largeGapAfter()
-      fullRow {
-        label(MarkdownBundle.message("markdown.settings.preview.extensions.name"))
-      }
-      extensionsListRow().largeGapAfter()
+      row {
+        checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text"))
+          .bindSelected(settings::isRunnerEnabled)
+      }.bottomGap(BottomGap.SMALL)
+      extensionsListRow()
       customCssRow()
       pandocSettingsRow()
     }
   }
 
-  private fun RowBuilder.htmlPanelProvidersRow(): Row {
-    return row {
-      cell {
-        label(MarkdownBundle.message("markdown.settings.preview.providers.label"))
-      }
-      cell {
-        val providers = MarkdownHtmlPanelProvider.getProviders().map { it.providerInfo }
-        comboBox(model = DefaultComboBoxModel(providers.toTypedArray()), settings::previewPanelProviderInfo)
-      }
+  private fun Panel.htmlPanelProvidersRow(): Row {
+    return row(MarkdownBundle.message("markdown.settings.preview.providers.label")) {
+      val providers = MarkdownHtmlPanelProvider.getProviders().map { it.providerInfo }
+      comboBox(model = DefaultComboBoxModel(providers.toTypedArray()))
+        .bindItem(settings::previewPanelProviderInfo)
     }
   }
 
@@ -115,35 +115,41 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
     }
   }
 
-  private fun RowBuilder.customCssRow(): Row {
-    return hideableRow(MarkdownBundle.message("markdown.settings.css.title.name")) {
-      fullRow {
-        val externalCssCheckBox = checkBox(MarkdownBundle.message("markdown.settings.external.css.path.label"), prop = settings::useCustomStylesheetPath)
-        textFieldWithBrowseButton(value = settings.customStylesheetPath).apply {
-          constraints(CCFlags.growX)
-          enableIf(externalCssCheckBox.selected)
-          applyIfEnabled()
-          onApply { settings.customStylesheetPath = component.text.takeIf { externalCssCheckBox.component.isSelected } }
-          onIsModified { externalCssCheckBox.component.isSelected && settings.customStylesheetPath != component.text }
-          withValidationOnInput(::validateCustomStylesheetPath)
-          withValidationOnApply(::validateCustomStylesheetPath)
-        }
+  private fun Panel.customCssRow() {
+    collapsibleGroup(MarkdownBundle.message("markdown.settings.css.title.name")) {
+      row {
+        val externalCssCheckBox = checkBox(MarkdownBundle.message("markdown.settings.external.css.path.label"))
+          .bindSelected(settings::useCustomStylesheetPath)
+          .gap(RightGap.SMALL)
+        textFieldWithBrowseButton()
+          .applyToComponent {
+            text = settings.customStylesheetPath ?: ""
+          }
+          .horizontalAlign(HorizontalAlign.FILL)
+          .enabledIf(externalCssCheckBox.selected)
+          .applyIfEnabled()
+          .validationOnInput(::validateCustomStylesheetPath)
+          .validationOnApply(::validateCustomStylesheetPath)
+          .apply {
+            onApply { settings.customStylesheetPath = component.text.takeIf { externalCssCheckBox.component.isSelected } }
+            onIsModified { externalCssCheckBox.component.isSelected && settings.customStylesheetPath != component.text }
+          }
       }
-      lateinit var editorCheckbox: CellBuilder<JBCheckBox>
-      fullRow {
-        editorCheckbox = checkBox(MarkdownBundle.message("markdown.settings.custom.css.text.label"), prop = settings::useCustomStylesheetText).apply {
-          applyToComponent {
+      lateinit var editorCheckbox: Cell<JBCheckBox>
+      row {
+        editorCheckbox = checkBox(MarkdownBundle.message("markdown.settings.custom.css.text.label"))
+          .bindSelected(settings::useCustomStylesheetText)
+          .applyToComponent {
             addActionListener { setEditorReadonlyState(isReadonly = !isSelected) }
           }
-        }
       }
-      fullRow {
+      row {
         val editor = createCustomStylesheetEditor()
-        editor.component(CCFlags.growX).apply {
-          onApply { settings.customStylesheetText = runReadAction { editor.document.text } }
-          onIsModified { settings.customStylesheetText != runReadAction { editor.document.text.takeIf { it.isNotEmpty() } } }
-          onReset { resetEditorText(settings.customStylesheetText ?: "") }
-        }
+        cell(editor.component)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .onApply { settings.customStylesheetText = runReadAction { editor.document.text } }
+          .onIsModified { settings.customStylesheetText != runReadAction { editor.document.text.takeIf { it.isNotEmpty() } } }
+          .onReset { resetEditorText(settings.customStylesheetText ?: "") }
         customStylesheetEditor = editor
         setEditorReadonlyState(isReadonly = !editorCheckbox.component.isSelected)
       }
@@ -157,15 +163,16 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
     }
   }
 
-  private fun RowBuilder.pandocSettingsRow(): Row {
-    return hideableRow(MarkdownBundle.message("markdown.settings.pandoc.name")) {
-      fullRow {
-        component(PandocSettingsPanel(project)).apply {
-          constraints(CCFlags.growX)
-          onApply { component.apply() }
-          onIsModified { component.isModified() }
-          onReset { component.reset() }
-        }
+  private fun Panel.pandocSettingsRow() {
+    collapsibleGroup(MarkdownBundle.message("markdown.settings.pandoc.name")) {
+      row {
+        cell(PandocSettingsPanel(project))
+          .horizontalAlign(HorizontalAlign.FILL)
+          .apply {
+            onApply { component.apply() }
+            onIsModified { component.isModified() }
+            onReset { component.reset() }
+          }
       }
     }
   }
@@ -182,38 +189,36 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
     super.disposeUIResources()
   }
 
-  private fun RowBuilder.extensionsListRow(): Row {
-    return fullRow {
-      row {
-        val extensions = MarkdownExtensionsUtil.collectConfigurableExtensions()
-        for (extension in extensions) {
-          createExtensionEntry(extension)
-        }
+  private fun Panel.extensionsListRow() {
+    buttonGroup(MarkdownBundle.message("markdown.settings.preview.extensions.name")) {
+      val extensions = MarkdownExtensionsUtil.collectConfigurableExtensions()
+      for (extension in extensions) {
+        createExtensionEntry(extension)
       }
     }
   }
 
-  private fun RowBuilder.createExtensionEntry(extension: MarkdownConfigurableExtension): Row {
-    return fullRow {
+  private fun Panel.createExtensionEntry(extension: MarkdownConfigurableExtension) {
+    row {
       val extensionsSettings = MarkdownExtensionsSettings.getInstance()
       val extensionCheckBox = checkBox(
-        text = extension.displayName,
-        getter = { extensionsSettings.extensionsEnabledState[extension.id] ?: false },
-        setter = { extensionsSettings.extensionsEnabledState[extension.id] = it}
-      )
+        text = extension.displayName
+      ).bindSelected({ extensionsSettings.extensionsEnabledState[extension.id] ?: false },
+                     { extensionsSettings.extensionsEnabledState[extension.id] = it})
+        .gap(RightGap.SMALL)
       extensionCheckBox.enabled((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable ?: true)
-      component(ContextHelpLabel.create(extension.description))
+      contextHelp(extension.description)
+        .gap(RightGap.SMALL)
       if ((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable == false) {
-        component(ActionLink(MarkdownBundle.message("markdown.settings.extension.install.label"))).apply {
-          component.addActionListener {
-            MarkdownSettingsUtil.downloadExtension(
-              extension,
-              enableAfterDownload = false
-            )
-            extensionCheckBox.enabled(extension.isAvailable)
-            component.isVisible = !extension.isAvailable
-            component.isEnabled = !extension.isAvailable
-          }
+        lateinit var installLink: Cell<ActionLink>
+        installLink = link(MarkdownBundle.message("markdown.settings.extension.install.label")) {
+          MarkdownSettingsUtil.downloadExtension(
+            extension,
+            enableAfterDownload = false
+          )
+          extensionCheckBox.enabled(extension.isAvailable)
+          installLink.component.isVisible = !extension.isAvailable
+          installLink.component.isEnabled = !extension.isAvailable
         }
       }
     }

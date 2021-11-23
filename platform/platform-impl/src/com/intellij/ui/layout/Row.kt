@@ -67,8 +67,12 @@ interface RowBuilder : BaseBuilder {
    * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun hideableRow(@NlsContexts.Separator title: String, incrementsIndent: Boolean = true, init: Row.() -> Unit): Row
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun hideableRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row {
     return hideableRow(title = title, true, init)
   }
@@ -89,6 +93,8 @@ interface RowBuilder : BaseBuilder {
   /**
    * Creates a nested UI DSL panel, with a grid which is independent of this pane.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun nestedPanel(@NlsContexts.BorderTitle title: String? = null, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel>
 
   fun onGlobalApply(callback: () -> Unit): Row
@@ -170,12 +176,17 @@ abstract class Row : Cell(), RowBuilder {
   }
 
   @PublishedApi
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   internal abstract fun createRow(label: String?): Row
 
   @PublishedApi
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)
 
   // backward compatibility
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
   operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
     invoke(constraints = *constraints, growPolicy = growPolicy).withLeftGap(gapLeft)
