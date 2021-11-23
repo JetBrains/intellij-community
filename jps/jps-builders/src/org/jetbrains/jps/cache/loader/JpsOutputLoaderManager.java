@@ -180,7 +180,7 @@ public class JpsOutputLoaderManager implements Disposable {
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
-    LOG.info("Commits count between latest success compilation and current commit: " + latestBuiltCommitFound +
+    LOG.info("Commits count between latest success compilation and current commit: " + commitsCountBetweenCompilation +
              ". Detected commit to download: " + commitToDownload);
     if (commitsCountBetweenCompilation < COMMITS_COUNT_THRESHOLD) {
       String message = JpsBuildBundle.message("notification.content.commits.count.threshold");
