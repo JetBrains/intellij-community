@@ -30,8 +30,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class EnvironmentVariablesDialog extends DialogWrapper {
   private final EnvironmentVariablesTextFieldWithBrowseButton myParent;
@@ -47,13 +47,6 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     Map<String, String> parentMap = new TreeMap<>(new GeneralCommandLine().getParentEnvironment());
 
     myParent.myParentDefaults.putAll(parentMap);
-    for (Iterator<Map.Entry<String, String>> iterator = userMap.entrySet().iterator(); iterator.hasNext(); ) {
-      Map.Entry<String, String> entry = iterator.next();
-      if (parentMap.containsKey(entry.getKey())) { //User overrides system variable, we have to show it in 'parent' table as bold
-        parentMap.put(entry.getKey(), entry.getValue());
-        iterator.remove();
-      }
-    }
 
     List<EnvironmentVariable> userList = EnvironmentVariablesTextFieldWithBrowseButton.convertToVariables(userMap, false);
     List<EnvironmentVariable> systemList = EnvironmentVariablesTextFieldWithBrowseButton.convertToVariables(parentMap, true);
@@ -91,6 +84,44 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
 
   private void updateSysTableState() {
     mySystemTable.getTableView().setEnabled(myIncludeSystemVarsCb.isSelected());
+    List<EnvironmentVariable> userList = new ArrayList<>(myUserTable.getEnvironmentVariables());
+    List<EnvironmentVariable> systemList = new ArrayList<>(mySystemTable.getEnvironmentVariables());
+    boolean[] dirty = {false};
+    if (myIncludeSystemVarsCb.isSelected()) {
+      //System properties are included so overridden properties should be shown as 'bold' or 'modified' in a system table
+      for (Iterator<EnvironmentVariable> iterator = userList.iterator(); iterator.hasNext(); ) {
+        EnvironmentVariable userVariable = iterator.next();
+        Optional<EnvironmentVariable> optional =
+          systemList.stream().filter(systemVariable -> systemVariable.getName().equals(userVariable.getName())).findAny();
+        optional.ifPresent(variable -> {
+          variable.setValue(userVariable.getValue());
+          iterator.remove();
+          dirty[0] = true;
+        });
+      }
+    } else {
+      // Overridden system properties should be shown as user variables as soon as system ones aren't included
+      // Thus system table should look unmodified and disabled
+      for (EnvironmentVariable systemVariable : systemList) {
+        if (myParent.isModifiedSysEnv(systemVariable)) {
+          Optional<EnvironmentVariable> optional =
+            userList.stream().filter(userVariable -> userVariable.getName().equals(systemVariable.getName())).findAny();
+          if (optional.isPresent()) {
+            optional.get().setValue(systemVariable.getValue());
+          } else {
+            EnvironmentVariable clone = systemVariable.clone();
+            clone.IS_PREDEFINED = false;
+            userList.add(clone);
+            systemVariable.setValue(myParent.myParentDefaults.get(systemVariable.getName()));
+          }
+          dirty[0] = true;
+        }
+      }
+    }
+    if (dirty[0]) {
+      myUserTable.setValues(userList);
+      mySystemTable.setValues(systemList);
+    }
   }
 
   @NotNull
