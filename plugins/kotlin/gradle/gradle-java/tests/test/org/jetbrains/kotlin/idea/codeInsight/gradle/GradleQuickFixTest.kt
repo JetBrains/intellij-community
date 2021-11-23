@@ -80,6 +80,10 @@ class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
     @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForNativeIOSWithExistentPath() = doMultiFileQuickFixTest()
 
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
+    fun testCreateActualForGranularSourceSetTarget() = doMultiFileQuickFixTest()
+
     private fun doMultiFileQuickFixTest(ignoreChangesInBuildScriptFiles: Boolean = true) {
         configureByFiles(subPath = "before")
         val projectPath = myProjectRoot.toNioPath()
