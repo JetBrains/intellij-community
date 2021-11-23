@@ -2,9 +2,6 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.util.io.exists
@@ -21,7 +18,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.coroutineModuleTransform
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
-import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.mapLatestTimedWithLoading
 import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
@@ -40,7 +36,6 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -59,12 +54,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.selects.select
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.json.Json
-import org.jetbrains.annotations.Nls
 import java.nio.file.Files
 import java.util.concurrent.Executors
 import kotlin.time.Duration
@@ -262,60 +252,22 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
 //        var controller: BackgroundLoadingBarController? = null
 //
-//        isLoadingFlow.onEach { isLoading ->
-//            if (isLoading) {
-//                controller = runBackgroundLoadingBar(
-//                    project,
-//                    PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
-//                    PackageSearchBundle.message("packagesearch.ui.loading")
-//                )
-//            } else {
-//                controller?.clear()
-//            }
-//        }.launchIn(this)
+//        if (System.getProperty("idea.pkgs.disableLoading") != "true") {
+//            isLoadingFlow.onEach { isLoading ->
+//                if (isLoading) {
+//                    controller = showBackgroundLoadingBar(
+//                        project,
+//                        PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
+//                        PackageSearchBundle.message("packagesearch.ui.loading")
+//                    )
+//                } else {
+//                    controller?.clear()
+//                }
+//            }.launchIn(this)
+//        }
     }
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
         operationExecutedChannel.trySend(successes)
     }
-}
-
-private fun CoroutineScope.runBackgroundLoadingBar(
-    project: Project,
-    @Nls title: String,
-    @Nls upperMessage: String
-): BackgroundLoadingBarController {
-    val syncSignal = Mutex(true)
-    val upperMessageChannel = Channel<String>()
-    val lowerMessageChannel = Channel<String>()
-    val externalScopeJob = coroutineContext.job
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, title) {
-        override fun run(indicator: ProgressIndicator) {
-            runBlocking {
-                upperMessageChannel.consumeAsFlow().onEach { indicator.text = it }.launchIn(this)
-                lowerMessageChannel.consumeAsFlow().onEach { indicator.text2 = it }.launchIn(this)
-                indicator.text = upperMessage // ??? why does it work?
-                val internalJob = launch {
-                    syncSignal.lock()
-                    logWarn { "lock released" }
-                }
-                select<Unit> {
-                    internalJob.onJoin { }
-                    externalScopeJob.onJoin { internalJob.cancel() }
-                }
-                upperMessageChannel.close()
-                lowerMessageChannel.close()
-            }
-        }
-    })
-    return BackgroundLoadingBarController(syncSignal, upperMessageChannel, lowerMessageChannel)
-}
-
-class BackgroundLoadingBarController(
-    private val syncMutex: Mutex,
-    val upperMessageChannel: SendChannel<String>,
-    val lowerMessageChannel: SendChannel<String>
-) {
-
-    fun clear() = runCatching { syncMutex.unlock() }.getOrElse { }
 }
