@@ -64,8 +64,7 @@ public final class LegalNoticeDialog extends DialogWrapper {
     }
   }
 
-  public static Builder build(@NotNull @NlsContexts.DialogTitle String title,
-                              @NotNull @NlsContexts.DialogMessage String message) {
+  public static Builder build(@NotNull @NlsContexts.DialogTitle String title, @NotNull @NlsContexts.DialogMessage String message) {
     return new Builder(title, message);
   }
 
