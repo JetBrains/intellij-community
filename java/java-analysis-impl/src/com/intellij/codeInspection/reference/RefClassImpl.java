@@ -108,8 +108,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     boolean utilityClass = uMethods.length > 0 || uFields.length > 0;
 
     for (UField uField : uFields) {
-      final RefElement field = getRefManager().getReference(uField.getSourcePsi());
-      if (field instanceof RefField) addChild(field);
+      final RefField field = ObjectUtils.tryCast(getRefManager().getReference(uField.getSourcePsi()), RefField.class);
+      if (field != null) addChild(field);
     }
     RefMethod varargConstructor = null;
     for (UMethod uMethod : uMethods) {
