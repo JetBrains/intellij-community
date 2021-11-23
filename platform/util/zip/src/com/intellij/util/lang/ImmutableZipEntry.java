@@ -111,6 +111,9 @@ public final class ImmutableZipEntry {
           String s = e.getMessage();
           throw new ZipException(s == null ? "Invalid ZLIB data format" : s);
         }
+        finally {
+          inflater.end();
+        }
       }
 
       default:
@@ -157,6 +160,9 @@ public final class ImmutableZipEntry {
         catch (DataFormatException e) {
           String s = e.getMessage();
           throw new ZipException(s == null ? "Invalid ZLIB data format" : s);
+        }
+        finally {
+          inflater.end();
         }
       }
 
