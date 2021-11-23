@@ -125,6 +125,8 @@ public class SvnChangeProvider implements ChangeProvider {
       applyMovedChange(context, copiedFile.getFilePath(), dirtyScope, movedFiles, movedFromFile, copiedFile.getStatus(), changeListName);
 
       for (SvnChangedFile deletedChild : context.getDeletedFiles()) {
+        if (movedFromFile == deletedChild) continue;
+
         Url childUrl = deletedChild.getStatus().getUrl();
         if (childUrl == null) continue;
 
