@@ -88,9 +88,9 @@ class GitShowExternalLogAction : DumbAwareAction() {
   }
 }
 
-private class MyContentComponent internal constructor(actualComponent: JComponent,
-                                                      val roots: Collection<VirtualFile>,
-                                                      val disposable: Disposable) : JPanel(BorderLayout()) {
+private class MyContentComponent(actualComponent: JComponent,
+                                 val roots: Collection<VirtualFile>,
+                                 val disposable: Disposable) : JPanel(BorderLayout()) {
 
   init {
     add(actualComponent)
@@ -98,8 +98,7 @@ private class MyContentComponent internal constructor(actualComponent: JComponen
 }
 
 private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs) :
-  Backgroundable(project, GitBundle.message(
-    "git.log.external.loading.process"), true) {
+  Backgroundable(project, @Suppress("DialogTitleCapitalization") GitBundle.message("git.log.external.loading.process"), true) {
   override fun run(indicator: ProgressIndicator) {
     if (!GitExecutableManager.getInstance().testGitExecutableVersionValid(project)) {
       throw ProcessCanceledException()
