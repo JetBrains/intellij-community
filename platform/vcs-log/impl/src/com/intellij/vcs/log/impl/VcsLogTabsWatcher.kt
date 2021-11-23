@@ -29,6 +29,10 @@ internal class VcsLogTabsWatcher(private val project: Project, private val postp
     return postponableLogRefresher.addLogWindow(window)
   }
 
+  fun getTabs(): List<VcsLogUiEx> {
+    return postponableLogRefresher.logWindows.map { it.ui }
+  }
+
   private fun selectionChanged(tabId: String) {
     val logWindow = postponableLogRefresher.logWindows.find { window -> window.id == tabId }
     if (logWindow != null) {

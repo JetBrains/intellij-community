@@ -91,7 +91,7 @@ public class VcsLogTabsManager {
   @NotNull
   MainVcsLogUi openAnotherLogTab(@NotNull VcsLogManager manager, @NotNull VcsLogFilterCollection filters,
                                  @NotNull VcsLogManager.LogWindowKind kind) {
-    String tabId = generateTabId(myProject);
+    String tabId = generateTabId(manager);
     myUiProperties.resetState(tabId);
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
       FileEditor[] editors = openEditorLogTab(tabId, true, filters);
@@ -152,9 +152,9 @@ public class VcsLogTabsManager {
 
   @NotNull
   @NonNls
-  private static String generateTabId(@NotNull Project project) {
-    Set<String> existingIds = ContainerUtil.union(VcsLogContentUtil.getExistingLogIds(project),
-                                                  VcsLogEditorUtilKt.getExistingLogIds(project));
+  private static String generateTabId(@NotNull VcsLogManager manager) {
+    Set<String> existingIds = ContainerUtil.map2Set(manager.getLogUis(), VcsLogUi::getId);
+
     String newId;
     do {
       newId = UUID.randomUUID().toString();

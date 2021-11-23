@@ -25,10 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -89,31 +87,6 @@ public final class VcsLogContentUtil {
     if (ui == null) return null;
     return ui.getId();
   }
-
-  @NotNull
-  public static Set<String> getExistingLogIds(@NotNull Project project) {
-    Set<String> existingIds;
-
-    ContentManager contentManager = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).getContentManager();
-    TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, VcsLogContentProvider.TAB_NAME);
-    if (tabbedContent != null) {
-      existingIds = ContainerUtil.map2SetNotNull(tabbedContent.getTabs(), pair -> {
-        VcsLogUiEx ui = getLogUi(pair.second);
-        if (ui == null) return null;
-        return ui.getId();
-      });
-    }
-    else {
-      existingIds = ContainerUtil.map2SetNotNull(Arrays.asList(contentManager.getContents()), content -> {
-        TabGroupId groupId = content.getUserData(Content.TAB_GROUP_ID_KEY);
-        if (groupId == null || !VcsLogContentProvider.TAB_NAME.equals(groupId.getId())) return null;
-        return getId(content);
-      });
-    }
-
-    return existingIds;
-  }
-
 
   public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project,
                                                     @NotNull VcsLogManager logManager,
