@@ -53,6 +53,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final StyleSheet ourCommonStyle;
   private static final StyleSheet ourNoGapsBetweenParagraphsStyle;
 
+  private final ViewFactory myViewFactory;
   private final StyleSheet myStyle = createStyleSheet();
   private final HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
@@ -67,11 +68,18 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     this(noGapsBetweenParagraphs, false);
   }
 
+  public JBHtmlEditorKit(boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
+    this(ourViewFactory, noGapsBetweenParagraphs, disableLinkedCss);
+  }
+
   /**
-   * @param disableLinkedCss Disables loading of linked CSS (from URL referenced in {@code <link>} HTML tags). JEditorPane does this loading
+   * @param viewFactory view factory for this kit, generally should be static
+   * @param noGapsBetweenParagraphs removes gaps before &lt;p&gt; tags
+   * @param disableLinkedCss disables loading of linked CSS (from URL referenced in &lt;link&gt; HTML tags). JEditorPane does this loading
    *                         synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
    */
-  public JBHtmlEditorKit(boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
+  public JBHtmlEditorKit(@NotNull ViewFactory viewFactory, boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
+    myViewFactory = viewFactory;
     myDisableLinkedCss = disableLinkedCss;
     if (noGapsBetweenParagraphs) myStyle.addStyleSheet(ourNoGapsBetweenParagraphsStyle);
   }
@@ -153,7 +161,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   @Override
   public ViewFactory getViewFactory() {
-    return ourViewFactory;
+    return myViewFactory;
   }
 
   @NotNull
