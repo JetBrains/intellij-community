@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
@@ -24,13 +23,14 @@ import java.beans.PropertyChangeListener
 import java.util.*
 
 internal class VcsLogToolWindowTabsWatcher(private val project: Project,
+                                           private val toolWindowId: String,
                                            parentDisposable: Disposable) : VcsLogTabsWatcherExtension<VcsLogToolWindowTab> {
   private val mainDisposable = Disposer.newDisposable()
   private val toolwindowListenerDisposable = Disposer.newDisposable()
   private var tabSelectedCallback: (String) -> Unit = {}
 
   private val toolWindow: ToolWindow?
-    get() = getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+    get() = getInstance(project).getToolWindow(toolWindowId)
 
   init {
     val connection = project.messageBus.connect(mainDisposable)
@@ -98,13 +98,13 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
 
   private inner class MyToolWindowManagerListener : ToolWindowManagerListener {
     override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
-      if (ids.contains(ChangesViewContentManager.TOOLWINDOW_ID)) {
+      if (ids.contains(toolWindowId)) {
         installContentListeners()
       }
     }
 
     override fun toolWindowUnregistered(id: String, toolWindow: ToolWindow) {
-      if (id == ChangesViewContentManager.TOOLWINDOW_ID) {
+      if (id == toolWindowId) {
         removeContentListeners()
       }
     }

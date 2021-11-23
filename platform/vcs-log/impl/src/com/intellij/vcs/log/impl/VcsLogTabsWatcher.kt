@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.impl.VcsLogManager.LogWindowKind
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
@@ -12,7 +13,7 @@ import java.util.function.Consumer
 
 internal class VcsLogTabsWatcher(private val project: Project, private val postponableLogRefresher: PostponableLogRefresher) : Disposable {
   private val extensions = mapOf(
-    Pair(LogWindowKind.TOOL_WINDOW, VcsLogToolWindowTabsWatcher(project, this)),
+    Pair(LogWindowKind.TOOL_WINDOW, VcsLogToolWindowTabsWatcher(project, ChangesViewContentManager.TOOLWINDOW_ID, this)),
     Pair(LogWindowKind.EDITOR, VcsLogEditorTabsWatcher(project, this))
   )
 
