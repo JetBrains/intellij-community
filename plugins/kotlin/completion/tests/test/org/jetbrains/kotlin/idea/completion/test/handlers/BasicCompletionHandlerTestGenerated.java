@@ -268,6 +268,26 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
         runTest("testData/handlers/basic/SyntheticExtension.kt");
     }
 
+    @TestMetadata("TypeAliasConfict.kt")
+    public void testTypeAliasConfict() throws Exception {
+        runTest("testData/handlers/basic/TypeAliasConfict.kt");
+    }
+
+    @TestMetadata("TypeAliasConfict1.kt")
+    public void testTypeAliasConfict1() throws Exception {
+        runTest("testData/handlers/basic/TypeAliasConfict1.kt");
+    }
+
+    @TestMetadata("TypeAliasConfict2.kt")
+    public void testTypeAliasConfict2() throws Exception {
+        runTest("testData/handlers/basic/TypeAliasConfict2.kt");
+    }
+
+    @TestMetadata("TypeAliasConfict3.kt")
+    public void testTypeAliasConfict3() throws Exception {
+        runTest("testData/handlers/basic/TypeAliasConfict3.kt");
+    }
+
     @TestMetadata("TypeInferedFromWrapperType.kt")
     public void testTypeInferedFromWrapperType() throws Exception {
         runTest("testData/handlers/basic/TypeInferedFromWrapperType.kt");
