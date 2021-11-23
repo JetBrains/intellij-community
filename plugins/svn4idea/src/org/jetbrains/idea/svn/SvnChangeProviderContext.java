@@ -166,7 +166,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (filePath.isDirectory() && status.isWorkingCopyLocked()) {
       myChangelistBuilder.processLockedFolder(filePath.getVirtualFile());
     }
-    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED) && isPossibleMove(filePath, status)) {
+    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED) && isPossibleMove(filePath, status)) {
       addCopiedFile(filePath, status, status.getCopyFromUrl());
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
