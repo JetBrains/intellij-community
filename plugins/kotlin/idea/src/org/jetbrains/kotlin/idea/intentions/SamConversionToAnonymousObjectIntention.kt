@@ -213,7 +213,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
         }
 
         private fun Name.actualType(functionTypes: List<KotlinType>, lambdaTypes: List<KotlinType>): KotlinType? {
-            return functionTypes.zip(lambdaTypes).firstNotNullResult { actualType(it.first, it.second) }
+            return functionTypes.zip(lambdaTypes).firstNotNullOfOrNull { actualType(it.first, it.second) }
         }
 
         private fun Name.actualType(functionType: KotlinType?, lambdaType: KotlinType?): KotlinType? {
