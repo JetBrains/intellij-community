@@ -57,4 +57,19 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   override fun setupProject(project: Project) {
     steps[step]?.setupProject(project)
   }
+
+  fun whenStepSelected(name: String, action: () -> Unit) {
+    if (step == name) {
+      action()
+    }
+    else {
+      val disposable = Disposer.newDisposable(context.disposable, "")
+      stepProperty.afterChange({
+        if (it == name) {
+          Disposer.dispose(disposable)
+          action()
+        }
+      }, disposable)
+    }
+  }
 }
