@@ -3,14 +3,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -19,8 +13,6 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.readText
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection
-import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
@@ -55,12 +47,6 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
             },
             ThrowableRunnable { myTestFixture = null }
         )
-    }
-
-    @Test
-    @Ignore // Import failed: A problem occurred evaluating root project 'project'
-    fun testUpdateKotlinxCoroutines() {
-        doGradleQuickFixTest(GradleKotlinxCoroutinesDeprecationInspection())
     }
 
     @Test
@@ -147,42 +133,5 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
 
             DirectiveBasedActionUtils.checkAvailableActionsAreExpected(ktFile, action?.let { actions - it } ?: actions)
         }
-    }
-
-    private fun doGradleQuickFixTest(localInspectionTool: LocalInspectionTool) {
-        val buildGradleVFile = configureByFiles().first { it.name == "build.gradle" }
-        importProject()
-
-        applyInspectionFixes(localInspectionTool, buildGradleVFile)
-
-        runInEdtAndWait {
-            FileDocumentManager.getInstance().saveAllDocuments()
-        }
-
-        checkResult(buildGradleVFile)
-    }
-
-    private fun applyInspectionFixes(tool: LocalInspectionTool, file: VirtualFile) {
-        runInEdtAndWait {
-            runTestRunnable {
-                val presentation = runInspection(tool, myProject, listOf(file))
-
-                WriteCommandAction.runWriteCommandAction(myProject) {
-                    val foundProblems = presentation.problemElements.values.mapNotNull { it as? ProblemDescriptorBase }
-                    for (problem in foundProblems) {
-                        val fixes = problem.fixes
-                        if (fixes != null) {
-                            fixes[0].applyFix(myProject, problem)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun checkResult(file: VirtualFile) {
-        val expectedFile = File(testDataDirectory(), "${file.name}.after")
-        val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(file).toString())
-        KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s) }
     }
 }
