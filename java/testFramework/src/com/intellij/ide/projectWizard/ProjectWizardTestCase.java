@@ -197,6 +197,44 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return myCreatedProject;
   }
 
+  protected Project createProjectFromTemplate(@NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+    return createProject(step -> {
+      var npwStep = getNewProjectWizardStep(step, UIBundle.message("label.project.wizard.project.generator.name"));
+      if (npwStep != null) {
+        adjuster.accept(npwStep);
+      }
+    });
+  }
+
+  protected Module createModule(@NotNull Project project, @NotNull Consumer<? super Step> adjuster) throws IOException {
+    createWizard(null);
+    runWizard(adjuster);
+    myWizard.disposeIfNeeded();
+    return createModuleFromWizard(project);
+  }
+
+  protected Module createModuleFromTemplate(@NotNull Project project, @NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+    return createModuleFromTemplate(UIBundle.message("label.project.wizard.module.generator.name"), null, project, step -> {
+      var npwStep = getNewProjectWizardStep(step, UIBundle.message("label.project.wizard.module.generator.name"));
+      if (npwStep != null) {
+        adjuster.accept(npwStep);
+      }
+    });
+  }
+
+  protected @Nullable NewProjectWizardStep getNewProjectWizardStep(@NotNull Step step, @NotNull String group) {
+    if (step instanceof ProjectTypeStep) {
+      var projectTypeStep = (ProjectTypeStep)step;
+      assertTrue(projectTypeStep.setSelectedTemplate(group, null));
+      var steps = myWizard.getSequence().getSelectedSteps();
+      assertEquals(steps.toString(), 1, steps.size());
+      var moduleWizardStep = projectTypeStep.getCustomStep();
+      assertInstanceOf(moduleWizardStep, NewProjectWizardStep.class);
+      return (NewProjectWizardStep)moduleWizardStep;
+    }
+    return null;
+  }
+
   protected T createWizard(Project project, File directory) {
     throw new RuntimeException();
   }
