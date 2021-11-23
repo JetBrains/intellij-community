@@ -93,7 +93,7 @@ public final class TestScaleHelper {
   }
 
   public static void assumeHeadful() {
-    Assume.assumeFalse("should not be headless", Boolean.getBoolean("java.awt.headless"));
+    Assume.assumeFalse("should not be headless", GraphicsEnvironment.isHeadless());
   }
 
   public static Graphics2D createGraphics(double scale) {

@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.sanitizeFileName
@@ -291,6 +290,31 @@ class EdtRule : TestRule {
   }
 }
 
+/**
+ * Allows to execute the test in non-headless mode (i.e., System.getProperty("java.awt.headless") == false in this test) and restores the headless property afterwards.
+ */
+class NonHeadlessRule : TestRule {
+  override fun apply(base: Statement, description: Description): Statement {
+    return object : Statement() {
+      override fun evaluate() {
+        UITestUtil.runWithHeadlessProperty<RuntimeException>(false) { base.evaluate() }
+      }
+    }
+  }
+}
+/**
+ * Allows to execute the test in headless mode (i.e., System.getProperty("java.awt.headless") == true in this test) and restores the headless property afterwards.
+ */
+class HeadlessRule : TestRule {
+  override fun apply(base: Statement, description: Description): Statement {
+    return object : Statement() {
+      override fun evaluate() {
+        UITestUtil.runWithHeadlessProperty<RuntimeException>(true) { base.evaluate() }
+      }
+    }
+  }
+}
+
 class InitInspectionRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement = statement { runInInitMode { base.evaluate() } }
 }
@@ -536,13 +560,17 @@ class DisposableRule : ExternalResource(), AfterEachCallback {
 }
 
 class SystemPropertyRule(private val name: String, private val value: String) : ExternalResource() {
-  private var oldValue: String? = null
-
-  public override fun before() {
-    oldValue = System.setProperty(name, value)
-  }
-
-  public override fun after() {
-    SystemProperties.setProperty(name, oldValue)
+  override fun apply(base: Statement, description: Description): Statement {
+    return object: Statement() {
+      override fun evaluate() {
+        before()
+        try {
+          PlatformTestUtil.withSystemProperty<RuntimeException>(name, value) { base.evaluate() }
+        }
+        finally {
+          after()
+        }
+      }
+    }
   }
 }
