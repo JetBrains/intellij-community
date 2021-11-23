@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -192,11 +192,17 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @After
   public void after() throws Exception {
     RunAll.runAll(
-      () -> changeListManager.waitEverythingDoneInTestMode(),
+      this::tearDownChangeListManager,
       () -> runInEdtAndWait(this::tearDownProject),
       this::tearDownTempDirectoryFixture,
       () -> resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY)
     );
+  }
+
+  private void tearDownChangeListManager() {
+    if (changeListManager != null) {
+      changeListManager.waitEverythingDoneInTestMode();
+    }
   }
 
   private void tearDownTempDirectoryFixture() throws Exception {
