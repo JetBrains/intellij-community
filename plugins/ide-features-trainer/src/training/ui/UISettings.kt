@@ -22,6 +22,8 @@ internal class UISettings {
   val southInset: Int by lazy { JBUI.scale(24) }
   val eastInset: Int by lazy { JBUI.scale(24) }
 
+  val learnPanelSideOffset: Int by lazy { JBUI.scale(18) }
+
   val verticalModuleItemInset: Int by lazy { JBUI.scale(8) }
 
   //GAPS
@@ -72,7 +74,7 @@ internal class UISettings {
     get() = EmptyBorder(northInset, westInset, southInset, eastInset)
 
   val lessonHeaderBorder: Border
-    get() = EmptyBorder(0, JBUI.scale(14), 0, JBUI.scale(14))
+    get() = EmptyBorder(0, JBUI.scale(14) + learnPanelSideOffset, 0, JBUI.scale(14) + learnPanelSideOffset)
 
   val checkmarkShiftBorder: Border
     get() = EmptyBorder(0, checkIndent, 0, 0)
