@@ -95,6 +95,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
     project.messageBus.connect().subscribe(BookmarksListener.TOPIC, listener)
     StartupManager.getInstance(project).runAfterOpened {
+      LOG.info("no state loaded for new bookmarks");
       com.intellij.ide.bookmarks.BookmarkManager.getInstance(project).allBookmarks.forEach { listener.bookmarkAdded(it) }
       invoker.invokeLater { noStateLoaded(FavoritesManager.getInstance(project)) }
     }
