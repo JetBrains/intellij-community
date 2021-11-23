@@ -525,7 +525,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
 
     if (notification.hasTitle()) {
       val titleContent = NotificationsUtil.buildHtml(notification, null, false, null, null)
-      val title = JBLabel(titleContent)
+      val title = JBLabel(titleContent).setCopyable(true)
 
       if (notification.isSuggestionType) {
         centerPanel.add(title)
@@ -681,7 +681,6 @@ private class NotificationComponent(val notification: Notification, timeComponen
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     component.contentType = "text/html"
     component.isOpaque = false
-    component.isFocusable = false
     component.border = null
 
     val kit = UIUtil.JBWordWrapHtmlEditorKit()
