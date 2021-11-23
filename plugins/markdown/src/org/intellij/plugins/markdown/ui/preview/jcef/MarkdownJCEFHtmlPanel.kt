@@ -18,6 +18,8 @@ import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import org.intellij.plugins.markdown.ui.preview.jcef.impl.FileSchemeResourcesProcessor
+import org.intellij.plugins.markdown.ui.preview.jcef.impl.IncrementalDOMBuilder
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.JcefBrowserPipeImpl
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -29,6 +31,7 @@ class MarkdownJCEFHtmlPanel(
   constructor(): this(null, null)
 
   private val pageBaseName = "markdown-preview-index-${hashCode()}.html"
+  private val fileSchemeResourcesProcessor = FileSchemeResourcesProcessor()
   private val resourceProvider = MyAggregatingResourceProvider()
   private val browserPipe = JcefBrowserPipeImpl(
     this,
@@ -98,8 +101,8 @@ class MarkdownJCEFHtmlPanel(
   init {
     Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
     Disposer.register(this, browserPipe)
-    val resourceProviderRegistration = PreviewStaticServer.instance.registerResourceProvider(resourceProvider)
-    Disposer.register(this, resourceProviderRegistration)
+    Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(resourceProvider))
+    Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(fileSchemeResourcesProcessor))
     jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser)
     browserPipe.subscribe(JcefBrowserPipeImpl.WINDOW_READY_EVENT) {
       delayedContent?.let {
@@ -128,6 +131,7 @@ class MarkdownJCEFHtmlPanel(
           const action = () => {
             console.time("incremental-dom-patch");
             const render = $previousRenderClosure;
+            // noinspection JSCheckFunctionSignatures
             IncrementalDOM.patch(document.body, () => render());
             $scrollCode
             if (IncrementalDOM.notifications.afterPatchListeners) {
@@ -149,7 +153,8 @@ class MarkdownJCEFHtmlPanel(
 
   override fun setHtml(html: String, initialScrollOffset: Int, documentPath: Path?) {
     val basePath = documentPath?.parent
-    val builder = IncrementalDOMBuilder(html, basePath)
+    fileSchemeResourcesProcessor.clear()
+    val builder = IncrementalDOMBuilder(html, basePath, fileSchemeResourcesProcessor)
     updateDom(builder.generateRenderClosure(), initialScrollOffset)
     firstUpdate = false
   }

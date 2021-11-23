@@ -1,19 +1,26 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.ui.preview.jcef
+package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.Urls
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Comment
 import org.jsoup.nodes.DataNode
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
+import java.net.URI
+import java.net.URISyntaxException
 import java.net.URLEncoder
 import java.nio.file.Path
-import java.nio.file.Paths
 
-internal class IncrementalDOMBuilder(html: String, private val basePath: Path? = null) {
+internal class IncrementalDOMBuilder(
+  html: String,
+  private val basePath: Path?,
+  private val fileSchemeResourceProcessor: FileSchemeResourceProcessingStrategy? = null
+) {
+  fun interface FileSchemeResourceProcessingStrategy {
+    fun processFileSchemeResource(basePath: Path, originalUri: URI): String?
+  }
+
   private val document = Jsoup.parse(html)
   private val builder = StringBuilder()
 
@@ -78,9 +85,10 @@ internal class IncrementalDOMBuilder(html: String, private val basePath: Path? =
     with(builder) {
       // It seems like CefBrowser::executeJavaScript() is not supporting a lot of unicode
       // symbols (like emojis) in the code string (probably a limitation of CefString).
-      // To preserve this symbols we are encoding our strings before sending them to JCEF,
-      // and decoding them before executing the code. For our use case it's enough to encode
-      // just the actual text content that will be displayed (only IncrementalDOM.text() calls).
+      // To preserve these symbols, we are encoding our strings before sending them to JCEF,
+      // and decoding them before executing the code.
+      // For our use case it's enough to encode just the actual text content that
+      // will be displayed (only IncrementalDOM.text() calls).
       append("t(`")
       append(encodeArgument(getter.invoke()))
       append("`);")
@@ -88,21 +96,26 @@ internal class IncrementalDOMBuilder(html: String, private val basePath: Path? =
   }
 
   private fun preprocessNode(node: Node): Node {
-    if (node.nodeName() != "img" ||
-        node.hasAttr(IntelliJImageGeneratingProvider.generatedAttributeName) ||
-        node.hasAttr(IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName))
-    {
+    if (node.nodeName() != "img" || fileSchemeResourceProcessor == null ||
+        node.hasAttr(IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName)) {
       return node
     }
-    val url = Urls.parse(node.attr("src"), asLocalIfNoScheme = true) ?: return node
-    if (url.scheme == null || url.scheme == "file") {
-      if (!FileUtil.isAbsolute(url.path)) {
-        val fixedPath = FileUtil.toSystemIndependentName(Paths.get(basePath.toString(), url.path).toString())
-        val newUrl = Urls.newUrl("file", url.authority, fixedPath, url.parameters).toExternalForm()
-        node.attr("src", newUrl)
-      }
+    val originalUrlValue = node.attr("src")
+    val uri = createUri(originalUrlValue) ?: return node
+    if ((uri.scheme == null || uri.scheme == "file") && basePath != null) {
+      val processed = fileSchemeResourceProcessor.processFileSchemeResource(basePath, uri) ?: return node
+      node.attr("data-original-src", originalUrlValue)
+      node.attr("src", processed)
     }
     return node
+  }
+
+  private fun createUri(string: String): URI? {
+    try {
+      return URI(string)
+    } catch (exception: URISyntaxException) {
+      return null
+    }
   }
 
   private fun traverse(node: Node) {

@@ -9,7 +9,6 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
-import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import java.io.File
 import java.io.IOException
 
@@ -32,7 +31,7 @@ internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePlugin
     cacheDiagram(key, raw)
     collector?.addAliveCachedFile(this, key)
 
-    return "<img ${IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName}=\"true\" src=\"${key.toURI()}\"/>"
+    return "<img src=\"${key.toURI()}\"/>"
   }
 
   override fun onLAFChanged() {}
