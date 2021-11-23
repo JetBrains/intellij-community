@@ -2,6 +2,12 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.util
 
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.ProgressManagerImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.UserDataHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -16,6 +22,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -25,10 +32,14 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.time.Duration
@@ -236,4 +247,68 @@ internal inline fun <reified T> Flow<T>.batchAtIntervals(duration: Duration) = c
             }
         }
     }
+}
+
+internal fun CoroutineScope.showBackgroundLoadingBar(
+    project: Project,
+    @Nls title: String,
+    @Nls upperMessage: String,
+    cancellable: Boolean = false,
+    isSafe: Boolean = true
+): BackgroundLoadingBarController {
+    val syncSignal = Mutex(true)
+    val upperMessageChannel = Channel<String>()
+    val lowerMessageChannel = Channel<String>()
+    val cancellationRequested = Channel<Unit>()
+    val externalScopeJob = coroutineContext.job
+    val progressManager = ProgressManager.getInstance()
+
+    progressManager.run(object : Task.Backgroundable(project, title, cancellable) {
+        override fun run(indicator: ProgressIndicator) {
+            if (isSafe && progressManager is ProgressManagerImpl && indicator is UserDataHolder) {
+                progressManager.markProgressSafe(indicator)
+            }
+            runBlocking {
+                upperMessageChannel.consumeAsFlow().onEach { indicator.text = it }.launchIn(this)
+                lowerMessageChannel.consumeAsFlow().onEach { indicator.text2 = it }.launchIn(this)
+                indicator.text = upperMessage // ??? why does it work?
+                val indicatorCancelledPollingJob = launch {
+                    while (true) {
+                        if (indicator.isCanceled) {
+                            cancellationRequested.send(Unit)
+                            break
+                        }
+                        delay(50)
+                    }
+                }
+                val internalJob = launch {
+                    syncSignal.lock()
+                    logWarn { "lock released" }
+                }
+                select<Unit> {
+                    internalJob.onJoin { }
+                    externalScopeJob.onJoin { internalJob.cancel() }
+                }
+                indicatorCancelledPollingJob.cancel()
+                upperMessageChannel.close()
+                lowerMessageChannel.close()
+            }
+        }
+    })
+    return BackgroundLoadingBarController(
+        syncSignal,
+        upperMessageChannel,
+        lowerMessageChannel,
+        cancellationRequested.consumeAsFlow()
+    )
+}
+
+internal class BackgroundLoadingBarController(
+    private val syncMutex: Mutex,
+    val upperMessageChannel: SendChannel<String>,
+    val lowerMessageChannel: SendChannel<String>,
+    val cancellationFlow: Flow<Unit>
+) {
+
+    fun clear() = runCatching { syncMutex.unlock() }.getOrElse { }
 }
