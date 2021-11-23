@@ -27,4 +27,11 @@ class BookmarkState {
 
   @get:XMap
   val attributes = mutableMapOf<String, String>()
+
+  override fun toString() = StringBuilder("BookmarkState").apply {
+    append(": provider=").append(provider)
+    append(", description=").append(description)
+    append(", type=").append(type)
+    attributes.forEach { append(", ").append(it.key).append("=").append(it.value) }
+  }.toString()
 }
