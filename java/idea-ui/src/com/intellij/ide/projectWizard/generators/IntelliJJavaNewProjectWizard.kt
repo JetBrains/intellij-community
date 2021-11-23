@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Paths
 
@@ -20,7 +21,14 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
         builder.contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
 
-        parent.context.projectJdk = sdk
+        if (parent.context.isCreatingNewProject) {
+          // New project with a single module: set project JDK
+          parent.context.projectJdk = sdk
+        } else {
+          // New module in an existing project: set module JDK
+          val sameSDK = ProjectRootManager.getInstance(project).projectSdk?.homePath == sdk?.homePath
+          builder.moduleJdk = if (sameSDK) null else sdk
+        }
 
         builder.commit(project)
       }
