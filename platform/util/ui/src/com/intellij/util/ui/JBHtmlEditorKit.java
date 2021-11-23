@@ -53,11 +53,6 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final StyleSheet ourCommonStyle;
   private static final StyleSheet ourNoGapsBetweenParagraphsStyle;
 
-  @Override
-  public Cursor getDefaultCursor() {
-    return null;
-  }
-
   private final StyleSheet myStyle = createStyleSheet();
   private final HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
@@ -112,6 +107,11 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
                                             StartupUiUtil.getDefaultHtmlKitCss()));
     style.addStyleSheet(ourCommonStyle);
     return style;
+  }
+
+  @Override
+  public Cursor getDefaultCursor() {
+    return null;
   }
 
   @Override
