@@ -35,8 +35,9 @@ import kotlin.io.path.isDirectory
  *   or if the confirmation wasn't shown because the project trust state was already known.
  */
 @ApiStatus.Internal
-fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectDir: Path): Boolean {
+fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boolean {
   return invokeAndWaitIfNeeded {
+    val projectDir = if (projectFileOrDir.isDirectory()) projectFileOrDir else projectFileOrDir.parent
     val trustedPaths = TrustedPaths.getInstance()
     val trustedState = trustedPaths.getProjectPathTrustedState(projectDir)
     if (trustedState == ThreeState.UNSURE) {
@@ -51,8 +52,8 @@ fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectDir: Path): Boolean {
   }
 }
 
-private fun confirmOpeningUntrustedProject(projectFileOrDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
-  projectFileOrDir,
+private fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
+  projectDir,
   IdeBundle.message("untrusted.project.open.dialog.title"),
   IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
   IdeBundle.message("untrusted.project.dialog.trust.button"),
@@ -61,14 +62,13 @@ private fun confirmOpeningUntrustedProject(projectFileOrDir: Path): OpenUntruste
 )
 
 private fun confirmOpeningUntrustedProject(
-  projectFileOrDir: Path,
+  projectDir: Path,
   @NlsContexts.DialogTitle title: String,
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String,
   @NlsContexts.Button cancelButtonText: String
 ): OpenUntrustedProjectChoice = invokeAndWaitIfNeeded {
-  val projectDir = if (projectFileOrDir.isDirectory()) projectFileOrDir else projectFileOrDir.parent
   if (isProjectImplicitlyTrusted(projectDir)) {
     return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.TRUST_AND_OPEN
   }
