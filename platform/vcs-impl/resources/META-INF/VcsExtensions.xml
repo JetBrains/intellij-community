@@ -314,6 +314,8 @@
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.openapi.vcs.changes.ShowDiffInEditorTooltipInstaller"/>
     <registryKey key="patch.context.line.count" defaultValue="3" description="Number of context lines for creating patches"/>
 
+    <diff.DiffExtension implementation="com.intellij.vcs.commit.CommitSessionCollector$MyDiffExtension"/>
+
     <advancedSetting id="vcs.annotations.preload" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.process.ignored" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.commit.tool.window" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
@@ -333,6 +335,8 @@
     <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$TrustListener"
               topic="com.intellij.ide.impl.TrustStateListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="com.intellij.vcs.commit.CommitSessionCollector$MyAnActionListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
 
   <projectListeners>
@@ -350,6 +354,8 @@
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
     <listener class="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorFactory$Listener"
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
+    <listener class="com.intellij.vcs.commit.CommitSessionCollector$MyToolWindowManagerListener"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </projectListeners>
 </idea-plugin>
 

@@ -401,9 +401,11 @@ public class ChangesBrowser extends JPanel implements DataProvider, TypeSafeData
 
       if (state) {
         myViewer.includeChange(change);
+        myViewer.logInclusionToggleEvents(false, e);
       }
       else {
         myViewer.excludeChange(change);
+        myViewer.logInclusionToggleEvents(true, e);
       }
     }
   }
