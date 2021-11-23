@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.CommonBundle;
@@ -70,7 +70,6 @@ public final class LegalNoticeDialog extends DialogWrapper {
   }
 
   private final Builder myBuilder;
-  private JComponent myFocusedComponent;
 
   private LegalNoticeDialog(Builder builder) {
     super(builder.project, builder.parent, true, IdeModalityType.PROJECT);
@@ -93,7 +92,6 @@ public final class LegalNoticeDialog extends DialogWrapper {
     messageArea.setPreferredSize(JBUI.size(500, 100));
     messageArea.setBorder(new CompoundBorder(BorderFactory.createLineBorder(Gray._200), JBUI.Borders.empty(3)));
     messageArea.setText(UIUtil.toHtml(myBuilder.message));
-    myFocusedComponent = messageArea;
 
     JPanel panel = new JPanel(new BorderLayout(JBUIScale.scale(3), 0));
     panel.add(iconPanel, BorderLayout.WEST);
@@ -110,10 +108,5 @@ public final class LegalNoticeDialog extends DialogWrapper {
     }
     actions.add(getCancelAction());
     return actions.toArray(new Action[0]);
-  }
-
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myFocusedComponent;
   }
 }
