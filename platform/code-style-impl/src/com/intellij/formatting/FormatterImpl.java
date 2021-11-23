@@ -462,6 +462,7 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
+  @Nullable
   public List<String> getLineIndents(final FormattingModel model,
                                      final CodeStyleSettings settings,
                                      final CommonCodeStyleSettings.IndentOptions indentOptions) {
