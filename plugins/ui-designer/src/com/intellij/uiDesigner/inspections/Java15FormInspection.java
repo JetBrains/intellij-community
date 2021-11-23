@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.inspections;
 
-import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -45,8 +44,8 @@ public class Java15FormInspection extends BaseFormInspection {
       final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, prop.getName(), false, true);
       if (getter == null) continue;
       final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (Java15APIUsageInspection.getLastIncompatibleLanguageLevel(getter, languageLevel) != null) {
-        registerError(component, collector, prop, "@since " + Java15APIUsageInspection.getShortName(languageLevel));
+      if (LanguageLevelUtil.getLastIncompatibleLanguageLevel(getter, languageLevel) != null) {
+        registerError(component, collector, prop, "@since " + LanguageLevelUtil.getJdkName(languageLevel));
       }
     }
   }
