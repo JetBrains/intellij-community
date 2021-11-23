@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.util.compareTo
@@ -57,7 +56,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     override fun setUp() {
         if (kotlinPluginVersionString == masterKotlinPluginVersion && IS_UNDER_TEAMCITY) {
             assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
-        } else if  (kotlinPluginVersionString == masterKotlinPluginVersion) {
+        } else if (kotlinPluginVersionString == masterKotlinPluginVersion) {
             assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
         }
         super.setUp()
@@ -73,7 +72,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             val classLoaderKey = "java.system.class.loader"
             System.getProperty(classLoaderKey)?.let { configuredClassLoader ->
                 System.clearProperty(classLoaderKey)
-                Disposer.register (testRootDisposable) {
+                Disposer.register(testRootDisposable) {
                     System.setProperty(classLoaderKey, configuredClassLoader)
                 }
             }
@@ -138,18 +137,13 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         return repositories.joinToString("\n")
     }
 
-    override fun configureByFiles(properties: Map<String, String>?, subPath: String?): List<VirtualFile> {
-        val unitedProperties = HashMap(properties ?: emptyMap())
-
-        unitedProperties.putAll(androidProperties())
-
-        unitedProperties["kotlin_plugin_version"] = kotlinPluginVersionString
-
-        unitedProperties["kotlin_plugin_repositories"] = repositories(false)
-        unitedProperties["kts_kotlin_plugin_repositories"] = repositories(true)
-        return super.configureByFiles(unitedProperties, subPath)
-    }
-
+    override val defaultProperties: Map<String, String>
+        get() = super.defaultProperties.toMutableMap().apply {
+            putAll(androidProperties())
+            put("kotlin_plugin_version", kotlinPluginVersionString)
+            put("kotlin_plugin_repositories", repositories(false))
+            put("kts_kotlin_plugin_repositories", repositories(true))
+        }
 
     protected open fun checkProjectStructure(
         exhaustiveModuleList: Boolean = true,
