@@ -119,7 +119,7 @@ public final class VcsLogContentUtil {
                                                     @NotNull VcsLogManager logManager,
                                                     @NotNull TabGroupId tabGroupId,
                                                     @NotNull Function<U, @NlsContexts.TabTitle String> tabDisplayName,
-                                                    @NotNull VcsLogManager.VcsLogUiFactory<U> factory,
+                                                    @NotNull VcsLogManager.VcsLogUiFactory<? extends U> factory,
                                                     boolean focus) {
     U logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW);
 
