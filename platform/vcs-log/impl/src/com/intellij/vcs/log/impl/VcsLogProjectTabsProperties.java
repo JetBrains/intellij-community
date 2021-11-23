@@ -44,8 +44,8 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
     return new MyVcsLogUiPropertiesImpl(id);
   }
 
-  public void addTab(@NotNull String tabId, @NotNull VcsLogManager.LogWindowKind kind) {
-    myState.OPEN_GENERIC_TABS.put(tabId, kind);
+  public void addTab(@NotNull String tabId, @NotNull VcsLogTabLocation location) {
+    myState.OPEN_GENERIC_TABS.put(tabId, location);
   }
 
   public void removeTab(@NotNull String tabId) {
@@ -57,7 +57,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   }
 
   @NotNull
-  public Map<String, VcsLogManager.LogWindowKind> getTabs() {
+  public Map<String, VcsLogTabLocation> getTabs() {
     return myState.OPEN_GENERIC_TABS;
   }
 
@@ -88,7 +88,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
 
   public static class State {
     public Map<String, MyState> TAB_STATES = new TreeMap<>();
-    public LinkedHashMap<String, VcsLogManager.LogWindowKind> OPEN_GENERIC_TABS = new LinkedHashMap<>();
+    public LinkedHashMap<String, VcsLogTabLocation> OPEN_GENERIC_TABS = new LinkedHashMap<>();
     public Map<String, List<RecentGroup>> RECENT_FILTERS = new HashMap<>();
   }
 

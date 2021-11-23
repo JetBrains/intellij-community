@@ -125,13 +125,13 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public MainVcsLogUi createLogUi(@NotNull String logId, @NotNull LogWindowKind kind) {
-    return createLogUi(getMainLogUiFactory(logId, null), kind, true);
+  public MainVcsLogUi createLogUi(@NotNull String logId, @NotNull VcsLogTabLocation location) {
+    return createLogUi(getMainLogUiFactory(logId, null), location, true);
   }
 
   @NotNull
-  MainVcsLogUi createLogUi(@NotNull String logId, @NotNull LogWindowKind kind, boolean isClosedOnDispose) {
-    return createLogUi(getMainLogUiFactory(logId, null), kind, isClosedOnDispose);
+  MainVcsLogUi createLogUi(@NotNull String logId, @NotNull VcsLogTabLocation location, boolean isClosedOnDispose) {
+    return createLogUi(getMainLogUiFactory(logId, null), location, isClosedOnDispose);
   }
 
   @NotNull
@@ -153,13 +153,13 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, @NotNull LogWindowKind kind) {
-    return createLogUi(factory, kind, true);
+  public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, @NotNull VcsLogTabLocation location) {
+    return createLogUi(factory, location, true);
   }
 
   @NotNull
   private <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
-                                               @NotNull LogWindowKind kind,
+                                               @NotNull VcsLogTabLocation location,
                                                boolean isClosedOnDispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) {
@@ -168,7 +168,7 @@ public class VcsLogManager implements Disposable {
     }
 
     U ui = factory.createLogUi(myProject, myLogData);
-    Disposer.register(ui, getTabsWatcher().addTabToWatch(ui, kind, isClosedOnDispose));
+    Disposer.register(ui, getTabsWatcher().addTabToWatch(ui, location, isClosedOnDispose));
 
     return ui;
   }
@@ -179,8 +179,8 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public List<? extends VcsLogUi> getVisibleLogUis(@NotNull LogWindowKind kind) {
-    return getTabsWatcher().getVisibleTabs(kind);
+  public List<? extends VcsLogUi> getVisibleLogUis(@NotNull VcsLogTabLocation location) {
+    return getTabsWatcher().getVisibleTabs(location);
   }
 
   /*
@@ -361,11 +361,5 @@ public class VcsLogManager implements Disposable {
                                               @Nullable VcsLogFilterCollection filters) {
       return new VcsLogUiImpl(logId, logData, colorManager, properties, refresher, filters);
     }
-  }
-
-  public enum LogWindowKind {
-    TOOL_WINDOW,
-    EDITOR,
-    STANDALONE
   }
 }

@@ -94,7 +94,7 @@ object VcsLogNavigationUtil {
       }
     }
 
-    val selectedUis = manager.getVisibleLogUis(VcsLogManager.LogWindowKind.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>()
+    val selectedUis = manager.getVisibleLogUis(VcsLogWindowKind.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>()
     selectedUis.find { ui -> predicate(ui) && ui.showCommit(hash, root, requestFocus) }?.let { return it }
 
     val mainLogUi = VcsLogContentProvider.getInstance(project)!!.waitMainUiCreation().await()
@@ -107,7 +107,7 @@ object VcsLogNavigationUtil {
     }
 
     val newUi = VcsProjectLog.getInstance(project).openLogTab(VcsLogFilterObject.EMPTY_COLLECTION,
-                                                              VcsLogManager.LogWindowKind.TOOL_WINDOW) ?: return null
+                                                              VcsLogWindowKind.TOOL_WINDOW) ?: return null
     if (newUi.showCommit(hash, root, requestFocus)) return newUi
     return null
   }

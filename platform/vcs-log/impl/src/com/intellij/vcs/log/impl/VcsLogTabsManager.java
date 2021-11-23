@@ -50,7 +50,7 @@ public class VcsLogTabsManager {
       @Override
       public void logCreated(@NotNull VcsLogManager manager) {
         myIsLogDisposing = false;
-        Map<String, VcsLogManager.LogWindowKind> savedTabs = myUiProperties.getTabs();
+        Map<String, VcsLogTabLocation> savedTabs = myUiProperties.getTabs();
         ApplicationManager.getApplication().invokeLater(() -> {
           if (LOG.assertTrue(!Disposer.isDisposed(manager), "Attempting to open tabs on disposed VcsLogManager")) {
             reopenLogTabs(manager, savedTabs);
@@ -66,16 +66,16 @@ public class VcsLogTabsManager {
   }
 
   @RequiresEdt
-  private void reopenLogTabs(@NotNull VcsLogManager manager, @NotNull Map<String, VcsLogManager.LogWindowKind> tabs) {
-    tabs.forEach((id, kind) -> {
-      if (kind == VcsLogManager.LogWindowKind.EDITOR) {
+  private void reopenLogTabs(@NotNull VcsLogManager manager, @NotNull Map<String, VcsLogTabLocation> tabs) {
+    tabs.forEach((id, location) -> {
+      if (location == VcsLogTabLocation.EDITOR) {
         openEditorLogTab(id, false, null);
       }
-      else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
+      else if (location == VcsLogTabLocation.TOOL_WINDOW) {
         openToolWindowLogTab(manager, id, false, null);
       }
       else {
-        LOG.warn("Unsupported log tab kind " + kind);
+        LOG.warn("Unsupported log tab location " + location);
       }
     });
   }
@@ -88,14 +88,14 @@ public class VcsLogTabsManager {
 
   @NotNull
   MainVcsLogUi openAnotherLogTab(@NotNull VcsLogManager manager, @NotNull VcsLogFilterCollection filters,
-                                 @NotNull VcsLogManager.LogWindowKind kind) {
+                                 @NotNull VcsLogTabLocation location) {
     String tabId = generateTabId(manager);
     myUiProperties.resetState(tabId);
-    if (kind == VcsLogManager.LogWindowKind.EDITOR) {
+    if (location == VcsLogTabLocation.EDITOR) {
       FileEditor[] editors = openEditorLogTab(tabId, true, filters);
       return Objects.requireNonNull(VcsLogEditorUtil.findVcsLogUi(editors, MainVcsLogUi.class));
     }
-    else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
+    else if (location == VcsLogTabLocation.TOOL_WINDOW) {
       return openToolWindowLogTab(manager, tabId, true, filters);
     }
     throw new UnsupportedOperationException("Only log in editor or tool window is supported");
@@ -112,7 +112,7 @@ public class VcsLogTabsManager {
                                             boolean focus,
                                             @Nullable VcsLogFilterCollection filters) {
     VcsLogManager.VcsLogUiFactory<MainVcsLogUi> factory = getPersistentVcsLogUiFactory(manager, tabId,
-                                                                                       VcsLogManager.LogWindowKind.TOOL_WINDOW,
+                                                                                       VcsLogTabLocation.TOOL_WINDOW,
                                                                                        filters);
     MainVcsLogUi ui = VcsLogContentUtil.openLogTab(myProject, manager, TAB_GROUP_ID, u -> generateShortDisplayName(u), factory, focus);
     ui.getFilterUi().addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
@@ -123,9 +123,9 @@ public class VcsLogTabsManager {
   @ApiStatus.Internal
   public VcsLogManager.VcsLogUiFactory<MainVcsLogUi> getPersistentVcsLogUiFactory(@NotNull VcsLogManager manager,
                                                                                   @NotNull String tabId,
-                                                                                  @NotNull VcsLogManager.LogWindowKind kind,
+                                                                                  @NotNull VcsLogTabLocation location,
                                                                                   @Nullable VcsLogFilterCollection filters) {
-    return new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters), kind);
+    return new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters), location);
   }
 
   @NotNull
@@ -164,18 +164,18 @@ public class VcsLogTabsManager {
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
     @NotNull private final VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> myFactory;
-    @NotNull private final VcsLogManager.LogWindowKind myLogWindowKind;
+    @NotNull private final VcsLogTabLocation myLogTabLocation;
 
     PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory,
-                              @NotNull VcsLogManager.LogWindowKind kind) {
+                              @NotNull VcsLogTabLocation location) {
       myFactory = factory;
-      myLogWindowKind = kind;
+      myLogTabLocation = location;
     }
 
     @Override
     public MainVcsLogUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUi ui = myFactory.createLogUi(project, logData);
-      myUiProperties.addTab(ui.getId(), myLogWindowKind);
+      myUiProperties.addTab(ui.getId(), myLogTabLocation);
       Disposer.register(ui, () -> {
         if (myProject.isDisposed() || myIsLogDisposing) return; // need to restore the tab after project/log is recreated
 

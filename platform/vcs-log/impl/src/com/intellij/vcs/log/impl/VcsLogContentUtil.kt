@@ -78,7 +78,7 @@ object VcsLogContentUtil {
                                   tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
                                   factory: VcsLogUiFactory<out U>,
                                   focus: Boolean): U {
-    val logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
+    val logUi = logManager.createLogUi(factory, VcsLogTabLocation.TOOL_WINDOW)
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
                      ?: throw IllegalStateException("Could not find tool window for id ${ChangesViewContentManager.TOOLWINDOW_ID}")
     ContentUtilEx.addTabbedContent(toolWindow.contentManager, tabGroupId,
