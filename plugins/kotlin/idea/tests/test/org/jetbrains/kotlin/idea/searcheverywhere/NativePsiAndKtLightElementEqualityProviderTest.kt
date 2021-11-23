@@ -24,18 +24,6 @@ import org.jetbrains.kotlin.utils.keysToMap
  * @see KtSearchEverywhereEqualityProvider
  */
 class NativePsiAndKtLightElementEqualityProviderTest : LightJavaCodeInsightFixtureTestCase() {
-    fun `test KtLightElement should be skipped`() {
-        val file = myFixture.configureByText("Foo.kt", "class Fo<caret>o")
-        val klass = file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>()!!
-        val ulc = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass)!!
-
-        val actualAction = KtSearchEverywhereEqualityProvider().compareItems(
-            newItem = SearchEverywhereFoundElementInfo(ulc, 0, null),
-            alreadyFoundItems = listOf(SearchEverywhereFoundElementInfo(klass, 0, null))
-        )
-        assertEquals(Skip, actualAction)
-    }
-
     fun `test only class presented`() {
         val file = myFixture.configureByText("MyKotlinClassWithStrangeName.kt", "class MyKotlinClassWithStrangeName")
         val klass = file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>()!!
@@ -89,18 +77,5 @@ class NativePsiAndKtLightElementEqualityProviderTest : LightJavaCodeInsightFixtu
         } finally {
             Disposer.dispose(disposable)
         }
-    }
-
-    fun `test KtLightElement should be replaced`() {
-        val file = myFixture.configureByText("Foo.kt", "class Fo<caret>o")
-        val klass = file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>()!!
-        val ulc = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass)!!
-
-        val ulcElementInfo = SearchEverywhereFoundElementInfo(ulc, 0, null)
-        val actualAction = KtSearchEverywhereEqualityProvider().compareItems(
-            newItem = SearchEverywhereFoundElementInfo(klass, 0, null),
-            alreadyFoundItems = listOf(ulcElementInfo)
-        )
-        assertEquals(Replace(ulcElementInfo), actualAction)
     }
 }
