@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -32,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.util.containers.ContainerUtil.find;
 import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
@@ -115,45 +115,42 @@ public class SvnChangeProvider implements ChangeProvider {
   private void processCopiedFile(@NotNull SvnChangedFile copiedFile,
                                  @NotNull SvnChangeProviderContext context,
                                  @Nullable VcsDirtyScope dirtyScope) {
-    boolean foundRename = false;
-    final Status copiedStatus = copiedFile.getStatus();
     Url copyFromURL = Objects.requireNonNull(copiedFile.getCopyFromURL());
-    final Set<SvnChangedFile> deletedToDelete = new HashSet<>();
+    SvnChangedFile movedFromFile = find(context.getDeletedFiles(), it -> copyFromURL.equals(it.getStatus().getUrl()));
 
-    for (SvnChangedFile deletedFile : context.getDeletedFiles()) {
-      final Status deletedStatus = deletedFile.getStatus();
-      if (Comparing.equal(copyFromURL, deletedStatus.getUrl())) {
-        final String clName = SvnUtil.getChangelistName(copiedFile.getStatus());
-        applyMovedChange(context, copiedFile.getFilePath(), dirtyScope, deletedToDelete, deletedFile, copiedStatus, clName);
-        for (SvnChangedFile deletedChild : context.getDeletedFiles()) {
-          final Status childStatus = deletedChild.getStatus();
-          final Url childUrl = childStatus.getUrl();
-          if (childUrl == null) {
-            continue;
-          }
-          if (isAncestor(copyFromURL, childUrl)) {
-            String relativePath = getRelativeUrl(copyFromURL, childUrl);
-            File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
-            FilePath newFilePath = VcsUtil.getFilePath(newPath);
-            if (!context.isDeleted(newFilePath)) {
-              applyMovedChange(context, newFilePath, dirtyScope, deletedToDelete, deletedChild, context.getTreeConflictStatus(newPath),
-                               clName);
-            }
+    if (movedFromFile != null) {
+      Set<SvnChangedFile> movedFiles = new HashSet<>();
+      String changeListName = SvnUtil.getChangelistName(copiedFile.getStatus());
+
+      applyMovedChange(context, copiedFile.getFilePath(), dirtyScope, movedFiles, movedFromFile, copiedFile.getStatus(), changeListName);
+
+      for (SvnChangedFile deletedChild : context.getDeletedFiles()) {
+        Url childUrl = deletedChild.getStatus().getUrl();
+        if (childUrl == null) continue;
+
+        if (isAncestor(copyFromURL, childUrl)) {
+          String relativePath = getRelativeUrl(copyFromURL, childUrl);
+          File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
+          FilePath newFilePath = VcsUtil.getFilePath(newPath);
+
+          if (!context.isDeleted(newFilePath)) {
+            applyMovedChange(context, newFilePath, dirtyScope, movedFiles, deletedChild, context.getTreeConflictStatus(newPath),
+                             changeListName);
           }
         }
-        foundRename = true;
-        break;
+      }
+
+      List<SvnChangedFile> deletedFiles = context.getDeletedFiles();
+      for (SvnChangedFile file : movedFiles) {
+        deletedFiles.remove(file);
       }
     }
 
-    final List<SvnChangedFile> deletedFiles = context.getDeletedFiles();
-    for (SvnChangedFile file : deletedToDelete) {
-      deletedFiles.remove(file);
-    }
+    boolean foundRename = movedFromFile != null;
 
     // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
     // by building a relative url
-    if (!foundRename && copiedStatus.getUrl() != null) {
+    if (!foundRename && copiedFile.getStatus().getUrl() != null) {
       File wcPath = myVcs.getSvnFileUrlMapping().getLocalPath(copyFromURL);
 
       if (wcPath != null) {
@@ -169,7 +166,8 @@ public class SvnChangeProvider implements ChangeProvider {
           FilePath filePath = VcsUtil.getFilePath(wcPath, status.isDirectory());
           SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
           ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
-          context.getBuilder().processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
+
+          context.getBuilder().processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedFile.getStatus(), status),
                                                    SvnUtil.getChangelistName(status), SvnVcs.getKey());
           foundRename = true;
         }
@@ -177,16 +175,15 @@ public class SvnChangeProvider implements ChangeProvider {
     }
 
     if (!foundRename) {
-      // for debug
       LOG.info("Rename not found for " + copiedFile.getFilePath().getPresentableUrl());
-      context.processStatus(copiedFile.getFilePath(), copiedStatus);
+      context.processStatus(copiedFile.getFilePath(), copiedFile.getStatus());
     }
   }
 
   private void applyMovedChange(@NotNull SvnChangeProviderContext context,
                                 @NotNull FilePath oldPath,
                                 @Nullable final VcsDirtyScope dirtyScope,
-                                @NotNull Set<SvnChangedFile> deletedToDelete,
+                                @NotNull Set<SvnChangedFile> movedFiles,
                                 @NotNull SvnChangedFile deletedFile,
                                 @Nullable Status copiedStatus,
                                 @Nullable String clName) {
@@ -199,7 +196,7 @@ public class SvnChangeProvider implements ChangeProvider {
     if (isUnder) {
       context.getBuilder().removeRegisteredChangeFor(oldPath);
       context.getBuilder().processChangeInList(change, clName, SvnVcs.getKey());
-      deletedToDelete.add(deletedFile);
+      movedFiles.add(deletedFile);
     }
   }
 
