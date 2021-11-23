@@ -214,6 +214,8 @@
     <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
                         serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
 
+    <applicationService serviceInterface="com.intellij.navigation.NavigationService"
+                        serviceImplementation="com.intellij.navigation.impl.NavigationServiceImpl"/>
     <applicationService serviceInterface="com.intellij.ide.util.PsiNavigationSupport"
                         serviceImplementation="com.intellij.ide.util.PsiNavigationSupportImpl"/>
 
