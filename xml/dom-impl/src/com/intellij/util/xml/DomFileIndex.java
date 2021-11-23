@@ -18,6 +18,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Use {@link DomService#getDomFileCandidates}.
+ */
 @ApiStatus.Internal
 public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomIndexKey> {
   private static final ID<DomIndexKey, Void> INDEX_ID = ID.create("DomFileIndex");
