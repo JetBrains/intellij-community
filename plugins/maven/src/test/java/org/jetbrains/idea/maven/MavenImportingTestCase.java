@@ -471,6 +471,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     MavenResolvedContext resolvedContext = flow.resolveDependencies(readContext);
     flow.commitToWorkspaceModel(resolvedContext);
     myProjectsTree = readContext.getProjectsTree();
+    myProjectsManager.initForTests();
 
   }
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError,
