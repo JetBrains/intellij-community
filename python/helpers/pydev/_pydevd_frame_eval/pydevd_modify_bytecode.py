@@ -48,6 +48,14 @@ def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_
 
 
 def _modify_new_lines(code_to_modify, all_inserted_code):
+    if code_to_modify.co_firstlineno == 1 and len(all_inserted_code) > 0 \
+            and all_inserted_code[0].offset == 0 \
+            and code_to_modify.co_name == '<module>':
+        # There's a peculiarity here: if a breakpoint is added in the first line of
+        # a module, we can't replace the code because we require a line event to stop
+        # and the live event was already generated, so, fallback to tracing.
+        return None
+
     # Python 3.10 and above uses a different schema for encoding of line numbers.
     # See PEP 626 for the details.
     if IS_PY310_OR_GREATER:
@@ -126,14 +134,6 @@ def _make_lnotab(code_to_modify, all_inserted_code):
     """
     # There's a nice overview of co_lnotab in
     # https://github.com/python/cpython/blob/3.6/Objects/lnotab_notes.txt
-
-    if code_to_modify.co_firstlineno == 1 and len(all_inserted_code) > 0 and all_inserted_code[0].offset == 0 \
-            and code_to_modify.co_name == '<module>':
-        # There's a peculiarity here: if a breakpoint is added in the first line of a module, we
-        # can't replace the code because we require a line event to stop and the live event
-        # was already generated, so, fallback to tracing.
-        return None
-
     new_list = list(code_to_modify.co_lnotab)
     if not new_list:
         # Could happen on a lambda (in this case, a breakpoint in the lambda should fallback to
