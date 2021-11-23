@@ -74,10 +74,6 @@ class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.5.31+")
-    fun testCreateActualForJvmTestWithCustomPath2() = doMultiFileQuickFixTest()
-
-    @Test
-    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForNativeIOS() = doMultiFileQuickFixTest()
 
     @Test
