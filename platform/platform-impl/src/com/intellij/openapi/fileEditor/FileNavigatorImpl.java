@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.*;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.INativeFileType;
@@ -21,8 +22,23 @@ import static com.intellij.openapi.fileEditor.OpenFileDescriptor.unfoldCurrentLi
 
 public class FileNavigatorImpl implements FileNavigator {
   @Override
+  public boolean canNavigate(@NotNull OpenFileDescriptor descriptor) {
+    VirtualFile file = descriptor.getFile();
+    return file.isValid();
+  }
+
+  @Override
+  public boolean canNavigateToSource(@NotNull OpenFileDescriptor descriptor) {
+    VirtualFile file = descriptor.getFile();
+    if (!file.isValid()) return false;
+
+    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(descriptor.getProject(), file);
+    return providers.length > 0 || file.getFileType() instanceof INativeFileType;
+  }
+
+  @Override
   public void navigate(@NotNull OpenFileDescriptor descriptor, boolean requestFocus) {
-    if (!canNavigate(descriptor.getFile())) {
+    if (!canNavigate(descriptor)) {
       throw new IllegalStateException("target not valid");
     }
 
@@ -41,7 +57,7 @@ public class FileNavigatorImpl implements FileNavigator {
     if (type == null || !descriptor.getFile().isValid()) return false;
 
     if (type instanceof INativeFileType) {
-      return ((INativeFileType) type).openFileInAssociatedApplication(descriptor.getProject(), descriptor.getFile());
+      return ((INativeFileType)type).openFileInAssociatedApplication(descriptor.getProject(), descriptor.getFile());
     }
 
     return navigateInEditor(descriptor, requestFocus);
