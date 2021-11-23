@@ -9,7 +9,7 @@ import com.intellij.ui.UIBundle
 
 class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep>(parent, LanguageNewProjectWizard.EP_NAME),
-  NewProjectWizardLanguageData,
+  LanguageNewProjectWizardData,
   NewProjectWizardBaseData by parent.baseData {
 
   override val self = this
@@ -17,10 +17,10 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   override val label = UIBundle.message("label.project.wizard.new.project.language")
 
   override val languageProperty by ::stepProperty
-  override val language by ::step
+  override var language by ::step
 
   init {
-    data.putUserData(NewProjectWizardLanguageData.KEY, this)
+    data.putUserData(LanguageNewProjectWizardData.KEY, this)
     languageProperty.afterChange {
       NewProjectWizardCollector.logLanguageChanged(context, this::class.java)
     }

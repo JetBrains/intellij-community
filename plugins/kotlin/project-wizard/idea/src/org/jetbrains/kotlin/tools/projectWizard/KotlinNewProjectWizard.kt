@@ -73,7 +73,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
     class CommentStep(parent: NewProjectWizardLanguageStep) :
         AbstractNewProjectWizardStep(parent),
-        NewProjectWizardLanguageData by parent {
+        LanguageNewProjectWizardData by parent {
 
         override fun setupUI(builder: Panel) {
             with(builder) {
@@ -90,16 +90,16 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
     class Step(parent: CommentStep) :
         AbstractNewProjectWizardMultiStep<Step>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
-        NewProjectWizardLanguageData by parent,
-        NewProjectWizardBuildSystemData {
+        LanguageNewProjectWizardData by parent,
+        BuildSystemKotlinNewProjectWizardData {
 
         override val self = this
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
         override val buildSystemProperty by ::stepProperty
-        override val buildSystem by ::step
+        override var buildSystem by ::step
 
         init {
-            data.putUserData(NewProjectWizardBuildSystemData.KEY, this)
+            data.putUserData(BuildSystemKotlinNewProjectWizardData.KEY, this)
         }
     }
 }

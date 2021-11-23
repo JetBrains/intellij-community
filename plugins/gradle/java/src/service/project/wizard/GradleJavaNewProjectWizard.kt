@@ -7,38 +7,47 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.systemIndependentPath
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.KEY
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   override val name = GradleConstants.SYSTEM_ID.readableName
 
-  override fun createStep(parent: JavaNewProjectWizard.Step) =
-    object : GradleNewProjectWizardStep<JavaNewProjectWizard.Step>(parent) {
-      override fun setupProject(project: Project) {
-        val builder = InternalGradleModuleBuilder().apply {
-          moduleJdk = sdk
-          name = parentStep.name
-          contentEntryPath = parentStep.projectPath.systemIndependentPath
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
 
-          isCreatingNewProject = context.isCreatingNewProject
+  class Step(parent: JavaNewProjectWizard.Step) :
+    GradleNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),
+    GradleJavaNewProjectWizardData {
 
-          parentProject = parentData
-          projectId = ProjectId(groupId, artifactId, version)
-          isInheritGroupId = parentData?.group == groupId
-          isInheritVersion = parentData?.version == version
+    override fun setupProject(project: Project) {
+      val builder = InternalGradleModuleBuilder().apply {
+        moduleJdk = sdk
+        name = parentStep.name
+        contentEntryPath = parentStep.projectPath.systemIndependentPath
 
-          isUseKotlinDsl = useKotlinDsl
+        isCreatingNewProject = context.isCreatingNewProject
 
-          gradleVersion = suggestGradleVersion()
-        }
+        parentProject = parentData
+        projectId = ProjectId(groupId, artifactId, version)
+        isInheritGroupId = parentData?.group == groupId
+        isInheritVersion = parentData?.version == version
 
-        builder.configureBuildScript {
-          it.withJavaPlugin()
-          it.withJUnit()
-        }
+        isUseKotlinDsl = useKotlinDsl
 
-        ExternalProjectsManagerImpl.setupCreatedProject(project)
-        builder.commit(project)
+        gradleVersion = suggestGradleVersion()
       }
+
+      builder.configureBuildScript {
+        it.withJavaPlugin()
+        it.withJUnit()
+      }
+
+      ExternalProjectsManagerImpl.setupCreatedProject(project)
+      builder.commit(project)
     }
+
+    init {
+      data.putUserData(KEY, this)
+    }
+  }
 }

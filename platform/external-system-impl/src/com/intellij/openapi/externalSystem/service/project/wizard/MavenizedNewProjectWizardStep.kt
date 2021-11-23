@@ -22,7 +22,7 @@ import java.util.function.Function
 import javax.swing.JList
 
 abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentStep: ParentStep) :
-  AbstractNewProjectWizardStep(parentStep)
+  AbstractNewProjectWizardStep(parentStep), MavenizedNewProjectWizardData<Data>
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
@@ -30,19 +30,19 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
 
   abstract fun findAllParents(): List<Data>
 
-  private val parentProperty = propertyGraph.graphProperty(::suggestParentByPath)
-  private val groupIdProperty = propertyGraph.graphProperty(::suggestGroupIdByParent)
-  private val artifactIdProperty = propertyGraph.graphProperty(::suggestArtifactIdByName)
-  private val versionProperty = propertyGraph.graphProperty(::suggestVersionByParent)
+  final override val parentProperty = propertyGraph.graphProperty(::suggestParentByPath)
+  final override val groupIdProperty = propertyGraph.graphProperty(::suggestGroupIdByParent)
+  final override val artifactIdProperty = propertyGraph.graphProperty(::suggestArtifactIdByName)
+  final override val versionProperty = propertyGraph.graphProperty(::suggestVersionByParent)
 
-  var parent by parentProperty
-  var groupId by groupIdProperty.map { it.trim() }
-  var artifactId by artifactIdProperty.map { it.trim() }
-  var version by versionProperty.map { it.trim() }
+  final override var parent by parentProperty
+  final override var groupId by groupIdProperty.map { it.trim() }
+  final override var artifactId by artifactIdProperty.map { it.trim() }
+  final override var version by versionProperty.map { it.trim() }
 
   val parents by lazy { parentsData.map(::createView) }
   val parentsData by lazy { findAllParents() }
-  var parentData: Data?
+  final override var parentData: Data?
     get() = DataView.getData(parent)
     set(value) {
       parent = if (value == null) EMPTY_VIEW else createView(value)
