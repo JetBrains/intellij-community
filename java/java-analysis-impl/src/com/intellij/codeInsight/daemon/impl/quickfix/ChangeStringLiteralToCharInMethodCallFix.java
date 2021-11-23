@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -24,6 +10,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -105,7 +92,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
   }
 
   public static void registerFixes(final PsiMethod @NotNull [] candidates, @NotNull final PsiConstructorCall call,
-                                   @NotNull final HighlightInfo out) {
+                                   @NotNull final HighlightInfo out, TextRange fixRange) {
     final Set<PsiLiteralExpression> literals = new HashSet<>();
     if (call.getArgumentList() == null) {
       return;
@@ -115,13 +102,14 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
       exactMatch |= findMatchingExpressions(call.getArgumentList().getExpressions(), method, literals);
     }
     if (! exactMatch) {
-      processLiterals(literals, call, out);
+      processLiterals(literals, call, out, fixRange);
     }
   }
 
   public static void registerFixes(final CandidateInfo @NotNull [] candidates,
                                    @NotNull final PsiMethodCallExpression methodCall,
-                                   @Nullable final HighlightInfo info) {
+                                   @Nullable final HighlightInfo info, 
+                                   @Nullable TextRange fixRange) {
     if (info == null) return;
     final Set<PsiLiteralExpression> literals = new HashSet<>();
     boolean exactMatch = false;
@@ -132,16 +120,16 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
       }
     }
     if (!exactMatch) {
-      processLiterals(literals, methodCall, info);
+      processLiterals(literals, methodCall, info, fixRange);
     }
   }
 
   private static void processLiterals(@NotNull final Set<? extends PsiLiteralExpression> literals,
                                       @NotNull final PsiCall call,
-                                      @NotNull final HighlightInfo info) {
+                                      @NotNull final HighlightInfo info, TextRange fixRange) {
     for (PsiLiteralExpression literal : literals) {
       final ChangeStringLiteralToCharInMethodCallFix fix = new ChangeStringLiteralToCharInMethodCallFix(literal, call);
-      QuickFixAction.registerQuickFixAction(info, fix);
+      QuickFixAction.registerQuickFixAction(info, fixRange, fix);
     }
   }
 

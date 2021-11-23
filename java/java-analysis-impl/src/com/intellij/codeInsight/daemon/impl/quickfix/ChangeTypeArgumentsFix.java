@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -9,6 +9,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -120,11 +121,11 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
   public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
                                         @NotNull PsiExpressionList list,
                                         @Nullable HighlightInfo highlightInfo,
-                                        PsiClass psiClass) {
+                                        PsiClass psiClass, TextRange fixRange) {
     if (candidates.length == 0) return;
     PsiExpression[] expressions = list.getExpressions();
     for (JavaResolveResult candidate : candidates) {
-      registerIntention(expressions, highlightInfo, psiClass, candidate, list);
+      registerIntention(expressions, highlightInfo, psiClass, candidate, list, fixRange);
     }
   }
 
@@ -132,12 +133,13 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
                                         @Nullable HighlightInfo highlightInfo,
                                         PsiClass psiClass,
                                         @NotNull JavaResolveResult candidate,
-                                        @NotNull PsiElement context) {
+                                        @NotNull PsiElement context,
+                                        TextRange fixRange) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
     if (method != null && BaseIntentionAction.canModify(method)) {
       final ChangeTypeArgumentsFix fix = new ChangeTypeArgumentsFix(method, psiClass, expressions, context);
-      QuickFixAction.registerQuickFixAction(highlightInfo, null, fix);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, fix);
     }
   }
 
