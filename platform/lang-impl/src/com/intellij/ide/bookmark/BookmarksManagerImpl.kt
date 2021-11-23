@@ -15,6 +15,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.io.systemIndependentPath
@@ -73,9 +74,11 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   override fun loadState(state: ManagerState) {
     remove() // see com.intellij.tasks.context.BookmarkContextProvider
     if (state.groups.isNotEmpty()) {
-      state.groups.forEach {
-        val group = addOrReuseGroup(it.name, it.isDefault)
-        it.bookmarks.forEach { bookmark -> group.addLater(bookmark, bookmark.type, bookmark.description) }
+      StartupManager.getInstance(project).runAfterOpened {
+        state.groups.forEach {
+          val group = addOrReuseGroup(it.name, it.isDefault)
+          it.bookmarks.forEach { bookmark -> group.addLater(bookmark, bookmark.type, bookmark.description) }
+        }
       }
     }
   }
@@ -88,8 +91,10 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
       }
     }
     project.messageBus.connect().subscribe(BookmarksListener.TOPIC, listener)
-    com.intellij.ide.bookmarks.BookmarkManager.getInstance(project).allBookmarks.forEach { listener.bookmarkAdded(it) }
-    invoker.invokeLater { noStateLoaded(FavoritesManager.getInstance(project)) }
+    StartupManager.getInstance(project).runAfterOpened {
+      com.intellij.ide.bookmarks.BookmarkManager.getInstance(project).allBookmarks.forEach { listener.bookmarkAdded(it) }
+      invoker.invokeLater { noStateLoaded(FavoritesManager.getInstance(project)) }
+    }
   }
 
   private fun noStateLoaded(manager: FavoritesManager) {
