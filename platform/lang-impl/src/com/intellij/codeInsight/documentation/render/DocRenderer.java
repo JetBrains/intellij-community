@@ -535,7 +535,8 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
   }
 
   private static EditorKit createEditorKit(@NotNull Editor editor) {
-    HTMLEditorKit editorKit = new MyEditorKit(editor);
+    JBHtmlEditorKit editorKit = new JBHtmlEditorKit(MyViewFactory.INSTANCE, true);
+    editorKit.setFontResolver(EditorCssFontResolver.getInstance(editor));
     editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor));
     return editorKit;
   }
@@ -742,17 +743,6 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     void dispose() {
       MEMORY_MANAGER.unregister(DocRenderer.this);
       myImages.forEach(image -> IMAGE_MANAGER.dispose(image));
-    }
-  }
-
-  private static class MyEditorKit extends JBHtmlEditorKit {
-    private MyEditorKit(Editor editor) {
-      setFontResolver(EditorCssFontResolver.getInstance(editor));
-    }
-
-    @Override
-    public ViewFactory getViewFactory() {
-      return MyViewFactory.INSTANCE;
     }
   }
 

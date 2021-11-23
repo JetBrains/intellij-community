@@ -23,11 +23,12 @@ import kotlin.math.max
 
 private const val ICON_INLINE_ELEMENT_NAME = "icon-inline" // NON-NLS
 
-open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
+open class BaseHtmlEditorPane(viewFactory: ViewFactory) : JEditorPane() {
+
+  constructor(iconsClass: Class<*>): this(HtmlEditorViewFactory(iconsClass))
+
   init {
-    editorKit = object : JBHtmlEditorKit(true) {
-      override fun getViewFactory() = createViewFactory(iconsClass)
-    }
+    editorKit = JBHtmlEditorKit(viewFactory, true)
 
     isEditable = false
     isOpaque = false
@@ -48,8 +49,6 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
     }
     setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
   }
-
-  protected open fun createViewFactory(iconsClass: Class<*>): ViewFactory = HtmlEditorViewFactory(iconsClass)
 
   protected open class HtmlEditorViewFactory(private val iconsClass: Class<*>) : JBHtmlEditorKit.JBHtmlFactory() {
     override fun create(elem: Element): View {

@@ -22,9 +22,7 @@ internal open class HtmlEditorPane : JEditorPane() {
 
     init {
         @Suppress("MagicNumber") // UI code
-        editorKit = object : JBHtmlEditorKit(false) {
-            override fun getViewFactory() = HtmlEditorViewFactory()
-        }.apply {
+        editorKit = JBHtmlEditorKit(HtmlEditorViewFactory(), false).apply {
             //language=CSS
             styleSheet.addRule(
                 """

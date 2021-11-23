@@ -17,14 +17,12 @@ import javax.swing.text.View
 import javax.swing.text.html.BlockView
 import javax.swing.text.html.ImageView
 
-internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
+internal class HtmlEditorPane() : BaseHtmlEditorPane(GHViewFactory()) {
   constructor(@NlsSafe body: String) : this() {
     setBody(body)
   }
 
-  override fun createViewFactory(iconsClass: Class<*>) = GHViewFactory()
-
-  protected class GHViewFactory : BaseHtmlEditorPane.HtmlEditorViewFactory(GithubIcons::class.java) {
+  private class GHViewFactory : HtmlEditorViewFactory(GithubIcons::class.java) {
     override fun create(elem: Element): View {
       val view = super.create(elem)
       if (view is ImageView) {

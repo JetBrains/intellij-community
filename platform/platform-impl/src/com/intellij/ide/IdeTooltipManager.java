@@ -737,37 +737,30 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       }
     } : new JEditorPane();
 
-    HTMLEditorKit kit = new JBHtmlEditorKit() {
-      final HTMLFactory factory = new JBHtmlFactory() {
-        @Override
-        public View create(Element elem) {
-          AttributeSet attrs = elem.getAttributes();
-          Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
-          Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
-          if (o instanceof HTML.Tag) {
-            HTML.Tag kind = (HTML.Tag)o;
-            if (kind == HTML.Tag.HR) {
-              View view = super.create(elem);
-              try {
-                Field field = view.getClass().getDeclaredField("size");
-                field.setAccessible(true);
-                field.set(view, JBUIScale.scale(1));
-                return view;
-              }
-              catch (Exception ignored) {
-                //ignore
-              }
+    HTMLEditorKit kit = new JBHtmlEditorKit(new JBHtmlEditorKit.JBHtmlFactory() {
+      @Override
+      public View create(Element elem) {
+        AttributeSet attrs = elem.getAttributes();
+        Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
+        Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
+        if (o instanceof HTML.Tag) {
+          HTML.Tag kind = (HTML.Tag)o;
+          if (kind == HTML.Tag.HR) {
+            View view = super.create(elem);
+            try {
+              Field field = view.getClass().getDeclaredField("size");
+              field.setAccessible(true);
+              field.set(view, JBUIScale.scale(1));
+              return view;
+            }
+            catch (Exception ignored) {
+              //ignore
             }
           }
-          return super.create(elem);
         }
-      };
-
-      @Override
-      public ViewFactory getViewFactory() {
-        return factory;
+        return super.create(elem);
       }
-    };
+    }, true);
     String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
     if (editorFontName != null) {
       String style = "font-family:\"" + StringUtil.escapeQuotes(editorFontName) + "\";font-size:95%;";

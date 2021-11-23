@@ -428,34 +428,27 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   public static JEditorPane createDescriptionComponent(@Nullable Consumer<? super View> imageViewHandler) {
-    HTMLEditorKit kit = new JBHtmlEditorKit() {
-      private final ViewFactory myFactory = new JBHtmlFactory() {
-        @Override
-        public View create(Element e) {
-          View view = super.create(e);
-          if (view instanceof ParagraphView) {
-            return new ParagraphView(e) {
-              {
-                super.setLineSpacing(0.3f);
-              }
-
-              @Override
-              protected void setLineSpacing(float ls) {
-              }
-            };
-          }
-          if (imageViewHandler != null && view instanceof ImageView) {
-            imageViewHandler.accept(view);
-          }
-          return view;
-        }
-      };
-
+    HTMLEditorKit kit = new JBHtmlEditorKit(new JBHtmlEditorKit.JBHtmlFactory() {
       @Override
-      public ViewFactory getViewFactory() {
-        return myFactory;
+      public View create(Element e) {
+        View view = super.create(e);
+        if (view instanceof ParagraphView) {
+          return new ParagraphView(e) {
+            {
+              super.setLineSpacing(0.3f);
+            }
+
+            @Override
+            protected void setLineSpacing(float ls) {
+            }
+          };
+        }
+        if (imageViewHandler != null && view instanceof ImageView) {
+          imageViewHandler.accept(view);
+        }
+        return view;
       }
-    };
+    }, true);
 
     StyleSheet sheet = kit.getStyleSheet();
     sheet.addRule("ul { margin-left-ltr: 30; margin-right-rtl: 30; }");

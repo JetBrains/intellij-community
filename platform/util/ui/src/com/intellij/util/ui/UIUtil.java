@@ -2068,7 +2068,7 @@ public final class UIUtil {
   }
 
   public static @NotNull HTMLEditorKit getHTMLEditorKitWithWordWrap() {
-    return new JBWordWrapHtmlEditorKit();
+    return new JBHtmlEditorKit(JBWordWrapHtmlEditorKit.ourFactory, true);
   }
 
   /**
@@ -2076,7 +2076,8 @@ public final class UIUtil {
    */
   @Deprecated
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
-    private final ViewFactory myFactory = new HTMLFactory() {
+
+    private final static ViewFactory ourFactory = new JBHtmlEditorKit.JBHtmlFactory() {
       @Override
       public View create(Element e) {
         View view = super.create(e);
@@ -2102,7 +2103,7 @@ public final class UIUtil {
 
     @Override
     public ViewFactory getViewFactory() {
-      return myFactory;
+      return ourFactory;
     }
   }
 

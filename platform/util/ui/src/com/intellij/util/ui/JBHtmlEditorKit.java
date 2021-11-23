@@ -6,6 +6,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
 
+@ApiStatus.NonExtendable
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
 
@@ -54,7 +56,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final StyleSheet ourNoGapsBetweenParagraphsStyle;
 
   private final ViewFactory myViewFactory;
-  private final StyleSheet myStyle = createStyleSheet();
+  private final StyleSheet myStyle;
   private final HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
 
@@ -72,6 +74,10 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     this(ourViewFactory, noGapsBetweenParagraphs, disableLinkedCss);
   }
 
+  public JBHtmlEditorKit(@NotNull ViewFactory viewFactory, boolean noGapsBetweenParagraphs) {
+    this(viewFactory, noGapsBetweenParagraphs, false);
+  }
+
   /**
    * @param viewFactory view factory for this kit, generally should be static
    * @param noGapsBetweenParagraphs removes gaps before &lt;p&gt; tags
@@ -79,9 +85,22 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
    *                         synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
    */
   public JBHtmlEditorKit(@NotNull ViewFactory viewFactory, boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
+    this(viewFactory, createStyleSheet(), disableLinkedCss);
+    if (noGapsBetweenParagraphs) myStyle.addStyleSheet(ourNoGapsBetweenParagraphsStyle);
+  }
+
+  /**
+   * @param viewFactory view factory for this kit, generally should be static
+   * @param defaultStyle css stylesheet to be used in all documents created by {@link #createDefaultDocument()}
+   * @param disableLinkedCss disables loading of linked CSS (from URL referenced in &lt;link&gt; HTML tags). JEditorPane does this loading
+   *                         synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
+   */
+  public JBHtmlEditorKit(@NotNull ViewFactory viewFactory,
+                         @NotNull StyleSheet defaultStyle,
+                         boolean disableLinkedCss) {
     myViewFactory = viewFactory;
     myDisableLinkedCss = disableLinkedCss;
-    if (noGapsBetweenParagraphs) myStyle.addStyleSheet(ourNoGapsBetweenParagraphsStyle);
+    myStyle = defaultStyle;
   }
 
   /**
@@ -94,6 +113,15 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   @Override
   public StyleSheet getStyleSheet() {
     return myStyle;
+  }
+
+  /**
+   * Will not work as one might expect it to
+   * To override default style you should use the provided constructor
+   */
+  @Override
+  public void setStyleSheet(StyleSheet style) {
+    //prevent setting the global style
   }
 
   @Override

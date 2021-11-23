@@ -30,6 +30,7 @@ import java.awt.Color
 import java.awt.Rectangle
 import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
+import javax.swing.text.html.HTMLEditorKit
 
 internal class DocumentationUI(
   project: Project,
@@ -39,7 +40,7 @@ internal class DocumentationUI(
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
 
-  private val htmlFactory: DocumentationHtmlFactory get() = (editorPane.editorKit as DocumentationHtmlEditorKit).viewFactory
+  private val htmlFactory: DocumentationHtmlFactory get() = editorPane.editorKit.viewFactory as DocumentationHtmlFactory
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
   private val cs = CoroutineScope(Dispatchers.EDT)
