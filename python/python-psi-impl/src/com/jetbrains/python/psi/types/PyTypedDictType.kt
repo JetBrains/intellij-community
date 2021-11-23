@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.types
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.TDFields
@@ -181,7 +182,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
                       context: TypeEvalContext): TypeCheckingResult {
       val valueTypesErrors = mutableListOf<ValueTypeError>()
       val keysMissing = mutableListOf<String>()
-      val extraKeys = mutableListOf<String>()
+      val extraKeys = mutableListOf<ExtraKeyError>()
       var match = true
 
       if (!actualArguments.keys.containsAll(mandatoryArguments.keys)) {
@@ -191,7 +192,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
 
       actualArguments.forEach {
         if (!expectedArguments.containsKey(it.key)) {
-          extraKeys.add(it.key)
+          val pairArgument = PsiTreeUtil.getParentOfType(it.value.first, PyKeyValueExpression::class.java)
+          extraKeys.add(ExtraKeyError(pairArgument ?: it.value.first, it.key))
           match = false
         }
         val actualValue = it.value.first
@@ -227,7 +229,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         val elementTypes = expected.elementTypes
         return Optional.of(TypeCheckingResult(elementTypes.size == 2
                                               && builtinCache.strType == elementTypes[0]
-                                              && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name), emptyList(), emptyList(), emptyList()))
+                                              && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name), emptyList(),
+                                              emptyList(), emptyList()))
       }
 
       if (expected !is PyTypedDictType) return Optional.empty()
@@ -237,25 +240,28 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
       var match = true
 
       expected.fields.forEach {
-        if (!actual.fields.containsKey(it.key)) {
-          keysMissing.add(it.key)
+        val expectedTypeAndTotality = it.value
+        val actualTypeAndTotality = actual.fields[it.key]
+
+        if (match && (actualTypeAndTotality == null
+            || !strictUnionMatch(expectedTypeAndTotality.type, actualTypeAndTotality.type, context)
+            || !strictUnionMatch(actualTypeAndTotality.type, expectedTypeAndTotality.type, context)
+            || expectedTypeAndTotality.isRequired.xor(actualTypeAndTotality.isRequired))) {
+          valueTypesErrors.add(ValueTypeError(null, expectedTypeAndTotality.type, actualTypeAndTotality?.type))
           match = false
         }
 
-        val expectedTypeAndTotality = it.value
-
-        val actualTypeAndTotality = actual.fields[it.key]
-        if (actualTypeAndTotality == null
-            || !strictUnionMatch(expectedTypeAndTotality.type, actualTypeAndTotality.type, context)
-            || !strictUnionMatch(actualTypeAndTotality.type, expectedTypeAndTotality.type, context)
-            || expectedTypeAndTotality.isRequired.xor(actualTypeAndTotality.isRequired)) {
-          valueTypesErrors.add(ValueTypeError(null, expectedTypeAndTotality.type, actualTypeAndTotality?.type))
+        if (!actual.fields.containsKey(it.key)) {
+          keysMissing.add(it.key)
           match = false
         }
       }
       return Optional.of(TypeCheckingResult(match, valueTypesErrors, keysMissing, emptyList()))
     }
   }
+
+  class ExtraKeyError constructor(val actualExpression: PyExpression?,
+                                  val key: String)
 
   class ValueTypeError constructor(val actualExpression: PyExpression?,
                                    val expectedType: PyType?,
@@ -264,5 +270,5 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
   class TypeCheckingResult constructor(val match: Boolean,
                                        val valueTypesErrors: List<ValueTypeError>,
                                        val missingKeys: List<String>,
-                                       val extraKeys: List<String>)
+                                       val extraKeys: List<ExtraKeyError>)
 }

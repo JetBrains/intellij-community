@@ -172,16 +172,15 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (!((PyTypedDictType)actual).isInferred()) return;
         }
         if (!typeCheckingResult.getExtraKeys().isEmpty()) {
-          registerProblem(value,
-                          PyPsiBundle.message("INSP.type.checker.typed.dict.extra.key", expectedTypedDictName,
-                                              typeCheckingResult.getExtraKeys().size(),
-                                              String.join(", ",
-                                                          ContainerUtil.map(typeCheckingResult.getExtraKeys(),
-                                                                            s -> String.format("'%s'", s)))));
+          typeCheckingResult.getExtraKeys().forEach(error -> {
+            final PyExpression actualValueWithWrongType = error.getActualExpression();
+            registerProblem(Objects.requireNonNullElse(actualValueWithWrongType, value),
+                            PyPsiBundle.message("INSP.type.checker.typed.dict.extra.key", error.getKey(), expectedTypedDictName));
+          });
         }
         if (!typeCheckingResult.getMissingKeys().isEmpty()) {
           registerProblem(value,
-                          PyPsiBundle.message("INSP.type.checker.typed.dict.missing.key", expectedTypedDictName,
+                          PyPsiBundle.message("INSP.type.checker.typed.dict.missing.keys", expectedTypedDictName,
                                               typeCheckingResult.getMissingKeys().size(),
                                               String.join(", ",
                                                           ContainerUtil.map(typeCheckingResult.getMissingKeys(),
@@ -326,7 +325,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           break;
         }
         else {
-          final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+          final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
           result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
         }
       }
@@ -361,7 +360,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         final var expected = types.get(i);
         final var argument = arguments.get(i);
         final var actual = myTypeEvalContext.getType(argument);
-        final var matched = matchParameterAndArgument(expected, actual, substitutions);
+        final var matched = matchParameterAndArgument(expected, actual, argument, substitutions);
         result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
     }
@@ -375,7 +374,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
         final PyType actual = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
-        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, null, substitutions);
         return ContainerUtil.map(arguments,
                                  argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
       }
@@ -384,7 +383,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           arguments,
           argument -> {
             final PyType actual = myTypeEvalContext.getType(argument);
-            final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+            final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
             return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
           }
         );
@@ -393,7 +392,13 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private boolean matchParameterAndArgument(@Nullable PyType parameterType,
                                               @Nullable PyType argumentType,
+                                              @Nullable PyExpression argument,
                                               @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
+      if (parameterType != null && argumentType instanceof PyTypedDictType) {
+        reportTypedDictProblems(parameterType, argumentType, argument);
+        return true;
+      }
+
       return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
              !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
     }

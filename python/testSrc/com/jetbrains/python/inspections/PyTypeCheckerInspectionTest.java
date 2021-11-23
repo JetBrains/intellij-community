@@ -1386,7 +1386,25 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "p2: NotPoint = {'x': <warning descr=\"Expected type 'int', got 'str' instead\">'x'</warning>, 'y': <warning descr=\"Expected type 'str', got 'int' instead\">42</warning>}\n" +
                          "p3: Point = <warning descr=\"Expected type 'Point', got 'NotPoint' instead\">p2</warning>\n" +
                          "p4: Point = <warning descr=\"TypedDict 'Point' has missing keys: 'x', 'y'\">{}</warning>\n" +
-                         "p5: Point = <warning descr=\"TypedDict 'Point' has extra keys: 'z', 'k', 'n'\">{'x': 0, 'y': 0, 'z': 123, 'k': 6, 'n': ''}</warning>\n" +
+                         "p5: Point = {'x': 0, 'y': 0, <warning descr=\"Extra key 'z' for TypedDict 'Point'\">'z': 123</warning>, <warning descr=\"Extra key 'k' for TypedDict 'Point'\">'k': 6</warning>}\n" +
                          "p6: Point = <warning descr=\"TypedDict 'Point' has missing key: 'x'\">{'y': 123}</warning>"));
+  }
+
+  // PY-46661
+  public void testCustomErrorMessagesForTypedDictInCallExpressions() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class Point(TypedDict):\n" +
+                         "    x: int\n" +
+                         "    y: int\n" +
+                         "class Movie(TypedDict):\n" +
+                         "    name: str\n" +
+                         "    year: int\n" +
+                         "def record_movie(movie: Movie) -> None: ...\n" +
+                         "record_movie({'name': <warning descr=\"Expected type 'str', got 'int' instead\">1984</warning>, 'year': 1984})\n" +
+                         "record_movie(<warning descr=\"TypedDict 'Movie' has missing keys: 'name', 'year'\">{}</warning>)\n" +
+                         "record_movie({'name': '1984', 'year': 1984, <warning descr=\"Extra key 'director' for TypedDict 'Movie'\">'director': 'Michael Radford'</warning>})\n" +
+                         "record_movie(<warning descr=\"Expected type 'Movie', got 'Point' instead\">Point(x=123, y=321)</warning>)"));
   }
 }
