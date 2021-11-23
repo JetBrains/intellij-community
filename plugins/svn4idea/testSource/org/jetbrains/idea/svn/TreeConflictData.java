@@ -65,17 +65,17 @@ public interface TreeConflictData {
                                                       StatusType.STATUS_UNVERSIONED, StatusType.STATUS_UNVERSIONED,
                                                       false));
     Data MINE_MOVE_THEIRS_EDIT = new Data("Index: root/source/s1.txt\n" +
-                                            "===================================================================\n" +
-                                            "--- root/source/s1.txt\t(revision 358)\n" +
-                                            "+++ root/source/s1.txt\t(revision )\n" +
-                                            "@@ -1,1 +1,1 @@\n" +
-                                            "-123\n" +
-                                            "\\ No newline at end of file\n" +
-                                            "+1*2*3\n" +
-                                            // conflict would be marked by svn on s1.txt, but here we put s1moved.txt, for change list manager to find the change
-                                            "\\ No newline at end of file\n", "root/source/s1moved.txt",
+                                          "===================================================================\n" +
+                                          "--- root/source/s1.txt\t(revision 358)\n" +
+                                          "+++ root/source/s1.txt\t(revision )\n" +
+                                          "@@ -1,1 +1,1 @@\n" +
+                                          "-123\n" +
+                                          "\\ No newline at end of file\n" +
+                                          "+1*2*3\n" +
+                                          // conflict would be marked by svn on s1.txt, but here we put s1moved.txt, for change list manager to find the change
+                                          "\\ No newline at end of file\n", "root/source/s1moved.txt",
                                           new FileData("root/source/s1moved.txt", null, StatusType.STATUS_ADDED,
-                                                       StatusType.STATUS_ADDED, StatusType.STATUS_ADDED, false, "root/source/s1.txt"),
+                                                       StatusType.STATUS_ADDED, StatusType.STATUS_ADDED, false, "root/source/s1.txt", true),
                                           new FileData("root/source/s1.txt", null, StatusType.STATUS_DELETED,
                                                        StatusType.STATUS_DELETED, StatusType.STATUS_DELETED, false));
     Data MINE_MOVE_THEIRS_ADD = new Data("Index: root/source/s1moved.txt\n" +
@@ -398,6 +398,7 @@ public interface TreeConflictData {
     public final String myRelativePath;
     public final String myContents;
     public final String myCopyFrom;
+    public final boolean myIsMove;
     public final StatusType myNodeStatus;
     public final StatusType myContentsStatus;
     // not used for now
@@ -418,7 +419,19 @@ public interface TreeConflictData {
                     StatusType nodeStatus,
                     StatusType contentsStatus,
                     StatusType propertiesStatus,
-                    boolean isDir, final String copyFrom) {
+                    boolean isDir,
+                    String copyFrom) {
+      this(relativePath, contents, nodeStatus, contentsStatus, propertiesStatus, isDir, copyFrom, false);
+    }
+
+    public FileData(String relativePath,
+                    String contents,
+                    StatusType nodeStatus,
+                    StatusType contentsStatus,
+                    StatusType propertiesStatus,
+                    boolean isDir,
+                    final String copyFrom,
+                    boolean isMove) {
       myRelativePath = relativePath;
       myContents = contents;
       myNodeStatus = nodeStatus;
@@ -426,6 +439,7 @@ public interface TreeConflictData {
       myPropertiesStatus = propertiesStatus;
       myIsDir = isDir;
       myCopyFrom = copyFrom;
+      myIsMove = isMove;
     }
   }
 }
