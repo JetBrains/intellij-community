@@ -6,10 +6,9 @@ import java.io.File
 
 interface LegacyUastRenderLogTestBase : UastRenderLogTestBase {
     override fun getTestMetadataFileFromPath(filePath: String, ext: String): File {
-        // We're using test files from .../uast-kotlin/testData/...
+        // We're using test files from .../uast-kotlin/tests/testData/...
         // but want to store metadata under .../uast-kotlin-fir/testData/legacyRenderLog/...
-        val revisedFilePath =
-            filePath.replace("uast-kotlin", "uast-kotlin-fir").replace("testData", "testData/legacyRenderLog")
+        val revisedFilePath = filePath.replace("uast-kotlin/tests", "uast-kotlin-fir").replace("testData", "testData/legacyRenderLog")
         return super.getTestMetadataFileFromPath(revisedFilePath, ext)
     }
 }

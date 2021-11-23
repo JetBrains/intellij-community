@@ -6,10 +6,9 @@ import java.io.File
 
 interface LegacyUastValuesTestBase : UastValuesTestBase {
     override fun getTestMetadataFileFromPath(filePath: String, ext: String): File {
-        // We're using test files from .../uast-kotlin/testData/...
+        // We're using test files from .../uast-kotlin/tests/testData/...
         // but want to store metadata under .../uast-kotlin-fir/testData/legacyValues/...
-        val revisedFilePath =
-            filePath.replace("uast-kotlin", "uast-kotlin-fir").replace("testData", "testData/legacyValues")
+        val revisedFilePath = filePath.replace("uast-kotlin/tests", "uast-kotlin-fir").replace("testData", "testData/legacyValues")
         return super.getTestMetadataFileFromPath(revisedFilePath, ext)
     }
 }
