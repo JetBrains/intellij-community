@@ -97,7 +97,7 @@ class LessonManager {
     if (cLesson.existedFile == null) {
       clearEditor(editor)
     }
-    LearningUiManager.activeToolWindow?.scrollToTheStart()
+    learnPanel.scrollToTheStart()
   }
 
   fun addMessage(@Language("HTML") text: String,
