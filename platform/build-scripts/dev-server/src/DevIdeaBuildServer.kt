@@ -18,6 +18,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.Semaphore
 import kotlin.io.path.createDirectories
 import kotlin.system.exitProcess
 
@@ -30,6 +32,7 @@ val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
 enum class DevIdeaBuildServerStatus(private val status: String) {
   OK("OK"),
   FAILED("FAILED"),
+  IN_PROGRESS("IN_PROGRESS"),
   UNDEFINED("UNDEFINED");
 
   companion object {
@@ -42,6 +45,7 @@ enum class DevIdeaBuildServerStatus(private val status: String) {
 class DevIdeaBuildServer {
   companion object {
     const val SERVER_PORT = 20854
+    private val buildQueueLock = Semaphore(1, true)
 
     // <product / DevIdeaBuildServerStatus>
     private var productBuildStatus = mutableMapOf<String, DevIdeaBuildServerStatus>()
@@ -95,52 +99,73 @@ class DevIdeaBuildServer {
 
     private fun HttpExchange.getPlatformPrefix() = parseQuery(this.requestURI).get("platformPrefix")?.first() ?: "idea"
 
-    private fun createHttpServer(buildServer: BuildServer): HttpServer {
-      val httpServer = HttpServer.create()
-      httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 4)
+    private fun HttpServer.createBuildEndpoint(buildServer: BuildServer) = createContext("/build") { exchange ->
+      val platformPrefix = exchange.getPlatformPrefix()
 
-      httpServer.createContext("/build") { exchange ->
-        val platformPrefix = exchange.getPlatformPrefix()
+      var statusMessage: String
+      var statusCode = HttpURLConnection.HTTP_OK
+      productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.UNDEFINED
 
-        var statusMessage: String
-        var statusCode = HttpURLConnection.HTTP_OK
-        try {
-          exchange.responseHeaders.add("Content-Type", "text/plain")
-          val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
-          statusMessage = ideBuilder.pluginBuilder.buildChanged()
-          LOG.info(statusMessage)
-        }
-        catch (e: ConfigurationException) {
-          statusCode = HttpURLConnection.HTTP_BAD_REQUEST
-          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
-          statusMessage = e.message!!
-        }
-        catch (e: Throwable) {
-          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
-          exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
-          LOG.error("Cannot handle build request", e)
-          return@createContext
-        }
-
-        productBuildStatus[platformPrefix] =
-          if (statusCode == HttpURLConnection.HTTP_OK) DevIdeaBuildServerStatus.OK
-          else DevIdeaBuildServerStatus.FAILED
-
-        val response = statusMessage.encodeToByteArray()
-        exchange.sendResponseHeaders(statusCode, response.size.toLong())
-        exchange.responseBody.write(response)
-      }
-
-      httpServer.createContext("/status") { exchange ->
-        val platformPrefix = exchange.getPlatformPrefix()
-        val buildStatus = productBuildStatus.getOrDefault(platformPrefix, DevIdeaBuildServerStatus.UNDEFINED)
+      try {
+        productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.IN_PROGRESS
+        buildQueueLock.acquire()
 
         exchange.responseHeaders.add("Content-Type", "text/plain")
-        val response = buildStatus.toString().encodeToByteArray()
-        exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
-        exchange.responseBody.write(response)
+        val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
+        statusMessage = ideBuilder.pluginBuilder.buildChanged()
+        LOG.info(statusMessage)
+      }
+      catch (e: ConfigurationException) {
+        statusCode = HttpURLConnection.HTTP_BAD_REQUEST
+        productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
+        statusMessage = e.message!!
+      }
+      catch (e: Throwable) {
+        productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
+        exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
+        LOG.error("Cannot handle build request", e)
+        return@createContext
+      }
+      finally {
+        buildQueueLock.release()
       }
 
+      productBuildStatus[platformPrefix] =
+        if (statusCode == HttpURLConnection.HTTP_OK) DevIdeaBuildServerStatus.OK
+        else DevIdeaBuildServerStatus.FAILED
+
+      val response = statusMessage.encodeToByteArray()
+      exchange.sendResponseHeaders(statusCode, response.size.toLong())
+      exchange.responseBody.apply {
+        write(response)
+        flush()
+        close()
+      }
+    }
+
+    private fun HttpServer.createStatusEndpoint() = createContext("/status") { exchange ->
+      val platformPrefix = exchange.getPlatformPrefix()
+      val buildStatus = productBuildStatus.getOrDefault(platformPrefix, DevIdeaBuildServerStatus.UNDEFINED)
+
+      exchange.responseHeaders.add("Content-Type", "text/plain")
+      val response = buildStatus.toString().encodeToByteArray()
+      exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
+      exchange.responseBody.apply {
+        write(response)
+        flush()
+        close()
+      }
+    }
+
+    private fun createHttpServer(buildServer: BuildServer): HttpServer {
+      val httpServer = HttpServer.create()
+      httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 2)
+
+      httpServer.createBuildEndpoint(buildServer)
+      httpServer.createStatusEndpoint()
+
+      // Serve requests in parallel. Though, there is no guarantee, that 2 requests will be for different endpoints
+      httpServer.executor = Executors.newFixedThreadPool(2)
       return httpServer
     }
 
