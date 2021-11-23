@@ -44,3 +44,4 @@ UFile (package = ) [public abstract interface Pizza {...]
             UParameter (name = size) [@org.jetbrains.annotations.NotNull var size: int = 42]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 ULiteralExpression (value = 42) [42] = 42
+        UMethod (name = Margherita) [public fun Margherita() = UastEmptyExpression]
