@@ -124,6 +124,7 @@ public final class VcsLogContentUtil {
     U logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW);
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    if (toolWindow == null) throw new IllegalStateException("Could not find tool window for id " + ChangesViewContentManager.TOOLWINDOW_ID);
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), tabGroupId,
                                    new TabDescriptor(new VcsLogPanel(logManager, logUi), () -> tabDisplayName.apply(logUi), logUi), focus);
     if (focus) {
