@@ -104,7 +104,7 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
             return TestCheckResult.Success
         } else {
             return TestCheckResult.Failure(
-                "The following errors arose during highlighting of $filename:${errors.joinToString(separator = "\n")}"
+                "The following errors arose during highlighting of $filename:\n${errors.joinToString(separator = "\n")}"
             )
         }
     }
