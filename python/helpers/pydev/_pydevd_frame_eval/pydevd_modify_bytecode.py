@@ -6,6 +6,7 @@ from opcode import opmap, EXTENDED_ARG, HAVE_ARGUMENT
 from types import CodeType
 
 MAX_BYTE = 255
+MAX_DELTA = 254
 RETURN_VALUE_SIZE = 2
 IS_PY310_OR_GREATER = sys.version_info > (3, 10)
 
@@ -84,17 +85,27 @@ def _make_linetable(code_to_modify, all_inserted_code):
         end = start + inst_delta
         if end in offset_to_code_list:
             new_delta = inst_delta + len(offset_to_code_list[end])
-            while new_delta > MAX_BYTE:
-                new_line_table.append(MAX_BYTE)
-                new_line_table.append(line_delta)
-                line_delta = 0
-                new_delta -= MAX_BYTE
-            new_line_table.append(new_delta)
-            new_line_table.append(line_delta)
+            _update_line_table_max_delta_aware(new_line_table, new_delta, line_delta)
         else:
-            new_line_table.append(inst_delta)
-            new_line_table.append(line_delta)
+            new_delta = inst_delta
+            # In a general case, an injected `EXTENDED_ARG` instruction is not aligned
+            # with the end of the previous or start of the current line.
+            for off in offset_to_code_list.keys():
+                if start < off <= end:
+                    new_delta = inst_delta + len(offset_to_code_list[off])
+                    break
+            _update_line_table_max_delta_aware(new_line_table, new_delta, line_delta)
     return bytes(new_line_table)
+
+
+def _update_line_table_max_delta_aware(line_table, inst_delta, line_delta):
+    while inst_delta > MAX_DELTA:
+        line_table.append(MAX_DELTA)
+        line_table.append(line_delta)
+        line_delta = 0
+        inst_delta -= MAX_DELTA
+    line_table.append(inst_delta)
+    line_table.append(line_delta)
 
 
 def _make_lnotab(code_to_modify, all_inserted_code):
