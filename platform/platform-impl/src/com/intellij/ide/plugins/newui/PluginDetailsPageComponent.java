@@ -241,15 +241,18 @@ public class PluginDetailsPageComponent extends MultiPanel {
         }
         return size;
       }
+
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD, 18));
+      }
     };
 
     UIUtil.convertToLabel(editorPane);
     editorPane.setCaret(EmptyCaret.INSTANCE);
 
-    Font font = editorPane.getFont();
-    if (font != null) {
-      editorPane.setFont(font.deriveFont(Font.BOLD, 18));
-    }
+    editorPane.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD, 18));
 
     @NlsSafe String text = "<html><span>Foo</span></html>";
     editorPane.setText(text);
