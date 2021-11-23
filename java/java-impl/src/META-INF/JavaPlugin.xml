@@ -666,13 +666,15 @@
     <stacktrace.fold substring="at java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege("/>
     <stacktrace.fold substring="at com.jgoodies.binding.beans.ExtendedPropertyChangeSupport.firePropertyChange0("/>
     <stacktrace.fold substring="at javax.swing.plaf.basic.BasicComboPopup$Handler.mouseReleased("/>
-
+    <stacktrace.fold substring="at java.util.ArrayList$ArrayListSpliterator"/>
+    <stacktrace.fold substring="at java.util.stream.ReferencePipeline."/>
     <stacktrace.fold substring="at java.util.stream.ReferencePipeline$"/>
     <stacktrace.fold substring="at java.util.Spliterators$"/>
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.evaluate("/>
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.copyInto("/>
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.wrapAndCopyInto("/>
     <stacktrace.fold substring="at java.util.stream.ReduceOps$"/>
+    <stacktrace.fold substring="at java.util.stream.ForEachOps$"/>
 
     <stacktrace.fold substring="at java.util.concurrent.Executors$"/>
     <stacktrace.fold substring="at java.util.concurrent.ThreadPoolExecutor"/> <!-- methods and inner classes -->
