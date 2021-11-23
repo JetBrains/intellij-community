@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.testGenerator
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
-import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassLoadingTest
@@ -17,8 +16,6 @@ import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.findUsages.*
 import org.jetbrains.kotlin.formatter.AbstractEnterHandlerTest
 import org.jetbrains.kotlin.formatter.AbstractFormatterTest
-import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
-import org.jetbrains.kotlin.formatter.AbstractTypingIndentationTestBase
 import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
 import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
@@ -40,6 +37,8 @@ import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTes
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.AbstractSurroundWithTest
 import org.jetbrains.kotlin.idea.codeInsight.unwrap.AbstractUnwrapRemoveTest
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationPluginIdeDiagnosticTest
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationQuickFixTest
 import org.jetbrains.kotlin.idea.completion.test.*
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionCharFilterTest
@@ -71,7 +70,6 @@ import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandle
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
-import org.jetbrains.kotlin.idea.filters.AbstractKotlinExceptionFilterTest
 import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirClassLoadingTest
 import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightClassTest
 import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightFacadeClassTest
@@ -156,9 +154,6 @@ import org.jetbrains.kotlin.idea.structureView.AbstractKotlinFileStructureTest
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiFileHighlightingTest
 import org.jetbrains.kotlin.idea.stubs.AbstractResolveByStubTest
 import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
-import org.jetbrains.kotlin.jps.build.*
-import org.jetbrains.kotlin.jps.incremental.AbstractJsProtoComparisonTest
-import org.jetbrains.kotlin.jps.incremental.AbstractJvmProtoComparisonTest
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.inference.common.AbstractCommonConstraintCollectorTest
 import org.jetbrains.kotlin.nj2k.inference.mutability.AbstractMutabilityInferenceTest
@@ -188,10 +183,8 @@ import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractProjectTemplateBuild
 import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractYamlBuildFileGenerationTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractProjectTemplateNewWizardProjectImportTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProjectImportTest
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationPluginIdeDiagnosticTest
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationQuickFixTest
-import org.jetbrains.uast.test.kotlin.*
-import org.jetbrains.uast.test.comparasion.*
+import org.jetbrains.kotlin.idea.inspections.AbstractViewOfflineInspectionTest
+import org.jetbrains.uast.test.kotlin.comparison.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
@@ -713,7 +706,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractOutOfBlockModificationTest> {
-            model("codeInsight/outOfBlock", pattern = "^(.+)\\.(kt|kts|java)$".toRegex())
+            model("codeInsight/outOfBlock", pattern = Patterns.forRegex("^(.+)\\.(kt|kts|java)$"))
         }
 
         testClass<AbstractChangeLocalityDetectorTest> {
@@ -816,8 +809,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFilteringAutoImportTest> {
-            model("editor/autoImportExtension", testMethodName = "doTest", testClassName="WithAutoImport", pattern = DIRECTORY, isRecursive = false)
-            model("editor/autoImportExtension", testMethodName = "doTestWithoutAutoImport", testClassName="WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImportExtension", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImportExtension", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractJvmOptimizeImportsTest> {
@@ -1036,17 +1029,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
 
-   /* testGroup("idea/idea-fir-performance-tests/tests", "idea") {
-        testClass<AbstractFirHighlightingPerformanceTest> {
-            model("testData/highlighter")
-        }
-    }
+    /* testGroup("idea/idea-fir-performance-tests/tests", "idea") {
+         testClass<AbstractFirHighlightingPerformanceTest> {
+             model("testData/highlighter")
+         }
+     }
 
-    testGroup("idea/idea-fir-performance-tests/tests", "idea/idea-completion/testData") {
-        testClass<AbstractHighLevelPerformanceBasicCompletionHandlerTest> {
-            model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS)
-        }
-    }*/
+     testGroup("idea/idea-fir-performance-tests/tests", "idea/idea-completion/testData") {
+         testClass<AbstractHighLevelPerformanceBasicCompletionHandlerTest> {
+             model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS)
+         }
+     }*/
 
     testGroup("fir", testDataPath = "../idea/tests/testData") {
         testClass<AbstractFirReferenceResolveTest> {
@@ -1462,11 +1455,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("plugins/parcelize/parcelize-ide/tests") {
         testClass<AbstractParcelizeQuickFixTest> {
-            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"), filenameStartsLowerCase = true)
+            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
         }
 
         testClass<AbstractParcelizeCheckerTest> {
-            model("checker", extension = "kt")
+            model("checker", pattern = KT)
         }
     }
 
@@ -1475,7 +1468,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("diagnostics")
         }
         testClass<AbstractSerializationQuickFixTest> {
-            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"), filenameStartsLowerCase = true)
+            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
         }
     }
 
@@ -1490,7 +1483,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/testData") {
+    testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/tests/testData") {
         testClass<AbstractFirLegacyUastDeclarationTest> {
             model("")
         }
@@ -1508,7 +1501,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("uast/uast-kotlin", testDataPath = "../uast-kotlin-fir/testData") {
+    testGroup("uast/uast-kotlin/tests", testDataPath = "../../uast-kotlin-fir/testData") {
         testClass<AbstractFE1UastDeclarationTest> {
             model("declaration")
             model("legacy")
@@ -1519,7 +1512,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("uast/uast-kotlin") {
+    testGroup("uast/uast-kotlin/tests") {
         testClass<AbstractFE1LegacyUastDeclarationTest> {
             model("")
         }
@@ -1539,7 +1532,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
         testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$""")))
+            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
         testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest> {
