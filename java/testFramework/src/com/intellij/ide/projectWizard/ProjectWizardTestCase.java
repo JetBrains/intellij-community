@@ -6,6 +6,7 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.wizard.NewProjectWizardStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -173,7 +175,9 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         throw new RuntimeException(currentStep + " is not validated");
       }
     }
-    myWizard.doFinishAction();
+    if (!myWizard.doFinishAction()) {
+      throw new RuntimeException(myWizard.getCurrentStepObject() + " is not validated");
+    }
   }
 
   protected void createWizard(@Nullable Project project) throws IOException {
