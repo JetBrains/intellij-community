@@ -16,9 +16,7 @@ import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Ignore
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
@@ -27,7 +25,7 @@ import kotlin.io.path.pathString
 import kotlin.reflect.KMutableProperty0
 import kotlin.streams.asSequence
 
-class GradleQuickFixTest : KotlinGradleImportingTestCase() {
+class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
     private lateinit var codeInsightTestFixture: CodeInsightTestFixture
 
     override fun testDataDirName() = "fixes"
@@ -50,39 +48,39 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("6.0.1")
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForJs() = doMultiFileQuickFixTest()
 
     @Test
-    @TargetVersions("6.0.1")
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForJsTest() = doMultiFileQuickFixTest()
 
     @Test
-    @TargetVersions("6.0.1")
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForJvm() = doMultiFileQuickFixTest()
 
     @Test
-    @TargetVersions("6.0.1")
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForJvmTest() = doMultiFileQuickFixTest()
 
     @Test
-    @TargetVersions("6.0.1")
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForJvmTestWithCustomPath() = doMultiFileQuickFixTest()
 
     @Test
-    @TargetVersions("6.0.1")
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForJvmTestWithCustomExistentPath() = doMultiFileQuickFixTest()
 
     @Test
-    @TargetVersions("6.0.1")
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForJvmTestWithCustomPath2() = doMultiFileQuickFixTest()
 
     @Test
-    @TargetVersions("6.0.1")
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForNativeiOS() = doMultiFileQuickFixTest()
 
     @Test
-    @TargetVersions("6.0.1")
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForNativeiOSWithExistentPath() = doMultiFileQuickFixTest()
 
     private fun doMultiFileQuickFixTest() {
