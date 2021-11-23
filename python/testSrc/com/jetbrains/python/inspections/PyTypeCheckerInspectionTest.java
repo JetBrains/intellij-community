@@ -1370,4 +1370,23 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testLiteralAgainstTypeVarWithoutBound() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
+
+  // PY-46661
+  public void testCustomErrorMessagesForTypedDictInTargetExpressions() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class NotPoint(TypedDict):\n" +
+                         "    x: int\n" +
+                         "    y: str\n" +
+                         "class Point(TypedDict):\n" +
+                         "    x: int\n" +
+                         "    y: int\n" +
+                         "p1: Point = {'x': 0, 'y': <warning descr=\"Expected type 'int', got 'str' instead\">'a'</warning>}\n" +
+                         "p2: NotPoint = {'x': <warning descr=\"Expected type 'int', got 'str' instead\">'x'</warning>, 'y': <warning descr=\"Expected type 'str', got 'int' instead\">42</warning>}\n" +
+                         "p3: Point = <warning descr=\"Expected type 'Point', got 'NotPoint' instead\">p2</warning>\n" +
+                         "p4: Point = <warning descr=\"TypedDict 'Point' has missing keys: 'x', 'y'\">{}</warning>\n" +
+                         "p5: Point = <warning descr=\"TypedDict 'Point' has extra keys: 'z', 'k', 'n'\">{'x': 0, 'y': 0, 'z': 123, 'k': 6, 'n': ''}</warning>\n" +
+                         "p6: Point = <warning descr=\"TypedDict 'Point' has missing key: 'x'\">{'y': 123}</warning>"));
+  }
 }

@@ -136,10 +136,57 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (value == null) return;
       final PyType expected = myTypeEvalContext.getType(node);
       final PyType actual = tryPromotingType(value, expected);
+
+      if (expected != null && actual instanceof PyTypedDictType) {
+        reportTypedDictProblems(expected, actual, value);
+        return;
+      }
+
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
         registerProblem(value, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
+      }
+    }
+
+    private void reportTypedDictProblems(PyType expected, PyType actual, PyExpression value) {
+      final Optional<PyTypedDictType.TypeCheckingResult> result =
+        PyTypedDictType.Companion.checkTypes(expected, (PyTypedDictType)actual,
+                                             myTypeEvalContext);
+
+      if (result.isPresent() && !result.get().getMatch()) {
+        final PyTypedDictType.TypeCheckingResult typeCheckingResult = result.get();
+        final String expectedTypedDictName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+        final String actualTypedDictName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+
+        if (!typeCheckingResult.getValueTypesErrors().isEmpty()) {
+          typeCheckingResult.getValueTypesErrors().forEach(error -> {
+            final PyExpression actualValueWithWrongType = error.getActualExpression();
+            final String expectedName = PythonDocumentationProvider.getTypeName(error.getExpectedType(), myTypeEvalContext);
+            final String actualName = PythonDocumentationProvider.getTypeName(error.getActualType(), myTypeEvalContext);
+            registerProblem(Objects.requireNonNullElse(actualValueWithWrongType, value),
+                            PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                                actualValueWithWrongType != null ? expectedName : expectedTypedDictName,
+                                                actualValueWithWrongType != null ? actualName : actualTypedDictName));
+          });
+          if (!((PyTypedDictType)actual).isInferred()) return;
+        }
+        if (!typeCheckingResult.getExtraKeys().isEmpty()) {
+          registerProblem(value,
+                          PyPsiBundle.message("INSP.type.checker.typed.dict.extra.key", expectedTypedDictName,
+                                              typeCheckingResult.getExtraKeys().size(),
+                                              String.join(", ",
+                                                          ContainerUtil.map(typeCheckingResult.getExtraKeys(),
+                                                                            s -> String.format("'%s'", s)))));
+        }
+        if (!typeCheckingResult.getMissingKeys().isEmpty()) {
+          registerProblem(value,
+                          PyPsiBundle.message("INSP.type.checker.typed.dict.missing.key", expectedTypedDictName,
+                                              typeCheckingResult.getMissingKeys().size(),
+                                              String.join(", ",
+                                                          ContainerUtil.map(typeCheckingResult.getMissingKeys(),
+                                                                            s -> String.format("'%s'", s)))));
+        }
       }
     }
 

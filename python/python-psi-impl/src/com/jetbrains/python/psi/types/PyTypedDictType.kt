@@ -159,7 +159,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
      * * all keys from [actual] are present in [expected]
      * * each key has the same value type in [expected] and [actual]
      */
-    fun match(expected: PyType, actual: PyTypedDictType, context: TypeEvalContext): Optional<Boolean> {
+    fun checkTypes(expected: PyType, actual: PyTypedDictType, context: TypeEvalContext): Optional<TypeCheckingResult> {
       if (!actual.isInferred()) {
         val match = checkStructuralCompatibility(expected, actual, context)
         if (match.isPresent) {
@@ -178,12 +178,21 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     private fun match(mandatoryArguments: Map<String, Pair<PyExpression?, PyType?>>,
                       expectedArguments: Map<String, Pair<PyExpression?, PyType?>>,
                       actualArguments: Map<String, Pair<PyExpression?, PyType?>>,
-                      context: TypeEvalContext): Boolean {
-      if (!actualArguments.keys.containsAll(mandatoryArguments.keys)) return false
+                      context: TypeEvalContext): TypeCheckingResult {
+      val valueTypesErrors = mutableListOf<ValueTypeError>()
+      val keysMissing = mutableListOf<String>()
+      val extraKeys = mutableListOf<String>()
+      var match = true
+
+      if (!actualArguments.keys.containsAll(mandatoryArguments.keys)) {
+        keysMissing.addAll(mandatoryArguments.keys.filter { !actualArguments.containsKey(it) })
+        match = false
+      }
 
       actualArguments.forEach {
         if (!expectedArguments.containsKey(it.key)) {
-          return false
+          extraKeys.add(it.key)
+          match = false
         }
         val actualValue = it.value.first
         val expectedType = expectedArguments[it.key]?.second
@@ -194,11 +203,12 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
           context
         )
         if (!matchResult) {
-          return false
+          valueTypesErrors.add(ValueTypeError(it.value.first, expectedType, it.value.second))
+          match = false
         }
       }
 
-      return true
+      return TypeCheckingResult(match, valueTypesErrors, keysMissing, extraKeys)
     }
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
@@ -209,31 +219,50 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
      * Rules for type-checking TypedDicts are described in PEP-589
      * @see <a href=https://www.python.org/dev/peps/pep-0589/#type-consistency>PEP-589</a>
      */
-    fun checkStructuralCompatibility(expected: PyType?, actual: PyTypedDictType, context: TypeEvalContext): Optional<Boolean> {
+    fun checkStructuralCompatibility(expected: PyType?,
+                                     actual: PyTypedDictType,
+                                     context: TypeEvalContext): Optional<TypeCheckingResult> {
       if (expected is PyCollectionType && PyTypingTypeProvider.MAPPING == expected.classQName) {
         val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
         val elementTypes = expected.elementTypes
-        return Optional.of(elementTypes.size == 2
-                           && builtinCache.strType == elementTypes[0]
-                           && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name))
+        return Optional.of(TypeCheckingResult(elementTypes.size == 2
+                                              && builtinCache.strType == elementTypes[0]
+                                              && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name), emptyList(), emptyList(), emptyList()))
       }
 
       if (expected !is PyTypedDictType) return Optional.empty()
 
-      expected.fields.forEach {
-        val expectedTypeAndTotality = it.value
+      val valueTypesErrors = mutableListOf<ValueTypeError>()
+      val keysMissing = mutableListOf<String>()
+      var match = true
 
-        if (!actual.fields.containsKey(it.key)) return Optional.of(false)
+      expected.fields.forEach {
+        if (!actual.fields.containsKey(it.key)) {
+          keysMissing.add(it.key)
+          match = false
+        }
+
+        val expectedTypeAndTotality = it.value
 
         val actualTypeAndTotality = actual.fields[it.key]
         if (actualTypeAndTotality == null
             || !strictUnionMatch(expectedTypeAndTotality.type, actualTypeAndTotality.type, context)
             || !strictUnionMatch(actualTypeAndTotality.type, expectedTypeAndTotality.type, context)
             || expectedTypeAndTotality.isRequired.xor(actualTypeAndTotality.isRequired)) {
-          return Optional.of(false)
+          valueTypesErrors.add(ValueTypeError(null, expectedTypeAndTotality.type, actualTypeAndTotality?.type))
+          match = false
         }
       }
-      return Optional.of(true)
+      return Optional.of(TypeCheckingResult(match, valueTypesErrors, keysMissing, emptyList()))
     }
   }
+
+  class ValueTypeError constructor(val actualExpression: PyExpression?,
+                                   val expectedType: PyType?,
+                                   val actualType: PyType?)
+
+  class TypeCheckingResult constructor(val match: Boolean,
+                                       val valueTypesErrors: List<ValueTypeError>,
+                                       val missingKeys: List<String>,
+                                       val extraKeys: List<String>)
 }
