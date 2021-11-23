@@ -11,10 +11,6 @@ class Fe10RustPerformanceTest : AbstractFE10ProjectBasedTests() {
     override val testPrefix: String = "FE10"
     override val warmUpOnHelloWorldProject: Boolean = true
 
-    fun testIsCorrectPlugin() {
-        assertKotlinPluginKind(KotlinPluginKind.FE10_PLUGIN)
-    }
-
     fun testRustPlugin() {
         val profile = ProjectBasedTestPreferences(
             warmUpIterations = 5,
