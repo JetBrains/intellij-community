@@ -141,14 +141,15 @@ fun collectAllArgumentsThatCanBeUsedWithoutName(
     }.sortedBy { (_, parameter) -> parameter.index }
     if (arguments.size != argumentAndParameters.size) return emptyList()
 
-    val firstVarargIndex = argumentAndParameters.indexOfFirst { (_, parameter) -> parameter.isVararg }
-    return argumentAndParameters.mapIndexedNotNull { index, (argument, parameter) ->
+    val firstVarargArgumentIndex = argumentAndParameters.indexOfFirst { (_, parameter) -> parameter.isVararg }
+    val lastVarargArgumentIndex = argumentAndParameters.indexOfLast { (_, parameter) -> parameter.isVararg }
+    return argumentAndParameters.mapIndexedNotNull { argumentIndex, (argument, parameter) ->
         val parameterIndex = parameter.index
-        val isAfterFirstVararg = firstVarargIndex != -1 && index > firstVarargIndex
-        val isFirstVararg = index == firstVarargIndex
-        if (index != parameterIndex ||
-            isAfterFirstVararg ||
-            isFirstVararg && argumentAndParameters.drop(index + 1).any { (argument, _) -> !argument.isNamed() }
+        val isAfterVararg = lastVarargArgumentIndex != -1 && argumentIndex > lastVarargArgumentIndex
+        val isVarargArg = argumentIndex in firstVarargArgumentIndex..lastVarargArgumentIndex
+        if (!isVarargArg && argumentIndex != parameterIndex ||
+            isAfterVararg ||
+            isVarargArg && argumentAndParameters.drop(lastVarargArgumentIndex + 1).any { (argument, _) -> !argument.isNamed() }
         ) {
             null
         } else {
