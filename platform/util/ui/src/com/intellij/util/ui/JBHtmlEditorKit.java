@@ -58,8 +58,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     return null;
   }
 
-  private final StyleSheet style;
-  private final HyperlinkListener myHyperlinkListener;
+  private final StyleSheet myStyle = createStyleSheet();
+  private final HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
 
   private FontResolver myFontResolver;
@@ -78,60 +78,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
    */
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
     myDisableLinkedCss = disableLinkedCss;
-    style = createStyleSheet();
-    if (noGapsBetweenParagraphs) style.addStyleSheet(ourNoGapsBetweenParagraphsStyle);
-    myHyperlinkListener = new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        Element element = e.getSourceElement();
-        if (element == null) return;
-        if (element.getName().equals("img")) return;
-
-        if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-          setUnderlined(true, element);
-        }
-        else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-          setUnderlined(false, element);
-        }
-      }
-
-      private void setUnderlined(boolean underlined, @NotNull Element element) {
-        AttributeSet attributes = element.getAttributes();
-        Object attribute = attributes.getAttribute(HTML.Tag.A);
-        if (attribute instanceof MutableAttributeSet) {
-          MutableAttributeSet a = (MutableAttributeSet)attribute;
-
-          Object href = a.getAttribute(HTML.Attribute.HREF);
-          Pair<Integer, Integer> aRange = findRangeOfParentTagWithGivenAttribute(element, href, HTML.Tag.A, HTML.Attribute.HREF);
-
-          a.addAttribute(CSS.Attribute.TEXT_DECORATION, underlined ? "underline" : "none");
-          ((StyledDocument)element.getDocument()).setCharacterAttributes(aRange.first, aRange.second - aRange.first, a, false);
-        }
-      }
-
-      /**
-       * There was a bug that if the anchor tag contained some span block, e.g.
-       * {@code <a><span>Objects.</span><span>equals()</span></a>} then only one block
-       * was underlined on mouse hover.
-       *
-       * <p>That was due to the receiver of the {@code HyperlinkEvent} was only one of child blocks
-       * and we need to properly find the range occupied by the whole parent.</p>
-       */
-      private @NotNull Pair<Integer, Integer> findRangeOfParentTagWithGivenAttribute(
-        @NotNull Element element,
-        Object elementAttributeValue,
-        @NotNull HTML.Tag tag,
-        @NotNull HTML.Attribute attribute
-      ) {
-        HtmlIteratorWrapper anchorTagIterator = new HtmlIteratorWrapper(((HTMLDocument)element.getDocument()).getIterator(tag));
-        return StreamSupport.stream(anchorTagIterator.spliterator(), false)
-          .filter(it -> Objects.equals(it.getAttributes().getAttribute(attribute), elementAttributeValue))
-          .filter(it -> it.getStartOffset() <= element.getStartOffset() && element.getStartOffset() <= it.getEndOffset())
-          .map(it -> new Pair<>(it.getStartOffset(), it.getEndOffset()))
-          .findFirst()
-          .orElse(new Pair<>(element.getStartOffset(), element.getEndOffset()));
-      }
-    };
+    if (noGapsBetweenParagraphs) myStyle.addStyleSheet(ourNoGapsBetweenParagraphsStyle);
   }
 
   /**
@@ -143,7 +90,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   @Override
   public StyleSheet getStyleSheet() {
-    return style;
+    return myStyle;
   }
 
   @Override
@@ -557,68 +504,121 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet);
   }
 
+  private static class LinkUnderlineListener implements HyperlinkListener {
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      Element element = e.getSourceElement();
+      if (element == null) return;
+      if (element.getName().equals("img")) return;
 
-  /**
-   * Implements {@code java.lang.Iterable} for {@code HTMLDocument.Iterator}
-   */
-  public static final class HtmlIteratorWrapper implements Iterable<HTMLDocument.Iterator> {
-
-    private final @NotNull HTMLDocument.Iterator myDelegate;
-
-    public HtmlIteratorWrapper(@NotNull HTMLDocument.Iterator delegate) {
-      myDelegate = delegate;
+      if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+        setUnderlined(true, element);
+      }
+      else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+        setUnderlined(false, element);
+      }
     }
 
-    @NotNull
-    @Override
-    public Iterator<HTMLDocument.Iterator> iterator() {
-      return new Iterator<>() {
-        @Override
-        public boolean hasNext() {
-          return myDelegate.isValid();
-        }
+    private static void setUnderlined(boolean underlined, @NotNull Element element) {
+      AttributeSet attributes = element.getAttributes();
+      Object attribute = attributes.getAttribute(HTML.Tag.A);
+      if (attribute instanceof MutableAttributeSet) {
+        MutableAttributeSet a = (MutableAttributeSet)attribute;
 
-        @Override
-        public HTMLDocument.Iterator next() {
-          final AttributeSet attributeSet = myDelegate.getAttributes();
-          final int startOffset = myDelegate.getStartOffset();
-          final int endOffset = myDelegate.getEndOffset();
-          final HTML.Tag tag = myDelegate.getTag();
-          HTMLDocument.Iterator current = new HTMLDocument.Iterator() {
-            @Override
-            public AttributeSet getAttributes() {
-              return attributeSet;
-            }
+        Object href = a.getAttribute(HTML.Attribute.HREF);
+        Pair<Integer, Integer> aRange = findRangeOfParentTagWithGivenAttribute(element, href, HTML.Tag.A, HTML.Attribute.HREF);
 
-            @Override
-            public int getStartOffset() {
-              return startOffset;
-            }
+        a.addAttribute(CSS.Attribute.TEXT_DECORATION, underlined ? "underline" : "none");
+        ((StyledDocument)element.getDocument()).setCharacterAttributes(aRange.first, aRange.second - aRange.first, a, false);
+      }
+    }
 
-            @Override
-            public int getEndOffset() {
-              return endOffset;
-            }
+    /**
+     * There was a bug that if the anchor tag contained some span block, e.g.
+     * {@code <a><span>Objects.</span><span>equals()</span></a>} then only one block
+     * was underlined on mouse hover.
+     *
+     * <p>That was due to the receiver of the {@code HyperlinkEvent} was only one of child blocks
+     * and we need to properly find the range occupied by the whole parent.</p>
+     */
+    @SuppressWarnings("SameParameterValue")
+    private static @NotNull Pair<Integer, Integer> findRangeOfParentTagWithGivenAttribute(
+      @NotNull Element element,
+      Object elementAttributeValue,
+      @NotNull HTML.Tag tag,
+      @NotNull HTML.Attribute attribute
+    ) {
+      HtmlIteratorWrapper anchorTagIterator = new HtmlIteratorWrapper(((HTMLDocument)element.getDocument()).getIterator(tag));
+      return StreamSupport.stream(anchorTagIterator.spliterator(), false)
+        .filter(it -> Objects.equals(it.getAttributes().getAttribute(attribute), elementAttributeValue))
+        .filter(it -> it.getStartOffset() <= element.getStartOffset() && element.getStartOffset() <= it.getEndOffset())
+        .map(it -> new Pair<>(it.getStartOffset(), it.getEndOffset()))
+        .findFirst()
+        .orElse(new Pair<>(element.getStartOffset(), element.getEndOffset()));
+    }
 
-            @Override
-            public HTML.Tag getTag() {
-              return tag;
-            }
+    /**
+     * Implements {@code java.lang.Iterable} for {@code HTMLDocument.Iterator}
+     */
+    private static final class HtmlIteratorWrapper implements Iterable<HTMLDocument.Iterator> {
 
-            @Override
-            public void next() {
-              throw new IllegalStateException("Must not be called");
-            }
+      private final @NotNull HTMLDocument.Iterator myDelegate;
 
-            @Override
-            public boolean isValid() {
-              throw new IllegalStateException("Must not be called");
-            }
-          };
-          myDelegate.next();
-          return current;
-        }
-      };
+      private HtmlIteratorWrapper(@NotNull HTMLDocument.Iterator delegate) {
+        myDelegate = delegate;
+      }
+
+      @NotNull
+      @Override
+      public Iterator<HTMLDocument.Iterator> iterator() {
+        return new Iterator<>() {
+          @Override
+          public boolean hasNext() {
+            return myDelegate.isValid();
+          }
+
+          @Override
+          public HTMLDocument.Iterator next() {
+            final AttributeSet attributeSet = myDelegate.getAttributes();
+            final int startOffset = myDelegate.getStartOffset();
+            final int endOffset = myDelegate.getEndOffset();
+            final HTML.Tag tag = myDelegate.getTag();
+            HTMLDocument.Iterator current = new HTMLDocument.Iterator() {
+              @Override
+              public AttributeSet getAttributes() {
+                return attributeSet;
+              }
+
+              @Override
+              public int getStartOffset() {
+                return startOffset;
+              }
+
+              @Override
+              public int getEndOffset() {
+                return endOffset;
+              }
+
+              @Override
+              public HTML.Tag getTag() {
+                return tag;
+              }
+
+              @Override
+              public void next() {
+                throw new IllegalStateException("Must not be called");
+              }
+
+              @Override
+              public boolean isValid() {
+                throw new IllegalStateException("Must not be called");
+              }
+            };
+            myDelegate.next();
+            return current;
+          }
+        };
+      }
     }
   }
 }
