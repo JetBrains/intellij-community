@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -83,7 +84,7 @@ class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
     @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForNativeiOSWithExistentPath() = doMultiFileQuickFixTest()
 
-    private fun doMultiFileQuickFixTest() {
+    private fun doMultiFileQuickFixTest(ignoreChangesInBuildScriptFiles: Boolean = true) {
         configureByFiles(subPath = "before")
         val projectPath = myProjectRoot.toNioPath()
 
@@ -118,15 +119,18 @@ class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
                 PlatformTestUtil.assertDirectoriesEqual(
                     expected,
                     projectVFile,
-                ) {
-                    if (it.parent == projectVFile)
-                        when (it.name) {
-                            ".gradle", "gradle", "build" -> false
-                            else -> true
+                    fun(vFile: VirtualFile): Boolean {
+                        if (vFile.parent == projectVFile) {
+                            when (vFile.name) {
+                                ".gradle", "gradle", "build" -> return false
+                            }
                         }
-                    else
-                        true
-                }
+
+                        if (ignoreChangesInBuildScriptFiles && ".gradle" in vFile.name) return false
+
+                        return true
+                    },
+                )
             }
 
             DirectiveBasedActionUtils.checkAvailableActionsAreExpected(ktFile, action?.let { actions - it } ?: actions)
