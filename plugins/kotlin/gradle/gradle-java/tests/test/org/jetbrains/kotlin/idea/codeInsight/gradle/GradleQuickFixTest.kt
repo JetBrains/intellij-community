@@ -78,11 +78,11 @@ class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.5.31+")
-    fun testCreateActualForNativeiOS() = doMultiFileQuickFixTest()
+    fun testCreateActualForNativeIOS() = doMultiFileQuickFixTest()
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.5.31+")
-    fun testCreateActualForNativeiOSWithExistentPath() = doMultiFileQuickFixTest()
+    fun testCreateActualForNativeIOSWithExistentPath() = doMultiFileQuickFixTest()
 
     private fun doMultiFileQuickFixTest(ignoreChangesInBuildScriptFiles: Boolean = true) {
         configureByFiles(subPath = "before")
