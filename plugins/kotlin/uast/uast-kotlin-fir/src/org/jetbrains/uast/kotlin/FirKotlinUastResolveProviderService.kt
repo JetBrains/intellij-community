@@ -113,7 +113,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktLambdaExpression) {
             // TODO: Should check an explicit, expected return type as well
             //  e.g., val y: () -> Unit = { 1 } // the lambda return type is Int, but we won't add an implicit return here.
-            val returnType = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().annotatedType.type
+            val returnType = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().returnType
             val returnUnitOrNothing = returnType.isUnit || returnType.isNothing
             return if (returnUnitOrNothing) null else
                 KotlinUImplicitReturnExpression(parent).apply {
@@ -130,7 +130,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         // TODO receiver parameter, dispatch parameter like in org.jetbrains.uast.kotlin.KotlinUastResolveProviderService.getImplicitParameters
         analyseForUast(ktLambdaExpression) {
             return ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters.map { p ->
-                val psiType = p.annotatedType.type.asPsiType(
+                val psiType = p.returnType.asPsiType(
                     ktLambdaExpression,
                     KtTypeMappingMode.DEFAULT_UAST,
                     isAnnotationMethod = false
@@ -231,7 +231,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
                 ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() as? KtConstructorSymbol ?: return false
-            val ktType = resolvedAnnotationConstructorSymbol.annotatedType.type
+            val ktType = resolvedAnnotationConstructorSymbol.returnType
             val context = containingKtClass(resolvedAnnotationConstructorSymbol) ?: ktCallElement
             val psiClass = toPsiClass(ktType, null, context, ktCallElement.typeOwnerKind) ?: return false
             return psiClass.isAnnotationType
@@ -244,10 +244,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return when (resolvedFunctionLikeSymbol) {
                 is KtConstructorSymbol -> {
                     val context = containingKtClass(resolvedFunctionLikeSymbol) ?: ktCallElement
-                    toPsiClass(resolvedFunctionLikeSymbol.annotatedType.type, source, context, ktCallElement.typeOwnerKind)
+                    toPsiClass(resolvedFunctionLikeSymbol.returnType, source, context, ktCallElement.typeOwnerKind)
                 }
                 is KtSamConstructorSymbol -> {
-                    toPsiClass(resolvedFunctionLikeSymbol.annotatedType.type, source, ktCallElement, ktCallElement.typeOwnerKind)
+                    toPsiClass(resolvedFunctionLikeSymbol.returnType, source, ktCallElement, ktCallElement.typeOwnerKind)
                 }
                 else -> null
             }
@@ -259,7 +259,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val resolvedAnnotationCall = ktAnnotationEntry.resolveCall() as? KtAnnotationCall ?: return null
             val resolvedAnnotationConstructorSymbol =
                 resolvedAnnotationCall.targetFunction.getSingleCandidateSymbolOrNull() as? KtConstructorSymbol ?: return null
-            val ktType = resolvedAnnotationConstructorSymbol.annotatedType.type
+            val ktType = resolvedAnnotationConstructorSymbol.returnType
             val context = containingKtClass(resolvedAnnotationConstructorSymbol) ?: ktAnnotationEntry
             return toPsiClass(ktType, source, context, ktAnnotationEntry.typeOwnerKind)
         }
@@ -355,7 +355,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         analyseForUast(ktCallElement) {
-            val ktType = ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull()?.receiverType?.type ?: return null
+            val ktType = ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull()?.receiverType ?: return null
             if (ktType is KtClassErrorType) return null
             return toPsiType(ktType, source, ktCallElement, ktCallElement.typeOwnerKind, boxed = true)
         }
@@ -364,7 +364,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
         analyseForUast(ktSimpleNameExpression) {
             val ktType =
-                ktSimpleNameExpression.resolveAccessorCall()?.targetFunction?.getSingleCandidateSymbolOrNull()?.receiverType?.type ?: return null
+                ktSimpleNameExpression.resolveAccessorCall()?.targetFunction?.getSingleCandidateSymbolOrNull()?.receiverType ?: return null
             if (ktType is KtClassErrorType) return null
             return toPsiType(ktType, source, ktSimpleNameExpression, ktSimpleNameExpression.typeOwnerKind, boxed = true)
         }

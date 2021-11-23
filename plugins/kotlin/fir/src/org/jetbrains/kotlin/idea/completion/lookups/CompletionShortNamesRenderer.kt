@@ -22,13 +22,13 @@ internal object CompletionShortNamesRenderer {
     }
 
     private fun KtAnalysisSession.renderReceiver(symbol: KtCallableSymbol, substitutor: KtSubstitutor): String {
-        val receiverType = symbol.receiverType?.type?.let { substitutor.substituteOrSelf(it) } ?: return ""
+        val receiverType = symbol.receiverType?.let { substitutor.substituteOrSelf(it) } ?: return ""
         return receiverType.render(TYPE_RENDERING_OPTIONS) + "."
     }
 
     private fun KtAnalysisSession.renderFunctionParameter(param: KtValueParameterSymbol, substitutor: KtSubstitutor): String =
         "${if (param.isVararg) "vararg " else ""}${param.name.asString()}: ${
-            substitutor.substituteOrSelf(param.annotatedType.type).render(TYPE_RENDERING_OPTIONS)
+            substitutor.substituteOrSelf(param.returnType).render(TYPE_RENDERING_OPTIONS)
         }"
 
     val TYPE_RENDERING_OPTIONS = KtTypeRendererOptions.SHORT_NAMES

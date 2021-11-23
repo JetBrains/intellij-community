@@ -2,18 +2,18 @@
 
 package org.jetbrains.kotlin.idea.fir.fe10
 
+import org.jetbrains.kotlin.analysis.api.KtStarProjectionTypeArgument
+import org.jetbrains.kotlin.analysis.api.KtTypeArgument
+import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.analysis.api.KtStarProjectionTypeArgument
-import org.jetbrains.kotlin.analysis.api.KtTypeArgument
-import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtTypeAndAnnotations
-import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -93,11 +93,8 @@ internal class MemberScopeForKtSymbolBasedDescriptors(lazyDebugInfo: () -> Strin
     ): Collection<DeclarationDescriptor> = noImplementation()
 }
 
-fun KtTypeAndAnnotations.getDescriptorsAnnotations(context: FE10BindingContext): Annotations =
+fun KtType.getDescriptorsAnnotations(context: FE10BindingContext): Annotations =
     Annotations.create(annotations.map { KtSymbolBasedAnnotationDescriptor(it, context) })
-
-fun KtTypeAndAnnotations.toKotlinType(context: FE10BindingContext): UnwrappedType =
-    type.toKotlinType(context, getDescriptorsAnnotations(context))
 
 fun KtTypeArgument.toTypeProjection(context: FE10BindingContext): TypeProjection =
     when (this) {

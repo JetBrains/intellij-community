@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
+import org.jetbrains.kotlin.analysis.api.annotations.containsAnnotation
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicator
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
