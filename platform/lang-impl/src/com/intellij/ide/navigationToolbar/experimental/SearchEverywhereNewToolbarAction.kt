@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar.experimental
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
@@ -23,6 +24,9 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.BigPopup.searchFieldBackground
 import com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_TEXT_COLOR
+import java.awt.Cursor
+import java.awt.Cursor.DEFAULT_CURSOR
+import java.awt.Cursor.TEXT_CURSOR
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
@@ -33,20 +37,24 @@ import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
+  companion object {
+    private const val SHOW_HOT_KEY = "ide.newtoolbar.searcheverywhere.hotkey"
+  }
+
   private val margin = JBUI.scale(4)
-  private var hotKeyWasUsed = AdvancedSettings.getBoolean("ide.suppress.double.click.handler")
   private var subscribedForDoubleShift = false
   private var firstOpened = false
   private var clearPosition = false
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = true
-    event.presentation.text = if (hotKeyWasUsed) {
+    event.presentation.text = if (!showHotkey()) {
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
     else {
       ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text")
     }
+    event.presentation.icon = AllIcons.Actions.Search
     if (!subscribedForDoubleShift) {
       event.project?.let {
         ApplicationManager.getApplication().messageBus.connect(it).subscribe(AnActionListener.TOPIC, this)
@@ -63,7 +71,8 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
       init {
         FocusManager.getCurrentManager().addPropertyChangeListener { this.repaint() }
-        setHorizontalTextAlignment(SwingConstants.LEFT);
+        setHorizontalTextAlignment(SwingConstants.LEFT)
+        cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
       }
 
       override fun updateToolTipText() {
@@ -105,6 +114,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
       }
 
+      override fun getPopState(): Int {
+        return NORMAL
+      }
+
       override fun paint(g: Graphics?) {
         foreground = DISABLED_TEXT_COLOR
         background = searchFieldBackground()
@@ -128,12 +141,15 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
                                                       viewRect, iconRect, textRect, iconTextSpace())
 
         if (seManager != null && seManager!!.isShown) {
+          cursor = Cursor.getPredefinedCursor(DEFAULT_CURSOR)
           this.isOpaque = false
           this.border = null
           drawStringUnderlineCharAt(g, ActionsBundle.message("action.SearchEverywhereToolbar.searching.text"), getMnemonicCharIndex(text),
                                     textRect.x, textRect.y + fm.ascent)
 
           return
+        } else {
+          cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
         }
 
         val icon = icon
@@ -152,11 +168,16 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
     }
   }
 
+  private fun showHotkey(): Boolean {
+    return !AdvancedSettings.getBoolean("ide.suppress.double.click.handler")
+           && AdvancedSettings.getBoolean(SHOW_HOT_KEY)
+  }
+
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-    if (action is SearchEverywhereAction && !hotKeyWasUsed) {
+    if (action is SearchEverywhereAction && showHotkey()) {
       if (event.inputEvent is KeyEvent) {
         if ((event.inputEvent as KeyEvent).keyCode == KeyEvent.VK_SHIFT) {
-          hotKeyWasUsed = true
+          AdvancedSettings.setBoolean(SHOW_HOT_KEY, false)
         }
       }
     }
