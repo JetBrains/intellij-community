@@ -2,22 +2,45 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.testFramework.runAll
 import org.jetbrains.kotlin.ObsoleteTestInfrastructure
-import org.jetbrains.kotlin.checkers.AbstractDiagnosticsTest
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
-import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
-import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
-import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationIDEContainerContributor
+import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightVisitorTest
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.addRoot
+import java.io.File
 
 @OptIn(ObsoleteTestInfrastructure::class)
-abstract class AbstractSerializationPluginIdeDiagnosticTest : AbstractDiagnosticsTest() {
-    private val coreLibraryPath = getSerializationCoreLibraryJar()!!
-    private val jsonLibraryPath = getSerializationJsonLibraryJar()!!
+abstract class AbstractSerializationPluginIdeDiagnosticTest : AbstractKotlinHighlightVisitorTest() {
+    private val serializationLibraries: Map<String, File> = mapOf(
+        "serializationCore" to getSerializationCoreLibraryJar()!!,
+        "serializationJson" to getSerializationJsonLibraryJar()!!
+    )
 
-    override fun setupEnvironment(environment: KotlinCoreEnvironment) {
-        if (!StorageComponentContainerContributor.getInstances(project).any { it is SerializationIDEContainerContributor }) {
-            StorageComponentContainerContributor.registerExtension(project, SerializationIDEContainerContributor())
+    override fun setUp() {
+        addSerializationLibraries()
+        super.setUp()
+    }
+
+    override fun tearDown() {
+        runAll(
+            { removeSerializationLibraries(module) },
+            { super.tearDown() }
+        )
+    }
+
+    private fun addSerializationLibraries() {
+        for ((libraryName, libraryJar) in serializationLibraries) {
+            ConfigLibraryUtil.addLibrary(module, libraryName) {
+                addRoot(libraryJar, OrderRootType.CLASSES)
+            }
         }
-        environment.updateClasspath(listOf(JvmClasspathRoot(coreLibraryPath), JvmClasspathRoot(jsonLibraryPath)))
+    }
+
+    private fun removeSerializationLibraries(module: Module) {
+        for ((libraryName, _) in serializationLibraries) {
+            ConfigLibraryUtil.removeLibrary(module, libraryName)
+        }
     }
 }
