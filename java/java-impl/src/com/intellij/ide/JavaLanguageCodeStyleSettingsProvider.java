@@ -15,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showAllStandardOptions();
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS",
                                 JavaBundle.message("code.style.settings.angle.spacing.brackets"), getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_ANNOTATION_EQ",
+                                JavaBundle.message("checkbox.spaces.around.annotation.eq"), getInstance().SPACES_OTHER);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_RECORD_HEADER",
                                 JavaBundle.message("checkbox.spaces.record.header"), getInstance().SPACES_WITHIN);
 

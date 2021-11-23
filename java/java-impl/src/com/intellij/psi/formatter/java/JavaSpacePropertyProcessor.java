@@ -1778,7 +1778,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitNameValuePair(PsiNameValuePair pair) {
     if (myRole1 == ChildRole.OPERATION_SIGN || myRole2 == ChildRole.OPERATION_SIGN) {
-      createSpaceInCode(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
+      createSpaceInCode(myJavaSettings.SPACE_AROUND_ANNOTATION_EQ);
     }
   }
 
