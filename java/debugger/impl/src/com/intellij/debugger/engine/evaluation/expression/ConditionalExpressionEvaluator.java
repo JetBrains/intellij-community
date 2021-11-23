@@ -22,25 +22,27 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.sun.jdi.*;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
 class ConditionalExpressionEvaluator implements Evaluator {
   private final Evaluator myConditionEvaluator;
   private final Evaluator myThenEvaluator;
   private final Evaluator myElseEvaluator;
-  private final String myExpectedType;
+  private final PsiType myExpectedType;
 
   ConditionalExpressionEvaluator(Evaluator conditionEvaluator,
                                  Evaluator thenEvaluator,
                                  Evaluator elseEvaluator,
-                                 @Nullable String expectedType) {
+                                 @Nullable PsiType expectedType) {
     myConditionEvaluator = conditionEvaluator;
     myThenEvaluator = thenEvaluator;
     myElseEvaluator = elseEvaluator;
@@ -61,61 +63,34 @@ class ConditionalExpressionEvaluator implements Evaluator {
   }
 
   static Object doConversion(Object conditionalResult,
-                             @Nullable String expectedType,
+                             @Nullable PsiType expectedType,
                              EvaluationContextImpl context) throws EvaluateException {
     if (expectedType == null) {
       return conditionalResult;
     }
 
-    Object castValue = null;
+    Object castValue;
     if (conditionalResult instanceof ObjectReference &&
         UnBoxingEvaluator.isTypeUnboxable(((ObjectReference)conditionalResult).type().name()) &&
-        DebuggerUtils.isPrimitiveType(expectedType)) {
+        DebuggerUtils.isPrimitiveType(expectedType.getCanonicalText())) {
 
-      final Object unboxed = UnBoxingEvaluator.unbox(conditionalResult, context);
-      castValue = tryCastValue(unboxed, expectedType, context);
-    }
-    else if (conditionalResult instanceof PrimitiveValue && DebuggerUtils.isPrimitiveType(expectedType)) {
-
-      castValue = tryCastValue(conditionalResult, expectedType, context);
+      castValue = UnBoxingEvaluator.unbox(conditionalResult, context);
+    } else {
+      castValue = conditionalResult;
     }
 
-    if (castValue != null) {
-      return castValue;
+    if (!(castValue instanceof Value)) {
+      return conditionalResult;
     }
 
-    return conditionalResult;
-  }
-
-  static @Nullable Object tryCastValue(@NotNull Object value,
-                                       @NotNull String expectedType,
-                                       @NotNull EvaluationContextImpl context) {
-    final VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
-    if (value instanceof IntegerValue) {
-      return DebuggerUtilsEx.createValue(vm, expectedType, ((IntegerValue)value).intValue());
+    if (expectedType instanceof PsiPrimitiveType) {
+      return new TypeCastEvaluator(new IdentityEvaluator((Value)castValue), expectedType.getCanonicalText()).evaluate(context);
     }
-    else if (value instanceof ShortValue) {
-      return DebuggerUtilsEx.createValue(vm, expectedType, ((ShortValue)value).shortValue());
+    else {
+      return new TypeCastEvaluator(
+        new IdentityEvaluator((Value)castValue),
+        new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(expectedType))
+      ).evaluate(context);
     }
-    else if (value instanceof ByteValue) {
-      return DebuggerUtilsEx.createValue(vm, expectedType, ((ByteValue)value).byteValue());
-    }
-    else if (value instanceof LongValue) {
-      return DebuggerUtilsEx.createValue(vm, expectedType, ((LongValue)value).longValue());
-    }
-    else if (value instanceof FloatValue) {
-      return DebuggerUtilsEx.createValue(vm, expectedType, ((FloatValue)value).floatValue());
-    }
-    else if (value instanceof DoubleValue) {
-      return DebuggerUtilsEx.createValue(vm, expectedType, ((DoubleValue)value).doubleValue());
-    }
-    else if (value instanceof CharValue) {
-      return DebuggerUtilsEx.createValue(vm, expectedType, ((CharValue)value).charValue());
-    }
-    else if (value instanceof BooleanValue) {
-      return DebuggerUtilsEx.createValue(vm, expectedType, ((BooleanValue)value).booleanValue());
-    }
-
-    return null;
   }
 }

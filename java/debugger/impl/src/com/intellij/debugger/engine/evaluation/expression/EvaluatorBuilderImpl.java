@@ -813,7 +813,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myResult = new ConditionalExpressionEvaluator(conditionEvaluator,
                                                     thenEvaluator,
                                                     elseEvaluator,
-                                                    expectedType == null ? null : expectedType.getCanonicalText());
+                                                    expectedType);
     }
 
     @Override
