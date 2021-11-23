@@ -109,6 +109,14 @@ public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomInd
     public int hashCode() {
       return Objects.hash(myRootTagName, myNamespace);
     }
+
+    @Override
+    public String toString() {
+      return "DomIndexKey{" +
+             "myRootTagName='" + myRootTagName + '\'' +
+             ", myNamespace='" + myNamespace + '\'' +
+             '}';
+    }
   }
 
   private static class DomIndexKeyDescriptor implements KeyDescriptor<DomIndexKey> {
