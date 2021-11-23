@@ -50,7 +50,7 @@ internal class PackageIndexBuilder {
     }
 
     zipCreator.uncompressedData(PACKAGE_INDEX_NAME,
-                                      (2 * Int.SIZE_BYTES) + ((classPackageHashSet.size + resourcePackageHashSet.size) * Int.SIZE_BYTES)) {
+                                (2 * Int.SIZE_BYTES) + ((classPackageHashSet.size + resourcePackageHashSet.size) * Int.SIZE_BYTES)) {
       val classPackages = classPackageHashSet.toIntArray()
       val resourcePackages = resourcePackageHashSet.toIntArray()
       // same content for same data

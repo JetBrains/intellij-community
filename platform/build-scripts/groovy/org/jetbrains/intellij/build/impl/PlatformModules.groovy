@@ -185,20 +185,26 @@ final class PlatformModules {
       "intellij.platform.util.rt",
       "intellij.platform.util.zip",
       "intellij.platform.util.classLoader",
+      "intellij.platform.bootstrap",
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",
       "intellij.platform.util.xmlDom",
+      "intellij.platform.extensions",
+      "intellij.platform.tracing.rt",
+      "intellij.platform.boot"
+    ), productLayout, layout)
+
+    jar(BaseLayout.APP_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
+    // util.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
+    jar(BaseLayout.APP_JAR, List.of(
       "intellij.platform.util.ui",
       "intellij.platform.util.ex",
       "intellij.platform.ide.util.io",
       "intellij.platform.ide.util.io.impl",
       "intellij.platform.ide.util.netty",
-      "intellij.platform.extensions",
-      "intellij.platform.tracing.rt"
     ), productLayout, layout)
 
-    jar(BaseLayout.APP_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
     jar(BaseLayout.APP_JAR, List.of(
       "intellij.relaxng",
       "intellij.json",
@@ -227,11 +233,6 @@ final class PlatformModules {
       "intellij.platform.statistics.uploader",
       "intellij.platform.statistics.config",
       ), productLayout, layout)
-
-    jar("bootstrap.jar", List.of(
-      "intellij.platform.bootstrap",
-      "intellij.platform.boot"
-    ), productLayout, layout)
 
     layout.excludedModuleLibraries.putValue("intellij.platform.credentialStore", "dbus-java")
 
@@ -274,7 +275,7 @@ final class PlatformModules {
     layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
       "JDOM",
       "Trove4j",
-      ))
+    ))
 
     for (JpsLibrary library in additionalProjectLevelLibraries) {
       String name = library.name

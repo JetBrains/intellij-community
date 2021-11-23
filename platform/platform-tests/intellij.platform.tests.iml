@@ -66,5 +66,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" scope="TEST" />
   </component>
 </module>

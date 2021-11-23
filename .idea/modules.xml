@@ -797,6 +797,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util/base/intellij.platform.util.base.iml" filepath="$PROJECT_DIR$/platform/util/base/intellij.platform.util.base.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-class-loader/intellij.platform.util.classLoader.iml" filepath="$PROJECT_DIR$/platform/util-class-loader/intellij.platform.util.classLoader.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" filepath="$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/util/ikv-benchmark/intellij.platform.util.ikvBenchmark.iml" filepath="$PROJECT_DIR$/platform/util/ikv-benchmark/intellij.platform.util.ikvBenchmark.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/intellij.platform.util.rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/intellij.platform.util.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/testSrc/intellij.platform.util.tests.iml" filepath="$PROJECT_DIR$/platform/util/testSrc/intellij.platform.util.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/text-matching/intellij.platform.util.text.matching.iml" filepath="$PROJECT_DIR$/platform/util/text-matching/intellij.platform.util.text.matching.iml" />

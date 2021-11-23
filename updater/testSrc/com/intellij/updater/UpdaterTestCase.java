@@ -71,7 +71,7 @@ public abstract class UpdaterTestCase {
 
     public CheckSums(boolean crLfs, boolean backwardSlashes) {
       README_TXT = crLfs ? 1272723667L : 7256327L;
-      IDEA_BAT = crLfs ? 3088608749L : 2879711301L;
+      IDEA_BAT = crLfs ? 3088608749L : 1681106766L;
       LINK_TO_DOT_README_TXT = backwardSlashes ? 2305843011210142148L : 2305843009503057206L;
     }
   }

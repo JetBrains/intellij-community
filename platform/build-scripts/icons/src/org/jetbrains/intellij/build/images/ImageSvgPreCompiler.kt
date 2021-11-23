@@ -14,6 +14,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import org.apache.batik.transcoder.TranscoderException
 import org.jetbrains.ikv.IkvWriter
+import org.jetbrains.ikv.sizeUnawareIkvWriter
 import org.jetbrains.intellij.build.io.ByteBufferAllocator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
@@ -23,10 +24,10 @@ import org.jetbrains.mvstore.type.IntDataType
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.nio.channels.FileChannel
-import java.nio.file.*
-import java.util.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
+import java.nio.file.Path
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ForkJoinTask
@@ -143,7 +144,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
       if (store == null) {
         val file = dbDir.resolve("icons-v1-$scale$classifier.db")
         this.file = file
-        store = IkvWriter(FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)), writeSize = false)
+        store = sizeUnawareIkvWriter(file)
         this.store = store
       }
       return store
@@ -221,21 +222,31 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
 
       //println("${Formats.formatFileSize(totalSize.get().toLong())} (${totalSize.get()}, iconCount=${totalFiles.get()}, resultSize=${result.size})")
     }
-    finally {
-      val span = GlobalOpenTelemetry.getTracer("build-script")
-        .spanBuilder("save rasterized SVG database")
-        .setAttribute("path", dbDir.toString())
-        .setAttribute(AttributeKey.longKey("iconCount"), totalFiles.get().toLong())
-        .startSpan()
+    catch (e: Throwable) {
       try {
         lightStores.close(resultFiles)
         darkStores.close(resultFiles)
-        span.setAttribute(AttributeKey.stringKey("fileSize"), Formats.formatFileSize(totalSize.get().toLong()))
       }
-      finally {
-        span.end()
+      catch (e1: Throwable) {
+        e.addSuppressed(e)
       }
+      throw e
     }
+
+    val span = GlobalOpenTelemetry.getTracer("build-script")
+      .spanBuilder("close rasterized SVG database")
+      .setAttribute("path", dbDir.toString())
+      .setAttribute(AttributeKey.longKey("iconCount"), totalFiles.get().toLong())
+      .startSpan()
+    try {
+      lightStores.close(resultFiles)
+      darkStores.close(resultFiles)
+      span.setAttribute(AttributeKey.stringKey("fileSize"), Formats.formatFileSize(totalSize.get().toLong()))
+    }
+    finally {
+      span.end()
+    }
+
     resultFiles.sort()
     return resultFiles
   }
@@ -392,10 +403,6 @@ private fun addEntry(map: IkvWriter, image: BufferedImage, imageKey: Int, totalS
     writeVar(buffer, w)
     writeVar(buffer, h)
   }
-
-  // critical for a proper colors, see https://en.wikipedia.org/wiki/RGBA_color_model
-  // On little-endian systems, this is equivalent to BGRA byte order. On big-endian systems, this is equivalent to ARGB byte order.
-  buffer.order(ByteOrder.BIG_ENDIAN)
 
   buffer.asIntBuffer().put(data)
   buffer.position(buffer.position() + (data.size * Int.SIZE_BYTES))

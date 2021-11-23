@@ -24,6 +24,8 @@ import java.util.concurrent.ForkJoinTask
 import java.util.zip.ZipEntry
 import kotlin.random.Random
 
+// XxHash3.hashUnencodedChars32 cannot be used because ClasspathCache located in the module where only JDK 8 is supported.
+
 private val testDataPath: Path
   get() = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins/reorderJars")
 

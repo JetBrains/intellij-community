@@ -6,13 +6,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -24,7 +19,7 @@ import java.util.EnumSet;
 import java.util.zip.ZipException;
 
 @ApiStatus.Internal
-public final class ImmutableZipFile implements Closeable {
+public final class ImmutableZipFile implements AutoCloseable {
   private static final int MIN_EOCD_SIZE = 22;
 
   private final ImmutableZipEntry[] nameMap;
@@ -91,13 +86,11 @@ public final class ImmutableZipFile implements Closeable {
    * @throws IOException if an error occurs closing the archive.
    */
   @Override
-  public void close() throws IOException {
+  public void close() throws Exception {
     ByteBuffer buffer = mappedBuffer;
     if (buffer != null) {
       mappedBuffer = null;
-      // we need to unmap buffer immediately without waiting until GC does this job; otherwise further modifications of the created file
-      // will fail with AccessDeniedException
-      unmapBuffer(buffer);
+      ByteBufferCleaner.unmapBuffer(buffer);
     }
   }
 
@@ -358,27 +351,6 @@ public final class ImmutableZipFile implements Closeable {
       else if (++index == set.length) {
         index = 0;
       }
-    }
-  }
-
-  /**
-   * This method repeats logic from {@link com.intellij.util.io.ByteBufferUtil#cleanBuffer} which isn't accessible from this module
-   */
-  private static void unmapBuffer(@NotNull ByteBuffer buffer) throws IOException {
-    if (!buffer.isDirect()) {
-      return;
-    }
-
-    try {
-      Field unsafeField = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
-      unsafeField.setAccessible(true);
-      Object unsafe = unsafeField.get(null);
-      MethodType type = MethodType.methodType(void.class, ByteBuffer.class);
-      MethodHandle handle = MethodHandles.lookup().findVirtual(unsafe.getClass(), "invokeCleaner", type);
-      handle.invoke(unsafe, buffer);
-    }
-    catch (Throwable t) {
-      throw new IOException(t);
     }
   }
 }
