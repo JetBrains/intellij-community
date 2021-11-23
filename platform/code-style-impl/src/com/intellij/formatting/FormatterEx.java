@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,8 @@ public abstract class FormatterEx implements Formatter {
                                        final TextRange affectedRange);
 
   @Nullable
-  public abstract List<String> getLineIndents(final FormattingModel psiBasedFormattingModel,
+  @ApiStatus.Internal
+  public abstract List<String> getLineIndents(final FormattingModel model,
                                               final CodeStyleSettings settings,
                                               final CommonCodeStyleSettings.IndentOptions indentOptions);
 

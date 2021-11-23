@@ -321,7 +321,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   }
 
   @Override
-  @NotNull
+  @Nullable
   public List<String> getLineIndents(@NotNull PsiFile file) {
     return new CodeStyleManagerRunnable<List<String>>(this, FormattingMode.ADJUST_INDENT) {
       @Override
