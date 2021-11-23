@@ -1299,8 +1299,9 @@ public final class PluginManagerConfigurable
   @Messages.YesNoResult
   public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title,
                                       @NotNull Function<? super String, @Nls String> message) {
-    String action =
-      IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
+    String action = IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ?
+                                      "ide.restart.action" :
+                                      "ide.shutdown.action");
     return Messages.showYesNoDialog(message.apply(action),
                                     title,
                                     action,
@@ -1316,10 +1317,6 @@ public final class PluginManagerConfigurable
     shutdownOrRestartAppAfterInstall(title, PluginManagerConfigurable::getUpdatesDialogMessage);
   }
 
-  public static void shutdownOrRestartAppAfterInstall(@NotNull Function<? super String, @Nls String> message) {
-    shutdownOrRestartAppAfterInstall(getUpdatesDialogTitle(), message);
-  }
-
   static void shutdownOrRestartAppAfterInstall(@NotNull @NlsContexts.DialogTitle String title,
                                                @NotNull Function<? super String, @Nls String> message) {
     if (showRestartDialog(title, message) == Messages.YES) {
@@ -1327,12 +1324,12 @@ public final class PluginManagerConfigurable
     }
   }
 
-  static @Nls @NotNull String getUpdatesDialogTitle() {
+  static @NotNull @NlsContexts.DialogTitle String getUpdatesDialogTitle() {
     return IdeBundle.message("updates.dialog.title",
                              ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
-  static @Nls @NotNull String getUpdatesDialogMessage(@Nls @NotNull String action) {
+  static @NotNull @NlsContexts.DialogMessage String getUpdatesDialogMessage(@Nls @NotNull String action) {
     return IdeBundle.message("ide.restart.required.message",
                              action,
                              ApplicationNamesInfo.getInstance().getFullProductName());
@@ -1666,8 +1663,11 @@ public final class PluginManagerConfigurable
     if (myPluginModel.apply(myCardPanel)) return;
 
     if (myPluginModel.createShutdownCallback) {
-      InstalledPluginsState.getInstance()
-        .setShutdownCallback(() -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp()));
+      InstalledPluginsState.getInstance().setShutdownCallback(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          shutdownOrRestartApp();
+        });
+      });
     }
   }
 
