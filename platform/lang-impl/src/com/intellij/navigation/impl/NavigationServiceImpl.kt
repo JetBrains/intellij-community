@@ -9,10 +9,17 @@ import com.intellij.pom.Navigatable
 internal class NavigationServiceImpl : NavigationService {
 
   override fun sourceNavigationRequest(file: VirtualFile, offset: Int): NavigationRequest? {
+    if (!file.isValid) {
+      return null
+    }
+    // TODO ? check if offset is within bounds
     return SourceNavigationRequest(file, offset)
   }
 
   override fun rawNavigationRequest(navigatable: Navigatable): NavigationRequest? {
+    if (!navigatable.canNavigateToSource() && !navigatable.canNavigate()) {
+      return null
+    }
     return RawNavigationRequest(navigatable)
   }
 }
