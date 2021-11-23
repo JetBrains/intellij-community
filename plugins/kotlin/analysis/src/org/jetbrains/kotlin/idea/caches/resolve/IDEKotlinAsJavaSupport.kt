@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.impl.compiled.ClsFileImpl
+import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
@@ -331,22 +332,30 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         val javaFileStub = ClsJavaStubByVirtualFileCache.getInstance(project).get(classFile) ?: return null
         javaFileStub.psiFactory = ClsWrapperStubPsiFactory.INSTANCE
         val manager = PsiManager.getInstance(mirrorFile.project)
-        val fakeFile = object : ClsFileImpl(ClassFileViewProvider(manager, classFile)) {
-            override fun getNavigationElement(): PsiElement {
-                if (correspondingClassOrObject != null) {
-                    return correspondingClassOrObject.navigationElement.containingFile
-                }
-                return super.getNavigationElement()
-            }
-
-            override fun getStub() = javaFileStub
-
-            override fun getMirror() = mirrorFile
-
-            override fun isPhysical() = false
-        }
+        val fakeFile = FakeClsFileImpl(manager, classFile, mirrorFile, correspondingClassOrObject, javaFileStub)
         javaFileStub.psi = fakeFile
         return fakeFile.classes.single() as ClsClassImpl
+    }
+
+    private inner class FakeClsFileImpl(
+        manager: PsiManager,
+        classFile: VirtualFile,
+        private val mirrorFile: KtFile,
+        private val correspondingClassOrObject: KtClassOrObject?,
+        private val javaFileStub: PsiJavaFileStubImpl,
+    ) : ClsFileImpl(ClassFileViewProvider(manager, classFile)) {
+        override fun getNavigationElement(): PsiElement {
+            if (correspondingClassOrObject != null) {
+                return correspondingClassOrObject.navigationElement.containingFile
+            }
+            return super.getNavigationElement()
+        }
+
+        override fun getStub() = javaFileStub
+
+        override fun getMirror() = mirrorFile
+
+        override fun isPhysical() = false
     }
 }
 
