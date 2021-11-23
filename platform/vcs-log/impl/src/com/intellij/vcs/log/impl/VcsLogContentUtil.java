@@ -163,7 +163,7 @@ public final class VcsLogContentUtil {
     VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING);
   }
 
-  public static boolean selectMainLog(@NotNull ContentManager cm) {
+  private static boolean selectMainLog(@NotNull ContentManager cm) {
     Content[] contents = cm.getContents();
     for (Content content : contents) {
       // here tab name is used instead of log ui id to select the correct tab
@@ -174,6 +174,12 @@ public final class VcsLogContentUtil {
       }
     }
     return false;
+  }
+
+  public static boolean selectMainLog(@NotNull Project project) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    if (toolWindow == null) return false;
+    return selectMainLog(toolWindow.getContentManager());
   }
 
   public static void updateLogUiName(@NotNull Project project, @NotNull VcsLogUi ui) {

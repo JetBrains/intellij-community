@@ -53,8 +53,7 @@ object GitLessonsUtil {
       vcsLogUi?.filterUi?.clearFilters()
       PropertiesComponent.getInstance(project).setValue("Vcs.Log.Text.Filter.History", null)
 
-      val vcsLogWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)
-      VcsLogContentUtil.selectMainLog(vcsLogWindow!!.contentManager)
+      VcsLogContentUtil.selectMainLog(project)
     }
 
     // clear Git tool window to return it to default state (needed in case of restarting the lesson)

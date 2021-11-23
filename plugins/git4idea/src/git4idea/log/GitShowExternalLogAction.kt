@@ -67,7 +67,7 @@ class GitShowExternalLogAction : DumbAwareAction() {
     }
     val showContent = {
       val cm = window.contentManager
-      if (!selectProjectLog(project, vcs, cm, roots) && !selectAlreadyOpened(cm, roots)) {
+      if (!selectProjectLog(project, vcs, roots) && !selectAlreadyOpened(cm, roots)) {
         val component = createManagerAndContent(project, vcs, roots, true)
         val content = ContentFactory.SERVICE.getInstance().createContent(component, calcTabName(cm, roots), false)
         content.setDisposer(component.disposable)
@@ -166,12 +166,11 @@ private fun getGitRootsFromUser(project: Project): List<VirtualFile> {
 
 private fun selectProjectLog(project: Project,
                              vcs: GitVcs,
-                             cm: ContentManager,
                              requestedRoots: List<VirtualFile>): Boolean {
   val projectRoots = listOf(*ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs))
   if (!projectRoots.containsAll(requestedRoots)) return false
 
-  if (requestedRoots.containsAll(projectRoots)) return VcsLogContentUtil.selectMainLog(cm)
+  if (requestedRoots.containsAll(projectRoots)) return VcsLogContentUtil.selectMainLog(project)
   val filters = collection(fromRoots(requestedRoots))
   return VcsProjectLog.getInstance(project).openLogTab(filters) != null
 }
