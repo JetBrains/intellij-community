@@ -23,6 +23,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
+import com.intellij.util.ui.EDT
 import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
@@ -120,9 +121,8 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         }.isSuccess
         if (success) {
             logToFUS(project)
+            scheduleSampleFilesOpening(project)
         }
-
-        scheduleSampleFilesOpening(project)
 
         return when {
             !success -> null
@@ -134,28 +134,43 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     }
 
     private fun scheduleSampleFilesOpening(project: Project) = StartupManager.getInstance(project).runAfterOpened {
-        val pathname = project.basePath ?: return@runAfterOpened
-        val projectPath = File(pathname)
+        // From javadoc of StartupManager.runAfterOpened:
+        //      ... that is executed on pooled thread after project is opened.
+        //      The runnable will be executed in current thread if project is already opened.
 
-        val wizardModules = wizard.context.read { KotlinPlugin.modules.settingValue }
-            .flatMap { module ->
-                buildList<Module> {
-                    +module.subModules
-                    +module
+        // The latter literally means EDT. New module addition is an example of the case.
+
+        fun openSampleFiles() {
+            val pathname = project.basePath ?: return
+            val projectPath = File(pathname)
+
+            val wizardModules = wizard.context.read { KotlinPlugin.modules.settingValue }
+                .flatMap { module ->
+                    buildList<Module> {
+                        +module.subModules
+                        +module
+                    }
+                }
+
+            // Might take time. Should be executed in a background thread.
+            val filesToOpen = wizardModules
+                .flatMap { it.template?.filesToOpenInEditor ?: emptyList() }
+                .mapNotNull { expectedFileName ->
+                    val file = FileUtil.findFilesByMask(Pattern.compile(Pattern.quote(expectedFileName)), projectPath).firstOrNull()
+                    file?.let { VirtualFileManager.getInstance().findFileByNioPath(file.toPath()) }
+                }
+
+            ApplicationManager.getApplication().invokeLater {
+                filesToOpen.forEach {
+                    FileEditorManager.getInstance(project).openFile(it, true)
                 }
             }
+        }
 
-        val filesToOpen = wizardModules
-            .flatMap { it.template?.filesToOpenInEditor ?: emptyList() }
-            .mapNotNull { expectedFileName ->
-                val file = FileUtil.findFilesByMask(Pattern.compile(Pattern.quote(expectedFileName)), projectPath).firstOrNull()
-                file?.let { VirtualFileManager.getInstance().findFileByNioPath(file.toPath()) }
-            }
-
-        ApplicationManager.getApplication().invokeLater {
-            filesToOpen.forEach {
-                FileEditorManager.getInstance(project).openFile(it, true)
-            }
+        if (EDT.isCurrentThreadEdt()) {
+            ApplicationManager.getApplication().executeOnPooledThread(::openSampleFiles)
+        } else {
+            openSampleFiles()
         }
     }
 
