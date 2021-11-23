@@ -137,7 +137,7 @@ public class PyEvaluator {
   }
 
   @Nullable
-  private Object evaluateBinary(@NotNull PyBinaryExpression expression) {
+  protected Object evaluateBinary(@NotNull PyBinaryExpression expression) {
     final PyElementType op = expression.getOperator();
     final Object lhs = evaluate(expression.getLeftExpression());
     final Object rhs = evaluate(expression.getRightExpression());
