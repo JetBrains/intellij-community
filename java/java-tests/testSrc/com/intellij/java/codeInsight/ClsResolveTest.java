@@ -43,7 +43,8 @@ public class ClsResolveTest {
         PsiTestUtil.addLibrary(model, "mutant", jar.getParent().toString(), jar.getFileName().toString());
       }
     };
-    TestFixtureBuilder<IdeaProjectTestFixture> builder = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(descriptor);
+    TestFixtureBuilder<IdeaProjectTestFixture> builder = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(descriptor,
+                                                                                                                              "ClsREsolveTest");
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(builder.getFixture(), new LightTempDirTestFixtureImpl(true));
     myFixture.setUp();
   }

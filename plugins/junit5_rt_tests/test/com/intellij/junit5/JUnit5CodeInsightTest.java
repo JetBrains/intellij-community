@@ -15,7 +15,8 @@ abstract class JUnit5CodeInsightTest {
   @BeforeEach
   void setUp() throws Exception {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor(),
+                                                                                                  "JUnit5CodeInsightTest");
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
     myFixture.setUp();

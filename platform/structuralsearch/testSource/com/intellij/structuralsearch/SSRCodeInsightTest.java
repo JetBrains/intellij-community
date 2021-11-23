@@ -29,7 +29,8 @@ public class SSRCodeInsightTest extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
+    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor(),
+                                                                                                        getTestName(false));
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
     myInspection = new SSBasedInspection();
