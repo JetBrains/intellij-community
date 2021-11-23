@@ -1250,7 +1250,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
-    importProjects();
+    importProject();
 
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
