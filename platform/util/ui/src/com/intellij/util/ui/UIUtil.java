@@ -2067,6 +2067,14 @@ public final class UIUtil {
     return new JBHtmlEditorKit(noGapsBetweenParagraphs);
   }
 
+  public static @NotNull HTMLEditorKit getHTMLEditorKitWithWordWrap() {
+    return new JBWordWrapHtmlEditorKit();
+  }
+
+  /**
+   * @deprecated replaced with {@code UIUtil.getWordWrapHTMLEditorKit()}
+   */
+  @Deprecated
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
     private final ViewFactory myFactory = new HTMLFactory() {
       @Override

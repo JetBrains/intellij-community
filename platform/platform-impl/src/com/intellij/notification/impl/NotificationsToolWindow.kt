@@ -683,7 +683,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
     component.isOpaque = false
     component.border = null
 
-    val kit = UIUtil.JBWordWrapHtmlEditorKit()
+    val kit = UIUtil.getHTMLEditorKitWithWordWrap()
     NotificationsUtil.setLinkForeground(kit.styleSheet)
     component.editorKit = kit
 
@@ -702,7 +702,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
     }
 
     myLafUpdater = Runnable {
-      val newKit = UIUtil.JBWordWrapHtmlEditorKit()
+      val newKit = UIUtil.getHTMLEditorKitWithWordWrap()
       NotificationsUtil.setLinkForeground(newKit.styleSheet)
       component.editorKit = newKit
       component.text = text

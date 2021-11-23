@@ -21,7 +21,6 @@ import com.intellij.ui.mac.MacMessages
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
-import com.intellij.util.ui.UIUtil.JBWordWrapHtmlEditorKit
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -446,7 +445,7 @@ private class AlertDialog(project: Project?,
     component.isOpaque = false
     component.border = null
 
-    val kit = JBWordWrapHtmlEditorKit()
+    val kit = UIUtil.getHTMLEditorKitWithWordWrap()
     kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")
     component.editorKit = kit
     component.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)

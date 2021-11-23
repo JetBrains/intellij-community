@@ -451,7 +451,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     };
-    HTMLEditorKit kit = new UIUtil.JBWordWrapHtmlEditorKit();
+    HTMLEditorKit kit = UIUtil.getHTMLEditorKitWithWordWrap();
     NotificationsUtil.setLinkForeground(kit.getStyleSheet());
     text.setEditorKit(kit);
     text.setForeground(layoutData.textColor);
@@ -717,7 +717,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     notification.setBalloon(balloon);
 
     ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
-      HTMLEditorKit newKit = new UIUtil.JBWordWrapHtmlEditorKit();
+      HTMLEditorKit newKit = UIUtil.getHTMLEditorKitWithWordWrap();
       NotificationsUtil.setLinkForeground(newKit.getStyleSheet());
       text.setEditorKit(newKit);
       text.setText(textContent);
