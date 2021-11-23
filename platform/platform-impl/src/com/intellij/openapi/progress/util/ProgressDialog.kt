@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Window
-import java.awt.event.KeyEvent
+import java.awt.event.ActionEvent
 import java.io.File
 import javax.swing.*
 import javax.swing.border.Border
@@ -181,12 +181,14 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
 
     myCancelButton.addActionListener { doCancelAction() }
 
-    myCancelButton.registerKeyboardAction(
-      {
-        if (myCancelButton.isEnabled) {
-          doCancelAction()
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+    val cancelFunction: (e: ActionEvent) -> Unit = {
+      if (myCancelButton.isEnabled) {
+        doCancelAction()
+      }
+    }
+    for (shortcut in myProgressWindow.cancelShortcuts) {
+      myCancelButton.registerKeyboardAction(cancelFunction, shortcut, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+    }
 
     if (cancelText != null) {
       myProgressWindow.setCancelButtonText(cancelText)
