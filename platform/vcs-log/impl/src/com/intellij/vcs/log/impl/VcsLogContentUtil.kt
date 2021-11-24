@@ -1,12 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl
 
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -16,21 +22,25 @@ import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JComponent
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Utility methods to operate VCS Log tabs as [Content]s of the [ContentManager] of the VCS toolwindow.
@@ -73,6 +83,41 @@ object VcsLogContentUtil {
 
   fun getId(content: Content): String? {
     return getLogUi(content.component)?.id
+  }
+
+  @JvmStatic
+  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): CompletableFuture<Boolean> {
+    val resultFuture = CompletableFuture<Boolean>()
+
+    val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.asString())
+    runBackgroundableTask(progressTitle, project, true) { indicator ->
+      runBlockingCancellable(indicator) {
+        resultFuture.computeResult {
+          withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+            jumpToRevision(project, root, hash, filePath)
+          }
+        }
+      }
+    }
+
+    return resultFuture
+  }
+
+  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): Boolean {
+    return runInCurrentOrCreateNewTab(project) { logUi ->
+      if (logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
+          logUi.properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) return@runInCurrentOrCreateNewTab false
+
+      val jumpResult = VcsLogUtil.jumpToCommit(logUi, hash, root, true, true).await()
+      when (jumpResult) {
+        VcsLogUiEx.JumpResult.SUCCESS -> {
+          logUi.selectFilePath(filePath, true)
+          true
+        }
+        null, VcsLogUiEx.JumpResult.COMMIT_NOT_FOUND -> true
+        VcsLogUiEx.JumpResult.COMMIT_DOES_NOT_MATCH -> false
+      }
+    }
   }
 
   @JvmStatic
@@ -193,6 +238,19 @@ object VcsLogContentUtil {
   fun getOrCreateLog(project: Project): VcsLogManager? {
     VcsProjectLog.ensureLogCreated(project)
     return VcsProjectLog.getInstance(project).logManager
+  }
+
+  private suspend fun <T> CompletableFuture<T>.computeResult(task: suspend () -> T) {
+    try {
+      val result = task()
+      this.complete(result)
+    }
+    catch (e: CancellationException) {
+      this.cancel(false)
+    }
+    catch (e: Throwable) {
+      this.completeExceptionally(e)
+    }
   }
 
   private fun <U> Any?.safeCastTo(clazz: Class<U>): U? {
