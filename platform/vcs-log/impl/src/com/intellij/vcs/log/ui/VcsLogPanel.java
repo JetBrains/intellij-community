@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NonNls;
@@ -65,6 +66,11 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
       if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ContainerUtil.map(hashes,
                                commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
+    }
+    else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.is(dataId)) {
+      List<VcsCommitMetadata> metadata = myUi.getVcsLog().getSelectedShortDetails();
+      if (metadata.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ContainerUtil.map2Array(metadata, String.class, data -> data.getSubject());
     }
     else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myUi.getHelpId();
