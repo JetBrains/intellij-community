@@ -136,7 +136,9 @@ class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
                 )
             }
 
+            codeInsightTestFixture.doHighlighting()
             DirectiveBasedActionUtils.checkAvailableActionsAreExpected(ktFile, action?.let { actions - it } ?: actions)
+            DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
         }
     }
 }
