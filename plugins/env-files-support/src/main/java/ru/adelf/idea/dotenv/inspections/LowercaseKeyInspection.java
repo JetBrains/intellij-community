@@ -10,7 +10,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvFactory;
-import ru.adelf.idea.dotenv.psi.*;
+import ru.adelf.idea.dotenv.psi.DotEnvFile;
+import ru.adelf.idea.dotenv.psi.DotEnvKey;
+import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 
 public class LowercaseKeyInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
@@ -38,8 +40,8 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
         PsiTreeUtil.findChildrenOfType(file, DotEnvKey.class).forEach(dotEnvKey -> {
             if (dotEnvKey.getText().matches(".*[a-z].*")) {
                 problemsHolder.registerProblem(dotEnvKey,
-                        "Key uses lowercase chars. Only keys with uppercase chars are allowed.",
-                        new ForceUppercaseQuickFix()
+                        "Key uses lowercase chars. Only keys with uppercase chars are allowed."/*,
+                        new ForceUppercaseQuickFix()*/
                 );
             }
         });

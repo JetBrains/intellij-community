@@ -44,7 +44,7 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvKeyImpl.class).forEach(key -> {
             if (key.getText().contains("-")) {
-                problemsHolder.registerProblem(key, "Expected: '_' Found: '-'", new ReplaceDelimiterQuickFix());
+                problemsHolder.registerProblem(key, "Expected: '_' Found: '-'"/*, new ReplaceDelimiterQuickFix()*/);
             }
         });
 
