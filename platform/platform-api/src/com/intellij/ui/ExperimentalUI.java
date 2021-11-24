@@ -113,7 +113,6 @@ public final class ExperimentalUI {
     Map<String, String> paths = new HashMap<>();
     paths.put("actions/collapseall.svg", "/expui/actions/collapseAll.svg");
     paths.put("actions/expandall.svg", "/expui/actions/expandAll.svg");
-    paths.put("general/chevron-right.svg", "/expui/general/chevronRight.svg");
     paths.put("nodes/class.svg", "/expui/nodes/class.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
     paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
@@ -143,6 +142,13 @@ public final class ExperimentalUI {
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
     paths.put("actions/more.svg", "/expui/16x16/general/moreVertical.svg");
     paths.put("general/hideToolWindow.svg", "/expui/16x16/general/close.svg");
+    paths.put("actions/find.svg", "/expui/16x16/general/search.svg");
+    paths.put("general/gearPlain.svg", "/expui/16x16/general/settings.svg");
+    paths.put("general/chevron-down.svg", "expui/16x16/general/chevronDown.svg");
+    paths.put("general/chevron-left.svg", "expui/16x16/general/chevronLeft.svg");
+    paths.put("general/chevron-right.svg", "expui/16x16/general/chevronRight.svg");
+    paths.put("general/chevron-up.svg", "expui/16x16/general/chevronUp.svg");
+    paths.put("vcs/branch.svg", "expui/16x16/toolwindow/vcs.svg");
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {

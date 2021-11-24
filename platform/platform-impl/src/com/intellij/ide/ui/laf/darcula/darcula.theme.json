@@ -509,6 +509,8 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
+    "TitlePane.Button.preferredSize": "47,28",
+
     "activeCaption": "#434E60",
     "control": "#3c3f41",
     "controlText": "#bbbbbb",
@@ -537,5 +539,14 @@
     "#b99bf899": "#977fca",
     "#9aa7b0cc": "#97acc6",
     "#9aa7b099": "#97acc6"
+  },
+
+  "MainToolbar": {
+    "icon": {
+      "borderInsets": "10,10,10,10"
+    },
+    "dropdown": {
+      "borderInsets": "12,6,12,6"
+    }
   }
 }

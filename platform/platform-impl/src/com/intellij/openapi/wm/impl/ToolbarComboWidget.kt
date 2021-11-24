@@ -13,16 +13,16 @@ import kotlin.reflect.KProperty
 
 abstract class ToolbarComboWidget: JComponent() {
 
-  init {
-    SwingUtilities.invokeLater { updateUI() }
-  }
-
   val pressListeners = mutableListOf<ActionListener>()
 
   var text: String? by Delegates.observable("", this::fireUpdateEvents)
   var leftIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
   var rightIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
   var hoverBackground: Color by Delegates.observable(UIManager.getColor("ToolbarComboWidget.hoverBackground"), this::fireUpdateEvents)
+
+  init {
+    updateUI()
+  }
 
   abstract fun doExpand(e: InputEvent)
 

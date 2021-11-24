@@ -3,13 +3,12 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.UIManager
 
 class MainToolbar: JPanel(HorizontalLayout(10)) {
 
@@ -20,19 +19,18 @@ class MainToolbar: JPanel(HorizontalLayout(10)) {
   )
 
   init {
+    background = UIManager.getColor("MainToolbar.background")
+    isOpaque = true
     for (factory in MainToolbarWidgetFactory.EP_NAME.extensionList) {
       val widget = factory.createWidget()
       add(layoutMap[factory.getPosition()], widget)
     }
 
-    add(HorizontalLayout.RIGHT, createActionsBar())
+    createActionsBar()?.let { add(HorizontalLayout.RIGHT, it) }
   }
 
-  private fun createActionsBar(): JComponent {
+  private fun createActionsBar(): JComponent? {
     val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS) as ActionGroup?
-    val toolBar = ActionManagerEx.getInstanceEx()
-      .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group!!, true)
-
-    return toolBar.component
+    return group?.let { ActionToolbar(it.getChildren(null).asList()) }
   }
 }

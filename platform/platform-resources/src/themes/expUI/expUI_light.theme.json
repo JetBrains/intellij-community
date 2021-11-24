@@ -271,10 +271,47 @@
       }
     },
 
-    "Tree.rowHeight": "24"
+    "MainToolbar": {
+      "background": "Grey2",
+      "icon": {
+        "borderInsets": "10,10,10,10",
+        "background": "Grey2",
+        "hoverBackground": "Grey1",
+        "pressedBackground": "Grey1"
+      },
+      "dropdown": {
+        "foreground": "Grey11",
+        "borderInsets": "12,6,12,6",
+        "background": "Grey2",
+        "hoverBackground": "Grey1",
+        "pressedBackground": "Grey1"
+      }
+    },
+
+    "TitlePane": {
+      "background": "Grey2",
+      "inactiveBackground": "Grey2",
+      "Button": {
+        "hoverBackground": "Grey3",
+        "preferredSize": "28,40"
+      }
+    },
+
+    "Tree.rowHeight": "24",
+
+    "MenuBar.borderColor": "Grey3"
   },
 
   "icons": {
+    "windows/minimize.svg": "/expui/16x16/windows/minimize.svg",
+    "windows/minimizeInactive.svg": "/expui/16x16/windows/minimizeInactive.svg",
+    "windows/maximize.svg": "/expui/16x16/windows/maximize.svg",
+    "windows/maximizeInactive.svg": "/expui/16x16/windows/maximizeInactive.svg",
+    "windows/closeActive.svg": "/expui/16x16/windows/closeActive.svg",
+    "windows/closeInactive.svg": "/expui/16x16/windows/closeInactive.svg",
+    "windows/restore.svg": "/expui/16x16/windows/restore.svg",
+    "windows/restoreInactive.svg": "/expui/16x16/windows/restoreInactive.svg",
+
     "ColorPalette": {
       "Checkbox.Border.Default": "Grey8",
       "Checkbox.Background.Selected": "Blue6",

@@ -755,6 +755,7 @@
     "TitlePane": {
       "background": "panel",
       "Button.hoverBackground": "#00000019",
+      "Button.preferredSize": "47,28",
       "inactiveBackground": "panel",
       "inactiveInfoForeground": "grey04",
       "infoForeground": "grey01"
@@ -898,6 +899,11 @@
       "hoverBackground": "#dfdfdf",
       "borderInsets": "3,5,3,5",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
+    },
+
+    "MainToolbar": {
+      "icon.borderInsets": "10,10,10,10",
+      "dropdown.borderInsets": "12,6,12,6"
     },
 
     "Tag": {

@@ -18,6 +18,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
@@ -43,6 +44,9 @@ object ProjectWidgetFactory : MainToolbarWidgetFactory {
   override fun createWidget(): JComponent {
     val p = getCurrentProject()
     val widget = ProjectWidget()
+    UIManager.getColor("MainToolbar.dropdown.foreground")?.let { widget.foreground = it }
+    UIManager.getColor("MainToolbar.dropdown.background")?.let { widget.background = it}
+    UIManager.getColor("MainToolbar.dropdown.hoverBackground")?.let { widget.hoverBackground = it }
     ProjectWidgetUpdater(p, widget).subscribe()
     return widget
   }
@@ -69,15 +73,38 @@ private class ProjectWidgetUpdater(proj: Project?, val widget: ProjectWidget) : 
   }
 
   private fun updateText() {
-    widget.text = project?.let { p ->
-      val sb = StringBuilder(p.name)
+    val pair = project?.let { p ->
       val currentFile = file
-      if (settings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null) {
-        sb.append(" — ").append(currentFile.name)
+      val showFileName = settings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null
+      val maxLength = if (showFileName) 12 else 24
+
+      val fullName = StringBuilder(p.name)
+      val cutName = StringBuilder(cutProject(p.name, maxLength))
+      if (showFileName) {
+        fullName.append(" — ").append(currentFile!!.name)
+        cutName.append(" — ").append(cutFile(currentFile.name, maxLength))
       }
-      return@let sb.toString()
-    } ?: IdeBundle.message("project.widget.empty")
+      return@let Pair(cutName.toString(), fullName.toString())
+    }
+
+    widget.text = pair?.first ?: IdeBundle.message("project.widget.empty")
+    @NlsSafe val fullName = if (pair?.first == pair?.second) null else pair?.second
+    widget.toolTipText = fullName
   }
+
+  private fun cutFile(value: String, maxLength: Int): String {
+    if (value.length <= maxLength) return value
+
+    val extension = value.substringAfterLast(".", "")
+    val name = value.substringBeforeLast(".")
+    if (name.length + extension.length <= maxLength) return value
+
+    return name.substring(0, maxLength - extension.length) + "..." + extension
+  }
+
+  private fun cutProject(value: String, maxLength: Int): String =
+    if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
+
 
   private fun updateProject() {
     widget.project = project

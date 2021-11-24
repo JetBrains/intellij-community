@@ -13,7 +13,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.ui.IconManager
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
@@ -46,9 +48,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
     add(buttonPanes.getView(), gb.next().anchor(EAST))
 
-    setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
-
-    myHeaderContent.border = JBUI.Borders.empty()
+    setCustomFrameTopBorder({ false }, {true})
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
@@ -86,14 +86,15 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
   }
 
   fun createHeaderContent(): JPanel {
-    val res = JPanel(CardLayout())
+    val res = NonOpaquePanel(CardLayout())
+    res.border = JBUI.Borders.emptyLeft(15)
 
-    val menuPnl = JPanel(GridBagLayout()).apply {
+    val menuPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(myMenuBar, gb.next())
       add(Box.createHorizontalGlue(), gb.next().weightx(1.0).fillCell())
     }
-    val toolbarPnl = JPanel(GridBagLayout()).apply {
+    val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(myMenuButton, gb.next().insetRight(25))
       add(myToolbar, gb.next().weightx(1.0).fillCellHorizontally())
@@ -110,11 +111,12 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     layout.show(myHeaderContent, if (settings.showMainToolbar) MENU_PANEL else TOOLBAR_PANEL)
   }
 
-  private fun createToolbar(): JPanel = MainToolbar()
+  private fun createToolbar(): JPanel = MainToolbar().apply { isOpaque = false }
 
   private fun createMenuButton(): AbstractButton {
     val button = FixedSizeButton(20)
-    button.icon = AllIcons.General.Add
+    button.icon = IconManager.getInstance().getIcon("expui/20x20/general/windowsMenu.svg", AllIcons::class.java) //todo change to precompiled icon later
+    button.isOpaque = false
     button.addActionListener {
       DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200)?.let { context ->
         val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
