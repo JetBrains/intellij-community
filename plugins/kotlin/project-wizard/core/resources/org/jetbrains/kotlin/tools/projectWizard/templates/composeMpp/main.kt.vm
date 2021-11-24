@@ -1,6 +1,3 @@
-#if ($package)
-package ${package}
-#end
 #if ($sharedPackage)
 import ${sharedPackage}.App
 #end
