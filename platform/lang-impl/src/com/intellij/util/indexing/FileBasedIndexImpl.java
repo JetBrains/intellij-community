@@ -843,6 +843,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return true;
   }
 
+  @Override
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId,
+                                    @NotNull Processor<? super K> processor,
+                                    @NotNull GlobalSearchScope scope,
+                                    @Nullable IdFilter idFilter) {
+    Boolean scanResult = FileBasedIndexScanUtil.processAllKeys(indexId, processor, scope, idFilter);
+    if (scanResult != null) return scanResult;
+    return super.processAllKeys(indexId, processor, scope, idFilter);
+  }
+
   private boolean areUnsavedDocumentsIndexed(@NotNull ID<?, ?> indexId) {
     return myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId);
   }
@@ -1123,6 +1133,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     return super.getFileData(id, virtualFile, project);
+  }
+
+  @Override
+  protected <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
+                                                @NotNull K dataKey,
+                                                boolean ensureValueProcessedOnce,
+                                                @NotNull GlobalSearchScope scope,
+                                                @Nullable IdFilter idFilter,
+                                                @NotNull ValueProcessor<? super V> processor) {
+    Boolean scanResult = FileBasedIndexScanUtil.processValuesInScope(indexId, dataKey, ensureValueProcessedOnce, scope, idFilter, processor);
+    if (scanResult != null) return scanResult;
+    return super.processValuesInScope(indexId, dataKey, ensureValueProcessedOnce, scope, idFilter, processor);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})

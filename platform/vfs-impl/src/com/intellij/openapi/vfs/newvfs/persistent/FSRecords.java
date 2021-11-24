@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
@@ -33,10 +34,12 @@ import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
+import java.util.function.IntPredicate;
 
 @ApiStatus.Internal
 public final class FSRecords {
@@ -502,6 +505,25 @@ public final class FSRecords {
     writeAndHandleErrors(() -> {
       incModCount(id);
       ourConnection.getRecords().setParent(id, parentId);
+    });
+  }
+
+  public static @NotNull Collection<String> getAllNames() {
+    return readAndHandleErrors(() -> ourConnection.getNames().getAllDataObjects(null));
+  }
+
+  public static boolean processFilesWithName(@NotNull String name, @NotNull IntPredicate processor) {
+    int nameId = getNameId(name);
+    return readAndHandleErrors(() -> {
+      PersistentFSRecordsStorage records = ourConnection.getRecords();
+      return records.processAll(r -> {
+        if (r.name == nameId &&
+            !(BitUtil.isSet(r.flags, PersistentFSRecordAccessor.FREE_RECORD_FLAG) ||
+              ourRecordAccessor.getNewFreeRecords().contains(r.id))) {
+          if (!processor.test(r.id)) return false;
+        }
+        return true;
+      });
     });
   }
 

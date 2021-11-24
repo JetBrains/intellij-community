@@ -140,11 +140,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
         return true;
       }
-      if (idFilter == null) {
-        idFilter = extractIdFilter(scope, scope.getProject());
-      }
-      @Nullable IdFilter finalIdFilter = idFilter;
-      return myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, finalIdFilter));
+      IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
+      return myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, idFilterAdjusted));
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -306,12 +303,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return !data.containsKey(dataKey) || processor.process(file, data.get(dataKey));
   }
 
-  private <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
-                                              @NotNull K dataKey,
-                                              boolean ensureValueProcessedOnce,
-                                              @NotNull GlobalSearchScope scope,
-                                              @Nullable IdFilter idFilter,
-                                              @NotNull ValueProcessor<? super V> processor) {
+  protected <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
+                                                @NotNull K dataKey,
+                                                boolean ensureValueProcessedOnce,
+                                                @NotNull GlobalSearchScope scope,
+                                                @Nullable IdFilter idFilter,
+                                                @NotNull ValueProcessor<? super V> processor) {
     Project project = scope.getProject();
     if (project != null &&
         !ModelBranchImpl.processModifiedFilesInScope(scope, file -> processInMemoryFileData(indexId, dataKey, project, file, processor))) {
