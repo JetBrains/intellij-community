@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.flavors;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -19,8 +18,6 @@ import java.util.Set;
 public final class MacPythonSdkFlavor extends CPythonSdkFlavor {
   private MacPythonSdkFlavor() {
   }
-
-  private static final String[] POSSIBLE_BINARY_NAMES = {"python", "python2", "python3"};
 
   @Override
   public boolean isApplicable() {
@@ -47,20 +44,12 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor {
       }
       rootVDir.refresh(true, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
-        final String dirName = StringUtil.toLowerCase(dir.getName());
         if (dir.isDirectory()) {
-          if ("Current".equals(dirName) || dirName.startsWith("2") || dirName.startsWith("3")) {
-            final VirtualFile binDir = dir.findChild("bin");
-            if (binDir != null && binDir.isDirectory()) {
-              for (String name : POSSIBLE_BINARY_NAMES) {
-                final VirtualFile child = binDir.findChild(name);
-                if (child == null) continue;
-                final String path = child.getPath();
-                if (!candidates.contains(path)) {
-                  candidates.add(path);
-                  break;
-                }
-              }
+          final VirtualFile binDir = dir.findChild("bin");
+          if (binDir != null && binDir.isDirectory()) {
+            final VirtualFile child = binDir.findChild("python3");
+            if (child != null && !child.isDirectory()) {
+              candidates.add(child.getPath());
             }
           }
         }
