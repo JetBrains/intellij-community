@@ -18,7 +18,7 @@ public final class JpsServerAuthUtil {
   public static @NotNull Map<String, String> getRequestHeaders(@NotNull Project project) {
     JpsServerAuthExtension authExtension = JpsServerAuthExtension.getInstance();
     if (authExtension == null) {
-      String message = JavaCompilerBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin");
+      String message = JavaCompilerBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work");
       ApplicationManager.getApplication().invokeLater(() -> {
         ATTENTION.createNotification(JavaCompilerBundle.message("notification.title.jps.caches.downloader"), message, NotificationType.WARNING).notify(project);
       });

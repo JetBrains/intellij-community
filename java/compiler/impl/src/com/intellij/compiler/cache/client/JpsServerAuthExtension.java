@@ -62,7 +62,7 @@ public interface JpsServerAuthExtension {
         ApplicationManager.getApplication().invokeLater(() -> {
           ATTENTION
             .createNotification(JavaCompilerBundle.message("notification.title.jps.caches.downloader"),
-                                JavaCompilerBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin"),
+                                JavaCompilerBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work"),
                                 NotificationType.WARNING)
             .setListener(NotificationListener.URL_OPENING_LISTENER)
             .notify(project);
