@@ -398,7 +398,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             val highlightType =
                                 if (shouldReportAsValue(expr)) ProblemHighlightType.WEAK_WARNING
                                 else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                            holder.registerProblem(expr, KotlinBundle.message(key), highlightType)
+                            holder.registerProblem(expr, KotlinBundle.message(key, expr.text), highlightType)
                         }
                     }
                     is KotlinWhenConditionAnchor -> {
@@ -483,6 +483,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     ): Boolean {
         if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
         if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
+        if (condition.textLength == 0) return true
         return isCompilationWarning(condition)
     }
 

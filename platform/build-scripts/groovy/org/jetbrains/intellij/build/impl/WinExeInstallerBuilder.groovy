@@ -152,7 +152,7 @@ final class WinExeInstallerBuilder {
     }
 
     String installerPath = "${buildContext.paths.artifacts}/${outFileName}.exe"
-    if (!Files.exists(Path.of(installerPath))) {
+    if (Files.notExists(Path.of(installerPath))) {
       buildContext.messages.error("Windows installer wasn't created.")
     }
     buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", installerPath), BuildOptions.WIN_SIGN_STEP) {

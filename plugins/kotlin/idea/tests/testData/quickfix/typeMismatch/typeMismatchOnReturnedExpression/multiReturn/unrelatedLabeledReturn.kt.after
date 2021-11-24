@@ -1,5 +1,5 @@
 // "Change return type of enclosing function 'bar' to 'String?'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun bar(n: Int): String? {
     if (true) return "bar"
     val list = listOf(1).map {

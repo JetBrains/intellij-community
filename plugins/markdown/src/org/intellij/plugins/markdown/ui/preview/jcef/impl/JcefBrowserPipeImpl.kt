@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.google.api.client.json.jackson2.JacksonFactory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowserBase

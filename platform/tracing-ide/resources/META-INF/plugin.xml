@@ -3,8 +3,7 @@
   <id>com.intellij.tracing.ide</id>
   <vendor>JetBrains</vendor>
   <description>
-    On an exceptionally hot evening early in July a young man came out of the garret in which he lodged in S. Place and walked slowly, as though in hesitation, towards K. bridge.
-    He had successfully avoided meeting his landlady on the staircase. His garret was under the roof of a high, five-storied house and was more like a cupboard than a room. The landlady who provided him with garret, dinners, and attendance, lived on the floor below, and every time he went out he was obliged to pass her kitchen, the door of which invariably stood open. And each time he passed, the young man had a sick, frightened feeling, which made him scowl and feel ashamed. He was hopelessly in debt to his landlady, and was afraid of meeting her.
+    Infrastructure to conveniently gather tracing information from builds.
   </description>
   <depends optional="false">com.intellij.modules.java</depends>
 

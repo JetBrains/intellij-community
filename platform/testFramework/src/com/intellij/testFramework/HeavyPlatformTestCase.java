@@ -186,7 +186,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     null,
     "AppCode", "SwiftTests",
     "DataGrip",
-    "Python", "PyCharmDS", "PyCharmCore",
+    "Python", "DataSpell", "PyCharmCore",
     "Ruby",
     "PhpStorm",
     "UltimateLangXml", "Idea", "PlatformLangXml"};

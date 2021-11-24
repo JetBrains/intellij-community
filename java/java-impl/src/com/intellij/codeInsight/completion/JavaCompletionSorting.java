@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
@@ -48,11 +49,12 @@ public final class JavaCompletionSorting {
     CompletionType type = parameters.getCompletionType();
     boolean smart = type == CompletionType.SMART;
     boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
+    Project project = parameters.getOriginalFile().getProject();
 
     List<LookupElementWeigher> afterProximity = new ArrayList<>();
     ContainerUtil.addIfNotNull(afterProximity, PreferMostUsedWeigher.create(position));
-    afterProximity.add(new PreferContainingSameWords(expectedTypes));
-    afterProximity.add(new PreferShorter(expectedTypes));
+    afterProximity.add(new PreferContainingSameWords(project, expectedTypes));
+    afterProximity.add(new PreferShorter(project, expectedTypes));
     afterProximity.add(new DispreferTechnicalOverloads(position));
 
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
@@ -93,7 +95,7 @@ public final class JavaCompletionSorting {
     }
 
     ContainerUtil.addIfNotNull(afterStats, recursion(parameters, expectedTypes));
-    afterStats.add(new PreferSimilarlyEnding(expectedTypes));
+    afterStats.add(new PreferSimilarlyEnding(project, expectedTypes));
     if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiType.VOID))) {
       afterStats.add(new PreferNonGeneric());
     }
@@ -271,20 +273,6 @@ public final class JavaCompletionSorting {
       }
     }
     return hasNonVoid;
-  }
-
-  @Nullable
-  private static String getLookupObjectName(Object o) {
-    if (o instanceof PsiVariable) {
-      final PsiVariable variable = (PsiVariable)o;
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
-      VariableKind variableKind = codeStyleManager.getVariableKind(variable);
-      return codeStyleManager.variableNameToPropertyName(variable.getName(), variableKind);
-    }
-    if (o instanceof PsiMethod) {
-      return ((PsiMethod)o).getName();
-    }
-    return null;
   }
 
   private static int getNameEndMatchingDegree(final String name, ExpectedTypeInfo[] expectedInfos) {
@@ -655,12 +643,33 @@ public final class JavaCompletionSorting {
     }
   }
 
-  private static class PreferSimilarlyEnding extends LookupElementWeigher {
-    private final ExpectedTypeInfo[] myExpectedTypes;
+  private static abstract class ExpectedTypeBasedWeigher extends LookupElementWeigher {
+    final ExpectedTypeInfo[] myExpectedTypes;
+    private final JavaCodeStyleManager myCodeStyleManager;
 
-    PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes) {
-      super("nameEnd");
+    ExpectedTypeBasedWeigher(@NotNull Project project, @NotNull String name, ExpectedTypeInfo[] expectedTypes) {
+      super(name);
       myExpectedTypes = expectedTypes;
+      myCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+    }
+
+    @Nullable String getLookupObjectName(Object o) {
+      if (o instanceof PsiVariable) {
+        final PsiVariable variable = (PsiVariable)o;
+        VariableKind variableKind = myCodeStyleManager.getVariableKind(variable);
+        String name = variable.getName();
+        return name == null ? null : myCodeStyleManager.variableNameToPropertyName(name, variableKind);
+      }
+      if (o instanceof PsiMethod) {
+        return ((PsiMethod)o).getName();
+      }
+      return null;
+    }
+  }
+
+  private static class PreferSimilarlyEnding extends ExpectedTypeBasedWeigher {
+    PreferSimilarlyEnding(@NotNull Project project, ExpectedTypeInfo[] expectedTypes) {
+      super(project, "nameEnd", expectedTypes);
     }
 
     @NotNull
@@ -671,12 +680,9 @@ public final class JavaCompletionSorting {
     }
   }
 
-  private static class PreferContainingSameWords extends LookupElementWeigher {
-    private final ExpectedTypeInfo[] myExpectedTypes;
-
-    PreferContainingSameWords(ExpectedTypeInfo[] expectedTypes) {
-      super("sameWords");
-      myExpectedTypes = expectedTypes;
+  private static class PreferContainingSameWords extends ExpectedTypeBasedWeigher {
+    PreferContainingSameWords(@NotNull Project project, ExpectedTypeInfo[] expectedTypes) {
+      super(project, "sameWords", expectedTypes);
     }
 
     @NotNull
@@ -702,12 +708,9 @@ public final class JavaCompletionSorting {
     }
   }
 
-  private static class PreferShorter extends LookupElementWeigher {
-    private final ExpectedTypeInfo[] myExpectedTypes;
-
-    PreferShorter(ExpectedTypeInfo[] expectedTypes) {
-      super("shorter");
-      myExpectedTypes = expectedTypes;
+  private static class PreferShorter extends ExpectedTypeBasedWeigher {
+    PreferShorter(@NotNull Project project, ExpectedTypeInfo[] expectedTypes) {
+      super(project, "shorter", expectedTypes);
     }
 
     @NotNull

@@ -122,6 +122,8 @@ class JavaRenameLesson
         }
       }
     }
+
+    restoreRefactoringOptionsInformer()
   }
 
   private fun TaskRuntimeContext.getFieldName(): String? {

@@ -1,5 +1,5 @@
 // FLOW: IN
-// WITH_RUNTIME
+// WITH_STDLIB
 import kotlin.reflect.KProperty
 
 class Delegate {

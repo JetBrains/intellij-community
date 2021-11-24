@@ -15,17 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
-import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
-import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
-import org.jetbrains.idea.reposearch.DependencySearchProvider;
-import org.jetbrains.idea.reposearch.DependencySearchService;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static java.util.Collections.emptyList;
 
 public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   protected MavenIndicesTestFixture myIndicesFixture;
@@ -35,12 +25,6 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
     super.setUp();
     myIndicesFixture = createIndicesFixture();
     myIndicesFixture.setUp();
-    List<DependencySearchProvider> indexProviders =
-      new ArrayList<>(ContainerUtil.map(myIndicesFixture.getProjectIndicesManager().getIndices(), IndexBasedCompletionProvider::new));
-    indexProviders.add(new ProjectModulesCompletionProvider(myProject));
-    DependencySearchService.getInstance(myProject).setProviders(indexProviders,
-                                                                emptyList()
-    );
   }
 
   protected MavenIndicesTestFixture createIndicesFixture() {

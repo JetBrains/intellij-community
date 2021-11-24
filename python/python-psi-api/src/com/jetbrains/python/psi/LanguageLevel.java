@@ -60,7 +60,8 @@ public enum LanguageLevel {
   PYTHON37(307),
   PYTHON38(308),
   PYTHON39(309),
-  PYTHON310(310);
+  PYTHON310(310),
+  PYTHON311(311);
 
   /**
    * This value is mostly bound to the compatibility of our debugger and helpers.
@@ -172,6 +173,9 @@ public enum LanguageLevel {
       }
       if (pythonVersion.startsWith("3.10")) {
         return PYTHON310;
+      }
+      if (pythonVersion.startsWith("3.11")) {
+        return PYTHON311;
       }
       return DEFAULT3;
     }

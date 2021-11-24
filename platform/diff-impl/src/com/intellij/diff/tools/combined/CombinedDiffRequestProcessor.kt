@@ -7,11 +7,17 @@ import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffSettingsHolder
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings.Companion.getSettings
+import com.intellij.diff.impl.ui.DifferencesLabel
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
+import com.intellij.diff.tools.util.IndexProvider
+import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.util.DiffUserDataKeys
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 
@@ -23,7 +29,7 @@ interface CombinedDiffRequestProducer : DiffRequestProducer {
 
 open class CombinedDiffRequestProcessor(project: Project?,
                                         private val requestProducer: CombinedDiffRequestProducer) :
-  CacheDiffRequestProcessor.Simple(project) {
+  CacheDiffRequestProcessor.Simple(project, DiffUtil.createUserDataHolder(DiffUserDataKeysEx.DIFF_NEW_TOOLBAR, true)) {
 
   override fun getCurrentRequestProvider(): DiffRequestProducer = requestProducer
 
@@ -31,9 +37,38 @@ open class CombinedDiffRequestProcessor(project: Project?,
   protected val request get() = activeRequest as? CombinedDiffRequest
 
   //
+  // Global, shortcuts only navigation actions
+  //
+
+  private val openInEditorAction = object : MyOpenInEditorAction() {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = false
+    }
+  }
+
+  private val prevFileAction = object : MyPrevChangeAction() {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = false
+    }
+  }
+  private val nextFileAction = object : MyNextChangeAction() {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = false
+    }
+  }
+
+  //
   // Navigation
   //
 
+  override fun getNavigationActions(): List<AnAction> {
+    val goToChangeAction = createGoToChangeAction()
+    return listOfNotNull(MyPrevDifferenceAction(), MyNextDifferenceAction(), MyDifferencesLabel(goToChangeAction),
+                         openInEditorAction, prevFileAction, nextFileAction)
+  }
   final override fun isNavigationEnabled(): Boolean = requestProducer.getFilesSize() > 0
 
   final override fun hasNextChange(fromUpdate: Boolean): Boolean {
@@ -79,6 +114,18 @@ open class CombinedDiffRequestProcessor(project: Project?,
         combinedDiffViewer.selectDiffBlock(ScrollPolicy.DIFF_BLOCK)
       }
     }
+  }
+
+  private inner class MyDifferencesLabel(goToChangeAction: AnAction?) :
+    DifferencesLabel(goToChangeAction, myToolbarWrapper.targetComponent) {
+
+    override fun getCurrentViewer(): DiffViewerBase? = viewer?.getCurrentDiffViewer() as? DiffViewerBase
+
+    override fun getCurrentDifferencePosition(): Int {
+      return ((viewer?.getDifferencesIterable() as? IndexProvider)?.getIndex() ?: 0) + 1
+    }
+
+    override fun getFileCount(): Int = requestProducer.getFilesSize()
   }
 
   //

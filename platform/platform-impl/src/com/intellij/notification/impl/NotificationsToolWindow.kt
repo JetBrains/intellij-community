@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.ui.NotificationsUtil
@@ -206,6 +207,11 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
         }
       }
     })
+
+    ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      suggestions.updateLaf()
+      timeline.updateLaf()
+    })
   }
 
   private fun updateIcon(toolWindow: ToolWindow, notifications: List<Notification>) {
@@ -340,6 +346,14 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
 
     myEventHandler.add(this)
+  }
+
+  fun updateLaf() {
+    val count = myList.componentCount
+    for (i in 0 until count) {
+      val component = myList.getComponent(i) as NotificationComponent
+      component.updateLaf()
+    }
   }
 
   override fun paintComponent(g: Graphics) {
@@ -492,6 +506,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
   private var myRoundColor = BG_COLOR
   private lateinit var myDoNotAskHandler: (Boolean) -> Unit
   private lateinit var myRemoveCallback: Consumer<Notification?>
+  private var myLafUpdater: Runnable? = null
 
   init {
     isOpaque = true
@@ -510,7 +525,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
 
     if (notification.hasTitle()) {
       val titleContent = NotificationsUtil.buildHtml(notification, null, false, null, null)
-      val title = JBLabel(titleContent)
+      val title = JBLabel(titleContent).setCopyable(true)
 
       if (notification.isSuggestionType) {
         centerPanel.add(title)
@@ -524,7 +539,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
     }
 
     if (notification.hasContent()) {
-      val textContent = NotificationsUtil.buildHtml(notification, null, true, null, null)
+      val textContent = NotificationsUtil.buildHtml(notification, null, true, null, NotificationsUtil.getFontStyle())
       val text = createTextComponent(textContent)
 
       if (!notification.hasTitle() && !notification.isSuggestionType) {
@@ -572,9 +587,6 @@ private class NotificationComponent(val notification: Notification, timeComponen
     }
 
     add(centerPanel)
-
-    val panel = JPanel(BorderLayout())
-    panel.isOpaque = false
 
     if (notification.isSuggestionType) {
       val group = DefaultActionGroup()
@@ -627,7 +639,11 @@ private class NotificationComponent(val notification: Notification, timeComponen
       button.border = JBUI.Borders.emptyRight(5)
       button.isVisible = false
       myMoreButton = button
+
+      val panel = JPanel(BorderLayout())
+      panel.isOpaque = false
       panel.add(button, BorderLayout.NORTH)
+      add(panel, BorderLayout.EAST)
     }
     else {
       val timeComponent = JBLabel(DateFormatUtil.formatPrettyDateTime(notification.timestamp))
@@ -644,8 +660,6 @@ private class NotificationComponent(val notification: Notification, timeComponen
 
       myMoreButton = null
     }
-
-    add(panel, BorderLayout.EAST)
   }
 
   private fun createAction(action: AnAction): Action {
@@ -667,13 +681,16 @@ private class NotificationComponent(val notification: Notification, timeComponen
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     component.contentType = "text/html"
     component.isOpaque = false
-    component.isFocusable = false
     component.border = null
 
     val kit = UIUtil.JBWordWrapHtmlEditorKit()
-    kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")
+    NotificationsUtil.setLinkForeground(kit.styleSheet)
     component.editorKit = kit
-    component.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+
+    val listener = NotificationsUtil.wrapListener(notification)
+    if (listener != null) {
+      component.addHyperlinkListener(listener)
+    }
 
     component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, StringUtil.unescapeXmlEntities(StringUtil.stripHtml(text, " ")))
 
@@ -684,7 +701,20 @@ private class NotificationComponent(val notification: Notification, timeComponen
       component.caretPosition = 0
     }
 
+    myLafUpdater = Runnable {
+      val newKit = UIUtil.JBWordWrapHtmlEditorKit()
+      NotificationsUtil.setLinkForeground(newKit.styleSheet)
+      component.editorKit = newKit
+      component.text = text
+      component.revalidate()
+      component.repaint()
+    }
+
     return component
+  }
+
+  fun updateLaf() {
+    myLafUpdater?.run()
   }
 
   fun setDoNotAskHandler(handler: (Boolean) -> Unit) {
@@ -744,7 +774,8 @@ private class NotificationComponent(val notification: Notification, timeComponen
     if (myRoundColor !== BG_COLOR) {
       g.color = myRoundColor
       val config = GraphicsUtil.setupAAPainting(g)
-      g.fillRoundRect(0, 0, width, height, 12, 12)
+      val cornerRadius = NotificationBalloonRoundShadowBorderProvider.CORNER_RADIUS.get()
+      g.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
       config.restore()
     }
   }

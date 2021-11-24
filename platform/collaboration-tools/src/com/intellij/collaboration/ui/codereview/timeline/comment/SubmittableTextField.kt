@@ -82,7 +82,7 @@ class SubmittableTextField(
     add(cancelButton, CC().alignY("top").hideMode(3))
 
     Controller(this, textField, busyLabel, submitButton, cancelButton, onCancel)
-    UiNotifyConnector(textField, ValidatorActivatable(textField))
+    UiNotifyConnector(textField, ValidatorActivatable(textField), false)
 
     installScrollIfChangedController()
   }

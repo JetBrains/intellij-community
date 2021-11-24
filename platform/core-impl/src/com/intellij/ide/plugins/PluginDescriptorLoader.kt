@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment")
 @file:JvmName("PluginDescriptorLoader")
 @file:ApiStatus.Internal
 package com.intellij.ide.plugins
@@ -20,10 +20,7 @@ import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.io.Closeable
-import java.io.File
-import java.io.IOException
-import java.io.InputStream
+import java.io.*
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -400,7 +397,6 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
   var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.DEFAULT)
 
   val platformPrefix = PlatformUtils.getPlatformPrefix()
-  // should be the only plugin in lib (only for Ultimate and WebStorm for now)
   val isInDevServerMode = java.lang.Boolean.getBoolean("idea.use.dev.build.server")
   val pathResolver = ClassPathXmlPathResolver(
     classLoader = classLoader,
@@ -409,43 +405,34 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
   val useCoreClassLoader = pathResolver.isRunningFromSources ||
                            platformPrefix.startsWith("CodeServer") ||
                            java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
+  // should be the only plugin in lib (only for Ultimate and WebStorm for now)
   if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
       (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
-    val dataLoader = object : DataLoader {
-      override val pool: ZipFilePool
-        get() = throw IllegalStateException("must be not called")
-
-      override fun load(path: String) = throw IllegalStateException("must be not called")
-
-      override fun toString() = "product classpath"
-    }
-
-    val raw = readModuleDescriptor(input = classLoader.getResourceAsStream(PluginManagerCore.PLUGIN_XML_PATH)!!,
-                                   readContext = context,
-                                   pathResolver = pathResolver,
-                                   dataLoader = dataLoader,
-                                   includeBase = null,
-                                   readInto = null,
-                                   locationSource = null)
-    val descriptor = IdeaPluginDescriptorImpl(raw = raw,
-                                              path = Paths.get(PathManager.getLibPath()),
-                                              isBundled = true,
-                                              id = null,
-                                              moduleName = null,
-                                              useCoreClassLoader = useCoreClassLoader)
-    descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
-    context.result.add(descriptor, overrideUseIfCompatible = false)
+    loadCoreProductPlugin(data = classLoader.getResourceAsStream(PluginManagerCore.PLUGIN_XML_PATH)!!,
+                          context = context,
+                          pathResolver = pathResolver,
+                          useCoreClassLoader = useCoreClassLoader)
   }
   else {
-    val urlToFilename = LinkedHashMap<URL, String>()
-    val platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlToFilename, platformPrefix)
+    val fileName = "${platformPrefix}Plugin.xml"
+    if (classLoader is UrlClassLoader) {
+      classLoader.getResourceAsBytes("${PluginManagerCore.META_INF}$fileName", false)?.let {
+        loadCoreProductPlugin(data = ByteArrayInputStream(it), context, pathResolver, useCoreClassLoader)
+      }
+    }
+    else {
+      classLoader.getResourceAsStream("${PluginManagerCore.META_INF}$fileName")?.let {
+        loadCoreProductPlugin(data = it, context, pathResolver, useCoreClassLoader)
+      }
+    }
+
+    val urlToFilename = collectPluginFilesInClassPath(classLoader)
     if (!urlToFilename.isEmpty()) {
       activity = activity.endAndStart("plugin from classpath loading")
       pool.invoke(LoadDescriptorsFromClassPathAction(urlToFilename = urlToFilename,
                                                      context = context,
-                                                     platformPluginURL = platformPluginURL,
                                                      pathResolver = pathResolver,
-        useCoreClassLoader = useCoreClassLoader))
+                                                     useCoreClassLoader = useCoreClassLoader))
     }
   }
 
@@ -458,31 +445,48 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
   activity.end()
 }
 
-private fun computePlatformPluginUrlAndCollectPluginUrls(loader: ClassLoader,
-                                                         urls: MutableMap<URL, String>,
-                                                         platformPrefix: String?): URL? {
-  var result: URL? = null
-  if (platformPrefix != null) {
-    val fileName = "${platformPrefix}Plugin.xml"
-    loader.getResource("${PluginManagerCore.META_INF}$fileName")?.let {
-      urls.put(it, fileName)
-      result = it
-    }
+private fun loadCoreProductPlugin(data: InputStream,
+                                  context: DescriptorListLoadingContext,
+                                  pathResolver: ClassPathXmlPathResolver,
+                                  useCoreClassLoader: Boolean) {
+  val dataLoader = object : DataLoader {
+    override val pool: ZipFilePool
+      get() = throw IllegalStateException("must be not called")
+
+    override fun load(path: String) = throw IllegalStateException("must be not called")
+
+    override fun toString() = "product classpath"
   }
-  collectPluginFilesInClassPath(loader, urls)
-  return result
+
+  val raw = readModuleDescriptor(data,
+                                 readContext = context,
+                                 pathResolver = pathResolver,
+                                 dataLoader = dataLoader,
+                                 includeBase = null,
+                                 readInto = null,
+                                 locationSource = null)
+  val descriptor = IdeaPluginDescriptorImpl(raw = raw,
+                                            path = Paths.get(PathManager.getLibPath()),
+                                            isBundled = true,
+                                            id = null,
+                                            moduleName = null,
+                                            useCoreClassLoader = useCoreClassLoader)
+  descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
+  context.result.add(descriptor, overrideUseIfCompatible = false)
 }
 
-private fun collectPluginFilesInClassPath(loader: ClassLoader, urls: MutableMap<URL, String>) {
+private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String> {
+  val urlToFilename = LinkedHashMap<URL, String>()
   try {
     val enumeration = loader.getResources(PluginManagerCore.PLUGIN_XML_PATH)
     while (enumeration.hasMoreElements()) {
-      urls.put(enumeration.nextElement(), PluginManagerCore.PLUGIN_XML)
+      urlToFilename.put(enumeration.nextElement(), PluginManagerCore.PLUGIN_XML)
     }
   }
   catch (e: IOException) {
     LOG.warn(e)
   }
+  return urlToFilename
 }
 
 /**
@@ -595,8 +599,7 @@ fun getDescriptorsToMigrate(dir: Path,
 
 @TestOnly
 fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescriptor> {
-  val urlToFilename = LinkedHashMap<URL, String>()
-  collectPluginFilesInClassPath(loader, urlToFilename)
+  val urlToFilename = collectPluginFilesInClassPath(loader)
   val buildNumber = BuildNumber.fromString("2042.42")!!
   val context = DescriptorListLoadingContext(disabledPlugins = Collections.emptySet(),
                                              result = PluginLoadingResult(brokenPluginVersions = emptyMap(),
@@ -605,7 +608,6 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
   LoadDescriptorsFromClassPathAction(
     urlToFilename = urlToFilename,
     context = context,
-    platformPluginURL = null,
     pathResolver = ClassPathXmlPathResolver(loader, isRunningFromSources = false),
     useCoreClassLoader = true
   ).compute()
@@ -665,7 +667,6 @@ private class LoadDescriptorsFromDirAction(private val dir: Path,
 // urls here expected to be a file urls to plugin.xml
 private class LoadDescriptorsFromClassPathAction(private val urlToFilename: Map<URL, String>,
                                                  private val context: DescriptorListLoadingContext,
-                                                 private val platformPluginURL: URL?,
                                                  private val pathResolver: ClassPathXmlPathResolver,
                                                  private val useCoreClassLoader: Boolean) : RecursiveAction() {
   public override fun compute() {
@@ -673,15 +674,10 @@ private class LoadDescriptorsFromClassPathAction(private val urlToFilename: Map<
     urlToFilename.forEach(BiConsumer { url, filename ->
       tasks.add(object : RecursiveTask<IdeaPluginDescriptorImpl?>() {
         override fun compute(): IdeaPluginDescriptorImpl? {
-          val isEssential = url == platformPluginURL
           try {
             return loadDescriptorFromResource(resource = url, filename = filename)
           }
           catch (e: Throwable) {
-            if (isEssential) {
-              throw e
-            }
-
             LOG.info("Cannot load $url", e)
             return null
           }

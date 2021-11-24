@@ -452,7 +452,7 @@ public class SwitchBlockHighlightingModel {
     private HighlightInfo checkLabelAndSelectorCompatibility(@NotNull PsiCaseLabelElement label) {
       if (label instanceof PsiDefaultCaseLabelElement) return null;
       if (isNullType(label)) {
-        if (!(mySelectorType instanceof PsiClassType) && !isNullType(mySelector)) {
+        if (mySelectorType instanceof PsiPrimitiveType && !isNullType(mySelector)) {
           return createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
                                                             JavaHighlightUtil.formatType(mySelectorType)));
         }
@@ -783,19 +783,18 @@ public class SwitchBlockHighlightingModel {
                                               @NotNull List<PsiCaseLabelElement> elements,
                                               @NotNull List<HighlightInfo> results) {
       Set<PsiClass> missingClasses;
-      List<String> patternClassNames = new SmartList<>();
+      LinkedHashMap<PsiClass, PsiPattern> patternClasses = null;
       if (elements.isEmpty()) {
         missingClasses = Collections.emptySet();
       }
       else {
-        Map<PsiClass, PsiPattern> patternClasses = new HashMap<>();
+        patternClasses = new LinkedHashMap<>();
         for (PsiCaseLabelElement element : elements) {
           PsiPattern patternLabelElement = ObjectUtils.tryCast(element, PsiPattern.class);
           if (patternLabelElement == null) continue;
           PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
           if (patternClass != null) {
             patternClasses.put(patternClass, patternLabelElement);
-            patternClassNames.add(patternClass.getName());
           }
         }
         Queue<PsiClass> nonVisited = new ArrayDeque<>();
@@ -823,13 +822,36 @@ public class SwitchBlockHighlightingModel {
       }
       HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
       if (!missingClasses.isEmpty()) {
-        missingClasses.forEach(aClass -> patternClassNames.add(aClass.getName()));
-        Set<String> missingCases = new SmartHashSet<>();
-        missingClasses.forEach(aClass -> missingCases.add(aClass.getName()));
-        IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, patternClassNames);
+        List<String> allNames = collectLabelElementNames(elements, missingClasses, patternClasses);
+        Set<String> missingCases = ContainerUtil.map2Set(missingClasses, PsiClass::getQualifiedName);
+        IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
         QuickFixAction.registerQuickFixAction(info, fix);
       }
       results.add(info);
+    }
+
+    @NotNull
+    private static List<String> collectLabelElementNames(@NotNull List<PsiCaseLabelElement> elements,
+                                                         @NotNull Set<PsiClass> missingClasses,
+                                                         @NotNull LinkedHashMap<PsiClass, PsiPattern> patternClasses) {
+      List<String> result = ContainerUtil.map(elements, PsiElement::getText);
+      for (PsiClass aClass : missingClasses) {
+        String className = aClass.getQualifiedName();
+        PsiPattern pattern = patternClasses.get(aClass);
+        if (pattern != null) {
+          result.add(result.lastIndexOf(pattern.getText()) + 1, className);
+        }
+        else {
+          pattern = ContainerUtil.find(patternClasses.values(), who -> JavaPsiPatternUtil.dominates(who, TypeUtils.getType(aClass)));
+          if (pattern != null) {
+            result.add(result.indexOf(pattern.getText()), aClass.getQualifiedName());
+          }
+          else {
+            result.add(aClass.getQualifiedName());
+          }
+        }
+      }
+      return StreamEx.of(result).distinct().toList();
     }
 
     @NotNull

@@ -12,6 +12,7 @@ import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
@@ -33,6 +35,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.Consumer
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
@@ -45,10 +48,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import java.util.*
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.*
 import kotlin.math.abs
 
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
@@ -104,14 +104,15 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     createContentManager()
       .apply {
         if (ExperimentalUI.isNewToolWindowsStripes()) {
-          addContentManagerListener(UpdateBackgroundContentManager())
+          addContentManagerListener(UpdateBackgroundContentManager(decorator))
         }
       }
   }
 
-  private class UpdateBackgroundContentManager : ContentManagerListener {
+  private class UpdateBackgroundContentManager(private val decorator: InternalDecoratorImpl?) : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
-      UIUtil.setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
+      setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
+      addAdjustListener(decorator, event.content.component)
     }
   }
 
@@ -447,12 +448,29 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   companion object {
     private val LOG = logger<ToolWindowImpl>()
+    private fun setBackgroundRecursively(component: Component, bg: Color) {
+      UIUtil.forEachComponentInHierarchy(component, Consumer { c: Component ->
+        if (c !is ActionButton) {
+          c.background = bg
+        }
+      })
+    }
+
+    private fun addAdjustListener(decorator: InternalDecoratorImpl?, component: JComponent) {
+      UIUtil.findComponentOfType(component, JScrollPane::class.java)?.verticalScrollBar?.addAdjustmentListener { event ->
+        decorator?.let {
+          ClientProperty.put(it, InternalDecoratorImpl.SCROLLED_STATE, event.adjustable?.value != 0)
+          it.header?.repaint()
+        }
+      }
+    }
   }
   internal fun doSetIcon(newIcon: Icon) {
     val oldIcon = icon
     if (EventLog.LOG_TOOL_WINDOW_ID != id) {
       if (oldIcon !== newIcon &&
           newIcon !is LayeredIcon &&
+          !ExperimentalUI.isNewUI() &&
           (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
         LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
       }
@@ -551,7 +569,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
 
     if (ExperimentalUI.isNewToolWindowsStripes()) {
-      UIUtil.setBackgroundRecursively(contentManager.value.component, JBUI.CurrentTheme.ToolWindow.background())
+      setBackgroundRecursively(contentManager.value.component, JBUI.CurrentTheme.ToolWindow.background())
+      addAdjustListener(decorator, contentManager.value.component)
     }
   }
 
@@ -614,6 +633,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   private inner class GearActionGroup(toolWindow: ToolWindow) : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
+      if (ExperimentalUI.isNewToolWindowsStripes()) {
+        templatePresentation.icon = AllIcons.Actions.More
+      }
       templatePresentation.text = IdeBundle.message("show.options.menu")
       val additionalGearActions = additionalGearActions
       if (additionalGearActions != null) {

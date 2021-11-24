@@ -302,11 +302,12 @@ Includes the following features:</p>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension$Provider"/>
-    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>
+    <!--<browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>-->
 
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceCopyButtonBrowserExtension$Provider"/>
 
     <!--suppress PluginXmlValidity -->
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider"/>

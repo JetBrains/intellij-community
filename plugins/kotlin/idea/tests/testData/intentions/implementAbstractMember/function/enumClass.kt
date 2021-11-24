@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // DISABLE-ERRORS
 interface T<X> {
     fun <caret>foo(x: X): X

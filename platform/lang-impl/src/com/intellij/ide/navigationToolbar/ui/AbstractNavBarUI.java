@@ -37,7 +37,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
     return isPopupElement ? JBInsets.create(1, 2) :
-           ExperimentalUI.isNewUI() ? JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1, 1, 3, 1)) : JBUI.emptyInsets();
+           ExperimentalUI.isNewUI() ? JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1)) : JBUI.emptyInsets();
   }
 
   @Override
@@ -51,14 +51,14 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     return ExperimentalUI.isNewUI() ?
             item != null && item.isInFloatingMode() ?
               JBUI.insets("StatusBar.Breadcrumbs.floatingItemInsets", JBUI.insets(1)) :
-              JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(3, 0)) :
+              JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(2, 0)) :
             JBUI.insets(3);
   }
 
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
     Font font = UIUtil.getLabelFont();
-    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? RelativeFont.SMALL.derive(font) : font;
+    return !ExperimentalUI.isNewUI() && UISettings.getInstance().getUseSmallLabelsOnTabs() ? RelativeFont.SMALL.derive(font) : font;
   }
 
   @Override
@@ -89,8 +89,9 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       int offset = rect.x;
       if (!item.isFirstElement()) {
         NavBarItem.CHEVRON_ICON.paintIcon(item, g, offset, rect.y + (rect.height - NavBarItem.CHEVRON_ICON.getIconHeight()) / 2);
-        offset += NavBarItem.CHEVRON_ICON.getIconWidth();
-        rect.width -= NavBarItem.CHEVRON_ICON.getIconWidth();
+        int delta = NavBarItem.CHEVRON_ICON.getIconWidth() + JBUI.CurrentTheme.StatusBar.Breadcrumbs.CHEVRON_INSET.get();
+        offset += delta;
+        rect.width -= delta;
       }
 
       paintHighlight(g, navbar, item, new Rectangle(offset, rect.y, rect.width, rect.height));

@@ -23,9 +23,11 @@ import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -54,38 +57,8 @@ public final class ActionMenu extends JBMenu {
   private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
   private final boolean myUseDarkIcons;
   private Disposable myDisposable;
-  private final Menu myScreenMenuPeer;
-
-  public ActionMenu(@Nullable DataContext context,
-                    @NotNull String place,
-                    @NotNull ActionGroup group,
-                    @NotNull PresentationFactory presentationFactory,
-                    boolean enableMnemonics,
-                    boolean useDarkIcons,
-                    Menu screenMenuPeer) {
-    myContext = context;
-    myPlace = place;
-    myGroup = ActionRef.fromAction(group);
-    myPresentationFactory = presentationFactory;
-    myPresentation = myPresentationFactory.getPresentation(group);
-    myMnemonicEnabled = enableMnemonics;
-    myUseDarkIcons = useDarkIcons;
-    myScreenMenuPeer = screenMenuPeer;
-    if (myScreenMenuPeer != null) {
-      myScreenMenuPeer.setOnOpen(() -> fillMenu(), this);
-      myScreenMenuPeer.setOnClose(() -> setSelected(false), this);
-
-      // update from presentation
-      myScreenMenuPeer.setEnabled(myPresentation.isEnabled());
-    }
-
-    updateUI();
-
-    init();
-
-    // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
-    getPopupMenu();
-  }
+  private final @Nullable Menu myScreenMenuPeer;
+  private final @Nullable SubElementSelector mySubElementSelector;
 
   public ActionMenu(@Nullable DataContext context,
                     @NotNull String place,
@@ -93,7 +66,31 @@ public final class ActionMenu extends JBMenu {
                     @NotNull PresentationFactory presentationFactory,
                     boolean enableMnemonics,
                     boolean useDarkIcons) {
-    this(context, place, group, presentationFactory, enableMnemonics, useDarkIcons, null);
+    myContext = context;
+    myPlace = place;
+    myGroup = ActionRef.fromAction(group);
+    myPresentationFactory = presentationFactory;
+    myPresentation = myPresentationFactory.getPresentation(group);
+    myMnemonicEnabled = enableMnemonics;
+    myUseDarkIcons = useDarkIcons;
+
+    if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      myScreenMenuPeer = new Menu(myPresentation.getText(enableMnemonics));
+      myScreenMenuPeer.setOnOpen(() -> fillMenu(), this);
+      myScreenMenuPeer.setOnClose(() -> setSelected(false), this);
+      myScreenMenuPeer.listenPresentationChanges(myPresentation);
+    }
+    else {
+      myScreenMenuPeer = null;
+    }
+    mySubElementSelector = SubElementSelector.isForceDisabled ? null : new SubElementSelector(this);
+
+    updateUI();
+
+    init();
+
+    // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
+    getPopupMenu();
   }
 
   @Override
@@ -114,6 +111,7 @@ public final class ActionMenu extends JBMenu {
   }
 
   private JPopupMenu mySpecialMenu;
+
   @Override
   public JPopupMenu getPopupMenu() {
     if (mySpecialMenu == null) {
@@ -136,11 +134,7 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
-  public Menu getScreenMenuPeer() {
-    if (!Menu.isJbScreenMenuEnabled() || !ActionPlaces.MAIN_MENU.equals(myPlace))
-      return null;
-    return myScreenMenuPeer;
-  }
+  public @Nullable Menu getScreenMenuPeer() { return myScreenMenuPeer; }
 
   private void init() {
     boolean macSystemMenu = SystemInfo.isMacSystemMenu && isMainMenuPlace();
@@ -237,6 +231,32 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
+  @Override
+  protected void processMouseEvent(MouseEvent e) {
+    boolean shouldCancelIgnoringOfNextSelectionRequest = false;
+
+    if (mySubElementSelector != null) {
+      switch (e.getID()) {
+        case MouseEvent.MOUSE_PRESSED:
+          mySubElementSelector.ignoreNextSelectionRequest();
+          shouldCancelIgnoringOfNextSelectionRequest = true;
+          break;
+        case MouseEvent.MOUSE_ENTERED:
+          mySubElementSelector.ignoreNextSelectionRequest(getDelay() * 2);
+          break;
+      }
+    }
+
+    try {
+      super.processMouseEvent(e);
+    }
+    finally {
+      if (shouldCancelIgnoringOfNextSelectionRequest) {
+        mySubElementSelector.cancelIgnoringOfNextSelectionRequest();
+      }
+    }
+  }
+
   private class MenuListenerImpl implements ChangeListener, MenuListener {
     ScheduledFuture<?> myDelayedClear;
     boolean isSelected = false;
@@ -281,6 +301,8 @@ public final class ActionMenu extends JBMenu {
         myDisposable = null;
       }
       onMenuHidden();
+
+      if (mySubElementSelector != null) mySubElementSelector.cancelNextSelection();
     }
 
     private void onMenuHidden() {
@@ -327,7 +349,12 @@ public final class ActionMenu extends JBMenu {
         return;
       }
     }
+
     super.setPopupMenuVisible(b);
+
+    if (b && (mySubElementSelector != null)) {
+      mySubElementSelector.selectSubElementIfNecessary();
+    }
   }
 
   public void clearItems() {
@@ -441,7 +468,8 @@ public final class ActionMenu extends JBMenu {
 
         if (!isMouseMovingTowardsSubmenu) {
           myCallbackAlarm.request();
-        } else {
+        }
+        else {
           myCallbackAlarm.cancel();
         }
         return true;
@@ -455,6 +483,135 @@ public final class ActionMenu extends JBMenu {
       myEventToRedispatch = null;
       myStartMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+    }
+  }
+
+
+  private static final class SubElementSelector {
+    static final boolean isForceDisabled =
+      SystemInfo.isMacSystemMenu ||
+      !Registry.is("ide.popup.menu.navigation.keyboard.selectFirstEnabledSubItem", false);
+
+
+    SubElementSelector(@NotNull ActionMenu owner) {
+      if (isForceDisabled) {
+        throw new IllegalStateException("Attempt to create an instance of ActionMenu.SubElementSelector class when it is force disabled");
+      }
+
+      myOwner = owner;
+      myShouldIgnoreNextSelectionRequest = false;
+      myShouldIgnoreNextSelectionRequestSinceTimestamp = -1;
+      myShouldIgnoreNextSelectionRequestTimeoutMs = -1;
+      myCurrentRequestId = -1;
+    }
+
+    @RequiresEdt
+    void ignoreNextSelectionRequest(int timeoutMs) {
+      myShouldIgnoreNextSelectionRequest = true;
+      myShouldIgnoreNextSelectionRequestTimeoutMs = timeoutMs;
+      if (timeoutMs >= 0) {
+        myShouldIgnoreNextSelectionRequestSinceTimestamp = System.currentTimeMillis();
+      }
+      else {
+        myShouldIgnoreNextSelectionRequestSinceTimestamp = -1;
+      }
+    }
+
+    @RequiresEdt
+    void ignoreNextSelectionRequest() {
+      ignoreNextSelectionRequest(-1);
+    }
+
+    @RequiresEdt
+    void cancelIgnoringOfNextSelectionRequest() {
+      myShouldIgnoreNextSelectionRequest = false;
+      myShouldIgnoreNextSelectionRequestSinceTimestamp = -1;
+      myShouldIgnoreNextSelectionRequestTimeoutMs = -1;
+    }
+
+    @RequiresEdt
+    void selectSubElementIfNecessary() {
+      final boolean shouldIgnoreThisSelectionRequest;
+      if (myShouldIgnoreNextSelectionRequest) {
+        if (myShouldIgnoreNextSelectionRequestTimeoutMs >= 0) {
+          shouldIgnoreThisSelectionRequest =
+            ( (System.currentTimeMillis() - myShouldIgnoreNextSelectionRequestSinceTimestamp) <= myShouldIgnoreNextSelectionRequestTimeoutMs );
+        }
+        else {
+          shouldIgnoreThisSelectionRequest = true;
+        }
+      }
+      else {
+        shouldIgnoreThisSelectionRequest = false;
+      }
+
+      cancelIgnoringOfNextSelectionRequest();
+
+      if (shouldIgnoreThisSelectionRequest) {
+        return;
+      }
+
+      final int thisRequestId = ++myCurrentRequestId;
+      SwingUtilities.invokeLater(() -> selectFirstEnabledElement(thisRequestId));
+    }
+
+    @RequiresEdt
+    void cancelNextSelection() {
+      ++myCurrentRequestId;
+    }
+
+
+    private final @NotNull ActionMenu myOwner;
+    private boolean myShouldIgnoreNextSelectionRequest;
+    private long myShouldIgnoreNextSelectionRequestSinceTimestamp;
+    private int myShouldIgnoreNextSelectionRequestTimeoutMs;
+    private int myCurrentRequestId;
+
+
+    @RequiresEdt
+    private void selectFirstEnabledElement(final int requestId) {
+      if (requestId != myCurrentRequestId) {
+        // the request was cancelled or a newer request was created
+        return;
+      }
+
+      if (!myOwner.isSelected()) {
+        return;
+      }
+
+      final var menuSelectionManager = MenuSelectionManager.defaultManager();
+
+      final var currentSelectedPath = menuSelectionManager.getSelectedPath();
+      if (currentSelectedPath.length < 2) {
+        return;
+      }
+
+      final var lastElementInCurrentPath = currentSelectedPath[currentSelectedPath.length - 1];
+
+      final MenuElement[] newSelectionPath;
+      if (lastElementInCurrentPath == myOwner.myStubItem) {
+        newSelectionPath = currentSelectedPath.clone();
+      }
+      else if (lastElementInCurrentPath == myOwner.getPopupMenu()) {
+        newSelectionPath = Arrays.copyOf(currentSelectedPath, currentSelectedPath.length + 1);
+      }
+      else if ( (currentSelectedPath[currentSelectedPath.length - 2] == myOwner.getPopupMenu()) &&
+                !ArrayUtil.contains(lastElementInCurrentPath.getComponent(), myOwner.getMenuComponents()) ) {
+        newSelectionPath = currentSelectedPath.clone();
+      }
+      else {
+        return;
+      }
+
+      final var menuComponents = myOwner.getMenuComponents();
+      for (final var component : menuComponents) {
+        if ((component != myOwner.myStubItem) && component.isEnabled() && (component instanceof JMenuItem)) {
+          newSelectionPath[newSelectionPath.length - 1] = (MenuElement)component;
+          menuSelectionManager.setSelectedPath(newSelectionPath);
+
+          return;
+        }
+      }
     }
   }
 }

@@ -3065,7 +3065,7 @@ public final class HighlightUtil {
           problem.second.forEach(fix -> QuickFixAction.registerQuickFixAction(info, fix));
         }
         else if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
-          HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)resolved, ref, info, result.getCurrentFileResolveScope());
+          HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)resolved, ref, info, result.getCurrentFileResolveScope(), null);
           if (ref instanceof PsiReferenceExpression) {
             QuickFixAction.registerQuickFixAction(info, getFixFactory().createRenameWrongRefFix((PsiReferenceExpression)ref));
           }
@@ -3106,10 +3106,11 @@ public final class HighlightUtil {
   }
 
   /**
-   * Checks if the element of the {@link PsiNewExpression} type can be a reference to a static member of the class,
-   * which is the qualifier of the reference element of {@link PsiNewExpression}.
+   * Checks if the specified element is possibly a reference to a static member of a class,
+   * when the {@code new} keyword is removed.
    * The element is split into two parts: the qualifier and the reference element.
-   * If the qualifier is a class and the reference element text matches either a field name or a method name of the class
+   * If they both exist and the qualifier references a class and the reference element text matches either
+   * the name of a static field or the name of a static method of the class
    * then the method returns true
    *
    * @param element an element to examine
@@ -3125,18 +3126,25 @@ public final class HighlightUtil {
 
     final PsiElement qualifier = reference.getQualifier();
     final PsiElement memberName = reference.getReferenceNameElement();
-    if (!(qualifier instanceof PsiReference) || memberName == null) return false;
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement) || memberName == null) return false;
 
-    final PsiReference psiReference = (PsiReference)qualifier;
+    final PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)qualifier;
+    if (psiReference.getTypeParameterCount() > 0) return false;
     final PsiClass clazz = tryCast(psiReference.resolve(), PsiClass.class);
     if (clazz == null) return false;
 
-    final PsiField field = clazz.findFieldByName(memberName.getText(), true);
-
-    if (field != null) return true;
-    final PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
-
-    return methods.length != 0;
+    if (newExpression.getArgumentList() == null) {
+      final PsiField field = clazz.findFieldByName(memberName.getText(), true);
+      if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) return true;
+    }
+    else {
+      final PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
+      if (methods.length == 0) return false;
+      for (PsiMethod method : methods) {
+        if (method.hasModifierProperty(PsiModifier.STATIC)) return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

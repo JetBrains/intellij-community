@@ -20,7 +20,7 @@ import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpointBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.*;
@@ -100,7 +100,7 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
 
     @Override
     public boolean isValid() {
-        return super.isValid() && getMethodName() != null;
+         return super.isValid() && getMethodName() != null;
     }
 
     // MODIFICATION: Start Kotlin implementation
@@ -112,8 +112,7 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
         mySignature = null;
 
         Project project = myProject;
-
-        Task.Backgroundable task = new Task.Backgroundable(myProject, KotlinDebuggerCoreBundle.message("function.breakpoint.initialize")) {
+        Task.Backgroundable task = new Task.Backgroundable(project, KotlinDebuggerCoreBundle.message("function.breakpoint.initialize")) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
                 SourcePosition sourcePosition = KotlinFunctionBreakpoint.this.getSourcePosition();
@@ -132,18 +131,17 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
 
                 ProgressIndicatorProvider.checkCanceled();
 
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    KotlinFunctionBreakpoint.this.setMethodName(methodName);
-                    KotlinFunctionBreakpoint.this.mySignature = methodSignature;
-                    KotlinFunctionBreakpoint.this.myIsStatic = methodIsStatic;
+                KotlinFunctionBreakpoint.this.setMethodName(methodName);
+                KotlinFunctionBreakpoint.this.mySignature = methodSignature;
+                KotlinFunctionBreakpoint.this.myIsStatic = methodIsStatic;
 
-                    if (psiClass != null) {
-                        KotlinFunctionBreakpoint.this.getProperties().myClassPattern = psiClass.getQualifiedName();
-                    }
-                    if (methodIsStatic) {
-                        KotlinFunctionBreakpoint.this.setInstanceFiltersEnabled(false);
-                    }
-                }, ModalityState.defaultModalityState());
+                if (psiClass != null) {
+                    KotlinFunctionBreakpoint.this.getProperties().myClassPattern =
+                            ReadAction.compute(() -> psiClass.getQualifiedName());
+                }
+                if (methodIsStatic) {
+                    KotlinFunctionBreakpoint.this.setInstanceFiltersEnabled(false);
+                }
             }
         };
 

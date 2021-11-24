@@ -3,7 +3,7 @@ package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
+import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.openapi.Disposable
@@ -16,6 +16,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.Activatable
 import kotlinx.coroutines.*
 import java.lang.Runnable
@@ -34,6 +35,18 @@ internal class DocumentationToolWindowUpdater(
 
   override fun hideNotify() {
     toggleAutoUpdate(false)
+  }
+
+  private var paused: Boolean = false
+
+  fun pause(): Disposable {
+    EDT.assertIsEdt()
+    paused = true
+    cs.coroutineContext.cancelChildren()
+    return Disposable {
+      EDT.assertIsEdt()
+      paused = false
+    }
   }
 
   private val autoUpdateRequest = Runnable(::requestAutoUpdate)
@@ -56,6 +69,9 @@ internal class DocumentationToolWindowUpdater(
 
   private fun requestAutoUpdate() {
     cs.coroutineContext.cancelChildren()
+    if (paused) {
+      return
+    }
     cs.launch {
       delay(DEFAULT_UI_RESPONSE_TIMEOUT)
       autoUpdate()
@@ -68,7 +84,7 @@ internal class DocumentationToolWindowUpdater(
       return
     }
     val request = readAction {
-      dataContext.getData(DOCUMENTATION_TARGETS)?.singleOrNull()?.documentationRequest()
+      documentationTargets(dataContext).singleOrNull()?.documentationRequest()
     }
     if (request != null) {
       browser.resetBrowser(request)

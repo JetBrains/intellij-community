@@ -2,17 +2,17 @@
 @file:Suppress("UsePropertyAccessSyntax")
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.testFramework.rules.InMemoryFsRule
-import org.assertj.core.api.Assertions
-import org.junit.Rule
-import org.junit.Test
+import com.intellij.testFramework.rules.InMemoryFsExtension
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Files
 import java.util.*
 
 class TaskTest {
+  @RegisterExtension
   @JvmField
-  @Rule
-  val fsRule = InMemoryFsRule()
+  val fs = InMemoryFsExtension()
 
   companion object {
     @JvmStatic
@@ -42,10 +42,10 @@ class TaskTest {
 
   @Test
   fun `broken plugins`() {
-    val targetFile = fsRule.fs.getPath("/result")
+    val targetFile = fs.root.resolve("result")
     buildBrokenPlugins(targetFile, "2020.3", isInDevelopmentMode = false)
     val data = Files.readAllBytes(targetFile)
-    Assertions.assertThat(data).isNotEmpty()
-    Assertions.assertThat(data[0]).isEqualTo(1)
+    assertThat(data).isNotEmpty()
+    assertThat(data[0]).isEqualTo(1)
   }
 }

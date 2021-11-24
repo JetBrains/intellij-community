@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filterNotNull().filter{}.forEach{}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filterNotNull().filter{}.forEach{}'"
 fun foo(list: List<String?>){

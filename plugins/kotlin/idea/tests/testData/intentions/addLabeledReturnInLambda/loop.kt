@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     for (i in 10..100) {

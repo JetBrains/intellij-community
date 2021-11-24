@@ -18,8 +18,10 @@ import static org.jetbrains.intellij.build.impl.ProjectLibraryData.PackMode
 
 @CompileStatic
 final class PlatformModules {
+  public static final String PRODUCT_JAR = "product.jar"
+
   /**
-   * List of modules which are included into lib/platform-api.jar in all IntelliJ based IDEs.
+   * List of modules which are included into lib/openapi.jar in all IntelliJ based IDEs.
    */
   static final List<String> PLATFORM_API_MODULES = List.of(
     "intellij.platform.analysis",
@@ -57,7 +59,7 @@ final class PlatformModules {
     )
 
   /**
-   * List of modules which are included into lib/platform-impl.jar in all IntelliJ based IDEs.
+   * List of modules which are included into lib/app.jar in all IntelliJ based IDEs.
    */
   static final List<String> PLATFORM_IMPLEMENTATION_MODULES = List.of(
     "intellij.platform.analysis.impl",
@@ -148,15 +150,29 @@ final class PlatformModules {
       alreadyPackedModules.addAll(entry.value)
     }
 
-    jar("platform-api.jar", PLATFORM_API_MODULES, productLayout, layout)
-    jar("openapi.jar", productLayout.productApiModules, productLayout, layout)
+    for (String moduleName : (PLATFORM_API_MODULES)) {
+      if (!productLayout.excludedModuleNames.contains(moduleName)) {
+        layout.withModule(moduleName, moduleName == "intellij.platform.jps.model" ? "jps-model.jar" : BaseLayout.APP_JAR)
+      }
+    }
+    jar(BaseLayout.APP_JAR, productLayout.productApiModules, productLayout, layout)
 
     for (String module in productLayout.productImplementationModules) {
       if (!productLayout.excludedModuleNames.contains(module) && !alreadyPackedModules.contains(module)) {
         boolean isRelocated = module == "intellij.xml.dom.impl" ||
                               module == "intellij.platform.structuralSearch" ||
+                              // todo why intellij.tools.testsBootstrap is included to RM?
+                              module == "intellij.tools.testsBootstrap" ||
                               module == "intellij.platform.duplicates.analysis"
-        layout.withModule(module, isRelocated ? BaseLayout.PLATFORM_JAR : productLayout.mainJarName)
+        if (isRelocated) {
+          layout.withModule(module, BaseLayout.APP_JAR)
+        }
+        else if (!buildContext.productProperties.useProductJar || module.startsWith("intellij.platform.commercial")) {
+          layout.withModule(module, productLayout.mainJarName)
+        }
+        else {
+          layout.withModule(module, PRODUCT_JAR)
+        }
       }
     }
 
@@ -179,10 +195,10 @@ final class PlatformModules {
       "intellij.platform.ide.util.netty",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt"
-      ), productLayout, layout)
+    ), productLayout, layout)
 
-    jar(BaseLayout.PLATFORM_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
-    jar(BaseLayout.PLATFORM_JAR, List.of(
+    jar(BaseLayout.APP_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
+    jar(BaseLayout.APP_JAR, List.of(
       "intellij.relaxng",
       "intellij.json",
       "intellij.spellchecker",
@@ -230,7 +246,7 @@ final class PlatformModules {
     addModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar", productLayout, layout)
 
     if (hasPlatformCoverage) {
-      addModule("intellij.platform.coverage", BaseLayout.PLATFORM_JAR, productLayout, layout)
+      addModule("intellij.platform.coverage", BaseLayout.APP_JAR, productLayout, layout)
     }
 
     for (String libraryName in productLayout.projectLibrariesToUnpackIntoMainJar) {
@@ -242,7 +258,7 @@ final class PlatformModules {
       List<String> modules = getProductPluginContentModules(buildContext, productPluginSourceModuleName)
       if (modules != null) {
         for (String name : modules) {
-          layout.withModule(name, BaseLayout.PLATFORM_JAR)
+          layout.withModule(name, BaseLayout.APP_JAR)
         }
       }
     }
@@ -252,12 +268,12 @@ final class PlatformModules {
       "jna", PackMode.STANDALONE_MERGED,
       "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
       "intellij-coverage", PackMode.STANDALONE_SEPARATE,
-    )
+      )
 
     layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
       "JDOM",
       "Trove4j",
-    ))
+      ))
 
     for (JpsLibrary library in additionalProjectLevelLibraries) {
       String name = library.name

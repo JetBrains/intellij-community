@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.completion.PsiClassLookupObject
 import org.jetbrains.kotlin.idea.completion.isAfterDot
 import org.jetbrains.kotlin.idea.completion.isArtificialImportAliasedDescriptor
 import org.jetbrains.kotlin.idea.completion.shortenReferences
@@ -21,13 +22,16 @@ import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver.Companion.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE_WITH_DOT
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
@@ -52,8 +56,18 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
 
                 val qualifiedName = qualifiedName(lookupObject)
 
-                descriptor?.takeIf { DescriptorUtils.isTopLevelDeclaration(it) }?.let {
-                    val importDescriptorResult = ImportInsertHelper.getInstance(project).importDescriptor(file, it)
+                val position = file.findElementAt(context.startOffset)?.getParentOfType<KtElement>(strict = false) ?: file
+
+                val importAction: (() -> ImportDescriptorResult?)? =
+                    descriptor?.takeIf { DescriptorUtils.isTopLevelDeclaration(it) }
+                        ?.let {
+                            fun(): ImportDescriptorResult = ImportInsertHelper.getInstance(project).importDescriptor(position, it)
+                        } ?: lookupObject.safeAs<PsiClassLookupObject>()
+                        ?.let {
+                            fun(): ImportDescriptorResult = ImportInsertHelper.getInstance(project).importPsiClass(position, it.psiClass)
+                        }
+
+                importAction?.invoke()?.let { importDescriptorResult ->
                     if (importDescriptorResult == ImportDescriptorResult.FAIL) {
                         document.replaceString(startOffset, context.tailOffset, qualifiedName)
                     }

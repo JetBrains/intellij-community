@@ -18,8 +18,10 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -27,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -39,14 +42,23 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.layout.*
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.ift.PythonLessonsBundle
 import com.jetbrains.python.ift.PythonLessonsUtil
+import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
+import com.jetbrains.python.sdk.findBaseSdks
+import com.jetbrains.python.sdk.pythonSdk
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.put
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
@@ -65,13 +77,12 @@ import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
-import training.util.getActionById
-import training.util.invokeActionForFocusContext
-import training.util.isToStringContains
-import training.util.learningToolWindow
+import training.ui.showOnboardingFeedbackNotification
+import training.util.*
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTree
@@ -159,7 +170,8 @@ class PythonOnboardingTour :
     }
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
+    prepareFeedbackData(project, lessonEndInfo)
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
 
@@ -167,7 +179,7 @@ class PythonOnboardingTour :
     uiSettings.showNavigationBar = showNavigationBarPreference
     uiSettings.fireUISettingsChanged()
 
-    if (!lessonPassed) return
+    if (!lessonEndInfo.lessonPassed) return
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
     invokeLater {
       val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
@@ -191,6 +203,66 @@ class PythonOnboardingTour :
         }
         Messages.NO -> invokeLater {
           LearningUiManager.resetModulesView()
+        }
+      }
+      if (result != Messages.YES) {
+        module.primaryLanguage?.let {
+          showOnboardingFeedbackNotification(project, it.onboardingFeedbackData)
+          it.onboardingFeedbackData = null
+        }
+      }
+    }
+  }
+
+  private fun prepareFeedbackData(project: Project, lessonEndInfo: LessonEndInfo) {
+    val primaryLanguage = module.primaryLanguage
+    if (primaryLanguage == null) {
+      thisLogger().error("Onboarding lesson has no language support for some magical reason")
+      return
+    }
+
+    val allExistingSdks = listOf(*PyConfigurableInterpreterList.getInstance(null).model.sdks)
+    val existingSdks = ProjectSpecificSettingsStep.getValidPythonSdks(allExistingSdks)
+
+    val interpreterVersions = CompletableFuture<List<String>>()
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val context = UserDataHolderBase()
+      val baseSdks = findBaseSdks(existingSdks, null, context)
+      interpreterVersions.complete(baseSdks.mapNotNull { it.sdkType.getVersionString(it) }.sorted().distinct())
+    }
+
+    val usedInterpreter = project.pythonSdk?.versionString ?: "none"
+
+    primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("PyCharm Onbdoarding Tour Feedback", lessonEndInfo) {
+      val interpreters: List<String>? by lazy {
+        if (interpreterVersions.isDone) interpreterVersions.get() else null
+      }
+      override val addAdditionalSystemData: JsonObjectBuilder.() -> Unit = {
+        put("current_interpreter", usedInterpreter)
+        put("found_interpreters", buildJsonArray {
+          for (i in interpreters ?: emptyList()) {
+            add(JsonPrimitive(i))
+          }
+        })
+      }
+
+      @Suppress("HardCodedStringLiteral")
+      override val addRowsForUserAgreement: LayoutBuilder.() -> Unit = {
+        row {
+          cell {
+            label("Found interpreters:")
+          }
+          cell {
+            label(interpreters?.toString() ?: "none")
+          }
+        }
+        row {
+          cell {
+            label("Used interpreter:")
+          }
+          cell {
+            label(usedInterpreter)
+          }
         }
       }
     }

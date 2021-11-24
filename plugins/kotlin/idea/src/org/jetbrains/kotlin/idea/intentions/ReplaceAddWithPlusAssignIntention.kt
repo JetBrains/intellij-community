@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -20,7 +21,8 @@ class ReplaceAddWithPlusAssignIntention : SelfTargetingOffsetIndependentIntentio
     KtDotQualifiedExpression::class.java,
     KotlinBundle.lazyMessage("replace.with1")
 ) {
-    private val compatibleNames: Set<String> by lazy { setOf("add", "addAll") }
+    @SafeFieldForPreview
+    private val compatibleNames = setOf("add", "addAll")
 
     override fun isApplicableTo(element: KtDotQualifiedExpression): Boolean {
         if (element.callExpression?.valueArguments?.size != 1) return false

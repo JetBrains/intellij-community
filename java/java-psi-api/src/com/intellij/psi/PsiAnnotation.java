@@ -4,6 +4,7 @@ package com.intellij.psi;
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.ApiStatus;
@@ -109,6 +110,17 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
    */
   @Nullable
   default PsiClass resolveAnnotationType() {
+    // https://youtrack.jetbrains.com/issue/KTIJ-19454
+    PsiFile containingFile = getContainingFile();
+    if (containingFile != null) {
+      VirtualFile vFile = containingFile.getVirtualFile();
+      if (vFile != null && vFile.getFileType().getName() == "Kotlin") {
+        String qualifiedName = getQualifiedName();
+        if (qualifiedName != null) {
+          return JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope());
+        }
+      }
+    }
     PsiJavaCodeReferenceElement element = getNameReferenceElement();
     PsiElement declaration = element == null ? null : element.resolve();
     if (!(declaration instanceof PsiClass) || !((PsiClass)declaration).isAnnotationType()) return null;

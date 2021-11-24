@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun bar(p: Int) {
     Thread(<caret>object: Runnable {

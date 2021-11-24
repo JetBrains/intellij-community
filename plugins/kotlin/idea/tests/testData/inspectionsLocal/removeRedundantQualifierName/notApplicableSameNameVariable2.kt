@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 sealed class Foo {
     object BAR : Foo()
 

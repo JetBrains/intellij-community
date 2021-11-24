@@ -1,5 +1,5 @@
 // "Remove @JvmField annotation" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 interface I {
     val x: Int
 }

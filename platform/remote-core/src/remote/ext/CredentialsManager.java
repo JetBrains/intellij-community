@@ -2,6 +2,7 @@
 package com.intellij.remote.ext;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.remote.CredentialsType;
@@ -54,7 +55,13 @@ public abstract class CredentialsManager {
     data.connectionCredentials().save(root);
 
     Object credentials = credentialsType.createCredentials();
-    credentialsType.getHandler(credentials).load(root);
+    try {
+      credentialsType.getHandler(credentials).load(root);
+    }
+    catch (CredentialsCantBeLoaded e) {
+      Logger.getInstance(CredentialsManager.class).warn(e);
+      return;
+    }
     data.setCredentials(credentialsType.getCredentialsKey(), credentials);
   }
 
@@ -72,7 +79,12 @@ public abstract class CredentialsManager {
 
     UnknownCredentialsHolder unknownCredentials = CredentialsType.UNKNOWN.createCredentials();
     unknownCredentials.setSdkId(data.getSdkId());
-    CredentialsType.UNKNOWN.getHandler(unknownCredentials).load(root);
+    try {
+      CredentialsType.UNKNOWN.getHandler(unknownCredentials).load(root);
+    }
+    catch (CredentialsCantBeLoaded e) {
+      Logger.getInstance(CredentialsManager.class).warn(e);
+    }
     data.setCredentials(CredentialsType.UNKNOWN.getCredentialsKey(), unknownCredentials);
   }
 }

@@ -3,45 +3,68 @@
 
 package org.jetbrains.intellij.build.tasks
 
+import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.jetbrains.intellij.build.io.isWindows
 import org.jetbrains.intellij.build.io.writeNewFile
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
 import java.util.*
+import java.util.function.BiConsumer
+import java.util.zip.ZipEntry
+
+// 0100000
+private const val fileFlag = 32768
+// 0755
+const val executableFileUnixMode = fileFlag or 493
+// 0644
+const val regularFileUnixMode = fileFlag or 420
 
 @Suppress("unused")
-fun crossPlatformZip(winDistDir: Path,
+fun crossPlatformZip(macDistDir: Path,
                      linuxDistDir: Path,
-                     macDistDir: Path,
+                     winDistDir: Path,
                      targetFile: Path,
                      executableName: String,
                      productJson: ByteArray,
-                     extraExecutables: List<String>,
+                     macExtraExecutables: List<String>,
+                     linuxExtraExecutables: List<String>,
+                     distFiles: Collection<Map.Entry<Path, String>>,
+                     extraFiles: Map<String, Path>,
                      distAllDir: Path) {
   writeNewFile(targetFile) { outFileChannel ->
     ZipArchiveOutputStream(outFileChannel).use { out ->
-      addPlainFileToDir(winDistDir.resolve("bin/idea.properties"), "bin/win", out)
-      addPlainFileToDir(linuxDistDir.resolve("bin/idea.properties"), "bin/linux", out)
-      addPlainFileToDir(macDistDir.resolve("bin/idea.properties"), "linux/mac", out)
+      out.setUseZip64(Zip64Mode.Never)
 
-      addPlainFileToDir(macDistDir.resolve("bin/${executableName}.vmoptions"), "bin/mac", out)
-      addPlainFile(macDistDir.resolve("bin/${executableName}.vmoptions"), "bin/mac/${executableName}64.vmoptions", out)
+      out.entryToDir(winDistDir.resolve("bin/idea.properties"), "bin/win")
+      out.entryToDir(linuxDistDir.resolve("bin/idea.properties"), "bin/linux")
+      out.entryToDir(macDistDir.resolve("bin/idea.properties"), "bin/mac")
+
+      out.entryToDir(macDistDir.resolve("bin/${executableName}.vmoptions"), "bin/mac")
+      out.entry("bin/mac/${executableName}64.vmoptions", macDistDir.resolve("bin/${executableName}.vmoptions"))
+
+      extraFiles.forEach(BiConsumer { p, f ->
+        out.entry(p, f)
+      })
+
+      out.entry("product-info.json", productJson)
 
       Files.newDirectoryStream(winDistDir.resolve("bin")).use {
         for (file in it) {
           val path = file.toString()
           if (path.endsWith(".exe.vmoptions")) {
-            addPlainFileToDir(file, "bin/win", out)
+            out.entryToDir(file, "bin/win")
           }
           else {
             val fileName = file.fileName.toString()
             @Suppress("SpellCheckingInspection")
             if (fileName.startsWith("fsnotifier") && fileName.endsWith(".exe")) {
-              addPlainFile(file, "bin/win/$fileName", out)
+              out.entry("bin/win/$fileName", file)
             }
           }
         }
@@ -51,16 +74,16 @@ fun crossPlatformZip(winDistDir: Path,
         for (file in it) {
           val path = file.toString()
           if (path.endsWith(".vmoptions")) {
-            addPlainFileToDir(file, "bin/linux", out)
+            out.entryToDir(file, "bin/linux")
           }
           else if (path.endsWith(".sh") || path.endsWith(".py")) {
-            addPlainFile(file, "bin/${file.fileName}", out, unixMode = 509)
+            out.entry("bin/${file.fileName}", file, unixMode = executableFileUnixMode)
           }
           else {
             val fileName = file.fileName.toString()
             @Suppress("SpellCheckingInspection")
             if (fileName.startsWith("fsnotifier")) {
-              addPlainFile(file, "bin/linux/$fileName", out, unixMode = 509)
+              out.entry("bin/linux/$fileName", file, unixMode = executableFileUnixMode)
             }
           }
         }
@@ -69,54 +92,83 @@ fun crossPlatformZip(winDistDir: Path,
       Files.newDirectoryStream(macDistDir.resolve("bin")).use {
         for (file in it) {
           if (file.toString().endsWith(".jnilib")) {
-            addPlainFile(file, "bin/mac/${file.fileName.toString().removeSuffix(".jnilib")}.dylib", out)
+            out.entry("bin/mac/${file.fileName.toString().removeSuffix(".jnilib")}.dylib", file)
           }
           else {
             val fileName = file.fileName.toString()
             @Suppress("SpellCheckingInspection")
             if (fileName.startsWith("restarter") || fileName.startsWith("printenv")) {
-              addPlainFile(file, "bin/$fileName", out, unixMode = 509)
+              out.entry("bin/$fileName", file, unixMode = executableFileUnixMode)
             }
             else if (fileName.startsWith("fsnotifier")) {
-              addPlainFile(file, "bin/mac/$fileName", out, unixMode = 509)
+              out.entry("bin/mac/$fileName", file, unixMode = executableFileUnixMode)
             }
           }
         }
       }
 
-      addEntry("product-info.json", productJson, out)
-
-      for (extraExecutable in extraExecutables) {
-        try {
-          addPlainFile(distAllDir.resolve(extraExecutable), extraExecutable, out, unixMode = 509)
-        }
-        catch (ignore: NoSuchFileException) {
+      val extraExecutablesSet = java.util.Set.copyOf(macExtraExecutables + linuxExtraExecutables)
+      val entryCustomizer: EntryCustomizer = { entry, _, relativeFile ->
+        if (extraExecutablesSet.contains(relativeFile.toString())) {
+          entry.unixMode = executableFileUnixMode
         }
       }
 
-      //addDirToZip(winDistDir, out, "", setUnixMode = false)
+      out.dir(startDir = distAllDir, prefix = "", fileFilter = { _, relativeFile ->
+        relativeFile.toString() != "bin/idea.properties"
+      }, entryCustomizer = entryCustomizer)
+
+      out.dir(startDir = macDistDir, prefix = "", fileFilter = { _, relativeFile ->
+        val p = relativeFile.toString()
+        @Suppress("SpellCheckingInspection")
+        !p.startsWith("bin/fsnotifier") &&
+        !p.startsWith("bin/restarter") &&
+        !p.startsWith("bin/printenv") &&
+        p != "bin/idea.properties" &&
+        !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions"))) &&
+        // do not copy common files
+        !Files.exists(linuxDistDir.resolve(p))
+      }, entryCustomizer = entryCustomizer)
+
+      out.dir(startDir = linuxDistDir, prefix = "", fileFilter = { _, relativeFile ->
+        val p = relativeFile.toString()
+        @Suppress("SpellCheckingInspection")
+        !p.startsWith("bin/fsnotifier") &&
+        !p.startsWith("bin/printenv") &&
+        !p.startsWith("help/") &&
+        p != "bin/idea.properties" &&
+        !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions") || p.endsWith(".py")))
+      }, entryCustomizer = entryCustomizer)
+
+      val winExcludes = distFiles.mapTo(HashSet(distFiles.size)) { "${it.value}/${it.key.fileName}" }
+      out.dir(startDir = winDistDir, prefix = "", fileFilter = { _, relativeFile ->
+        val p = relativeFile.toString()
+        @Suppress("SpellCheckingInspection")
+        !p.startsWith("bin/fsnotifier") &&
+        !p.startsWith("bin/printenv") &&
+        !p.startsWith("help/") &&
+        p != "bin/idea.properties" &&
+        p != "build.txt" &&
+        !(p.startsWith("bin/") && p.endsWith(".exe.vmoptions")) &&
+        !(p.startsWith("bin/$executableName") && p.endsWith(".exe")) &&
+        !winExcludes.contains(p)
+      }, entryCustomizer = entryCustomizer)
     }
   }
 }
 
-@Suppress("SameParameterValue")
-private fun addEntry(name: String, data: ByteArray, out: ZipArchiveOutputStream) {
-  val entry = ZipArchiveEntry(name)
-  out.putArchiveEntry(entry)
-  out.write(data)
-  out.closeArchiveEntry()
-}
-
 typealias EntryCustomizer = (entry: ZipArchiveEntry, file: Path, relativeFile: Path) -> Unit
 
-private val fsUnixMode: EntryCustomizer = { entry, file, _ ->
-  entry.unixMode = Files.readAttributes(file, "unix:mode").get("mode") as Int
+private val fsUnixMode: EntryCustomizer = { entry, file, relativeFile ->
+  if (!relativeFile.toString().endsWith(".jar") && Files.isExecutable(file)) {
+    entry.unixMode = executableFileUnixMode
+  }
 }
 
 internal fun ZipArchiveOutputStream.dir(startDir: Path,
                                         prefix: String,
                                         fileFilter: ((sourceFile: Path, relativeFile: Path) -> Boolean)? = null,
-                                        entryCustomizer: EntryCustomizer = fsUnixMode) {
+                                        entryCustomizer: EntryCustomizer = if (isWindows) { _, _, _ ->  } else fsUnixMode) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()
@@ -143,8 +195,13 @@ internal fun ZipArchiveOutputStream.dir(startDir: Path,
       }
       else if (attributes.isSymbolicLink) {
         val entry = ZipArchiveEntry(prefix + startDir.relativize(file))
+        entry.method = ZipEntry.STORED
+        entry.lastModifiedTime = zeroTime
+        entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS).get("mode") as Int
+        val data = (prefix + startDir.relativize(Files.readSymbolicLink(file))).toByteArray()
+        entry.size = data.size.toLong()
         putArchiveEntry(entry)
-        write((prefix + startDir.relativize(Files.readSymbolicLink(file))).toByteArray())
+        write(data)
         closeArchiveEntry()
       }
       else {
@@ -157,25 +214,38 @@ internal fun ZipArchiveOutputStream.dir(startDir: Path,
 
         val entry = ZipArchiveEntry(prefix + relativeFile)
         entry.size = attributes.size()
-        putArchiveEntry(entry)
         entryCustomizer(entry, file, relativeFile)
-        Files.copy(file, this)
-        closeArchiveEntry()
+        writeFileEntry(file, entry, this)
       }
     }
   }
 }
 
-private fun addPlainFileToDir(file: Path, zipPath: String, out: ZipArchiveOutputStream) {
-  addPlainFile(file, "$zipPath/${file.fileName}", out)
+private fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String) {
+  entry("$zipPath/${file.fileName}", file)
 }
 
-private fun addPlainFile(file: Path, zipPath: String, out: ZipArchiveOutputStream, unixMode: Int = -1) {
-  val entry = ZipArchiveEntry(zipPath)
-  entry.size = Files.size(file)
+private val zeroTime = FileTime.fromMillis(0)
+
+internal fun ZipArchiveOutputStream.entry(name: String, file: Path, unixMode: Int = -1) {
+  val entry = ZipArchiveEntry(name)
   if (unixMode != -1) {
     entry.unixMode = unixMode
   }
+  writeFileEntry(file, entry, this)
+}
+
+internal fun ZipArchiveOutputStream.entry(name: String, data: ByteArray) {
+  val entry = ZipArchiveEntry(name)
+  entry.size = data.size.toLong()
+  entry.lastModifiedTime = zeroTime
+  putArchiveEntry(entry)
+  write(data)
+  closeArchiveEntry()
+}
+
+private fun writeFileEntry(file: Path, entry: ZipArchiveEntry, out: ZipArchiveOutputStream) {
+  entry.lastModifiedTime = zeroTime
   out.putArchiveEntry(entry)
   Files.copy(file, out)
   out.closeArchiveEntry()

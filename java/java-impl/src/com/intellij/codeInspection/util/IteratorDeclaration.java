@@ -73,7 +73,7 @@ public final class IteratorDeclaration extends IterableTraversal {
   }
 
   @Nullable
-  public static PsiLocalVariable getDeclaredVariable(@Nullable PsiStatement statement) {
+  private static PsiLocalVariable getDeclaredVariable(PsiStatement statement) {
     if (!(statement instanceof PsiDeclarationStatement)) return null;
     PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
     PsiElement[] elements = declaration.getDeclaredElements();

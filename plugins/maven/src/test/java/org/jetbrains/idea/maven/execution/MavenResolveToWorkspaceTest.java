@@ -73,11 +73,11 @@ public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImpor
                                                      "</dependencies>"
     );
 
-    MavenProjectsManager.getInstance(myProject).setIgnoredFilesPaths(Collections.singletonList(moduleIgnored.getPath()));
+    setIgnoredFilesPathForNextImport(Collections.singletonList(moduleIgnored.getPath()));
 
     importProject();
 
-    MavenProjectsManager.getInstance(myProject).setIgnoredFilesPaths(Collections.singletonList(moduleIgnored.getPath()));
+    setIgnoredFilesPathForNextImport(Collections.singletonList(moduleIgnored.getPath()));
 
     //assertModules("project", "moduleA", "moduleB");
 

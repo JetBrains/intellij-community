@@ -41,7 +41,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, horizontal: Boolean, priv
     place: String,
     presentation: Presentation,
     minimumSize: Dimension): ActionButton {
-    return SegmentedButton(action as SegmentedButtonAction<*>, presentation, place, minimumSize, spacingConfiguration)
+    return SegmentedButton(action, presentation, place, minimumSize, spacingConfiguration)
   }
 
   override fun addNotify() {
@@ -72,7 +72,7 @@ internal class SegmentedButtonAction<T>(private val option: T,
 }
 
 private class SegmentedButton(
-  action: SegmentedButtonAction<*>,
+  action: AnAction,
   presentation: Presentation,
   place: String?,
   minimumSize: Dimension,

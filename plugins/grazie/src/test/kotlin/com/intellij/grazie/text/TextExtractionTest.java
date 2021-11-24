@@ -19,9 +19,13 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.lang.regexp.RegExpLanguage;
+import org.intellij.plugins.markdown.lang.MarkdownFileType;
+import org.intellij.plugins.markdown.lang.MarkdownLanguage;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraphImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.grazie.text.TextContentTest.unknownOffsets;
 
@@ -32,6 +36,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
     int prefix = "* ".length();
     assertEquals(prefix + "list [".length(), extracted.textOffsetToFile("list ".length()));
     assertEquals(prefix + "list [item".length(), extracted.textOffsetToFile("list item".length()));
+  }
+
+  public void testMarkdownUrlLink() {
+    TextContent extracted = extractText("a.md", "go to [http://localhost](http://localhost) and validate", 3);
+    assertEquals("go to http://localhost and validate", unknownOffsets(extracted));
   }
 
   public void testMarkdownImage() {
@@ -236,6 +245,33 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PlatformTestUtil.startPerformanceTest("TextContent building from a long text fragment", 200, () -> {
       assertEquals(expected, extractor.buildTextContent(literal, TextContent.TextDomain.ALL).toString());
     }).assertTiming();
+  }
+
+  public void testCachingWorks() {
+    TextExtractor delegate = TextExtractor.EP.forLanguage(MarkdownLanguage.INSTANCE);
+    var countingExtractor = new TextExtractor() {
+      int count = 0;
+
+      @Override
+      protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
+                                                             @NotNull Set<TextContent.TextDomain> allowedDomains) {
+        if (element instanceof MarkdownParagraphImpl) {
+          count++;
+        }
+        return delegate.buildTextContents(element, allowedDomains);
+      }
+    };
+    TextExtractor.EP.addExplicitExtension(MarkdownLanguage.INSTANCE, countingExtractor);
+    disposeOnTearDown(() -> TextExtractor.EP.removeExplicitExtension(MarkdownLanguage.INSTANCE, countingExtractor));
+
+    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText(
+      "a.md", MarkdownFileType.INSTANCE,
+      "[Before ![AltText](http://www.google.com.au/images/nav_logo7.png) after](http://google.com.au/)");
+    for (int i = 0; i <= file.getTextLength(); i++) {
+      TextExtractor.findTextAt(file, i, TextContent.TextDomain.ALL);
+    }
+    // should be invoked once, but allow some repetitions in case GC kicks in
+    assertTrue(String.valueOf(countingExtractor.count), countingExtractor.count < 3);
   }
 
   private TextContent extractText(String fileName, String fileText, int offset) {

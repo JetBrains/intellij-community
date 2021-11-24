@@ -19,7 +19,10 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
-import javax.swing.*
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JScrollPane
 import javax.swing.border.Border
 
 @ApiStatus.Internal
@@ -50,7 +53,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Text Fields", createTextFields())
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
     result.addTab("Text MaxLine", createTextMaxLinePanel())
-    result.addTab("Groups", JScrollPane(createGroupsPanel()))
+    result.addTab("Groups", JScrollPane(GroupsPanel().panel))
     result.addTab("Segmented Button", createSegmentedButton())
     result.addTab("Visible/Enabled", createVisibleEnabled())
     result.addTab("Cells With Sub-Panels", createCellsWithPanels())
@@ -118,107 +121,6 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     Disposer.register(myDisposable, disposable)
 
     return result
-  }
-
-  fun createGroupsPanel(): JPanel {
-    return panel {
-      lateinit var group1: Panel
-      lateinit var group1Row: Row
-      lateinit var group2: RowsRange
-      group(title = "Group at top, no gap before") {
-        row {
-          checkBox("Group1 visibility")
-            .applyToComponent {
-              isSelected = true
-              addItemListener { group1.visible(this.isSelected) }
-            }
-        }
-        indent {
-          row {
-            checkBox("Group1 label1 visibility")
-              .applyToComponent {
-                isSelected = true
-                addItemListener { group1Row.visible(this.isSelected) }
-              }
-          }
-        }
-        row {
-          checkBox("Group2 visibility")
-            .applyToComponent {
-              isSelected = true
-              addItemListener { group2.visible(this.isSelected) }
-            }
-        }
-      }
-
-      row("A very very long label") {
-        textField()
-      }
-
-      group1 = group(title = "Group1, gaps around") {
-        group1Row = row("label1") {
-          textField()
-        }
-        row("label2 long") {
-          textField()
-        }
-      }
-
-      group2 = groupRowsRange(title = "Group RowsRange title") {
-        row("label1") {
-          textField()
-        }
-        row("label2 long") {
-          textField()
-        }
-      }
-      group {
-        row {
-          label("Group without title")
-        }
-      }
-      panel {
-        row {
-          label("Panel")
-        }
-        row("label1") {
-          textField()
-        }
-        row("label2 long") {
-          textField()
-        }
-      }
-
-      row("separator") {}
-
-      collapsibleGroup("CollapsibleGroup") {
-        row("Row with label") {}
-      }
-
-      row("separator") {}
-
-      group("Group, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
-        row("Row with label") {}
-      }
-
-      row("separator") {}
-
-      groupRowsRange("GroupRowsRange, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
-        row("Row with label") {}
-      }
-
-      row("separator") {}
-
-      collapsibleGroup("CollapsibleGroup, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
-        row("Row with label") {}
-      }
-
-      row("separator") {}
-
-      group("Group at bottom, no gap after") {
-        row("Row with label") {}
-      }
-    }
   }
 
   fun createSegmentedButton(): JPanel {

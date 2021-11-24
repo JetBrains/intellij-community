@@ -37,7 +37,7 @@ public class BlockBraceFixer implements Fixer{
     }
   }
 
-  private boolean afterUnmatchedBrace(Editor editor, FileType fileType) {
+  static boolean afterUnmatchedBrace(Editor editor, FileType fileType) {
     return EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, editor.getCaretModel().getOffset(), fileType);
   }
 }

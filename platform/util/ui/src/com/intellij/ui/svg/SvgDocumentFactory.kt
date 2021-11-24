@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.svg
 
 import com.intellij.openapi.util.createXmlStreamReader
@@ -9,6 +9,7 @@ import org.apache.batik.dom.GenericCDATASection
 import org.apache.batik.dom.GenericText
 import org.apache.batik.transcoder.TranscoderException
 import org.apache.batik.util.ParsedURL
+import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -19,8 +20,12 @@ import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 
 @ApiStatus.Internal
-fun createSvgDocument(uri: String?, reader: InputStream): Document {
-  val xmlStreamReader = createXmlStreamReader(reader)
+fun createSvgDocument(uri: String?, reader: InputStream) = createSvgDocument(uri, createXmlStreamReader(reader))
+
+@ApiStatus.Internal
+fun createSvgDocument(uri: String?, data: ByteArray) = createSvgDocument(uri, createXmlStreamReader(data))
+
+private fun createSvgDocument(uri: String?, xmlStreamReader: XMLStreamReader2): Document {
   val result = try {
     buildDocument(xmlStreamReader)
   }

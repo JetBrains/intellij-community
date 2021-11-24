@@ -221,8 +221,13 @@ public final class TextDiffViewerUtil {
     @NotNull
     protected abstract @Nls String getText(@NotNull T option);
 
-    private class MyAction extends AnAction implements DumbAware {
+    private class MyAction extends AnAction implements Toggleable, DumbAware {
       @NotNull private final T myOption;
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        Toggleable.setSelected(e.getPresentation(), getValue() == myOption);
+      }
 
       MyAction(@NotNull T option) {
         super(getText(option));
@@ -292,7 +297,7 @@ public final class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull HighlightPolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.highlight.policy", option, mySettings.getPlace());
+      DiffUsageTriggerCollector.logToggleHighlightPolicy(option, mySettings.getPlace());
       mySettings.setHighlightPolicy(option);
     }
 
@@ -334,7 +339,7 @@ public final class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull IgnorePolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.ignore.policy", option, mySettings.getPlace());
+      DiffUsageTriggerCollector.logToggleIgnorePolicy(option, mySettings.getPlace());
       mySettings.setIgnorePolicy(option);
     }
 

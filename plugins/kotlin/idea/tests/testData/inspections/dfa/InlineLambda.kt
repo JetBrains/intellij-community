@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 import kotlin.contracts.*
 
 fun lambdaGlobalReturn(ints: Array<Int>, b : Boolean) {
@@ -8,7 +8,7 @@ fun lambdaGlobalReturn(ints: Array<Int>, b : Boolean) {
         x++
         print(it)
     }
-    if (<warning descr="Condition is always false">b && <warning descr="Condition is always false when reached"><weak_warning descr="Value is always zero">x</weak_warning> == 1</warning></warning>)
+    if (<warning descr="Condition 'b && x == 1' is always false">b && <warning descr="Condition 'x == 1' is always false when reached"><weak_warning descr="Value of 'x' is always zero">x</weak_warning> == 1</warning></warning>)
         println()
 }
 fun lambdaGlobalReturn2(ints: Array<Int>, b : Boolean) {
@@ -18,7 +18,7 @@ fun lambdaGlobalReturn2(ints: Array<Int>, b : Boolean) {
         if (b) return
         print(it)
     }
-    if (<warning descr="Condition is always false">b && <warning descr="Condition is always false when reached"><weak_warning descr="Value is always zero">x</weak_warning> == 1</warning></warning>)
+    if (<warning descr="Condition 'b && x == 1' is always false">b && <warning descr="Condition 'x == 1' is always false when reached"><weak_warning descr="Value of 'x' is always zero">x</weak_warning> == 1</warning></warning>)
         println()
 }
 fun lambdaLocalReturn(ints: Array<Int>, b : Boolean) {
@@ -61,11 +61,11 @@ fun exactlyOnce(ints: Array<Int>) {
     synchronized(ints) {
         x++
     }
-    if (<warning descr="Condition is always true">x == 1</warning>) {}
+    if (<warning descr="Condition 'x == 1' is always true">x == 1</warning>) {}
     synchronized(ints) {
         x++
     }
-    if (<warning descr="Condition is always true">x == 2</warning>) {}
+    if (<warning descr="Condition 'x == 2' is always true">x == 2</warning>) {}
     ints.forEach {
         x++
     }
@@ -75,10 +75,10 @@ fun exactlyOnce(ints: Array<Int>) {
 fun atMostOnce(result : Result<String>) {
     var x = 1
     result.onSuccess { x++ }
-    if (<warning descr="Condition is always false">x == 0</warning>) {}
+    if (<warning descr="Condition 'x == 0' is always false">x == 0</warning>) {}
     if (x == 1) {}
     if (x == 2) {}
-    if (<warning descr="Condition is always true">x == 1 || <warning descr="Condition is always true when reached">x == 2</warning></warning>) {}
+    if (<warning descr="Condition 'x == 1 || x == 2' is always true">x == 1 || <warning descr="Condition 'x == 2' is always true when reached">x == 2</warning></warning>) {}
 }
 
 fun atLeastOnce() {
@@ -89,7 +89,7 @@ fun atLeastOnce() {
         y++
     }
     if (y == 2) {}
-    if (<warning descr="Condition is always true">x == 2</warning>) {}
+    if (<warning descr="Condition 'x == 2' is always true">x == 2</warning>) {}
 }
 
 @<warning descr="[EXPERIMENTAL_IS_NOT_ENABLED] This class can only be used with the compiler argument '-Xopt-in=kotlin.RequiresOptIn'">OptIn</warning>(kotlin.contracts.ExperimentalContracts::class)

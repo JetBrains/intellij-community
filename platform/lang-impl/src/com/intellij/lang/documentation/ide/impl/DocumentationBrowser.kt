@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
@@ -98,7 +99,13 @@ internal class DocumentationBrowser private constructor(
   private suspend fun handleLink(url: String) {
     EDT.assertIsEdt()
     val targetPointer = state.request.targetPointer
-    when (val internalResult = handleLink(project, targetPointer, url)) {
+    val internalResult = try {
+      handleLink(project, targetPointer, url)
+    }
+    catch (e: IndexNotReadyException) {
+      return // normal situation, nothing to do
+    }
+    when (internalResult) {
       is OrderEntry -> if (internalResult.isValid) {
         ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(internalResult)
       }

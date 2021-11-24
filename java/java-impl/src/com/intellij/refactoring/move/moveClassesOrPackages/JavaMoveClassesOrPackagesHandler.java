@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -232,7 +233,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     for (PsiDirectory directory : directories) {
       final boolean [] containsJava = new boolean[]{false};
       VfsUtil.processFileRecursivelyWithoutIgnored(directory.getVirtualFile(), file -> {
-        if (file.getFileType() == JavaFileType.INSTANCE) {
+        if (FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE)) {
           containsJava[0] = true;
           return false;
         }

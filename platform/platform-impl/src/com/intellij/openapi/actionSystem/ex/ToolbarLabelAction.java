@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,8 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -20,19 +22,41 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
   }
 
   @Override
-  public final void actionPerformed(@NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     //do nothing
   }
 
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return new MyLabel(presentation)
+    JBLabel label = new MyLabel(presentation)
       .withFont(JBUI.Fonts.toolbarFont())
       .withBorder(JBUI.Borders.empty(0, 6, 0, 5));
+
+    if (isCopyable()) {
+      label.setCopyable(true);
+    }
+
+    return label;
   }
 
-  private static class MyLabel extends JBLabel {
+  protected @Nullable HyperlinkListener createHyperlinkListener() {
+    return null;
+  }
+
+  protected boolean isCopyable() {
+    return false;
+  }
+
+  private class MyLabel extends JBLabel {
+    @Override
+    protected @NotNull HyperlinkListener createHyperlinkListener() {
+      HyperlinkListener listener = ToolbarLabelAction.this.createHyperlinkListener();
+      if (listener != null) return listener;
+
+      return super.createHyperlinkListener();
+    }
+
     @NotNull private final Presentation myPresentation;
 
     MyLabel(@NotNull Presentation presentation) {

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun main() {
     listOf(42).map {

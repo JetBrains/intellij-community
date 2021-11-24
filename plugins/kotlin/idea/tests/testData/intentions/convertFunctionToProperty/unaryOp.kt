@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 class A(val n: Int) {
     operator fun <caret>unaryMinus(): A = A(-n)

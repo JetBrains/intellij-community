@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.icons.AllIcons
@@ -6,8 +6,8 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
-import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationType
@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.dialog
@@ -25,8 +26,6 @@ import java.io.IOException
 
 /**
  * Action adds group which are not yet registered on the server to a test groups scheme for testing.
- *
- * If "Add custom validation rules" is disabled, all event id and event data values from the group will be allowed.
  */
 class AddGroupToTestSchemeAction constructor(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
   : DumbAwareAction(ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.text"),
@@ -38,7 +37,7 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
+    val project = e.project ?: ProjectManager.getInstance().defaultProject
     val testStorage = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)
     if (testStorage == null) {
       showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.cannot.find.test.scheme.storage"))

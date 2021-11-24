@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CustomTaskState;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
@@ -15,10 +16,7 @@ import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil.JsonResponseHandlerBuilder;
-import com.intellij.tasks.youtrack.model.YouTrackCommandList;
-import com.intellij.tasks.youtrack.model.YouTrackErrorInfo;
-import com.intellij.tasks.youtrack.model.YouTrackIssue;
-import com.intellij.tasks.youtrack.model.YouTrackSingleIssueCommand;
+import com.intellij.tasks.youtrack.model.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.http.HttpRequestInterceptor;
@@ -41,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 /**
  * @author Dmitry Avdeev
@@ -195,6 +194,31 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
   }
 
   @Override
+  public void updateTimeSpent(@NotNull LocalTask task,
+                              @NotNull String timeSpent,
+                              @NotNull String comment) throws Exception {
+    YouTrackPluginAdvertiserService.getInstance().showTimeTrackingNotification();
+    
+    Matcher matcher = TIME_SPENT_PATTERN.matcher(timeSpent);
+    if (matcher.find()) {
+      int hours = Integer.valueOf(matcher.group(1));
+      int minutes = Integer.valueOf(matcher.group(2));
+      int totalMinutes = hours * 60 + minutes;
+
+      HttpPost request = new HttpPost(getRestApiUrl("api", "issues", task.getId(), "timeTracking", "workItems"));
+      request.setEntity(new StringEntity(GSON.toJson(new YouTrackWorkItem(comment, totalMinutes)),
+                                         ContentType.APPLICATION_JSON));
+      getHttpClient().execute(request,
+                              JsonResponseHandlerBuilder.fromGson(GSON)
+                                .errorHandler(this::parseYouTrackError)
+                                .toNothing());
+    }
+    else {
+      LOG.warn("Unrecognized time pattern: " + timeSpent);
+    }
+  }
+
+  @Override
   protected @Nullable HttpRequestInterceptor createRequestInterceptor() {
     return (request, context) -> request.addHeader(new BasicHeader("Accept", ContentType.APPLICATION_JSON.toString()));
   }
@@ -224,7 +248,7 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | STATE_UPDATING;
+    return super.getFeatures() | STATE_UPDATING | TIME_MANAGEMENT;
   }
 
   @NotNull

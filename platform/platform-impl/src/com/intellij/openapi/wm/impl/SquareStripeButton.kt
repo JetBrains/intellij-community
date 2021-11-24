@@ -24,7 +24,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   ActionButton(SquareAnActionButton(project, button), createPresentation(button), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
 
   init {
-    setLook(SquareStripeButtonLook())
+    setLook(SquareStripeButtonLook(this))
     addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
         showPopup(component, x, y)
@@ -40,6 +40,10 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
       isEnabledAndVisible = true
     }
   }
+
+  fun isHovered() = myRollover
+
+  fun isFocused() = button.toolWindow.isActive
 
   override fun updateToolTipText() {
     HelpTooltip().

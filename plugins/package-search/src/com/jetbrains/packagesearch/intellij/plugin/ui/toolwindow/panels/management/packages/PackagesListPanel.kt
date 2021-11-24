@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DocumentAdapter
@@ -41,7 +42,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -62,15 +62,21 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
@@ -110,8 +116,12 @@ internal class PackagesListPanel(
 
     private val packagesTable = PackagesTable(operationExecutor, ::onSearchResultStateChanged)
 
-    val onlyStableStateFlow = MutableStateFlow(true)
-    val selectedPackageStateFlow = packagesTable.selectedPackageStateFlow
+    private val onlyStableMutableStateFlow = MutableStateFlow(true)
+    private val selectedPackageMutableStateFlow = packagesTable.selectedPackageStateFlow
+
+    val onlyStableStateFlow: StateFlow<Boolean> = onlyStableMutableStateFlow
+    val selectedPackageStateFlow: StateFlow<UiPackageModel<*>?> = selectedPackageMutableStateFlow
+
     private val onlyMultiplatformStateFlow = MutableStateFlow(false)
     private val searchQueryStateFlow = MutableStateFlow("")
     private val isSearchingStateFlow = MutableStateFlow(false)
@@ -272,8 +282,10 @@ internal class PackagesListPanel(
                         model
                     }
                     logTrace("PackagesListPanel main flow") { "Search took $time" }
+
                     result
                 }
+                .shareIn(project.lifecycleScope, SharingStarted.Lazily)
 
         combine(
             viewModelFlow,
@@ -380,7 +392,7 @@ internal class PackagesListPanel(
                 }
                 isLoadingStateFlow.emit(false)
             }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
             .catch { logWarn("Error in PackagesListPanel main flow", it) }
             .launchIn(project.lifecycleScope)
 
@@ -391,7 +403,7 @@ internal class PackagesListPanel(
         ) { booleans -> emit(booleans.any { it }) }
             .debounce(150)
             .onEach { headerPanel.showBusyIndicator(it) }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)
 
         project.lookAndFeelFlow.onEach { updateUiOnLafChange() }
@@ -404,6 +416,13 @@ internal class PackagesListPanel(
                 searchCache.clear()
                 headerOperationsCache.clear()
             }
+            .launchIn(project.lifecycleScope)
+
+        searchResultsFlow.map { it.searchQuery }
+            .debounce(500)
+            .distinctUntilChanged()
+            .filterNot { it.isBlank() }
+            .onEach { PackageSearchEventsLogger.logSearchRequest(it) }
             .launchIn(project.lifecycleScope)
     }
 
@@ -442,12 +461,11 @@ internal class PackagesListPanel(
         }
 
         searchTextField.addOnTextChangedListener { text ->
-            PackageSearchEventsLogger.logSearchRequest(text)
             searchQueryStateFlow.tryEmit(text)
         }
 
         onlyStableCheckBox.addSelectionChangedListener { selected ->
-            onlyStableStateFlow.tryEmit(selected)
+            onlyStableMutableStateFlow.tryEmit(selected)
             PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.OnlyStable, selected)
         }
 
@@ -457,11 +475,11 @@ internal class PackagesListPanel(
         }
 
         project.uiStateSource.searchQueryFlow.onEach { searchTextField.text = it }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)
     }
 
-    private suspend fun updateUiOnLafChange() = withContext(Dispatchers.AppUI) {
+    private suspend fun updateUiOnLafChange() = withContext(Dispatchers.EDT) {
         @Suppress("MagicNumber") // Dimension constants
         with(searchTextField) {
             textEditor.putClientProperty("JTextField.Search.Gap", 6.scaled())
@@ -556,7 +574,7 @@ private fun CoroutineScope.computeHeaderData(
     return result
 }
 
-private suspend fun List<PackageModel.Installed>.filterByTargetModules(
+private fun List<PackageModel.Installed>.filterByTargetModules(
     targetModules: TargetModules
 ) = when (targetModules) {
     is TargetModules.All -> this
@@ -591,7 +609,7 @@ private suspend fun computeSearchResultModels(
         val index = searchResults.packages.parallelMap { "${it.groupId}:${it.artifactId}" }
         searchResults.packages
             .parallelFilterNot { installedDependencies.any { installed -> installed.matchesCoordinates(it) } }
-            .parallelMapNotNull { PackageModel.fromSearchResult(it, project.packageVersionNormalizer) }
+            .parallelMapNotNull { PackageModel.fromSearchResult(it, packageVersionNormalizer) }
             .parallelMap {
                 val uiState = searchResultsUiStateOverrides[it.identifier]
                 cache.getOrPut(UiPackageModelCacheKey(targetModules, uiState, onlyStable, it)) {

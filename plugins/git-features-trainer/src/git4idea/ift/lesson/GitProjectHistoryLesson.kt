@@ -31,6 +31,7 @@ import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import java.util.regex.Pattern
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
@@ -62,11 +63,9 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      highlightLatestCommitsFromBranch(branchName)
-    }
-
-    task {
       text(GitLessonsBundle.message("git.project.history.commits.tree.explanation"))
+      highlightLatestCommitsFromBranch(branchName)
+      showWarningIfGitWindowClosed()
       proceedLink()
     }
 
@@ -91,7 +90,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       triggerByUiComponentAndHighlight(false, false) { ui: BranchFilterPopupComponent ->
         ui.currentText?.contains("HEAD") == true
       }
-      showWarningIfGitWindowClosed()
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == "HEAD_NODE" }
@@ -112,7 +111,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       triggerByListItemAndHighlight { item ->
         item.toString().contains(meFilterText)
       }
-      showWarningIfGitWindowClosed()
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           val panel: UserFilterPopupComponent = findComponentWithTimeout(defaultTimeout)
@@ -176,6 +175,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       text(GitLessonsBundle.message("git.project.history.commit.details.explanation"))
       proceedLink()
       triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: CommitDetailsListPanel -> true }
+      showWarningIfGitWindowClosed()
     }
 
     task {
@@ -212,7 +212,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     text(GitLessonsBundle.message("git.project.history.invitation.to.commit.lesson"))
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     if (showGitBranchesBackup != null) {
       val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: error("Failed to get MainVcsLogUiProperties")
       logUiProperties[SHOW_GIT_BRANCHES_LOG_PROPERTY] = showGitBranchesBackup!!

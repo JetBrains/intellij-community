@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -77,14 +77,15 @@ public final class HighlightFixUtil {
   static void registerAccessQuickFixAction(@NotNull PsiJvmMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
                                            @Nullable HighlightInfo errorResult,
-                                           PsiElement fileResolveScope) {
+                                           PsiElement fileResolveScope, 
+                                           TextRange parentFixRange) {
     if (errorResult == null) return;
     PsiClass accessObjectClass = null;
     PsiElement qualifier = place.getQualifier();
     if (qualifier instanceof PsiExpression) {
       accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass((PsiExpression)qualifier).getElement();
     }
-    registerReplaceInaccessibleFieldWithGetterSetterFix(refElement, place, accessObjectClass, errorResult);
+    registerReplaceInaccessibleFieldWithGetterSetterFix(refElement, place, accessObjectClass, errorResult, parentFixRange);
 
     if (refElement instanceof PsiCompiledElement) return;
     PsiModifierList modifierList = refElement.getModifierList();
@@ -94,7 +95,7 @@ public final class HighlightFixUtil {
     if (packageLocalClassInTheMiddle != null) {
       List<IntentionAction> fixes =
         JvmElementActionFactories.createModifierActions(packageLocalClassInTheMiddle, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
-      QuickFixAction.registerQuickFixActions(errorResult, null, fixes);
+      QuickFixAction.registerQuickFixActions(errorResult, parentFixRange, fixes);
       return;
     }
 
@@ -291,7 +292,8 @@ public final class HighlightFixUtil {
   private static void registerReplaceInaccessibleFieldWithGetterSetterFix(PsiMember refElement,
                                                                           PsiJavaCodeReferenceElement place,
                                                                           PsiClass accessObjectClass,
-                                                                          HighlightInfo error) {
+                                                                          HighlightInfo error,
+                                                                          TextRange parentFixRange) {
     if (refElement instanceof PsiField && place instanceof PsiReferenceExpression) {
       PsiField psiField = (PsiField)refElement;
       PsiClass containingClass = psiField.getContainingClass();
@@ -302,7 +304,7 @@ public final class HighlightFixUtil {
           if (setter != null && PsiUtil.isAccessible(setter, place, accessObjectClass)) {
             PsiElement element = PsiTreeUtil.skipParentsOfType(place, PsiParenthesizedExpression.class);
             if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationTokenType() == JavaTokenType.EQ) {
-              QuickFixAction.registerQuickFixAction(error, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true));
+              QuickFixAction.registerQuickFixAction(error, parentFixRange, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true));
             }
           }
         }
@@ -310,7 +312,7 @@ public final class HighlightFixUtil {
           PsiMethod getterPrototype = PropertyUtilBase.generateGetterPrototype(psiField);
           PsiMethod getter = containingClass.findMethodBySignature(getterPrototype, true);
           if (getter != null && PsiUtil.isAccessible(getter, place, accessObjectClass)) {
-            QuickFixAction.registerQuickFixAction(error, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false));
+            QuickFixAction.registerQuickFixAction(error, parentFixRange, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false));
           }
         }
       }

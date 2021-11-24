@@ -278,15 +278,6 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
         return projectTargets.mapNotNull { buildTarget(importingContext, it, dependencyResolver, dependencyMapper) }
     }
 
-    private operator fun Any?.get(methodName: String, vararg params: Any): Any? {
-        return this[methodName, params.map { it.javaClass }, params.toList()]
-    }
-
-    private operator fun Any?.get(methodName: String, paramTypes: List<Class<*>>, params: List<Any?>): Any? {
-        if (this == null) return null
-        return this::class.java.getMethodOrNull(methodName, *paramTypes.toTypedArray())?.invoke(this, *params.toTypedArray())
-    }
-
     private fun buildArtifact(
         executableName: String,
         linkTask: Task,
@@ -379,7 +370,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
             "${e::class.java.name}:${e.message}"
         }
 
-        val gradleCompilations = getCompilations(gradleTarget) ?: return null
+        val gradleCompilations = gradleTarget.compilations ?: return null
         val compilations = gradleCompilations.mapNotNull {
             buildCompilation(importingContext, it, platform, disambiguationClassifier, dependencyResolver, dependencyMapper)
         }
@@ -527,7 +518,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
         @Suppress("UNCHECKED_CAST")
         val kotlinGradleSourceSets = (getKotlinSourceSets(gradleCompilation) as? Collection<Named>) ?: return null
         val kotlinSourceSets = kotlinGradleSourceSets.mapNotNull { importingContext.sourceSetByName(it.name) }
-        val compileKotlinTask = getCompileKotlinTaskName(importingContext.project, gradleCompilation) ?: return null
+        val compileKotlinTask = gradleCompilation.getCompileKotlinTaskName(importingContext.project) ?: return null
         val output = buildCompilationOutput(gradleCompilation, compileKotlinTask) ?: return null
         val dependencies =
             buildCompilationDependencies(importingContext, gradleCompilation, classifier, dependencyResolver, dependencyMapper)
@@ -949,28 +940,6 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
         private val Task.isCompilerArgumentAware: Boolean
             get() = javaClass.classLoader.loadClassOrNull(COMPILER_ARGUMENT_AWARE_CLASS)?.isAssignableFrom(javaClass) ?: false
 
-
-        fun Project.getTargets(): Collection<Named>? {
-            val kotlinExt = project.extensions.findByName("kotlin") ?: return null
-            val getTargets = kotlinExt.javaClass.getMethodOrNull("getTargets") ?: return null
-            @Suppress("UNCHECKED_CAST")
-            return (getTargets.invoke(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList()
-        }
-
-        fun getCompilations(target: Named): Collection<Named>? {
-            val getCompilationsMethod = target.javaClass.getMethodOrNull("getCompilations") ?: return null
-            @Suppress("UNCHECKED_CAST")
-            return (getCompilationsMethod.invoke(target) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList()
-        }
-
-        fun getCompileKotlinTaskName(project: Project, compilation: Named): Task? {
-            val compilationClass = compilation.javaClass
-            val getCompileKotlinTaskName = compilationClass.getMethodOrNull("getCompileKotlinTaskName") ?: return null
-
-            @Suppress("UNCHECKED_CAST")
-            val compileKotlinTaskName = (getCompileKotlinTaskName(compilation) as? String) ?: return null
-            return project.tasks.findByName(compileKotlinTaskName)
-        }
     }
 }
 

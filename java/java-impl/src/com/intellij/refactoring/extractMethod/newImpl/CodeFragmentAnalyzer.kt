@@ -198,22 +198,6 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     return ExceptionUtil.getThrownCheckedExceptions(*elements.toTypedArray())
   }
 
-  fun findExposedLocalVariables(expressions: List<PsiExpression>): List<PsiVariable> {
-    val exposedLocalVariables = HashSet<PsiVariable>()
-    val visitor = object : JavaRecursiveElementWalkingVisitor() {
-
-      override fun visitReferenceExpression(reference: PsiReferenceExpression) {
-        val variable = reference.resolve() as? PsiVariable ?: return
-        if (variable.textRange in TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)) {
-          exposedLocalVariables += variable
-        }
-      }
-    }
-    expressions.forEach { it.accept(visitor) }
-
-    return exposedLocalVariables.toList()
-  }
-
   fun findWrittenVariables(): List<PsiVariable> {
     return ControlFlowUtil.getWrittenVariables(flow, flowRange.first, flowRange.last, false).toList()
   }

@@ -299,6 +299,11 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return resource != null ? resource.getURL() : null;
   }
 
+  public byte @Nullable [] getResourceAsBytes(@NotNull String name, boolean checkParents) throws IOException {
+    Resource resource = classPath.findResource(name);
+    return resource == null ? null : resource.getBytes();
+  }
+
   @Override
   public @Nullable InputStream getResourceAsStream(@NotNull String name) {
     Resource resource = doFindResource(name);

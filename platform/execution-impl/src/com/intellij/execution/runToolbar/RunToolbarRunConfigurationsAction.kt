@@ -119,6 +119,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
 
     override fun actionPerformed(e: AnActionEvent) {
       e.project?.let {
+        e.runToolbarData()?.clear()
         e.setConfiguration(configuration)
         RunToolbarSlotManager.getInstance(it).saveSlotsConfiguration()
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),

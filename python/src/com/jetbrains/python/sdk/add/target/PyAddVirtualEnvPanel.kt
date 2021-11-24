@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.fixHighlightingOfUiDslComponents
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -119,14 +121,25 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
           ?.also { projectSync -> projectSync.extendDialogPanelWithOptionalFields(this) }
       }
     }
+
+    // workarounds the issue with cropping the focus highlighting
+    panel.fixHighlightingOfUiDslComponents()
+
     add(panel, BorderLayout.NORTH)
 
     if (targetEnvironmentConfiguration.isLocal()) {
       // asynchronously fill the combobox
-      addInterpretersAsync(interpreterCombobox) {
-        detectVirtualEnvs(module, existingSdks, context)
-          .filterNot { it.isAssociatedWithAnotherModule(module) }
-      }
+      addInterpretersAsync(
+        interpreterCombobox,
+        sdkObtainer = {
+          detectVirtualEnvs(module, existingSdks, context)
+            .filterNot { it.isAssociatedWithAnotherModule(module) }
+        },
+        onAdded = { sdks ->
+          val associatedVirtualEnv = sdks.find { it.isAssociatedWithModule(module) }
+          associatedVirtualEnv?.let { interpreterCombobox.selectedSdk = associatedVirtualEnv }
+        }
+      )
       addBaseInterpretersAsync(baseInterpreterCombobox, existingSdks, module, context)
     }
     else {
@@ -137,6 +150,16 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       }
     }
   }
+
+  override fun validateAll(): List<ValidationInfo> =
+    if (isUnderLocalTarget) {
+      when (interpreterCombobox.selectedItem) {
+        is NewPySdkComboBoxItem -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField),
+                                                 validateSdkComboBox(baseInterpreterCombobox, this))
+        else -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
+      }
+    }
+    else emptyList()
 
   override fun getOrCreateSdk(): Sdk? =
     getOrCreateSdk(targetEnvironmentConfiguration = null)

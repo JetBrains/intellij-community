@@ -1,5 +1,5 @@
 // LANGUAGE_VERSION: 1.3
-// WITH_RUNTIME
+// WITH_STDLIB
 // PROBLEM: none
 
 object SomeMain {

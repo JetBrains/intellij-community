@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
@@ -88,9 +90,11 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     }
   }.apply {
     border = JBUI.Borders.empty(3, 0, 0, 3)
+    background = JBColor.namedColor("Panel.background", Gray.xCD)
+
     add(slotPane)
 
-    val bottomPane = object : JPanel(MigLayout("fillx, ins 0, novisualpadding, gap 0, hidemode 3, wrap 3", "[][]push[]")){
+    val bottomPane = object : JPanel(MigLayout("fillx, ins 0, novisualpadding, gap 0, hidemode 2, wrap 3", "[][]push[]")) {
       override fun getPreferredSize(): Dimension {
         val preferredSize = super.getPreferredSize()
         baseWidth()?.let {
@@ -126,6 +130,8 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
             ShowSettingsUtil.getInstance().showSettingsDialog(project, RunToolbarSettingsConfigurable::class.java)
           }
         })
+
+        isVisible = RunToolbarProcess.isSettingsAvailable
       })
 
       add(newSlotDetails, "skip")

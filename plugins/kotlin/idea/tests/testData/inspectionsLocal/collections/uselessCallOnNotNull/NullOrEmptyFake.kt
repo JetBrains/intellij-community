@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 val s: String? = null
 val empty = s<caret>.isNullOrEmpty()

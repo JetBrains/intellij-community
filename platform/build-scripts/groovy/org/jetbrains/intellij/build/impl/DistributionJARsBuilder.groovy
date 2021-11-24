@@ -12,6 +12,8 @@ import groovy.transform.TypeCheckingMode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.NotNull
@@ -146,14 +148,14 @@ final class DistributionJARsBuilder {
   }
 
   private static @NotNull Set<PluginLayout> filterPluginsToPublish(@NotNull Set<PluginLayout> plugins, @NotNull BuildContext context) {
-    plugins = plugins.findAll {
+    plugins = plugins.stream().filter {
       // Kotlin Multiplatform Mobile plugin is excluded since:
       // * is compatible with Android Studio only;
       // * has release cycle of its
       // * shadows IntelliJ utility modules included via Kotlin Compiler;
       // * breaks searchable options index and jar order generation steps.
       it.mainModule != 'kotlin-ultimate.kmm-plugin'
-    }
+    }.collect(Collectors.toSet())
     if (plugins.isEmpty()) {
       return plugins
     }
@@ -217,41 +219,45 @@ final class DistributionJARsBuilder {
     Set<PluginLayout> pluginLayouts = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
 
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
-    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask = buildHelper.createTask(spanBuilder("build platform lib"), {
-      List<ForkJoinTask<?>> tasks = new ArrayList<>()
-      ForkJoinTask<?> task = StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context)
-      if (task != null) {
-        tasks.add(task)
-      }
+    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask =
+      buildHelper.createTask(spanBuilder("build platform lib"), new Supplier<List<DistributionFileEntry>>() {
+        @Override
+        List<DistributionFileEntry> get() {
+          List<ForkJoinTask<?>> tasks = new ArrayList<>()
+          ForkJoinTask<?> task = StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context)
+          if (task != null) {
+            tasks.add(task)
+          }
 
-      ForkJoinTask.invokeAll(Arrays.asList(
-        StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
-        buildHelper.createTask(spanBuilder("write patched app info")) {
-          Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
-          String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-          byte[] result = buildHelper.setAppInfo.invokeWithArguments(moduleOutDir.resolve(relativePath),
-                                                                     context.applicationInfo?.getAppInfoXml()) as byte[]
-          moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
-          return null
-        },
-        ).findAll { it != null })
+          ForkJoinTask.invokeAll(Arrays.asList(
+            StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
+            buildHelper.createTask(spanBuilder("write patched app info")) {
+              Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
+              String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
+              byte[] result = buildHelper.setAppInfo.invokeWithArguments(moduleOutDir.resolve(relativePath),
+                                                                         context.applicationInfo?.getAppInfoXml()) as byte[]
+              moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
+              return null
+            },
+            ).findAll { it != null })
 
-      List<DistributionFileEntry> result = buildLib(moduleOutputPatcher, platform, context)
-      if (!isUpdateFromSources) {
-        scramble(context)
-      }
+          List<DistributionFileEntry> result = buildLib(moduleOutputPatcher, platform, context)
+          if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
+            scramble(context)
+          }
 
-      buildHelper.writeClasspath.invokeWithArguments(context.paths.distAllDir,
-                                                     context.productProperties.productLayout.mainJarName,
-                                                     context.productProperties.isAntRequired ?
-                                                     context.paths.communityHomeDir.resolve("lib/ant/lib") : null)
-      return result
-    })
+          context.bootClassPathJarNames = (List<String>)buildHelper.generateClasspath
+            .invokeWithArguments(context.paths.distAllDir,
+                                 context.productProperties.productLayout.mainJarName,
+                                 context.productProperties.isAntRequired ? context.paths.communityHomeDir.resolve("lib/ant/lib") : null)
+          return result
+        }
+      })
     List<DistributionFileEntry> entries = ForkJoinTask.invokeAll(Arrays.asList(
       buildPlatformTask,
       createBuildBundledPluginTask(pluginLayouts, buildPlatformTask, context),
       createBuildOsSpecificBundledPluginsTask(pluginLayouts, isUpdateFromSources, buildPlatformTask, context),
-      createBuildNonBundledPluginsTask(!isUpdateFromSources, context),
+      createBuildNonBundledPluginsTask(!isUpdateFromSources, buildPlatformTask, context),
       ).findAll { it != null })
       .collectMany {
         Object result = it.rawResult
@@ -297,22 +303,22 @@ final class DistributionJARsBuilder {
   }
 
   private static void scramble(BuildContext context) {
-    if (!context.productProperties.scrambleMainJar) {
-      return
-    }
-
     JarPackager.pack(Map.of("internalUtilities.jar", List.of("intellij.tools.internalUtilities")),
                      context.paths.buildOutputDir.resolve("internal"),
                      context)
 
-    if (context.proprietaryBuildTools.scrambleTool == null) {
+    ScrambleTool tool = context.proprietaryBuildTools.scrambleTool
+    if (tool == null) {
       Span.current().addEvent("skip scrambling because `scrambleTool` isn't defined")
     }
     else {
-      context.proprietaryBuildTools.scrambleTool.scramble(context.productProperties.productLayout.mainJarName, context)
+      tool.scramble(context.productProperties.productLayout.mainJarName, context)
     }
 
-    packInternalUtilities(context)
+    // e.g. JetBrainsGateway doesn't have a main jar with license code
+    if (Files.exists(context.paths.distAllDir.resolve("lib/${context.productProperties.productLayout.mainJarName}"))) {
+      packInternalUtilities(context)
+    }
   }
 
   @SuppressWarnings("GrUnresolvedAccess")
@@ -468,24 +474,32 @@ final class DistributionJARsBuilder {
     }
   }
 
-  void generateProjectStructureMapping(@NotNull Path targetFile, @NotNull BuildContext buildContext) {
+  void generateProjectStructureMapping(@NotNull Path targetFile, @NotNull BuildContext context) {
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
-    ForkJoinTask<List<DistributionFileEntry>> libDirLayout = processLibDirectoryLayout(moduleOutputPatcher, platform, buildContext, false).fork()
-    def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
-    def pluginsToBundle = allPlugins.findAll { satisfiesBundlingRequirements(it, null, buildContext) }
-
-    List<DistributionFileEntry> entries = new ArrayList<>()
-    for (PluginLayout plugin in pluginsToBundle) {
-      entries.addAll(processLayout(plugin,
-                                   buildContext.paths.tempDir,
-                                   false,
-                                   moduleOutputPatcher,
-                                   plugin.moduleJars,
-                                   buildContext).fork().join())
-    }
+    ForkJoinTask<List<DistributionFileEntry>> libDirLayout = processLibDirectoryLayout(moduleOutputPatcher, platform, context, false).fork()
+    Set<PluginLayout> allPlugins = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
+    List<DistributionFileEntry> entries = new ArrayList<DistributionFileEntry>()
+    allPlugins.stream()
+      .filter(new Predicate<PluginLayout>() {
+        @Override
+        boolean test(PluginLayout plugin) {
+          return satisfiesBundlingRequirements(plugin, null, context)
+        }
+      })
+      .forEach(new Consumer<PluginLayout>() {
+        @Override
+        void accept(PluginLayout plugin) {
+          entries.addAll(processLayout(plugin,
+                                       context.paths.tempDir,
+                                       false,
+                                       moduleOutputPatcher,
+                                       plugin.moduleJars,
+                                       context).fork().join())
+        }
+      })
     entries.addAll(libDirLayout.join())
 
-    ProjectStructureMapping.writeReport(entries, targetFile, buildContext.paths)
+    ProjectStructureMapping.writeReport(entries, targetFile, context.paths)
   }
 
   @Nullable
@@ -534,7 +548,7 @@ final class DistributionJARsBuilder {
       List<String> modulesToBeScrambled = context.proprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled
       ProductModulesLayout productLayout = context.productProperties.productLayout
       for (jarName in platform.moduleJars.keySet()) {
-        if (jarName != productLayout.mainJarName) {
+        if (jarName != productLayout.mainJarName && jarName != PlatformModules.PRODUCT_JAR) {
           Collection<String> notScrambled = platform.moduleJars.get(jarName).intersect(modulesToBeScrambled)
           if (!notScrambled.isEmpty()) {
             context.messages.error("Module '${notScrambled.first()}' is included into $jarName which is not scrambled.")
@@ -568,8 +582,11 @@ final class DistributionJARsBuilder {
       new Supplier<List<DistributionFileEntry>>() {
         @Override
         List<DistributionFileEntry> get() {
-          Collection<PluginLayout> pluginsToBundle = plugins.findAll {
-            satisfiesBundlingRequirements(it, null, context) && !pluginDirectoriesToSkip.contains(it.directoryName)
+          List<PluginLayout> pluginsToBundle = new ArrayList<PluginLayout>(plugins.size())
+          for (PluginLayout plugin : plugins) {
+            if (satisfiesBundlingRequirements(plugin, null, context) && !pluginDirectoriesToSkip.contains(plugin.directoryName)) {
+              pluginsToBundle.add(plugin)
+            }
           }
           Span.current().setAttribute("satisfiableCount", pluginsToBundle.size())
           return buildPlugins(new ModuleOutputPatcher(), pluginsToBundle,
@@ -581,7 +598,7 @@ final class DistributionJARsBuilder {
 
   private static boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily, @NotNull BuildContext context) {
     PluginBundlingRestrictions bundlingRestrictions = plugin.bundlingRestrictions
-    if (!context.applicationInfo.isEAP && bundlingRestrictions.includeInEapOnly) {
+    if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
       return false
     }
     return osFamily == null
@@ -603,10 +620,12 @@ final class DistributionJARsBuilder {
             return null
           }
 
-          Collection<PluginLayout> osSpecificPlugins = pluginLayouts.findAll {
-            satisfiesBundlingRequirements(it, osFamily, context)
+          List<PluginLayout> osSpecificPlugins = new ArrayList<PluginLayout>()
+          for (PluginLayout pluginLayout : pluginLayouts) {
+            if (satisfiesBundlingRequirements(pluginLayout, osFamily, context)) {
+              osSpecificPlugins.add(pluginLayout)
+            }
           }
-
           if (osSpecificPlugins.isEmpty()) {
             return null
           }
@@ -678,7 +697,9 @@ final class DistributionJARsBuilder {
 
   // compressPluginArchive also means that blockmap for plugin archive will be built
   @Nullable
-  ForkJoinTask<?> createBuildNonBundledPluginsTask(boolean compressPluginArchive, BuildContext context) {
+  ForkJoinTask<?> createBuildNonBundledPluginsTask(boolean compressPluginArchive,
+                                                   @Nullable ForkJoinTask<?> buildPlatformLibTask,
+                                                   @NotNull BuildContext context) {
     if (pluginsToPublish.isEmpty()) {
       return null
     }
@@ -701,17 +722,26 @@ final class DistributionJARsBuilder {
 
         List<Map.Entry<String, Path>> dirToJar = new ArrayList<>()
 
-        String pluginVersion = context.buildNumber.endsWith(".SNAPSHOT")
+        String defaultPluginVersion = context.buildNumber.endsWith(".SNAPSHOT")
           ? context.buildNumber + ".${PluginXmlPatcher.pluginDateFormat.format(ZonedDateTime.now())}"
           : context.buildNumber
+
         List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
         Predicate<PluginLayout> autoPublishPluginChecker = loadPluginAutoPublishList(context)
 
-        buildPlugins(moduleOutputPatcher, pluginsToPublish, stageDir, context, buildKeymapPluginsTask, new BiConsumer<PluginLayout, Path>() {
+        buildPlugins(moduleOutputPatcher, pluginsToPublish, stageDir, context, buildPlatformLibTask, new BiConsumer<PluginLayout, Path>() {
           @Override
           void accept(PluginLayout plugin, Path pluginDir) {
             Path targetDirectory = autoPublishPluginChecker.test(plugin) ? autoUploadingDir : nonBundledPluginsArtifacts
             String pluginDirName = pluginDir.getFileName().toString()
+
+            Path moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
+            Path pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
+
+            String pluginVersion =
+              Files.exists(pluginXmlPath) ? plugin.versionEvaluator.evaluate(pluginXmlPath, defaultPluginVersion, context) :
+              defaultPluginVersion
+
             Path destFile = targetDirectory.resolve("$pluginDirName-${pluginVersion}.zip")
             if (prepareCustomPluginRepositoryForPublishedPlugins) {
               byte[] pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
@@ -727,7 +757,7 @@ final class DistributionJARsBuilder {
           context.notifyArtifactWasBuilt(item.value)
         }
 
-        PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(context, pluginVersion)
+        PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(context, defaultPluginVersion)
         if (helpPlugin != null) {
           PluginRepositorySpec spec = buildHelpPlugin(helpPlugin, stageDir, autoUploadingDir, moduleOutputPatcher, context)
           if (prepareCustomPluginRepositoryForPublishedPlugins) {
@@ -796,19 +826,56 @@ final class DistributionJARsBuilder {
     }
   }
 
-  static Set<PluginLayout> getPluginsByModules(BuildContext buildContext, Collection<String> modules) {
+  static Set<PluginLayout> getPluginsByModules(BuildContext context, Collection<String> modules) {
     if (modules.isEmpty()) {
       return Collections.emptySet()
     }
 
-    List<PluginLayout> allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
+    List<PluginLayout> allNonTrivialPlugins = context.productProperties.productLayout.allNonTrivialPlugins
     Map<String, List<PluginLayout>> nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
-    Set<PluginLayout> result = new LinkedHashSet<>(modules.size())
+    Set<PluginLayout> result = new ObjectLinkedOpenCustomHashSet<>(modules.size(), new Hash.Strategy<PluginLayout>() {
+      @Override
+      int hashCode(@Nullable PluginLayout layout) {
+        if (layout == null) {
+          return 0
+        }
+
+        int result = layout.mainModule.hashCode()
+        result = 31 * result + layout.bundlingRestrictions.supportedOs.hashCode()
+        return result
+      }
+
+      @Override
+      boolean equals(@Nullable PluginLayout a, @Nullable PluginLayout b) {
+        if (a.is(b)) {
+          return true
+        }
+        if (a == null || b == null) {
+          return false
+        }
+        return a.mainModule == b.mainModule && a.bundlingRestrictions.supportedOs == b.bundlingRestrictions.supportedOs
+      }
+    })
     for (String moduleName : modules) {
-      PluginLayout layout = (nonTrivialPlugins[moduleName] ?: nonTrivialPlugins[buildContext.findModule(moduleName)?.name])?.first()
-        ?: PluginLayout.plugin(moduleName)
-      if (!result.add(layout)) {
-        throw new IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
+      List<PluginLayout> customLayouts = nonTrivialPlugins.get(moduleName)
+      if (customLayouts == null) {
+        String alternativeModuleName = context.findModule(moduleName)?.name
+        if (alternativeModuleName != moduleName) {
+          customLayouts = nonTrivialPlugins.get(alternativeModuleName)
+        }
+      }
+
+      if (customLayouts == null) {
+        if (!result.add(PluginLayout.simplePlugin(moduleName))) {
+          throw new IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
+        }
+      }
+      else {
+        for (PluginLayout layout : customLayouts) {
+          if (!result.add(layout)) {
+            throw new IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
+          }
+        }
       }
     }
     return result

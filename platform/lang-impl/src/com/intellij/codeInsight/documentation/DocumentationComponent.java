@@ -159,7 +159,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane = new DocumentationHintEditorPane(
       manager.getProject(),
       DocumentationScrollPane.keyboardActions(myScrollPane),
-      this::getElement
+      this::getElementImage
     );
     myScrollPane.setViewportView(myEditorPane);
     myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener(myEditorPane::applyFontProps));
@@ -719,6 +719,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   public boolean needsToolbar() {
     return myManager.myToolWindow == null && Registry.is("documentation.show.toolbar");
+  }
+
+  private @Nullable Image getElementImage(@NotNull String imageSpec) {
+    PsiElement element = getElement();
+    return element == null ? null : DocumentationManager.getElementImage(element, imageSpec);
   }
 
   private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {

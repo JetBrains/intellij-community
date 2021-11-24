@@ -133,6 +133,7 @@ public abstract class ActionPlaces {
   public static final String COMPOSER_LOG_RERUN = "ComposerLogRerun";
 
   public static final String DIFF_TOOLBAR = "DiffToolbar";
+  public static final String DIFF_RIGHT_TOOLBAR = "DiffRightToolbar";
 
   public static final String ANALYZE_STACKTRACE_PANEL_TOOLBAR = "ANALYZE_STACKTRACE_PANEL_TOOLBAR";
 

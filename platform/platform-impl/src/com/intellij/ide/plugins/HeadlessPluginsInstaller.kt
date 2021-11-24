@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.util.io.URLUtil
-import com.intellij.util.text.nullize
 import kotlin.system.exitProcess
 
 internal class HeadlessPluginsInstaller : ApplicationStarter {

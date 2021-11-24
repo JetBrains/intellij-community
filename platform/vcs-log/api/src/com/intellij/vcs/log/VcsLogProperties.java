@@ -26,4 +26,8 @@ public final class VcsLogProperties {
    * True if VCS has separate committer and committed date information which may differ from author and author date
    */
   @NotNull public static final VcsLogProperty<Boolean> HAS_COMMITTER = new VcsLogProperty<>(false);
+  /**
+   * True if VCS allows incrementally refresh commits in the log. False if full refresh should be performed.
+   */
+  @NotNull public static final VcsLogProperty<Boolean> SUPPORTS_INCREMENTAL_REFRESH = new VcsLogProperty<>(true);
 }

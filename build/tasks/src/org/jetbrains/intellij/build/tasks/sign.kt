@@ -10,15 +10,17 @@ import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.log4j.ConsoleAppender
 import org.apache.log4j.Level
+import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
 import org.jetbrains.intellij.build.io.NioFileDestination
 import org.jetbrains.intellij.build.io.NioFileSource
+import org.jetbrains.intellij.build.io.runAsync
 import org.jetbrains.intellij.build.io.writeNewFile
 import java.nio.file.Files
 import java.nio.file.Path
@@ -27,10 +29,10 @@ import java.nio.file.StandardOpenOption
 import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.zip.Deflater
-import kotlin.concurrent.thread
 
 private val random by lazy { SecureRandom() }
 
@@ -58,20 +60,19 @@ fun prepareMacZip(macZip: Path,
   Files.newByteChannel(macZip, StandardOpenOption.READ).use { sourceFileChannel ->
     ZipFile(sourceFileChannel).use { zipFile ->
       writeNewFile(sitFile) { targetFileChannel ->
-        ZipArchiveOutputStream(targetFileChannel).use { zipOutStream ->
-          // file just used for transfer
-          zipOutStream.setLevel(Deflater.BEST_SPEED)
+        ZipArchiveOutputStream(targetFileChannel).use { out ->
+          // file is used only for transfer to mac builder
+          out.setLevel(Deflater.BEST_SPEED)
+          out.setUseZip64(Zip64Mode.Never)
 
           // exclude existing product-info.json as a custom one will be added
           val productJsonZipPath = "$zipRoot/Resources/product-info.json"
-          zipFile.copyRawEntries(zipOutStream, ZipArchiveEntryPredicate { it.name != productJsonZipPath })
+          zipFile.copyRawEntries(out, ZipArchiveEntryPredicate { it.name != productJsonZipPath })
           if (macAdditionalDir != null) {
-            zipOutStream.dir(macAdditionalDir, prefix = "$zipRoot/")
+            out.dir(macAdditionalDir, prefix = "$zipRoot/")
           }
 
-          zipOutStream.putArchiveEntry(ZipArchiveEntry(productJsonZipPath))
-          zipOutStream.write(productJson)
-          zipOutStream.closeArchiveEntry()
+          out.entry(productJsonZipPath, productJson)
         }
       }
     }
@@ -92,22 +93,22 @@ fun signMacApp(
   fullBuildNumber: String,
   notarize: Boolean,
   bundleIdentifier: String,
-  sitFile: Path,
+  appArchiveFile: Path,
   jreArchiveFile: Path?,
   communityHome: Path,
   artifactDir: Path,
   dmgImage: Path?,
-  artifactBuilt: Consumer<Path>
+  artifactBuilt: Consumer<Path>,
+  publishAppArchive: Boolean,
 ) {
-  initLog
-
   executeTask(host, user, password, "intellij-builds/${fullBuildNumber}") { ssh, sftp, remoteDir ->
     tracer.spanBuilder("upload file")
-      .setAttribute("file", sitFile.toString())
+      .setAttribute("file", appArchiveFile.toString())
       .setAttribute("remoteDir", remoteDir)
       .setAttribute("host", host)
-      .startSpan().use {
-        sftp.put(NioFileSource(sitFile, filePermission = regularFileMode), "$remoteDir/${sitFile.fileName}")
+      .startSpan()
+      .use {
+        sftp.put(NioFileSource(appArchiveFile, filePermission = regularFileMode), "$remoteDir/${appArchiveFile.fileName}")
       }
 
     if (jreArchiveFile != null) {
@@ -115,7 +116,8 @@ fun signMacApp(
         .setAttribute("file", jreArchiveFile.toString())
         .setAttribute("remoteDir", remoteDir)
         .setAttribute("host", host)
-        .startSpan().use {
+        .startSpan()
+        .use {
           sftp.put(NioFileSource(jreArchiveFile, filePermission = regularFileMode), "$remoteDir/${jreArchiveFile.fileName}")
         }
     }
@@ -138,7 +140,7 @@ fun signMacApp(
       }
 
     val args = listOf(
-      sitFile.fileName.toString(),
+      appArchiveFile.fileName.toString(),
       fullBuildNumber,
       user,
       password,
@@ -146,35 +148,46 @@ fun signMacApp(
       jreArchiveFile?.fileName?.toString() ?: "no-jdk",
       if (notarize) "yes" else "no",
       bundleIdentifier,
+      publishAppArchive.toString(),
     )
 
     val env = System.getenv("ARTIFACTORY_URL")?.takeIf { it.isNotEmpty() }?.let { "ARTIFACTORY_URL=$it " } ?: ""
     @Suppress("SpellCheckingInspection")
-    tracer.spanBuilder("sign mac app").setAttribute("file", sitFile.toString()).startSpan().useWithScope {
+    tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).startSpan().useWithScope {
       signFile(remoteDir = remoteDir,
                commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
-               file = sitFile,
+               file = appArchiveFile,
                ssh = ssh,
                ftpClient = sftp,
                artifactDir = artifactDir,
-               artifactBuilt = artifactBuilt,
-               failedToProcess = null)
+               artifactBuilt = artifactBuilt)
+      if (publishAppArchive) {
+        downloadResult(remoteFile = "$remoteDir/${appArchiveFile.fileName}",
+                       localFile = appArchiveFile,
+                       ftpClient = sftp,
+                       failedToSign = null)
+      }
+    }
+
+    if (publishAppArchive) {
+      artifactBuilt.accept(appArchiveFile)
     }
 
     if (dmgImage != null) {
-      val fileNameWithoutExt = sitFile.fileName.toString().removeSuffix(".sit")
+      val fileNameWithoutExt = appArchiveFile.fileName.toString().removeSuffix(".sit")
       val dmgFile = artifactDir.resolve("$fileNameWithoutExt.dmg")
       tracer.spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).startSpan().useWithScope {
         @Suppress("SpellCheckingInspection")
-        processFile(remoteDir = remoteDir,
-                    commandString = "'$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
-                    localTargetFile = dmgFile,
+        processFile(localFile = dmgFile,
                     ssh = ssh,
-                    ftpClient = sftp,
+                    commandString = "'$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
                     artifactDir = artifactDir,
                     artifactBuilt = artifactBuilt,
-                    failedToProcess = null,
                     taskLogClassifier = "dmg")
+        downloadResult(remoteFile = "$remoteDir/${dmgFile.fileName}",
+                       localFile = dmgFile,
+                       ftpClient = sftp,
+                       failedToSign = null)
 
         artifactBuilt.accept(dmgFile)
       }
@@ -193,8 +206,6 @@ fun signMac(
   artifactDir: Path,
   artifactBuilt: Consumer<Path>
 ) {
-  initLog
-
   val failedToSign = mutableListOf<Path>()
   executeTask(host, user, password, remoteDirPrefix) { ssh, sftp, remoteDir ->
     val remoteSignScript = "$remoteDir/${signScript.fileName}"
@@ -208,8 +219,8 @@ fun signMac(
                  ssh = ssh,
                  ftpClient = sftp,
                  artifactDir = artifactDir,
-                 artifactBuilt = artifactBuilt,
-                 failedToProcess = failedToSign)
+                 artifactBuilt = artifactBuilt)
+        downloadResult(remoteFile = "$remoteDir/${file.fileName}", localFile = file, ftpClient = sftp, failedToSign = failedToSign)
       }
     }
   }
@@ -225,43 +236,34 @@ private fun signFile(remoteDir: String,
                         ftpClient: SFTPClient,
                         commandString: String,
                         artifactDir: Path,
-                        artifactBuilt: Consumer<Path>,
-                        failedToProcess: MutableList<Path>?) {
+                        artifactBuilt: Consumer<Path>) {
   ftpClient.put(NioFileSource(file), "$remoteDir/${file.fileName}")
-  processFile(remoteDir = remoteDir,
-              localTargetFile = file,
+  processFile(localFile = file,
               ssh = ssh,
-              ftpClient = ftpClient,
               commandString = commandString,
               artifactDir = artifactDir,
               artifactBuilt = artifactBuilt,
-              failedToProcess = failedToProcess,
               taskLogClassifier = "sign")
 }
 
-private fun processFile(remoteDir: String,
-                        localTargetFile: Path,
+private fun processFile(localFile: Path,
                         ssh: SSHClient,
-                        ftpClient: SFTPClient,
                         commandString: String,
                         artifactDir: Path,
                         artifactBuilt: Consumer<Path>,
-                        failedToProcess: MutableList<Path>?,
                         taskLogClassifier: String) {
-  val fileName = localTargetFile.fileName.toString()
+  val fileName = localFile.fileName.toString()
 
   val logFile = artifactDir.resolve("macos-logs").resolve("$taskLogClassifier-$fileName.log")
   Files.createDirectories(logFile.parent)
   ssh.startSession().use { session ->
     val command = session.exec(commandString)
     try {
-      val inputStreamReadThread = thread(name = "error-stream-reader-of-$taskLogClassifier-$fileName") {
-        command.inputStream.transferTo(System.out)
-      }
-      command.errorStream.use {
-        Files.copy(it, logFile, StandardCopyOption.REPLACE_EXISTING)
-      }
-      inputStreamReadThread.join(TimeUnit.HOURS.toMillis(3))
+      // use CompletableFuture because get will call ForkJoinPool.helpAsyncBlocker, so, other tasks in FJP will be executed while waiting
+      CompletableFuture.allOf(
+        runAsync { command.inputStream.transferTo(System.out) },
+        runAsync { Files.copy(command.errorStream, logFile, StandardCopyOption.REPLACE_EXISTING) }
+      ).get(3, TimeUnit.HOURS)
 
       command.join(1, TimeUnit.MINUTES)
     }
@@ -281,8 +283,6 @@ private fun processFile(remoteDir: String,
                              " (exitStatus=${command.exitStatus}, exitErrorMessage=${command.exitErrorMessage})")
     }
   }
-
-  downloadResult(remoteFile = "$remoteDir/$fileName", localFile = localTargetFile, ftpClient = ftpClient, failedToSign = failedToProcess)
 }
 
 private fun downloadResult(remoteFile: String,
@@ -339,7 +339,7 @@ private fun downloadResult(remoteFile: String,
 
 private val initLog by lazy {
   System.setProperty("log4j.defaultInitOverride", "true")
-  val root: org.apache.log4j.Logger = org.apache.log4j.Logger.getRootLogger()
+  val root = Logger.getRootLogger()
   if (!root.allAppenders.hasMoreElements()) {
     root.level = Level.INFO
     root.addAppender(ConsoleAppender(PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)))
@@ -348,7 +348,7 @@ private val initLog by lazy {
 
 private fun generateRemoteDirName(remoteDirPrefix: String): String {
   val currentDateTimeString = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
-  return "$remoteDirPrefix-$currentDateTimeString-${random.nextLong().toString(Character.MAX_RADIX)}"
+  return "$remoteDirPrefix-$currentDateTimeString-${java.lang.Long.toUnsignedString(random.nextLong(), Character.MAX_RADIX)}"
 }
 
 private inline fun executeTask(host: String,
@@ -356,11 +356,11 @@ private inline fun executeTask(host: String,
                                password: String,
                                remoteDirPrefix: String,
                                task: (ssh: SSHClient, sftp: SFTPClient, remoteDir: String) -> Unit) {
+  initLog
   val config = DefaultConfig()
   config.keepAliveProvider = KeepAliveProvider.KEEP_ALIVE
 
-  val ssh = SSHClient(config)
-  ssh.use {
+  SSHClient(config).use { ssh ->
     ssh.addHostKeyVerifier(PromiscuousVerifier())
     ssh.connect(host)
     ssh.authPassword(user, password)

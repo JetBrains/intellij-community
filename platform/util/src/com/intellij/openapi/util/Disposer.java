@@ -31,13 +31,28 @@ public final class Disposer {
 
   private Disposer() { }
 
+  /**
+   * @return new {@link Disposable} unnamed instance
+   */
   @NotNull
   @Contract(pure = true, value = "->new")
   public static Disposable newDisposable() {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
-    return newDisposable("newDisposable");
+    return new Disposable() {
+      @Override
+      public void dispose() { }
+
+      @Override
+      public String toString() {
+        return "newDisposable";
+      }
+    };
   }
 
+  /**
+   * @return new {@link Disposable} instance with the given name which is visible in its {@link Disposable#toString()}.
+   * Please be aware of increased memory consumption due to storing this name inside the object instance.
+   */
   @NotNull
   @Contract(pure = true, value = "_->new")
   public static Disposable newDisposable(@NotNull @NonNls String debugName) {
@@ -51,6 +66,35 @@ public final class Disposer {
         return debugName;
       }
     };
+  }
+
+  /**
+   * @return new {@link Disposable} instance which tracks its own invalidation.
+   * Please be aware of increased memory consumption due to storing extra flag for tracking invalidation.
+   */
+  @NotNull
+  @Contract(pure = true, value = "->new")
+  public static CheckedDisposable newCheckedDisposable() {
+    return new CheckedDisposableImpl();
+  }
+
+  static class CheckedDisposableImpl implements CheckedDisposable {
+    volatile boolean isDisposed;
+
+    @Override
+    public boolean isDisposed() {
+      return isDisposed;
+    }
+
+    @Override
+    public void dispose() {
+      isDisposed = true;
+    }
+
+    @Override
+    public String toString() {
+      return "CheckedDisposableImpl{isDisposed=" + isDisposed + "} "+super.toString();
+    }
   }
 
   @Contract(pure = true, value = "_,_->new")
@@ -114,13 +158,14 @@ public final class Disposer {
   }
 
   /**
-   * @return true if {@code disposable} is disposed or being disposed (i.e. its {@link Disposable#dispose()} method is executing).
-   *
-   * <b>Note</b>: This method relies on relatively short-living diagnostic information which is cleared (to free up memory) on certain events,
-   * for example on dynamic plugin unload or major GC run.</br>
-   * Thus, it's not wise to rely on this method in your production-grade code.
-   * Instead, please use corresponding predicate inside the disposable object if available, i.e., {@link com.intellij.openapi.components.ComponentManager#isDisposed()}
-   * Or introduce boolean flag into your object like this:
+   * @return true if {@code disposable} is disposed or being disposed (i.e., its {@link Disposable#dispose()} method is executing).
+   * @deprecated This method relies on relatively short-living diagnostic information which is cleared (to free up memory) on certain events,
+   * for example on dynamic plugin unload or major GC run.<br/>
+   * Thus, it's not wise to rely on this method in your production-grade code.<br/>
+   * Instead, please
+   * <li>Avoid using this method by registering your disposable in the parent disposable hierarchy with {@link #register(Disposable, Disposable)}</li> or, failing that,
+   * <li>Use corresponding predicate inside the disposable object if available, i.e., {@link com.intellij.openapi.components.ComponentManager#isDisposed()} or</li>
+   * <li>Introduce boolean flag into your object like this:
    * <pre> {@code class MyDisposable implements Disposable {
    *   boolean isDisposed;
    *   void dispose() {
@@ -129,9 +174,10 @@ public final class Disposer {
    *   boolean isDisposed() {
    *     return isDisposed;
    *   }
-   * }}
-   * </pre>
+   * }}</pre> or</li>
+   * <li>Use {@link #newCheckedDisposable()} (but be aware of increased memory consumption due to storing extra flag for tracking invalidation)</li>
    */
+  @Deprecated
   public static boolean isDisposed(@NotNull Disposable disposable) {
     return ourTree.getDisposalInfo(disposable) != null;
   }
@@ -152,6 +198,8 @@ public final class Disposer {
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static Disposable get(@NotNull String key) {
+    String message = "this method is deprecated and going to be removed soon. Store and use your own Disposable instead";
+    Logger.getInstance(Disposer.class).error(message);
     return ourKeyDisposables.get(key);
   }
 

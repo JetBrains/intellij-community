@@ -1,16 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.screenmenu;
 
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -20,18 +22,20 @@ import java.util.List;
 public class Menu extends MenuItem {
   private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
   private static Boolean IS_ENABLED = null;
-  private static final List<MenuItem> ourRootItems = new ArrayList<>();
   private final List<MenuItem> myItems = new ArrayList<>();
   private final List<MenuItem> myBuffer = new ArrayList<>();
+  private Runnable myOnOpen;
   private Runnable myOnClose; // we assume that can run it only on EDT (to change swing components)
   private Component myComponent;
+
+  long[] myCachedPeers;
 
   public Menu(String title) {
     setTitle(title);
   }
 
   public void setOnOpen(Runnable fillMenuProcedure, Component component) {
-    this.actionDelegate = fillMenuProcedure;
+    this.myOnOpen = fillMenuProcedure;
     this.myComponent = component;
   }
 
@@ -40,22 +44,21 @@ public class Menu extends MenuItem {
     this.myComponent = component;
   }
 
-  public void setTitle(String label) {
-    ensureNativePeer();
-    nativeSetTitle(nativePeer,label);
+  @Override
+  public void propertyChange(PropertyChangeEvent e) {
+    @NonNls String propertyName = e.getPropertyName();
+    if (Presentation.PROP_TEXT.equals(propertyName) || Presentation.PROP_DESCRIPTION.equals(propertyName)) {
+      setTitle(presentation.getText());
+    }
   }
 
-  // If item was created but wasn't added into any parent menu then can be invoked from any thread.
-  public void addItem(@NotNull MenuItem menuItem, boolean onAppKit) {
-    myItems.add(menuItem);
-
+  public void setTitle(String label) {
     ensureNativePeer();
-    menuItem.ensureNativePeer();
-    nativeAddItem(nativePeer, menuItem.nativePeer, onAppKit);
+    nativeSetTitle(nativePeer, label, isInHierarchy);
   }
 
   @SuppressWarnings("SSBasedInspection")
-  private void disposeChildren(int delayMs) {
+  void disposeChildren(int delayMs) {
     if (delayMs <= 0) {
       for (MenuItem item : myItems)
         item.dispose();
@@ -75,10 +78,8 @@ public class Menu extends MenuItem {
   synchronized
   public void dispose() {
     disposeChildren(0);
-    if (nativePeer != 0) {
-      nativeDisposeMenu(nativePeer);
-      nativePeer = 0;
-    }
+    myCachedPeers = null;
+    super.dispose();
   }
 
   public void beginFill() {
@@ -95,23 +96,34 @@ public class Menu extends MenuItem {
 
     if (myBuffer.isEmpty()) return;
 
-    long[] newItemsPeers = new long[myBuffer.size()];
+    myCachedPeers = new long[myBuffer.size()];
     //System.err.println("refill with " + newItemsPeers.length + " items");
     for (int c = 0; c < myBuffer.size(); ++c) {
       MenuItem menuItem = myBuffer.get(c);
       if (menuItem != null) {
         menuItem.ensureNativePeer();
-        newItemsPeers[c] = menuItem.nativePeer;
+        myCachedPeers[c] = menuItem.nativePeer;
         //System.err.printf("\t0x%X\n", newItemsPeers[c]);
         myItems.add(menuItem);
+        menuItem.isInHierarchy = true;
       } else {
-        newItemsPeers[c] = 0;
+        myCachedPeers[c] = 0;
       }
     }
     myBuffer.clear();
 
+    refillImpl(onAppKit);
+  }
+
+  synchronized void refillImpl(boolean onAppKit) {
     ensureNativePeer();
-    nativeRefill(nativePeer, newItemsPeers, onAppKit);
+    if (myCachedPeers != null)
+      nativeRefill(nativePeer, myCachedPeers, onAppKit);
+  }
+
+  synchronized
+  public void endFill() {
+    endFill(true);
   }
 
   @Override
@@ -124,16 +136,23 @@ public class Menu extends MenuItem {
 
   public void invokeOpenLater() {
     // Called on AppKit when menu opening
-    if (actionDelegate != null) {
+    if (myOnOpen != null) {
       if (USE_STUB) {
         // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty and we can't fill it later)
-        addItem(new MenuItem(), false/*already on AppKit thread*/);
+        MenuItem stub = new MenuItem();
+        myItems.add(stub);
+        stub.isInHierarchy = true;
+
+        ensureNativePeer();
+        stub.ensureNativePeer();
+        nativeAddItem(nativePeer, stub.nativePeer, false/*already on AppKit thread*/);
+
         ApplicationManager.getApplication().invokeLater(()->{
-          actionDelegate.run();
+          myOnOpen.run();
           endFill(true);
         });
       } else {
-        invokeWithLWCToolkit(actionDelegate, ()->endFill(false/*already on AppKit thread*/), myComponent);
+        invokeWithLWCToolkit(myOnOpen, ()->endFill(false/*already on AppKit thread*/), myComponent);
       }
     }
   }
@@ -153,24 +172,20 @@ public class Menu extends MenuItem {
   //
 
   // Creates native peer (wrapper for NSMenu with corresponding NSMenuItem).
-  // User must dealloc it via nativeDisposeMenu after usage.
+  // User must dealloc it via nativeDispose after usage.
   // Can be invoked from any thread.
   private native long nativeCreateMenu();
 
-  // Dealloc native peer.
-  // Can be invoked from any thread.
-  private native long nativeDisposeMenu(long nativePeer);
-
   // If menu was created but wasn't added into any parent menu then all setters can be invoked from any thread.
-  private native void nativeSetTitle(long menuPtr, String title);
+  private native void nativeSetTitle(long menuPtr, String title, boolean onAppKit);
   private native void nativeAddItem(long menuPtr, long itemPtr/*MenuItem OR Menu*/, boolean onAppKit);
 
-  // Refill menu
-  private native void nativeRefill(long menuPtr, long[] newItems, boolean onAppKit);
+  // Refill menu.
+  // If menuPtr == null then refills sharedApplication.mainMenu with new items (except AppMenu, i.e. first item of mainMenu)
+  native void nativeRefill(long menuPtr, long[] newItems, boolean onAppKit);
 
-  // Refill sharedApplication.mainMenu with new items (except AppMenu, i.e. first item of mainMenu)
   static
-  private native void nativeRefillMainMenu(long[] newItems, boolean onAppKit);
+  private native void nativeInitClass();
 
   //
   // Static API
@@ -192,6 +207,7 @@ public class Menu extends MenuItem {
     Path lib = PathManager.findBinFile("libmacscreenmenu64.dylib");
     try {
       System.load(lib.toFile().getAbsolutePath());
+      nativeInitClass();
       // create and dispose native object (just for to test)
       Menu test = new Menu("test");
       test.ensureNativePeer();
@@ -204,28 +220,6 @@ public class Menu extends MenuItem {
     }
 
     return IS_ENABLED;
-  }
-
-  @SuppressWarnings("SSBasedInspection")
-  static public void refillMainMenu(@NotNull List<MenuItem> newItems) {
-    // 1. dispose old root items
-    for (MenuItem item: ourRootItems)
-      item.dispose();
-    ourRootItems.clear();
-
-    // 2. collect new native peers
-    long[] newItemsPeers = new long[newItems.size()];
-    for (int c = 0; c < newItems.size(); ++c) {
-      MenuItem menuItem = newItems.get(c);
-      if (menuItem != null) {
-        menuItem.ensureNativePeer();
-        newItemsPeers[c] = menuItem.nativePeer;
-        ourRootItems.add(menuItem);
-      }
-    }
-
-    // 3. refill in AppKit thread
-    nativeRefillMainMenu(newItemsPeers, true);
   }
 
   private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker) {

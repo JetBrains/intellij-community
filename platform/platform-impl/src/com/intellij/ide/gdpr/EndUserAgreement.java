@@ -6,9 +6,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -64,8 +66,9 @@ public final class EndUserAgreement {
     return PathManager.getCommonDataPath().resolve(RELATIVE_RESOURCE_PATH);
   }
 
+  // path for classloader - without leading slash
   private static String getBundledResourcePath(String docName) {
-    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? "/PrivacyPolicy.html" : "/" + docName + ".html";
+    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? "PrivacyPolicy.html" : docName + ".html";
   }
 
   public static void setAccepted(@NotNull Document doc) {
@@ -149,13 +152,10 @@ public final class EndUserAgreement {
   }
 
   private static @NotNull Document loadContent(String docName, String resourcePath) {
-    try (InputStream stream = EndUserAgreement.class.getResourceAsStream(resourcePath)) {
-      if (stream != null) {
-        String result;
-        try (stream) {
-          result = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-        }
-        return new Document(docName, result);
+    try {
+      byte[] data = ResourceUtil.getResourceAsBytes(resourcePath, EndUserAgreement.class.getClassLoader());
+      if (data != null) {
+        return new Document(docName, new String(data, StandardCharsets.UTF_8));
       }
     }
     catch (IOException e) {

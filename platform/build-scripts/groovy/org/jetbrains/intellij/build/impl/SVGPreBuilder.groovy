@@ -25,13 +25,13 @@ final class SVGPreBuilder {
       new Runnable() {
         @Override
         void run() {
-          runSVGTool(context)
+          runSvgTool(context)
         }
       }
     )
   }
 
-  private static void runSVGTool(@NotNull BuildContext context) {
+  private static void runSvgTool(@NotNull BuildContext context) {
     List<Path> moduleOutputs = new ArrayList<>()
     // build for all modules - so, icon db will be suitable for any non-bundled plugin
     for (JpsModule module : context.getProject().getModules()) {
@@ -43,10 +43,13 @@ final class SVGPreBuilder {
     ClassLoader classLoader = BuildHelper.createClassLoader(classPathFiles)
     MethodHandle handle = MethodHandles.lookup().findStatic(classLoader.loadClass("org.jetbrains.intellij.build.images.ImageSvgPreCompiler"),
                                                             "optimize",
-                                                            MethodType.methodType(void.class as Class<?>,
-                                                                                  Path.class as Class, Path.class as Class, List.class as Class))
-    Path dbFile = context.paths.tempDir.resolve("icons.db")
-    handle.invokeWithArguments(dbFile, context.getProjectOutputDirectory().toPath().resolve("production"), moduleOutputs)
-    context.addDistFile(Map.entry(dbFile, "bin"))
+                                                            MethodType.methodType(List.class,
+                                                                                  Path.class, Path.class, List.class))
+    Path dbDir = context.paths.tempDir.resolve("icons")
+    List<Path> files = (List<Path>)handle.invokeWithArguments(dbDir, context.getProjectOutputDirectory().toPath().resolve("production"),
+                                                              moduleOutputs)
+    for (Path file : files) {
+      context.addDistFile(Map.entry(file, "bin/icons"))
+    }
   }
 }

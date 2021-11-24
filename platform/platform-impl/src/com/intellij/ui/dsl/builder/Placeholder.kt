@@ -9,6 +9,8 @@ import javax.swing.JComponent
 
 /**
  * Used as a reserved cell in layout. Can be populated by content later via [component] property or reset to null
+ *
+ * @see Row.placeholder
  */
 @ApiStatus.Experimental
 interface Placeholder : CellBase<Placeholder> {

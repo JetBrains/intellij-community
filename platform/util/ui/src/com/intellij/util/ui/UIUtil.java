@@ -128,9 +128,9 @@ public final class UIUtil {
     rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
 
     // Use standard properties starting jdk 17
-    if (Runtime.version().feature() >= 17) {
-      rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
-    }
+    //if (Runtime.version().feature() >= 17) {
+      //rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
+    //}
 
     AbstractBorder customDecorationBorder = new AbstractBorder() {
       @Override
@@ -190,7 +190,12 @@ public final class UIUtil {
     if (property instanceof Integer) {
       return (int)property;
     }
-    return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 29;
+
+    if ("small".equals(rootPane.getClientProperty("Window.style"))) {
+      return JBUI.getInt("macOSWindow.Title.heightSmall", 19);
+    } else {
+      return JBUI.getInt("macOSWindow.Title.height", SystemInfo.isMacOSBigSur ? 29 : 23);
+    }
   }
 
   private static String getWindowTitle(Window window) {
@@ -199,20 +204,20 @@ public final class UIUtil {
 
   // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
   public static void markAsTypeAheadAware(Window window) {
-    putWindowClientProperty(window, "TypeAheadAwareWindow", Boolean.TRUE);
+    ClientProperty.put(window, "TypeAheadAwareWindow", Boolean.TRUE);
   }
 
   public static boolean isTypeAheadAware(Window window) {
-    return isWindowClientPropertyTrue(window, "TypeAheadAwareWindow");
+    return ClientProperty.isTrue(window, "TypeAheadAwareWindow");
   }
 
   // Here we setup dialog to be suggested in OwnerOptional as owner even if the dialog is not modal
   public static void markAsPossibleOwner(Dialog dialog) {
-    putWindowClientProperty(dialog, "PossibleOwner", Boolean.TRUE);
+    ClientProperty.put(dialog, "PossibleOwner", Boolean.TRUE);
   }
 
   public static boolean isPossibleOwner(@NotNull Dialog dialog) {
-    return isWindowClientPropertyTrue(dialog, "PossibleOwner");
+    return ClientProperty.isTrue(dialog, "PossibleOwner");
   }
 
   public static int getMultiClickInterval() {
@@ -433,7 +438,7 @@ public final class UIUtil {
   private static final Action REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
+      UndoManager manager = ClientProperty.get(ObjectUtils.tryCast(e.getSource(), Component.class), UNDO_MANAGER);
       if (manager != null && manager.canRedo()) {
         manager.redo();
       }
@@ -442,7 +447,7 @@ public final class UIUtil {
   private static final Action UNDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
+      UndoManager manager = ClientProperty.get(ObjectUtils.tryCast(e.getSource(), Component.class), UNDO_MANAGER);
       if (manager != null && manager.canUndo()) {
         manager.undo();
       }
@@ -519,45 +524,55 @@ public final class UIUtil {
     }
   }
 
+  /**
+   * @deprecated use {@link ClientProperty#isTrue(Component, Object)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
-    return Boolean.TRUE.equals(getWindowClientProperty(window, key));
+    return ClientProperty.isTrue(window, key);
   }
 
+  /**
+   * @deprecated use {@link ClientProperty#get(Component, Object)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static Object getWindowClientProperty(Window window, @NotNull Object key) {
-    if (window instanceof RootPaneContainer) {
-      JRootPane pane = ((RootPaneContainer)window).getRootPane();
-      if (pane != null) {
-        return pane.getClientProperty(key);
-      }
-    }
-    return null;
+    return ClientProperty.get(window, key);
   }
 
+  /**
+   * @deprecated use {@link ClientProperty#put(Window, Object, Object)}  instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
-    if (window instanceof RootPaneContainer) {
-      JRootPane pane = ((RootPaneContainer)window).getRootPane();
-      if (pane != null) {
-        pane.putClientProperty(key, value);
-      }
-    }
+    ClientProperty.put(window, key, value);
   }
 
   /**
    * @param component a Swing component that may hold a client property value
    * @param key       the client property key
    * @return {@code true} if the property of the specified component is set to {@code true}
+   * @deprecated use {@link ClientProperty#isTrue(Component, Object)} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
-    return Boolean.TRUE.equals(component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null);
+    return component instanceof Component && ClientProperty.isTrue((Component)component, key);
   }
 
   /**
    * @param component a Swing component that may hold a client property value
    * @param key       the client property key that specifies a return type
    * @return the property value from the specified component or {@code null}
+   * @deprecated use {@link ClientProperty#get(Component, Object)} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
-    return component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null;
+    return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
 
   @NotNull
@@ -592,22 +607,29 @@ public final class UIUtil {
    * @return the property value from the specified component or {@code null}
    */
   public static <T> T getClientProperty(Object component, @NotNull Class<T> type) {
-    return ObjectUtils.tryCast(getClientProperty(component, (Object)type), type);
+    return ObjectUtils.tryCast(ClientProperty.get(ObjectUtils.tryCast(component, Component.class), type), type);
   }
 
   /**
    * @param component a Swing component that may hold a client property value
    * @param key       the client property key that specifies a return type
    * @return the property value from the specified component or {@code null}
+   * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> T getClientProperty(Object component, @NotNull Key<T> key) {
-    Object value = getClientProperty(component, (Object)key);
-    //noinspection unchecked
-    return value != null ? (T)value : null;
+    return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
 
+  /**
+   * @deprecated use {@link JComponent#putClientProperty(Object, Object)}
+   * or {@link ClientProperty#put(JComponent, Key, Object)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
-    ComponentUtil.putClientProperty(component, key, value);
+    component.putClientProperty(key, value);
   }
 
   @Contract(pure = true)
@@ -1819,7 +1841,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean hasFocus(@NotNull Component component) {
-    if (Boolean.getBoolean("java.awt.headless") || component.hasFocus()) {
+    if (GraphicsEnvironment.isHeadless() || component.hasFocus()) {
       return true;
     }
 
@@ -1833,7 +1855,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsFocused(@NotNull JComponent component, boolean value) {
-    if (Boolean.getBoolean("java.awt.headless")) {
+    if (GraphicsEnvironment.isHeadless()) {
       return;
     }
     component.putClientProperty(HAS_FOCUS, value ? Boolean.TRUE : null);
@@ -2127,7 +2149,7 @@ public final class UIUtil {
       .expand(o -> o == c || o instanceof JPanel || o instanceof JLayeredPane)
       .filter(JScrollPane.class);
     for (JScrollPane scrollPane : scrollPanes) {
-      Integer keepBorderSides = ComponentUtil.getClientProperty(scrollPane, KEEP_BORDER_SIDES);
+      Integer keepBorderSides = ClientProperty.get(scrollPane, KEEP_BORDER_SIDES);
       if (keepBorderSides != null) {
         if (scrollPane.getBorder() instanceof LineBorder) {
           Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
@@ -2410,7 +2432,7 @@ public final class UIUtil {
     }
     if (c instanceof JComponent) {
       JComponent jc = (JComponent)c;
-      Iterable<? extends Component> orphans = ComponentUtil.getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
+      Iterable<? extends Component> orphans = ClientProperty.get(jc, NOT_IN_HIERARCHY_COMPONENTS);
       if (orphans != null) {
         result = result.append(orphans);
       }
@@ -2685,7 +2707,7 @@ public final class UIUtil {
     forEachComponentInHierarchy(component, c -> c.setForeground(bg));
   }
 
-  private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
+  public static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
     action.consume(component);
     if (component instanceof Container) {
       for (Component c : ((Container)component).getComponents()) {
@@ -2853,7 +2875,7 @@ public final class UIUtil {
   }
 
   public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
-    UndoManager undoManager = ComponentUtil.getClientProperty(textComponent, UNDO_MANAGER);
+    UndoManager undoManager = ClientProperty.get(textComponent, UNDO_MANAGER);
     if (undoManager != null) {
       undoManager.discardAllEdits();
     }
@@ -3460,7 +3482,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (Boolean.getBoolean("java.awt.headless") || component.isShowing()) {
+    if (GraphicsEnvironment.isHeadless() || component.isShowing()) {
       return true;
     }
 
@@ -3481,7 +3503,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsShowing(@NotNull JComponent component, boolean value) {
-    if (Boolean.getBoolean("java.awt.headless")) {
+    if (GraphicsEnvironment.isHeadless()) {
       return;
     }
     component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);

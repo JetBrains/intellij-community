@@ -152,7 +152,7 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
   companion object {
     private val PY_SDK_COMBOBOX_TEXT_ACCESSOR = object : TextComponentAccessor<JComboBox<PySdkComboBoxItem>> {
       override fun getText(component: JComboBox<PySdkComboBoxItem>): String =
-        (component.selectedItem as? PySdkComboBoxItem)?.getText().orEmpty()
+        (component.selectedItem as? ExistingPySdkComboBoxItem)?.getText().orEmpty()
 
       override fun setText(component: JComboBox<PySdkComboBoxItem>, text: String) {
         component.addItem(ExistingPySdkComboBoxItem(createDetectedSdk(text, isLocal = false)))

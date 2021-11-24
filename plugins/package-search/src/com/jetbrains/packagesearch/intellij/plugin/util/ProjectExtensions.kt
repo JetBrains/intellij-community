@@ -1,7 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
-import com.intellij.ide.impl.TrustChangeNotifier
+import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
@@ -38,7 +38,7 @@ import kotlin.streams.toList
 internal val Project.packageSearchProjectService
     get() = service<PackageSearchProjectService>()
 
-internal val Project.packageVersionNormalizer
+internal val packageVersionNormalizer
     get() = service<PackageVersionNormalizerService>().normalizer
 
 @OptIn(ExperimentalTypeInference::class)
@@ -54,8 +54,12 @@ internal fun <L : Any, K> Project.messageBusFlow(
 }
 
 internal val Project.trustedProjectFlow: Flow<Boolean>
-    get() = messageBusFlow(TrustChangeNotifier.TOPIC, { isTrusted() }) {
-        TrustChangeNotifier { if (it == this@trustedProjectFlow) trySend(isTrusted()) }
+    get() = messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
+        object : TrustStateListener {
+            override fun onProjectTrusted(project: Project) {
+                if (project == this@trustedProjectFlow) trySend(isTrusted())
+            }
+        }
     }.distinctUntilChanged()
 
 internal val Project.nativeModulesChangesFlow
@@ -108,7 +112,7 @@ internal val Project.dumbService: DumbService
 internal val Project.moduleTransformers: List<ModuleTransformer>
     get() = ModuleTransformer.extensionPointName.extensions(this).toList()
 
-internal val Project.coroutineModuleTransformer: List<CoroutineModuleTransformer>
+internal val Project.coroutineModuleTransformers: List<CoroutineModuleTransformer>
     get() = CoroutineModuleTransformer.extensionPointName.extensions(this).toList()
 
 internal val Project.lookAndFeelFlow

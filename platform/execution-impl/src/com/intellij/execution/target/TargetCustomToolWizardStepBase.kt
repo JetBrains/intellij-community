@@ -35,6 +35,8 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
 
     stepDescription = getInitStepDescription()
 
+    model.save()
+
     // TODO [targets] get rid of `!!` in `model.languageConfigForIntrospection!!`
     customToolPanel = TargetCustomToolPanel(model.project, model.subject.getTargetType(), model::subject,
                                             model.languageConfigForIntrospection!!)

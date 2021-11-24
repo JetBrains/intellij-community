@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -181,7 +181,7 @@ public abstract class JavaTestFramework implements TestFramework {
   }
 
   /**
-   * @return true for junit 3 classes with suite method and for junit 4 tests with @Suite annotation
+   * @return true for junit 3 classes with suite method and for junit 4/junit 5 tests with @Suite annotation
    */
   public boolean isSuiteClass(PsiClass psiClass) {
     return false;

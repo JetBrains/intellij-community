@@ -193,6 +193,9 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     }
     DfReferenceType type = (DfReferenceType)other;
     TypeConstraint constraint = getConstraint().join(type.getConstraint());
+    if (constraint == TypeConstraints.BOTTOM) {
+      throw new AssertionError("Join failed: " + this + " | " + other);
+    }
     DfaNullability nullability = getNullability().unite(type.getNullability());
     Mutability mutability = getMutability().unite(type.getMutability());
     boolean locality = isLocal() && type.isLocal();

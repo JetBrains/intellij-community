@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -709,6 +710,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     private TabPanel() {
       super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
       setBorder(JBUI.Borders.emptyRight(2));
+      if (ExperimentalUI.isNewToolWindowsStripes()) {
+        setBorder(JBUI.Borders.empty());
+      }
     }
 
     @Override
@@ -738,7 +742,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     public Dimension getPreferredSize() {
       Dimension size = new Dimension();
       size.height = 0;
-      size.width = TabContentLayout.TAB_LAYOUT_START + getInsets().left + getInsets().right;
+      size.width = TabContentLayout.getTabLayoutStart() + getInsets().left + getInsets().right;
       for (int i = 0; i < getComponentCount(); i++) {
         final Component each = getComponent(i);
         if (each.isVisible()) {

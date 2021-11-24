@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // EXTRACTION_TARGET: lazy property
 
 val n: Int = 1

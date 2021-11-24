@@ -505,7 +505,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
       var effectivePluginId = pluginId
       if (effectivePluginId == PluginManagerCore.CORE_ID) {
-        effectivePluginId = PluginManagerCore.getPluginOrPlatformByClassName(componentClassName) ?: PluginManagerCore.CORE_ID
+        effectivePluginId = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(componentClassName)?.pluginId
+                            ?: PluginManagerCore.CORE_ID
       }
 
       throw PluginException("Fatal error initializing '$componentClassName'", error, effectivePluginId)
@@ -1424,7 +1425,7 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   var effectivePluginId = pluginId
   if (effectivePluginId == null || PluginManagerCore.CORE_ID == effectivePluginId) {
     if (componentClassName != null) {
-      effectivePluginId = PluginManagerCore.getPluginByClassName(componentClassName)
+      effectivePluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(componentClassName)
     }
   }
 

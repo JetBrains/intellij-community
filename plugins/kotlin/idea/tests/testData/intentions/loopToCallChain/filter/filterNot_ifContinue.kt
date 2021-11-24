@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filterNot{}.map{}.firstOrNull()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filterNot{}.map{}.firstOrNull()'"
 fun foo(list: List<String>): Int? {

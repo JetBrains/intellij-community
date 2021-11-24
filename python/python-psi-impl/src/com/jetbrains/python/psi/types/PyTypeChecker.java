@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
@@ -21,6 +22,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1203,6 +1205,38 @@ public final class PyTypeChecker {
     return null;
   }
 
+  /**
+   * Populates an existing generic type with given actual type parameters in their original order.
+   *
+   * @return a parameterized version of the original type or {@code null} if it cannot be meaningfully parameterized.
+   */
+  @ApiStatus.Internal
+  @Nullable
+  public static PyType parameterizeType(@NotNull PyType genericType,
+                                        @NotNull List<PyType> actualTypeParams,
+                                        @NotNull TypeEvalContext context) {
+    Generics typeParams = collectGenerics(genericType, context);
+    if (!typeParams.isEmpty()) {
+      final List<PyGenericType> formalTypeParams = Lists.newArrayList(typeParams.typeVars);
+      final Map<PyGenericType, PyType> substitutions = new HashMap<>();
+      for (int i = 0; i < Math.min(formalTypeParams.size(), actualTypeParams.size()); i++) {
+        substitutions.put(formalTypeParams.get(i), actualTypeParams.get(i));
+      }
+      return substitute(genericType, new GenericSubstitutions(substitutions, Collections.emptyMap()), context);
+    }
+    // An already parameterized type, don't override existing values for type parameters
+    else if (genericType instanceof PyCollectionType) {
+      return genericType;
+    }
+    else if (genericType instanceof PyClassType) {
+      PyClass cls = ((PyClassType)genericType).getPyClass();
+      return new PyCollectionTypeImpl(cls, false, actualTypeParams);
+    }
+    else {
+      return null;
+    }
+  }
+
   private static class Generics {
     @NotNull
     private final Set<PyGenericType> typeVars;
@@ -1214,7 +1248,7 @@ public final class PyTypeChecker {
     private final Set<PyConcatenateType> concatenates;
 
     Generics() {
-      this(new HashSet<>(), new HashSet<>(), new HashSet<>());
+      this(new LinkedHashSet<>(), new LinkedHashSet<>(), new LinkedHashSet<>());
     }
 
     Generics(@NotNull Set<PyGenericType> generics, @NotNull Set<PyParamSpecType> paramSpecs, @NotNull Set<PyConcatenateType> concatenates) {

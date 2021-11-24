@@ -1,5 +1,5 @@
 // "Replace 'if' expression with safe access expression" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Test {
     var x: String? = ""
 

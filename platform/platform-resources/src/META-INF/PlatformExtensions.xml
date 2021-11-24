@@ -5,6 +5,7 @@
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter implementation="com.intellij.openapi.application.SaveStarter"/>
+    <appStarter implementation="com.intellij.openapi.application.ExitStarter"/>
     <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
@@ -500,6 +501,8 @@
 
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <themeProvider id="JetBrainsLightTheme" path="/themes/Light.theme.json"/>
+    <themeProvider id="ExperimentalLight" path="/themes/expUI/expUI_light.theme.json"/>
+    <themeProvider id="ExperimentalDark" path="/themes/expUI/expUI_dark.theme.json"/>
 
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
@@ -736,7 +739,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger"/>
-    <statistics.counterUsagesCollector groupId="vcs.diff.trigger" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.diff.impl.DiffUsageTriggerCollector"/>
     <statistics.counterUsagesCollector groupId="vcs.back.forward.trigger" version="1"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.application.ImportOldConfigsUsagesCollector"/>
@@ -855,6 +858,7 @@
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.CommandLineWaitingManager$MyNotification"/>
+    <editorNotificationProvider implementation="com.intellij.ide.impl.UntrustedProjectNotificationProvider"/>
 
     <getDataRule key="copyProvider" implementationClass="com.intellij.ide.impl.dataRules.CopyProviderRule"/>
     <getDataRule key="cutProvider" implementationClass="com.intellij.ide.impl.dataRules.CutProviderRule"/>
@@ -1017,6 +1021,7 @@
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.SystemTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.DisplayTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.PluginTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.ProjectTroubleInfoCollector"/>
 
     <!-- experiments -->
     <experimentalFeature id="wsl.legacy.distribution" percentOfUsers="0">
@@ -1039,7 +1044,7 @@
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>
 
-    <experimentalFeature id="new.project.wizard" percentOfUsers="0">
+    <experimentalFeature id="new.project.wizard" percentOfUsers="100">
       <description>New project wizard</description>
     </experimentalFeature>
 
@@ -1268,7 +1273,6 @@
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
     <startupActivity implementation="com.intellij.ide.plugins.LanguagePluginDetectionStartupActivity"/>
-    <experimentalFeature id="language.detect.notification" percentOfUsers="0"/>
     <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
@@ -1352,6 +1356,13 @@
     <listener class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsActivity" topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener" topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    <listener class="com.intellij.ide.impl.UntrustedProjectNotificationProvider$TrustedListener" topic="com.intellij.ide.impl.TrustStateListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+
+    <listener class="com.intellij.util.EarlyAccessRegistryManager$MyListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+
+    <listener class="com.intellij.ui.ExperimentalUI$NewUiRegistryListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+    <listener class="com.intellij.ui.ExperimentalUI$NewUiLafManagerListener" topic="com.intellij.ide.ui.LafManagerListener"/>
   </applicationListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml" xpointer="xpointer(/idea-plugin/*)">

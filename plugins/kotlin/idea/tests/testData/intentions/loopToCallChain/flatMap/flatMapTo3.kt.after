@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'flatMapTo(){}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().flatMapTo(){}'"
 fun foo(list: List<String>): List<String> {

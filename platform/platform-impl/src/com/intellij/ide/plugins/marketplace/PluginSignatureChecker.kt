@@ -67,10 +67,12 @@ internal object PluginSignatureChecker {
 
     val certificates = PluginCertificateStore.customTrustManager.certificates +
                        PluginCertificateStore.managedTrustedCertificates
-    return if (showAcceptDialog)
+    return if (showAcceptDialog) {
       isSignedInWithAcceptDialog(descriptor, pluginFile, certificates)
-    else
+    }
+    else {
       isSignedInBackground(descriptor, pluginFile, certificates)
+    }
   }
 
   private fun isSignedInBackground(

@@ -16,6 +16,7 @@ import training.learn.LearnBundle
 import training.learn.course.IftModule
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
 import training.ui.UISettings
 import training.util.*
 import java.awt.*
@@ -65,7 +66,7 @@ class LearningItems(private val project: Project) : JPanel() {
         balloon.showInCenterOf(name)
         return@l
       }
-      CourseManager.instance.openLesson(project, lesson)
+      CourseManager.instance.openLesson(project, lesson, LessonStartingWay.LEARN_TAB)
     }
     val result = LearningItemPanel(clickAction)
     result.layout = BoxLayout(result, BoxLayout.X_AXIS)

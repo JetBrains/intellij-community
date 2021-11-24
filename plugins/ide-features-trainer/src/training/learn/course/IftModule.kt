@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindowAnchor
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import training.lang.LangSupport
 
-abstract class IftModule(@Nls val name: String,
+abstract class IftModule(@NonNls val id: String,
+                         @Nls val name: String,
                          @Nls val description: String,
                          val primaryLanguage: LangSupport?,
                          /** It is lessons default type */

@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -17,11 +18,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.webcore.packaging.PackageManagementService;
-import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import org.jetbrains.annotations.Nls;
@@ -186,11 +186,18 @@ public final class PyPackageManagerUI {
                                                       NotificationType.INFORMATION, null));
       }
       else {
-        final List<String> requirements = this instanceof InstallTask && ((InstallTask)this).myRequirements != null
-                                          ? ContainerUtil.map(((InstallTask)this).myRequirements, req -> req.getName()) : null;
-        final String packageNames = exceptions.stream()
+        final List<Pair<String, String>> requirements =
+          this instanceof InstallTask && ((InstallTask)this).myRequirements != null ? ContainerUtil.flatMap(
+            ((InstallTask)this).myRequirements,
+            req -> ContainerUtil.map(req.getInstallOptions(), option -> Pair.create(option, req.getName()))) : null;
+        final List<String> packageManagerArguments = exceptions.stream()
           .flatMap(e -> (e instanceof PyExecutionException) ? ((PyExecutionException)e).getArgs().stream() : null)
-          .filter(str -> str != null && requirements != null && requirements.contains(str)).collect(Collectors.joining(", "));
+          .collect(Collectors.toList());
+        final String packageNames = requirements != null ? requirements.stream()
+          .filter(req -> packageManagerArguments.contains(req.first))
+          .map(req -> req.second)
+          .collect(Collectors.joining(", ")) : "";
+
         final PyPackageManagementService.PyPackageInstallationErrorDescription description = PyPackageManagementService.
           toErrorDescription(exceptions, mySdk, packageNames);
         if (description != null) {
@@ -200,9 +207,11 @@ public final class PyPackageManagerUI {
             public void hyperlinkUpdate(@NotNull Notification notification,
                                         @NotNull HyperlinkEvent event) {
               assert myProject != null;
-              final String title = StringUtil.capitalizeWords(getFailureTitle(), true);
               final PyPackageInstallationErrorDialog dialog =
-                new PyPackageInstallationErrorDialog(title, description);
+                new PyPackageInstallationErrorDialog(packageNames.isEmpty()
+                                                     ? IdeBundle.message("failed.to.install.packages.dialog.title")
+                                                     : IdeBundle.message("failed.to.install.package.dialog.title", packageNames),
+                                                     description);
               dialog.show();
             }
           };

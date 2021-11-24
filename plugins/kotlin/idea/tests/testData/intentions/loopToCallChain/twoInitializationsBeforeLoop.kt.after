@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filterIndexed{}.map{}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filterIndexed{}.map{}.toList()'"
 import java.util.*

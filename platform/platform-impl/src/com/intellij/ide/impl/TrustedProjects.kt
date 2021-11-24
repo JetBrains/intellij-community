@@ -5,6 +5,7 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -22,6 +23,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.function.Consumer
 import kotlin.io.path.isDirectory
 
 /**
@@ -33,8 +35,9 @@ import kotlin.io.path.isDirectory
  *   or if the confirmation wasn't shown because the project trust state was already known.
  */
 @ApiStatus.Internal
-fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectDir: Path): Boolean {
+fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boolean {
   return invokeAndWaitIfNeeded {
+    val projectDir = if (projectFileOrDir.isDirectory()) projectFileOrDir else projectFileOrDir.parent
     val trustedPaths = TrustedPaths.getInstance()
     val trustedState = trustedPaths.getProjectPathTrustedState(projectDir)
     if (trustedState == ThreeState.UNSURE) {
@@ -49,8 +52,8 @@ fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectDir: Path): Boolean {
   }
 }
 
-private fun confirmOpeningUntrustedProject(projectFileOrDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
-  projectFileOrDir,
+private fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
+  projectDir,
   IdeBundle.message("untrusted.project.open.dialog.title"),
   IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
   IdeBundle.message("untrusted.project.dialog.trust.button"),
@@ -59,14 +62,13 @@ private fun confirmOpeningUntrustedProject(projectFileOrDir: Path): OpenUntruste
 )
 
 private fun confirmOpeningUntrustedProject(
-  projectFileOrDir: Path,
+  projectDir: Path,
   @NlsContexts.DialogTitle title: String,
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String,
   @NlsContexts.Button cancelButtonText: String
 ): OpenUntrustedProjectChoice = invokeAndWaitIfNeeded {
-  val projectDir = if (projectFileOrDir.isDirectory()) projectFileOrDir else projectFileOrDir.parent
   if (isProjectImplicitlyTrusted(projectDir)) {
     return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.TRUST_AND_OPEN
   }
@@ -125,19 +127,21 @@ enum class OpenUntrustedProjectChoice {
 
 fun Project.isTrusted() = getTrustedState() == ThreeState.YES
 
+@ApiStatus.Internal
 fun Project.getTrustedState(): ThreeState {
-  val explicit = this.service<TrustedProjectSettings>().trustedState
-  if (explicit != ThreeState.UNSURE) {
-    return explicit
+  val projectPath = basePath
+  if (projectPath != null) {
+    val explicit = TrustedPaths.getInstance().getProjectPathTrustedState(Paths.get(projectPath))
+    if (explicit != ThreeState.UNSURE) {
+      return explicit
+    }
   }
+
   if (isProjectImplicitlyTrusted(this)) {
     return ThreeState.YES
   }
-  val projectPath = basePath
-  if (projectPath != null) {
-    return TrustedPaths.getInstance().getProjectPathTrustedState(Paths.get(projectPath))
-  }
-  return ThreeState.UNSURE
+
+  return this.service<TrustedProjectSettings>().trustedState
 }
 
 fun Project.setTrusted(value: Boolean) {
@@ -149,7 +153,7 @@ fun Project.setTrusted(value: Boolean) {
     trustedPaths.setProjectPathTrusted(path, value)
 
     if (value && oldValue != ThreeState.YES) {
-      ApplicationManager.getApplication().messageBus.syncPublisher(TrustChangeNotifier.TOPIC).projectTrusted(this)
+      ApplicationManager.getApplication().messageBus.syncPublisher(TrustStateListener.TOPIC).onProjectTrusted(this)
     }
   }
 }
@@ -182,7 +186,7 @@ private fun isProjectImplicitlyTrusted(project: Project): Boolean =
 
 @JvmOverloads
 @ApiStatus.Internal
-internal fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
+fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
   if (isTrustedCheckDisabled()) {
     return true
   }
@@ -193,6 +197,10 @@ internal fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = 
   return false
 }
 
+/**
+ * Per-project "is this project trusted" setting from the previous version of the trusted API.
+ * It shouldn't be used and is kept for migration purposes only.
+ */
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -210,14 +218,56 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
     }
 }
 
+/**
+ * Listens to the change of the project trusted state, i.e. when a non-trusted project becomes trusted (the vice versa is not possible).
+ *
+ * Consider using the helper method [whenProjectTrusted] which accepts a lambda.
+ */
 @ApiStatus.Experimental
-fun interface TrustChangeNotifier {
-  fun projectTrusted(project: Project)
+interface TrustStateListener {
+  /**
+   * Executed when the project becomes trusted.
+   */
+  @JvmDefault
+  fun onProjectTrusted(project: Project) {
+  }
+
+  /**
+   * Executed when the user clicks to the "Trust Project" button in the [editor notification][UntrustedProjectEditorNotificationPanel].
+   * Use this method if you need to know that the project has become trusted exactly because the user has clicked to that button.
+   *
+   * NB: [onProjectTrusted] is also called in this case, and most probably you want to use that method.
+   */
+  @JvmDefault
+  fun onProjectTrustedFromNotification(project: Project) {
+  }
 
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic.create("Trusted project status", TrustChangeNotifier::class.java)
+    val TOPIC = Topic.create("Trusted project status", TrustStateListener::class.java)
+  }
+}
+
+/**
+ * Adds a one-time listener of the project's trust state change: when the project becomes trusted, the listener is called and disconnected.
+ */
+@JvmOverloads
+fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project) -> Unit) {
+  val messageBus = ApplicationManager.getApplication().messageBus
+  val connection = if (parentDisposable == null) messageBus.connect() else messageBus.connect(parentDisposable)
+  connection.subscribe(TrustStateListener.TOPIC, object : TrustStateListener {
+    override fun onProjectTrusted(project: Project) {
+      listener(project)
+      connection.disconnect()
+    }
+  })
+}
+
+@JvmOverloads
+fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>) {
+  whenProjectTrusted(parentDisposable) { project ->
+    listener.accept(project)
   }
 }
 

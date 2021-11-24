@@ -461,12 +461,11 @@
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.MenuSaveall"/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
+        <group id="CacheRecovery" class="com.intellij.ide.actions.cache.CacheRecoveryActionGroup"/>
+
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction">
           <synonym text="Restart"/>
         </action>
-        <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
-
-        <group id="CacheRecovery" class="com.intellij.ide.actions.cache.CacheRecoveryActionGroup"/>
         <separator/>
         <group id="ExportImportGroup" popup="true">
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
@@ -531,6 +530,7 @@
           <action id="ToggleFindInSelection" class="com.intellij.find.editorHeaderActions.ToggleSelectionOnlyAction"/>
           <separator/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
+          <action id="FindPrevWordAtCaret" class="com.intellij.openapi.editor.actions.FindPrevWordAtCaretAction"/>
           <separator/>
           <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction">
             <synonym key="action.FindInPath.synonym1"/>
@@ -866,6 +866,8 @@
 
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
+
+    <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
 
     <group id="MainToolBar">
       <reference ref="OpenFile"/>
@@ -1390,6 +1392,7 @@
               internal="true"/>
       <action id="SilentHeapDumpSnapshot" class="com.intellij.diagnostic.hprof.action.InternalNonuserInvokedHeapDumpSnapshotAction"
               internal="true"/>
+      <action id="AnalyzeHeapDumpSnapshot" class="com.intellij.diagnostic.hprof.action.AnalyzeReportAction" internal="true"/>
       <add-to-group group-id="Internal"/>
     </group>
 

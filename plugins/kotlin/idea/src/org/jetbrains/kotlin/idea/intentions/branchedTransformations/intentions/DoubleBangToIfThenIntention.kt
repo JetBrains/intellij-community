@@ -72,7 +72,7 @@ class DoubleBangToIfThenIntention : SelfTargetingRangeIntention<KtPostfixExpress
 
         TemplateManager.getInstance(project).startTemplate(editor, builder.buildInlineTemplate(), object : TemplateEditingAdapter() {
             override fun templateFinished(template: Template, brokenOff: Boolean) {
-                if (!isStable && !isStatement && ifStatement.isPhysical) {
+                if (!isStable && !isStatement) {
                     ifStatement.introduceValueForCondition(ifStatement.then!!, editor)
                 }
             }

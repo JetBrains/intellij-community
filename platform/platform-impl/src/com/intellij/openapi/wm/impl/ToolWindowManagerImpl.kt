@@ -499,7 +499,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     id = bean.id,
     icon = findIconFromBean(bean, factory, pluginDescriptor),
     anchor = getToolWindowAnchor(factory, bean),
-    sideTool = bean.secondary || (@Suppress("DEPRECATION") bean.side),
+    sideTool = !ExperimentalUI.isNewUI() && (bean.secondary || (@Suppress("DEPRECATION") bean.side)),
     canCloseContent = bean.canCloseContents,
     canWorkInDumbMode = DumbService.isDumbAware(factory),
     shouldBeAvailable = factory.shouldBeAvailable(project),
@@ -571,7 +571,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val toolWindowPane = toolWindowPane ?: init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
     val anchor = getToolWindowAnchor(factory, bean)
     @Suppress("DEPRECATION")
-    val sideTool = bean.secondary || bean.side
+    val sideTool = !ExperimentalUI.isNewUI() && (bean.secondary || bean.side)
     val entry = doRegisterToolWindow(RegisterToolWindowTask(
       id = bean.id,
       icon = findIconFromBean(bean, factory, pluginDescriptor),
@@ -1755,6 +1755,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val dirtyMode = entry.readOnlyWindowInfo.type == ToolWindowType.DOCKED || entry.readOnlyWindowInfo.type == ToolWindowType.SLIDING
     updateStateAndRemoveDecorator(info, entry, dirtyMode)
     info.type = type
+    if (type != ToolWindowType.FLOATING && type != ToolWindowType.WINDOWED) {
+      info.internalType = type
+    }
 
     val newInfo = info.copy()
     entry.applyWindowInfo(newInfo)
@@ -1811,15 +1814,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun loadState(state: Element) {
+    val isNewUi = ExperimentalUI.isNewUI()
     for (element in state.children) {
       if (DesktopLayout.TAG == element.name) {
         val layout = DesktopLayout()
-        layout.readExternal(element)
+        layout.readExternal(element, isNewUi)
         scheduleSetLayout(layout)
       }
       else if (LAYOUT_TO_RESTORE == element.name) {
         layoutToRestoreLater = DesktopLayout()
-        layoutToRestoreLater!!.readExternal(element)
+        layoutToRestoreLater!!.readExternal(element, isNewUi)
       }
       else if (RECENT_TW_TAG == element.name) {
         recentToolWindows.clear()
@@ -1949,7 +1953,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val id = entry.id
     val decorator = entry.toolWindow.getOrCreateDecoratorComponent()
-    val windowedDecorator = FrameWrapper(project, title = "$id - ${project.name}", component = decorator)
+    val windowedDecorator = FrameWrapper(project, title = "${entry.toolWindow.stripeTitle} - ${project.name}", component = decorator)
     val window = windowedDecorator.getFrame()
 
     MnemonicHelper.init((window as RootPaneContainer).contentPane)
@@ -2049,7 +2053,17 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   internal fun activated(toolWindow: ToolWindowImpl, source: ToolWindowEventSource?) {
-    activateToolWindow(idToEntry[toolWindow.id]!!, getRegisteredMutableInfoOrLogError(toolWindow.id), source = source)
+    val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
+    if (ExperimentalUI.isNewUI()) {
+      val visibleToolWindow = idToEntry.values
+        .asSequence()
+        .filter { it.readOnlyWindowInfo.anchor == info.anchor && it.toolWindow.isVisible }
+        .firstOrNull()
+      if (visibleToolWindow != null) {
+        info.weight = visibleToolWindow.readOnlyWindowInfo.weight
+      }
+    }
+    activateToolWindow(idToEntry[toolWindow.id]!!, info, source = source)
   }
 
   /**

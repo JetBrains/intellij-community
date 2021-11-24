@@ -1,5 +1,5 @@
 // PROBLEM: Variable 'foo' is assigned to itself
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Remove self assignment
 
 class Test {

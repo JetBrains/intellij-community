@@ -75,7 +75,7 @@ import java.util.function.BooleanSupplier;
 
 @State(name = "LafManager", storages = @Storage("laf.xml"), category = SettingsCategory.UI)
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance(LafManager.class);
+  private static final Logger LOG = Logger.getInstance(LafManagerImpl.class);
 
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ELEMENT_PREFERRED_LIGHT_LAF = "preferred-light-laf";
@@ -246,11 +246,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) {
     myEventDispatcher.addListener(listener);
-  }
-
-  @Override
-  public void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable) {
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC, listener);
   }
 
   @Override
@@ -654,7 +649,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.clear();
     defaults.putAll(ourDefaults);
     if (!myFirstSetup) {
-      SVGLoader.setColorPatcherForSelection(null);
+      SVGLoader.setContextColorPatcher(null);
+      SVGLoader.setSelectionColorPatcherProvider(null);
     }
 
     // set L&F
@@ -663,9 +659,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       try {
         UIManager.setLookAndFeel(laf);
         AppUIUtil.updateForDarcula(true);
-        if (lafNameOrder.containsKey(lookAndFeelInfo.getName())) {
-          updateIconsUnderSelection(true);
-        }
+        //if (lafNameOrder.containsKey(lookAndFeelInfo.getName())) {
+        //  updateIconsUnderSelection(true);
+        //}
       }
       catch (Exception e) {
         LOG.error(e);
@@ -694,9 +690,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
               UserDataHolder userDataHolder = (UserDataHolder)laf;
               userDataHolder.putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
             }
-            if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
-              updateIconsUnderSelection(false);
-            }
+            //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
+            //  updateIconsUnderSelection(false);
+            //}
           }
         }
 
@@ -741,53 +737,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       installLinuxFonts(UIManager.getLookAndFeelDefaults());
     }
     return false;
-  }
-
-  private static void updateIconsUnderSelection(boolean darcula) {
-    Map<String, String> map = new HashMap<>();
-    if (darcula) {
-      map.put("#5e5e5e", "#5778ad");
-      map.put("#c75450", "#a95768");
-      map.put("#6e6e6e", "#afb1b3");
-      //map.put("#f26522", "#b76554"); //red
-      map.put("#f26522b3", "#bc6b43"); //red 70%
-      map.put("#f2652299", "#bc6b43"); //red 60% (same as 70%)
-      map.put("#62b54399", "#579b41"); //green 60%
-      map.put("#f98b9e99", "#ba7481"); //pink 60%
-      map.put("#f4af3d99", "#aa823f"); //yellow 60%
-      map.put("#b99bf899", "#977fca"); //purple 60%
-      map.put("#9aa7b0cc", "#97acc6"); //noun gray 80%
-      map.put("#9aa7b099", "#97acc6"); //noun gray 60% (same as 80%)
-    }
-    else {
-      map.put("#6e6e6e", "#afb1b3");
-      map.put("#db5860", "#b75e73");
-      //map.put("#f26522", "#b56a51"); //red
-      map.put("#f26522b3", "#d38369"); //red 70%
-      map.put("#f2652299", "#d38369"); //red 60% (same as 70%)
-      map.put("#40b6e099", "#5eb6d4"); //blue 60%
-      map.put("#62b54399", "#7ebe65"); //green 60%
-      map.put("#f98b9e99", "#f1a4b2"); //pink 60%
-      map.put("#f4af3d99", "#ecc27d"); //yellow 60%
-      map.put("#b99bf899", "#b49ee2"); //purple 60%
-      map.put("#9aa7b0cc", "#aebdc6"); //noun gray 80%
-      map.put("#9aa7b099", "#aebdc6"); //noun gray 60% (same as 80%)
-      map.put("#40b6e0b3", "#5eb6d4"); //blue 70%
-      map.put("#62b543b3", "#7ebe65"); //green 70%
-      map.put("#f98b9eb3", "#f1a4b2"); //pink 70%
-      map.put("#f4af3db3", "#ecc27d"); //yellow 70%
-      map.put("#b99bf8b3", "#b49ee2"); //purple 70%
-    }
-
-    Map<String, Integer> alpha = new HashMap<>(map.size());
-    map.forEach((key, value) -> alpha.put(value, 255));
-
-     SVGLoader.setColorPatcherForSelection(new SVGLoader.SvgElementColorPatcherProvider() {
-       @Override
-       public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
-         return SVGLoader.newPatcher(null, map, alpha);
-       }
-     });
   }
 
   private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf, boolean processChangeSynchronously) {
@@ -857,12 +806,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS,
                    AppUIUtil.adjustFractionalMetrics(UISettings.Companion.getPreferredFractionalMetricsValue()));
 
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this);
+    myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
+
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
     }
-
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this);
-    myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
   }
 
   @NotNull

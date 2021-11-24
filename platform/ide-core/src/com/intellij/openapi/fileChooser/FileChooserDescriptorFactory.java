@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -47,7 +48,7 @@ public final class FileChooserDescriptorFactory {
     return createSingleLocalFileDescriptor();
   }
 
-  public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType) {
+  public static FileChooserDescriptor createSingleFileDescriptor(@NotNull FileType fileType) {
     return new FileChooserDescriptor(true, false, false, false, false, false)
       .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
   }
@@ -69,7 +70,7 @@ public final class FileChooserDescriptorFactory {
     return new FileChooserDescriptor(true, true, false, false, false, false);
   }
 
-  public static FileChooserDescriptor createSingleFileOrFolderDescriptor(final FileType fileType) {
+  public static FileChooserDescriptor createSingleFileOrFolderDescriptor(@NotNull FileType fileType) {
     return new FileChooserDescriptor(true, true, false, false, false, false)
       .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
   }

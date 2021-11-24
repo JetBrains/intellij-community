@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.icons.AllIcons
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,7 +21,7 @@ class JavaOutsideModuleDetector(private val project: Project) : EditorNotificati
     override fun getKey(): Key<EditorNotificationPanel> = KEY
 
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
-        if (file.fileType != JavaFileType.INSTANCE) return null
+        if (!FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE)) return null
         val module = file.findModule(project) ?: return null
         if (!module.isGradleModule()) return null
         val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return null

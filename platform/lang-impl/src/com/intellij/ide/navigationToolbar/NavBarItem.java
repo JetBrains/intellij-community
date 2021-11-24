@@ -146,7 +146,9 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
       if (isMouseHover()) fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.HOVER_FOREGROUND;
       else if (selected && focused) fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.SELECTION_FOREGROUND;
       else if (selected && myPanel.isNodePopupActive() && !isPopupElement()) fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.SELECTION_INACTIVE_FOREGROUND;
-      else fg = isInFloatingMode() ? JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_FOREGROUND : JBUI.CurrentTheme.StatusBar.Breadcrumbs.FOREGROUND;
+      else if (isInFloatingMode()) fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_FOREGROUND;
+      else if (isPopupElement()) fg = JBUI.CurrentTheme.List.foreground(selected, focused);
+      else fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.FOREGROUND;
     }
     else {
       fg = myUI.getForeground(selected, focused, isInactive());
@@ -206,7 +208,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     int width = size.width + offsets.width;
 
     if (ExperimentalUI.isNewUI() && !isFirstElement() && !isPopupElement) {
-      width += CHEVRON_ICON.getIconWidth();
+      width += CHEVRON_ICON.getIconWidth() + JBUI.CurrentTheme.StatusBar.Breadcrumbs.CHEVRON_INSET.get();
     }
 
     if (!needPaintIcon() && myIcon != null) {

@@ -22,6 +22,9 @@ import javax.swing.Icon
 
 abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : BackgroundSupplier, AbstractTreeNode<B>(project, bookmark) {
 
+  val bookmarksView
+    get() = parentRootNode?.value
+
   val bookmarkType
     get() = bookmarksManager?.getType(value)
 
@@ -55,16 +58,19 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
   }
 
   protected fun addTextTo(presentation: PresentationData, file: VirtualFile, line: Int = 0) {
+    val name = file.presentableName
     val location = file.parent?.let { getRelativePath(it) }
     val description = bookmarkDescription
     if (description == null) {
-      presentation.addText(file.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      presentation.presentableText = name // configure speed search
+      presentation.addText(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
       if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       location?.let { presentation.addText("  $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
     }
     else {
+      presentation.presentableText = "$description $name" // configure speed search
       presentation.addText("$description  ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
-      presentation.addText(file.presentableName, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      presentation.addText(name, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       location?.let { presentation.addText("  ($it)", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
     }

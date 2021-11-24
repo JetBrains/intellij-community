@@ -31,12 +31,11 @@ import java.lang.invoke.MethodHandle
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.function.BiConsumer
 import java.util.function.BiFunction
-import java.util.function.Consumer
 import java.util.function.IntConsumer
 import java.util.function.Predicate
 import java.util.regex.Matcher
-import java.util.stream.Stream
 
 import static org.jetbrains.intellij.build.impl.ProjectLibraryData.PackMode
 
@@ -140,8 +139,11 @@ final class JarPackager {
     if (libraryToMerge.isEmpty()) {
       libSources = null
     }
+    else if (isRootDir) {
+      libSources = packager.filesToSourceWithMappings(outputDir.resolve(BaseLayout.APP_JAR), libraryToMerge)
+    }
     else {
-      boolean isSeparateUberJar = isRootDir || actualModuleJars.size() != 1
+      boolean isSeparateUberJar = actualModuleJars.size() != 1
       Path uberJarFile = outputDir.resolve(isSeparateUberJar ? "3rd-party.jar" : actualModuleJars.keySet().first())
       libSources = packager.filesToSourceWithMappings(uberJarFile, libraryToMerge)
       if (isSeparateUberJar) {
@@ -157,7 +159,7 @@ final class JarPackager {
       String jarPath = entry.key
       Path jarFile = outputDir.resolve(entry.key)
       List sourceList = new ArrayList()
-      if (libSources != null) {
+      if (libSources != null && (!isRootDir || jarPath == BaseLayout.APP_JAR)) {
         sourceList.addAll(libSources)
         libSources = null
       }
@@ -236,38 +238,38 @@ final class JarPackager {
     return sources
   }
 
-  private static Stream<JpsLibrary> getModuleLibs(Map<String, List<String>> actualModuleJars, BaseLayout layout, BuildContext context) {
+  private static void processModuleLibs(Map<String, List<String>> actualModuleJars,
+                                        BaseLayout layout,
+                                        BuildContext context,
+                                        BiConsumer<JpsLibrary, String> consumer) {
     // include all module libraries from the plugin modules added to IDE classpath to layout
-    return actualModuleJars.entrySet()
+    actualModuleJars.entrySet()
       .stream()
       .filter { !it.key.contains("/") }
       .flatMap { it.value.stream() }
       .filter { !layout.modulesWithExcludedModuleLibraries.contains(it) }
-      .flatMap { moduleName ->
+      .forEach { moduleName ->
         Collection<String> excluded = layout.excludedModuleLibraries.get(moduleName)
-        context.findRequiredModule(moduleName).dependenciesList.dependencies.stream()
-          .filter(new Predicate<JpsDependencyElement>() {
-            @Override
-            boolean test(JpsDependencyElement it) {
-              if (it instanceof JpsLibraryDependency &&
-                  ((JpsLibraryDependency)it)?.libraryReference?.parentReference?.resolve() instanceof JpsModule) {
-                return JpsJavaExtensionService.instance.getDependencyExtension(it)
-                         ?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false
-              }
-              else {
-                return false
-              }
+        for (JpsDependencyElement element : context.findRequiredModule(moduleName).dependenciesList.dependencies) {
+          if (!(element instanceof JpsLibraryDependency)) {
+            continue
+          }
+
+          JpsLibraryDependency libraryDependency = (JpsLibraryDependency)element
+          if (!(libraryDependency.libraryReference?.parentReference?.resolve() instanceof JpsModule)) {
+            continue
+          }
+
+          if (JpsJavaExtensionService.instance.getDependencyExtension(element)?.scope
+                ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false) {
+            JpsLibrary library = libraryDependency.library
+            String libraryName = LayoutBuilder.getLibraryName(library)
+            if (!excluded.contains(libraryName) &&
+                !layout.includedModuleLibraries.any { it.libraryName == libraryName }) {
+              consumer.accept(library, moduleName)
             }
-          })
-          .map { ((JpsLibraryDependency)it).library }
-          .filter(new Predicate<JpsLibrary>() {
-            @Override
-            boolean test(JpsLibrary library) {
-              String libraryName = LayoutBuilder.getLibraryName(library)
-              return !excluded.contains(libraryName) &&
-                     !layout.includedModuleLibraries.any { it.libraryName == libraryName }
-            }
-          })
+          }
+        }
       }
   }
 
@@ -391,9 +393,9 @@ final class JarPackager {
       }
     }
 
-    getModuleLibs(jarToModuleNames, layout, context).forEach(new Consumer<JpsLibrary>() {
+    processModuleLibs(jarToModuleNames, layout, context, new BiConsumer<JpsLibrary, String>() {
       @Override
-      void accept(JpsLibrary library) {
+      void accept(JpsLibrary library, String moduleName) {
         String libName = library.name
         List<Path> files = getLibraryFiles(library, copiedFiles, true)
 
@@ -403,14 +405,21 @@ final class JarPackager {
           return
         }
 
+        boolean isJpsModule = moduleName.endsWith(".jps")
         for (int i = files.size() - 1; i >= 0; i--) {
           Path file = files.get(i)
           String fileName = file.fileName.toString()
-          //noinspection SpellCheckingInspection
-          if (fileName.endsWith("-rt.jar") || fileName.startsWith("jps-") || fileName.contains("-agent") ||
-              fileName == "yjp-controller-api-redist.jar") {
+          if (isJpsModule) {
             files.remove(i)
-            addLibrary(library, outputDir.resolve(removeVersionFromJar(fileName)), List.of(file))
+            addLibrary(library, outputDir.resolve(fileName), List.of(file))
+          }
+          else {
+            //noinspection SpellCheckingInspection
+            if (fileName.endsWith("-rt.jar") || fileName.startsWith("jps-") || fileName.contains("-agent") ||
+                fileName == "yjp-controller-api-redist.jar") {
+              files.remove(i)
+              addLibrary(library, outputDir.resolve(removeVersionFromJar(fileName)), List.of(file))
+            }
           }
         }
         if (!files.isEmpty()) {

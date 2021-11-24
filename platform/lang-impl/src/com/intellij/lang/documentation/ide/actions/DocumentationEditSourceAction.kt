@@ -15,7 +15,7 @@ import java.util.concurrent.Callable
 
 internal class DocumentationEditSourceAction : AnAction(), UpdateInBackground {
 
-  private fun targetPointer(dc: DataContext): Pointer<out DocumentationTarget>? = dc.getData(DOCUMENTATION_BROWSER)?.targetPointer
+  private fun targetPointer(dc: DataContext): Pointer<out DocumentationTarget>? = documentationBrowser(dc)?.targetPointer
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = targetPointer(e.dataContext)?.dereference()?.navigatable != null

@@ -58,7 +58,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
   private boolean myShowWelcomeScreen = true;
-  private int myConfirmOpenNewProject = PlatformUtils.isPyCharmDs() ? OPEN_PROJECT_SAME_WINDOW_ATTACH : OPEN_PROJECT_ASK;
+  private int myConfirmOpenNewProject = PlatformUtils.isDataSpell() ? OPEN_PROJECT_SAME_WINDOW_ATTACH : OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
   private String myDefaultProjectDirectory = "";
 

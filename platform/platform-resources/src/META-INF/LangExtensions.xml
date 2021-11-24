@@ -214,6 +214,8 @@
     <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
                         serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
 
+    <applicationService serviceInterface="com.intellij.navigation.NavigationService"
+                        serviceImplementation="com.intellij.navigation.impl.NavigationServiceImpl"/>
     <applicationService serviceInterface="com.intellij.ide.util.PsiNavigationSupport"
                         serviceImplementation="com.intellij.ide.util.PsiNavigationSupportImpl"/>
 
@@ -550,7 +552,6 @@
     <getDataRule key="module" implementationClass="com.intellij.ide.impl.dataRules.ModuleRule"/>
     <getDataRule key="symbols" implementationClass="com.intellij.model.psi.impl.TargetSymbolsDataRule" injectedContext="true"/>
     <getDataRule key="search.targets" implementationClass="com.intellij.find.actions.SearchTargetsDataRule"/>
-    <getDataRule key="search.target.variants" implementationClass="com.intellij.find.actions.SearchTargetVariantsDataRule"/>
 
     <dataValidators implementation="com.intellij.ide.impl.LangDataValidators"/>
 
@@ -977,6 +978,9 @@
     <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
                       groupKey="inspection.general.tools.group.name" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
+    <globalInspection shortName="EmptyDirectory" bundle="messages.LangBundle" key="empty.directory.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
+                      level="WARNING" implementationClass="com.intellij.codeInspection.EmptyDirectoryInspection"/>
 
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
     <annotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkAnnotator"/>
@@ -1411,6 +1415,8 @@
 
     <registryKey defaultValue="true" description="Use IndexableEntityProviders to iterate project for indexing"
                  key="indexing.enable.entity.provider.based.indexing"/>
+    <registryKey defaultValue="2000" description="Amount in milliseconds to wait for completion contributors till decide whether to insert the single item"
+                 key="ide.completion.auto.insert.item.timeout"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>
@@ -1436,11 +1442,13 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter"/>
 
     <advancedSetting id="ide.suppress.double.click.handler" default="false" groupKey="group.advanced.settings.ui"/>
+    <advancedSetting id="ide.newtoolbar.searcheverywhere.hotkey" default="true" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.usages.page.size" default="100" groupKey="group.advanced.settings.find"/>
     <advancedSetting id="bigger.font.in.project.view" default="false" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="editor.comment.line.caret.down" default="true" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.maximize.on.double.click" default="true" groupKey="group.advanced.settings.editor.tabs"/>
     <advancedSetting id="editor.maximize.in.splits.on.double.click" default="false" groupKey="group.advanced.settings.editor.tabs"/>
+    <advancedSetting id="editor.normalize.splits" default="false" groupKey="group.advanced.settings.editor.tabs"/>
 
     <actionOnSaveInfoProvider id="FormatOnSaveInfoProvider"
                               implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveInfoProvider"
@@ -1455,8 +1463,6 @@
     <postStartupActivity implementation="com.intellij.lang.documentation.ide.impl.DocumentationAutoPopup"/>
     <postStartupActivity implementation="com.intellij.codeInsight.documentation.DocumentationSettingsListener"/>
     <lang.documentationLinkResolver implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkResolver"/>
-    <getDataRule key="documentation.targets"
-                 implementationClass="com.intellij.lang.documentation.ide.impl.DocumentationTargetsDataRule"/>
     <projectService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"
                     serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>
   </extensions>

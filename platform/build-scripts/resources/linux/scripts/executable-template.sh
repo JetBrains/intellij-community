@@ -88,6 +88,7 @@ fi
 # ---------------------------------------------------------------------
 # Collect JVM options and IDE properties.
 # ---------------------------------------------------------------------
+IDE_PROPERTIES_PROPERTY=""
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$__product_uc___PROPERTIES"
@@ -120,13 +121,13 @@ fi
 VM_OPTIONS=""
 USER_GC=""
 if [ -n "$USER_VM_OPTIONS_FILE" ]; then
-  egrep -q -e "-XX:\+.*GC" "$USER_VM_OPTIONS_FILE" && USER_GC="yes"
+  grep -E -q -e "-XX:\+.*GC" "$USER_VM_OPTIONS_FILE" && USER_GC="yes"
 fi
-if [ -n "$VM_OPTIONS_FILE" -o -n "$USER_VM_OPTIONS_FILE" ]; then
-  if [ -z "$USER_GC" -o -z "$VM_OPTIONS_FILE" ]; then
-    VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | egrep -v -e "^#.*")
+if [ -n "$VM_OPTIONS_FILE" ] || [ -n "$USER_VM_OPTIONS_FILE" ]; then
+  if [ -z "$USER_GC" ] || [ -z "$VM_OPTIONS_FILE" ]; then
+    VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | grep -E -v -e "^#.*")
   else
-    VM_OPTIONS=$({ egrep -v -e "-XX:\+Use.*GC" "$VM_OPTIONS_FILE"; cat "$USER_VM_OPTIONS_FILE"; } 2> /dev/null | egrep -v -e "^#.*")
+    VM_OPTIONS=$({ grep -E -v -e "-XX:\+Use.*GC" "$VM_OPTIONS_FILE"; cat "$USER_VM_OPTIONS_FILE"; } 2> /dev/null | grep -E -v -e "^#.*")
   fi
 else
   message "Cannot find a VM options file"

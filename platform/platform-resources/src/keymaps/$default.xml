@@ -136,6 +136,9 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control F3"/>
   </action>
+  <action id="FindPrevWordAtCaret">
+    <keyboard-shortcut first-keystroke="control shift F3"/>
+  </action>
   <action id="SelectNextOccurrence">
     <keyboard-shortcut first-keystroke="alt J"/>
   </action>

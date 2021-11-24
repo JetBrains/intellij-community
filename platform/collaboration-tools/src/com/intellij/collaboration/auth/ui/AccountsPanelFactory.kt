@@ -16,7 +16,8 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
@@ -89,7 +90,7 @@ object AccountsPanelFactory {
                                             detailsProvider: AccountsDetailsProvider<A, *>,
                                             disposable: Disposable,
                                             needAddBtnWithDropdown: Boolean,
-                                            defaultAvatarIcon: Icon = EmptyIcon.ICON_16): CellBuilder<JComponent> {
+                                            defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
 
     accountsModel.addCredentialsChangeListener(detailsProvider::reset)
     detailsProvider.loadingStateModel.addListener {
@@ -121,9 +122,10 @@ object AccountsPanelFactory {
       }
     })
 
-    return create(accountsModel, needAddBtnWithDropdown) {
+    val component = create(accountsModel, needAddBtnWithDropdown) {
       SimpleAccountsListCellRenderer(accountsModel, detailsProvider, defaultAvatarIcon)
-    }(grow, push)
+    }
+    return cell(component)
       .onIsModified(::isModified)
       .onReset(::reset)
       .onApply(::apply)
@@ -135,7 +137,7 @@ object AccountsPanelFactory {
                                             detailsProvider: AccountsDetailsProvider<A, *>,
                                             disposable: Disposable,
                                             needAddBtnWithDropdown: Boolean,
-                                            defaultAvatarIcon: Icon = EmptyIcon.ICON_16): CellBuilder<JComponent> {
+                                            defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
 
     accountsModel.addCredentialsChangeListener(detailsProvider::reset)
     detailsProvider.loadingStateModel.addListener {
@@ -171,9 +173,10 @@ object AccountsPanelFactory {
       }
     })
 
-    return create(accountsModel, needAddBtnWithDropdown) {
+    val component = create(accountsModel, needAddBtnWithDropdown) {
       SimpleAccountsListCellRenderer(accountsModel, detailsProvider, defaultAvatarIcon)
-    }(grow, push)
+    }
+    return cell(component)
       .onIsModified(::isModified)
       .onReset(::reset)
       .onApply(::apply)

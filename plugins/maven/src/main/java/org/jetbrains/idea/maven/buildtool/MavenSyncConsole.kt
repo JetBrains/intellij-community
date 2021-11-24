@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.buildtool
 
 import com.intellij.build.BuildProgressListener
@@ -48,6 +48,7 @@ class MavenSyncConsole(private val myProject: Project) {
   private var mySyncId = createTaskId()
   private var finished = false
   private var started = false
+  private var syncTransactionStarted = false
   private var hasErrors = false
   private var hasUnresolved = false
   private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
@@ -166,6 +167,10 @@ class MavenSyncConsole(private val myProject: Project) {
     if (EXIT_CODE_OK == exitCode || EXIT_CODE_SIGTERM == exitCode) doFinish() else doTerminate(exitCode) }
 
   private fun doTerminate(exitCode: Int) {
+    if (syncTransactionStarted) {
+      debugLog("Maven sync: sync transaction is still not finished, postpone build finish event")
+      return
+    }
     val tasks = myStartedSet.toList().asReversed()
     debugLog("Tasks $tasks are not completed! Force complete")
     tasks.forEach { completeTask(it.first, it.second, FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))) }
@@ -284,6 +289,10 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   private fun doFinish() {
+    if (syncTransactionStarted) {
+      debugLog("Maven sync: sync transaction is still not finished, postpone build finish event")
+      return
+    }
     val tasks = myStartedSet.toList().asReversed()
     debugLog("Tasks $tasks are not completed! Force complete")
     tasks.forEach { completeTask(it.first, it.second, DerivedResultImpl()) }
@@ -346,10 +355,6 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
-
-  private fun debugLog(s: String, exception: Throwable? = null) {
-    MavenLog.LOG.debug(s, exception)
-  }
 
   @Synchronized
   private fun completeUmbrellaEvents(keyPrefix: String) = doIfImportInProcess {
@@ -487,6 +492,31 @@ class MavenSyncConsole(private val myProject: Project) {
   companion object {
     val EXIT_CODE_OK = 0
     val EXIT_CODE_SIGTERM = 143
+
+    @ApiStatus.Experimental
+    @JvmStatic
+    fun startTransaction(project: Project) {
+      debugLog("Maven sync: start sync transaction")
+      val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
+      synchronized(syncConsole) {
+        syncConsole.syncTransactionStarted = true
+      }
+    }
+
+    @ApiStatus.Experimental
+    @JvmStatic
+    fun finishTransaction(project: Project) {
+      debugLog("Maven sync: finish sync transaction")
+      val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
+      synchronized(syncConsole) {
+        syncConsole.syncTransactionStarted = false
+        syncConsole.finishImport()
+      }
+    }
+
+    private fun debugLog(s: String, exception: Throwable? = null) {
+      MavenLog.LOG.debug(s, exception)
+    }
   }
 }
 

@@ -6,7 +6,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -17,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -27,7 +27,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.ui.mac.screenmenu.MenuItem;
+import com.intellij.ui.mac.screenmenu.MenuBar;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.*;
@@ -38,10 +38,7 @@ import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
@@ -67,7 +64,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private List<AnAction> myVisibleActions = new ArrayList<>();
   private final MenuItemPresentationFactory myPresentationFactory = new MenuItemPresentationFactory();
   private final TimerListener myTimerListener = new MyTimerListener();
-  protected final Disposable myDisposable = Disposer.newDisposable();
+  protected final CheckedDisposable myDisposable = Disposer.newCheckedDisposable();
 
   @Nullable private final ClockPanel myClockPanel;
   @Nullable private final MyExitFullScreenButton myButton;
@@ -77,11 +74,17 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @NotNull private State myState = State.EXPANDED;
   private double myProgress;
   private boolean myActivated;
-  private final List<ActionMenu> myScreenMenus = Menu.isJbScreenMenuEnabled() ? new ArrayList<>() : null;
+
+  private final MenuBar myScreenMenuPeer = Menu.isJbScreenMenuEnabled() ? new MenuBar("MainMenu") : null;
 
   @NotNull
   public static IdeMenuBar createMenuBar() {
     return SystemInfoRt.isLinux ? new LinuxIdeMenuBar() : new IdeMenuBar();
+  }
+
+  public IdeMenuBar setFrame(@NotNull JFrame frame) {
+    if (myScreenMenuPeer != null) myScreenMenuPeer.setFrame(frame);
+    return this;
   }
 
   protected IdeMenuBar() {
@@ -275,6 +278,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public void addNotify() {
     super.addNotify();
     ActionManagerEx.doWithLazyActionManager(actionManager -> {
+      if (myDisposable.isDisposed()) return;
       doUpdateMenuActions(false, actionManager);
       for (AnAction action : myVisibleActions) {
         if (!(action instanceof ActionGroup)) continue;
@@ -389,33 +393,25 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     myVisibleActions = myNewVisibleActions;
 
     removeAll();
-    List<MenuItem> newScreenMenuItems = null;
-    if (myScreenMenus != null) {
-      myScreenMenus.clear();
-      newScreenMenuItems = new ArrayList<>();
-    }
+    if (myScreenMenuPeer != null) myScreenMenuPeer.beginFill();
+
     boolean isDarkMenu = isDarkMenu();
     for (AnAction action : myVisibleActions) {
-      Menu rootMenuPeer = null;
-      if (newScreenMenuItems != null) newScreenMenuItems.add(rootMenuPeer = new Menu(myPresentationFactory.getPresentation(action).getText(enableMnemonics)));
       ActionMenu actionMenu =
-        new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu,
-                       rootMenuPeer);
+        new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu);
 
       if (IdeFrameDecorator.isCustomDecorationActive()) {
         actionMenu.setOpaque(false);
         actionMenu.setFocusable(false);
       }
 
-      if (myScreenMenus == null)
-        add(actionMenu);
-      else
-        myScreenMenus.add(actionMenu);
+      if (myScreenMenuPeer != null) myScreenMenuPeer.add(actionMenu.getScreenMenuPeer());
+      else add(actionMenu);
     }
 
     myPresentationFactory.resetNeedRebuild();
 
-    if (newScreenMenuItems != null) Menu.refillMainMenu(newScreenMenuItems);
+    if (myScreenMenuPeer != null) myScreenMenuPeer.endFill();
 
     updateGlobalMenuRoots();
     if (myClockPanel != null) {

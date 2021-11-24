@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FocusModeModel
@@ -19,9 +20,12 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
+import javax.swing.UIManager
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -182,18 +186,23 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         get() = metrics.font
 
       init {
-        val editorFont = EditorUtil.getEditorFont()
-        val font = editorFont.deriveFont(fontType, size.toFloat())
+        val useEditorFont = useEditorFont()
+        val font = if (useEditorFont) {
+          val editorFont = EditorUtil.getEditorFont()
+          editorFont.deriveFont(fontType, size.toFloat())
+        } else {
+          val familyName = UIManager.getFont("Label.font").family
+          StartupUiUtil.getFontWithFallback(familyName, fontType, size)
+        }
         val context = getCurrentContext(editor)
         metrics = FontInfo.getFontMetrics(font, context)
         // We assume this will be a better approximation to a real line height for a given font
         lineHeight = ceil(font.createGlyphVector(context, "Ap").visualBounds.height).toInt()
       }
 
-      fun isActual(editor: Editor, size: Int, fontType: Int): Boolean {
+      fun isActual(editor: Editor, size: Int, fontType: Int, familyName: String): Boolean {
         val font = metrics.font
-        val fontName = EditorColorsManager.getInstance().globalScheme.editorFontName
-        if (fontName != font.family || size != font.size || fontType != font.style) return false
+        if (familyName != font.family || size != font.size || fontType != font.style) return false
         val currentContext = getCurrentContext(editor)
         return currentContext.equals(metrics.fontRenderContext)
       }
@@ -212,7 +221,13 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       var metrics = editor.getUserData(HINT_FONT_METRICS)
       val attributes = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
       val fontType = attributes.fontType
-      if (metrics != null && !metrics.isActual(editor, size, fontType)) {
+      val familyName = if (useEditorFont()) {
+        EditorColorsManager.getInstance().globalScheme.editorFontName
+      }
+      else {
+        UIUtil.getLabelFont().family
+      }
+      if (metrics != null && !metrics.isActual(editor, size, fontType, familyName)) {
         metrics = null
       }
       if (metrics == null) {
@@ -221,6 +236,8 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       }
       return metrics
     }
+
+    private fun useEditorFont() = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
 
     private fun getFont(editor: Editor): Font {
       return getFontMetrics(editor).font

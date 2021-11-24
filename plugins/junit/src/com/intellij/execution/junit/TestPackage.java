@@ -189,10 +189,8 @@ public class TestPackage extends TestObject {
                                            Condition<? super PsiClass> acceptClassCondition,
                                            Set<Location<?>> classes) throws CantRunException {
     PsiPackage aPackage = getPackage(getConfiguration().getPersistentData());
-    if (aPackage != null) {
-      GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
-      collectClassesRecursively(aPackage, scope, acceptClassCondition, classes);
-    }
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
+    collectClassesRecursively(aPackage, scope, acceptClassCondition, classes);
   }
 
   private static void collectClassesRecursively(PsiPackage aPackage,
@@ -267,6 +265,7 @@ public class TestPackage extends TestObject {
     return ReadAction.compute(() -> PackageScope.packageScope(getPackage(data), true));
   }
 
+  @NotNull
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
     final String packageName = data.getPackageName();
     final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);

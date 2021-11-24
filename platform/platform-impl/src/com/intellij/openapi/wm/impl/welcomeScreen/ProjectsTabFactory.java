@@ -220,7 +220,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
 
   @Override
   public boolean isApplicable() {
-    return !PlatformUtils.isPyCharmDs();
+    return !PlatformUtils.isDataSpell();
   }
 
   private static @NotNull DnDNativeTarget createDropFileTarget() {

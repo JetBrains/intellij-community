@@ -103,7 +103,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                   statusBar :
                   getStatusBar(window.getOwner());
 
-    updatePluginDependencies(null);
+    updatePluginDependencies();
   }
 
   private static @Nullable StatusBarEx getStatusBar(@Nullable Window frame) {
@@ -124,9 +124,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
    * @return true if changes were applied without restart
    */
   public boolean apply(@Nullable JComponent parent) throws ConfigurationException {
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
-    updatePluginDependencies(pluginIdMap);
-    assertCanApply(pluginIdMap);
+    updatePluginDependencies();
+    assertCanApply();
 
     PluginEnabler pluginEnabler = PluginEnabler.getInstance();
     DynamicPluginEnablerState pluginEnablerState = pluginEnabler instanceof DynamicPluginEnabler ?
@@ -1085,7 +1084,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   @Override
-  protected void updatePluginDependencies(@Nullable Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+  protected void updatePluginDependencies() {
     myDependentToRequiredListMap.clear();
 
     InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
@@ -1097,13 +1096,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         continue;
       }
 
-      if (pluginIdMap == null) {
-        pluginIdMap = PluginManagerCore.buildPluginIdMap();
-      }
-
       boolean loaded = isLoaded(pluginId);
       if (rootDescriptor instanceof IdeaPluginDescriptorImpl) {
-        PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, (depId, __) -> {
+        PluginManagerCore.processAllNonOptionalDependencyIds((IdeaPluginDescriptorImpl)rootDescriptor, depId -> {
           if (depId.equals(pluginId)) {
             return FileVisitResult.CONTINUE;
           }
@@ -1133,7 +1128,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return myDependentToRequiredListMap.getOrDefault(pluginId, Set.of());
   }
 
-  private void assertCanApply(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) throws ConfigurationException {
+  private void assertCanApply() throws ConfigurationException {
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     List<IdeaPluginDescriptorImpl> descriptors = new ArrayList<>();
     for (Map.Entry<PluginId, Set<PluginId>> entry : myDependentToRequiredListMap.entrySet()) {
       PluginId pluginId = entry.getKey();
@@ -1160,7 +1156,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       String message = IdeBundle.message("dialog.message.unable.to.apply.changes",
                                          pluginNames.size(),
                                          joinPluginNamesOrIds(pluginNames));
-      throw new ConfigurationException(XmlStringUtil.wrapInHtml(message));
+      throw new ConfigurationException(XmlStringUtil.wrapInHtml(message)).withHtmlMessage();
     }
   }
 
@@ -1198,24 +1194,22 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   // todo move from the class
   public static @NotNull List<IdeaPluginDescriptorImpl> getDependents(@NotNull IdeaPluginDescriptor rootDescriptor,
-                                                                      @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
                                                                       @NotNull ApplicationInfoEx applicationInfo) {
+    PluginSet pluginSet = PluginManagerCore.getPluginSet();
     PluginId rootId = rootDescriptor.getPluginId();
 
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
-    for (Map.Entry<PluginId, IdeaPluginDescriptorImpl> entry : pluginIdMap.entrySet()) {
-      PluginId pluginId = entry.getKey();
-      IdeaPluginDescriptorImpl descriptor = entry.getValue();
+    for (IdeaPluginDescriptorImpl descriptor : pluginSet.allPlugins) {
+      PluginId pluginId = descriptor.getPluginId();
 
       if (pluginId.equals(rootId) ||
           applicationInfo.isEssentialPlugin(pluginId) ||
-          descriptor == null ||
           !descriptor.isEnabled() ||
           isHidden(descriptor)) {
         continue;
       }
 
-      PluginManagerCore.processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
+      PluginManagerCore.processAllNonOptionalDependencies(descriptor, dependency -> {
         if (dependency.getPluginId().equals(rootId)) {
           result.add(descriptor);
           return FileVisitResult.TERMINATE;

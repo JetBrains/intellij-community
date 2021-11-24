@@ -2,9 +2,12 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.ListEditForm
@@ -20,7 +23,8 @@ import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDepen
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsFor
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsAsync
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.NotifyingOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
@@ -121,7 +125,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 val targetModules = TargetModules.One(moduleModel)
                 val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
 
-                val packageOperations = project.lifecycleScope.computeActionsFor(
+                val packageOperations = project.lifecycleScope.computeActionsAsync(
                     packageModel = packageUpdateInfo.packageModel,
                     targetModules = targetModules,
                     knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules),
@@ -134,23 +138,35 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                     return@parallelForEach
                 }
 
+                val operations = packageOperations.primaryOperations.await()
+
                 problemsHolder.registerProblem(
                     versionElement,
                     PackageSearchBundle.message(
                         "packagesearch.inspection.upgrade.description",
+                        identifier.rawValue,
                         packageUpdateInfo.targetVersion.originalVersion.displayName
                     ),
-                    PackageSearchDependencyUpgradeQuickFix(
+                    LocalQuickFixOnPsiElement(
                         element = versionElement,
-                        identifier = identifier,
-                        targetVersion = packageUpdateInfo.targetVersion.originalVersion,
-                        operations = packageOperations.primaryOperations.await()
-                    ),
-                    LocalQuickFix(
-                        PackageSearchBundle.message(
-                            "packagesearch.quickfix.upgrade.exclude",
+                        familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.family"),
+                        text = PackageSearchBundle.message(
+                            "packagesearch.quickfix.upgrade.action",
+                            identifier.rawValue,
+                            packageUpdateInfo.targetVersion.originalVersion
+                        ),
+                        isHighPriority = true
+                    ) {
+                        NotifyingOperationExecutor(this).executeOperations(operations)
+                    },
+                    LocalQuickFixOnPsiElement(
+                        element = versionElement,
+                        familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.exclude.family"),
+                        text = PackageSearchBundle.message(
+                            "packagesearch.quickfix.upgrade.exclude.action",
                             identifier.rawValue
-                        )
+                        ),
+                        isHighPriority = false
                     ) {
                         excludeList.add(identifier.rawValue)
                         ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
@@ -178,7 +194,20 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
 }
 
-internal fun LocalQuickFix(@Nls familyName: String, action: Project.(ProblemDescriptor) -> Unit) = object : LocalQuickFix {
+internal fun LocalQuickFixOnPsiElement(
+    element: PsiElement,
+    @Nls familyName: String,
+    @Nls text: String,
+    isHighPriority: Boolean,
+    action: Project.() -> Unit
+): LocalQuickFix = if (isHighPriority) object : LocalQuickFixOnPsiElement(element), HighPriorityAction {
     override fun getFamilyName() = familyName
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) = project.action(descriptor)
+    override fun getText() = text
+    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
+        project.action()
+} else object : LocalQuickFixOnPsiElement(element), LowPriorityAction {
+    override fun getFamilyName() = familyName
+    override fun getText() = text
+    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
+        project.action()
 }

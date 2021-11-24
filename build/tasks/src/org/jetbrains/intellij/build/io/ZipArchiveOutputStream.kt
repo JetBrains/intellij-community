@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.io
 
 import com.intellij.util.io.Murmur3_32Hash
 import it.unimi.dsi.fastutil.ints.IntArrayList
-import java.io.Closeable
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -13,11 +12,12 @@ import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.util.zip.ZipEntry
 
-internal class ZipArchiveOutputStream(private val channel: WritableByteChannel, private val withOptimizedMetadataEnabled: Boolean) : Closeable {
+internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
+                                      private val withOptimizedMetadataEnabled: Boolean) : AutoCloseable {
   private var finished = false
   private var entryCount = 0
 
-  private val metadataBuffer = ByteBuffer.allocateDirect(12 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
+  private var metadataBuffer = ByteBuffer.allocateDirect(2 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
   // 1 MB should be enough for end of central directory record
   private val buffer = ByteBuffer.allocateDirect(1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
 
@@ -162,37 +162,102 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel, 
     val centralDirectoryLength = metadataBuffer.limit()
     writeBuffer(metadataBuffer)
 
-    // write end of central directory record (EOCD)
     buffer.clear()
-    buffer.putInt(0x06054b50)
-    // write 0 to clear reused buffer content
-    // number of this disk (short), disk where central directory starts (short)
-    buffer.putInt(0)
-    // number of central directory records on this disk
-    val shortEntryCount = (entryCount.coerceAtMost(0xffff) and 0xffff).toShort()
-    buffer.putShort(shortEntryCount)
-    // total number of central directory records
-    buffer.putShort(shortEntryCount)
-    buffer.putInt(centralDirectoryLength)
-    // Offset of start of central directory, relative to start of archive
-    buffer.putInt((centralDirectoryOffset and 0xffffffffL).toInt())
+    if (entryCount < 65_535) {
+      // write end of central directory record (EOCD)
+      buffer.clear()
+      buffer.putInt(0x06054b50)
+      // write 0 to clear reused buffer content
+      // number of this disk (short), disk where central directory starts (short)
+      buffer.putInt(0)
+      // number of central directory records on this disk
+      val shortEntryCount = (entryCount.coerceAtMost(0xffff) and 0xffff).toShort()
+      buffer.putShort(shortEntryCount)
+      // total number of central directory records
+      buffer.putShort(shortEntryCount)
+      buffer.putInt(centralDirectoryLength)
+      // Offset of start of central directory, relative to start of archive
+      buffer.putInt((centralDirectoryOffset and 0xffffffffL).toInt())
 
-    // comment length
-    if (withOptimizedMetadataEnabled) {
-      buffer.putShort(1 + 4 + 4)
-      // version
-      buffer.put(1)
-      buffer.putInt(sizes.size)
-      buffer.putInt(optimizedMetadataOffset)
+      // comment length
+      if (withOptimizedMetadataEnabled) {
+        buffer.putShort(1 + 4 + 4)
+        // version
+        buffer.put(1)
+        buffer.putInt(sizes.size)
+        buffer.putInt(optimizedMetadataOffset)
+      }
+      else {
+        buffer.putShort(0)
+      }
     }
     else {
-      buffer.putShort(0)
+      writeZip64End(centralDirectoryLength, centralDirectoryOffset, optimizedMetadataOffset)
     }
-
     buffer.flip()
     writeBuffer(buffer)
 
     finished = true
+  }
+
+  private fun writeZip64End(centralDirectoryLength: Int, centralDirectoryOffset: Long, optimizedMetadataOffset: Int) {
+    val eocd64Position = channelPosition
+
+    buffer.putInt(0x06064b50)
+    // size of - will be written later
+    val eocdSizePosition = buffer.position()
+    buffer.position(eocdSizePosition + Long.SIZE_BYTES)
+    // Version made by
+    buffer.putShort(0)
+    // Version needed to extract (minimum)
+    buffer.putShort(0)
+    // Number of this disk
+    buffer.putInt(0)
+    // Disk where central directory starts
+    buffer.putInt(0)
+    // Number of central directory records on this disk
+    buffer.putLong(entryCount.toLong())
+    // Total number of central directory records
+    buffer.putLong(entryCount.toLong())
+    // Size of central directory (bytes)
+    buffer.putLong(centralDirectoryLength.toLong())
+    // Offset of start of central directory, relative to start of archive
+    buffer.putLong(centralDirectoryOffset)
+
+    // comment length
+    if (withOptimizedMetadataEnabled) {
+      // version
+      buffer.put(1)
+      buffer.putInt(optimizedMetadataOffset)
+    }
+
+    buffer.putLong(eocdSizePosition, (buffer.position() - 12).toLong())
+
+    // Zip64 end of central directory locator
+    buffer.putInt(0x07064b50)
+    // number of the disk with the start of the zip64 end of central directory
+    buffer.putInt(0)
+    // relative offset of the zip64 end of central directory record
+    buffer.putLong(eocd64Position)
+    // total number of disks
+    buffer.putInt(0)
+
+    // write EOCD (EOCD is required even if we write EOCD64)
+    buffer.putInt(0x06054b50)
+    // number of this disk (short)
+    buffer.putShort(0xffff.toShort())
+    // disk where central directory starts (short)
+    buffer.putShort(0xffff.toShort())
+    // number of central directory records on this disk
+    buffer.putShort(0xffff.toShort())
+    // total number of central directory records
+    buffer.putShort(0xffff.toShort())
+    // Size of central directory (bytes) (or 0xffffffff for ZIP64)
+    buffer.putInt(0xffffffff.toInt())
+    // Offset of start of central directory, relative to start of archive
+    buffer.putInt(0xffffffff.toInt())
+    // comment length
+    buffer.putShort(0)
   }
 
   internal fun getChannelPositionAndAdd(increment: Int): Long {
@@ -224,15 +289,29 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel, 
   }
 
   override fun close() {
-    if (!finished) {
-      channel.use {
-        finish()
+    try {
+      if (!finished) {
+        channel.use {
+          finish()
+        }
       }
+    }
+    finally {
+      unmapBuffer(metadataBuffer)
+      unmapBuffer(buffer)
     }
   }
 
   private fun writeCentralFileHeader(size: Int, compressedSize: Int, method: Int, crc: Long, name: ByteArray, offset: Long, dataOffset: Int) {
-    val buffer = metadataBuffer
+    var buffer = metadataBuffer
+    if (buffer.remaining() < (46 + name.size)) {
+      metadataBuffer = ByteBuffer.allocateDirect(buffer.capacity() * 2).order(ByteOrder.LITTLE_ENDIAN)
+      buffer.flip()
+      metadataBuffer.put(buffer)
+      unmapBuffer(buffer)
+      buffer = metadataBuffer
+    }
+
     val headerOffset = buffer.position()
     buffer.putInt(headerOffset, 0x02014b50)
     // compression method
@@ -274,7 +353,7 @@ private fun computeTableIndexes(names: List<ByteArray>): IntArray {
         indexToName[index] = name
         break
       }
-      else if (name.contentEquals(indexToName[index])) {
+      else if (name.contentEquals(found)) {
         indexes[entryIndex] = index
         break
       }

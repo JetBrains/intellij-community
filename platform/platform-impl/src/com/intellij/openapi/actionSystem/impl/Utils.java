@@ -28,7 +28,6 @@ import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
@@ -148,6 +147,8 @@ public final class Utils extends DataContextUtils {
 
   }
 
+  private static int ourExpandActionGroupImplEDTLoopLevel;
+
   private static @NotNull List<AnAction> expandActionGroupImpl(boolean isInModalContext,
                                                                @NotNull ActionGroup group,
                                                                @NotNull PresentationFactory presentationFactory,
@@ -173,11 +174,19 @@ public final class Utils extends DataContextUtils {
           return list;
         }
       }
+      int maxLoops = Math.max(2, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20));
+      if (ourExpandActionGroupImplEDTLoopLevel >= maxLoops) {
+        LOG.warn("Maximum number of recursive EDT loops reached (" + maxLoops +") at '" + place + "'");
+        if (onProcessed != null) onProcessed.run();
+        ActionUpdater.cancelAllUpdates("recursive EDT loops limit reached at '" + place + "'");
+        throw new ProcessCanceledException();
+      }
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = expander.expandActionGroupAsync(
         project, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
       try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
+        ourExpandActionGroupImplEDTLoopLevel++;
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -188,6 +197,9 @@ public final class Utils extends DataContextUtils {
             queue.dispatchEvent(event);
           }
         });
+      }
+      finally {
+        ourExpandActionGroupImplEDTLoopLevel--;
       }
       if (promise.isCancelled()) {
         // to avoid duplicate "Nothing Here" items in menu bar
@@ -341,16 +353,16 @@ public final class Utils extends DataContextUtils {
       }
       else if (action instanceof ActionGroup &&
                !Boolean.TRUE.equals(presentation.getClientProperty("actionGroup.perform.only"))) {
-        Menu submenuPeer = nativePeer != null ? (Menu)nativePeer.add(new Menu(presentation.getText(enableMnemonics))) : null;
-        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons, submenuPeer);
+        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
+        if (nativePeer != null) nativePeer.add(menu.getScreenMenuPeer());
       }
       else {
-        MenuItem menuItemPeer = nativePeer != null ? nativePeer.add(new MenuItem()) : null;
-        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons, menuItemPeer);
+        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons);
         component.add(each);
         children.add(each);
+        if (nativePeer != null) nativePeer.add(each.getScreenMenuItemPeer());
       }
     }
 
@@ -462,6 +474,8 @@ public final class Utils extends DataContextUtils {
     return updater;
   }
 
+  private static boolean ourInUpdateSessionForInputEventEDTLoop;
+
   @ApiStatus.Internal
   public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull InputEvent inputEvent,
                                                               @NotNull DataContext dataContext,
@@ -473,6 +487,10 @@ public final class Utils extends DataContextUtils {
     ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
     if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
       LOG.error("Actions cannot be updated when write-action is running or pending");
+      return null;
+    }
+    if (ourInUpdateSessionForInputEventEDTLoop) {
+      LOG.warn("Recursive shortcut processing invocation is ignored");
       return null;
     }
     long start = System.currentTimeMillis();
@@ -532,11 +550,17 @@ public final class Utils extends DataContextUtils {
           promise.setError(e);
         }
       });
-      result = runLoopAndWaitForFuture(promise, null, false, () -> {
-        Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
-        if (runnable != null) runnable.run();
-        if (parentIndicator != null) parentIndicator.checkCanceled();
-      });
+      try {
+        ourInUpdateSessionForInputEventEDTLoop = true;
+        result = runLoopAndWaitForFuture(promise, null, false, () -> {
+          Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
+          if (runnable != null) runnable.run();
+          if (parentIndicator != null) parentIndicator.checkCanceled();
+        });
+      }
+      finally {
+        ourInUpdateSessionForInputEventEDTLoop = false;
+      }
     }
     else {
       result = function.apply(actionUpdater.asUpdateSession());
@@ -600,6 +624,7 @@ public final class Utils extends DataContextUtils {
         lastCancellation = ex;
         String reasonStr = ex.reason instanceof String ? (String)ex.reason : "";
         if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
+          if (expire.getAsBoolean()) return;
           continue;
         }
         throw ex;
@@ -607,7 +632,6 @@ public final class Utils extends DataContextUtils {
       catch (Throwable ex) {
         ExceptionUtil.rethrow(ex);
       }
-      if (expire.getAsBoolean()) return;
     }
     if (retries > 1) {
       LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);

@@ -69,6 +69,10 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     override fun getGroupName(): String = moduleType.name
     override fun isTemplateBased(): Boolean = false
 
+    override fun getWeight(): Int {
+        return ModuleBuilder.KOTLIN_WEIGHT
+    }
+
     companion object {
         const val MODULE_BUILDER_ID = "kotlin.newProjectWizard.builder"
         private val projectNameValidator = StringValidators.shouldBeValidIdentifier("Project name", setOf('-', '_'))

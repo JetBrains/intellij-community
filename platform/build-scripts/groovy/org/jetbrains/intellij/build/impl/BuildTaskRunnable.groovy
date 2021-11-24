@@ -6,53 +6,20 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 
 import java.util.function.Consumer
-import java.util.function.Function
-import java.util.function.Supplier
 
 @CompileStatic
-abstract class BuildTaskRunnable<T> {
+final class BuildTaskRunnable {
   final @NotNull String stepId
   final @NotNull String stepMessage
+  final Consumer<BuildContext> task
 
-  protected BuildTaskRunnable(@NotNull String stepId, @NotNull String stepMessage) {
+  BuildTaskRunnable(@NotNull String stepId, @NotNull String stepMessage, @NotNull Consumer<BuildContext> task) {
     this.stepId = stepId
     this.stepMessage = stepMessage
+    this.task = task
   }
 
-  static <T> BuildTaskRunnable<T> taskWithResult(@NotNull String name, @NotNull Function<BuildContext, T> task) {
-    return new BuildTaskRunnable<T>(name, name) {
-      @Override
-      T execute(BuildContext context) {
-        return task.apply(context)
-      }
-    }
+  static BuildTaskRunnable task(@NotNull String name, @NotNull Consumer<BuildContext> task) {
+    return new BuildTaskRunnable(name, name, task)
   }
-
-  static BuildTaskRunnable<Void> task(@NotNull String name, @NotNull Consumer<BuildContext> task) {
-    return new BuildTaskRunnable<Void>(name, name) {
-      @Override
-      Void execute(BuildContext context) {
-        task.accept(context)
-        return null
-      }
-    }
-  }
-
-  static BuildTaskRunnable<Void> task(@NotNull String stepId, @NotNull String stepMessage, @NotNull Consumer<BuildContext> task) {
-    return new BuildTaskRunnable<Void>(stepId, stepMessage) {
-      @Override
-      Void execute(BuildContext context) {
-        context.messages.block(stepMessage, new Supplier<Void>() {
-          @Override
-          Void get() {
-            task.accept(context)
-            return null
-          }
-        })
-        return null
-      }
-    }
-  }
-
-  abstract T execute(BuildContext context)
 }

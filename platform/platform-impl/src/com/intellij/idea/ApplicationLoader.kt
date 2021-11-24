@@ -8,10 +8,7 @@ import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginSet
-import com.intellij.ide.plugins.StartupAbortedException
+import com.intellij.ide.plugins.*
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -186,6 +183,8 @@ private fun startApp(app: ApplicationImpl,
       addActivateAndWindowsCliListeners()
       initAppActivity.end()
 
+      PluginManagerMain.checkThirdPartyPluginsAllowed()
+
       if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
         starter.main(args)
         // no need to use pool once plugins are loaded
@@ -345,7 +344,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 
 /**
  * The method looks for `-Dkey=value` program arguments and stores some of them in system properties.
- * We should use it for a limited number of safe keys; one of them is a list of IDs of required plugins.
+ * We should use it for a limited number of safe keys; one of them is a list of required plugins.
  *
  * @see SAFE_JAVA_ENV_PARAMETERS
  */

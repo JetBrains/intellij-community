@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -26,6 +27,7 @@ public class JavaIconTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testOnlyOneIconForLockedJavaClass() throws IOException {
+    if (!Registry.is("ide.locked.icon.enabled", false)) return;
     PsiFile psiFile = myFixture.configureByText("a.java", "class A {}");
     VirtualFile file = myFixture.getFile().getVirtualFile();
     setFileWritable(file, false);

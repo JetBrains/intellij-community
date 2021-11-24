@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
@@ -27,7 +28,7 @@ class InlayHintsPass(
   private val rootElement: PsiElement,
   private val enabledCollectors: List<CollectorWithSettings<out Any>>,
   private val editor: Editor
-) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
+) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
   private var allHints: HintsBuffer? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {

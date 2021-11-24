@@ -80,7 +80,6 @@ class LessonManager {
   private fun stopLesson(lessonPassed: Boolean) {
     shownRestoreNotification = null
     currentLessonExecutor?.takeIf { !it.hasBeenStopped }?.let {
-      it.lesson.onStop(it.project, lessonPassed)
       it.stopLesson()
       currentLessonExecutor = null
     }
@@ -129,6 +128,14 @@ class LessonManager {
 
   fun removeMessage(index: Int) {
     learnPanel?.removeMessage(index)
+  }
+
+  fun removeMessageAndRepaint(index: Int) {
+    learnPanel?.let {
+      it.removeMessage(index)
+      it.lessonMessagePane.redrawMessages()
+      it.adjustMessagesArea()
+    }
   }
 
   fun messagesNumber(): Int = learnPanel?.messagesNumber() ?: 0

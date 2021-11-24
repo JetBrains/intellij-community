@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -10,6 +12,8 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 
 public final class ModalityStateEx extends ModalityState {
@@ -23,7 +27,8 @@ public final class ModalityStateEx extends ModalityState {
     myModalEntities.addAll(modalEntities);
   }
 
-  @NotNull List<Object> getModalEntities() {
+  @NotNull
+  private List<@NotNull Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
@@ -33,28 +38,44 @@ public final class ModalityStateEx extends ModalityState {
   }
 
   @NotNull ModalityStateEx appendEntity(@NotNull Object anEntity){
-    List<Object> modalEntities = getModalEntities();
+    List<@NotNull Object> modalEntities = getModalEntities();
     List<Object> list = new ArrayList<>(modalEntities.size() + 1);
     list.addAll(modalEntities);
     list.add(anEntity);
     return new ModalityStateEx(list);
   }
 
-  void forceModalEntities(List<Object> entities) {
+  void forceModalEntities(@NotNull ModalityStateEx other) {
+    List<@NotNull Object> otherEntities = other.getModalEntities();
     myModalEntities.clear();
-    myModalEntities.addAll(entities);
+    myModalEntities.addAll(otherEntities);
   }
 
   @Override
   public boolean dominates(@NotNull ModalityState anotherState){
-    if (anotherState == ModalityState.any()) return false;
+    if (anotherState == this || anotherState == ModalityState.any()) return false;
     if (myModalEntities.isEmpty()) return false;
-
-    List<Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
+    
+    List<@NotNull Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
     for (Object entity : getModalEntities()) {
       if (!otherEntities.contains(entity) && !ourTransparentEntities.contains(entity)) return true; // I have entity which is absent in anotherState
     }
     return false;
+  }
+
+  void cancelAllEntities() {
+    for (Object entity : myModalEntities) {
+      // DialogWrapperDialog is not accessible here
+      if (entity instanceof Dialog) {
+        ((Dialog)entity).setVisible(false);
+        if (entity instanceof Disposable) {
+          Disposer.dispose((Disposable)entity);
+        }
+      }
+      else if (entity instanceof ProgressIndicator) {
+        ((ProgressIndicator)entity).cancel();
+      }
+    }
   }
 
   @NonNls
@@ -69,13 +90,14 @@ public final class ModalityStateEx extends ModalityState {
   }
 
   void markTransparent() {
-    Object element = ContainerUtil.getLastItem(getModalEntities(), null);
-    if (element != null) {
-      ourTransparentEntities.add(element);
-    }
+    ContainerUtil.addIfNotNull(ourTransparentEntities, ContainerUtil.getLastItem(getModalEntities()));
   }
 
   static void unmarkTransparent(@NotNull Object modalEntity) {
     ourTransparentEntities.remove(modalEntity);
+  }
+
+  boolean contains(@NotNull Object modalEntity) {
+    return getModalEntities().contains(modalEntity);
   }
 }

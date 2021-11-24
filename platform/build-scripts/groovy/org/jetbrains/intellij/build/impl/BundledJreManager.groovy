@@ -10,7 +10,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -67,39 +66,41 @@ final class BundledJreManager {
                                             .setAttribute("os", os.osName)
                                             .setAttribute("destination", destinationDir.toString())) {
       NioFiles.deleteRecursively(destinationDir)
-      untar(archive, destinationDir, context)
+      unTar(archive, destinationDir, context)
       fixJbrPermissions(destinationDir, os == OsFamily.WINDOWS)
     }
   }
 
-  Path findJreArchive(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    String build = buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}_${getJBRArchSuffix(arch)}")
+  Path findJreArchive(OsFamily os, JvmArchitecture arch) {
+    String jreBuild = buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}_${getJBRArchSuffix(arch)}")
       ?: buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}")
-                     ?: jreBuild
-    return findArchive(os, build, arch)
-  }
+                        ?: jreBuild
 
-  @Nullable
-  private Path findArchive(OsFamily os, String jreBuild, JvmArchitecture arch) {
-    String archiveName = jbrArchiveName(jreBuild, buildContext.options.bundledJreVersion, arch, os)
     //noinspection SpellCheckingInspection
     Path jreDir = buildContext.paths.communityHomeDir.resolve("build/dependencies/build/jbre")
-    Path jreArchive = jreDir.resolve(archiveName)
-    if (Files.isRegularFile(jreArchive)) {
+    Path jreArchive = jreDir.resolve(jbrArchiveName(jreBuild, buildContext.options.bundledJreVersion, arch, os, buildContext))
+    if (Files.exists(jreArchive)) {
       return jreArchive
     }
 
-    String errorMessage = "Cannot extract $os.osName JRE: file $jreArchive is not found (${jreDir.toFile().listFiles()})"
+    List<String> existingFiles = jreDir.toFile().listFiles().collect { jreDir.relativize(it.toPath()).toString() }
     if (buildContext.options.isInDevelopmentMode) {
-      buildContext.messages.warning(errorMessage)
+      buildContext.messages.warning("Cannot extract $os.osName JRE: file $jreArchive is not found (${ existingFiles})")
     }
     else {
-      buildContext.messages.error(errorMessage)
+      RuntimeException error = new RuntimeException("cannot extract JRE")
+      Span.current().recordException(error, Attributes.of(
+        AttributeKey.stringKey("os"), os.osName,
+        AttributeKey.stringKey("arch"), arch.name(),
+        AttributeKey.stringKey("archiveName"), jreArchive.fileName.toString(),
+        AttributeKey.stringArrayKey("existingFiles"), existingFiles,
+        ))
+      throw error
     }
     return null
   }
 
-  private static void untar(Path archive, Path destination, BuildContext context) {
+  private static void unTar(Path archive, Path destination, BuildContext context) {
     // CompressorStreamFactory requires input stream with mark support
     String rootDir = createTarGzInputStream(archive).withCloseable {
       it.nextTarEntry?.name
@@ -174,7 +175,7 @@ final class BundledJreManager {
    *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
   */
   @SuppressWarnings('SpellCheckingInspection')
-  private String jbrArchiveName(String jreBuild, int version, JvmArchitecture arch, OsFamily os) {
+  private static String jbrArchiveName(String jreBuild, int version, JvmArchitecture arch, OsFamily os, BuildContext buildContext) {
     String update, build
     String[] split = jreBuild.split('b')
     if (split.length > 2) {
@@ -193,7 +194,7 @@ final class BundledJreManager {
 
     String prefix
     if (buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
-      prefix = 'jbr-'
+      prefix = "jbr-"
     }
     else if (buildContext.options.bundledJrePrefix != null) {
       prefix = buildContext.options.bundledJrePrefix
@@ -202,8 +203,8 @@ final class BundledJreManager {
       prefix = "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"
     }
 
-    def archSuffix = getJBRArchSuffix(arch)
-    "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
+    String archSuffix = getJBRArchSuffix(arch)
+    return "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
   }
 
   private static String getJBRArchSuffix(JvmArchitecture arch) {

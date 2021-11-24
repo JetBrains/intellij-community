@@ -3,19 +3,19 @@
   "fixed": false,
   "ui": [
     {
-      "key": "BookmarkIcon.background",
+      "key": "Bookmark.iconBackground",
       "description": "The background of the default bookmark icon."
     },
     {
-      "key": "BookmarkMnemonicIcon.foreground",
+      "key": "Bookmark.Mnemonic.iconForeground",
       "description": "The text color on the bookmark icon with mnemonic."
     },
     {
-      "key": "BookmarkMnemonicIcon.background",
+      "key": "Bookmark.Mnemonic.iconBackground",
       "description": "The background of the bookmark icon with mnemonic."
     },
     {
-      "key": "BookmarkMnemonicIcon.borderColor",
+      "key": "Bookmark.Mnemonic.iconBorderColor",
       "description": "The border color of the bookmark icon with mnemonic."
     },
     {
@@ -539,6 +539,31 @@
     {
       "key": "Notification.foreground",
       "description": "Color of the text in notification balloon"
+    },
+    {
+      "key": "Notification.linkForeground",
+      "description": "Color of link actions in the notification."
+    },
+    {
+      "key": "Notification.arc",
+      "description": "Notification border corners radius"
+    },
+    {
+      "key": "Notification.borderInsets",
+      "description": "Top/Left/Bottom/Right insets of the notification"
+    },
+    {
+      "key": "Notification.iconOffsetSize",
+      "description": "Width/HorizontalOffset: Width for icon component, HorizontalOffset horizontal X for start icon"
+    },
+    {
+      "key": "Notification.titleContentInset"
+    },
+    {
+      "key": "Notification.contentActionsInset"
+    },
+    {
+      "key": "Notification.titleActionsInset"
     },
     {
       "key": "Notification.MoreButton.background",

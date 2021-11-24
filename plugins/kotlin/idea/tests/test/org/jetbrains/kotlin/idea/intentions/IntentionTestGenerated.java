@@ -8514,6 +8514,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertToScope/convertToRun/callExpression2.kt");
             }
 
+            @TestMetadata("insideLambdaExpression.kt")
+            public void testInsideLambdaExpression() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToRun/insideLambdaExpression.kt");
+            }
+
             @TestMetadata("itReceiver.kt")
             public void testItReceiver() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToRun/itReceiver.kt");
@@ -8720,6 +8725,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("package.kt")
             public void testPackage() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToWith/package.kt");
+            }
+
+            @TestMetadata("parameterExpression.kt")
+            public void testParameterExpression() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToWith/parameterExpression.kt");
             }
 
             @TestMetadata("singleCall.kt")

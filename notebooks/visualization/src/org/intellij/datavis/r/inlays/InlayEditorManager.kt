@@ -74,7 +74,7 @@ class EditorInlaysManager(val project: Project, private val editor: EditorImpl, 
     restoreToolbars().onSuccess { restoreOutputs() }
     onCaretPositionChanged()
     ApplicationManager.getApplication().invokeLater {
-      if (Disposer.isDisposed(editor.disposable)) return@invokeLater
+      if (editor.isDisposed) return@invokeLater
       updateInlayComponentsWidth()
     }
   }
@@ -93,7 +93,7 @@ class EditorInlaysManager(val project: Project, private val editor: EditorImpl, 
     if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return result.apply { set(Unit) }
     ApplicationManager.getApplication().invokeLater {
       try {
-        if (Disposer.isDisposed(editor.disposable)) {
+        if (editor.isDisposed) {
           result.set(Unit)
           return@invokeLater
         }
@@ -161,7 +161,7 @@ class EditorInlaysManager(val project: Project, private val editor: EditorImpl, 
 
   private fun updateInlaysForViewport() {
     invokeLater {
-      if (Disposer.isDisposed(editor.disposable)) return@invokeLater
+      if (editor.isDisposed) return@invokeLater
       val viewportRange = calculateViewportRange(editor)
       val expansionRange = calculateInlayExpansionRange(editor, viewportRange)
       for (element in inlayElements) {

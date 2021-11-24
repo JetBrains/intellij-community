@@ -115,7 +115,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
     final JButton additionalAction;
-    if (Experiments.getInstance().isFeatureEnabled("add.python.interpreter.dialog.on.targets")) {
+    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
       additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
                                             link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
     }

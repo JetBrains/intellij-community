@@ -50,6 +50,7 @@ import com.intellij.ui.popup.PopupOwner;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -109,7 +110,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     installPopupHandler(this, -1);
     setOpaque(false);
-    if (!docked && StartupUiUtil.isUnderDarcula()) {
+    if (!ExperimentalUI.isNewUI() && !docked && StartupUiUtil.isUnderDarcula()) {
       setBorder(new LineBorder(Gray._120, 1));
     }
     myUpdateQueue.queueModelUpdateFromFocus();
@@ -866,7 +867,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(this);
       panel.setOpaque(true);
-      panel.setBackground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_BACKGROUND: UIUtil.getListBackground());
+
+      if (ExperimentalUI.isNewUI()) {
+        panel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.StatusBar.Breadcrumbs.floatingBorderInsets()));
+        panel.setBackground(JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_BACKGROUND);
+      }
+      else {
+        panel.setBackground(UIUtil.getListBackground());
+      }
 
       myHint = new LightweightHint(panel) {
         @Override

@@ -17,4 +17,7 @@ class Main {
         System.out.println("It is friend. But I have a ${1} here");
         System.out.println("The path is ../data/test.avi");
     }
+
+    String gitCherryPickPattern = "(cherry picked from "; // hard-coding the string git outputs
+    String nonGitCherryPick = "I'd like to <warning descr="EN_COMPOUNDS">cherry pick</warning> this";
 }

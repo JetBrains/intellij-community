@@ -501,6 +501,7 @@
   <action id="EditorScrollUp"/> <!-- Disables meta up -->
   <action id="EditorScrollDown"/>  <!-- Disables meta down -->
   <action id="FindWordAtCaret"/> <!-- Disables meta F3 -->
+  <action id="FindPrevWordAtCaret"/> <!-- Disables shift meta F3 -->
   <action id="EditorScrollToCenter"/> <!-- Disables meta M -->
 
   <action id="$Undo">

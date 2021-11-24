@@ -7,9 +7,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.ui.IdeBorderFactory
@@ -24,6 +27,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ActionEvent
@@ -33,6 +37,19 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 import kotlin.math.floor
 
+/**
+ * Note: we count table rows including header. So, this action assumes that this is a 1x1 table:
+ * ```
+ * |     |
+ * |-----|
+ * ```
+ * And this is 2x1:
+ * ```
+ * |     |
+ * |-----|
+ * |     |
+ * ```
+ */
 internal class InsertEmptyTableAction: DumbAwareAction() {
   init {
     addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
@@ -44,28 +61,7 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
     val project = event.project ?: return
     val editor = event.getRequiredData(CommonDataKeys.EDITOR)
     val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
-    val hintComponent = TableGridComponent { rows, columns ->
-      val text = TableModificationUtils.buildEmptyTable(rows, columns)
-      runWriteAction {
-        executeCommand(project) {
-          val caret = editor.caretModel.currentCaret
-          val document = editor.document
-          val caretOffset = caret.offset
-          val currentLine = document.getLineNumber(caret.offset)
-          val content = when {
-            currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1) -> "\n$text"
-            else -> text
-          }
-          EditorModificationUtil.insertStringAtCaret(editor, content)
-          PsiDocumentManager.getInstance(project).commitDocument(document)
-          val table = TableUtils.findTable(file, caretOffset)
-          val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCellImpl::class.java) }?.startOffset
-          if (offsetToMove != null) {
-            caret.moveToOffset(offsetToMove)
-          }
-        }
-      }
-    }
+    val hintComponent = TableGridComponent { rows, columns -> actuallyInsertTable(project, editor, file, rows, columns) }
     val hint = LightweightHint(hintComponent)
     hintComponent.parentHint = hint
     hint.setForceShowAsPopup(true)
@@ -89,6 +85,29 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
     event.presentation.isEnabledAndVisible = project != null && editor != null && file?.fileType == MarkdownFileType.INSTANCE
   }
 
+  private fun actuallyInsertTable(project: Project, editor: Editor, file: PsiFile, rows: Int, columns: Int) {
+    runWriteAction {
+      executeCommand(project) {
+        val caret = editor.caretModel.currentCaret
+        val document = editor.document
+        val caretOffset = caret.offset
+        val currentLine = document.getLineNumber(caret.offset)
+        val text = TableModificationUtils.buildEmptyTable(rows, columns)
+        val content = when {
+          currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1) -> "\n$text"
+          else -> text
+        }
+        EditorModificationUtil.insertStringAtCaret(editor, content)
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        val table = TableUtils.findTable(file, caretOffset)
+        val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCellImpl::class.java) }?.startOffset
+        if (offsetToMove != null) {
+          caret.moveToOffset(offsetToMove)
+        }
+      }
+    }
+  }
+
   private class TableGridComponent(
     private var rows: Int = 4,
     private var columns: Int = 4,
@@ -104,15 +123,11 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
     private val label = JBLabel()
 
     private val mouseListener = MyMouseListener()
-    private val childMouseListener = object: MouseAdapter() {
-      override fun mouseClicked(event: MouseEvent) {
-        mouseListener.mouseClicked(SwingUtilities.convertMouseEvent(event.component, event, this@TableGridComponent))
-      }
-    }
+    private val childMouseListener = MyForwardingMouseListener(gridPanel)
 
     init {
       for (rowIndex in 0 until rows) {
-        cells.add(generateSequence { Cell() }.take(columns).toCollection(ArrayList(columns)))
+        cells.add(generateSequence(this::createCell).take(columns).toCollection(ArrayList(columns)))
       }
       fillGrid()
       add(gridPanel, "wrap")
@@ -133,7 +148,7 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
 
     private fun indicesSelected(selectedRow: Int, selectedColumn: Int) {
       parentHint.hide()
-      selectedCallback.invoke(selectedRow + 1, selectedColumn + 1)
+      selectedCallback.invoke(selectedRow, selectedColumn + 1)
     }
 
     private fun registerAction(key: Int, actionKey: String, action: Action) {
@@ -158,14 +173,14 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       gridPanel.removeAll()
       if (expandRows) {
         repeat(expandFactor) {
-          cells.add(generateSequence { Cell() }.take(columns).toCollection(ArrayList(columns)))
+          cells.add(generateSequence(this::createCell).take(columns).toCollection(ArrayList(columns)))
         }
         rows += expandFactor
       }
       if (expandColumns) {
         for (row in cells) {
           repeat(expandFactor) {
-            row.add(Cell())
+            row.add(createCell())
           }
         }
         columns += expandFactor
@@ -194,6 +209,13 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       }
     }
 
+    private fun createCell(): Cell {
+      return Cell().apply {
+        addMouseListener(childMouseListener)
+        addMouseMotionListener(childMouseListener)
+      }
+    }
+
     private inner class ArrowAction(private val calcDiff: () -> Pair<Int, Int>): AbstractAction() {
       override fun actionPerformed(event: ActionEvent) {
         val (rowDiff, columnDiff) = calcDiff.invoke()
@@ -205,14 +227,25 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       }
     }
 
+    private class MyForwardingMouseListener(private val targetComponent: Component): MouseAdapter() {
+      private fun dispatch(event: MouseEvent) {
+        val translated = SwingUtilities.convertMouseEvent(event.component, event, targetComponent)
+        targetComponent.dispatchEvent(translated)
+      }
+
+      override fun mouseMoved(event: MouseEvent) = dispatch(event)
+
+      override fun mouseClicked(event: MouseEvent) = dispatch(event)
+    }
+
     private inner class MyMouseListener: MouseAdapter() {
       private fun obtainIndices(point: Point): Pair<Int, Int> {
         val panelWidth = gridPanel.width.toFloat()
         val panelHeight = gridPanel.height.toFloat()
         val tileWidth = panelWidth / columns
         val tileHeight = panelHeight / rows
-        val column = floor(point.x.toFloat() / tileWidth).toInt()
-        val row = floor(point.y.toFloat() / tileHeight).toInt()
+        val column = floor(point.x.toFloat() / tileWidth).toInt().coerceIn(0, columns - 1)
+        val row = floor(point.y.toFloat() / tileHeight).toInt().coerceIn(0, rows - 1)
         return row to column
       }
 
@@ -230,14 +263,12 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       }
     }
 
-    private inner class Cell: JPanel() {
+    private class Cell: JPanel() {
       init {
         background = UIUtil.getTextFieldBackground()
         size = Dimension(15, 15)
         preferredSize = size
         border = IdeBorderFactory.createBorder()
-        border = IdeBorderFactory.createBorder()
-        addMouseListener(childMouseListener)
       }
 
       var isSelected = false

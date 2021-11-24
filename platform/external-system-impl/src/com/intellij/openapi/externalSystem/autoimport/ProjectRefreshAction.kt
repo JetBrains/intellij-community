@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.ui.DefaultExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -45,16 +45,14 @@ class ProjectRefreshAction : DumbAwareAction() {
   }
 
   private fun getNotificationIcon(systemIds: Set<ProjectSystemId>): Icon {
-    val iconManager = when (systemIds.size) {
-      1 -> ExternalSystemIconProvider.getExtension(systemIds.first())
-      else -> DefaultExternalSystemIconProvider
-    }
-    return iconManager.reloadIcon
+    val systemId = systemIds.singleOrNull() ?: return AllIcons.Actions.BuildLoadChanges
+    val iconProvider = ExternalSystemIconProvider.getExtension(systemId)
+    return iconProvider.reloadIcon
   }
 
   init {
     val productName = ApplicationNamesInfo.getInstance().fullProductName
-    templatePresentation.icon = DefaultExternalSystemIconProvider.reloadIcon
+    templatePresentation.icon = AllIcons.Actions.BuildLoadChanges
     templatePresentation.text = ExternalSystemBundle.message("external.system.reload.notification.action.reload.text.empty")
     templatePresentation.description = ExternalSystemBundle.message("external.system.reload.notification.action.reload.description.empty", productName)
   }

@@ -97,7 +97,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
   private boolean myShouldClosePopupAndOnProcessFinish;
 
-  private final JLabel myRefreshIcon = new JLabel(new AnimatedIcon.FS());
+  private final JLabel myRefreshIcon;
 
   private String myCurrentRequestor;
   private boolean myDisposed;
@@ -122,13 +122,14 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     setOpaque(false);
     setBorder(JBUI.Borders.empty());
 
-    myRefreshIcon.setVisible(false);
-
     myRefreshAndInfoPanel.setLayout(new BorderLayout());
     myRefreshAndInfoPanel.setOpaque(false);
-    myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
 
     if (!ExperimentalUI.isNewUI()) {
+      myRefreshIcon = new JLabel(new AnimatedIcon.FS());
+      myRefreshIcon.setVisible(false);
+      myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
+
       var statusPanel = new StatusPanel();
       myRefreshAndInfoPanel.add(statusPanel, BorderLayout.CENTER);
       myTextSetter = (text, requestor) -> {
@@ -140,6 +141,9 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
         myCurrentRequestor = logMode ? EventLog.LOG_REQUESTOR : requestor;
         return text;
       };
+    }
+    else {
+      myRefreshIcon = null;
     }
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
@@ -227,7 +231,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
       myDisposed = true;
     }
-    GuiUtils.removePotentiallyLeakingReferences(myRefreshIcon);
+
+    if (myRefreshIcon != null) {
+      GuiUtils.removePotentiallyLeakingReferences(myRefreshIcon);
+    }
+
     myInfos.clear();
   }
 
@@ -378,11 +386,15 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   }
 
   void setRefreshVisible(boolean visible) {
-    UIUtil.invokeLaterIfNeeded(() -> myRefreshIcon.setVisible(visible));
+    if (!ExperimentalUI.isNewUI()){
+      UIUtil.invokeLaterIfNeeded(() -> myRefreshIcon.setVisible(visible));
+    }
   }
 
   void setRefreshToolTipText(@NlsContexts.Tooltip String tooltip) {
-    myRefreshIcon.setToolTipText(tooltip);
+    if (!ExperimentalUI.isNewUI()) {
+      myRefreshIcon.setToolTipText(tooltip);
+    }
   }
 
   public BalloonHandler notifyByBalloon(@NotNull MessageType type,
@@ -817,7 +829,9 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       @Override
       public void updateUI() {
         super.updateUI();
-        setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+        if (!ExperimentalUI.isNewUI()) {
+          setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+        }
       }
     };
 

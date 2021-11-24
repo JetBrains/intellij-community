@@ -5,8 +5,6 @@ import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkProvider
 import com.intellij.ide.projectView.impl.ModuleGroupUrl
 import com.intellij.ide.projectView.impl.ModuleUrl
-import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
@@ -36,8 +34,6 @@ internal class ModuleBookmarkProvider(private val project: Project) : BookmarkPr
   private fun createGroupBookmark(name: String?) = name?.let { ModuleBookmark(this, it, true) }
   private fun createModuleBookmark(name: String?) = name?.let { ModuleBookmark(this, it, false) }
   override fun createBookmark(context: Any?): ModuleBookmark? = when (context) {
-    is AbstractTreeNode<*> -> createBookmark(context.value)
-    is NodeDescriptor<*> -> createBookmark(context.element)
     is ModuleGroupUrl -> createGroupBookmark(context.url)
     is ModuleUrl -> createModuleBookmark(context.url)
     is Module -> createModuleBookmark(context.name)

@@ -22,7 +22,7 @@ interface NotebookIntervalPointerFactory {
    * if doesn't - hints applied after action
    * hint should contain pointers created by this factory
    */
-  fun <T> withHints(hints: Iterable<Hint>, modifyDocumentAction: () -> T): T
+  fun <T> modifyingPointers(changes: Iterable<Change>, modifyDocumentAction: () -> T): T
 
   companion object {
     fun get(editor: Editor): NotebookIntervalPointerFactory =
@@ -38,21 +38,21 @@ interface NotebookIntervalPointerFactory {
         ?.also { key.set(editor, it) }
   }
 
-  sealed interface Hint
+  sealed interface Change
 
   /** invalidate pointer, create new pointer for interval if necessary */
-  data class Invalidate(val ptr: NotebookIntervalPointer) : Hint
+  data class Invalidate(val ptr: NotebookIntervalPointer) : Change
 
   /** reuse old pointer instead of creating new, for example when moving interval */
-  data class Reuse(val ptr: NotebookIntervalPointer, val ordinalAfterChange: Int) : Hint
+  data class Reuse(val ptr: NotebookIntervalPointer, val ordinalAfterChange: Int) : Change
 }
 
-fun <T> NotebookIntervalPointerFactory?.invalidate(cell: NotebookCellLines.Interval, action: () -> T): T =
+fun <T> NotebookIntervalPointerFactory?.invalidatingCell(cell: NotebookCellLines.Interval, action: () -> T): T =
   if (this == null) {
     action()
   }
   else {
-    withHints(listOf(NotebookIntervalPointerFactory.Invalidate(create(cell)))) {
+    modifyingPointers(listOf(NotebookIntervalPointerFactory.Invalidate(create(cell)))) {
       action()
     }
   }
@@ -60,12 +60,12 @@ fun <T> NotebookIntervalPointerFactory?.invalidate(cell: NotebookCellLines.Inter
 /**
  * input pairs - current interval and it's ordinal after document change
  */
-fun <T> NotebookIntervalPointerFactory?.moveIntervals(newPositions: List<Pair<NotebookCellLines.Interval, Int>>, action: () -> T): T =
+fun <T> NotebookIntervalPointerFactory?.movingCells(newPositions: List<Pair<NotebookCellLines.Interval, Int>>, action: () -> T): T =
   if (this == null) {
     action()
   }
   else {
-    withHints(newPositions.map { (interval, newOrdinal) -> NotebookIntervalPointerFactory.Reuse(create(interval), newOrdinal) }) {
+    modifyingPointers(newPositions.map { (interval, newOrdinal) -> NotebookIntervalPointerFactory.Reuse(create(interval), newOrdinal) }) {
       action()
     }
   }

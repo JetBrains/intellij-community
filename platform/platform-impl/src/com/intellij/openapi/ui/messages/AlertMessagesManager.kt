@@ -156,7 +156,6 @@ private class AlertDialog(project: Project?,
 
   private val myRootLayout = RootLayout()
   private val myIconComponent = JLabel(icon)
-  private var myTitleComponent: JComponent? = null
   private var myMessageComponent: JComponent? = null
   private val mySouthPanel = JPanel(BorderLayout())
   private val myButtonsPanel = JPanel()
@@ -230,7 +229,7 @@ private class AlertDialog(project: Project?,
 
         override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
           val target = dragComponent.findComponentAt(dragComponentPoint)
-          return target == null || target == dragComponent || target == myTitleComponent || target is JPanel
+          return target == null || target == dragComponent || target is JPanel
         }
 
         override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
@@ -281,6 +280,9 @@ private class AlertDialog(project: Project?,
   }
 
   private fun configureMessageWidth(width: Int) {
+    if (myMessageComponent == null) {
+      return
+    }
     val scrollPane = ComponentUtil.getScrollPane(myMessageComponent)
     if (scrollPane == null) {
       myMessageComponent!!.putClientProperty(PARENT_WIDTH_KEY, width)
@@ -359,7 +361,6 @@ private class AlertDialog(project: Project?,
       val title = UIUtil.replaceMnemonicAmpersand(myTitle!!).replace(BundleBase.MNEMONIC_STRING, "")
       val titleComponent = createTextComponent(JTextPane(), title)
       titleComponent.font = JBFont.h4()
-      myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
     }
 
@@ -443,7 +444,6 @@ private class AlertDialog(project: Project?,
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     component.contentType = "text/html"
     component.isOpaque = false
-    component.isFocusable = false
     component.border = null
 
     val kit = JBWordWrapHtmlEditorKit()

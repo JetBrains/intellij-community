@@ -166,14 +166,8 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
       if (e.source != editor.contentComponent) {
         return
       }
-      updateOnProbablyChangedSelection { selection ->
-        if ('\n' in selection) {
-          hideIfShown()
-        } else if (isShown()) {
-          updateLocationIfShown()
-        } else {
-          showIfHidden()
-        }
+      updateOnProbablyChangedSelection {
+        hideIfShown()
       }
     }
   }

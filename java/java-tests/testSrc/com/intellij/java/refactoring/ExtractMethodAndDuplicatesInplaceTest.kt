@@ -163,11 +163,43 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testLocalAssignmentDuplicates(){
-    doTest();
+    doTest()
   }
 
   fun testWrongLocalAssignmentDuplicates(){
-    doTest();
+    doTest()
+  }
+
+  fun testDuplicateWithLocalMethodReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithAnonymousMethodReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithAnonymousFieldReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithLocalReferenceInLambda(){
+    doTest()
+  }
+
+  fun testAvoidChangeSignatureForLocalRefsInPattern(){
+    doTest()
+  }
+
+  fun testAvoidChangeSignatureForLocalRefsInCandidate(){
+    doTest()
+  }
+
+  fun testDiamondTypesConsideredAsEqual(){
+    doTest()
+  }
+
+  fun testDuplicatedExpressionAndChangeSignature(){
+    doTest()
   }
 
   fun testRefactoringListener(){

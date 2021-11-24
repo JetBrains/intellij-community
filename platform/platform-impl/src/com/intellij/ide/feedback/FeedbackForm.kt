@@ -20,6 +20,7 @@ import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.panel
@@ -138,8 +139,8 @@ class FeedbackForm(
               ApplicationBundle.message("feedback.form.evaluation.details.emptyText")
             else
               ApplicationBundle.message("feedback.form.details.emptyText")
-            putClientProperty(JBTextArea.STATUS_VISIBLE_FUNCTION,
-              BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
+                              BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
             addKeyListener(object : KeyAdapter() {
               override fun keyPressed(e: KeyEvent) {
                 if (e.keyCode == KeyEvent.VK_TAB) {
@@ -208,8 +209,8 @@ class FeedbackForm(
 
       override fun doAction(e: ActionEvent) {
         val ratingComponent = ratingComponent
-        missingRatingTooltip?.isVisible = ratingComponent?.rating == 0
-        if (ratingComponent == null || ratingComponent.rating != 0) {
+        missingRatingTooltip?.isVisible = ratingComponent?.myRating == 0
+        if (ratingComponent == null || ratingComponent.myRating != 0) {
           super.doAction(e)
         }
         else {
@@ -239,8 +240,8 @@ class FeedbackForm(
         mapOf(
           "systeminfo" to systemInfo,
           "needsupport" to needSupport
-        ) + (ratingComponent?.let { mapOf("rating" to it.rating) } ?: mapOf()) + (topic?.let { mapOf("topic" to it.id)} ?: emptyMap() )
-      , onDone = {
+        ) + (ratingComponent?.let { mapOf("rating" to it.myRating) } ?: mapOf()) + (topic?.let { mapOf("topic" to it.id) } ?: emptyMap())
+        , onDone = {
         ApplicationManager.getApplication().invokeLater {
           var message = ApplicationBundle.message("feedback.form.thanks", ApplicationNamesInfo.getInstance().fullProductName)
           if (isEvaluation) {

@@ -134,12 +134,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
 
-    if (!isUnitTestMode && !isHeadless) {
-      Disposable uiRootDisposable = Disposer.newDisposable();
-      //noinspection deprecation
-      Disposer.register(this, uiRootDisposable, "ui");
-    }
-
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
     AtomicReference<Thread> edtThread = new AtomicReference<>();
     EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
@@ -623,6 +617,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         return;
       }
 
+      IdeaLogger.dropFrequentExceptionsCaches();
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
@@ -634,7 +629,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           exitCode = Main.RESTART_FAILED;
         }
       }
-      IdeaLogger.dropFrequentExceptionsCaches();
       System.exit(exitCode);
     }
     finally {

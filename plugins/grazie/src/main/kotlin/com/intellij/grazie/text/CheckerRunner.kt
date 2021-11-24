@@ -17,7 +17,7 @@ import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.runSuspendingAction
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
@@ -32,7 +32,7 @@ internal class CheckerRunner(val text: TextContent) {
   private val sentences by lazy { SRXSentenceTokenizer.tokenize(text.toString()) }
 
   fun run(checkers: List<TextChecker>, consumer: (TextProblem) -> Unit) {
-    runSuspendingAction {
+    runBlockingCancellable {
       val deferred: List<Deferred<Collection<TextProblem>>> = checkers.map { checker ->
         when (checker) {
           is ExternalTextChecker -> async { checker.checkExternally(text) }

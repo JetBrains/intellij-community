@@ -9,7 +9,7 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ExecutionUiService
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.ExtendableSettingsEditor
 import com.intellij.openapi.options.ExtensionSettingsEditor
@@ -23,16 +23,15 @@ import org.jdom.Element
 import org.jdom.output.XMLOutputter
 import java.util.*
 
-private val RUN_EXTENSIONS = Key.create<List<Element>>("run.extension.elements")
-private const val EXT_ID_ATTR = "ID"
+private const val EXTENSION_ID_ATTR = "ID"
 private const val EXTENSION_ROOT_ATTR = "EXTENSION"
 
-private val LOG = Logger.getInstance(RunConfigurationExtensionsManager::class.java)
-
 open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : RunConfigurationExtensionBase<U>>(@PublishedApi internal val extensionPoint: ExtensionPointName<T>) {
-  protected open val idAttrName = EXT_ID_ATTR
+  protected open val idAttrName = EXTENSION_ID_ATTR
 
   protected open val extensionRootAttr = EXTENSION_ROOT_ATTR
+
+  private val unloadedExtensionsKey = Key.create<List<Element>>(this::class.java.canonicalName + ".run.extension.elements")
 
   fun readExternal(configuration: U, parentNode: Element) {
     val children = parentNode.getChildren(extensionRootAttr)
@@ -63,13 +62,13 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
       for (child in children) {
         copy.add(JDOMUtil.internElement(child))
       }
-      configuration.putCopyableUserData(RUN_EXTENSIONS, copy)
+      configuration.putCopyableUserData(unloadedExtensionsKey, copy)
     }
   }
 
   fun writeExternal(configuration: U, parentNode: Element) {
     val map = TreeMap<String, Element>()
-    val elements = configuration.getCopyableUserData(RUN_EXTENSIONS)
+    val elements = configuration.getCopyableUserData(unloadedExtensionsKey)
     if (elements != null) {
       for (element in elements) {
         val id = element.getExtensionId()
@@ -104,7 +103,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     val id = getAttributeValue(idAttrName)
     if (id == null) {
       val xml = XMLOutputter().outputString(this)
-      LOG.error("Cannot find extension id in extension element: $xml")
+      logger<RunConfigurationExtensionsManager<*, *>>().error("Cannot find extension id in extension element: $xml")
     }
     return id
   }

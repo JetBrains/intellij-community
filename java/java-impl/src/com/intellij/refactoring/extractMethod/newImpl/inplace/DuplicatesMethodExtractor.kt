@@ -8,7 +8,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -33,6 +33,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
 
   override fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
     val file = targetClass.containingFile
+    JavaDuplicatesFinder.linkCopiedClassMembersWithOrigin(file)
     val copiedFile = file.copy() as PsiFile
     val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
     val copiedElements = elements.map { PsiTreeUtil.findSameElementInCopy(it, copiedFile) }
@@ -94,8 +95,8 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val exactDuplicates = duplicates.filter {
       duplicate -> duplicate.changedExpressions.all { changedExpression -> changedExpression.pattern in initialParameters }
     }
-    val oldMethodCall = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java)
-    val newMethodCall = PsiTreeUtil.findChildOfType(elementsToReplace.callElements.first(), PsiMethodCallExpression::class.java)
+    val oldMethodCall = findMethodCallInside(calls.firstOrNull()) ?: throw IllegalStateException()
+    val newMethodCall = findMethodCallInside(elementsToReplace.callElements.firstOrNull()) ?: throw IllegalStateException()
     val parametrizedDuplicatesNumber = duplicates.size - exactDuplicates.size
     fun confirmChangeSignature(): Boolean {
       val dialog = SignatureSuggesterPreviewDialog(method, elementsToReplace.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber)
@@ -135,6 +136,10 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     }
   }
 
+  private fun findMethodCallInside(element: PsiElement?): PsiMethodCallExpression? {
+    return PsiTreeUtil.findChildOfType(element, PsiMethodCallExpression::class.java, false)
+  }
+
   private fun areElementsIntersected(firstElements: List<PsiElement>, secondElements: List<PsiElement>): Boolean {
     if (firstElements.isEmpty() || secondElements.isEmpty()) {
       return false
@@ -155,11 +160,12 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
   }
 
   private fun confirmDuplicates(project: Project, editor: Editor, duplicates: List<Duplicate>): List<Duplicate> {
+    if (duplicates.isEmpty()) return duplicates
     if (isSilentMode) return duplicates
+    val initialPosition = editor.caretModel.logicalPosition
     val confirmedDuplicates = mutableListOf<Duplicate>()
     duplicates.forEach { duplicate ->
-      val highlighters = ArrayList<RangeHighlighter>()
-      DuplicatesImpl.highlightMatch(project, editor, textRangeOf(duplicate.candidate), highlighters)
+      val highlighters = DuplicatesImpl.previewMatch(project, editor, textRangeOf(duplicate.candidate))
       try {
         val prompt = ReplacePromptDialog(false, JavaRefactoringBundle.message("process.duplicates.title"), project)
         prompt.show()
@@ -172,6 +178,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
         highlighters.forEach { highlighter -> HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighter) }
       }
     }
+    editor.scrollingModel.scrollTo(initialPosition, ScrollType.MAKE_VISIBLE)
     return confirmedDuplicates
   }
 

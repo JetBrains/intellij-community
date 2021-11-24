@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl.preview
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.NO_PREVIEW
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.ModalityState
@@ -14,6 +15,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -92,12 +95,12 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   private fun adjustPosition(originalPopup: JBPopup?) {
-    if (originalPopup != null) {
+    if (originalPopup != null && originalPopup.content.isShowing) {
       PositionAdjuster(originalPopup.content).adjust(popup, RIGHT, LEFT)
     }
   }
 
-  private fun renderPreview(result: IntentionPreviewContent) {
+  private fun renderPreview(result: IntentionPreviewInfo) {
     when (result) {
       is IntentionPreviewDiffResult -> {
         val editors = IntentionPreviewModel.createEditors(project, result)
@@ -109,8 +112,8 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         editorsToRelease.addAll(editors)
         select(index, editors)
       }
-      is IntentionPreviewHtmlResult -> {
-        select(index, html = result.html)
+      is IntentionPreviewInfo.Html -> {
+        select(index, html = result.content().toString())
       }
       else -> {
         select(NO_PREVIEW)
@@ -190,8 +193,11 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                        action: IntentionAction,
                        originalFile: PsiFile,
                        originalEditor: Editor): String? {
-      val preview = IntentionPreviewComputable(project, action, originalFile, originalEditor).generatePreview()
-      return preview?.psiFile?.text
+      val preview =
+        ProgressManager.getInstance().runProcess<IntentionPreviewInfo>(
+          { IntentionPreviewComputable(project, action, originalFile, originalEditor).generatePreview() },
+          EmptyProgressIndicator())
+      return (preview as? IntentionPreviewDiffResult)?.psiFile?.text
     }
   }
 

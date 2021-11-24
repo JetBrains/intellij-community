@@ -7,17 +7,23 @@ import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAware
 
 internal class AdjustFontSizeAction : AnAction(CodeInsightBundle.message("javadoc.adjust.font.size")), ActionToIgnore, DumbAware {
 
+  private fun editorPane(dc: DataContext): DocumentationEditorPane? {
+    return dc.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? DocumentationEditorPane
+           ?: documentationToolWindowUI(dc)?.editorPane
+  }
+
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) is DocumentationEditorPane
+    e.presentation.isEnabledAndVisible = editorPane(e.dataContext) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editorPane = e.dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as DocumentationEditorPane
+    val editorPane = requireNotNull(editorPane(e.dataContext))
     DocFontSizePopup.show(editorPane, editorPane::applyFontProps)
   }
 }

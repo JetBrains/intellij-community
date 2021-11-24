@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 // INTENTION_TEXT_2: "Replace with 'asSequence().filter{}.forEach{}'"
 // AFTER-WARNING: Parameter 'i' is never used

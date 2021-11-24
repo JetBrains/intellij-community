@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.formatter.settings
 
 import com.intellij.application.options.IndentOptionsEditor
@@ -18,9 +18,24 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
   override fun getConfigurableDisplayName() = MarkdownBundle.message("markdown.settings.name")
 
   override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
+    @Suppress("NON_EXHAUSTIVE_WHEN")
     when (settingsType) {
       SettingsType.WRAPPING_AND_BRACES_SETTINGS -> {
         consumer.showStandardOptions("RIGHT_MARGIN", "WRAP_ON_TYPING")
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::WRAP_TEXT_IF_LONG.name,
+          MarkdownBundle.message("markdown.style.settings.text.wrapping"),
+          null,
+          CodeStyleSettingsCustomizable.OptionAnchor.AFTER,
+          "WRAP_ON_TYPING"
+        )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS.name,
+          MarkdownBundle.message("markdown.style.settings.line.breaks.inside.text.blocks"),
+          CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_KEEP
+        )
       }
       SettingsType.BLANK_LINES_SETTINGS -> {
         consumer.showCustomOption(
@@ -94,7 +109,6 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
           MarkdownBundle.message("markdown.style.settings.spacing.force.one.space")
         )
       }
-      else -> {}
     }
   }
 
@@ -106,19 +120,13 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
 
   @org.intellij.lang.annotations.Language("Markdown")
   override fun getCodeSample(settingsType: SettingsType): String {
-    return when (settingsType) {
-      SettingsType.INDENT_SETTINGS -> {
-        this::class.java.getResourceAsStream("indent_settings.md")
-      }
-      SettingsType.BLANK_LINES_SETTINGS -> {
-        this::class.java.getResourceAsStream("blank_lines_settings.md")
-      }
-      SettingsType.SPACING_SETTINGS -> {
-        this::class.java.getResourceAsStream("spacing_settings.md")
-      }
-      else -> {
-        this::class.java.getResourceAsStream("default.md")
-      }
-    }.bufferedReader().use { it.readText() }
+    val sampleName = when (settingsType) {
+      SettingsType.INDENT_SETTINGS -> "indent_settings.md"
+      SettingsType.BLANK_LINES_SETTINGS -> "blank_lines_settings.md"
+      SettingsType.SPACING_SETTINGS -> "spacing_settings.md"
+      else -> "default.md"
+    }
+    val codeSample = this::class.java.getResourceAsStream(sampleName)?.bufferedReader()?.use { it.readText() }
+    return codeSample ?: "Failed to get predefined code sample"
   }
 }

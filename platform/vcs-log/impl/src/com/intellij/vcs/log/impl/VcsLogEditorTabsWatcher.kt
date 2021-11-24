@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.visible.VisiblePackRefresher
+import org.jetbrains.annotations.NonNls
 
 internal class VcsLogEditorTabsWatcher(private val project: Project,
                                        parentDisposable: Disposable) : VcsLogTabsWatcherExtension<VcsLogEditorTabsWatcher.VcsLogEditorTab> {
@@ -41,6 +42,10 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
   inner class VcsLogEditorTab(id: String, refresher: VisiblePackRefresher, val isClosedOnDispose: Boolean) : VcsLogWindow(id, refresher) {
     override fun isVisible(): Boolean {
       return getSelectedEditorTabIds(project).contains(id)
+    }
+
+    override fun toString(): @NonNls String {
+      return "VcsLogEditorTab '$id'"
     }
   }
 

@@ -6,12 +6,13 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.function.Function;
 
 /**
@@ -40,14 +41,15 @@ public final class UIThemeProvider implements PluginAware {
   public String id;
 
   @ApiStatus.Internal
-  public @Nullable InputStream getThemeJsonStream() {
-    return myPluginDescriptor.getClassLoader().getResourceAsStream(path.charAt(0) == '/' ? path.substring(1) : path);
+  public byte[] getThemeJson() throws IOException {
+    @NotNull String path1 = path.charAt(0) == '/' ? path.substring(1) : path;
+    return ResourceUtil.getResourceAsBytes(path1, myPluginDescriptor.getClassLoader());
   }
 
   public @Nullable UITheme createTheme() {
     try {
       ClassLoader classLoader = myPluginDescriptor.getPluginClassLoader();
-      InputStream stream = getThemeJsonStream();
+      byte[] stream = getThemeJson();
       if (stream == null) {
         Logger.getInstance(getClass()).warn("Cannot find theme resource: " + path + " (classLoader=" + classLoader + ", pluginDescriptor=" + myPluginDescriptor + ")");
         return null;

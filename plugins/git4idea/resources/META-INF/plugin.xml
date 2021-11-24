@@ -145,7 +145,7 @@
       </action>
       <reference ref="Git.CreateNewBranch"/>
       <action id="Git.Tag" class="git4idea.actions.GitTag"/>
-      <action id="Git.Reset" class="git4idea.actions.GitResetHead" icon="AllIcons.Actions.Rollback"/>
+      <action id="Git.Reset" class="git4idea.actions.GitResetHead"/>
       <separator/>
       <reference ref="Vcs.Show.Log"/>
       <reference id="Patch.MainMenu"/>
@@ -492,7 +492,6 @@
     <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
-    <vcsLogCustomColumn implementation="git4idea.log.GitCommitSignatureLogColumn"/>
     <vcsLogCommitStatusProvider implementation="git4idea.log.GitCommitSignatureStatusProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     <vcs.branchStateProvider implementation="git4idea.branch.GitBranchStateProvider"/>
@@ -683,7 +682,8 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="git4idea.index.CommitModeListener" topic="com.intellij.vcs.commit.CommitModeManager$CommitModeListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="git4idea.actions.GitQuickActionsToolbarPopup$MyGitRepositoryListener" activeInHeadlessMode="false" activeInTestMode="false"
-              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+    <listener class="git4idea.actions.GitQuickActionsToolbarPopup$MyGitRepositoryListener"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </projectListeners>
 </idea-plugin>

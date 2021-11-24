@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.editor.images
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 
 class MarkdownConfigureImageLineMarkersTest: BasePlatformTestCase() {
@@ -41,8 +40,6 @@ class MarkdownConfigureImageLineMarkersTest: BasePlatformTestCase() {
 
   private fun doTest(expectedCount: Int, file: String = getTestFileName()) {
     myFixture.configureByFile(file)
-    // Workaround for org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention.SettingsListener
-    (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
     myFixture.doHighlighting()
     val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, myFixture.project)
     assertSize(expectedCount, markers)

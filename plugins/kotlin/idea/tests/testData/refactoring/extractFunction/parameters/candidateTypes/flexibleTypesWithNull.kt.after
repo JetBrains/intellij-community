@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // SUGGESTED_NAMES: i, getN
 // PARAM_TYPES: kotlin.String?, kotlin.String, kotlin.CharSequence?, kotlin.CharSequence
 // PARAM_DESCRIPTOR: val property: kotlin.String! defined in test

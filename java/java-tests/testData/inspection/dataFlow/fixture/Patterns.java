@@ -64,4 +64,36 @@ class Test {
       case default -> System.out.println(3);
     };
   }
+
+  void test6() {
+    String s = "abc";
+    switch (s) {
+      case Object o -> System.out.println("total");
+    }
+  }
+
+  void test7() {
+    String s = "abc";
+    switch (s) {
+      case <error descr="'switch' has both a total pattern and a default label">Object o</error> -> System.out.println("total");
+      case <error descr="'switch' has both a total pattern and a default label">default</error> -> System.out.println("default");
+    }
+  }
+
+  void test8() {
+    String s = "abc";
+    switch (s) {
+      case <warning descr="Switch label '\"\"' is unreachable">""</warning> -> System.out.println("abc");
+      case <error descr="'switch' has both a total pattern and a default label">Object o</error> -> System.out.println("total");
+      case <error descr="'switch' has both a total pattern and a default label">default</error> -> System.out.println("default");
+    }
+  }
+
+  void test9() {
+    String s = "abc";
+    switch (s) {
+      case <warning descr="Switch label 'Object o' is the only reachable in the whole switch">Object o</warning> -> System.out.println("total");
+      case <error descr="Label is dominated by a preceding case label 'Object o'">"abc"</error> -> System.out.println("abc");
+    }
+  }
 }

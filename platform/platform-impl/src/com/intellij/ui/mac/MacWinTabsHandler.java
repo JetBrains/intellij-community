@@ -301,7 +301,7 @@ public class MacWinTabsHandler {
 
         Foundation.executeOnMainThread(true, false, () -> {
           try {
-            deliverMoveResize.invoke(cPlatformWindow, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), true);
+            deliverMoveResize.invoke(cPlatformWindow, rect.x, rect.y, rect.width, rect.height, true);
           }
           catch (Throwable e) {
             Logger.getInstance(MacWinTabsHandler.class).error(e);

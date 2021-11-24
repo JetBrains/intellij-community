@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
 import kotlinx.coroutines.async
@@ -11,7 +12,6 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import org.apache.commons.lang3.StringUtils
 
 internal sealed class PackageModel(
     val groupId: String,
@@ -22,7 +22,7 @@ internal sealed class PackageModel(
 
     val identifier = PackageIdentifier("$groupId:$artifactId")
 
-    val sortKey = (StringUtils.normalizeSpace(remoteInfo?.name) ?: identifier.rawValue.lowercase())
+    val sortKey = (remoteInfo?.name.normalizeWhitespace() ?: identifier.rawValue.lowercase())
 
     val isKotlinMultiplatform = remoteInfo?.mpp != null
 
@@ -118,6 +118,8 @@ internal sealed class PackageModel(
             if (other !is Installed) return false
 
             if (usageInfo != other.usageInfo) return false
+            if (latestInstalledVersion != other.latestInstalledVersion) return false
+            if (declaredVersions != other.declaredVersions) return false
             if (searchableInfo != other.searchableInfo) return false
 
             return true
@@ -125,11 +127,15 @@ internal sealed class PackageModel(
 
         override fun hashCode(): Int {
             var result = usageInfo.hashCode()
+            result = 31 * result + latestInstalledVersion.hashCode()
+            result = 31 * result + declaredVersions.hashCode()
             result = 31 * result + searchableInfo.hashCode()
             return result
         }
 
-        override fun toString(): String = "Installed(usageInfo=$usageInfo, searchableInfo='$searchableInfo')"
+        override fun toString(): String =
+            "Installed(usageInfo=$usageInfo, latestInstalledVersion=$latestInstalledVersion, declaredVersions=$declaredVersions, " +
+                "searchableInfo='$searchableInfo')"
     }
 
     class SearchResult(
@@ -162,16 +168,19 @@ internal sealed class PackageModel(
             if (this === other) return true
             if (other !is SearchResult) return false
 
+            if (declaredVersions != other.declaredVersions) return false
             if (searchableInfo != other.searchableInfo) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            return searchableInfo.hashCode()
+            var result = declaredVersions.hashCode()
+            result = 31 * result + searchableInfo.hashCode()
+            return result
         }
 
-        override fun toString(): String = "SearchResult(searchableInfo='$searchableInfo')"
+        override fun toString(): String = "SearchResult(declaredVersions=$declaredVersions, searchableInfo='$searchableInfo')"
     }
 
     companion object {

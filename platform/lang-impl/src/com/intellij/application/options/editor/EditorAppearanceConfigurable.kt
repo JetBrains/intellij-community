@@ -43,6 +43,7 @@ private val myFocusModeCheckBox                       get() = CheckboxDescriptor
 private val myCbShowIntentionBulbCheckBox             get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.intention.bulb"), PropertyBinding(model::isShowIntentionBulb, model::setShowIntentionBulb))
 private val myCodeLensCheckBox                        get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.editor.preview.popup"), uiSettings::showEditorToolTip)
 private val myRenderedDocCheckBox                     get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.rendered.doc.comments"), PropertyBinding(model::isDocCommentRenderingEnabled, model::setDocCommentRenderingEnabled))
+private val myUseEditorFontInInlays                   get() = CheckboxDescriptor(ApplicationBundle.message("use.editor.font.for.inlays"), PropertyBinding(model::isUseEditorFontInInlays, model::setUseEditorFontInInlays))
 // @formatter:on
 
 class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
@@ -112,6 +113,9 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myCodeLensCheckBox)
+      }
+      row {
+        checkBox(myUseEditorFontInInlays)
       }
 
       for (configurable in configurables) {

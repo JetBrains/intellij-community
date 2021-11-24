@@ -428,7 +428,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow", "RiderBackendAction-EncapsulateField",
     "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
     "ActivateInspectionResultsToolWindow",
-    "GoFmtProjectAction", "GoGenerateFileAction", "GoShareInPlaygroundAction",
     ""
   );
 

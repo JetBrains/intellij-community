@@ -7,7 +7,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 // not thread-safe, intended only for single thread for one time use
-internal class ByteBufferAllocator : AutoCloseable {
+class ByteBufferAllocator : AutoCloseable {
   private var directByteBuffer: ByteBuffer? = null
 
   fun allocate(size: Int): ByteBuffer {

@@ -14,10 +14,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.ui.*
 import training.util.*
@@ -111,6 +113,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       val link = helpLink.value
       val linkLabel = LinkLabel<Any>(text, null) { _, _ ->
         openLinkInBrowser(link)
+        StatisticBase.logHelpLinkClicked(lesson.id)
       }
       footerContent.add(rigid(0, 5))
       footerContent.add(linkLabel.wrapWithUrlPanel())
@@ -198,6 +201,12 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
           if (!StatisticBase.isLearnProjectCloseLogged) {
             StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
           }
+          LessonManager.instance.stopLesson()
+          val langSupport = LangManager.getInstance().getLangSupport()
+          langSupport?.onboardingFeedbackData?.let {
+            showOnboardingLessonFeedbackForm(learnToolWindow.project, it)
+            langSupport.onboardingFeedbackData = null
+          }
           CloseProjectWindowHelper().windowClosing(learnToolWindow.project)
         }
       })
@@ -260,7 +269,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
   }
 
-  private fun adjustMessagesArea() {
+  fun adjustMessagesArea() {
     updatePanelSize(learnToolWindow.getVisibleAreaWidth())
     revalidate()
     repaint()
@@ -293,23 +302,27 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     buttonPanel.removeAll()
     rootPane?.defaultButton = null
 
-    updateButton(prevButton, getPreviousLessonForCurrent(), LearnBundle.message("learn.new.ui.button.back"))
+    updateButton(prevButton, getPreviousLessonForCurrent(), isNext = false)
 
     val nextLesson = getNextLessonForCurrent()
-    updateButton(nextButton, nextLesson, LearnBundle.message("learn.new.ui.button.next", nextLesson?.name ?: ""))
+    updateButton(nextButton, nextLesson, isNext = true)
   }
 
 
-  private fun updateButton(button: JButton, targetLesson: Lesson?, @Nls buttonText: String) {
+  private fun updateButton(button: JButton, targetLesson: Lesson?, isNext: Boolean) {
     button.isVisible = targetLesson != null
     if (targetLesson != null) {
       button.action = object : AbstractAction() {
         override fun actionPerformed(actionEvent: ActionEvent) {
           StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.OPEN_NEXT_OR_PREV_LESSON)
-          CourseManager.instance.openLesson(learnToolWindow.project, targetLesson)
+          val startingWay = if (isNext) LessonStartingWay.NEXT_BUTTON else LessonStartingWay.PREV_BUTTON
+          CourseManager.instance.openLesson(learnToolWindow.project, targetLesson, startingWay)
         }
       }
-      button.text = buttonText
+      button.text = if (isNext) {
+        LearnBundle.message("learn.new.ui.button.next", targetLesson.name)
+      }
+      else LearnBundle.message("learn.new.ui.button.back")
       button.updateUI()
       button.isSelected = true
 

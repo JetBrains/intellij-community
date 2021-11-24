@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
@@ -41,7 +42,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.vertical
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.verticalCenter
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
 import kotlinx.coroutines.Deferred
-import org.apache.commons.lang3.StringUtils
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
@@ -160,7 +160,7 @@ internal class PackageDetailsHeaderPanel(
             nameLabel.setBody(
                 listOf(
                     HtmlChunk.span("font-size: ${16.scaledFontSize()};")
-                        .addRaw("<b>" + StringUtils.normalizeSpace(packageModel.remoteInfo.name) + "</b>")
+                        .addRaw("<b>" + packageModel.remoteInfo.name.normalizeWhitespace() + "</b>")
                 )
             )
             identifierLabel.setBodyText(rawIdentifier)

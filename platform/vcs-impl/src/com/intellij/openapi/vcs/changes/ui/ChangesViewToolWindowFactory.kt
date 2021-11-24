@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.setEmptyStateBackground
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -34,6 +35,10 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
     super.updateState(project, toolWindow)
     toolWindow.stripeTitle = project.vcsManager.allActiveVcss.singleOrNull()?.displayName ?: ChangesViewContentManager.TOOLWINDOW_ID
   }
+
+  override fun shouldBeAvailable(project: Project): Boolean {
+    return project.isTrusted()
+  }
 }
 
 private class CommitToolWindowFactory : VcsToolWindowFactory() {
@@ -49,7 +54,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 
   override fun shouldBeAvailable(project: Project): Boolean =
-    project.vcsManager.hasAnyMappings() && project.isCommitToolWindowShown
+    project.vcsManager.hasAnyMappings() && project.isCommitToolWindowShown && project.isTrusted()
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     super.createToolWindowContent(project, toolWindow)

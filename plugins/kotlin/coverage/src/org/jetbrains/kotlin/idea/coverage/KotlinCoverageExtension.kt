@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
@@ -40,13 +41,21 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         coverageAnnotator: JavaCoverageAnnotator,
         element: PsiNamedElement
     ): PackageAnnotator.ClassCoverageInfo? {
+        if (element is KtClassOrObject) {
+            val searchScope = CoverageDataManager.getInstance(element.project)
+                ?.currentSuitesBundle
+                ?.getSearchScope(element.project) ?: return null
+            val vFile = PsiUtilCore.getVirtualFile(element) ?: return null
+            if (!searchScope.contains(vFile)) return null
+            return coverageAnnotator.getClassCoverageInfo(element.fqName?.asString())
+        }
         if (element !is KtFile) {
             return null
         }
         LOG.info("Retrieving coverage for " + element.name)
 
         val qualifiedNames = collectGeneratedClassQualifiedNames(findOutputRoots(element), element)
-        return if (qualifiedNames == null) null else totalCoverageForQualifiedNames(coverageAnnotator, qualifiedNames)
+        return if (qualifiedNames == null || qualifiedNames.isEmpty()) null else totalCoverageForQualifiedNames(coverageAnnotator, qualifiedNames)
     }
 
     override fun keepCoverageInfoForClassWithoutSource(bundle: CoverageSuitesBundle, classFile: File): Boolean {

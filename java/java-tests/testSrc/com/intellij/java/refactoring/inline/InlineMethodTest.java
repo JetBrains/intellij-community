@@ -551,6 +551,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
   
   public void testAnonymousCall() { doTest(); }
+  public void testInSwitchExpression() { doTest(); }
+  public void testInSwitchExpressionYield() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {

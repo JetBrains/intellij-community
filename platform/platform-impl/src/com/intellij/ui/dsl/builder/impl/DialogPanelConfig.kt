@@ -30,7 +30,8 @@ fun <T> MutableMap<JComponent?, MutableList<() -> T>>.register(component: JCompo
 }
 
 // https://jetbrains.github.io/ui/controls/input_field/#spacing
-private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
+@ApiStatus.Experimental
+fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   return object : SpacingConfiguration {
 
     override val horizontalSmallGap = JBUI.scale(6)

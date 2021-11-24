@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.types.typeUtil.isNullableNothing
 class ImplicitNullableNothingTypeInspection : IntentionBasedInspection<KtCallableDeclaration>(
     intention = SpecifyTypeExplicitlyIntention::class,
     additionalChecker = { declaration -> declaration.check() },
-    problemText = KotlinBundle.message("implicit.nothing.type")
+    problemText = KotlinBundle.message("inspection.implicit.nullable.nothing.type.display.name")
 ) {
     override fun inspectionTarget(element: KtCallableDeclaration) = element.nameIdentifier
 }

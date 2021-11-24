@@ -46,7 +46,7 @@ fun runTestBuild(homePath: String,
                  buildTools: ProprietaryBuildTools,
                  communityHomePath: String = "$homePath/community",
                  traceSpanName: String? = null,
-                 verifier: (outDir: Path) -> Unit = {},
+                 verifier: (paths: BuildPaths) -> Unit = {},
                  buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
   initializeTracer
 
@@ -63,7 +63,7 @@ fun runTestBuild(homePath: String,
     val messages = buildContext.messages as BuildMessagesImpl
     try {
       BuildTasks.create(buildContext).runTestBuild()
-      verifier(outDir)
+      verifier(buildContext.paths)
     }
     catch (e: Throwable) {
       span.recordException(e)

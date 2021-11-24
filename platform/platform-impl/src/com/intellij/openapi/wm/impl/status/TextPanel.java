@@ -86,6 +86,10 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     }
 
     int y = UIUtil.getStringY(s, bounds, g2);
+    if (ExperimentalUI.isNewUI() && SystemInfo.isJetBrainsJvm) {
+      y += fm.getLeading(); // See SimpleColoredComponent.getTextBaseline
+    }
+
     var effect = ComponentUtil.getClientProperty(this, IdeStatusBarImpl.WIDGET_EFFECT_KEY);
     var foreground = isEnabled() ?
                    effect == IdeStatusBarImpl.WidgetEffect.PRESSED ? JBUI.CurrentTheme.StatusBar.Widget.PRESSED_FOREGROUND :

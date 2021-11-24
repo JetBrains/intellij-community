@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
 import com.intellij.facet.Facet
@@ -31,13 +31,16 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.nio.file.Path
 
-class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
+class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule, BeforeEachCallback, AfterEachCallback {
   val baseProjectDir = TempDirectory()
   private val disposableRule = DisposableRule()
 
@@ -46,7 +49,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
   lateinit var filePointerTracker: VirtualFilePointerTracker
 
   private val projectResource = object : ExternalResource() {
-    override fun before() {
+    public override fun before() {
       projectRootDir = baseProjectDir.root.toPath()
       if (forceEnableWorkspaceModel) {
         WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
@@ -59,7 +62,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
       filePointerTracker = VirtualFilePointerTracker()
     }
 
-    override fun after() {
+    public override fun after() {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       filePointerTracker.assertPointersAreDisposed()
     }
@@ -71,6 +74,17 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     return ruleChain.apply(base, description)
   }
 
+  override fun beforeEach(context: ExtensionContext) {
+    baseProjectDir.beforeEach(context)
+    projectResource.before()
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    baseProjectDir.after()
+    projectResource.after()
+    disposableRule.after()
+  }
+  
   fun createModule(name: String = "module"): Module {
     val imlFile = generateImlPath(name)
     val manager = moduleManager

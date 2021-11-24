@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bulkOperation;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.java.JavaBundle;
@@ -9,14 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -27,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.regex.Pattern;
 
 public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -39,10 +36,6 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP_ENTRY, "getKey").parameterCount(0);
   private static final CallMatcher ENTRY_GET_VALUE =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP_ENTRY, "getValue").parameterCount(0);
-  private static final CallMatcher LIST_SET =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "set").parameterTypes("int", "E");
-  private static final CallMatcher LIST_GET =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "get").parameterTypes("int");
 
   public boolean USE_ARRAYS_AS_LIST = true;
 
@@ -64,9 +57,6 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     PsiExpression[] args = expression.getArgumentList().getExpressions();
     if (args.length != info.getSimpleParametersCount()) return null;
     PsiElement parent = expression.getParent();
-    if (LIST_SET.test(expression)) {
-      return findIterableForListSet(expression, args);
-    }
     if (parent instanceof PsiLambdaExpression) {
       return findIterableForLambda((PsiLambdaExpression)parent, args, info);
     }
@@ -95,10 +85,13 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
                 }
               }
             }
-            if (blockParent instanceof PsiForStatement) {
-              PsiLocalVariable var = IteratorDeclaration.getDeclaredVariable(statements[0]);
-              if (ExpressionUtils.isReferenceTo(args[0], var)) {
-                return findIterableForIndexedLoop(CountingLoop.from((PsiForStatement)blockParent), var.getInitializer());
+            if (blockParent instanceof PsiForStatement && statements[0] instanceof PsiDeclarationStatement) {
+              PsiElement[] elements = ((PsiDeclarationStatement)statements[0]).getDeclaredElements();
+              if (elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
+                PsiLocalVariable var = (PsiLocalVariable)elements[0];
+                if (ExpressionUtils.isReferenceTo(args[0], var)) {
+                  return findIterableForIndexedLoop((PsiForStatement)blockParent, var.getInitializer());
+                }
               }
             }
           }
@@ -164,13 +157,14 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       }
     }
     if (parent instanceof PsiForStatement) {
-      return findIterableForIndexedLoop(CountingLoop.from((PsiForStatement)parent), args[0]);
+      return findIterableForIndexedLoop((PsiForStatement)parent, args[0]);
     }
     return null;
   }
 
   @Nullable
-  private static PsiExpression findIterableForIndexedLoop(CountingLoop countingLoop, PsiExpression getElementExpression) {
+  private static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
+    CountingLoop countingLoop = CountingLoop.from(loop);
     if (countingLoop == null ||
         countingLoop.isIncluding() ||
         countingLoop.isDescending() ||
@@ -227,35 +221,6 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     return null;
   }
 
-  @Nullable
-  private static PsiExpression findIterableForListSet(@Nullable PsiMethodCallExpression expression, PsiExpression[] args) {
-    PsiForStatement forStatement = PsiTreeUtil.getParentOfType(expression, PsiForStatement.class);
-    if (forStatement == null) return null;
-    CountingLoop countingLoop = CountingLoop.from(forStatement);
-    if (countingLoop == null) return null;
-    var visitor = new ListSetVisitor(forStatement, countingLoop);
-    PsiStatement body = forStatement.getBody();
-    if (body == null) return null;
-    PsiElement parentStatement = RefactoringUtil.getParentStatement(expression, false);
-    PsiStatement lastStatement;
-    if (body instanceof PsiBlockStatement) {
-      lastStatement = ArrayUtil.getLastElement(((PsiBlockStatement)body).getCodeBlock().getStatements());
-    }
-    else {
-      lastStatement = body;
-    }
-    if (parentStatement != lastStatement) return null;
-    body.accept(visitor);
-    if (!ExpressionUtils.isReferenceTo(args[0], countingLoop.getCounter()) |
-        visitor.numberOfCounterUsages != 2 ||
-        visitor.listGetCall == null ||
-        visitor.hasBreak ||
-        ControlFlowUtils.statementIsContinueTarget(forStatement)) {
-      return null;
-    }
-    return findIterableForIndexedLoop(countingLoop, visitor.listGetCall);
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -291,21 +256,11 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
           // Likely we are inside of the bulk method implementation
           if (method != null && method.getName().equals(info.getBulkName())) return;
         }
-        PsiMethodCallExpression mayBeListSet = ObjectUtils.tryCast(methodExpression.getParent(), PsiMethodCallExpression.class);
-        if (LIST_SET.test(mayBeListSet)) {
-          PsiReferenceExpression ref = ObjectUtils.tryCast(iterable, PsiReferenceExpression.class);
-          PsiVariable variable = ObjectUtils.tryCast(ref != null ? ref.resolve() : null, PsiVariable.class);
-          if (!ExpressionUtils.isReferenceTo(qualifier, variable) &&
-              !(qualifier instanceof PsiQualifiedExpression && iterable instanceof PsiQualifiedExpression)) {
-            return;
-          }
+        if (isSupportedQualifier(qualifier) && info.isSupportedIterable(qualifier, iterable, USE_ARRAYS_AS_LIST)) {
+          holder.registerProblem(methodExpression,
+                                 JavaBundle.message("inspection.replace.with.bulk.message", info.getReplacementName()),
+                                 new UseBulkOperationFix(info));
         }
-        else {
-          if (!isSupportedQualifier(qualifier) || !info.isSupportedIterable(qualifier, iterable, USE_ARRAYS_AS_LIST)) return;
-        }
-        holder.registerProblem(methodExpression,
-                               JavaBundle.message("inspection.replace.with.bulk.message", info.getReplacementName()),
-                               new UseBulkOperationFix(info));
       }
 
       @Contract("null -> false")
@@ -318,51 +273,6 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
         return false;
       }
     };
-  }
-
-  private static class ListSetVisitor extends JavaRecursiveElementWalkingVisitor {
-    private final @NotNull PsiForStatement forStatement;
-    private final @NotNull CountingLoop countingLoop;
-    private PsiMethodCallExpression listGetCall;
-    private int numberOfCounterUsages = 0;
-    private boolean hasBreak;
-
-    ListSetVisitor(@NotNull PsiForStatement forStatement, @NotNull CountingLoop countingLoop) {
-      this.forStatement = forStatement;
-      this.countingLoop = countingLoop;
-      listGetCall = null;
-      hasBreak = false;
-    }
-
-    @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      if (LIST_GET.test(expression) && findIterableForIndexedLoop(countingLoop, expression) != null) {
-        if (listGetCall != null) {
-          listGetCall = null;
-          stopWalking();
-        }
-        listGetCall = expression;
-      }
-    }
-
-    @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      super.visitReferenceExpression(expression);
-      if (ExpressionUtils.isReferenceTo(expression, countingLoop.getCounter())) {
-        numberOfCounterUsages++;
-        if (numberOfCounterUsages > 2) stopWalking();
-      }
-    }
-
-    @Override
-    public void visitStatement(PsiStatement statement) {
-      super.visitStatement(statement);
-      if (ControlFlowUtils.flowBreaksLoop(statement, forStatement)) {
-        hasBreak = true;
-        stopWalking();
-      }
-    }
   }
 
   private static class UseBulkOperationFix implements LocalQuickFix {
@@ -392,32 +302,28 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       if (!(element instanceof PsiReferenceExpression)) return;
       PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier((PsiReferenceExpression)element);
       if (qualifier == null) return;
-      PsiMethodCallExpression parent = ObjectUtils.tryCast(element.getParent(), PsiMethodCallExpression.class);
       PsiExpression iterable;
       if (element instanceof PsiMethodReferenceExpression) {
         iterable = findIterableForFunction((PsiFunctionalExpression)element);
       }
       else {
-        if (parent == null) return;
-        iterable = findIterable(parent, myInfo);
+        PsiElement parent = element.getParent();
+        if (!(parent instanceof PsiMethodCallExpression)) return;
+        iterable = findIterable((PsiMethodCallExpression)parent, myInfo);
       }
       if (iterable == null) return;
-      PsiElement parentStatement = RefactoringUtil.getParentStatement(iterable, false);
-      if (parentStatement == null) return;
+      PsiElement parent = RefactoringUtil.getParentStatement(iterable, false);
+      if (parent == null) return;
       CommentTracker ct = new CommentTracker();
-      String bulkMethodParameterText =
-        LIST_SET.test(parent) ? calculateReplaceAllLambdaExpressionText(parent, ct) : calculateIterableText(iterable, ct);
-      if (parentStatement instanceof PsiDeclarationStatement) {
+      String iterableText = calculateIterableText(iterable, ct);
+      if (parent instanceof PsiDeclarationStatement) {
         PsiLoopStatement loop = PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
-        if (loop != null && loop.getParent() == parentStatement.getParent()) {
+        if (loop != null && loop.getParent() == parent.getParent()) {
           ct.delete(loop);
         }
       }
-      String text = ct.text(qualifier) + "." + myInfo.getBulkName() + "(" + bulkMethodParameterText + ")"
-                    + (parentStatement instanceof PsiStatement ? ";" : "");
-      PsiElement result = ct.replaceAndRestoreComments(parentStatement, text);
-      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
-      simplifyToExpressionLambda(result);
+      PsiElement result = ct.replaceAndRestoreComments(parent, ct.text(qualifier) + "." + myInfo.getBulkName() + "(" + iterableText + ")"
+                                                               + (parent instanceof PsiStatement ? ";" : ""));
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }
@@ -435,67 +341,6 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
         iterableText = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + iterableText + ")";
       }
       return iterableText;
-    }
-
-    @Nullable
-    private static String calculateReplaceAllLambdaExpressionText(PsiMethodCallExpression listSetCall, CommentTracker ct) {
-      PsiForStatement forStatement = PsiTreeUtil.getParentOfType(listSetCall, PsiForStatement.class);
-      if (forStatement == null) return null;
-      PsiStatement body = forStatement.getBody();
-      if (body == null) return null;
-      CountingLoop countingLoop = CountingLoop.from(forStatement);
-      if (countingLoop == null) return null;
-      var visitor = new ListSetVisitor(forStatement, countingLoop);
-      body.accept(visitor);
-      PsiExpression[] args = listSetCall.getArgumentList().getExpressions();
-      if (!ExpressionUtils.isReferenceTo(args[0], countingLoop.getCounter()) || visitor.numberOfCounterUsages != 2 ||
-          visitor.listGetCall == null) {
-        return null;
-      }
-      PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(visitor.listGetCall, PsiDeclarationStatement.class);
-      PsiElement element = null;
-      PsiLocalVariable var = IteratorDeclaration.getDeclaredVariable(declarationStatement);
-      String variableName;
-      if (var != null && var.getInitializer() == visitor.listGetCall) {
-        variableName = var.getName();
-        new CommentTracker().deleteAndRestoreComments(declarationStatement);
-      }
-      else {
-        variableName = new VariableNameGenerator(body, VariableKind.PARAMETER).byExpression(visitor.listGetCall).generate(true);
-        element = new CommentTracker().replaceAndRestoreComments(visitor.listGetCall, variableName);
-      }
-      PsiBlockStatement blockStatement = ObjectUtils.tryCast(body, PsiBlockStatement.class);
-      PsiElement result =
-        new CommentTracker().replaceAndRestoreComments(listSetCall.getParent(), "return " +
-                                                                                ct.textWithComments(
-                                                                                  listSetCall.getArgumentList().getExpressions()[1]) +
-                                                                                ";");
-      PsiLocalVariable variable =
-        IteratorDeclaration.getDeclaredVariable(PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class));
-      inlineVariable(variable);
-      String codeBlockText = blockStatement != null ? ct.text(blockStatement) : "{ " + ct.text(result) + " }";
-      return variableName + " -> " + codeBlockText;
-    }
-
-    private static void inlineVariable(PsiLocalVariable variable) {
-      if (variable == null) return;
-      final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer == null || references.size() != 1) return;
-      InlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)references.iterator().next());
-      variable.delete();
-    }
-
-    private static void simplifyToExpressionLambda(PsiElement element) {
-      PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(element, PsiExpressionStatement.class);
-      if (expressionStatement == null) return;
-      PsiExpression expression = expressionStatement.getExpression();
-      PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
-      if (call == null) return;
-      PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
-      PsiLambdaExpression lambdaExpression = ObjectUtils.tryCast(arg, PsiLambdaExpression.class);
-      if (lambdaExpression == null) return;
-      LambdaRefactoringUtil.simplifyToExpressionLambda(lambdaExpression);
     }
   }
 }

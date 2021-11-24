@@ -73,13 +73,9 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       ToggleShowDocsOnHoverAction(),
       ActionManager.getInstance().getAction(TOGGLE_AUTO_SHOW_ACTION_ID),
       ActionManager.getInstance().getAction(TOGGLE_AUTO_UPDATE_ACTION_ID),
-      AdjustFontSizeAction(), // TODO this action doesn't work because of wrong DataContext
+      AdjustFontSizeAction(),
     ))
-    if (Registry.`is`("documentation.v2.tw.navigation.actions")) {
-      // TODO these actions are always visible, but they are unavailable in the tool window title,
-      //  because they are updated with the wrong DataContext.
-      toolWindow.setTitleActions(navigationActions())
-    }
+    toolWindow.setTitleActions(navigationActions())
     toolWindow.installWatcher(contentManager)
     toolWindow.component.putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, true)
     toolWindow.helpId = "reference.toolWindows.Documentation"
@@ -105,11 +101,8 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
     return true
   }
 
-  private fun getVisibleAutoUpdatingContent(): Content? {
-    if (!autoUpdate || !toolWindow.isVisible) {
-      return null
-    }
-    return contentManager.selectedContent?.takeIf {
+  fun getVisibleAutoUpdatingContent(): Content? {
+    return getVisibleReusableContent()?.takeIf {
       it.toolWindowUI.isAutoUpdate
     }
   }
@@ -124,14 +117,25 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       }
       waitForFocusRequest = false
     }
-    if (!toolWindow.isVisible) {
-      return false
-    }
-    val content = contentManager.selectedContent?.takeIf {
-      it.isReusable
-    } ?: return false
+    val content = getVisibleReusableContent() ?: return false
     contentManager.requestFocus(content, false)
     return true
+  }
+
+  fun updateVisibleReusableTab(request: DocumentationRequest): Boolean {
+    val content = getVisibleReusableContent() ?: return false
+    content.toolWindowUI.browser.resetBrowser(request)
+    waitForFocusRequest()
+    return true
+  }
+
+  private fun getVisibleReusableContent(): Content? {
+    if (!toolWindow.isVisible) {
+      return null
+    }
+    return contentManager.selectedContent?.takeIf {
+      it.toolWindowUI.isReusable
+    }
   }
 
   /**

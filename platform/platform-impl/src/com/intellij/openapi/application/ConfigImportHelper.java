@@ -186,7 +186,7 @@ public final class ConfigImportHelper {
         if (!guessedOldConfigDirs.fromSameProduct) {
           // do not import plugins from other products even if configs are imported
           configImportOptions.importPlugins = false;
-          configImportOptions.importBundledPlugins = settings != null && settings.shouldImportBundledPlugins();
+          configImportOptions.importSettings = settings;
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
         else if (importScenarioStatistics == null) {
@@ -722,7 +722,7 @@ public final class ConfigImportHelper {
     final Logger log;
     boolean headless;
     boolean importPlugins = true;
-    boolean importBundledPlugins = false;
+    @Nullable ConfigImportSettings importSettings;
     BuildNumber compatibleBuildNumber = null;
     MarketplacePluginDownloadService downloadService = null;
     Path bundledPluginPath = null;
@@ -766,16 +766,19 @@ public final class ConfigImportHelper {
 
     List<ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
 
-    ConfigImportSettings settings = findCustomConfigImportSettings();
     // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
-    if (!options.importPlugins && !options.importBundledPlugins) {
+    boolean importBundledPlugins = options.importSettings != null && options.importSettings.shouldImportBundledPlugins();
+    if (!options.importPlugins && !importBundledPlugins) {
       log.info("plugins are not imported.");
+    }
+    else if (options.importPlugins && !Files.isDirectory(oldPluginsDir)) {
+      log.info("non-existing plugins directory: " + oldPluginsDir);
     }
     else if (!isEmptyDirectory(newPluginsDir)) {
       log.info("non-empty plugins directory: " + newPluginsDir);
     }
     else {
-      migratePlugins(oldPluginsDir, newPluginsDir, oldConfigDir, actionCommands, options, settings);
+      migratePlugins(oldPluginsDir, newPluginsDir, oldConfigDir, actionCommands, options);
     }
 
     if (SystemInfo.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
@@ -812,20 +815,13 @@ public final class ConfigImportHelper {
                                      Path newPluginsDir,
                                      Path oldConfigDir,
                                      List<ActionCommand> actionCommands,
-                                     ConfigImportOptions options,
-                                     ConfigImportSettings settings) throws IOException {
+                                     ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     try {
       List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
       List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
       List<PluginId> pendingUpdates;
-      if (!Files.isDirectory(oldPluginsDir)) {
-        pendingUpdates = new ArrayList<>();
-        log.info("non-existing plugins directory: " + oldPluginsDir);
-      } else if (!options.importPlugins) {
-        pendingUpdates = new ArrayList<>();
-        log.info("non-bundled plugins are not imported.");
-      } else {
+      if (options.importPlugins) {
         pendingUpdates = collectPendingPluginUpdates(actionCommands, options);
         PluginDescriptorLoader.getDescriptorsToMigrate(oldPluginsDir,
                                                        options.compatibleBuildNumber,
@@ -835,10 +831,13 @@ public final class ConfigImportHelper {
                                                        pluginsToDownload);
 
         migratePlugins(newPluginsDir, pluginsToMigrate, pendingUpdates, log);
+      } else {
+        pendingUpdates = new ArrayList<>();
+        log.info("non-bundled plugins are not imported.");
       }
 
-      if (options.importBundledPlugins) {
-        collectBundledPluginsToDownload(oldConfigDir, pluginsToDownload);
+      if (options.importSettings != null && options.importSettings.shouldImportBundledPlugins()) {
+        collectBundledPluginsToDownload(oldConfigDir, pluginsToDownload, options.importSettings);
       }
 
       if (!pluginsToDownload.isEmpty()) {
@@ -1166,14 +1165,15 @@ public final class ConfigImportHelper {
     return result;
   }
 
-  private static void collectBundledPluginsToDownload(Path configDir, List<IdeaPluginDescriptor> pluginsToDownload) {
-    ConfigImportSettings settings = Objects.requireNonNull(findCustomConfigImportSettings());
-    @Nullable Set<@Nullable String> categories = settings.getBundledPluginCategoriesToImport();
-    @Nullable List<BundledPluginsState.PluginWithCategory> plugins = BundledPluginsState.Companion.getBundledIdsForOtherIde(configDir);
+  private static void collectBundledPluginsToDownload(Path configDir,
+                                                      List<IdeaPluginDescriptor> pluginsToDownload,
+                                                      @NotNull ConfigImportSettings settings) {
+    @Nullable List<kotlin.Pair<PluginId, @Nullable String>> plugins = BundledPluginsState.getBundledPlugins(configDir);
     if (plugins != null) {
-      for (BundledPluginsState.PluginWithCategory plugin : plugins) {
-        if (categories == null || categories.contains(plugin.getCategory()) || settings.shouldImportAnyway(plugin.getId())) {
-          PluginNode pluginNode = new PluginNode(plugin.getId());
+      // pairs of PluginId to Category
+      for (kotlin.Pair<PluginId, @Nullable String> plugin : plugins) {
+        if (settings.shouldImport(plugin.getFirst(), plugin.getSecond())) {
+          PluginNode pluginNode = new PluginNode(plugin.getFirst());
           pluginsToDownload.add(pluginNode);
         }
       }

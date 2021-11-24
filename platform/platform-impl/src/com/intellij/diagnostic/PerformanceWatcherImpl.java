@@ -532,7 +532,10 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
             if (publisher != null) {
               publisher.uiFreezeFinished(durationMs, new File(myLogDir, myFreezeFolder));
             }
-            postProcessReportFolder(durationMs);
+            File reportDir = postProcessReportFolder(durationMs);
+            if (publisher != null) {
+              publisher.uiFreezeRecorded(durationMs, reportDir);
+            }
           }).get();
         }
         catch (Exception e) {

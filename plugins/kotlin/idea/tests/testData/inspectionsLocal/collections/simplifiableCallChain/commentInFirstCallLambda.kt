@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(): List<Int> {
     return listOf(1, null, 2)
         // TEXT1

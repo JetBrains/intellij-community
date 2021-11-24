@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ComponentTreeEventDispatcher;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
@@ -54,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -380,7 +380,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
     final boolean dark = StartupUiUtil.isUnderDarcula() && getScheme("Darcula") != null;
-    // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
+    // It is reasonable to fetch attributes from Default color scheme. Otherwise, if we launch IDE and then
     // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
     // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
     return getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME).getAttributes(key);
@@ -414,16 +414,15 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   private static void loadAdditionalTextAttributesForScheme(@NotNull AbstractColorsScheme scheme,
                                                             @NotNull Collection<AdditionalTextAttributesEP> attributeEps) {
     for (AdditionalTextAttributesEP attributesEP : attributeEps) {
-      InputStream resourceStream = attributesEP.pluginDescriptor
-        .getClassLoader()
-        .getResourceAsStream(StringUtil.trimStart(attributesEP.file, "/"));
-      if (resourceStream == null) {
-        LOG.warn("resource not found: " + attributesEP.file);
-        continue;
-      }
-
       try {
-        Element root = JDOMUtil.load(resourceStream);
+        byte[] data =
+          ResourceUtil.getResourceAsBytes(Strings.trimStart(attributesEP.file, "/"), attributesEP.pluginDescriptor.getClassLoader());
+        if (data == null) {
+          LOG.warn("resource not found: " + attributesEP.file);
+          continue;
+        }
+
+        Element root = JDOMUtil.load(data);
         scheme.readAttributes(Objects.requireNonNullElse(root.getChild("attributes"), root));
         Element colors = root.getChild("colors");
         if (colors != null) {

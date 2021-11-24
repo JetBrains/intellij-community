@@ -1,5 +1,5 @@
 // "Create extension property 'Unit.foo'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 private val Unit.foo: Int
     get() {

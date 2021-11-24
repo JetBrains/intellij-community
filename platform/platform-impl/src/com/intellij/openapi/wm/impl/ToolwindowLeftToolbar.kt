@@ -37,7 +37,7 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
   override fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow) {
     when (anchor) {
       ToolWindowAnchor.LEFT -> rebuildStripe(project, topPane, toolWindow)
-      ToolWindowAnchor.BOTTOM -> rebuildStripe(project, bottomPane, toolWindow)
+      ToolWindowAnchor.BOTTOM -> rebuildStripe(project, bottomPane, toolWindow, addToBeginning = true)
     }
   }
 

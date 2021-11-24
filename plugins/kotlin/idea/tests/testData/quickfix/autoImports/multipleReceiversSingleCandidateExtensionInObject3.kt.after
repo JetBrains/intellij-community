@@ -1,5 +1,5 @@
 // "Import" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 package p
 
 import p.AExtObject.extension

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'indexOfFirst{}'"
 // IS_APPLICABLE_2: false
 fun f8_indexOfFirst_complex(value: String, list: List<Any?>):Int{

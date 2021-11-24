@@ -1,5 +1,5 @@
 // "Specify override for 'size: Int' explicitly" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 import java.util.*
 

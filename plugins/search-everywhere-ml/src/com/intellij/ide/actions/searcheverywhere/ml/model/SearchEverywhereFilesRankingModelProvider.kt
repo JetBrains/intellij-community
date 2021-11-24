@@ -11,11 +11,10 @@ internal class SearchEverywhereFilesRankingModelProvider : SearchEverywhereMLRan
 
   override val supportedContributor = FileSearchEverywhereContributor::class.java
 
-  override val model: DecisionFunction
-    get() {
-      val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, resourceDirectory))
-      return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
-        override fun predict(features: DoubleArray?): Double = PredictionModel.makePredict(features)
-      }
+  override fun getBundledModel(): DecisionFunction {
+    val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, resourceDirectory))
+    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
+      override fun predict(features: DoubleArray?): Double = PredictionModel.makePredict(features)
     }
+  }
 }

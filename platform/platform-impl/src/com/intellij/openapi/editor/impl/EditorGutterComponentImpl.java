@@ -426,7 +426,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private double getExpUIVerticalLineX() {
-    return getFoldingAreaOffset() + getFoldingAnchorWidth() - scale(4f);
+    return getFoldingAreaOffset() + getFoldingAnchorWidth() - scale(1f);
   }
 
   private void paintEditorBackgrounds(Graphics g, int firstVisibleOffset, int lastVisibleOffset) {
@@ -1575,7 +1575,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private double getFoldingAnchorWidth2D() {
     if (ExperimentalUI.isNewEditorTabs()) {
-      return getEditorScaleFactor() * (UIUtil.getTreeCollapsedIcon().getIconWidth() + JBUIScale.scale(10f)) ;
+      return getEditorScaleFactor() * (UIUtil.getTreeCollapsedIcon().getIconWidth() + JBUIScale.scale(6f)) ;
     }
     return Math.min(scale(4f), myEditor.getLineHeight() / 2f - JBUIScale.scale(2f)) * 2;
   }

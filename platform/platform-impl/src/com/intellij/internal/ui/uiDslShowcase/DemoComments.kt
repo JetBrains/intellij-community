@@ -11,7 +11,7 @@ import com.intellij.ui.dsl.builder.text
       description = "Comment is a gray (depends on color scheme) text which can be assigned to cell (placed under cell), rows or placed in any cell directly")
 fun demoComments(): DialogPanel {
   return panel {
-    row {
+    row("Row1:") {
       textField()
         .comment("Comment to textField1")
         .text("textField1")

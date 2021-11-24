@@ -35,9 +35,12 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.lang.reflect.UndeclaredThrowableException
-import java.nio.file.*
-import java.util.concurrent.Callable
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
+import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
 
@@ -307,26 +310,28 @@ idea.fatal.error.notification=disabled
   }
 
   @NotNull
-  private static BuildTaskRunnable<Path> createDistributionForOsTask(@NotNull OsFamily os,
+  private static BuildTaskRunnable createDistributionForOsTask(@NotNull OsFamily os,
+                                                                     @NotNull Map<OsFamily, Path> result,
                                                                      @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
-    return BuildTaskRunnable.<Path> taskWithResult(os.osId, new Function<BuildContext, Path>() {
+    return BuildTaskRunnable.task(os.osId, new Consumer<BuildContext>() {
       @Override
-      Path apply(BuildContext context) {
+      void accept(BuildContext context) {
         if (!context.shouldBuildDistributionForOS(os.osId)) {
-          return null
+          return
         }
 
         OsSpecificDistributionBuilder builder = factory.apply(context)
         if (builder == null) {
-          return null
+          return
         }
 
-        return context.messages.block("build ${os.osName} distribution", new Supplier<Path>() {
+        context.messages.block("build ${os.osName} distribution", new Supplier<Void>() {
           @Override
-          Path get() {
+          Void get() {
             Path osSpecificDistDirectory = DistributionJARsBuilder.getOsSpecificDistDirectory(builder.targetOs, context)
             builder.buildArtifacts(osSpecificDistDirectory)
-            return osSpecificDistDirectory
+            result.put(os, osSpecificDistDirectory)
+            return null
           }
         })
       }
@@ -406,7 +411,7 @@ idea.fatal.error.notification=disabled
 
   private void doBuildDistributions(BuildContext context) {
     checkProductProperties()
-    copyDependenciesFile()
+    copyDependenciesFile(context)
     setupBundledMaven()
 
     logFreeDiskSpace("before compilation")
@@ -449,7 +454,7 @@ idea.fatal.error.notification=disabled
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"$BuildOptions.OS_NONE\"")
           DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish())
-          distributionJARsBuilder.createBuildNonBundledPluginsTask(true, context)?.fork()?.join()
+          distributionJARsBuilder.createBuildNonBundledPluginsTask(true, null, context)?.fork()?.join()
         }
         return null
       }
@@ -460,8 +465,9 @@ idea.fatal.error.notification=disabled
       setupJetBrainsRuntimeTask?.join()
 
       Path propertiesFile = patchIdeaPropertiesFile()
-      List<BuildTaskRunnable<Path>> tasks = [
-        createDistributionForOsTask(OsFamily.MACOS, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+      Map<OsFamily, Path> distDirs = Collections.synchronizedMap(new HashMap<OsFamily, Path>(3))
+      runInParallel(List.of(
+        createDistributionForOsTask(OsFamily.MACOS, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
           @Override
           OsSpecificDistributionBuilder apply(BuildContext customContext) {
             return customContext.macDistributionCustomizer?.with {
@@ -469,7 +475,7 @@ idea.fatal.error.notification=disabled
             }
           }
         }),
-        createDistributionForOsTask(OsFamily.WINDOWS, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+        createDistributionForOsTask(OsFamily.WINDOWS, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
           @Override
           OsSpecificDistributionBuilder apply(BuildContext customContext) {
             return customContext.windowsDistributionCustomizer?.with {
@@ -477,7 +483,7 @@ idea.fatal.error.notification=disabled
             }
           }
         }),
-        createDistributionForOsTask(OsFamily.LINUX, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+        createDistributionForOsTask(OsFamily.LINUX, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
           @Override
           OsSpecificDistributionBuilder apply(BuildContext customContext) {
             return customContext.linuxDistributionCustomizer?.with {
@@ -485,9 +491,7 @@ idea.fatal.error.notification=disabled
             }
           }
         })
-      ].findAll { it != null }
-
-      List<Path> paths = runInParallel(tasks, context).findAll { it != null }
+      ).findAll { it != null }, context)
       if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
         if (context.buildNumber == null) {
           context.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
@@ -523,15 +527,11 @@ idea.fatal.error.notification=disabled
       }
 
       if (context.productProperties.buildCrossPlatformDistribution) {
-        if (paths.size() == 3) {
+        if (distDirs.size() == 3) {
           context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP, new Runnable() {
             @Override
             void run() {
-              Path monsterZip = new CrossPlatformDistributionBuilder().buildCrossPlatformZip(paths[0], paths[1], paths[2], context)
-              Map<String, String> checkerConfig = context.productProperties.versionCheckerConfig
-              if (checkerConfig != null) {
-                new ClassVersionChecker(checkerConfig).checkVersions(context, monsterZip)
-              }
+              CrossPlatformDistributionBuilder.buildCrossPlatformZip(distDirs, context)
             }
           })
         }
@@ -547,11 +547,11 @@ idea.fatal.error.notification=disabled
   void buildNonBundledPlugins(List<String> mainPluginModules) {
     checkProductProperties()
     checkPluginModules(mainPluginModules, "mainPluginModules", buildContext.productProperties.productLayout.allNonTrivialPlugins)
-    copyDependenciesFile()
+    copyDependenciesFile(buildContext)
     Set<PluginLayout> pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
     DistributionJARsBuilder distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
     DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
-    distributionJARsBuilder.createBuildNonBundledPluginsTask(true, buildContext)?.fork()?.join()
+    distributionJARsBuilder.createBuildNonBundledPluginsTask(true, null, buildContext)?.fork()?.join()
   }
 
   @Override
@@ -639,30 +639,15 @@ idea.fatal.error.notification=disabled
     return extraJars
   }
 
-  static void appendLibsToClasspathJar(BuildContext buildContext, @NotNull Path distDir, @NotNull List<String> extraJars) {
-    Path srcClassPathTxt = buildContext.paths.distAllDir.resolve("lib/classpath.txt")
-    Path destLibDir = distDir.resolve("lib")
-    //no file in fleet
-    if (Files.exists(srcClassPathTxt)) {
-      Path classPathTxt = destLibDir.resolve("classpath.txt")
-      Files.copy(srcClassPathTxt, classPathTxt, StandardCopyOption.REPLACE_EXISTING)
-      Files.writeString(classPathTxt, "\n" + String.join("\n", extraJars), StandardOpenOption.APPEND)
-      buildContext.messages.warning("added ${extraJars.size()} extra jars to classpath.txt")
-    }
-    else {
-      buildContext.messages.warning("no classpath.txt - no patching")
-    }
-  }
-
   private void logFreeDiskSpace(String phase) {
     CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
   }
 
-  private void copyDependenciesFile() {
-    Path outputFile = Path.of(buildContext.paths.artifacts, "dependencies.txt")
+  private static void copyDependenciesFile(BuildContext context) {
+    Path outputFile = Path.of(context.paths.artifacts, "dependencies.txt")
     Files.createDirectories(outputFile.parent)
-    Files.copy(buildContext.dependenciesProperties.file, outputFile, StandardCopyOption.REPLACE_EXISTING)
-    buildContext.notifyArtifactWasBuilt(outputFile)
+    Files.copy(context.dependenciesProperties.file, outputFile, StandardCopyOption.REPLACE_EXISTING)
+    context.notifyArtifactWasBuilt(outputFile)
   }
 
   private void checkProductProperties() {
@@ -674,7 +659,6 @@ idea.fatal.error.notification=disabled
 
     checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile")
     checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests")
-    checkModules(properties.additionalModulesRequiredForScrambling, "productProperties.additionalModulesRequiredForScrambling")
 
     def winCustomizer = buildContext.windowsDistributionCustomizer
     checkPaths([winCustomizer?.icoPath], "productProperties.windowsCustomizer.icoPath")
@@ -850,15 +834,16 @@ idea.fatal.error.notification=disabled
     CompilationTasks.create(buildContext).compileModules(moduleNames, includingTestsInModules)
   }
 
-  static <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks, BuildContext buildContext) {
+  static void runInParallel(List<BuildTaskRunnable> tasks, BuildContext buildContext) {
     if (tasks.empty) {
-      return Collections.emptyList()
+      return
     }
 
     if (!buildContext.options.runBuildStepsInParallel) {
-      return tasks.collect {
-        it.execute(buildContext)
+      tasks.collect {
+        it.task.accept(buildContext)
       }
+      return
     }
 
     Span span = spanBuilder("run tasks in parallel")
@@ -867,9 +852,9 @@ idea.fatal.error.notification=disabled
       .startSpan()
     Context traceContext = Context.current().with(span)
     try {
-      List<ForkJoinTask<V>> futures = new ArrayList<ForkJoinTask<V>>(tasks.size())
-      for (BuildTaskRunnable<V> task : tasks) {
-        ForkJoinTask<V> forkJoinTask = createTaskWrapper(task, buildContext.forkForParallelTask(task.stepId), traceContext)
+      List<ForkJoinTask<?>> futures = new ArrayList<ForkJoinTask<?>>(tasks.size())
+      for (BuildTaskRunnable task : tasks) {
+        ForkJoinTask<?> forkJoinTask = createTaskWrapper(task, buildContext.forkForParallelTask(task.stepId), traceContext)
         if (forkJoinTask != null) {
           futures.add(forkJoinTask.fork())
         }
@@ -877,21 +862,16 @@ idea.fatal.error.notification=disabled
 
       List<Throwable> errors = new ArrayList<>()
 
-      List<V> results = new ArrayList<>(futures.size())
       // inversed order of join - better for FJP (https://shipilev.net/talks/jeeconf-May2012-forkjoin.pdf, slide 32)
       for (int i = futures.size() - 1; i >= 0; i--) {
-        ForkJoinTask<V> task = futures.get(i)
+        ForkJoinTask<?> task = futures.get(i)
         try {
-          V result = task.join()
-          if (result != null) {
-            results.add(result)
-          }
+          task.join()
         }
         catch (Throwable e) {
           errors.add(e instanceof UndeclaredThrowableException ? e.cause : e)
         }
       }
-      results.sort(Collections.reverseOrder())
 
       if (!errors.isEmpty()) {
         Span.current().setStatus(StatusCode.ERROR)
@@ -902,7 +882,6 @@ idea.fatal.error.notification=disabled
           buildContext.messages.error("Some tasks failed", new CompoundRuntimeException(errors))
         }
       }
-      return results
     }
     catch (Throwable e) {
       span.recordException(e)
@@ -916,7 +895,7 @@ idea.fatal.error.notification=disabled
   }
 
   @Nullable
-  private static <T> ForkJoinTask<T> createTaskWrapper(BuildTaskRunnable<T> task, BuildContext buildContext, Context traceContext) {
+  private static ForkJoinTask<?> createTaskWrapper(BuildTaskRunnable task, BuildContext buildContext, Context traceContext) {
     if (buildContext.options.buildStepsToSkip.contains(task.stepId)) {
       Span span = spanBuilder(task.stepId).setParent(traceContext).startSpan()
       span.addEvent("skip")
@@ -924,19 +903,19 @@ idea.fatal.error.notification=disabled
       return null
     }
 
-    return ForkJoinTask.adapt(new Callable<T>() {
+    return ForkJoinTask.adapt(new Runnable() {
       @Override
-      T call() throws Exception {
+      void run() throws Exception {
         Span span = spanBuilder(task.stepId).setParent(traceContext).startSpan()
         Scope scope = span.makeCurrent()
         buildContext.messages.onForkStarted()
         try {
           if (buildContext.options.buildStepsToSkip.contains(task.stepId)) {
             span.addEvent("skip")
-            return null
+            null
           }
           else {
-            return task.execute(buildContext)
+            task.task.accept(buildContext)
           }
         }
         catch (Throwable e) {

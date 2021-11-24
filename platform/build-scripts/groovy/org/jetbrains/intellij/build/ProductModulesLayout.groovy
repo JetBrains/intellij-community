@@ -13,7 +13,7 @@ import java.util.function.BiConsumer
 
 @CompileStatic
 class ProductModulesLayout {
-  public static List<String> DEFAULT_BUNDLED_PLUGINS = ["intellij.platform.images"]
+  public static final List<String> DEFAULT_BUNDLED_PLUGINS = List.of("intellij.platform.images")
 
   /**
    * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
@@ -83,7 +83,22 @@ class ProductModulesLayout {
   /**
    * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
    */
-  BiConsumer<PlatformLayout, BuildContext> platformLayoutCustomizer = { _, __ -> } as BiConsumer<PlatformLayout, BuildContext>
+  BiConsumer<PlatformLayout, BuildContext> platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+    @Override
+    void accept(PlatformLayout layout, BuildContext context) {
+    }
+  }
+
+  void appendPlatformCustomizer(BiConsumer<PlatformLayout, BuildContext> customizer) {
+    BiConsumer<PlatformLayout, BuildContext> prev = platformLayoutCustomizer
+    platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+      @Override
+      void accept(PlatformLayout layout, BuildContext context) {
+        prev.accept(layout, context)
+        customizer.accept(layout, context)
+      }
+    }
+  }
 
   /**
    * Names of the modules which classpath will be used to build searchable options index <br>

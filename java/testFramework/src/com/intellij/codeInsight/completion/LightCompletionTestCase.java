@@ -71,7 +71,7 @@ public abstract class LightCompletionTestCase extends LightJavaCodeInsightTestCa
 
   protected void testByCount(int finalCount, String... values) {
     if (myItems == null) {
-      assertEquals(0, finalCount);
+      assertEquals(finalCount, 0);
       return;
     }
     int index = 0;

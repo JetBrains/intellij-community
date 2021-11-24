@@ -2,6 +2,7 @@
 package com.intellij.feedback.notification
 
 import com.intellij.feedback.bundle.FeedbackBundle
+import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
@@ -11,7 +12,7 @@ import com.intellij.openapi.project.Project
  */
 
 class RequestFeedbackNotification : Notification(
-  "Feedback Notification",
+  "Project Creation Feedback",
   FeedbackBundle.message("notification.request.feedback.title"),
   FeedbackBundle.message("notification.request.feedback.content"),
   NotificationType.INFORMATION
@@ -19,9 +20,7 @@ class RequestFeedbackNotification : Notification(
 
   //Tracking showing notification
   override fun notify(project: Project?) {
-    //TODO: Should we track it?
-    //val feedbackDatesState: FeedbackDatesState = service<FeedbackDatesService>().state ?: return
+    ProjectCreationFeedbackCountCollector.logNotificationShowed()
     super.notify(project)
-    //feedbackDatesState.dateShowFeedbackNotification = LocalDate.now()
   }
 }

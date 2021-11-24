@@ -35,9 +35,11 @@ import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.restoreCommitWindowStateInformer
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.data.TableCell
@@ -82,6 +84,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     showWarningIfModalCommitEnabled()
+    showWarningIfStagingAreaEnabled()
 
     task {
       openCommitWindowText(GitLessonsBundle.message("git.commit.open.commit.window"))
@@ -121,7 +124,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
            LearningBalloonConfig(Balloon.Position.below, 300, cornerToPointerDistance = 55))
       highlightVcsChange(firstFileName)
       triggerOnOneChangeIncluded(secondFileName)
-      showWarningIfCommitWindowClosed()
+      showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         clickChangeElement(firstFileName)
       }
@@ -140,7 +143,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.open.options.tooltip", strong(commitWindowName)),
            LearningBalloonConfig(Balloon.Position.above, 0))
       triggerByUiComponentAndHighlight(false, false) { _: CommitOptionsPanel -> true }
-      showWarningIfCommitWindowClosed()
+      showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           actionButton(ActionsBundle.actionText("ChangesView.ShowCommitOptions")).click()
@@ -224,10 +227,11 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.committed.file.explanation"))
       triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: VcsLogChangesBrowser -> true }
       proceedLink()
-      showWarningIfGitWindowClosed(restoreTaskWhenResolved = false)
+      showWarningIfGitWindowClosed()
     }
 
     task {
+      before { LearningUiHighlightingManager.clearHighlights() }
       val amendCheckboxText = VcsBundle.message("checkbox.amend").dropMnemonic()
       text(GitLessonsBundle.message("git.commit.select.amend.checkbox",
                                     strong(amendCheckboxText),
@@ -286,6 +290,8 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     text(GitLessonsBundle.message("git.commit.two.committed.files.explanation"))
+
+    restoreCommitWindowStateInformer()
   }
 
   private fun TaskContext.highlightVcsChange(changeFileName: String, highlightBorder: Boolean = true) {

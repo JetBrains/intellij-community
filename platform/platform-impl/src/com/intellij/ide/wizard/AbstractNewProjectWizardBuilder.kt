@@ -54,7 +54,8 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     panel = null
   }
 
-  private class BridgeStep(private val panel: NewProjectWizardStepPanel) : ModuleWizardStep() {
+  private class BridgeStep(private val panel: NewProjectWizardStepPanel) : ModuleWizardStep(),
+                                                                           NewProjectWizardStep by panel.step {
 
     override fun validate() = panel.validate()
 

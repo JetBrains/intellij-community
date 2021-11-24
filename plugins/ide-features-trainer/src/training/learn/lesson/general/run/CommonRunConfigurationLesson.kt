@@ -3,6 +3,7 @@ package training.learn.lesson.general.run
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
+import com.intellij.ide.ui.UISettings
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.ui.components.JBCheckBox
@@ -10,7 +11,7 @@ import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.ui.LearningUiHighlightingManager
-import java.util.concurrent.CompletableFuture
+import training.ui.LearningUiManager
 import javax.swing.JButton
 
 abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBundle.message("run.configuration.lesson.name")) {
@@ -41,20 +42,11 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         test { actions(it) }
       }
 
+      showWarningIfRunConfigurationsHidden()
+
       task {
-        val configurationsShown = CompletableFuture<Boolean>()
         triggerByUiComponentAndHighlight<JButton> { ui ->
-          if (ui.text == demoConfigurationName) {
-            configurationsShown.complete(true)
-            true
-          }
-          else false
-        }
-        showWarning(LessonsBundle.message("run.configuration.list.not.shown.warning",
-                                          strong(ActionsBundle.message("action.ViewNavigationBar.text").dropMnemonic()),
-                                          strong(ActionsBundle.message("group.ViewMenu.text").dropMnemonic()),
-                                          strong(ActionsBundle.message("group.ViewAppearanceGroup.text").dropMnemonic()))) {
-          !configurationsShown.getNow(false)
+          ui.text == demoConfigurationName
         }
       }
 
@@ -111,9 +103,44 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
           }
         }
       }
+
+      restoreUiInformer()
     }
 
   protected abstract fun LessonContext.runTask()
+
+  private fun LessonContext.showWarningIfRunConfigurationsHidden() {
+    task {
+      val step = stateCheck {
+        UISettings.instance.run { showNavigationBar || showMainToolbar }
+      }
+      val callbackId = LearningUiManager.addCallback {
+        UISettings.instance.apply {
+          showNavigationBar = true
+          fireUISettingsChanged()
+        }
+        step.complete(true)
+      }
+      showWarning(LessonsBundle.message("run.configuration.list.not.shown.warning",
+                                        strong(ActionsBundle.message("action.ViewNavigationBar.text").dropMnemonic()),
+                                        strong(ActionsBundle.message("group.ViewMenu.text").dropMnemonic()),
+                                        strong(ActionsBundle.message("group.ViewAppearanceGroup.text").dropMnemonic()),
+                                        callbackId)) {
+        UISettings.instance.run { !showNavigationBar && !showMainToolbar }
+      }
+    }
+  }
+
+  private fun LessonContext.restoreUiInformer() {
+    if (UISettings.instance.run { showNavigationBar || showMainToolbar }) return
+    restoreChangedSettingsInformer {
+      UISettings.instance.apply {
+        showNavigationBar = false
+        showMainToolbar = false
+        fireUISettingsChanged()
+      }
+    }
+  }
 
   override val testScriptProperties: TaskTestContext.TestScriptProperties
     get() = TaskTestContext.TestScriptProperties(duration = 20)

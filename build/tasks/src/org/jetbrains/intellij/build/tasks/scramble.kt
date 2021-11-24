@@ -4,16 +4,12 @@
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.util.lang.ImmutableZipFile
-import org.jetbrains.intellij.build.io.ZipArchiver
-import org.jetbrains.intellij.build.io.deleteDir
-import org.jetbrains.intellij.build.io.runJavaWithOutputToFile
-import org.jetbrains.intellij.build.io.writeNewZip
+import org.jetbrains.intellij.build.io.*
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.List
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Consumer
@@ -25,11 +21,11 @@ fun runScrambler(scramblerJar: Path,
                  pluginDir: Path?,
                  workingDir: Path,
                  artifactDir: Path,
-                 filesToScramble: List<Path>,
+                 files: List<Path>,
                  args: Iterable<String>,
                  jvmArgs: Iterable<String>,
                  artifactBuilt: Consumer<Path>) {
-  val logSpecifier = pluginDir?.fileName?.toString() ?: "main"
+  val logSpecifier = pluginDir?.fileName?.toString() ?: files.first().fileName.toString().removeSuffix(".jar")
   val logDir = artifactDir.resolve("scramble-logs")
   val processOutputFile = logDir.resolve("$logSpecifier-process-output.log")
   try {
@@ -45,10 +41,10 @@ fun runScrambler(scramblerJar: Path,
 
     if (pluginDir == null) {
       // yes, checked only for a main JAR
-      checkClassFilesValidity(filesToScramble.first())
+      checkClassFilesValidity(files.first())
 
-      // update package index
-      ForkJoinTask.invokeAll(filesToScramble.map { file ->
+      // update package index (main jar will be merged into app.jar, so, skip it)
+      ForkJoinTask.invokeAll(files.subList(1, files.size).map { file ->
         task(tracer.spanBuilder("update package index after scrambling")
                .setAttribute("file", file.toString())) {
           updatePackageIndexUsingTempFile(file)
@@ -62,7 +58,7 @@ fun runScrambler(scramblerJar: Path,
           .forEach { Files.delete(it) }
       }
 
-      ForkJoinTask.invokeAll(filesToScramble.map { file ->
+      ForkJoinTask.invokeAll(files.map { file ->
         task(tracer.spanBuilder("update package index after scrambling")
                .setAttribute("plugin", pluginDir.toString())
                .setAttribute("file", pluginDir.relativize(file).toString())) {
@@ -99,13 +95,17 @@ fun runScrambler(scramblerJar: Path,
 }
 
 private fun updatePackageIndexUsingTempFile(file: Path) {
-  val tempFile = file.parent.resolve("${file.fileName}.tmp")
-  try {
-    updatePackageIndex(file, tempFile)
-    Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+  transformFile(file) {
+    updatePackageIndex(file, it)
   }
-  finally {
-    Files.deleteIfExists(tempFile)
+}
+
+private fun updatePackageIndex(sourceFile: Path, targetFile: Path) {
+  writeNewZip(targetFile) { zipCreator ->
+    val packageIndexBuilder = PackageIndexBuilder()
+    copyZipRaw(sourceFile, packageIndexBuilder, zipCreator)
+    packageIndexBuilder.writeDirs(zipCreator)
+    packageIndexBuilder.writePackageIndex(zipCreator)
   }
 }
 

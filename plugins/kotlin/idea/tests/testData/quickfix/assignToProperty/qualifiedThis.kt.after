@@ -1,5 +1,5 @@
 // "Assign to property" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Test {
     var foo = 1
 

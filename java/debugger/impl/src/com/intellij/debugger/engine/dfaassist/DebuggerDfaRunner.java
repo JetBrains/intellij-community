@@ -82,8 +82,12 @@ class DebuggerDfaRunner {
       return null;
     }
     var interceptor = new DebuggerDfaListener();
+    // interpret() could be called several times in case if ReadAction is cancelled
+    // So we need to copy the mutable myStartingState. Otherwise, restarted analysis will start from the wrong memory state
+    DfaMemoryState memoryState = myStartingState.getMemoryState().createCopy();
+    DfaInstructionState startingState = new DfaInstructionState(myStartingState.getInstruction(), memoryState);
     StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true);
-    return interpreter.interpret(List.of(myStartingState)) == RunnerResult.OK ? interceptor : null;
+    return interpreter.interpret(List.of(startingState)) == RunnerResult.OK ? interceptor : null;
   }
 
   @Nullable

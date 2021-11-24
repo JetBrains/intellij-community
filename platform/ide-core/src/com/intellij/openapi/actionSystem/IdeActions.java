@@ -109,7 +109,7 @@ public interface IdeActions {
   String GROUP_MAIN_MENU = "MainMenu";
   String GROUP_MAIN_TOOLBAR = "MainToolBar";
   String GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS = "ExperimentalToolbarActions";
-  String GROUP_EXPERIMENTAL_TOOLBAR = "NewToolbarActions";
+  String GROUP_EXPERIMENTAL_TOOLBAR = "CenterToolbarSideGroup";
   String GROUP_EDITOR_POPUP = "EditorPopupMenu";
   String GROUP_BASIC_EDITOR_POPUP = "BasicEditorPopupMenu";
   String GROUP_CONSOLE_EDITOR_POPUP = "ConsoleEditorPopupMenu";
@@ -141,6 +141,7 @@ public interface IdeActions {
   String ACTION_FIND_NEXT = "FindNext";
   String ACTION_FIND_PREVIOUS = "FindPrevious";
   String ACTION_FIND_WORD_AT_CARET = "FindWordAtCaret";
+  String ACTION_FIND_PREV_WORD_AT_CARET = "FindPrevWordAtCaret";
   String ACTION_SELECT_NEXT_OCCURENCE = "SelectNextOccurrence";
   String ACTION_SELECT_ALL_OCCURRENCES = "SelectAllOccurrences";
   String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
@@ -173,6 +174,7 @@ public interface IdeActions {
   String DIFF_VIEWER_POPUP = "Diff.ViewerPopupMenu";
   String DIFF_VIEWER_TOOLBAR = "Diff.ViewerToolbar";
   String GROUP_DIFF_EDITOR_GUTTER_POPUP = "Diff.EditorGutterPopupMenu";
+  String GROUP_DIFF_EDITOR_SETTINGS = "Diff.EditorGutterPopupMenu.EditorSettings";
 
   String ACTION_EXPAND_ALL = "ExpandAll";
   String ACTION_COLLAPSE_ALL = "CollapseAll";

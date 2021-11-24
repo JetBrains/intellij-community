@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -49,7 +50,7 @@ public final class BootstrapClassLoaderUtil {
     }
   }
 
-  public static @NotNull PathClassLoader initClassLoader() throws IOException {
+  public static @NotNull PathClassLoader initClassLoader(boolean addCwmLibs) throws Throwable {
     Path distDir = Path.of(PathManager.getHomePath());
     if (isDevServer()) {
       ClassLoader classLoader = BootstrapClassLoaderUtil.class.getClassLoader();
@@ -65,13 +66,17 @@ public final class BootstrapClassLoaderUtil {
       return result;
     }
 
-    Collection<Path> classpath = computeClassPath(distDir.resolve("lib"));
-    parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
+    boolean useUnifiedClassloader = Boolean.parseBoolean(System.getProperty("idea.use.unified.classloader", "true"));
+    boolean strict = useUnifiedClassloader && Boolean.getBoolean("idea.strict.classpath");
+    ClassLoader currentClassLoader = BootstrapClassLoaderUtil.class.getClassLoader();
 
-    Path pluginDir = Path.of(PathManager.getPreInstalledPluginsPath());
+    Collection<Path> classpath = strict ? new LinkedHashSet<>() : computeClassPath(distDir.resolve("lib"));
+
+    Path preinstalledPluginDir = distDir.resolve("plugins");
+    Path pluginDir = preinstalledPluginDir;
     Path marketPlaceBootDir = findMarketplaceBootDir(pluginDir);
     Path mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR);
-    if (!Files.exists(mpBoot)) {
+    if (Files.notExists(mpBoot)) {
       pluginDir = Path.of(PathManager.getPluginsPath());
       marketPlaceBootDir = findMarketplaceBootDir(pluginDir);
       mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR);
@@ -85,28 +90,58 @@ public final class BootstrapClassLoaderUtil {
       }
     }
 
-    UrlClassLoader.Builder builder = UrlClassLoader.build()
-      .files(filterClassPath(classpath))
-      .usePersistentClasspathIndexForLocalClassDirectories()
-      .autoAssignUrlsWithProtectionDomain()
-      .parent(ClassLoader.getPlatformClassLoader())
-      .useCache();
-    if (Boolean.parseBoolean(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
-      builder.allowBootstrapResources();
+    boolean updateSystemClassLoader = false;
+    if (addCwmLibs) {
+      // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)
+      // At the same time, we don't want to ship them with base (non-remote) IDE due to possible unwanted interference with plugins
+      // See also: com.jetbrains.codeWithMe.projector.PluginClassPathRuntimeCustomizer
+      String relativeLibPath = "cwm-plugin-projector/lib/projector";
+      Path remoteDevPluginLibs = preinstalledPluginDir.resolve(relativeLibPath);
+      boolean exists = Files.exists(remoteDevPluginLibs);
+      if (!exists) {
+        remoteDevPluginLibs = Path.of(PathManager.getPluginsPath(), relativeLibPath);
+        exists = Files.exists(remoteDevPluginLibs);
+      }
+
+      if (exists) {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(remoteDevPluginLibs)) {
+          // add all files in that dir except for plugin jar
+          for (Path f : dirStream) {
+            if (f.toString().endsWith(".jar")) {
+              classpath.add(f);
+            }
+          }
+        }
+      }
+
+      // AWT can only use builtin and system class loaders to load classes,
+      // so set the system loader to something that can find projector libs
+      updateSystemClassLoader = true;
+    }
+
+    PathClassLoader newClassLoader;
+    if (useUnifiedClassloader && currentClassLoader instanceof PathClassLoader) {
+      newClassLoader = (PathClassLoader)currentClassLoader;
+      if (!classpath.isEmpty()) {
+        newClassLoader.getClassPath().appendFiles(List.copyOf(classpath));
+      }
+    }
+    else {
+      if (useUnifiedClassloader) {
+        //noinspection UseOfSystemOutOrSystemErr,SpellCheckingInspection
+        System.err.println("You should run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
+      }
+      newClassLoader = new PathClassLoader(createNonUnifiedClassloaderBuilder(classpath));
     }
 
     if (installMarketplace) {
       try {
         PathClassLoader spiLoader = new PathClassLoader(UrlClassLoader.build()
                                                           .files(Collections.singletonList(mpBoot))
-                                                          .parent(BootstrapClassLoaderUtil.class.getClassLoader()));
+                                                          .parent(currentClassLoader));
         Iterator<BytecodeTransformer> transformers = ServiceLoader.load(BytecodeTransformer.class, spiLoader).iterator();
         if (transformers.hasNext()) {
-          BytecodeTransformer impl = transformers.next();
-          return new PathClassLoader(builder, new BytecodeTransformerAdapter(impl));
-        }
-        else {
-          return new PathClassLoader(builder);
+          newClassLoader.setTransformer(new BytecodeTransformerAdapter(transformers.next()));
         }
       }
       catch (Throwable e) {
@@ -117,7 +152,21 @@ public final class BootstrapClassLoaderUtil {
       }
     }
 
-    return new PathClassLoader(builder);
+    if (updateSystemClassLoader) {
+      Class<ClassLoader> aClass = ClassLoader.class;
+      MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);
+    }
+    return newClassLoader;
+  }
+
+  private static @NotNull UrlClassLoader.Builder createNonUnifiedClassloaderBuilder(@NotNull Collection<Path> classpath) {
+    return UrlClassLoader.build()
+      .files(filterClassPath(classpath))
+      .usePersistentClasspathIndexForLocalClassDirectories()
+      .autoAssignUrlsWithProtectionDomain()
+      .parent(ClassLoader.getPlatformClassLoader())
+      .useCache()
+      .allowBootstrapResources(Boolean.parseBoolean(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true")));
   }
 
   private static @NotNull Path findMarketplaceBootDir(Path pluginDir) {
@@ -160,7 +209,7 @@ public final class BootstrapClassLoaderUtil {
   }
 
   private static boolean shouldInstallMarketplace(@NotNull Path homePath, @NotNull Path mpBoot) {
-    if (!Files.exists(mpBoot)) {
+    if (Files.notExists(mpBoot)) {
       return false;
     }
 
@@ -196,23 +245,6 @@ public final class BootstrapClassLoaderUtil {
   private static @NotNull Collection<Path> computeClassPath(@NotNull Path libDir) throws IOException {
     Collection<Path> classpath = new LinkedHashSet<>();
 
-    Path classPathFile = libDir.resolve("classpath.txt");
-    try (Stream<String> stream = Files.lines(classPathFile)) {
-      stream.forEach(jarName -> {
-        if (!jarName.isEmpty()) {
-          classpath.add(libDir.resolve(jarName));
-        }
-      });
-      return classpath;
-    }
-    catch (NoSuchFileException ignored) {
-    }
-    catch (Exception e) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("Cannot read " + classPathFile + ": " + e);
-    }
-
-    // no classpath file - compute classpath
     parseClassPathString(System.getProperty("java.class.path"), classpath);
 
     Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
@@ -220,9 +252,10 @@ public final class BootstrapClassLoaderUtil {
     assert selfRootPath != null;
     Path selfRoot = Path.of(selfRootPath);
     classpath.add(selfRoot);
-    Path libFolder = Path.of(PathManager.getLibPath());
-    addLibraries(classpath, libFolder, selfRoot);
-    addLibraries(classpath, libFolder.resolve("ant/lib"), null);
+    addLibraries(classpath, libDir, selfRoot);
+    addLibraries(classpath, libDir.resolve("ant/lib"), null);
+
+    parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
     return classpath;
   }
 

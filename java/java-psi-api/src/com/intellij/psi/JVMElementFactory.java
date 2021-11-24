@@ -13,7 +13,6 @@ import java.util.Map;
 /**
  * @author Medvedev Max
  */
-@SuppressWarnings("UnusedDeclaration")
 public interface JVMElementFactory {
   /**
    * Creates an empty class with the specified name.

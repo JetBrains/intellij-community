@@ -8,7 +8,6 @@ import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAcce
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -86,9 +85,7 @@ class RecordBuilder {
     PsiJavaFile psiFile = (PsiJavaFile)PsiFileFactory.getInstance(myOriginClass.getProject())
       .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, myRecordText.toString(), false, false);
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_16);
-    PsiClass psiRecord = psiFile.getClasses()[0];
-    CodeStyleManager.getInstance(myOriginClass.getProject()).reformat(psiRecord);
-    return psiRecord;
+    return psiFile.getClasses()[0];
   }
 
   @NotNull

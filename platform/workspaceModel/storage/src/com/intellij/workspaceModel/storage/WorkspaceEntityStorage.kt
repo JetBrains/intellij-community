@@ -253,6 +253,8 @@ interface WorkspaceEntityStorageDiffBuilder {
 
   fun addDiff(diff: WorkspaceEntityStorageDiffBuilder)
 
+  fun <T : WorkspaceEntity> addEntity(entity: T, source: EntitySource): T
+
   /**
    * Please see [WorkspaceEntityStorage.getExternalMapping] for naming conventions
    */

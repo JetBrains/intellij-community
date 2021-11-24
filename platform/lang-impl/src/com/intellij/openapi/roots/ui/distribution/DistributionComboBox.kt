@@ -6,8 +6,8 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.Item
-import com.intellij.openapi.roots.ui.whenItemSelected
-import com.intellij.openapi.roots.ui.whenTextModified
+import com.intellij.openapi.ui.whenItemSelected
+import com.intellij.openapi.ui.whenTextModified
 import com.intellij.openapi.ui.BrowseFolderRunnable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor

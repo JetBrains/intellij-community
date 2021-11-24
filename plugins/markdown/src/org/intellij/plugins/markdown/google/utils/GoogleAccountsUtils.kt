@@ -11,14 +11,15 @@ import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.alsoIfNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -29,7 +30,10 @@ import org.intellij.plugins.markdown.google.accounts.GoogleAccountsDetailsProvid
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountsListModel
 import org.intellij.plugins.markdown.google.accounts.GoogleUserInfoService
 import org.intellij.plugins.markdown.google.accounts.data.GoogleAccount
-import org.intellij.plugins.markdown.google.authorization.*
+import org.intellij.plugins.markdown.google.authorization.GoogleCredentials
+import org.intellij.plugins.markdown.google.authorization.GoogleOAuthService
+import org.intellij.plugins.markdown.google.authorization.getGoogleAuthRequest
+import org.intellij.plugins.markdown.google.authorization.getGoogleRefreshRequest
 import org.intellij.plugins.markdown.google.ui.GoogleChooseAccountDialog
 import java.net.ConnectException
 import java.net.URI
@@ -141,7 +145,9 @@ internal object GoogleAccountsUtils {
     return panel {
       row {
         accountsPanel(accountManager, accountsListModel, detailsProvider, disposable, false)
-      }
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+      }.resizableRow()
     }
   }
 

@@ -278,7 +278,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
   private void createDescription(ProblemsHolder holder,
                                  final DataFlowInstructionVisitor visitor,
-                                 PsiElement scope, 
+                                 PsiElement scope,
                                  Instruction @NotNull [] instructions) {
     ProblemReporter reporter = new ProblemReporter(holder, scope);
 
@@ -340,8 +340,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (entry.getValue() != ThreeState.YES) continue;
       PsiCaseLabelElement label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
-      PsiSwitchBlock statement = labelStatement.getEnclosingSwitchBlock();
-      if (statement == null || !canRemoveUnreachableBranches(labelStatement, statement)) continue;
+      PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
+      if (switchBlock == null || !canRemoveUnreachableBranches(labelStatement, switchBlock)) continue;
+      if (!canRemoveTheOnlyReachableLabel(label, switchBlock)) continue;
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
         .nonNull().flatArray(PsiCaseLabelElementList::getElements)
@@ -349,9 +350,15 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         .allMatch(l -> labelReachability.get(l) == ThreeState.NO)) {
         continue;
       }
-      coveredSwitches.add(statement);
-      holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"),
-                             createUnwrapSwitchLabelFix());
+      coveredSwitches.add(switchBlock);
+      LocalQuickFix unwrapFix;
+      if (switchBlock instanceof PsiSwitchExpression && !CodeBlockSurrounder.canSurround(((PsiSwitchExpression)switchBlock))) {
+        unwrapFix = null;
+      }
+      else {
+        unwrapFix = createUnwrapSwitchLabelFix();
+      }
+      holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"), unwrapFix);
     }
     PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labelReachability.keySet().iterator().next(), PsiSwitchBlock.class);
     Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
@@ -380,6 +387,18 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
            !ContainerUtil.and(allBranches, branch -> branch == labelStatement || SwitchUtils.isDefaultLabel(branch))) ||
            (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
             ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
+  }
+
+  private static boolean canRemoveTheOnlyReachableLabel(@NotNull PsiCaseLabelElement label, @NotNull PsiSwitchBlock switchBlock) {
+    if (!(label instanceof PsiPattern)) return true;
+    PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return false;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return false;
+    if (!JavaPsiPatternUtil.isTotalForType(((PsiPattern)label), selectorType)) return true;
+    int branchCount = SwitchUtils.calculateBranchCount(switchBlock);
+    // it's a compilation error if switch contains both default and total pattern, so no additional suggestion is needed
+    return branchCount > 1;
   }
 
   private void reportConstants(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {

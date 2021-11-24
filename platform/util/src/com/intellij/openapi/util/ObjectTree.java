@@ -54,6 +54,9 @@ final class ObjectTree {
       }
 
       myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
+      if (child instanceof Disposer.CheckedDisposableImpl) {
+        ((Disposer.CheckedDisposableImpl)child).isDisposed = false;
+      }
       ObjectNode parentNode = getNode(parent);
       if (parentNode == null) parentNode = createNodeFor(parent, null);
 
@@ -69,7 +72,7 @@ final class ObjectTree {
       }
       myRootObjects.remove(child);
 
-      RuntimeException e = checkWasNotAddedAlready(parentNode, childNode);
+      RuntimeException e = checkWasNotAddedAlreadyAsChild(parentNode, childNode);
       if (e != null) return e;
 
       parentNode.addChild(childNode);
@@ -83,7 +86,7 @@ final class ObjectTree {
     }
   }
 
-  private static RuntimeException checkWasNotAddedAlready(@NotNull ObjectNode childNode, @NotNull ObjectNode parentNode) {
+  private static RuntimeException checkWasNotAddedAlreadyAsChild(@NotNull ObjectNode childNode, @NotNull ObjectNode parentNode) {
     for (ObjectNode node = childNode; node != null; node = node.getParent()) {
       if (node == parentNode) {
         return new IncorrectOperationException("'"+childNode.getObject() + "' was already added as a child of '" + parentNode.getObject()+"'");

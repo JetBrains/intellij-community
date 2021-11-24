@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -423,7 +423,9 @@ public final class GenerateMembersUtil {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
-      final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope(), parameter.getModifierList());
+      PsiElement declarationScope = parameter.getDeclarationScope();
+      PsiType substituted = declarationScope instanceof PsiTypeParameterListOwner ? substituteType(substitutor, parameterType, (PsiTypeParameterListOwner)declarationScope, parameter.getModifierList()) 
+                                                                                  : parameterType;
       String paramName = parameter.getName();
       boolean isBaseNameGenerated = true;
       final boolean isSubstituted = substituted.equals(parameterType);

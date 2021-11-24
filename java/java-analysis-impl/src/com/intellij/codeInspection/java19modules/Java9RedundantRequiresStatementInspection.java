@@ -198,8 +198,6 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
         if (importList != null) {
           RefModule refModule = refFile.getModule();
           if (refModule != null) {
-            PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getPsiElement());
-            if (javaModule == null) return;
             Set<String> packageNames = getImportedPackages(refModule, refFile);
             if (packageNames != DONT_COLLECT_PACKAGES) {
               for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
@@ -234,7 +232,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
         Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
         if (importedPackages == null) {
           PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getPsiElement());
-          importedPackages = javaModule != null ? new HashSet<>() : DONT_COLLECT_PACKAGES;
+          importedPackages = javaModule != null ? ContainerUtil.newConcurrentSet() : DONT_COLLECT_PACKAGES;
           refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
         }
         return importedPackages;

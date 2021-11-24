@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class CallableObject {
     operator fun User.invoke() = println("User.invoke")
 }

@@ -1,6 +1,6 @@
 // "Add '@MyExperimentalAPI' annotation to 'bar'" "false"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
-// WITH_RUNTIME
+// WITH_STDLIB
 // ACTION: Add '@MyExperimentalAPI' annotation to containing class 'Bar'
 // ACTION: Add '@OptIn(MyExperimentalAPI::class)' annotation to containing file 'basicFunctionNotApplicable.kt'
 // ACTION: Add '@OptIn(MyExperimentalAPI::class)' annotation to 'bar'

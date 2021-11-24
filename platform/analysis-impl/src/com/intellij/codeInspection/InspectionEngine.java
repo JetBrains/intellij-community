@@ -122,20 +122,21 @@ public final class InspectionEngine {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, file, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, foundDescriptorCallback);
     if (inspectInjectedPsi) {
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
-      List<PsiFile> injectedFiles = new ArrayList<>();
+      List<Pair<PsiFile, PsiElement>> injectedFiles = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiLanguageInjectionHost) {
           List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
           if (files != null) {
             for (Pair<PsiElement, TextRange> pair : files) {
               PsiFile injectedFile = (PsiFile)pair.getFirst();
-              injectedFiles.add(injectedFile);
+              injectedFiles.add(Pair.create(injectedFile, element));
             }
           }
         }
       }
-      Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> withInjected = Collections.synchronizedMap(map);
-      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(injectedFiles, indicator, injectedFile -> {
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(injectedFiles, indicator, pair -> {
+        PsiFile injectedFile = pair.getFirst();
+        PsiElement host = pair.getSecond();
         List<PsiElement> injectedElements = new ArrayList<>();
         Set<String> injectedDialects = new HashSet<>();
         getAllElementsAndDialectsFrom(injectedFile, injectedElements, injectedDialects);
@@ -143,12 +144,18 @@ public final class InspectionEngine {
           inspectElements(toolWrappers, injectedFile, injectedFile.getTextRange(), isOnTheFly, indicator, ignoreSuppressedElements,
                           injectedElements,
                           injectedDialects, foundDescriptorCallback);
-        withInjected.putAll(result);
+        for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : result.entrySet()) {
+          LocalInspectionToolWrapper toolWrapper = entry.getKey();
+          List<ProblemDescriptor> descriptors = entry.getValue();
+          List<ProblemDescriptor> filtered = ignoreSuppressedElements ? ContainerUtil.filter(descriptors, descriptor -> !toolWrapper.getTool().isSuppressedFor(host)) : descriptors;
+          // in case two injected fragments contain result of the same inspection, concatenate them
+          // assume map is ConcurrentHashMap here, otherwise synchronization would be needed
+          map.merge(toolWrapper, filtered, (oldList, newList)->ContainerUtil.concat(oldList, newList));
+        }
         return true;
       })) {
         throw new ProcessCanceledException();
       }
-      map = withInjected;
     }
 
     return map;

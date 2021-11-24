@@ -32,12 +32,16 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
+import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
+import git4idea.ift.GitLessonsUtil.restoreCommitWindowStateInformer
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JButton
@@ -69,6 +73,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
 
     showWarningIfModalCommitEnabled()
+    showWarningIfStagingAreaEnabled()
 
     lateinit var highlightLineMarkerTaskId: TaskContext.TaskId
     task {
@@ -159,6 +164,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     task {
       text(GitLessonsBundle.message("git.changelists.shelf.explanation", strong(shelfText)))
       proceedLink()
+      showWarningIfCommitWindowClosed()
     }
 
     lateinit var letsShelveTaskId: TaskContext.TaskId
@@ -176,7 +182,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
         ui.anAction is ShelveChangesAction
       }
-      showWarningIfCommitWindowClosed()
+      showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           val tree = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == newChangeListName }
@@ -267,7 +273,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       }
       text(GitLessonsBundle.message("git.changelists.shelf.unshelve.changelist", strong(unshelveChangesButtonText)))
       stateCheck { editor.document.text.contains(commentText) }
-      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
+      restoreByUiAndBackgroundTask(VcsBundle.message("vcs.unshelving.changes"), delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         Thread.sleep(500)
         ideFrame { button(unshelveChangesButtonText).click() }
@@ -277,9 +283,11 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     task {
       text(GitLessonsBundle.message("git.changelists.shelf.congratulations"))
     }
+
+    restoreCommitWindowStateInformer()
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, CommitChangeListDialog.DIMENSION_SERVICE_KEY, backupShelveDialogLocation)
     backupShelveDialogLocation = null
     restorePopupPosition(project, ApplyPatchDifferentiatedDialog.DIMENSION_SERVICE_KEY, backupUnshelveDialogLocation)

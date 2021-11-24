@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,6 +39,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenServerConnector;
 import org.jetbrains.idea.maven.server.MavenServerConnectorImpl;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.awt.*;
@@ -62,6 +64,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   private MavenProgressIndicator myProgressIndicator;
   private MavenEmbeddersManager myEmbeddersManager;
   private WSLDistribution myWSLDistribution;
+  protected RemotePathTransformerFactory.Transformer myPathTransformer;
 
   private File ourTempDir;
 
@@ -82,6 +85,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     setUpFixtures();
     myProject = myTestFixture.getProject();
+    myPathTransformer = RemotePathTransformerFactory.createForProject(myProject);
     setupWsl();
     ensureTempDirCreated();
 
@@ -142,6 +146,9 @@ public abstract class MavenTestCase extends UsefulTestCase {
         if (t.getMessage().contains("The network name cannot be found") && message.contains("Couldn't read shelf information")) {
           return false;
         }
+        if ("JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category)) {
+          return false;
+        }
         return super.processError(category, message, t, details);
       }
     }, () -> super.runBare(testRunnable));
@@ -180,7 +187,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         Project defaultProject = ProjectManager.getInstance().getDefaultProject();
         MavenIndicesManager mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager.class);
         if (mavenIndicesManager != null) {
-          mavenIndicesManager.clear();
+          Disposer.dispose(mavenIndicesManager);
         }
       },
       () -> deleteDirOnTearDown(myDir),
@@ -370,7 +377,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   private static String createSettingsXmlContent(String content) {
     return "<settings>" +
            content +
-           "</settings>";
+           "</settings>\r\n";
   }
 
   protected void restoreSettingsFile() throws IOException {
@@ -588,7 +595,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
   }
 
-  protected static <T> void assertContain(List<? extends T> actual, T... expected) {
+  protected static <T> void assertContain(Collection<? extends T> actual, T... expected) {
     List<T> expectedList = Arrays.asList(expected);
     assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
   }

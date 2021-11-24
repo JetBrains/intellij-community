@@ -126,6 +126,8 @@ internal class ToolWindowTabTheme : DefaultTabTheme() {
     get() = JBUI.CurrentTheme.ToolWindow.underlinedTabForeground()
   override val underlineHeight: Int
     get() = JBUI.CurrentTheme.ToolWindow.underlineHeight()
+  override val underlineArc: Int
+    get() = JBUI.CurrentTheme.ToolWindow.headerTabUnderlineArc()
 
   override val hoverInactiveBackground: Color?
     get() = JBUI.CurrentTheme.ToolWindow.hoverInactiveBackground()

@@ -1,8 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.getProjectDataPath
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
@@ -16,9 +15,9 @@ import kotlinx.serialization.json.Json
 import java.nio.file.Files
 import kotlin.io.path.writeText
 
-internal class PackageVersionNormalizerService(project: Project) : Disposable {
+internal class PackageVersionNormalizerService : Disposable {
 
-    private val persistentCacheFile = project.getProjectDataPath("pkgs/normalizedVersions.json")
+    private val persistentCacheFile = appSystemDir.resolve("caches/pkgs/normalizedVersions.json")
 
     private val json = Json {
         prettyPrint = true
@@ -33,7 +32,7 @@ internal class PackageVersionNormalizerService(project: Project) : Disposable {
             )
         }
         ?.getOrNull()
-        ?: CoroutineLRUCache(2_000)
+        ?: CoroutineLRUCache(4_000)
 
     val normalizer = PackageVersionNormalizer(cacheMap)
 
@@ -98,7 +97,7 @@ internal class PackageVersionNormalizer(
 
     suspend fun parse(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> {
         @Suppress("UNCHECKED_CAST") // Unfortunately, MRUMap doesn't have type parameters
-        val cachedValue = versionsCache.getOrNull(version)
+        val cachedValue = versionsCache.get(version)
 
         if (cachedValue != null) return cachedValue
 

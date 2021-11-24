@@ -4,7 +4,10 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.context.Scope
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
@@ -19,11 +22,13 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.lang.reflect.UndeclaredThrowableException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiFunction
+import java.util.function.Function
+import java.util.function.Predicate
 import java.util.function.Supplier
 import java.util.stream.Collectors
 
@@ -237,8 +242,8 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  @Nullable Path findFileInModuleSources(String moduleName, String relativePath) {
-    for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName)) ) {
+  @Nullable Path findFileInModuleSources(@NotNull String moduleName, @NotNull String relativePath) {
+    for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName))) {
       if (relativePath.startsWith(info.second)) {
         Path result = info.first.resolve(Strings.trimStart(Strings.trimStart(relativePath, info.second), "/"))
         if (Files.exists(result)) {
@@ -249,23 +254,32 @@ final class BuildContextImpl extends BuildContext {
     return null
   }
 
-  private static @NotNull List<Pair<Path, String>> getSourceRootsWithPrefixes(JpsModule module) {
+  @NotNull
+  private static List<Pair<Path, String>> getSourceRootsWithPrefixes(@NotNull JpsModule module) {
     return module.sourceRoots
       .stream()
-      .filter({ JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) })
-      .map({ JpsModuleSourceRoot moduleSourceRoot ->
-        String prefix
-        JpsElement properties = moduleSourceRoot.properties
-        if (properties instanceof JavaSourceRootProperties) {
-          prefix = ((JavaSourceRootProperties)properties).packagePrefix.replace(".", "/")
+      .filter(new Predicate<JpsModuleSourceRoot>() {
+        @Override
+        boolean test(JpsModuleSourceRoot root) {
+          return JavaModuleSourceRootTypes.PRODUCTION.contains(root.rootType)
         }
-        else {
-          prefix = ((JavaResourceRootProperties)properties).relativeOutputPath
+      })
+      .map(new Function<JpsModuleSourceRoot, Pair<Path, String>>() {
+        @Override
+        Pair<Path, String> apply(JpsModuleSourceRoot moduleSourceRoot) {
+          String prefix
+          JpsElement properties = moduleSourceRoot.properties
+          if (properties instanceof JavaSourceRootProperties) {
+            prefix = ((JavaSourceRootProperties)properties).packagePrefix.replace(".", "/")
+          }
+          else {
+            prefix = ((JavaResourceRootProperties)properties).relativeOutputPath
+          }
+          if (!prefix.endsWith("/")) {
+            prefix += "/"
+          }
+          return new Pair<>(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), Strings.trimStart(prefix, "/"))
         }
-        if (!prefix.endsWith("/")) {
-          prefix += "/"
-        }
-        return new Pair<>(Paths.get(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), Strings.trimStart(prefix, "/"))
       })
       .collect(Collectors.toList())
   }
@@ -299,25 +313,47 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  boolean executeStep(SpanBuilder spanBuilder, String stepId, Runnable step) {
+  void executeStep(SpanBuilder spanBuilder, String stepId, Runnable step) {
     if (options.buildStepsToSkip.contains(stepId)) {
       spanBuilder.startSpan().addEvent("skip").end()
+      return
     }
-    else {
-      messages.block(spanBuilder, new Supplier<Void>() {
-        @Override
-        Void get() {
-          step.run()
-          return null
-        }
-      })
+
+    Span span = spanBuilder.startSpan()
+    Scope scope = span.makeCurrent()
+    // we cannot flush tracing after "throw e" as we have to end the current span before that
+    boolean success = false
+    try {
+      step.run()
+      success = true
     }
-    return true
+    catch (Throwable e) {
+      if (e instanceof UndeclaredThrowableException) {
+        e = e.cause
+      }
+
+      span.recordException(e)
+      span.setStatus(StatusCode.ERROR, e.message)
+      throw e
+    }
+    finally {
+      try {
+        scope.close()
+      }
+      finally {
+        span.end()
+      }
+
+      if (!success) {
+        // print all pending spans - after current span
+        TracerProviderManager.flush()
+      }
+    }
   }
 
   @Override
   boolean shouldBuildDistributions() {
-    options.targetOS.toLowerCase() != BuildOptions.OS_NONE
+    return options.targetOS.toLowerCase() != BuildOptions.OS_NONE
   }
 
   @Override
@@ -366,13 +402,16 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  @SuppressWarnings('SpellCheckingInspection')
+  @SuppressWarnings("SpellCheckingInspection")
   @NotNull List<String> getAdditionalJvmArguments() {
     List<String> jvmArgs = new ArrayList<>()
 
     String classLoader = productProperties.classLoader
     if (classLoader != null) {
-      jvmArgs.add('-Djava.system.class.loader=' + classLoader)
+      jvmArgs.add("-Djava.system.class.loader=" + classLoader)
+      if (classLoader == "com.intellij.util.lang.PathClassLoader") {
+        jvmArgs.add("-Didea.strict.classpath=true")
+      }
     }
 
     jvmArgs.add('-Didea.vendor.name=' + applicationInfo.shortCompanyName)
@@ -404,6 +443,7 @@ final class BuildContextImpl extends BuildContext {
         '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
         '--add-opens=java.desktop/java.awt=ALL-UNNAMED',
         '--add-opens=java.desktop/java.awt.event=ALL-UNNAMED',
+        '--add-opens=java.desktop/java.awt.image=ALL-UNNAMED',
         '--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED',
         '--add-opens=java.desktop/javax.swing=ALL-UNNAMED',
         '--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED',
@@ -413,11 +453,14 @@ final class BuildContextImpl extends BuildContext {
         '--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED',
         '--add-opens=java.desktop/sun.font=ALL-UNNAMED',
         '--add-opens=java.desktop/sun.java2d=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED',
+        '--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED',
         '--add-opens=java.desktop/sun.swing=ALL-UNNAMED',
         '--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED',
         '--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED',
         '--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED',
         '--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED',
+        '--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED',
         '--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED'
       ])
     }

@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
@@ -10,7 +11,9 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.actions.ShowSettingsAction
 import com.jetbrains.packagesearch.intellij.plugin.actions.TogglePackageDetailsAction
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules.ModulesTree
@@ -18,7 +21,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesListPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computeModuleTreeModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
@@ -31,6 +33,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -125,7 +128,12 @@ internal class PackageManagementPanel(
             .map { computeModuleTreeModel(it) }
             .flowOn(Dispatchers.Default)
             .onEach { modulesTree.display(it) }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
+            .launchIn(this)
+
+        packagesListPanel.selectedPackageStateFlow
+            .filterNotNull()
+            .onEach { PackageSearchEventsLogger.logPackageSelected(it is UiPackageModel.Installed) }
             .launchIn(this)
 
         combine(
@@ -144,7 +152,7 @@ internal class PackageManagementPanel(
             )
         }.flowOn(Dispatchers.Default)
             .onEach { packageDetailsPanel.display(it) }
-            .flowOn(Dispatchers.AppUI)
+            .flowOn(Dispatchers.EDT)
             .launchIn(this)
     }
 

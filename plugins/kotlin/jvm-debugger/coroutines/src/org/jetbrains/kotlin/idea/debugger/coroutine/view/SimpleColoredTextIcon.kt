@@ -93,7 +93,7 @@ interface CoroutineDebuggerColors {
 
 fun fromState(state: State): Icon =
     when (state) {
-        State.SUSPENDED -> AllIcons.Debugger.ThreadSuspended
+        State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
         State.RUNNING -> AllIcons.Debugger.ThreadRunning
         State.CREATED -> AllIcons.Debugger.ThreadStates.Idle
         else -> AllIcons.Debugger.ThreadStates.Daemon_sign
@@ -177,9 +177,7 @@ class SimpleColoredTextIconPresentationRenderer {
 
     fun renderCreationNode() =
         SimpleColoredTextIcon(
-            AllIcons.Debugger.ThreadSuspended,
-            true,
-            KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
+            null, true, KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
         )
 
     fun renderErrorNode(error: String) =

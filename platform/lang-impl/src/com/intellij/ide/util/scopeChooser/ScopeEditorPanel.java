@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -18,12 +19,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
@@ -78,6 +81,7 @@ public final class ScopeEditorPanel implements Disposable {
   private JPanel myPositionPanel;
   private JLabel myRecursivelyIncluded;
   private JLabel myPartiallyIncluded;
+  private JBLabel myPatternLegend;
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
   private Boolean myRebuildRequired = null; //updated in EDT only
@@ -149,6 +153,9 @@ public final class ScopeEditorPanel implements Disposable {
         }
       }
     });
+    myPatternLegend.setForeground(new JBColor(Gray._50, Gray._130));
+    myPatternLegend.setText(new HtmlBuilder().appendRaw(
+      LangBundle.message("scope.editor.pattern.legend.label")).wrapWithHtmlBody().toString());
 
     initTree(myPackageTree);
     Disposer.register(this, new UiNotifyConnector(myPanel, new Activatable() {
@@ -539,6 +546,7 @@ public final class ScopeEditorPanel implements Disposable {
           SwingUtilities.invokeLater(() -> { //not under progress
             myPackageTree.setModel(model);
             myTreeExpansionMonitor.restore();
+            TreeUtil.ensureSelection(myPackageTree);
           });
         } catch (ProcessCanceledException e) {
           ex[0] = e;

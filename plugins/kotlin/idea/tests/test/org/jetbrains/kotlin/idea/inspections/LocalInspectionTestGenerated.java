@@ -5376,6 +5376,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("body.kt")
+            public void testBody() throws Exception {
+                runTest("testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/body.kt");
+            }
+
             @TestMetadata("function.kt")
             public void testFunction() throws Exception {
                 runTest("testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/function.kt");
@@ -14819,6 +14824,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/unusedLambdaExpressionBody/simple.kt");
+        }
+
+        @TestMetadata("withArrow.kt")
+        public void testWithArrow() throws Exception {
+            runTest("testData/inspectionsLocal/unusedLambdaExpressionBody/withArrow.kt");
+        }
+
+        @TestMetadata("withBody.kt")
+        public void testWithBody() throws Exception {
+            runTest("testData/inspectionsLocal/unusedLambdaExpressionBody/withBody.kt");
         }
     }
 

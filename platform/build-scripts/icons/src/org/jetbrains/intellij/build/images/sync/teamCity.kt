@@ -15,7 +15,7 @@ private fun teamCityGet(path: String) = loadUrl("$BUILD_SERVER/httpAuth/app/rest
   teamCityAuth()
 }
 
-private val XML: MediaType = "application/xml".toMediaType()
+private val XML: MediaType by lazy { "application/xml".toMediaType() }
 
 private fun teamCityPost(path: String, body: String): String {
   return post("$BUILD_SERVER/httpAuth/app/rest/$path", body, XML) {

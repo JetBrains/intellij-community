@@ -254,7 +254,19 @@ fun LookupElement.assignSmartCompletionPriority(priority: SmartCompletionItemPri
     return this
 }
 
-var LookupElement.isProbableKeyword: Boolean by NotNullableUserDataProperty(Key.create("PROBABLE_KEYWORD_KEY"), false)
+/**
+ * In some completion contexts, certain keywords are more probable than others. This enum together with
+ * [keywordProbability] property are used to capture that. They should be considered when weighting completion
+ * items.
+ */
+internal enum class KeywordProbability {
+    HIGH,
+    DEFAULT,
+    LOW,
+}
+
+internal var LookupElement.keywordProbability: KeywordProbability
+    by NotNullableUserDataProperty(Key.create("KEYWORD_PROBABILITY_KEY"), KeywordProbability.DEFAULT)
 
 fun DeclarationDescriptor.fuzzyTypesForSmartCompletion(
     smartCastCalculator: SmartCastCalculator,

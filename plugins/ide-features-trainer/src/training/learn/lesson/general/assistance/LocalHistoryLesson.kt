@@ -47,6 +47,7 @@ import training.learn.lesson.LessonManager
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiHighlightingManager.HighlightingOptions
 import training.ui.LearningUiUtil
+import training.util.LessonEndInfo
 import training.util.isToStringContains
 import java.awt.Component
 import java.awt.Point
@@ -256,7 +257,9 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       before { LearningUiHighlightingManager.clearHighlights() }
       text(LessonsBundle.message("local.history.close.window", action("EditorEscape")))
       stateCheck {
-        previous.ui?.isShowing != true
+        val focusedEditor = focusOwner as? EditorComponentImpl
+        // check that it is editor from main IDE frame
+        focusedEditor != null && UIUtil.getParentOfType(SingleHeightTabs::class.java, focusedEditor) != null
       }
       test {
         invokeActionViaShortcut("ESCAPE")
@@ -270,8 +273,8 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
     text(LessonsBundle.message("local.history.congratulations"))
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
-    if (!lessonPassed) return
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
+    if (!lessonEndInfo.lessonPassed) return
     ApplicationManager.getApplication().executeOnPooledThread {
       val editorComponent = LearningUiUtil.findComponentOrNull(project, EditorComponentImpl::class.java) { editor ->
         UIUtil.getParentOfType(SingleHeightTabs::class.java, editor) != null

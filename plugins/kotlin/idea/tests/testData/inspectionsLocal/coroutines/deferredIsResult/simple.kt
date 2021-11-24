@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Add '.await()' to function result (breaks use-sites!)
 
 package kotlinx.coroutines

@@ -230,7 +230,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
           actions.add(Separator.getInstance());
         }
       }
-      else if (myDiscardedOptions.containsKey(virtualFile)) {
+      else if (virtualFile != null && myDiscardedOptions.containsKey(virtualFile)) {
         final IndentOptions discardedOptions = myDiscardedOptions.get(virtualFile);
         final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         if (document != null) {

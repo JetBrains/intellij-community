@@ -179,20 +179,19 @@ public final class MavenExternalParameters {
                                           @NotNull String workingDirPath) {
     if (runnerSettings != null && !StringUtil.isEmptyOrSpaces(runnerSettings.getVmOptions())) return runnerSettings.getVmOptions();
     if (project == null) return null;
-    String multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(workingDirPath);
-    return readJvmConfigOptions(multimoduleDirectory);
+    return readJvmConfigOptions(workingDirPath);
   }
 
   @NotNull
-  public static String readJvmConfigOptions(@NotNull String multiModuleDir) {
-    return Optional.ofNullable(getJvmConfig(multiModuleDir))
+  public static String readJvmConfigOptions(@NotNull String workingDirPath) {
+    return Optional.ofNullable(getJvmConfig(workingDirPath))
       .map(jdkOpts -> toVmString(jdkOpts))
       .orElse("");
   }
 
   @Nullable
-  public static VirtualFile getJvmConfig(@NotNull String multiModuleDir) {
-    return Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(multiModuleDir))
+  public static VirtualFile getJvmConfig(@NotNull String workingDirPath) {
+    return Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(workingDirPath))
       .map(baseDir -> baseDir.findChild(".mvn"))
       .map(mvn -> mvn.findChild("jvm.config"))
       .orElse(null);

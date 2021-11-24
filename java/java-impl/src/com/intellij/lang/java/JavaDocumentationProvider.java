@@ -697,6 +697,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   @Override
   public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
     if (!(file instanceof PsiJavaFile)) return;
+    if (file instanceof PsiCompiledElement) return;
     String fileName = file.getName();
     if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName)) {
       PsiPackageStatement packageStatement = ((PsiJavaFile)file).getPackageStatement();

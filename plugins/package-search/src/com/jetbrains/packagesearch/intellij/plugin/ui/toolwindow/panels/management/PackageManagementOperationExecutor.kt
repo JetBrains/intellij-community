@@ -5,16 +5,12 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.Operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFailure
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import org.apache.commons.collections.CollectionUtils
 
 internal open class PackageManagementOperationExecutor(
     private val coroutineScope: CoroutineScope,
@@ -25,12 +21,11 @@ internal open class PackageManagementOperationExecutor(
     private val operationExecutor = ModuleOperationExecutor()
 
     private suspend fun execute(operations: List<PackageSearchOperation<*>>) {
-        val failures = operations.asFlow()
+        val failures = operations.distinct().asFlow()
             .mapNotNull { operationExecutor.doOperation(it) }
-            .flowOn(Dispatchers.AppUI)
             .toList()
 
-        val successes = operations.map { it.projectModule } difference failures.map { it.operation.projectModule }
+        val successes = operations.map { it.projectModule } - failures.map { it.operation.projectModule }
 
         if (failures.size == operations.size) {
             onOperationsSuccessful(successes)
@@ -57,6 +52,3 @@ internal open class PackageManagementOperationExecutor(
         ALL
     }
 }
-
-private inline infix fun <reified E> Collection<E>.difference(other: List<E>) =
-    CollectionUtils.removeAll(this, other).filterIsInstance<E>()

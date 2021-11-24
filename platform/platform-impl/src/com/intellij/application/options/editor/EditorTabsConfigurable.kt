@@ -8,6 +8,11 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo
@@ -27,25 +32,19 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
 
   override fun createPanel(): DialogPanel {
     return panel {
-      titledRow(message("group.tab.appearance")) {
+      group(message("group.tab.appearance")) {
 
         if (JBTabsImpl.NEW_TABS) {
           val tabPlacementComboBoxModel: DefaultComboBoxModel<Int> = DefaultComboBoxModel(TAB_PLACEMENTS)
           val myTabsLayoutComboBox: JComboBox<TabsLayoutInfo> = TabsLayoutSettingsUi.tabsLayoutComboBox(tabPlacementComboBoxModel)
 
-          row {
-            cell {
-              label(message("combobox.editor.tab.tabslayout") + ":")
-              val builder = myTabsLayoutComboBox()
-              TabsLayoutSettingsUi.prepare(builder, myTabsLayoutComboBox)
-            }
-          }
-          row {
-            cell {
-              label(TAB_PLACEMENT + ":")
-              myEditorTabPlacement = tabPlacementComboBox(tabPlacementComboBoxModel).component
-            }
-          }
+          row(message("combobox.editor.tab.tabslayout") + ":") {
+            val builder = cell(myTabsLayoutComboBox)
+            TabsLayoutSettingsUi.prepare(builder, myTabsLayoutComboBox)
+          }.layout(RowLayout.INDEPENDENT)
+          row(TAB_PLACEMENT + ":") {
+            myEditorTabPlacement = tabPlacementComboBox(tabPlacementComboBoxModel).component
+          }.layout(RowLayout.INDEPENDENT)
 
           updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel)
           tabPlacementComboBoxModel.addListDataListener(MyAnyChangeOfListListener {
@@ -53,34 +52,29 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
           })
         }
         else {
-          row {
-            cell {
-              label(TAB_PLACEMENT + ":")
-              myEditorTabPlacement = tabPlacementComboBox().component
-            }
+          row(TAB_PLACEMENT + ":") {
+            myEditorTabPlacement = tabPlacementComboBox().component
           }
           if (ExperimentalUI.isNewEditorTabs()) {
             row {
-              cell(false, false) {
-                checkBox(hideTabsIfNeeded)
-                  .enableIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP })
-                  .component
-              }
+              checkBox(hideTabsIfNeeded)
+                .enabledIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP })
+                .component
             }
           } else {
             row {
               myOneRowCheckbox = checkBox(showTabsInOneRow)
-                .enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+                .enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+            }
+            indent {
               row {
-                cell(false, false) {
-                  checkBox(hideTabsIfNeeded).enableIf(
-                    myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
-                      and myOneRowCheckbox.selected).component
-                }
+                checkBox(hideTabsIfNeeded).enabledIf(
+                  myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
+                    and myOneRowCheckbox.selected).component
               }
             }
           }
-          row { checkBox(showPinnedTabsInASeparateRow).enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)) }
+          row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)) }
         }
         row { checkBox(useSmallFont).enableIfTabsVisible() }
         row { checkBox(showFileIcon).enableIfTabsVisible() }
@@ -88,47 +82,38 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
         row { checkBox(markModifiedTabsWithAsterisk).enableIfTabsVisible() }
         row { checkBox(showTabsTooltips).enableIfTabsVisible() }
-        row {
-          cell {
-            label(CLOSE_BUTTON_POSITION + ":")
-            closeButtonPositionComboBox()
-          }
-        }.enableIf((myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }))
+        row(CLOSE_BUTTON_POSITION + ":") {
+          closeButtonPositionComboBox()
+        }.enabledIf((myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }))
       }
-      titledRow(message("group.tab.order")) {
+      group(message("group.tab.order")) {
         row { checkBox(sortTabsAlphabetically) }
         row { checkBox(openTabsAtTheEnd) }
       }
-      titledRow(message("group.tab.opening.policy")) {
+      group(message("group.tab.opening.policy")) {
         row {
           checkBox(openInPreviewTabIfPossible)
         }
       }
-      titledRow(message("group.tab.closing.policy")) {
-        row {
-          cell {
-            label(message("editbox.tab.limit"))
-            intTextField(ui::editorTabLimit, 4, 1..max(10, Registry.intValue("ide.max.editor.tabs", 100)))
-          }
+      group(message("group.tab.closing.policy")) {
+        row(message("editbox.tab.limit")) {
+          intTextField(1..max(10, Registry.intValue("ide.max.editor.tabs", 100)))
+            .columns(4)
+            .bindIntText(ui::editorTabLimit)
         }
-        row {
-          buttonGroup(ui::closeNonModifiedFilesFirst) {
-            checkBoxGroup(message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
-              row { radioButton(message("radio.close.non.modified.files.first"), value = true) }
-              row { radioButton(message("radio.close.less.frequently.used.files"), value = false) }.largeGapAfter()
+        buttonGroup(ui::closeNonModifiedFilesFirst, message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
+          row { radioButton(message("radio.close.non.modified.files.first"), value = true) }
+          row { radioButton(message("radio.close.less.frequently.used.files"), value = false) }
+            .bottomGap(BottomGap.SMALL)
+        }
+        buttonGroup(message("label.when.closing.active.editor")) {
+          row {
+            radioButton(message("radio.activate.left.neighbouring.tab")).apply {
+              onReset { component.isSelected = !ui.activeRightEditorOnClose && !ui.activeMruEditorOnClose }
             }
           }
-        }
-        row {
-          buttonGroup(message("label.when.closing.active.editor")) {
-            row {
-              radioButton(message("radio.activate.left.neighbouring.tab")).apply {
-                onReset { component.isSelected = !ui.activeRightEditorOnClose && !ui.activeMruEditorOnClose }
-              }
-            }
-            row { radioButton(message("radio.activate.right.neighbouring.tab"), ui::activeRightEditorOnClose) }
-            row { radioButton(message("radio.activate.most.recently.opened.tab"), ui::activeMruEditorOnClose) }.largeGapAfter()
-          }
+          row { radioButton(message("radio.activate.right.neighbouring.tab")).bindSelected(ui::activeRightEditorOnClose) }
+          row { radioButton(message("radio.activate.most.recently.opened.tab")).bindSelected(ui::activeMruEditorOnClose) }
         }
       }
     }
@@ -138,8 +123,8 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
     myEditorTabPlacement.isEnabled = tabPlacementComboBoxModel.size > 1
   }
 
-  private fun <T : JComponent> CellBuilder<T>.enableIfTabsVisible() {
-    enableIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE })
+  private fun <T : JComponent> Cell<T>.enableIfTabsVisible() {
+    enabledIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE })
   }
 
   override fun apply() {

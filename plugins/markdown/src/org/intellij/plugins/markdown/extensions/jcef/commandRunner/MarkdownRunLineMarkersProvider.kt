@@ -44,7 +44,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
       return null
     }
 
-    val dir = element.containingFile.virtualFile.parent.path
+    val dir = element.containingFile.virtualFile.parent?.path ?: return null
     val text = getText(element)
     if (!matches(element.project, dir, true, text, allowRunConfigurations = inCodeSpan)) {
       return null
@@ -70,7 +70,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
       val text = getContent(element.parent as MarkdownCodeFenceImpl, false)
         ?.fold(StringBuilder()) { acc, psiElement -> acc.append(psiElement.text) }
         .toString()
-      val dir = element.containingFile.virtualFile.parent.path
+      val dir = element.containingFile.virtualFile.parent?.path ?: return null
       val runAction = object : AnAction({ runner.title() }, AllIcons.RunConfigurations.TestState.Run_run) {
         override fun actionPerformed(e: AnActionEvent) {
           runner.run(text, e.project!!, dir, DefaultRunExecutor.getRunExecutorInstance())

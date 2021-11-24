@@ -109,32 +109,12 @@ fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boo
           buildJar(file, item.third, dryRun = dryRun)
         }
 
-      if (!dryRun && item.second.isNotEmpty()) {
+      // app.jar is combined later with other JARs and then re-ordered
+      if (!dryRun && item.second.isNotEmpty() && item.second != "lib/app.jar") {
         reorderJar(relativePath = item.second, file = file, traceContext = traceContext)
       }
     }
   })
-}
-
-internal fun updatePackageIndex(sourceFile: Path, targetFile: Path) {
-  writeNewFile(targetFile) { outChannel ->
-    ZipFileWriter(outChannel).use { zipCreator ->
-      val packageIndexBuilder = PackageIndexBuilder()
-      ImmutableZipFile.load(sourceFile).use { sourceZipFile ->
-        for (entry in sourceZipFile.entries) {
-          if (entry.isDirectory || entry.name == PACKAGE_INDEX_NAME) {
-            continue
-          }
-
-          val name = entry.name
-          packageIndexBuilder.addFile(name)
-          zipCreator.uncompressedData(name, entry.getByteBuffer(sourceZipFile))
-        }
-      }
-      packageIndexBuilder.writeDirs(zipCreator)
-      packageIndexBuilder.writePackageIndex(zipCreator)
-    }
-  }
 }
 
 fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
@@ -145,7 +125,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
     return
   }
 
-  val forbidNativeFiles = targetFile.fileName.toString() == "3rd-party.jar"
+  val forbidNativeFiles = targetFile.fileName.toString() == "app.jar"
   val packageIndexBuilder = PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(outChannel).use { zipCreator ->

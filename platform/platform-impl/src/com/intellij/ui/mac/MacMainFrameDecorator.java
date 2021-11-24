@@ -109,7 +109,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           JRootPane rootPane = myFrame.getRootPane();
           if (Registry.is("ide.mac.transparentTitleBarAppearance")) {
             UIUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {
-              Disposer.register(parentDisposable, () -> runnable.run());
+              if(!Disposer.isDisposed(parentDisposable)) {
+                Disposer.register(parentDisposable, () -> runnable.run());
+              }
             });
           }
           exitFullScreen();
@@ -150,7 +152,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             }
             apple_global_domain.release();
             appleActionOnDoubleClick.release();
-            res.release();
+            if(res != null) {
+              res.release();
+            }
           }
           super.mouseClicked(e);
         }

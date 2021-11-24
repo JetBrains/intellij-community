@@ -22,7 +22,8 @@ private const val mappedTransferSize = 8L * 1024L * 1024L
 
 internal inline fun writeNewZip(file: Path, compress: Boolean = false, task: (ZipFileWriter) -> Unit) {
   Files.createDirectories(file.parent)
-  ZipFileWriter(FileChannel.open(file, W_CREATE_NEW), compress).use {
+  ZipFileWriter(channel = FileChannel.open(file, W_CREATE_NEW),
+                deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use {
     task(it)
   }
 }

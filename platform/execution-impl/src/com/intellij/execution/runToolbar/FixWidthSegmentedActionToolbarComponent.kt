@@ -14,7 +14,7 @@ import javax.swing.JComponent
 
 open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionGroup) : SegmentedActionToolbarComponent(place, group) {
   companion object {
-    private val RUN_CONFIG_WIDTH_UNSCALED = 180
+    private val RUN_CONFIG_WIDTH_UNSCALED = 200
     private val ARROW_WIDTH_UNSCALED = 28
 
     val RUN_CONFIG_WIDTH: Int

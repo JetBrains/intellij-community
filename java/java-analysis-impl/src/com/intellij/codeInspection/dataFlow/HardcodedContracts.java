@@ -339,9 +339,9 @@ public final class HardcodedContracts {
                                                            String className,
                                                            String methodName,
                                                            @Nullable PsiMethodCallExpression call) {
-    if (("assertThat".equals(methodName) || "assumeThat".equals(methodName) ||
-         "that".equals(methodName) ||
-         "then".equals(methodName) && "org.assertj.core.api.BDDAssertions".equals(className)) && call != null) {
+    if (call != null && ("assertThat".equals(methodName) || "assumeThat".equals(methodName) ||
+                         "that".equals(methodName) ||
+                         "then".equals(methodName) && "org.assertj.core.api.BDDAssertions".equals(className))) {
       return handleAssertThat(paramCount, call);
     }
 

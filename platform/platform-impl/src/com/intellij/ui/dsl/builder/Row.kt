@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
+import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -93,13 +94,19 @@ interface Row {
   fun layout(rowLayout: RowLayout): Row
 
   /**
-   * The row becomes resizable and occupies all free space. For several resizable rows extra free space is divided between rows equally
+   * Marks the row as resizable: the row occupies all extra space in parent (for example in [Panel.group] or [Panel.panel])
+   * and changes size together with parent. When resizable is needed in whole [DialogPanel] all row parents should be marked
+   * as [resizableRow] as well. It's possible to have several resizable rows, which means extra space is shared between them.
+   * Note that vertical size and placement of components in the row are managed by [Cell.verticalAlign]
+   *
+   * @see [Grid.resizableRows]
    */
   fun resizableRow(): Row
 
   /**
    * Adds comment after the row with appropriate color and font size (macOS uses smaller font).
-   * [comment] can contain html tags except <html>, which is added automatically in this method.
+   * [comment] can contain html tags except &lt;html&gt;, which is added automatically in this method.
+   * \n does not work as new line in html, use &lt;br&gt; instead.
    * Visibility and enabled state of the row affects row comment as well.
    *
    * @see MAX_LINE_LENGTH_WORD_WRAP
@@ -109,7 +116,15 @@ interface Row {
                  maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
+  @Deprecated("Use cell(component: T) and scrollCell(component: T) instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
+
+  /**
+   * Adds [component]. Use this method only for custom specific components, all standard components like label, button,
+   * checkbox etc are covered by [Row] factory methods
+   */
+  fun <T : JComponent> cell(component: T): Cell<T>
 
   /**
    * Adds an empty cell in the grid
@@ -117,40 +132,51 @@ interface Row {
   fun cell()
 
   /**
+   * Adds [component] wrapped by [JBScrollPane]
+   */
+  fun <T : JComponent> scrollCell(component: T): Cell<T>
+
+  /**
    * Adds a reserved cell in layout which can be populated by content later
    */
   fun placeholder(): Placeholder
 
   /**
-   * Sets visibility of the row including comment [Row.comment] and all children recursively.
+   * Sets visibility of the row including comment [Row.rowComment] and all children recursively.
    * The row is invisible while there is an invisible parent
    */
   fun visible(isVisible: Boolean): Row
 
+  /**
+   * Binds row visibility to provided [predicate]
+   */
   fun visibleIf(predicate: ComponentPredicate): Row
 
   /**
-   * Sets enabled state of the row including comment [Row.comment] and all children recursively.
+   * Sets enabled state of the row including comment [Row.rowComment] and all children recursively.
    * The row is disabled while there is a disabled parent
    */
   fun enabled(isEnabled: Boolean): Row
 
+  /**
+   * Binds row enabled state to provided [predicate]
+   */
   fun enabledIf(predicate: ComponentPredicate): Row
 
   /**
-   * Adds gap before current row. It is visible together with the row.
+   * Adds additional gap above current row. It is visible together with the row.
    * Only greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
    */
   fun topGap(topGap: TopGap): Row
 
   /**
-   * Adds gap after current row. It is visible together with the row.
+   * Adds additional gap below current row. It is visible together with the row.
    * Only greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
    */
   fun bottomGap(bottomGap: BottomGap): Row
 
   /**
-   * Creates subpanel inside cell of the row
+   * Creates sub-panel inside the cell of the row. The panel contains its own rows and cells
    */
   fun panel(init: Panel.() -> Unit): Panel
 
@@ -184,7 +210,8 @@ interface Row {
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
   /**
-   * Adds text. [text] can contain html tags except <html>, which is added automatically in this method.
+   * Adds text. [text] can contain html tags except &lt;html&gt;, which is added automatically in this method.
+   * \n does not work as new line in html, use &lt;br&gt; instead.
    * It is preferable to use [label] method for short plain single-lined strings because labels use less resources and simpler
    *
    * @see DEFAULT_COMMENT_WIDTH
@@ -196,7 +223,8 @@ interface Row {
 
   /**
    * Adds comment with appropriate color and font size (macOS uses smaller font).
-   * [comment] can contain html tags except <html>, which is added automatically in this method
+   * [comment] can contain html tags except &lt;html&gt;, which is added automatically in this method.
+   * \n does not work as new line in html, use &lt;br&gt; instead.
    *
    * @see DEFAULT_COMMENT_WIDTH
    * @see MAX_LINE_LENGTH_WORD_WRAP

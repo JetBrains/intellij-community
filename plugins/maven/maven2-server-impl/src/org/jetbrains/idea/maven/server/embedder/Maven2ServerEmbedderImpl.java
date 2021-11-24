@@ -96,10 +96,14 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     settings.setWorkOffline(facadeSettings.isOffline());
     settings.setUsePluginRegistry(false);
 
-    settings.setMavenHome(facadeSettings.getMavenHome());
-    settings.setUserSettingsFile(facadeSettings.getUserSettingsFile());
-    settings.setGlobalSettingsFile(facadeSettings.getGlobalSettingsFile());
-    settings.setLocalRepository(facadeSettings.getLocalRepository());
+    String mavenHomePath = facadeSettings.getMavenHomePath();
+    if (mavenHomePath != null) {
+      settings.setMavenHomePath(facadeSettings.getMavenHomePath());
+    }
+
+    settings.setUserSettingsPath(facadeSettings.getUserSettingsPath());
+    settings.setGlobalSettingsPath(facadeSettings.getGlobalSettingsPath());
+    settings.setLocalRepositoryPath(facadeSettings.getLocalRepositoryPath());
 
     if (commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots")) {
       settings.setSnapshotUpdatePolicy(MavenEmbedderSettings.UpdatePolicy.ALWAYS_UPDATE);

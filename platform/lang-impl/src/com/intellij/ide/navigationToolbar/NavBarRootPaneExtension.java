@@ -127,6 +127,9 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
             myRunPanel.add(actionToolbar.getComponent(), BorderLayout.CENTER);
             final boolean needGap = isNeedGap(action);
             myRunPanel.setBorder(JBUI.Borders.emptyLeft(needGap ? 5 : 1));
+            NavBarLeftSideExtension.EP_NAME.forEachExtensionSafe(extension -> {
+              extension.process(myWrapperPanel);
+            });
             myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
           }
         }
@@ -178,7 +181,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
       @Override
       public void updateUI() {
         super.updateUI();
-        setOpaque(true);
         if (myScrollPane == null || myNavigationBar == null) return;
 
         myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -198,7 +200,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     };
 
     panel.add(myScrollPane, BorderLayout.CENTER);
-    panel.setOpaque(false);
+    panel.setOpaque(!ExperimentalUI.isNewUI());
     panel.updateUI();
     return panel;
   }

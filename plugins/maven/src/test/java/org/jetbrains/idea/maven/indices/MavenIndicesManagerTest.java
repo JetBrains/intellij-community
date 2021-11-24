@@ -1,20 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.WaitFor;
 import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static java.util.Arrays.asList;
 
 public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   private MavenIndicesTestFixture myIndicesFixture;
@@ -39,65 +38,49 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     }
   }
 
-
   @Test
-  public void testEnsuringRemoteRepositoryIndex() {
-    Pair<String, String> remote1 = Pair.create("id1", "http://foo/bar");
-    Pair<String, String> remote2 = Pair.create("id1", "  http://foo\\bar\\\\  ");
-    Pair<String, String> remote3 = Pair.create("id3", "http://foo\\bar\\baz");
-    Pair<String, String> remote4 = Pair.create("id4", "http://foo/bar"); // same url
-    Pair<String, String> remote5 = Pair.create("id4", "http://foo/baz"); // same id
-
-    assertEquals(1, myIndicesFixture.getIndicesManager().ensureIndicesExist(Collections.singleton(remote1)).size());
-    assertEquals(1, myIndicesFixture.getIndicesManager().ensureIndicesExist(asList(remote1, remote2)).size());
-    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(asList(remote1, remote2, remote3)).size());
-    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(asList(remote1, remote2, remote3, remote4)).size());
-    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(asList(remote1, remote2, remote3, remote4, remote5))
-      .size());
-  }
-
-  @Test 
   public void testDefaultArchetypes() {
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-quickstart:RELEASE");
   }
 
-  @Test 
+  @Test
   public void testIndexedArchetypes() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
-    myIndicesFixture.getIndicesManager()
-      .createIndexForLocalRepo(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"));
+    File archetypes = myIndicesFixture.getRepositoryHelper().getTestData("archetypes");
+    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(archetypes.getPath());
+    myIndicesFixture.getIndicesManager().scheduleUpdateIndicesList(null);
+    MavenIndexHolder indexHolder = myIndicesFixture.getIndicesManager().getIndex();
+    MavenIndex localIndex = indexHolder.getLocalIndex();
+    Assert.assertNotNull(localIndex);
+    localIndex.updateOrRepair(true, MavenProjectsManager.getInstance(myProject).getGeneralSettings(), getMavenProgressIndicator());
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
   }
 
-  @Test 
-  public void testAddingArchetypes() throws Exception {
-    myIndicesFixture.getIndicesManager().addArchetype(new MavenArchetype("myGroup",
-                                                                         "myArtifact",
-                                                                         "666",
-                                                                         null,
-                                                                         null));
-
-    assertArchetypeExists("myGroup:myArtifact:666");
-
-    myIndicesFixture.tearDown();
-    myIndicesFixture.setUp();
+  @Test
+  public void testAddingArchetypes() {
+    MavenArchetype mavenArchetype = new MavenArchetype("myGroup", "myArtifact", "666", null, null);
+    myIndicesFixture.getIndicesManager().addArchetype(mavenArchetype);
 
     assertArchetypeExists("myGroup:myArtifact:666");
   }
 
-  @Test 
-  public void testAddingFilesToIndex() throws IOException {
+  @Test
+  public void testAddingFilesToIndex() throws IOException, MavenProcessCanceledException {
     File localRepo = myIndicesFixture.getRepositoryHelper().getTestData("local2");
-    MavenIndex localIndex = myIndicesFixture.getIndicesManager()
-      .createIndexForLocalRepo(myProject, localRepo);
+
+    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(localRepo.getPath());
+    myIndicesFixture.getIndicesManager().scheduleUpdateIndicesList(null);
+    MavenIndexHolder indexHolder = myIndicesFixture.getIndicesManager().getIndex();
+    MavenIndex localIndex = indexHolder.getLocalIndex();
+
     //copy junit to repository
     File artifactDir = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit");
     FileUtil.copyDir(artifactDir, localRepo);
     assertTrue(localIndex.getArtifactIds("junit").isEmpty());
     File artifactFile = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit/junit/4.0/junit-4.0.pom");
-    MavenIndicesManager.getInstance(myProject).fixArtifactIndexAsync(artifactFile, localRepo);
-    new WaitFor(500) {
+    MavenIndicesManager.getInstance(myProject).addArtifactIndexAsync(null, artifactFile);
+    new WaitFor(5000) {
       @Override
       protected boolean condition() {
         return !localIndex.getArtifactIds("junit").isEmpty();

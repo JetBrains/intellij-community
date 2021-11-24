@@ -7,13 +7,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 
 internal class DocumentationForwardAction : AnAction(), ActionToIgnore {
 
-  private fun history(e: AnActionEvent) = e.dataContext.getData(DOCUMENTATION_HISTORY)
-
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = history(e)?.canForward() == true
+    e.presentation.isEnabled = documentationHistory(e.dataContext)?.canForward() == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    history(e)?.forward()
+    documentationHistory(e.dataContext)?.forward()
   }
 }

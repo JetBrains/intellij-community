@@ -332,7 +332,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (balloon instanceof BalloonImpl) {
-      ((BalloonImpl)balloon).startFadeoutTimer(0);
       if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0 || Registry.is("ide.notification.action.center", false)) {
         frameActivateBalloonListener(balloon, () -> {
           if (!balloon.isDisposed()) {
@@ -453,7 +452,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       }
     };
     HTMLEditorKit kit = new UIUtil.JBWordWrapHtmlEditorKit();
-    kit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}");
+    NotificationsUtil.setLinkForeground(kit.getStyleSheet());
     text.setEditorKit(kit);
     text.setForeground(layoutData.textColor);
 
@@ -639,7 +638,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     hoverAdapter.addSource(pane);
 
     if (actions) {
-      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap, hoverAdapter);
+      createActionPanel(notification, centerPanel, layoutData.fillColor, layoutData.configuration.actionGap, hoverAdapter);
     }
 
     if (expandAction != null) {
@@ -719,7 +718,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
       HTMLEditorKit newKit = new UIUtil.JBWordWrapHtmlEditorKit();
-      newKit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}");
+      NotificationsUtil.setLinkForeground(newKit.getStyleSheet());
       text.setEditorKit(newKit);
       text.setText(textContent);
       text.revalidate();
@@ -753,6 +752,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   private static void createActionPanel(Notification notification,
                                         NotificationCenterPanel centerPanel,
+                                        Color background,
                                         int gap,
                                         HoverAdapter hoverAdapter) {
     NotificationActionPanel actionPanel = new NotificationActionPanel(gap, notification.getCollapseDirection());
@@ -777,7 +777,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         for (int i = 0; i < buttonActions.length; i++) {
           buttonActions[i] = createAction(notification, actions.get(i + 1));
         }
-        actionPanel.addAction(new NotificationOptionButton(createAction(notification, actions.get(0)), buttonActions));
+        NotificationOptionButton button = new NotificationOptionButton(createAction(notification, actions.get(0)), buttonActions);
+        button.setBackground(background);
+        actionPanel.addAction(button);
       }
     }
     else {
@@ -984,7 +986,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
       @Override
       protected Color getTextColor() {
-        return JBColor.namedColor("Notification.MoreButton.foreground", new JBColor(0x666666, 0x8C8C8C));
+        return NotificationsUtil.getMoreButtonForeground();
       }
     };
 
@@ -1007,7 +1009,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.setColor(JBColor.namedColor("Notification.MoreButton.background", new JBColor(0xE3E3E3, 0x3A3C3D)));
+        g.setColor(NotificationsUtil.getMoreButtonBackground());
         ((Graphics2D)g).fill(new Rectangle2D.Double(1.5, 1, getWidth() - 2.5, getHeight() - 2));
         g.setColor(JBColor.namedColor("Notification.MoreButton.innerBorderColor", new JBColor(0xDBDBDB, 0x353738)));
         if (SystemInfo.isMac) {

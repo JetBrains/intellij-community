@@ -5,7 +5,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.XmlDomReader
 import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -45,7 +44,7 @@ final class BuildHelper {
   private final MethodHandle runProcessHandle
 
   final MethodHandle brokenPluginsTask
-  final MethodHandle writeClasspath
+  final MethodHandle generateClasspath
   final BiConsumer<Path, List<?>> buildJar
   final BiConsumer<List<Triple<Path, String, List<?>>>, Boolean> buildJars
   final BiFunction<Path, IntConsumer, ?> createZipSource
@@ -104,9 +103,9 @@ final class BuildHelper {
                                           "buildBrokenPlugins",
                                           MethodType.methodType(aVoid, path, string, bool))
 
-    writeClasspath = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ReorderJarsKt"),
-                                       "writeClasspath",
-                                       MethodType.methodType(aVoid, path, string, path))
+    generateClasspath = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ReorderJarsKt"),
+                                          "generateClasspath",
+                                          MethodType.methodType(list, path, string, path))
 
     Class<?> jarBuilder = helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.JarBuilder")
 
@@ -166,14 +165,17 @@ final class BuildHelper {
                                                          string, string,
                                                          bool, string,
                                                          path, path,
-                                                         path, path, path, Consumer.class))
+                                                         path, path, path, Consumer.class,
+                                                         bool))
 
     buildMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.MacKt"),
                                     "buildMacZip",
                                     MethodType.methodType(aVoid,
                                                           path, string,
                                                           byte[].class,
-                                                          path, path, list))
+                                                          path, path,
+                                                          Collection.class,
+                                                          list, int.class))
 
     prepareMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.SignKt"),
                                 "prepareMacZip",
@@ -186,7 +188,10 @@ final class BuildHelper {
                                              MethodType.methodType(aVoid,
                                                                    path, path, path,
                                                                    path,
-                                                                   string, byte[].class, list,
+                                                                   string, byte[].class,
+                                                                   list, list,
+                                                                   Collection.class,
+                                                                   Map.class,
                                                                    path))
   }
 
@@ -505,23 +510,21 @@ final class BuildHelper {
   }
 
   @NotNull
-  static UrlClassLoader createClassLoader(@NotNull List<Path> classPathFiles) {
+  static URLClassLoader createClassLoader(@NotNull List<Path> classPathFiles) {
     // don't use index - avoid saving to output (reproducible builds)
     // not ClassLoader.getSystemClassLoader() to reuse OpenTelemetry
     ClassLoader parent = BuildHelper.class.getClassLoader()
-    return UrlClassLoader.build()
-      .parent(new ClassLoader() {
-        @Override
-        Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-          // todo exclude blockmap lib from jps bootstrap
-          if (name.startsWith("com.jetbrains.plugin.blockmap.")) {
-            return null
-          }
-          return parent.loadClass(name)
+    // our UrlClassLoader loads com.intellij.util.lang. from app classloader - that's not a desired behaviour
+    URL[] urls = classPathFiles.collect { it.toUri().toURL() }.toArray(new URL[0])
+    return new URLClassLoader(urls, new ClassLoader() {
+      @Override
+      Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        if (name.startsWith("com.intellij.")) {
+          return null
         }
-      })
-      .files(classPathFiles)
-      .get()
+        return parent.loadClass(name)
+      }
+    })
   }
 
   static List<Path> buildClasspathForModule(JpsModule helperModule, CompilationContext context) {

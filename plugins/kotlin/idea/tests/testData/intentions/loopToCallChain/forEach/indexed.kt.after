@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'map{}.forEachIndexed{}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().map{}.forEachIndexed{}'"
 fun foo(list: List<String>) {

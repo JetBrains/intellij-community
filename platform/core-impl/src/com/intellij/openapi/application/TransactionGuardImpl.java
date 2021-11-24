@@ -130,7 +130,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public boolean isWriteSafeModality(ModalityState state) {
+  public boolean isWriteSafeModality(@NotNull ModalityState state) {
     return Boolean.TRUE.equals(myWriteSafeModalities.get(state));
   }
 

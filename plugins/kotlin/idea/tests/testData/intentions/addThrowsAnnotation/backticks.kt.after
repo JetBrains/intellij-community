@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 package foo.bar
 
 class `My$Exception` : Exception()

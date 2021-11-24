@@ -9,14 +9,19 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.GraphicsUtil
+import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.isSoftWrapping
+import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isLast
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
@@ -24,6 +29,7 @@ import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.fillHalfOval
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
@@ -37,10 +43,38 @@ internal class VerticalBarPresentation(
   private val hover: Boolean,
   private val accent: Boolean = false
 ): BasePresentation() {
-  override val width = barWidth
+  private data class BoundsState(
+    val width: Int,
+    val height: Int
+  )
+
+  private var boundsState = initialState
+
+  init {
+    invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
+      PsiDocumentManager.getInstance(row.project).performForCommittedDocument(editor.document) {
+        if (shouldShowInlay()) {
+          val calculated = BoundsState(barWidth, editor.lineHeight)
+          boundsState = calculated
+          fireSizeChanged(Dimension(0, 0), Dimension(calculated.width, calculated.height))
+        }
+      }
+    }
+  }
+
+  private fun shouldShowInlay(): Boolean {
+    if (!row.isValid || editor.isDisposed) {
+      return false
+    }
+    val table = TableUtils.findTable(row) ?: return false
+    return !table.isSoftWrapping(editor)
+  }
+
+  override val width
+    get() = boundsState.width
 
   override val height
-    get() = editor.lineHeight
+    get() = boundsState.height
 
   private enum class RowLocation {
     FIRST,
@@ -61,6 +95,9 @@ internal class VerticalBarPresentation(
   }
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
+    if (!row.isValid || editor.isDisposed || boundsState == initialState) {
+      return
+    }
     GraphicsUtil.setupAntialiasing(graphics)
     GraphicsUtil.setupRoundedBorderAntialiasing(graphics)
     paintRow(graphics, rowLocation)
@@ -185,6 +222,8 @@ internal class VerticalBarPresentation(
 
     private val rowActionGroup
       get() = ActionManager.getInstance().getAction("Markdown.TableRowActions") as ActionGroup
+
+    private val initialState = BoundsState(0, 0)
 
     private fun createDataProvider(row: PsiElement): DataProvider {
       val elementReference = WeakReference(row)

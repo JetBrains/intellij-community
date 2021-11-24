@@ -19,7 +19,7 @@
                      enabledByDefault="true" level="WARNING"
                      key="jvm.inspections.blocking.method.display.name" bundle="messages.JvmAnalysisBundle"
                      implementationClass="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection"/>
-    <localInspection language="UAST" shortName="SourceToSinkFlow"
+    <localInspection language="UAST" shortName="SourceToSinkFlow"  suppressId="tainting"
                      groupBundle="messages.JvmAnalysisBundle" groupKey="jvm.inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection"
@@ -77,6 +77,7 @@
     <notificationGroup id="UAST" displayType="BALLOON"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
+    <codeInsight.externalLibraryResolver implementation="com.intellij.codeInspection.sourceToSink.CheckerQualExternalLibraryResolver"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>

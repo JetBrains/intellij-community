@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation.ide.ui
 
+import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -9,17 +10,23 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.UiNotifyConnector
+import java.awt.BorderLayout
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 internal class DocumentationToolWindowUI(
   project: Project,
-  private val ui: DocumentationUI,
+  val ui: DocumentationUI,
   private val content: Content,
 ) : Disposable {
 
   val browser: DocumentationBrowser get() = ui.browser
 
-  val contentComponent: JComponent get() = ui.scrollPane
+  val contentComponent: JComponent = JPanel(BorderLayout()).also {
+    it.add(ui.scrollPane, BorderLayout.CENTER)
+  }
+
+  val editorPane: DocumentationEditorPane get() = ui.editorPane
 
   private var reusable: Disposable?
 
@@ -46,6 +53,7 @@ internal class DocumentationToolWindowUI(
   // - > reuse
   // - - > asterisk content tab updater
   // - > content tab updater (after tab is kept)
+  // - > search handler
   init {
     content.putUserData(TW_UI_KEY, this)
     Disposer.register(content, this)
@@ -54,6 +62,7 @@ internal class DocumentationToolWindowUI(
     reusable = updateContentTab(browser, content, asterisk = true).also {
       Disposer.register(this, it)
     }
+    Disposer.register(this, DocumentationSearchHandler(this))
   }
 
   override fun dispose() {
@@ -74,6 +83,11 @@ internal class DocumentationToolWindowUI(
       Disposer.dispose(checkNotNull(autoUpdate))
       autoUpdate = null
     }
+  }
+
+  fun pauseAutoUpdate(): Disposable {
+    check(isAutoUpdate)
+    return autoUpdater.pause()
   }
 
   fun keep() {

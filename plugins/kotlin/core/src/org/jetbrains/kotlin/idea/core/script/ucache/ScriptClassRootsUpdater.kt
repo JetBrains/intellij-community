@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -25,8 +26,6 @@ import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
-import org.jetbrains.kotlin.idea.core.util.BackgroundTask
-import org.jetbrains.kotlin.idea.core.util.BackgroundTaskUtil.Companion.executeOnPooledThread
 import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
@@ -78,7 +77,10 @@ abstract class ScriptClassRootsUpdater(
     init {
         ProjectManager.getInstance().addProjectManagerListener(project, object : ProjectManagerListener {
             override fun projectClosing(project: Project) {
-                scheduledUpdate?.cancelAndAwaitCompletion()
+                scheduledUpdate?.apply {
+                    cancel()
+                    awaitCompletion()
+                }
             }
         })
 
@@ -167,7 +169,7 @@ abstract class ScriptClassRootsUpdater(
         }
     }
 
-    private var scheduledUpdate: BackgroundTask? = null
+    private var scheduledUpdate: BackgroundTaskUtil.BackgroundTask? = null
 
     private fun ensureUpdateScheduled() {
         val disposable = KotlinPluginDisposable.getInstance(project)
@@ -175,7 +177,7 @@ abstract class ScriptClassRootsUpdater(
             scheduledUpdate?.cancel()
 
             if (!Disposer.isDisposed(disposable)) {
-                scheduledUpdate = executeOnPooledThread(disposable) {
+                scheduledUpdate = BackgroundTaskUtil.submitTask(disposable) {
                     doUpdate()
                 }
             }

@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -297,9 +296,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     try {
-      InputStream defaultFileTypeStream = FileTypeManagerImpl.class.getClassLoader().getResourceAsStream("defaultFileTypes.xml");
-      if (defaultFileTypeStream != null) {
-        Element defaultFileTypesElement = JDOMUtil.load(defaultFileTypeStream);
+      byte[] defaultFileTypeData = ResourceUtil.getResourceAsBytes("defaultFileTypes.xml", FileTypeManagerImpl.class.getClassLoader());
+      if (defaultFileTypeData != null) {
+        Element defaultFileTypesElement = JDOMUtil.load(defaultFileTypeData);
         IdeaPluginDescriptor coreIdeaPluginDescriptor = coreIdeaPluginDescriptor();
         for (Element e : defaultFileTypesElement.getChildren()) {
           if ("filetypes".equals(e.getName())) {
@@ -644,6 +643,52 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   public @NotNull FileType getFileTypeByFile(@NotNull VirtualFile file) {
     return getFileTypeByFile(file, null);
+  }
+
+  @Override
+  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType requestedFileType) {
+    FileType overriddenFileType = FileTypeOverrider.EP_NAME.computeSafeIfAny(overrider -> overrider.getOverriddenFileType(file));
+    if (overriddenFileType != null) {
+      return overriddenFileType.equals(requestedFileType);
+    }
+
+    Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
+    if (fixedType != null && fixedType.getFirst().equals(file)) {
+      FileType fileType = fixedType.getSecond();
+      if (toLog()) {
+        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
+      }
+      return fileType.equals(requestedFileType);
+    }
+
+    if (file instanceof LightVirtualFile) {
+      FileType fileType = ((LightVirtualFile)file).getAssignedFileType();
+      if (fileType != null) {
+        return fileType.equals(requestedFileType);
+      }
+    }
+
+    if (requestedFileType instanceof FileTypeIdentifiableByVirtualFile
+        && ((FileTypeIdentifiableByVirtualFile)requestedFileType).isMyFileType(file)) {
+      return true;
+    }
+    // otherwise, we can skip all the mySpecialFileTypes because it's certain this file type is not one of them
+
+    FileType fileType = getFileTypeByFileName(file.getNameSequence());
+    if (fileType == UnknownFileType.INSTANCE) {
+      fileType = null;
+    }
+    if (fileType == null && file instanceof FakeVirtualFile && ScratchUtil.isScratch(file.getParent())) {
+      return PlainTextFileType.INSTANCE.equals(requestedFileType);
+    }
+    if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
+      FileType detected = myDetectionService.getOrDetectFromContent(file, null, false);
+      if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
+        return DetectedByContentFileType.INSTANCE.equals(requestedFileType);
+      }
+      return requestedFileType.equals(detected);
+    }
+    return requestedFileType.equals(ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE));
   }
 
   @Override
@@ -1379,7 +1424,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
                                          boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
 
-    String extensionsStr = Objects.requireNonNullElse(typeElement.getAttributeValue("extensions"), "");
+    String extensionsStr = ObjectUtils.notNull(typeElement.getAttributeValue("extensions"), "");
     if (isDefault && !extensionsStr.isEmpty()) {
       // todo support wildcards
       extensionsStr = filterAlreadyRegisteredExtensions(extensionsStr);

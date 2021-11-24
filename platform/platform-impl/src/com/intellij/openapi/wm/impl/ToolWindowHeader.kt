@@ -16,10 +16,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.isNewUI
-import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.popup.PopupState
@@ -95,6 +93,9 @@ abstract class ToolWindowHeader internal constructor(
     toolbar.setReservePlaceAutoPopupIcon(false)
     val component = toolbar.component
     component.border = JBUI.Borders.empty(2, 0)
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      component.border = JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerToolbarLeftRightInsets())
+    }
     component.isOpaque = false
     @Suppress("LeakingThis")
     add(component)
@@ -138,7 +139,10 @@ abstract class ToolWindowHeader internal constructor(
     )
 
     isOpaque = true
-    border = JBUI.Borders.empty(0)
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      border = JBUI.Borders.empty()
+    }
+
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
         val manager = toolWindow.toolWindowManager
@@ -247,9 +251,11 @@ abstract class ToolWindowHeader internal constructor(
     var drawBottomLine = true
 
     if (isNewUI()) {
+      val scrolled = ClientProperty.isTrue(nearestDecorator, InternalDecoratorImpl.SCROLLED_STATE)
       drawBottomLine = (toolWindow.largeStripeAnchor == ToolWindowAnchor.BOTTOM
                         || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
-                        || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow))
+                        || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow)
+                        || scrolled)
 
       if (this.drawBottomLine != drawBottomLine) {
         //no active header for new UI
@@ -309,7 +315,10 @@ abstract class ToolWindowHeader internal constructor(
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()
     val insets = insets
-    val height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom
+    var height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      height = JBUI.scale(JBUI.CurrentTheme.ToolWindow.headerHeight()) - insets.top - insets.bottom
+    }
     return Dimension(size.width, height)
   }
 

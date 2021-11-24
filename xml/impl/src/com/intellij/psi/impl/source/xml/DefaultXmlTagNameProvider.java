@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,6 +38,7 @@ import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
 
 public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
@@ -88,9 +90,11 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (StringUtil.isNotEmpty(ns)) {
         lookupElement = lookupElement.withTypeText(ns, true);
       }
+      Icon icon = AllIcons.Nodes.Tag;
       if (descriptor instanceof PsiPresentableMetaData) {
-        lookupElement = lookupElement.withIcon(((PsiPresentableMetaData)descriptor).getIcon());
+        icon = ((PsiPresentableMetaData)descriptor).getIcon();
       }
+      lookupElement = lookupElement.withIcon(icon);
       if (xmlExtension.useXmlTagInsertHandler()) {
         lookupElement = lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE);
       }
@@ -140,7 +144,9 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
         public boolean process(@NotNull final VirtualFile file, XsdNamespaceBuilder value) {
           List<String> tags = value.getRootTags();
           for (String s : tags) {
-            elements.add(LookupElementBuilder.create(s).withTypeText(ns).withInsertHandler(new XmlTagInsertHandler() {
+            elements.add(LookupElementBuilder.create(s)
+                           .withIcon(AllIcons.Nodes.Tag)
+                           .withTypeText(ns).withInsertHandler(new XmlTagInsertHandler() {
               @Override
               public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
                 final Editor editor = context.getEditor();

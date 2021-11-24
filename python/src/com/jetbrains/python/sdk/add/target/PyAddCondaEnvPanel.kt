@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.fixHighlightingOfUiDslComponents
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -94,6 +95,7 @@ open class PyAddCondaEnvPanel(
 
     val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS
       .asReversed()
+      .filter { it < LanguageLevel.PYTHON311 }
       .map { it.toPythonVersion() }
 
     languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {
@@ -138,6 +140,10 @@ open class PyAddCondaEnvPanel(
 
       updateComponentsVisibility()
     }
+
+    // workarounds the issue with cropping the focus highlighting
+    formPanel.fixHighlightingOfUiDslComponents()
+
     add(formPanel, BorderLayout.NORTH)
   }
 

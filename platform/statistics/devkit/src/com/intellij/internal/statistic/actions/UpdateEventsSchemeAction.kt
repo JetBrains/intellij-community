@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
@@ -12,11 +12,11 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 
 class UpdateEventsSchemeAction(val recorder: String)
-  : DumbAwareAction(StatisticsBundle.message("stats.update.events.scheme"),
+  : DumbAwareAction(StatisticsBundle.message("stats.update.0.events.scheme", recorder),
                     ActionsBundle.message("group.UpdateEventsSchemeAction.description"),
                     AllIcons.Actions.Refresh) {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
+    val project = e.project
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, StatisticsBundle.message("stats.updating.events.scheme"), false) {
       override fun run(indicator: ProgressIndicator) {

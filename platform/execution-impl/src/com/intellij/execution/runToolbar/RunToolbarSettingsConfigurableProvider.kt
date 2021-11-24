@@ -15,7 +15,7 @@ class RunToolbarSettingsConfigurableProvider(val project: Project) : Configurabl
   }
 
   override fun canCreateConfigurable(): Boolean {
-    return RunToolbarProcess.isAvailable
+    return RunToolbarProcess.isSettingsAvailable
   }
 }
 

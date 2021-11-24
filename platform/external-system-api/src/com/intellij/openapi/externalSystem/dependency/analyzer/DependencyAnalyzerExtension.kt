@@ -7,15 +7,15 @@ import com.intellij.openapi.project.Project
 
 interface DependencyAnalyzerExtension {
 
-  fun getContributor(project: Project, systemId: ProjectSystemId): DependenciesContributor?
+  fun getContributor(project: Project, systemId: ProjectSystemId): DependencyContributor?
 
   companion object {
     @JvmField
     val EP_NAME = ExtensionPointName.create<DependencyAnalyzerExtension>("com.intellij.externalSystemDependencyAnalyzer")
 
     @JvmStatic
-    fun findContributor(project: Project, systemId: ProjectSystemId): DependenciesContributor? {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.getContributor(project, systemId) }
+    fun getExtension(project: Project, systemId: ProjectSystemId): DependencyContributor {
+      return EP_NAME.extensionList.firstNotNullOf { it.getContributor(project, systemId) }
     }
   }
 }

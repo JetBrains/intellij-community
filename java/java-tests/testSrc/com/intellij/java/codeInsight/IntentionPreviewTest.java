@@ -24,7 +24,8 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
     String text = IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), action, getFile(), getEditor());
     assertEquals("class Test {\n" +
                  "  public void test() {\n" +
-                 "    int variable  ;variable = 2;\n" +
+                 "    int variable  ;\n" +
+                 "      variable = 2;\n" +
                  "  }\n" +
                  "}", text);
   }
@@ -39,7 +40,9 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
     IntentionAction action = findActionWithText("Add on-demand static import for 'java.lang.Math'");
     assertNotNull(action);
     String text = IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), action, getFile(), getEditor());
-    assertEquals("import static java.lang.Math.*;class Computer {\n" +
+    assertEquals("import static java.lang.Math.*;\n" +
+                 "\n" +
+                 "class Computer {\n" +
                  "    void f() {\n" +
                  "      double pi = PI;\n" +
                  "    }\n" +
@@ -80,6 +83,49 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
     assertNotNull(action);
     String text = getPreviewText(action);
     assertEquals("[\"123]", text);
+  }
+
+  public void testBindFieldsFromParameters() {
+    configureFromFileText("Test.java",
+                          "public    class    Test {\n" +
+                          "    Test(int <caret>a, String b) {\n" +
+                          "\n" +
+                          "    }\n" +
+                          "}\n");
+    IntentionAction action = findActionWithText("Bind constructor parameters to fields");
+    assertNotNull(action);
+    String text = getPreviewText(action);
+    assertEquals("public    class    Test {\n" +
+                 "    private final int a;\n" +
+                 "    private final String b;\n" +
+                 "\n" +
+                 "    Test(int a, String b) {\n" +
+                 "\n" +
+                 "    this.a = a;\n" +
+                 "        this.b = b;\n" +
+                 "    }\n" +
+                 "}\n", text);
+  }
+
+  public void testDefineDefaultValues() {
+    configureFromFileText("Test.java",
+                          "public class Test {\n" +
+                          "    void test(int <caret>a,  String b) {\n" +
+                          "\n" +
+                          "    }\n" +
+                          "}\n");
+    IntentionAction action = findActionWithText("Generate overloaded method with default parameter values");
+    assertNotNull(action);
+    String text = getPreviewText(action);
+    assertEquals("public class Test {\n" +
+                 "    void test() {\n" +
+                 "        test(0, null);\n" +
+                 "    }\n" +
+                 "\n" +
+                 "    void test(int a, String b) {\n" +
+                 "\n" +
+                 "    }\n" +
+                 "}\n", text);
   }
 
   @Override

@@ -18,11 +18,11 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,7 @@ public final class PluginDownloader {
   private final @NotNull String myPluginUrl;
   private final BuildNumber myBuildNumber;
 
-  private final @NotNull Consumer<@NotNull @Nls String> myErrorsConsumer;
+  private final @NotNull Consumer<@NotNull @NlsContexts.NotificationContent String> myErrorsConsumer;
   private final @Nullable MarketplacePluginDownloadService myDownloadService;
 
   private @NlsSafe String myPluginVersion;
@@ -68,7 +68,7 @@ public final class PluginDownloader {
   private PluginDownloader(@NotNull IdeaPluginDescriptor descriptor,
                            @NotNull String pluginUrl,
                            @Nullable BuildNumber buildNumber,
-                           @NotNull Consumer<@NotNull @Nls String> errorsConsumer,
+                           @NotNull Consumer<@NotNull @NlsContexts.NotificationContent String> errorsConsumer,
                            @Nullable MarketplacePluginDownloadService service) {
     myPluginId = descriptor.getPluginId();
     myPluginName = descriptor.getName();
@@ -88,7 +88,7 @@ public final class PluginDownloader {
     myDownloadService = service;
   }
 
-  public @NotNull PluginDownloader withErrorsConsumer(@NotNull Consumer<@NotNull @Nls String> errorsConsumer) {
+  public @NotNull PluginDownloader withErrorsConsumer(@NotNull Consumer<@NotNull @NlsContexts.NotificationContent String> errorsConsumer) {
     return new PluginDownloader(myDescriptor,
                                 myPluginUrl,
                                 myBuildNumber,
@@ -170,6 +170,23 @@ public final class PluginDownloader {
 
   public boolean isShownErrors() {
     return myShownErrors;
+  }
+
+  /**
+   * @deprecated Please use {@link PluginDownloader#withErrorsConsumer(Consumer)} to set the errors' consumer,
+   * and {@link PluginDownloader#getDescriptor()} to get the actual descriptor instance.
+   */
+  @Deprecated
+  public @Nullable IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator,
+                                                                              boolean showMessageOnError) throws IOException {
+    PluginDownloader downloader = showMessageOnError ?
+                                  this :
+                                  withErrorsConsumer(__ -> {
+                                  });
+
+    return downloader.prepareToInstall(indicator) ?
+           (IdeaPluginDescriptorImpl)downloader.myDescriptor :
+           null;
   }
 
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
@@ -254,13 +271,13 @@ public final class PluginDownloader {
     return PluginDescriptorLoader.loadDescriptorFromArtifact(getFilePath(), myBuildNumber);
   }
 
-  private void reportError(@NotNull @Nls String errorMessage) {
+  private void reportError(@NotNull @NlsContexts.NotificationContent String errorMessage) {
     LOG.info("PluginDownloader error: " + errorMessage);
     myShownErrors = true;
     myErrorsConsumer.accept(IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage));
   }
 
-  public static void showErrorDialog(@NotNull @Nls String text) {
+  public static void showErrorDialog(@NotNull @NlsContexts.NotificationContent String text) {
     Application application = ApplicationManager.getApplication();
     if (application == null || application.isDisposed()) {
       return;

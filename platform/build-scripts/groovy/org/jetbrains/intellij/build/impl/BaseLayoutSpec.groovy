@@ -12,7 +12,7 @@ class BaseLayoutSpec {
    * Register an additional module to be included into the plugin distribution. Module-level libraries from
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
-  void withModule(String moduleName) {
+  final void withModule(String moduleName) {
     layout.withModule(moduleName)
   }
 

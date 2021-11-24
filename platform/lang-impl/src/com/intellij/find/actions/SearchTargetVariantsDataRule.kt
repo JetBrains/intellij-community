@@ -3,11 +3,9 @@ package com.intellij.find.actions
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
-import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.IndexNotReadyException
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageView
 import com.intellij.util.SmartList
@@ -15,26 +13,14 @@ import com.intellij.util.SmartList
 /**
  * @see com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.doChooseAmbiguousTarget
  */
-class SearchTargetVariantsDataRule : GetDataRule {
-
-  override fun getData(dataProvider: DataProvider): Any? {
-    if (!Registry.`is`("ide.find.usages.data.rule")) {
-      return null
-    }
-    return targetVariants(dataProvider).takeUnless {
-      it.isEmpty()
-    }
-  }
-}
-
-internal fun targetVariants(dataProvider: DataProvider): List<TargetVariant> {
+internal fun targetVariants(dc: DataContext): List<TargetVariant> {
   val allTargets = SmartList<TargetVariant>()
 
-  FindUsagesAction.SEARCH_TARGETS.getData(dataProvider)?.mapTo(allTargets, ::SearchTargetVariant)
+  dc.getData(FindUsagesAction.SEARCH_TARGETS)?.mapTo(allTargets, ::SearchTargetVariant)
 
-  val usageTargets: Array<out UsageTarget>? = UsageView.USAGE_TARGETS_KEY.getData(dataProvider)
+  val usageTargets: Array<out UsageTarget>? = dc.getData(UsageView.USAGE_TARGETS_KEY)
   if (usageTargets == null) {
-    val editor = CommonDataKeys.EDITOR.getData(dataProvider)
+    val editor = dc.getData(CommonDataKeys.EDITOR)
     if (editor != null) {
       val offset = editor.caretModel.offset
       try {

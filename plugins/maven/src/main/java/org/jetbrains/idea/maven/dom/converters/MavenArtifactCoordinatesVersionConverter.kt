@@ -20,7 +20,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xml.ConvertContext
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.getParentVersionForConsumerPom
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isConsumerPomResolutionApplicable
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager
+import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
@@ -42,7 +42,7 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
   }
 
 
-  override fun doIsValid(id: MavenId, manager: MavenProjectIndicesManager, context: ConvertContext): Boolean {
+  override fun doIsValid(id: MavenId, manager: MavenIndicesManager, context: ConvertContext): Boolean {
     if (StringUtil.isEmpty(id.groupId) || StringUtil.isEmpty(id.artifactId)) {
       return false
     }
@@ -77,7 +77,7 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
       }
     }
 
-    return manager.hasLocalVersion(id.groupId, id.artifactId, id.version) ?: false
+    return manager.hasLocalVersion(id.groupId, id.artifactId, id.version)
   }
 
   override fun doGetVariants(id: MavenId, searchService: DependencySearchService): Set<String> {

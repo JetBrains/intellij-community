@@ -43,7 +43,7 @@ class DialogPanel : JBPanel<DialogPanel> {
 
   private var parentDisposable: Disposable? = null
   private var componentValidityChangedCallback: ((Map<JComponent, ValidationInfo>) -> Unit)? = null
-  private val integratedPanels = mutableMapOf<DialogPanel, Disposable>()
+  private val integratedPanels = mutableMapOf<DialogPanel, Disposable?>()
   private var _validateCallbacks: List<() -> ValidationInfo?> = emptyList()
 
   private val componentValidationStatus = hashMapOf<JComponent, ValidationInfo>()
@@ -54,7 +54,7 @@ class DialogPanel : JBPanel<DialogPanel> {
   fun registerValidators(parentDisposable: Disposable, componentValidityChangedCallback: ((Map<JComponent, ValidationInfo>) -> Unit)? = null) {
     this.parentDisposable = parentDisposable
     this.componentValidityChangedCallback = componentValidityChangedCallback
-    registerIntegratedPanels(integratedPanels)
+    registerValidatorsForIntegratedPanels(integratedPanels.keys)
 
     for ((component, callback) in componentValidateCallbacks) {
       val validator = ComponentValidator(parentDisposable).withValidator(Supplier {
@@ -110,9 +110,8 @@ class DialogPanel : JBPanel<DialogPanel> {
   override fun addImpl(comp: Component?, constraints: Any?, index: Int) {
     super.addImpl(comp, constraints, index)
     if (comp is DialogPanel && comp.getClientProperty(INTEGRATED_PANEL_PROPERTY) != null) {
-      val disposable = Disposer.newDisposable()
-      integratedPanels[comp] = disposable
-      registerIntegratedPanels(mapOf(comp to disposable))
+      integratedPanels[comp] = null
+      registerValidatorsForIntegratedPanels(setOf(comp))
     }
   }
 
@@ -124,14 +123,16 @@ class DialogPanel : JBPanel<DialogPanel> {
   }
 
   override fun removeAll() {
-    integratedPanels.values.forEach { Disposer.dispose(it) }
+    integratedPanels.values.filterNotNull().forEach { Disposer.dispose(it) }
     integratedPanels.clear()
     super.removeAll()
   }
 
-  private fun registerIntegratedPanels(panels: Map<DialogPanel, Disposable>) {
+  private fun registerValidatorsForIntegratedPanels(panels: Set<DialogPanel>) {
     parentDisposable?.let {
-      for ((panel, disposable) in panels) {
+      for (panel in panels) {
+        val disposable = Disposer.newDisposable()
+        integratedPanels.put(panel, disposable)?.let { oldDisposable -> Disposer.dispose(oldDisposable) }
         Disposer.register(it, disposable)
         panel.registerValidators(disposable, componentValidityChangedCallback)
       }

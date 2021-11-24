@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A<T>(private val list: List<T>) : Iterable<T> {
     override fun iterator(): Iterator<T> = list.iterator()

@@ -1,5 +1,5 @@
 // "Replace with '::class.java'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun main() {
     val c = Int.javaClass<caret>
 }

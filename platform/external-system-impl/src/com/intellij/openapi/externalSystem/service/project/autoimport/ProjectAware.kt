@@ -45,7 +45,7 @@ class ProjectAware(
   private val externalProjectFiles: List<File>
     get() = autoImportAware.getAffectedExternalProjectFiles(projectPath, project)
 
-  override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
+  override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
     progressManager.addNotificationListener(TaskNotificationListener(listener), parentDisposable)
   }
@@ -63,7 +63,7 @@ class ProjectAware(
   }
 
   private inner class TaskNotificationListener(
-    val delegate: ExternalSystemProjectRefreshListener
+    val delegate: ExternalSystemProjectListener
   ) : ExternalSystemTaskNotificationListenerAdapter() {
     var externalSystemTaskId = AtomicReference<ExternalSystemTaskId?>(null)
 
@@ -78,13 +78,13 @@ class ProjectAware(
         }
       }
       externalSystemTaskId.set(id)
-      delegate.beforeProjectRefresh()
+      delegate.onProjectReloadStart()
     }
 
     private fun afterProjectRefresh(id: ExternalSystemTaskId, status: ExternalSystemRefreshStatus) {
       if (id.type != RESOLVE_PROJECT) return
       if (!externalSystemTaskId.compareAndSet(id, null)) return
-      delegate.afterProjectRefresh(status)
+      delegate.onProjectReloadFinish(status)
     }
 
     override fun onSuccess(id: ExternalSystemTaskId) {

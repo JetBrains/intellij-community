@@ -679,8 +679,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     importProjects(p1, p2);
     myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("one", "two")));
-    myProjectsManager.setIgnoredFilesPaths(Arrays.asList(p1.getPath()));
-    myProjectsManager.setIgnoredFilesPatterns(Arrays.asList("*.xxx"));
+    setIgnoredFilesPathForNextImport(Arrays.asList(p1.getPath()));
+    setIgnoredPathPatternsForNextImport(Arrays.asList("*.xxx"));
 
     state = myProjectsManager.getState();
     assertUnorderedPathsAreEqual(state.originalFiles, Arrays.asList(p1.getPath(), p2.getPath()));

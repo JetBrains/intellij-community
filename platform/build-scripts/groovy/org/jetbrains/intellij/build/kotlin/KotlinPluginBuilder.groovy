@@ -208,7 +208,6 @@ final class KotlinPluginBuilder {
 
       String jpsPluginJar = "jps/kotlin-jps-plugin.jar"
       withModule("kotlin.jps-plugin", jpsPluginJar)
-      withProjectLibraryUnpackedIntoJar("kotlinc.compiler-components-for-jps", jpsPluginJar)
 
       String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
       withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
@@ -244,8 +243,8 @@ final class KotlinPluginBuilder {
       withModule("kotlin.jps-common", "kotlin-jps-common.jar")
       withModule("kotlin.common", "kotlin-common.jar")
 
-      withProjectLibrary("kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlin-stdlib-jdk8", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinc.kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinc.kotlin-stdlib", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("javaslang")
       withProjectLibrary("kotlinx-collections-immutable-jvm")
       withProjectLibrary("javax-inject")
@@ -279,10 +278,28 @@ final class KotlinPluginBuilder {
             if (kotlinVersion == null) {
               throw new IllegalStateException("Can't determine Kotlin compiler version")
             }
-            return "${major}-${kotlinVersion}-${kind}${minor}"
+            String version = "${major}-${kotlinVersion}-${kind}${minor}"
+            context.messages.info("version: $version")
+            return version
           } else {
+            // 221-1.5.10-release-IJ916
+            Matcher kotlinPluginIJBuildNumber = Pattern.compile("^(\\d+)-([.\\d]+)-(\\w+)-([A-Z]+)(\\d+)\$").matcher(buildNumber)
+
+            if (kotlinPluginIJBuildNumber.matches()) {
+              String major = kotlinPluginIJBuildNumber.group(1)
+              String kotlinVersion = kotlinPluginIJBuildNumber.group(2)
+              String type = kotlinPluginIJBuildNumber.group(3)
+              String buildKind = kotlinPluginIJBuildNumber.group(4)
+              String minor = kotlinPluginIJBuildNumber.group(5)
+
+              String version = "${major}-${kotlinVersion}-${type}-${kind}${minor}"
+              context.messages.info("Kotlin plugin IJ version: $version")
+              return version
+            }
+
             // Build number isn't recognized as IJ build number then it means build
             // number must be plain Kotlin plugin version which we can use directly
+            context.messages.info("buildNumber version: $buildNumber")
             return buildNumber
           }
         }

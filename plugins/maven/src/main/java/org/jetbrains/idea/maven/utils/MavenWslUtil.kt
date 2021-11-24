@@ -72,7 +72,7 @@ internal object MavenWslUtil : MavenUtil() {
     if (sdkByExactName != null && projectWslDistr == tryGetWslDistributionForPath(sdkByExactName.homePath)) {
       return sdkByExactName
     }
-    return MavenProjectBuilder.suggestProjectSdk(project) ?: throw InvalidSdkException(name)
+    return MavenUtil.suggestProjectSdk(project) ?: throw InvalidSdkException(name)
   }
 
   @JvmStatic

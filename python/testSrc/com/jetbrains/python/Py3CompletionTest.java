@@ -616,6 +616,11 @@ public class Py3CompletionTest extends PyTestCase {
     doNegativeTest();
   }
 
+  // EA-404000
+  public void testUnresolvedClassPatternLeadsToNothingSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
   // PY-48012
   public void testAttributesOfDataclassSuggestedForKeywordPatterns() {
     final String testName = getTestName(true);

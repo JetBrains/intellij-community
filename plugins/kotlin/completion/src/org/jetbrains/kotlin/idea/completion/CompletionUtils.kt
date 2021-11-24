@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.handlers.CastReceiverInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
-import org.jetbrains.kotlin.idea.completion.smart.isProbableKeyword
+import org.jetbrains.kotlin.idea.completion.smart.KeywordProbability
+import org.jetbrains.kotlin.idea.completion.smart.keywordProbability
 import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -226,7 +227,7 @@ fun returnExpressionItems(bindingContext: BindingContext, position: KtElement): 
                 }
 
                 if (returnIsProbableInPosition()) {
-                    blockBodyReturns.forEach { it.isProbableKeyword = true }
+                    blockBodyReturns.forEach { it.keywordProbability = KeywordProbability.HIGH }
                 }
 
                 result.addAll(blockBodyReturns)
@@ -292,6 +293,9 @@ private fun KtDeclarationWithBody.returnType(bindingContext: BindingContext): Ko
     val callable = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? CallableDescriptor ?: return null
     return callable.returnType
 }
+
+internal val PsiElement.isInsideKtTypeReference: Boolean
+    get() = getNonStrictParentOfType<KtTypeReference>() != null
 
 private fun Name?.labelNameToTail(): String = if (this != null) "@" + render() else ""
 

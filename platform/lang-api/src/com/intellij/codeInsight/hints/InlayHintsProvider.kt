@@ -64,6 +64,7 @@ object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EX
  * @see com.intellij.openapi.editor.InlayModel.addBlockElement
  *
  * To test it you may use InlayHintsProviderTestCase.
+ * Mark as [com.intellij.openapi.project.DumbAware] to enable it in dumb mode.
  */
 interface InlayHintsProvider<T : Any> {
   /**

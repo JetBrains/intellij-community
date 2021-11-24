@@ -465,6 +465,31 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             runTest("testData/basic/common/KT33903_2.kt");
         }
 
+        @TestMetadata("KTIJ20039.kt")
+        public void testKTIJ20039() throws Exception {
+            runTest("testData/basic/common/KTIJ20039.kt");
+        }
+
+        @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
+        public void testKeywordsAreLowInParameterTypeCompletion1() throws Exception {
+            runTest("testData/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
+        }
+
+        @TestMetadata("KeywordsAreLowInParameterTypeCompletion2.kt")
+        public void testKeywordsAreLowInParameterTypeCompletion2() throws Exception {
+            runTest("testData/basic/common/KeywordsAreLowInParameterTypeCompletion2.kt");
+        }
+
+        @TestMetadata("KeywordsAreLowInParameterTypeCompletion3.kt")
+        public void testKeywordsAreLowInParameterTypeCompletion3() throws Exception {
+            runTest("testData/basic/common/KeywordsAreLowInParameterTypeCompletion3.kt");
+        }
+
+        @TestMetadata("KeywordsAreLowInParameterTypeCompletion4.kt")
+        public void testKeywordsAreLowInParameterTypeCompletion4() throws Exception {
+            runTest("testData/basic/common/KeywordsAreLowInParameterTypeCompletion4.kt");
+        }
+
         @TestMetadata("LocalMultideclarationValues.kt")
         public void testLocalMultideclarationValues() throws Exception {
             runTest("testData/basic/common/LocalMultideclarationValues.kt");
@@ -688,6 +713,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
         @TestMetadata("SuperMembers4.kt")
         public void testSuperMembers4() throws Exception {
             runTest("testData/basic/common/SuperMembers4.kt");
+        }
+
+        @TestMetadata("SuspendCanBePrefixSelectedInParameterTypeCompletion.kt")
+        public void testSuspendCanBePrefixSelectedInParameterTypeCompletion() throws Exception {
+            runTest("testData/basic/common/SuspendCanBePrefixSelectedInParameterTypeCompletion.kt");
         }
 
         @TestMetadata("TopLevelClassCompletionInQualifiedCall.kt")

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public class CreateMissingSealedClassSwitchBranchesFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/createMissingSealedClassSwitchBranchesFixTest";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/createMissingSealedClassSwitchBranches";
   }
 
   @Override

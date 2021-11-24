@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.Disposable;
@@ -30,11 +30,9 @@ import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -196,36 +194,21 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
   }
 
   @Nullable
-  private Editor validateCurrentEditor() {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner instanceof JComponent) {
-      final JComponent jComponent = (JComponent)focusOwner;
-      if (jComponent.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null) return null;
-    }
-
-    return myEditor;
-  }
-
-  @Nullable
   @Override
   public DataProvider createBackgroundDataProvider() {
-    final Editor e = validateCurrentEditor();
-    if (e == null || e.isDisposed()) return null;
+    if (myEditor.isDisposed()) return null;
 
     // There's no FileEditorManager for default project (which is used in diff command-line application)
     FileEditorManager fileEditorManager = !myProject.isDisposed() && !myProject.isDefault() ? FileEditorManager.getInstance(myProject) : null;
-    Caret currentCaret = e.getCaretModel().getCurrentCaret();
+    Caret currentCaret = myEditor.getCaretModel().getCurrentCaret();
     return dataId -> {
       if (fileEditorManager != null) {
-        Object o = fileEditorManager.getData(dataId, e, currentCaret);
+        Object o = fileEditorManager.getData(dataId, myEditor, currentCaret);
         if (o != null) return o;
       }
 
       if (CommonDataKeys.EDITOR.is(dataId)) {
-        return e;
-      }
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
+        return myEditor;
       }
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         return myFile.isValid() ? myFile : null;  // fix for SCR 40329

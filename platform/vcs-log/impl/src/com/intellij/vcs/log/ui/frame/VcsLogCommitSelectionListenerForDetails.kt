@@ -170,11 +170,11 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
         val loaded = loadData(indicator)
         ApplicationManager.getApplication()
           .invokeLater({
-            progressIndicator = null
-            detailsPanel.forEachPanelIndexed { i: Int, panel: CommitDetailsPanel ->
-              setData(panel, loaded[i])
-            }
-          }, { indicator.isCanceled })
+                         progressIndicator = null
+                         detailsPanel.forEachPanelIndexed { i: Int, panel: CommitDetailsPanel ->
+                           setData(panel, loaded[i])
+                         }
+                       }, { indicator.isCanceled })
       }
     }
 
@@ -198,15 +198,19 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     }
 
     private fun branchesChanged() {
-      requestData(requestedCommits)
+      requestData(requestedCommits, fromCache = true)
     }
 
-    fun requestData(commits: List<CommitId>) {
+    fun requestData(commits: List<CommitId>, fromCache: Boolean = false) {
       val result = mutableMapOf<CommitId, List<String>>()
       for (commit in commits) {
-        val branches = getter.requestContainingBranches(commit.root, commit.hash)
-        if (branches != null)
-          result[commit] = branches
+        val branches = if (fromCache) {
+          getter.getContainingBranchesFromCache(commit.root, commit.hash)
+        }
+        else {
+          getter.requestContainingBranches(commit.root, commit.hash)
+        }
+        if (branches != null) result[commit] = branches
       }
 
       if (result.isNotEmpty()) {
@@ -239,7 +243,7 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
 
     fun requestData(commits: List<CommitId>) {
       statuses = mutableMapOf()
-      if(commits.isEmpty()) {
+      if (commits.isEmpty()) {
         loaders?.forEach {
           it.requestData(emptyList()) {}
         }
@@ -295,7 +299,7 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
 
       fun requestData(commits: List<CommitId>, onChange: (Map<CommitId, VcsCommitExternalStatusPresentation?>) -> Unit) {
         loader.loadData(commits) {
-          val presentations = it.mapValues { (commit, status) -> provider.getPresentation(project, commit, status) }
+          val presentations = it.mapValues { (_, status) -> provider.getPresentation(project, status) }
           onChange(presentations)
         }
       }

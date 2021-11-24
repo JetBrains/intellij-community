@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun fibonacci() = sequence {
     var terms = Pair(0, 1)

@@ -2,8 +2,8 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
@@ -24,7 +24,7 @@ final class MacDmgBuilder {
                               MacDistributionCustomizer customizer,
                               MacHostProperties macHostProperties,
                               @Nullable Path macZip,
-                              Path macAdditionalDirPath,
+                              @Nullable Path additionalDir,
                               @Nullable Path jreArchivePath,
                               String suffix,
                               boolean notarize) {
@@ -40,8 +40,8 @@ final class MacDmgBuilder {
     List<Path> installationDirectories = new ArrayList<>()
     List<Pair<Path, String>> installationArchives = new ArrayList<>(2)
     installationArchives.add(new Pair<>(macZip, zipRoot))
-    if (macAdditionalDirPath != null) {
-      installationDirectories.add(macAdditionalDirPath)
+    if (additionalDir != null) {
+      installationDirectories.add(additionalDir)
     }
     if (jreArchivePath != null) {
       installationArchives.add(new Pair<>(jreArchivePath, ""))
@@ -49,10 +49,10 @@ final class MacDmgBuilder {
     new ProductInfoValidator(context).validateInDirectory(productJson, "Resources/", installationDirectories, installationArchives)
 
     String targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
-    Path sitFile = artifactDir.resolve(targetName + ".sit")
+    Path sitFile = (customizer.publishArchive ? artifactDir : context.paths.tempDir).resolve(targetName + ".sit")
 
     BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, macAdditionalDirPath, zipRoot)
+    buildHelper.prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, additionalDir, zipRoot)
 
     boolean signMacArtifacts = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
     if (!signMacArtifacts && isMac()) {
@@ -77,12 +77,9 @@ final class MacDmgBuilder {
         void accept(Path file) {
           context.notifyArtifactWasBuilt(file)
         }
-      }
+      },
+      customizer.publishArchive
     )
-
-    if (customizer.publishArchive) {
-      context.notifyArtifactBuilt(sitFile)
-    }
   }
 
   private static void buildLocally(Path sitFile,
@@ -92,13 +89,15 @@ final class MacDmgBuilder {
                                    MacDistributionCustomizer customizer,
                                    BuildContext context) {
     BuildHelper buildHelper = BuildHelper.getInstance(context)
+    Path tempDir = context.paths.tempDir.resolve(sitFile.fileName.toString().replace(".sit", "")).resolve("bundled-jre")
     if (jreArchivePath != null || signMacArtifacts) {
       buildHelper.span(TracerManager.spanBuilder("bundle JBR and sign sit locally")
                          .setAttribute("jreArchive", jreArchivePath.toString())
                          .setAttribute("sitFile", sitFile.toString()), new Runnable() {
         @Override
         void run() {
-          bundleJBRAndSignSitLocally(sitFile, jreArchivePath, customizer, context)
+          Files.createDirectories(tempDir)
+          bundleJBRAndSignSitLocally(sitFile, tempDir, jreArchivePath, customizer, context)
         }
       })
     }
@@ -108,74 +107,51 @@ final class MacDmgBuilder {
     context.executeStep("build DMG locally", BuildOptions.MAC_DMG_STEP, new Runnable() {
       @Override
       void run() {
-        buildDmgLocally(sitFile, targetName, customizer, context)
+        buildDmgLocally(tempDir, targetName, customizer, context)
       }
     })
+
+    NioFiles.deleteRecursively(tempDir)
   }
 
+  @SuppressWarnings('SpellCheckingInspection')
   private static void bundleJBRAndSignSitLocally(Path targetFile,
+                                                 Path tempDir,
                                                  Path jreArchivePath,
                                                  MacDistributionCustomizer customizer,
                                                  @NotNull BuildContext context) {
-    Path tempDir = context.paths.tempDir.resolve(targetFile.fileName).resolve("mac.dist.bundled.jre")
-    Files.createDirectories(tempDir)
     Files.copy(targetFile, tempDir.resolve(targetFile.fileName))
     if (jreArchivePath != null) {
       Files.copy(jreArchivePath, tempDir.resolve(jreArchivePath.fileName))
     }
-    //noinspection SpellCheckingInspection
     Path signAppFile = tempDir.resolve("signapp.sh")
-    //noinspection SpellCheckingInspection
     Files.copy(context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/signapp.sh"), signAppFile,
                StandardCopyOption.COPY_ATTRIBUTES)
-    //noinspection SpellCheckingInspection
     Files.setPosixFilePermissions(signAppFile, PosixFilePermissions.fromString("rwxrwxrwx"))
-    List<String> args = [
+    BuildHelper.runProcess(context, List.of(
       "./signapp.sh",
       targetFile.fileName.toString(),
       context.fullBuildNumber,
-      "\"\"",
-      "\"\"",
-      "\"\"",
+      "",
+      "",
+      "",
       (jreArchivePath == null ? "no-jdk" : '"' + jreArchivePath.fileName.toString() + '"'),
       "no",
       customizer.bundleIdentifier,
-    ]
-    BuildHelper.runProcess(context, args, tempDir)
-    Path artifactDir = Path.of(context.paths.artifacts)
-    Files.move(tempDir.resolve(targetFile.fileName), artifactDir.resolve(targetFile.fileName), StandardCopyOption.REPLACE_EXISTING)
+      ), tempDir)
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private static void buildDmgLocally(Path sitFile, String targetFileName, MacDistributionCustomizer customizer, BuildContext context) {
-    Path tempDir = context.paths.tempDir.resolve("mac.dist.dmg")
-    Files.createDirectories(tempDir)
-    String dmgImagePath = (context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath
+  @SuppressWarnings("SpellCheckingInspection")
+  private static void buildDmgLocally(Path tempDir, String targetFileName, MacDistributionCustomizer customizer, BuildContext context) {
     Path dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
-    AntBuilder ant = context.ant
-    ant.copy(file: dmgImagePath, tofile: dmgImageCopy.toString())
-    ant.copy(file: sitFile.toString(), todir: tempDir)
-    ant.copy(todir: tempDir) {
-      ant.fileset(dir: "${context.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
-        include(name: "makedmg.sh")
-        include(name: "create-dmg.sh")
-        include(name: "makedmg-locally.sh")
-      }
-    }
-    //noinspection SpellCheckingInspection
-    Files.setPosixFilePermissions(tempDir.resolve("makedmg.sh"), PosixFilePermissions.fromString("rwxrwxrwx"))
+    Files.copy(Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath), dmgImageCopy)
+    Path scriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
+    Files.copy(scriptDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"), StandardCopyOption.COPY_ATTRIBUTES)
 
     Path artifactDir = Path.of(context.paths.artifacts)
-    ant.exec(dir: tempDir, command: "sh ./makedmg-locally.sh ${targetFileName} ${context.fullBuildNumber}")
+    Files.createDirectories(artifactDir)
     Path dmgFile = artifactDir.resolve("${targetFileName}.dmg")
-    ant.copy(tofile: dmgFile.toString()) {
-      ant.fileset(dir: tempDir) {
-        include(name: "**/${targetFileName}.dmg")
-      }
-    }
-    if (Files.notExists(dmgFile)) {
-      context.messages.error("Failed to build .dmg file")
-    }
+    BuildHelper.runProcess(context, List.of("sh", "makedmg.sh", targetFileName, context.fullBuildNumber, dmgFile.toString()), tempDir)
     context.notifyArtifactBuilt(dmgFile)
   }
 

@@ -27,8 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 @ApiStatus.Internal
 public final class LaterInvocator {
@@ -40,9 +38,9 @@ public final class LaterInvocator {
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
 
   // Per-project modal entities
-  private static final Map<Project, List<Dialog>> projectToModalEntities = ContainerUtil.createWeakMap();
-  private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap();
-  private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
+  private static final Map<Project, List<Dialog>> projectToModalEntities = ContainerUtil.createWeakMap(); // accessed in EDT only
+  private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap(); // accessed in EDT only
+  private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);// guarded by ourModalityStack
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
   private static final FlushQueue ourEdtQueue = new FlushQueue();
@@ -60,7 +58,7 @@ public final class LaterInvocator {
     return ourWindowModalities.computeIfAbsent(window, __ -> {
       synchronized (ourModalityStack) {
         for (ModalityStateEx state : ourModalityStack) {
-          if (state.getModalEntities().contains(window)) {
+          if (state.contains(window)) {
             return state;
           }
         }
@@ -101,7 +99,6 @@ public final class LaterInvocator {
     }
     FlushQueue.RunnableInfo runnableInfo = new FlushQueue.RunnableInfo(runnable, modalityState, expired, callback);
     ourEdtQueue.push(runnableInfo);
-    requestFlush();
   }
 
   static void invokeAndWait(@NotNull ModalityState modalityState, @NotNull final Runnable runnable) {
@@ -148,9 +145,9 @@ public final class LaterInvocator {
   public static void enterModal(@NotNull Object modalEntity) {
     ModalityStateEx state = getCurrentModalityState().appendEntity(modalEntity);
     if (isModalDialog(modalEntity)) {
-      List<Object> currentEntities = state.getModalEntities();
+      ModalityStateEx current = state;
       state = modalityStateForWindow((Window)modalEntity);
-      state.forceModalEntities(currentEntities);
+      state.forceModalEntities(current);
     }
     enterModal(modalEntity, state);
   }
@@ -186,12 +183,10 @@ public final class LaterInvocator {
 
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true, dialog);
 
-    List<Dialog> modalEntitiesList = projectToModalEntities.getOrDefault(project, ContainerUtil.createLockFreeCopyOnWriteList());
-    projectToModalEntities.put(project, modalEntitiesList);
+    List<Dialog> modalEntitiesList = projectToModalEntities.computeIfAbsent(project, __->ContainerUtil.createLockFreeCopyOnWriteList());
     modalEntitiesList.add(dialog);
 
-    Stack<ModalityState> modalEntitiesStack = projectToModalEntitiesStack.getOrDefault(project, new Stack<>(ModalityState.NON_MODAL));
-    projectToModalEntitiesStack.put(project, modalEntitiesStack);
+    Stack<ModalityState> modalEntitiesStack = projectToModalEntitiesStack.computeIfAbsent(project, __->new Stack<>(ModalityState.NON_MODAL));
     modalEntitiesStack.push(new ModalityStateEx(ourModalEntities));
   }
 
@@ -202,12 +197,13 @@ public final class LaterInvocator {
    */
   @ApiStatus.Internal
   public static void markTransparent(@NotNull ModalityState state) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ((ModalityStateEx)state).markTransparent();
     reincludeSkippedItemsAndRequestFlush();
   }
 
   public static void leaveModal(Project project, @NotNull Dialog dialog) {
-    LOG.assertTrue(isWriteThread(), "leaveModal() should be invoked in write thread");
+    LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in write thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + dialog.getName() + " ; for project: " + project.getName());
@@ -265,11 +261,28 @@ public final class LaterInvocator {
 
   @TestOnly
   public static void leaveAllModals() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     while (!ourModalEntities.isEmpty()) {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
     LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
     reincludeSkippedItemsAndRequestFlush();
+  }
+
+  /**
+   * This method attempts to cancel all current modal entities.
+   * This may cause memory leaks from improperly closed/undisposed modal dialogs.
+   * Intended for use mostly in Remote Dev where forcefully leaving all modalities is better than alternatives.
+   */
+  @ApiStatus.Internal
+  public static void forceLeaveAllModals() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ModalityStateEx currentState = getCurrentModalityState();
+    if (currentState != ModalityState.NON_MODAL) {
+      currentState.cancelAllEntities();
+      // let event queue pump once before trying to cancel next modal
+      invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> { forceLeaveAllModals(); });
+    }
   }
 
   public static Object @NotNull [] getCurrentModalEntities() {
@@ -285,13 +298,13 @@ public final class LaterInvocator {
     }
   }
 
-  public static boolean isInModalContextForProject(final Project project) {
-    LOG.assertTrue(isWriteThread());
+  public static boolean isInModalContextForProject(@Nullable Project project) {
+    LOG.assertTrue(isDispatchThread());
 
     if (ourModalEntities.isEmpty()) return false;
+    if (project == null) return true;
 
     List<Dialog> modalEntitiesForProject = projectToModalEntities.get(project);
-
     return modalEntitiesForProject == null || modalEntitiesForProject.isEmpty();
   }
 
@@ -307,29 +320,6 @@ public final class LaterInvocator {
     return ApplicationManager.getApplication().isWriteThread();
   }
 
-  static void requestFlush() {
-    SUBMITTED_COUNT.incrementAndGet();
-    while (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
-      long submittedCount = SUBMITTED_COUNT.get();
-
-      FlushQueue queue = ourEdtQueue;
-      if (queue.mayHaveItems()) {
-        queue.scheduleFlush();
-        return;
-      }
-
-      FLUSHER_SCHEDULED.set(false);
-
-      // If a requestFlush was called by somebody else (because queues were modified) but we have not really scheduled anything
-      // then we've missed `mayHaveItems` `true` value because of race.
-      // Another run of `requestFlush` will get the correct `mayHaveItems` because
-      // `mayHaveItems` is mutated strictly before SUBMITTED_COUNT which we've observe below
-      if (submittedCount == SUBMITTED_COUNT.get()) {
-        break;
-      }
-    }
-  }
-
   static boolean isFlushNow(@NotNull Runnable runnable) {
     return ourEdtQueue.isFlushNow(runnable);
   }
@@ -338,25 +328,6 @@ public final class LaterInvocator {
     LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
   }
 
-  /**
-   * There might be some requests in the queue, but {@link FlushQueue#FLUSH_NOW} might not be scheduled yet. In these circumstances
-   * {@link EventQueue#peekEvent()} default implementation would return null, and {@link com.intellij.util.ui.UIUtil#dispatchAllInvocationEvents()} would
-   * stop processing events too early and lead to spurious test failures.
-   *
-   * @see com.intellij.ide.IdeEventQueue#peekEvent()
-   */
-  public static boolean ensureFlushRequested() {
-    if (ourEdtQueue.getNextEvent(false) != null) {
-      ourEdtQueue.scheduleFlush();
-      return true;
-    }
-    return false;
-  }
-
-  static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
-
-  private static final AtomicLong SUBMITTED_COUNT = new AtomicLong(0);
-
   @TestOnly
   @NotNull
   public static Collection<FlushQueue.RunnableInfo> getLaterInvocatorEdtQueue() {
@@ -364,13 +335,12 @@ public final class LaterInvocator {
   }
 
   private static void reincludeSkippedItemsAndRequestFlush() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ourEdtQueue.reincludeSkippedItems();
-    requestFlush();
   }
 
   public static void purgeExpiredItems() {
     ourEdtQueue.purgeExpiredItems();
-    requestFlush();
   }
 
   /**

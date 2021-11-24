@@ -1104,27 +1104,27 @@
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" description="a type can be a type alias or a single-item tuple of a desired type. And you most likely want to support them as well" suppressId="explicit.cast.to.swift.type" problemDescriptor="Please use `SwiftTypeUtil.as&lt;type&gt;` method instead" text="$ref$ instanceof $SwiftType$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" order="1" text="$ref$ is $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" order="2" text="$ref$ !is $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" order="3" text="$ref$ as $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" order="4" text="$ref$ as? $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis).+Type" within="" contains="" />
+        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
         <constraint name="prefix" within="" contains="" />

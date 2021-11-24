@@ -76,6 +76,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
       val libDir = "jar://${PathManagerEx.getTestDataPath()}/codeInsight/jigsaw"
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-1.0.jar!/")
+      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-2.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-with-claimed-name.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-1.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-2.0.jar!/")

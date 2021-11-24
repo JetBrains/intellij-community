@@ -17,10 +17,13 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 
+
+
 object DirectiveBasedActionUtils {
     const val DISABLE_ERRORS_DIRECTIVE = "// DISABLE-ERRORS"
     const val DISABLE_WARNINGS_DIRECTIVE = "// DISABLE-WARNINGS"
     const val ENABLE_WARNINGS_DIRECTIVE = "// ENABLE-WARNINGS"
+    const val ACTION_DIRECTIVE = "// ACTION:"
 
     fun checkForUnexpectedErrors(file: KtFile, diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }) {
         if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
@@ -109,9 +112,9 @@ object DirectiveBasedActionUtils {
     }
 
     fun checkAvailableActionsAreExpected(file: PsiFile, availableActions: Collection<IntentionAction>) {
-        val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// ACTION:").sorted()
+        val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, ACTION_DIRECTIVE).sorted()
 
-        UsefulTestCase.assertEmpty("Irrelevant actions should not be specified in ACTION directive for they are not checked anyway",
+        UsefulTestCase.assertEmpty("Irrelevant actions should not be specified in $ACTION_DIRECTIVE directive for they are not checked anyway",
                                    expectedActions.filter { isIrrelevantAction(it) })
 
         if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// IGNORE_IRRELEVANT_ACTIONS").isNotEmpty()) {
@@ -121,9 +124,9 @@ object DirectiveBasedActionUtils {
         val actualActions = availableActions.map { it.text }.sorted()
 
         UsefulTestCase.assertOrderedEquals(
-            "Some unexpected actions available at current position. Use // ACTION: directive",
-            filterOutIrrelevantActions(actualActions),
-            expectedActions
+            "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive",
+            filterOutIrrelevantActions(actualActions).map { "$ACTION_DIRECTIVE $it" },
+            expectedActions.map { "$ACTION_DIRECTIVE $it" }
         )
     }
 

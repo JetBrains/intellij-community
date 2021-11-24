@@ -38,8 +38,6 @@
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
-  <xi:include href="/META-INF/FeedbackExtensions.xml"/>
-
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>

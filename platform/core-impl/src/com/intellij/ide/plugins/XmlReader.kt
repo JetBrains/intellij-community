@@ -66,7 +66,7 @@ fun readModuleDescriptor(input: ByteArray,
                               readInto = readInto)
 }
 
-private fun readModuleDescriptor(reader: XMLStreamReader2,
+internal fun readModuleDescriptor(reader: XMLStreamReader2,
                                  readContext: ReadModuleContext,
                                  pathResolver: PathResolver,
                                  dataLoader: DataLoader,
@@ -176,7 +176,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
       if (descriptor.id == null) {
         descriptor.id = getNullifiedContent(reader)
       }
-      else if (!KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id)) {
+      else if (!KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id) && descriptor.id != "com.intellij") {
         // no warn and no redefinition for kotlin - compiler.xml is a known issue
         LOG.warn("id redefinition (${reader.locationInfo.location})")
         descriptor.id = getNullifiedContent(reader)

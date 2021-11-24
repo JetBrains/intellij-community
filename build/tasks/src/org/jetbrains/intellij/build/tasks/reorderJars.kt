@@ -1,24 +1,23 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "BlockingMethodInNonBlockingContext")
 
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.util.lang.ImmutableZipEntry
 import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.intellij.build.io.ZipFileWriter
+import org.jetbrains.intellij.build.io.copyZipRaw
+import org.jetbrains.intellij.build.io.transformFile
 import org.jetbrains.intellij.build.io.writeNewZip
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
-import java.util.concurrent.ForkJoinTask
 
 internal const val PACKAGE_INDEX_NAME = "__packageIndex__"
 
@@ -60,13 +59,45 @@ internal fun reorderJar(relativePath: String, file: Path, traceContext: Context)
     }
 }
 
-fun writeClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?) {
-  tracer.spanBuilder("generate classpath.txt")
+fun generateClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?): List<String> {
+  val libDir = homeDir.resolve("lib")
+  val appFile = libDir.resolve("app.jar")
+
+  tracer.spanBuilder("generate app.jar")
     .setAttribute("dir", homeDir.toString())
+    .setAttribute("mainJarName", mainJarName)
     .startSpan()
     .use {
-      val libDir = homeDir.resolve("lib")
+      transformFile(appFile) { target ->
+        writeNewZip(target) { zipCreator ->
+          val packageIndexBuilder = PackageIndexBuilder()
+          copyZipRaw(appFile, packageIndexBuilder, zipCreator)
 
+          val mainJar = libDir.resolve(mainJarName)
+          if (Files.exists(mainJar)) {
+            // no such file in community (no closed sources)
+            copyZipRaw(mainJar, packageIndexBuilder, zipCreator)
+            Files.delete(mainJar)
+          }
+
+          // packing to product.jar maybe disabled
+          val productJar = libDir.resolve("product.jar")
+          if (Files.exists(productJar)) {
+            copyZipRaw(productJar, packageIndexBuilder, zipCreator)
+            Files.delete(productJar)
+          }
+
+          packageIndexBuilder.writeDirs(zipCreator)
+          packageIndexBuilder.writePackageIndex(zipCreator)
+        }
+      }
+    }
+  reorderJar("lib/app.jar", appFile, Context.current())
+
+  tracer.spanBuilder("generate classpath")
+    .setAttribute("dir", homeDir.toString())
+    .startSpan()
+    .use { span ->
       val osName = System.getProperty("os.name")
       val classifier = when {
         osName.startsWith("windows", ignoreCase = true) -> "windows"
@@ -79,9 +110,9 @@ fun writeClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?) {
         rootDir = homeDir,
         mainJarName = mainJarName
       )
-      val coreClassLoaderFiles = computeAppClassPath(sourceToNames, libDir, antLibDir)
-      val resultFile = libDir.resolve("classpath.txt")
-      Files.writeString(resultFile, coreClassLoaderFiles.joinToString(separator = "\n") { libDir.relativize(it).toString() })
+      val result = computeAppClassPath(sourceToNames, libDir, antLibDir).map { libDir.relativize(it).toString() }
+      span.setAttribute(AttributeKey.stringArrayKey("result"), result)
+      return result
     }
 }
 
@@ -124,20 +155,6 @@ internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path, ma
     sourceToNames.computeIfAbsent(rootDir.resolve(sourcePath)) { mutableListOf() }.add(data[0])
   }
   return sourceToNames
-}
-
-internal fun doReorderJars(sourceToNames: Map<Path, List<String>>, sourceDir: Path, targetDir: Path) {
-  ForkJoinTask.invokeAll(sourceToNames.mapNotNull { (jarFile, orderedNames) ->
-    if (Files.notExists(jarFile)) {
-      Span.current().addEvent("cannot find jar", Attributes.of(AttributeKey.stringKey("file"), sourceDir.relativize(jarFile).toString()))
-      return@mapNotNull null
-    }
-
-    task(tracer.spanBuilder("reorder jar")
-           .setAttribute("file", sourceDir.relativize(jarFile).toString())) {
-      reorderJar(jarFile, orderedNames, if (targetDir == sourceDir) jarFile else targetDir.resolve(sourceDir.relativize(jarFile)))
-    }
-  })
 }
 
 data class PackageIndexEntry(val path: Path, val classPackageIndex: IntSet, val resourcePackageIndex: IntSet)

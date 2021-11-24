@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.io
 
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import org.jetbrains.intellij.build.tasks.tracer
 import org.jetbrains.intellij.build.tasks.use
@@ -12,8 +11,8 @@ import java.lang.System.Logger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 
 /**
  * Executes a Java class in a forked JVM.
@@ -26,7 +25,7 @@ fun runJava(mainClass: String,
             timeoutMillis: Long = Timeout.DEFAULT,
             workingDir: Path? = null) {
   val timeout = Timeout(timeoutMillis)
-  var errorReader: Thread? = null
+  var errorReader: CompletableFuture<Void>? = null
   val classpathFile = Files.createTempFile("classpath-", ".txt")
   tracer.spanBuilder("runJava")
     .setAttribute("mainClass", mainClass)
@@ -59,7 +58,7 @@ fun runJava(mainClass: String,
             dumpThreads(process.pid())
           }
           catch (e: Exception) {
-            Span.current().addEvent("cannot dump threads: ${e.message}")
+            span.addEvent("cannot dump threads: ${e.message}")
           }
 
           process.destroyForcibly().waitFor()
@@ -111,6 +110,9 @@ internal fun runJavaWithOutputToFile(mainClass: String,
         fun javaRunFailed(reason: String) {
           val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (args=$args, vmOptions=$jvmArgs): $reason"
           span.setStatus(StatusCode.ERROR, message)
+          if (Files.exists(outputFile)) {
+            span.setAttribute("processOutput", Files.readString(outputFile))
+          }
           throw RuntimeException(message)
         }
 
@@ -198,12 +200,14 @@ fun runProcess(args: List<String>, workingDir: Path? = null,
 }
 
 private fun readOutputAndBlock(process: Process, timeout: Timeout, logger: Logger) {
-  consume(process.inputStream, process, timeout, logger::info)
+  // join on CompletableFuture will help to process other tasks in FJP_
+  runAsync {
+    consume(process.inputStream, process, timeout, logger::info)
+  }.join()
 }
 
-internal const val errorOutputReaderNamePrefix = "error-output-reader-of-pid-"
-private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger): Thread {
-  return thread(name = "$errorOutputReaderNamePrefix${process.pid()}") {
+private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger): CompletableFuture<Void> {
+  return runAsync {
     consume(process.errorStream, process, timeout, logger::warn)
   }
 }

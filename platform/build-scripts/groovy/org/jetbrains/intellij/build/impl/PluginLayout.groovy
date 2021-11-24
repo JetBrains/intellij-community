@@ -5,15 +5,12 @@ import com.intellij.openapi.util.Pair
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import org.jetbrains.intellij.build.ResourcesGenerator
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.BiConsumer
-import java.util.function.BiFunction
-import java.util.function.BiPredicate
-import java.util.function.UnaryOperator
+import java.util.function.*
 
 /**
  * Describes layout of a plugin in the product distribution
@@ -21,6 +18,8 @@ import java.util.function.UnaryOperator
 @CompileStatic
 final class PluginLayout extends BaseLayout {
   final String mainModule
+  private String mainJarName
+
   String directoryName
   VersionEvaluator versionEvaluator = { pluginXmlFile, ideVersion, context -> ideVersion } as VersionEvaluator
   UnaryOperator<String> pluginXmlPatcher = UnaryOperator.identity()
@@ -41,6 +40,7 @@ final class PluginLayout extends BaseLayout {
 
   private PluginLayout(@NotNull String mainModule) {
     this.mainModule = mainModule
+    mainJarName = "${convertModuleNameToFileName(mainModule)}.jar"
   }
 
   /**
@@ -58,24 +58,47 @@ final class PluginLayout extends BaseLayout {
    * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
    */
   static PluginLayout plugin(@NotNull String mainModuleName, @DelegatesTo(PluginLayoutSpec) Closure body = {}) {
+    plugin(mainModuleName, new Consumer<PluginLayoutSpec>() {
+      @Override
+      void accept(PluginLayoutSpec spec) {
+        body.delegate = spec
+        body()
+      }
+    })
+  }
+
+  static PluginLayout plugin(@NotNull String mainModuleName, @NotNull Consumer<PluginLayoutSpec> body) {
     if (mainModuleName.isEmpty()) {
       throw new IllegalArgumentException("mainModuleName must be not empty")
     }
 
     PluginLayout layout = new PluginLayout(mainModuleName)
     PluginLayoutSpec spec = new PluginLayoutSpec(layout)
-    body.delegate = spec
-    body()
+    body.accept(spec)
     layout.directoryName = spec.directoryName
-    spec.withModule(mainModuleName, spec.mainJarName)
+    if (!layout.getIncludedModuleNames().contains(mainModuleName)) {
+      layout.withModule(mainModuleName, layout.mainJarName)
+    }
     if (spec.mainJarNameSetExplicitly) {
-      layout.explicitlySetJarPaths.add(spec.mainJarName)
+      layout.explicitlySetJarPaths.add(layout.mainJarName)
     }
     else {
-      layout.explicitlySetJarPaths.remove(spec.mainJarName)
+      layout.explicitlySetJarPaths.remove(layout.mainJarName)
     }
     layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
-    layout.bundlingRestrictions = spec.bundlingRestrictions
+    layout.bundlingRestrictions = spec.bundlingRestrictions.build()
+    return layout
+  }
+
+  static PluginLayout simplePlugin(@NotNull String mainModuleName) {
+    if (mainModuleName.isEmpty()) {
+      throw new IllegalArgumentException("mainModuleName must be not empty")
+    }
+
+    PluginLayout layout = new PluginLayout(mainModuleName)
+    layout.directoryName = convertModuleNameToFileName(layout.mainModule)
+    layout.withModuleImpl(mainModuleName, layout.mainJarName)
+    layout.bundlingRestrictions = PluginBundlingRestrictions.NONE
     return layout
   }
 
@@ -84,30 +107,62 @@ final class PluginLayout extends BaseLayout {
     return "Plugin '$mainModule'"
   }
 
+  @Override
+  void withModule(@NotNull String moduleName) {
+    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
+      // must be in a separate JAR
+      super.withModule(moduleName)
+    }
+    else {
+      withModuleImpl(moduleName, mainJarName)
+    }
+  }
+
+  void withGeneratedResources(BiConsumer<Path, BuildContext> generator) {
+    resourceGenerators.add(new Pair<>(new BiFunction<Path, BuildContext, Path>() {
+      @Override
+      Path apply(Path targetDir, BuildContext context) {
+        generator.accept(targetDir, context)
+        return null
+      }
+    }, ""))
+  }
+
+  @CompileStatic
   static final class PluginLayoutSpec extends BaseLayoutSpec {
     final PluginLayout layout
     private String directoryName
-    private String mainJarName
     private boolean mainJarNameSetExplicitly
     private boolean directoryNameSetExplicitly
-    private PluginBundlingRestrictions bundlingRestrictions = new PluginBundlingRestrictions()
+    private final PluginBundlingRestrictionBuilder bundlingRestrictions = new PluginBundlingRestrictionBuilder()
+
+    @CompileStatic
+    final class PluginBundlingRestrictionBuilder {
+      /**
+       * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
+       */
+      public List<OsFamily> supportedOs = OsFamily.ALL
+
+      /**
+       * Set to {@code true} if the plugin should be included in distribution for EAP builds only.
+       */
+      public boolean includeInEapOnly
+
+      PluginBundlingRestrictions build() {
+        if (supportedOs == OsFamily.ALL && !includeInEapOnly) {
+          return PluginBundlingRestrictions.NONE
+        }
+        else {
+          return new PluginBundlingRestrictions(supportedOs, includeInEapOnly)
+        }
+      }
+    }
+
 
     PluginLayoutSpec(PluginLayout layout) {
       super(layout)
       this.layout = layout
       directoryName = convertModuleNameToFileName(layout.mainModule)
-      mainJarName = "${convertModuleNameToFileName(layout.mainModule)}.jar"
-    }
-
-    @Override
-    void withModule(String moduleName) {
-      if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
-        // must be in a separate JAR
-        layout.withModule(moduleName)
-      }
-      else {
-        layout.withModule(moduleName, mainJarName)
-      }
     }
 
   /**
@@ -130,18 +185,18 @@ final class PluginLayout extends BaseLayout {
      * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
      */
     void setMainJarName(String mainJarName) {
-      this.mainJarName = mainJarName
+      layout.mainJarName = mainJarName
       mainJarNameSetExplicitly = true
     }
 
     String getMainJarName() {
-      return mainJarName
+      return layout.mainJarName
     }
 
     /**
      * Returns {@link PluginBundlingRestrictions} instance which can be used to exclude the plugin from some distributions.
      */
-    PluginBundlingRestrictions getBundlingRestrictions() {
+    PluginBundlingRestrictionBuilder getBundlingRestrictions() {
       return bundlingRestrictions
     }
 
@@ -198,7 +253,8 @@ final class PluginLayout extends BaseLayout {
     /**
      * Copy output produced by {@code generator} to the directory specified by {@code relativeOutputPath} under the plugin directory.
      */
-    void withGeneratedResources(ResourcesGenerator generator, String relativeOutputPath) {
+    @SuppressWarnings(["GrDeprecatedAPIUsage", "UnnecessaryQualifiedReference"])
+    void withGeneratedResources(org.jetbrains.intellij.build.ResourcesGenerator generator, String relativeOutputPath) {
       layout.resourceGenerators.add(new Pair<>(new BiFunction<Path, BuildContext, Path>() {
         @Override
         Path apply(Path targetDir, BuildContext context) {
@@ -212,13 +268,7 @@ final class PluginLayout extends BaseLayout {
     }
 
     void withGeneratedResources(BiConsumer<Path, BuildContext> generator) {
-      layout.resourceGenerators.add(new Pair<>(new BiFunction<Path, BuildContext, Path>() {
-        @Override
-        Path apply(Path targetDir, BuildContext context) {
-          generator.accept(targetDir, context)
-          return null
-        }
-      }, ""))
+      layout.withGeneratedResources(generator)
     }
 
     /**

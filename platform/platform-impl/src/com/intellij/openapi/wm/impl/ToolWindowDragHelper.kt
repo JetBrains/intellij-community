@@ -95,7 +95,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       val decorator = InternalDecoratorImpl.findNearestDecorator(clickedComponent)
       if (decorator != null &&
           (decorator.toolWindow.anchor != BOTTOM ||
-           decorator.locationOnScreen.y <= startScreenPoint.screenPoint.y - ToolWindowsPane.getHeaderResizeArea()))
+           decorator.locationOnScreen.y < startScreenPoint.screenPoint.y - ToolWindowsPane.getHeaderResizeArea()))
         return decorator.toolWindow
     }
     if (clickedComponent is StripeButton) {

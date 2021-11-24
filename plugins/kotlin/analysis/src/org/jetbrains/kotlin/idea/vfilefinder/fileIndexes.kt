@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.*
@@ -148,7 +149,7 @@ object KotlinMetadataFilePackageIndex : KotlinMetadataFileIndexBase<KotlinMetada
 object KotlinBuiltInsMetadataIndex : KotlinFileIndexBase<KotlinBuiltInsMetadataIndex>(KotlinBuiltInsMetadataIndex::class.java) {
     override fun getIndexer() = INDEXER
 
-    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> file.fileType == KotlinBuiltInFileType }
+    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> FileTypeRegistry.getInstance().isFileOfType(file, KotlinBuiltInFileType) }
 
     override fun getVersion() = VERSION
 

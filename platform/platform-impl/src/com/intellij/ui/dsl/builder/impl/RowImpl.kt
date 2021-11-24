@@ -42,7 +42,7 @@ import java.awt.event.KeyEvent
 import javax.swing.*
 
 @ApiStatus.Internal
-internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
+internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        private val panelContext: PanelContext,
                        private val parent: PanelImpl,
                        val firstCellLabel: Boolean,
@@ -97,8 +97,16 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component, viewComponent, null)
   }
 
+  override fun <T : JComponent> cell(component: T): CellImpl<T> {
+    return cell(component, component, null)
+  }
+
   override fun cell() {
     cells.add(null)
+  }
+
+  override fun <T : JComponent> scrollCell(component: T): CellImpl<T> {
+    return cell(component, JBScrollPane(component), null)
   }
 
   fun cell(cell: CellBaseImpl<*>) {

@@ -42,7 +42,7 @@ private fun findJvmScope(file: KtFile, fallback: () -> SearchScope): SearchScope
     val project = file.project
     val projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
 
-    val virtualFile = file.virtualFile
+    val virtualFile = file.virtualFile ?: return fallback()
     val moduleScope = projectFileIndex.getModuleForFile(virtualFile)?.moduleScope
     return when {
         moduleScope != null -> moduleScope

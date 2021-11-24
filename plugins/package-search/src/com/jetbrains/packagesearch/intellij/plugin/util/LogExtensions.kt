@@ -81,14 +81,21 @@ internal fun logTrace(traceInfo: TraceInfo? = null, contextName: String? = null,
     logTrace(buildMessageFrom(traceInfo, contextName, messageProvider))
 }
 
-internal fun logTrace(message: String) {
+private inline fun catchAndSuppress(action: () -> Unit) {
+    try {
+        action()
+    } catch (e: Throwable) {
+    }
+}
+
+internal fun logTrace(message: String) = catchAndSuppress {
     if (!FeatureFlags.useDebugLogging) return
     if (!logger.isTraceEnabled) warnNotLoggable()
 
     logger.trace(message)
 }
 
-internal fun logTrace(throwable: Throwable) {
+internal fun logTrace(throwable: Throwable) = catchAndSuppress {
     if (!FeatureFlags.useDebugLogging) return
     if (!logger.isTraceEnabled) warnNotLoggable()
 
@@ -123,7 +130,7 @@ private fun buildMessageFrom(
         append(' ')
     }
 
-    if (isNotEmpty()) append("— ")
+    if (isNotEmpty()) append("- ")
 
     append(messageProvider())
 }

@@ -1,0 +1,294 @@
+{
+  "name": "Dark",
+  "dark": true,
+  "author": "JetBrains",
+  "editorScheme": "/themes/expUI/expUI_darkScheme.xml",
+
+  "colors": {
+    "Grey1": "#1E1F22",
+    "Grey2": "#2B2D30",
+    "Grey3": "#393B40",
+    "Grey4": "#43454A",
+    "Grey5": "#4E5157",
+    "Grey6": "#5A5D63",
+    "Grey7": "#6F737A",
+    "Grey8": "#868A91",
+    "Grey9": "#9DA0A8",
+    "Grey10": "#B4B8BF",
+    "Grey11": "#CED0D6",
+    "Grey12": "#DFE1E5",
+    "Grey13": "#F0F1F2",
+    "Grey14": "#FFFFFF",
+
+    "Blue1": "#25324D",
+    "Blue2": "#2E436E",
+    "Blue3": "#35538F",
+    "Blue4": "#375FAD",
+    "Blue5": "#366ACE",
+    "Blue6": "#3573F0",
+    "Blue7": "#467FF2",
+    "Blue8": "#548AF7",
+    "Blue9": "#6B9BFA",
+    "Blue10": "#83ACFC",
+    "Blue11": "#99BBFF",
+
+    "Green1": "#253627",
+    "Green2": "#375239",
+    "Green3": "#436946",
+    "Green4": "#4E8052",
+    "Green5": "#57965C",
+    "Green6": "#5FAD65",
+    "Green7": "#73BD79",
+    "Green8": "#89CC8E",
+    "Green9": "#A0DBA5",
+    "Green10": "#B9EBBD",
+    "Green11": "#D4FAD7",
+
+    "Yellow1": "#3D3223",
+    "Yellow2": "#5E4D33",
+    "Yellow3": "#826A41",
+    "Yellow4": "#9E814A",
+    "Yellow5": "#BA9752",
+    "Yellow6": "#D6AE58",
+    "Yellow7": "#F2C55C",
+    "Yellow8": "#F5D273",
+    "Yellow9": "#F7DE8B",
+    "Yellow10": "#FCEBA4",
+    "Yellow11": "#FFF6BD",
+
+    "Red1": "#402929",
+    "Red2": "#5E3838",
+    "Red3": "#7A4343",
+    "Red4": "#9C4E4E",
+    "Red5": "#BD5757",
+    "Red6": "#DB5C5C",
+    "Red7": "#E37774",
+    "Red8": "#EB938D",
+    "Red9": "#F2B1AA",
+    "Red10": "#F7CCC6",
+    "Red11": "#FAE3DE",
+
+    "Orange1": "#45322B",
+    "Orange2": "#614438",
+    "Orange3": "#825845",
+    "Orange4": "#A36B4E",
+    "Orange5": "#C27A53",
+    "Orange6": "#E08855",
+    "Orange7": "#E5986C",
+    "Orange8": "#F0AC81",
+    "Orange9": "#F5BD98",
+    "Orange10": "#FACEAF",
+    "Orange11": "#FFDFC7"
+  },
+
+  "ui": {
+
+    "*": {
+      "foreground": "Grey12",
+      "background":  "Grey2",
+      "borderColor": "Grey1",
+
+      "disabledText": "Grey6",
+      "disabledForeground": "Grey6",
+      "inactiveForeground": "Grey6",
+      "disabledBackground": "Grey2",
+      "disabledBorderColor": "Grey4",
+
+      "selectionBackground": "Blue2",
+      "lightSelectionBackground": "Blue2",
+      "hoverBackground": "Blue1",
+      "selectionForeground": "Grey12",
+      "selectionInactiveForeground": "Grey12",
+      "selectionInactiveBackground": "Grey4",
+
+      "infoForeground": "Grey7",
+      "acceleratorForeground": "Grey7",
+      "shortcutForeground": "Grey7",
+
+      "underlineColor": "Blue6",
+      "inactiveUnderlineColor": "Grey6",
+
+      "focusColor": "Blue6",
+
+      "separatorColor": "Grey4",
+      "separatorForeground": "Grey7"
+    },
+
+    "ActionButton": {
+      "hoverBackground": "Grey4",
+      "hoverBorderColor": "Grey4",
+      "pressedBackground": "Grey5",
+      "pressedBorderColor": "Grey5"
+    },
+
+    "Borders.color": "Grey1",
+    "Borders.ContrastBorderColor": "Grey1",
+
+    "Button": {
+      "startBackground": "Grey2",
+      "endBackground": "Grey2",
+      "startBorderColor": "Grey5",
+      "endBorderColor": "Grey5",
+      "focusedBorderColor": "Grey2",
+      "shadowColor": "#00000000",
+
+      "default": {
+        "foreground": "Grey14",
+        "startBackground": "Blue6",
+        "endBackground": "Blue6",
+        "startBorderColor": "Blue6",
+        "endBorderColor": "Blue6",
+        "focusedBorderColor": "Grey1",
+        "shadowColor": "#00000000"
+      }
+    },
+
+    "ComboBox": {
+      "ArrowButton.background": "Grey2"
+    },
+
+    "FileColor": {
+      "Yellow": "Yellow1",
+      "Green": "Green1"
+    },
+
+    "TextField.background": "Grey2",
+
+    "Component": {
+      "borderColor": "Grey5",
+      "focusedBorderColor": "Grey2"
+    },
+
+    "EditorTabs": {
+      "tabInsets": "-3,12,-4,8",
+      "hoverBackground": "Grey1",
+      "inactiveHoverBackground": "Grey1",
+      "underTabsBorderColor":"Grey3"
+    },
+
+    "Link": {
+      "activeForeground": "Blue8",
+      "hoverForeground": "Blue8",
+      "pressedForeground": "Blue8",
+      "visitedForeground": "Blue8"
+    },
+
+    "List.rowHeight": "24",
+
+    "MemoryIndicator": {
+      "allocatedBackground": "Grey1",
+      "usedBackground": "#35538F80"
+    },
+
+    "Menu": {
+      "separatorColor": "Grey4",
+      "borderColor": "Grey2"
+    },
+
+    "Notification": {
+      "background": "Grey2",
+      "borderColor": "Grey2",
+      "MoreButton": {
+        "background": "Grey2",
+        "innerBorderColor": "Grey4"
+      }
+    },
+
+    "Popup": {
+      "Header": {
+        "activeBackground": "Grey2",
+        "inactiveBackground": "Grey3"
+      },
+      "Advertiser.foreground": "Grey7"
+    },
+
+    "CompletionPopup": {
+      "foreground": "Grey10",
+      "matchForeground": "Blue7"
+    },
+
+    "ProgressBar": {
+      "progressColor": "Blue7",
+      "indeterminateStartColor": "Blue9",
+      "indeterminateEndColor": "Blue5",
+      "trackColor": "Grey4"
+    },
+
+    "SearchEverywhere": {
+      "Tab": {
+        "selectedBackground": "Blue2",
+        "selectedForeground": "Grey14"
+      },
+      "Advertiser.foreground": "Grey7"
+    },
+
+    "StatusBar": {
+      "Widget": {
+        "foreground": "Grey7",
+        "hoverForeground": "Grey12",
+        "hoverBackground": "Grey3",
+        "pressedBackground": "Grey4",
+        "widgetInsets": "6,8,6,8"
+      },
+      "Breadcrumbs": {
+        "foreground": "Grey7",
+        "hoverForeground": "Grey12",
+        "hoverBackground": "Grey3",
+        "itemInsets": "0,0,0,2",
+        "chevronInset": "2"
+      }
+    },
+
+    "ToolTip":{
+      "background": "Grey2",
+      "infoForeground": "Grey7",
+      "shortcutForeground": "Grey7"
+    },
+
+    "HelpTooltip": {
+      "defaultTextBorderInsets": "12,16,16,16",
+      "smallTextBorderInsets": "8,12,9,12"
+    },
+
+    "ToolWindow": {
+      "Header": {
+        "inactiveBackground": "Grey2",
+        "font.size.offset": 0
+      }
+    },
+
+    "Tree.rowHeight": "24"
+  },
+
+  "icons": {
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBox.svg": "/themes/expUI/icons/dark/checkBox.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxDisabled.svg": "/themes/expUI/icons/dark/checkBoxDisabled.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxFocused.svg": "/themes/expUI/icons/dark/checkBoxFocused.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxIndeterminateSelected.svg": "/themes/expUI/icons/dark/checkBoxIndeterminateSelected.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxIndeterminateSelectedDisabled.svg": "/themes/expUI/icons/dark/checkBoxIndeterminateSelectedDisabled.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxIndeterminateSelectedFocused.svg": "/themes/expUI/icons/dark/checkBoxIndeterminateSelectedFocused.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxSelected.svg": "/themes/expUI/icons/dark/checkBoxSelected.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxSelectedDisabled.svg": "/themes/expUI/icons/dark/checkBoxSelectedDisabled.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxSelectedFocused.svg": "/themes/expUI/icons/dark/checkBoxSelectedFocused.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/radio.svg": "/themes/expUI/icons/dark/radio.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/radioDisabled.svg": "/themes/expUI/icons/dark/radioDisabled.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/radioFocused.svg": "/themes/expUI/icons/dark/radioFocused.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/radioSelected.svg": "/themes/expUI/icons/dark/radioSelected.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/radioSelectedDisabled.svg": "/themes/expUI/icons/dark/radioSelectedDisabled.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/radioSelectedFocused.svg": "/themes/expUI/icons/dark/radioSelectedFocused.svg",
+
+    "ColorPalette": {
+      "Checkbox.Background.Default.Dark": "Grey2",
+      "Checkbox.Border.Default.Dark": "Grey5",
+      "Checkbox.Foreground.Selected.Dark": "Grey14",
+      "Checkbox.Background.Selected.Dark": "Blue6",
+      "Checkbox.Border.Selected.Dark": "Blue6",
+      "Checkbox.Focus.Thin.Default.Dark": "Grey2",
+      "Checkbox.Focus.Thin.Selected.Dark": "Grey2",
+      "Checkbox.Focus.Wide.Dark": "Blue6",
+      "Checkbox.Foreground.Disabled.Dark": "Grey5",
+      "Checkbox.Border.Disabled.Dark": "Grey3",
+      "Checkbox.Background.Disabled.Dark": "Grey2"
+    }
+  }
+}

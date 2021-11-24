@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -16,7 +16,7 @@ private fun unzip(zip: ZipFile) {
         errorUnpacking = false
     }
     finally {
-        if (<weak_warning descr="Value is always false">errorUnpacking</weak_warning>) {
+        if (<weak_warning descr="Value of 'errorUnpacking' is always false">errorUnpacking</weak_warning>) {
         }
     }
 }

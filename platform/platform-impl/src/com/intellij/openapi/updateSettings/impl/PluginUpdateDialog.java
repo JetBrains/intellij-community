@@ -108,6 +108,16 @@ final class PluginUpdateDialog extends DialogWrapper {
     myPluginsPanel = new PluginsGroupComponent(eventHandler) {
       @Override
       protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+        if (!(descriptor instanceof PluginNode)) {
+          PluginNode node = new PluginNode(descriptor.getPluginId(), descriptor.getName(), "0");
+          node.setDescription(descriptor.getDescription());
+          node.setChangeNotes(descriptor.getChangeNotes());
+          node.setVersion(descriptor.getVersion());
+          node.setVendor(descriptor.getVendor());
+          node.setOrganization(descriptor.getOrganization());
+          node.setDependencies(descriptor.getDependencies());
+          descriptor = node;
+        }
         @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, group, LinkListener.NULL, true);
         component.setOnlyUpdateMode();
         component.getChooseUpdateButton().addActionListener(e -> updateButtons());

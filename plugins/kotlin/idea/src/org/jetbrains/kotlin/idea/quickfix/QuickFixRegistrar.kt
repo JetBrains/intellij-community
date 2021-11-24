@@ -568,7 +568,7 @@ class QuickFixRegistrar : QuickFixContributor {
         CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFix)
         NULL_FOR_NONNULL_TYPE.registerFactory(ChangeToLabeledReturnFix)
 
-        WRONG_ANNOTATION_TARGET.registerFactory(AddAnnotationTargetFix)
+        WRONG_ANNOTATION_TARGET.registerFactory(AddAnnotationTargetFix, AddAnnotationUseSiteTargetFix)
         WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET.registerFactory(MoveReceiverAnnotationFix, AddAnnotationTargetFix)
 
         NO_CONSTRUCTOR.registerFactory(RemoveNoConstructorFix)
@@ -679,5 +679,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         NON_PUBLIC_CALL_FROM_PUBLIC_INLINE.registerFactory(NonPublicCallFromPublicInlineFactory)
         PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR.registerFactory(NonPublicCallFromPublicInlineFactory)
+
+        IS_ENUM_ENTRY.registerFactory(IsEnumEntryFactory)
     }
 }

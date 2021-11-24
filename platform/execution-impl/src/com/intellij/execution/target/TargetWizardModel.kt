@@ -10,5 +10,7 @@ interface TargetWizardModel {
 
   val languageConfigForIntrospection: LanguageRuntimeConfiguration?
 
+  fun save() {}
+
   fun commit() {}
 }

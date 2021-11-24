@@ -6,10 +6,7 @@ import org.gradle.api.Named
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder.Companion.getTargets
-import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder
-import org.jetbrains.kotlin.idea.gradleTooling.AndroidAwareGradleModelProvider
+import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
@@ -104,15 +101,17 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
                         continue
                     }
 
-                    val compilations = KotlinMPPGradleModelBuilder.getCompilations(target) ?: continue
+                    val compilations = target.compilations ?: continue
                     for (compilation in compilations) {
-                        val compileTask = KotlinMPPGradleModelBuilder.getCompileKotlinTaskName(project, compilation) ?: continue
+                        val compileTask = compilation.getCompileKotlinTaskName(project) ?: continue
                         val moduleName = target.name + compilation.name.capitalize()
                         handleCompileTask(moduleName, compileTask)
                     }
                 }
             } else {
-                project.getAllTasks(false)[project]?.forEach { compileTask ->
+                val compileTasks = project.getTarget()?.compilations?.map { compilation -> compilation.getCompileKotlinTaskName(project) }
+                    ?: project.getAllTasks(false)[project]
+                compileTasks?.forEach{ compileTask ->
                     val sourceSetName = compileTask.getSourceSetName()
                     if (androidVariantRequest.shouldSkipSourceSet(sourceSetName)) return@forEach
                     handleCompileTask(sourceSetName, compileTask)

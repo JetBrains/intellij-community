@@ -1,5 +1,5 @@
 // "Import" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // FULL_JDK
 // ERROR: Unresolved reference: sleep
 

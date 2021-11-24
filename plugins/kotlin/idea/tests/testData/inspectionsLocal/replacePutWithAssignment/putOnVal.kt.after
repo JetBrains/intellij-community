@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     val map = mutableMapOf(42 to "foo")

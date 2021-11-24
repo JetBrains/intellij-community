@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Variable 'x' is never used
 // AFTER-WARNING: Variable 'z' is never used

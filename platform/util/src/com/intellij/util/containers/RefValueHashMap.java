@@ -41,7 +41,7 @@ abstract class RefValueHashMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public V get(Object key) {
+  public V get(@NotNull Object key) {
     MyReference<K,V> ref = myMap.get(key);
     return SoftReference.deref(ref);
   }
@@ -55,7 +55,7 @@ abstract class RefValueHashMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public V remove(Object key) {
+  public V remove(@NotNull Object key) {
     processQueue();
     MyReference<K,V> ref = myMap.remove(key);
     return SoftReference.deref(ref);

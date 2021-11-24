@@ -1,0 +1,32 @@
+<scheme name="Dark" version="142" parent_scheme="Darcula">
+  <metaInfo>
+    <property name="created">2021-10-28T20:09:40</property>
+    <property name="ide">idea</property>
+    <property name="ideVersion">2022.1.0.0</property>
+    <property name="modified">2021-10-28T20:09:48</property>
+    <property name="originalScheme">_@user_Darcula</property>
+  </metaInfo>
+  <colors>
+    <option name="CARET_ROW_COLOR" value="2b2d30" />
+    <option name="DOCUMENTATION_COLOR" value="2b2d30" />
+    <option name="LINE_NUMBERS_COLOR" value="4e5157" />
+    <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="9da0a8" />
+    <option name="LOOKUP_COLOR" value="2b2d30" />
+    <option name="CONSOLE_BACKGROUND_KEY" value="1e1f22" />
+  </colors>
+  <attributes>
+    <option name="TEXT">
+      <value>
+        <option name="FOREGROUND" value="a9b7c6" />
+        <option name="BACKGROUND" value="1e1f22" />
+      </value>
+    </option>
+    <option name="WARNING_ATTRIBUTES">
+      <value>
+        <option name="BACKGROUND" value="3d3322" />
+        <option name="ERROR_STRIPE_COLOR" value="be9117" />
+        <option name="EFFECT_TYPE" value="2" />
+      </value>
+    </option>
+  </attributes>
+</scheme>

@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
@@ -189,7 +190,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
     updateConfigurations();
     initErrorValidation();
-    return new JBScrollPane(myMainPanel);
+    var pane = new JBScrollPane(myMainPanel);
+    pane.setViewportBorder(JBUI.Borders.empty());
+    pane.setBorder(JBUI.Borders.empty());
+    return pane;
   }
 
   private void updateConfigurations() {

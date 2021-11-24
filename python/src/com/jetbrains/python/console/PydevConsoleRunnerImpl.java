@@ -696,7 +696,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private void initAndRun(@NotNull Sdk sdk) throws ExecutionException {
     // Create Server process
     CommandLineProcess commandLineProcess;
-    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")) {
+    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
       commandLineProcess = createProcessUsingTargetsAPI(sdk);
     }
     else {
@@ -733,32 +733,38 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   protected void createContentDescriptorAndActions() {
+    boolean isHorizontalAndUnitedToolbar = PyExecuteConsoleCustomizer.Companion.getInstance().isHorizontalAndUnitedToolbar();
     final DefaultActionGroup runToolbarActions = new DefaultActionGroup();
-    final ActionToolbar runActionsToolbar = ActionManager.getInstance().createActionToolbar("PydevConsoleRunner", runToolbarActions, false);
-
-    final DefaultActionGroup outputToolbarActions = new DefaultActionGroup();
-    final ActionToolbar outputActionsToolbar =
-      ActionManager.getInstance().createActionToolbar("PydevConsoleRunner", outputToolbarActions, false);
-
+    final ActionToolbar runActionsToolbar =
+      ActionManager.getInstance().createActionToolbar("PydevConsoleRunner", runToolbarActions, isHorizontalAndUnitedToolbar);
     final JPanel actionsPanel = new JPanel(new BorderLayout());
     // Left toolbar panel
     actionsPanel.add(runActionsToolbar.getComponent(), BorderLayout.WEST);
-    // Add line between toolbar panels
-    final JComponent outputActionsComponent = outputActionsToolbar.getComponent();
-    int emptyBorderSize = outputActionsComponent.getBorder().getBorderInsets(outputActionsComponent).left;
-    outputActionsComponent.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, JBColor.border()),
-                                                                        new JBEmptyBorder(emptyBorderSize)));
-    // Right toolbar panel
-    actionsPanel.add(outputActionsComponent, BorderLayout.CENTER);
-    // Add Toolbar for PythonConsoleView
-    myConsoleView.setToolbar(outputActionsToolbar);
 
     final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.add(actionsPanel, BorderLayout.WEST);
     mainPanel.add(myConsoleView.getComponent(), BorderLayout.CENTER);
-
+    myConsoleView.setToolbar(runActionsToolbar);
     runActionsToolbar.setTargetComponent(mainPanel);
-    outputActionsToolbar.setTargetComponent(mainPanel);
+
+    final DefaultActionGroup outputToolbarActions = new DefaultActionGroup();
+    if (!isHorizontalAndUnitedToolbar) {
+      final ActionToolbar outputActionsToolbar =
+        ActionManager.getInstance().createActionToolbar("PydevConsoleRunner", outputToolbarActions, false);
+      final JComponent outputActionsComponent = outputActionsToolbar.getComponent();
+      // Add line between toolbar panels
+      int emptyBorderSize = outputActionsComponent.getBorder().getBorderInsets(outputActionsComponent).left;
+      outputActionsComponent.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, JBColor.border()),
+                                                                          new JBEmptyBorder(emptyBorderSize)));
+      // Right toolbar panel
+      actionsPanel.add(outputActionsComponent, BorderLayout.CENTER);
+      // Add Toolbar for PythonConsoleView
+      myConsoleView.setToolbar(outputActionsToolbar);
+      outputActionsToolbar.setTargetComponent(mainPanel);
+      mainPanel.add(actionsPanel, BorderLayout.WEST);
+    }
+    else {
+      mainPanel.add(actionsPanel, BorderLayout.PAGE_START);
+    }
 
     if (myConsoleInitTitle == null) {
       ConsoleTitleGen consoleTitleGen = new ConsoleTitleGen(myProject, myTitle) {
@@ -787,7 +793,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     // tool bar actions
     final List<AnAction> actions = fillRunActionsToolbar(runToolbarActions);
-    final List<AnAction> outputActions = fillOutputActionsToolbar(outputToolbarActions);
+    final List<AnAction> outputActions;
+    if (!isHorizontalAndUnitedToolbar) {
+      outputActions = fillOutputActionsToolbar(outputToolbarActions);
+    }
+    else {
+      runToolbarActions.add(new Separator());
+      outputActions = fillOutputActionsToolbar(runToolbarActions);
+    }
     actions.addAll(outputActions);
 
     registerActionShortcuts(actions, myConsoleView.getConsoleEditor().getComponent());
