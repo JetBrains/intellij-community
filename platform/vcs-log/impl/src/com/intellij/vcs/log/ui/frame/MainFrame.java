@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -84,6 +85,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final CommitDetailsListPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final EditorNotificationPanel myNotificationLabel;
+
+  private boolean myIsLoading;
+  @Nullable private FilePath myPathToSelect = null;
 
   @NotNull private final FrameDiffPreview<VcsLogChangeProcessor> myDiffPreview;
 
@@ -317,6 +321,20 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
+  public void selectFilePath(@NotNull FilePath filePath, boolean requestFocus) {
+    if (myIsLoading) {
+      myPathToSelect = filePath;
+    }
+    else {
+      myChangesBrowser.getViewer().selectFile(filePath);
+      myPathToSelect = null;
+    }
+
+    if (requestFocus) {
+      myChangesBrowser.getViewer().requestFocus();
+    }
+  }
+
   @Override
   public void dispose() {
     myDetailsSplitter.dispose();
@@ -360,6 +378,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
 
     @Override
+    protected void onLoadingScheduled() {
+      myIsLoading = true;
+      myPathToSelect = null;
+    }
+
+    @Override
     protected void onLoadingStarted() {
       myChangesLoadingPane.startLoading();
     }
@@ -367,6 +391,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @Override
     protected void onLoadingStopped() {
       myChangesLoadingPane.stopLoading();
+      myIsLoading = false;
+      if (myPathToSelect != null) {
+        myChangesBrowser.getViewer().selectFile(myPathToSelect);
+        myPathToSelect = null;
+      }
     }
 
     @Override
