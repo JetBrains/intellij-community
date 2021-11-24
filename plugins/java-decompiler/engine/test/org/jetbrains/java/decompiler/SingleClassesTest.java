@@ -125,6 +125,7 @@ public class SingleClassesTest {
   @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
   @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
   @Test public void testPackageInfo() { doTest("pkg/package-info"); }
+  @Test public void testIntVarMerge() { doTest("pkg/TestIntVarMerge"); }
 
   // TODO: fix all below
   //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
