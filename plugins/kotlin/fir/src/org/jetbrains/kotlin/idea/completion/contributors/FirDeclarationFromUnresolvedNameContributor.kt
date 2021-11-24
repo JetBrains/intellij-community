@@ -109,7 +109,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     }
 
     private fun KtAnalysisSession.getReceiverType(symbol: KtCallableSymbol): KtType? {
-        return symbol.receiverType ?: (symbol as? KtPossibleMemberSymbol)?.getDispatchReceiverType()
+        return symbol.receiverType ?: (symbol as? KtCallableSymbol)?.getDispatchReceiverType()
     }
 
     private fun PsiElement.getCurrentDeclarationAtCaret(): KtNamedDeclaration? {
