@@ -23,6 +23,8 @@ import java.awt.image.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
@@ -43,6 +45,13 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   private volatile @Nullable JBHiDPIScaledImage myImage;
   private volatile @Nullable VolatileImage myVolatileImage;
+
+  private final static @NotNull Point ZERO_POINT = new Point();
+  private final static @NotNull Rectangle ZERO_RECT = new Rectangle();
+
+  // jcef thread only
+  private @NotNull Rectangle myPopupBounds = ZERO_RECT;
+  private boolean myPopupShown;
 
   JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<JComponent, Rectangle> screenBoundsProvider) {
     myComponent = component;
@@ -100,10 +109,12 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void onPopupShow(CefBrowser browser, boolean show) {
+    myPopupShown = show;
   }
 
   @Override
   public void onPopupSize(CefBrowser browser, Rectangle size) {
+    myPopupBounds = scaleUp(size);
   }
 
   @Override
@@ -111,13 +122,23 @@ class JBCefOsrHandler implements CefRenderHandler {
     JBHiDPIScaledImage image = myImage;
     VolatileImage volatileImage = myVolatileImage;
 
-    Dimension size = getDevImageSize();
-    if (size.width != width || size.height != height) {
-      image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
-      volatileImage = myComponent.createVolatileImage(width, height);
-      dirtyRects = new Rectangle[]{ new Rectangle(0, 0, width, height) };
+    //
+    // Recreate images when necessary
+    //
+    if (!popup) {
+      Dimension size = getDevImageSize();
+      if (size.width != width || size.height != height) {
+        image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
+        volatileImage = myComponent.createVolatileImage(width, height);
+        dirtyRects = new Rectangle[]{new Rectangle(0, 0, width, height)};
+      }
     }
     assert image != null;
+    BufferedImage bufferedImage = (BufferedImage)image.getDelegate();
+    assert bufferedImage != null;
+
+    int imageWidth = bufferedImage.getWidth();
+    int imageHeight = bufferedImage.getHeight();
 
     // {volatileImage} can be null if myComponent is not yet displayed, in that case we will use {myImage} in {paint(Graphics)} as
     // it can be called (asynchronously) when {myComponent} has already been displayed - in order not to skip the {onPaint} request
@@ -127,35 +148,60 @@ class JBCefOsrHandler implements CefRenderHandler {
         dirtyRects = new Rectangle[]{ new Rectangle(0, 0, width, height) };
       }
       if (result == VolatileImage.IMAGE_INCOMPATIBLE) {
-        volatileImage = myComponent.createVolatileImage(width, height);
+        volatileImage = myComponent.createVolatileImage(imageWidth, imageHeight);
       }
     }
 
-    BufferedImage bi = (BufferedImage)image.getDelegate();
-    assert bi != null;
-    int[] dst = ((DataBufferInt)bi.getRaster().getDataBuffer()).getData();
+    int[] dst = ((DataBufferInt)bufferedImage.getRaster().getDataBuffer()).getData();
     IntBuffer src = buffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
 
+    //
+    // Adjust the dirty rects for a popup case (a workaround for not enough erase rect after popup close)
+    //
+    if (!popup && !myPopupShown && myPopupBounds != ZERO_RECT) {
+      // first repaint after popup close
+      var rects = new ArrayList<>(Arrays.asList(dirtyRects));
+      rects.add(myPopupBounds);
+      Rectangle outerRect = findOuterRect(rects.toArray(new Rectangle[0]));
+      // mind the bounds of the {buffer}
+      outerRect = outerRect.intersection(new Rectangle(0, 0, width, height));
+      dirtyRects = new Rectangle[]{ outerRect };
+      myPopupBounds = ZERO_RECT;
+    }
+
+    //
+    // Copy pixels into the BufferedImage
+    //
+    Point popupLoc = popup ? myPopupBounds.getLocation() : ZERO_POINT;
+
     for (Rectangle rect : dirtyRects) {
-      if (rect.width < width) {
+      if (rect.width < imageWidth) {
         for (int line = rect.y; line < rect.y + rect.height; line++) {
-          int offset = line * width + rect.x;
-          src.position(offset).get(dst, offset, Math.min(rect.width, src.capacity() - offset));
+          int srcOffset = line * width + rect.x;
+          int dstOffset = (line + popupLoc.y) * imageWidth + (rect.x + popupLoc.x);
+          src.position(srcOffset).get(dst, dstOffset, Math.min(rect.width, src.capacity() - srcOffset));
         }
       }
       else { // optimized for a buffer wide dirty rect
-        int offset = rect.y * width;
-        src.position(offset).get(dst, offset, Math.min(rect.height * width, src.capacity() - offset));
+        int srcOffset = rect.y * width;
+        int dstOffset = (rect.y + popupLoc.y) * imageWidth;
+        src.position(srcOffset).get(dst, dstOffset, Math.min(rect.height * width, src.capacity() - srcOffset));
       }
     }
+
+    //
+    // Draw the BufferedImage into the VolatileImage
+    //
     Rectangle outerRect = findOuterRect(dirtyRects);
+    if (popup) outerRect.translate(popupLoc.x, popupLoc.y);
+
     if (volatileImage != null) {
       Graphics2D viGr = (Graphics2D)volatileImage.getGraphics().create();
       try {
         double sx = viGr.getTransform().getScaleX();
         double sy = viGr.getTransform().getScaleY();
         viGr.scale(1 / sx, 1 / sy);
-        viGr.drawImage(bi,
+        viGr.drawImage(bufferedImage,
                        outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
                        outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
                        null);
@@ -166,7 +212,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
     myImage = image;
     myVolatileImage = volatileImage;
-    myComponent.repaint(scaleDown(outerRect));
+    myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect));
   }
 
   @Override
@@ -202,8 +248,8 @@ class JBCefOsrHandler implements CefRenderHandler {
   private static @NotNull Rectangle findOuterRect(Rectangle@NotNull[] rects) {
     if (rects.length == 1) return rects[0];
 
-    int minX = 0;
-    int minY = 0;
+    int minX = Integer.MAX_VALUE;
+    int minY = Integer.MAX_VALUE;
     int maxX = 0;
     int maxY = 0;
     for (Rectangle rect : rects) {
@@ -243,6 +289,12 @@ class JBCefOsrHandler implements CefRenderHandler {
     double scale = myScale.getJreBiased();
     return new Rectangle(FLOOR.round(rect.x / scale), FLOOR.round(rect.y / scale),
                          CEIL.round(rect.width / scale), CEIL.round(rect.height / scale));
+  }
+
+  private @NotNull Rectangle scaleUp(@NotNull Rectangle rect) {
+    double scale = myScale.getJreBiased();
+    return new Rectangle(FLOOR.round(rect.x * scale), FLOOR.round(rect.y * scale),
+                         CEIL.round(rect.width * scale), CEIL.round(rect.height * scale));
   }
 
   private @NotNull Point scaleUp(@NotNull Point pt) {
