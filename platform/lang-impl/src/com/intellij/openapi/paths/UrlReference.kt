@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.paths
 
 import com.intellij.codeInsight.highlighting.HyperlinkAnnotator
@@ -46,15 +46,13 @@ private class UrlSymbol(
     NavigatableSymbol,
     NavigationTarget {
 
-  override fun createPointer(): Pointer<out Symbol> = this
+  override fun createPointer(): Pointer<out UrlSymbol> = this
 
   override fun dereference(): UrlSymbol = this
 
   override fun getSymbolPresentation(): SymbolPresentation = SymbolPresentation.create(AllIcons.General.Web, url, url)
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> = listOf(this)
-
-  override fun isValid(): Boolean = true
 
   override fun getNavigatable(): Navigatable = UrlNavigatable(url)
 

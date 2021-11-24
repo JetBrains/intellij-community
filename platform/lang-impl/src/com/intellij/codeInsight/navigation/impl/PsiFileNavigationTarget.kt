@@ -1,19 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.fileLocation
 import com.intellij.codeInsight.navigation.fileStatusAttributes
+import com.intellij.model.Pointer
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.suggested.createSmartPointer
 
 internal class PsiFileNavigationTarget(
   private val psiFile: PsiFile
 ) : NavigationTarget {
 
-  override fun isValid(): Boolean = psiFile.isValid
+  override fun createPointer(): Pointer<out NavigationTarget> = Pointer.delegatingPointer(
+    psiFile.createSmartPointer(), PsiFileNavigationTarget::class.java, ::PsiFileNavigationTarget
+  )
 
   override fun getNavigatable(): Navigatable = psiFile
 
