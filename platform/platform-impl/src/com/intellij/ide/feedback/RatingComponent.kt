@@ -11,26 +11,32 @@ import javax.swing.*
 class RatingComponent : JComponent() {
   private val myIconSize = 32
   private val myIconGap = 4
-  private val myLeftGap = 1
+  private val myLeftGap = 5
   private val myIconCount = 5
   private val myActiveIcon = AllIcons.Ide.FeedbackRatingOn
   private val myInactiveIcon = AllIcons.Ide.FeedbackRating
-  private val myFocusActiveIcon = AllIcons.Ide.FeedbackRatingOnFocused
+  private val myFocusActiveIcon = AllIcons.Ide.FeedbackRatingFocusedOn
   private val myFocusInactiveIcon = AllIcons.Ide.FeedbackRatingFocused
   private var myHoverRating = 0
   private var myMouseInside = false
 
   private val myMaxRating = 5
   private val myMinRating = 1
+  private var myFocusRating = 1
   var myRating = 0
     private set
 
+
   init {
     isFocusable = true
+    focusTraversalKeysEnabled = false
     createKeyBindings()
 
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {
+        if (myRating != 0) {
+          myFocusRating = myRating
+        }
         repaint()
       }
 
@@ -51,9 +57,12 @@ class RatingComponent : JComponent() {
       }
 
       override fun mouseClicked(e: MouseEvent) {
-        this@RatingComponent.requestFocusInWindow()
+        if (!isFocusOwner) {
+          requestFocusInWindow()
+        }
         val oldRating = myRating
         myRating = ratingFromPoint(e)
+        myFocusRating = myRating
         if (myRating != oldRating) {
           firePropertyChange(RATING_PROPERTY, oldRating, myRating)
         }
@@ -78,93 +87,133 @@ class RatingComponent : JComponent() {
   private fun createKeyBindings() {
     val leftActionMapKey = "left"
     val rightActionMapKey = "right"
-    val spaceActionMapKey = "space"
     val oneStarActionMapKey = "1"
     val twoStarActionMapKey = "2"
     val threeStarActionMapKey = "3"
     val fourStarActionMapKey = "4"
     val fiveStarActionMapKey = "5"
+    val tabStarActionMapKey = "tab"
+    val shiftTabStarActionMapKey = "shiftTab"
+    val enterStarActionMapKey = "enter"
 
     inputMap.put(KeyStroke.getKeyStroke("LEFT"), leftActionMapKey)
     inputMap.put(KeyStroke.getKeyStroke("RIGHT"), rightActionMapKey)
-    inputMap.put(KeyStroke.getKeyStroke("SPACE"), spaceActionMapKey)
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, 0), oneStarActionMapKey)
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_2, 0), twoStarActionMapKey)
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_3, 0), threeStarActionMapKey)
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_4, 0), fourStarActionMapKey)
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_5, 0), fiveStarActionMapKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), tabStarActionMapKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK), shiftTabStarActionMapKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), enterStarActionMapKey)
 
     val leftAction: Action = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        if (myRating != myMinRating) {
-          myRating -= 1
-          repaint()
-        }
-      }
-    }
-    actionMap.put(leftActionMapKey, leftAction)
-    val rightAction: Action = object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent?) {
-        if (myRating != myMaxRating) {
-          myRating += 1
-          repaint()
-        }
-      }
-    }
-    actionMap.put(rightActionMapKey, rightAction)
-    val spaceAction: Action = object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent?) {
-        if (myRating == myMaxRating) {
-          myRating = myMinRating
-        }
-        else {
-          myRating += 1
+        if (myFocusRating != myMinRating) {
+          myFocusRating -= 1
         }
         repaint()
       }
     }
-    actionMap.put(spaceActionMapKey, spaceAction)
+    actionMap.put(leftActionMapKey, leftAction)
+
+    val rightAction: Action = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        if (myFocusRating != myMaxRating) {
+          myFocusRating += 1
+        }
+        repaint()
+      }
+    }
+    actionMap.put(rightActionMapKey, rightAction)
+
     val oneStarAction: Action = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        myRating = 1
+        myFocusRating = 1
         repaint()
       }
     }
     actionMap.put(oneStarActionMapKey, oneStarAction)
+
     val twoStarAction: Action = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        myRating = 2
+        myFocusRating = 2
         repaint()
       }
     }
     actionMap.put(twoStarActionMapKey, twoStarAction)
+
     val threeStarAction: Action = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        myRating = 3
+        myFocusRating = 3
         repaint()
       }
     }
     actionMap.put(threeStarActionMapKey, threeStarAction)
+
     val fourStarAction: Action = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        myRating = 4
+        myFocusRating = 4
         repaint()
       }
     }
     actionMap.put(fourStarActionMapKey, fourStarAction)
+
     val fiveStarAction: Action = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        myRating = 5
+        myFocusRating = 5
         repaint()
       }
     }
     actionMap.put(fiveStarActionMapKey, fiveStarAction)
+
+    val tabStarAction: Action = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        if (myFocusRating == myMaxRating) {
+          transferFocus()
+        }
+        else {
+          myFocusRating += 1
+        }
+        repaint()
+      }
+    }
+    actionMap.put(tabStarActionMapKey, tabStarAction)
+
+    val shiftTabStarAction: Action = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        if (myFocusRating == myMinRating) {
+          transferFocusBackward()
+        }
+        else {
+          myFocusRating -= 1
+        }
+        repaint()
+      }
+    }
+    actionMap.put(shiftTabStarActionMapKey, shiftTabStarAction)
+
+    val enterTabStarAction: Action = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        val oldRating = myRating
+        if (myFocusRating == myRating) {
+          myRating = 0
+          firePropertyChange(RATING_PROPERTY, oldRating, myRating)
+        }
+        else {
+          myRating = myFocusRating
+          firePropertyChange(RATING_PROPERTY, oldRating, myRating)
+        }
+        repaint()
+      }
+    }
+    actionMap.put(enterStarActionMapKey, enterTabStarAction)
   }
 
   private fun ratingFromPoint(e: MouseEvent) = (e.x / (myIconSize + myIconGap) + 1).coerceAtMost(myIconCount)
 
   override fun getPreferredSize(): Dimension {
-    return Dimension(myIconSize * myIconCount + myIconGap * (myIconCount - 2), myIconSize)
+    return Dimension(myIconSize * myIconCount + myIconGap * (myIconCount - 2) + myLeftGap, myIconSize)
   }
 
   override fun getMinimumSize(): Dimension {
@@ -172,31 +221,37 @@ class RatingComponent : JComponent() {
   }
 
   override fun paintComponent(g: Graphics) {
-    if (isFocusOwner) {
-      val ratingToShow = if (myMouseInside) myHoverRating else myRating
-      for (i in 0 until myIconCount) {
-        val icon = if (ratingToShow == 0) {
-          myFocusInactiveIcon
-        }
-        else if (i < ratingToShow) {
-          myFocusActiveIcon
+    val ratingToShow = if (myMouseInside) myHoverRating else myRating
+    val isFocusOwner = isFocusOwner
+    for (i in 1 until myIconCount + 1) {
+      if (isFocusOwner) {
+        val icon = if (i <= ratingToShow) {
+          if (i == myFocusRating) {
+            myFocusActiveIcon
+          }
+          else {
+            myActiveIcon
+          }
         }
         else {
-          myInactiveIcon
+          if (i == myFocusRating) {
+            myFocusInactiveIcon
+          }
+          else {
+            myInactiveIcon
+          }
         }
         icon.paintRatingIcon(i, g)
       }
-    }
-    else {
-      for (i in 0 until myIconCount) {
-        val icon = if (i < myRating) myActiveIcon else myInactiveIcon
+      else {
+        val icon = if (i <= ratingToShow) myActiveIcon else myInactiveIcon
         icon.paintRatingIcon(i, g)
       }
     }
   }
 
   private fun Icon.paintRatingIcon(position: Int, g: Graphics) {
-    this.paintIcon(this@RatingComponent, g, position * myIconSize + (position - 1) * myIconGap + myLeftGap, 0)
+    this.paintIcon(this@RatingComponent, g, (position - 1) * myIconSize + (position - 2) * myIconGap + myLeftGap, 0)
   }
 
   companion object {

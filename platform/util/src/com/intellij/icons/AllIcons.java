@@ -598,7 +598,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon FatalErrorRead = load("ide/fatalError-read.svg", -716280782, 2);
     /** 16x16 */ public static final @NotNull Icon FatalError = load("ide/fatalError.svg", 931416130, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRating = load("ide/feedbackRating.svg", 2076130332, 2);
-    /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocused = load("ide/feedbackRatingFocused.svg", -642130225, 0);
+    /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocused = load("ide/feedbackRatingFocused.svg", -1519327925, 2);
+    /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocusedOn = load("ide/feedbackRatingFocusedOn.svg", -2017558097, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOn = load("ide/feedbackRatingOn.svg", 1299596390, 0);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOnFocused = load("ide/feedbackRatingOnFocused.svg", -1642490001, 0);
     /** 16x16 */ public static final @NotNull Icon Gift = load("ide/gift.svg", 1462640968, 2);
