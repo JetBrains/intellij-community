@@ -44,7 +44,7 @@ public class IndexOfInliner implements CallInliner {
       .assignTo(res)
       .splice(2, 0, 0, 1)
       .unwrap(SpecialField.STRING_LENGTH)
-      .relation(relationType)
+      .compare(relationType)
       .ensure(RelationType.EQ, DfTypes.TRUE, new UnsatisfiedConditionProblem() {
       }, null)
       .pop();
