@@ -79,10 +79,10 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   /**
-   * @param viewFactory view factory for this kit, generally should be static
+   * @param viewFactory             view factory for this kit, generally should be static
    * @param noGapsBetweenParagraphs removes gaps before &lt;p&gt; tags
-   * @param disableLinkedCss disables loading of linked CSS (from URL referenced in &lt;link&gt; HTML tags). JEditorPane does this loading
-   *                         synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
+   * @param disableLinkedCss        disables loading of linked CSS (from URL referenced in &lt;link&gt; HTML tags). JEditorPane does this loading
+   *                                synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
    */
   public JBHtmlEditorKit(@NotNull ViewFactory viewFactory, boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
     this(viewFactory, createStyleSheet(), disableLinkedCss);
@@ -90,8 +90,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   /**
-   * @param viewFactory view factory for this kit, generally should be static
-   * @param defaultStyle css stylesheet to be used in all documents created by {@link #createDefaultDocument()}
+   * @param viewFactory      view factory for this kit, generally should be static
+   * @param defaultStyle     css stylesheet to be used in all documents created by {@link #createDefaultDocument()}
    * @param disableLinkedCss disables loading of linked CSS (from URL referenced in &lt;link&gt; HTML tags). JEditorPane does this loading
    *                         synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
    */
@@ -116,8 +116,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   /**
-   * Will not work as one might expect it to
-   * To override default style you should use the provided constructor
+   * Will not work as one might expect it to.
+   * To override default style you should use the provided constructor.
    */
   @Override
   public void setStyleSheet(StyleSheet style) {
