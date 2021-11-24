@@ -284,6 +284,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
            || elementType == JavaElementType.ANNOTATION_ARRAY_INITIALIZER
            || elementType == JavaElementType.CLASS_INITIALIZER
            || elementType == JavaElementType.SYNCHRONIZED_STATEMENT
+           || elementType == JavaElementType.SWITCH_LABELED_RULE
            || elementType == JavaElementType.FOREACH_STATEMENT;
   }
 

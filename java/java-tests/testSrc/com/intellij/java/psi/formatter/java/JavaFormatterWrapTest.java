@@ -1075,4 +1075,39 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "        \"content\", \"value\", \"content\", \"value\");"
     );
   }
+
+  public void testSwitchLabelBracesWrapping() {
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+
+    doClassTest(
+      "static boolean test(String name)" +
+      "{\n" +
+      "    switch (name)" +
+      "{\n" +
+      "        case \"GET\" -> {\n" +
+      "            return true;\n" +
+      "        }\n" +
+      "        case \"POST\" -> {\n" +
+      "            return false;\n" +
+      "        }\n" +
+      "    }\n" +
+      "    return false;\n" +
+      "}",
+
+      "static boolean test(String name) {\n" +
+      "    switch (name)\n" +
+      "    {\n" +
+      "        case \"GET\" ->\n" +
+      "        {\n" +
+      "            return true;\n" +
+      "        }\n" +
+      "        case \"POST\" ->\n" +
+      "        {\n" +
+      "            return false;\n" +
+      "        }\n" +
+      "    }\n" +
+      "    return false;\n" +
+      "}"
+    );
+  }
 }

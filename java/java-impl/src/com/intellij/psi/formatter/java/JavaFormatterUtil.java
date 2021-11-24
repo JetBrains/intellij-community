@@ -406,6 +406,11 @@ public final class JavaFormatterUtil {
       }
     }
 
+    else if (nodeType == JavaElementType.SWITCH_LABELED_RULE && childType == JavaElementType.BLOCK_STATEMENT) {
+      boolean dontNeedBreak = settings.BRACE_STYLE == CommonCodeStyleSettings.END_OF_LINE;
+      return Wrap.createWrap(dontNeedBreak ? WrapType.NONE : WrapType.NORMAL, true);
+    }
+
     return suggestedWrap;
   }
 
