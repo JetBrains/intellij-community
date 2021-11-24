@@ -809,6 +809,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       .select(PsiDeclarationStatement.class)
       .flatArray(PsiDeclarationStatement::getDeclaredElements)
       .select(PsiLocalVariable.class)
+      .remove(var -> PsiTreeUtil.isAncestor(var, position, true))
       .toMap(PsiLocalVariable::getName, Optional::of, (v1, v2) -> Optional.empty());
     PsiResolveHelper helper = JavaPsiFacade.getInstance(parameters.getOriginalFile().getProject()).getResolveHelper();
     variableMap.values().removeAll(Collections.singleton(Optional.<PsiLocalVariable>empty()));
