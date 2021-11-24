@@ -46,8 +46,8 @@ class NativePsiAndKtLightElementEqualityProviderTest : LightJavaCodeInsightFixtu
         val syntheticClass = file.declarations.last().cast<KtNamedFunction>().toLightMethods().single().parent
         findByPattern("MyKotlinClassWithStrangeName") { results ->
             assertTrue(klass in results)
-            assertTrue(file in results)
-            assertTrue(syntheticClass in results)
+            assertFalse(file in results)
+            assertFalse(syntheticClass in results)
             assertFalse(ulc in results)
         }
     }
