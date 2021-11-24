@@ -169,31 +169,22 @@ public class VarVersionsProcessor {
             VarType secondType = mapExprentMinTypes.get(secondPair);
 
             if (firstType.equals(secondType) ||
-                (firstType.equals(VarType.VARTYPE_NULL) && secondType.type == CodeConstants.TYPE_OBJECT) ||
-                (secondType.equals(VarType.VARTYPE_NULL) && firstType.type == CodeConstants.TYPE_OBJECT) ||
-                (firstType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER && secondType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER)
-            ) {
-
+                firstType.equals(VarType.VARTYPE_NULL) && secondType.type == CodeConstants.TYPE_OBJECT ||
+                secondType.equals(VarType.VARTYPE_NULL) && firstType.type == CodeConstants.TYPE_OBJECT ||
+                firstType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER && secondType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
               VarType firstMaxType = mapExprentMaxTypes.get(firstPair);
               VarType secondMaxType = mapExprentMaxTypes.get(secondPair);
               VarType type = firstMaxType == null ? secondMaxType :
                              secondMaxType == null ? firstMaxType :
                              VarType.getCommonMinType(firstMaxType, secondMaxType);
 
-              if (firstType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER &&
-                  secondType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+              if (firstType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER && secondType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
                 switch (secondType.type) {
                   case CodeConstants.TYPE_INT:
                     type = VarType.VARTYPE_INT;
                     break;
                   case CodeConstants.TYPE_SHORT:
-                    switch (firstType.type) {
-                      case CodeConstants.TYPE_INT:
-                        type = null;
-                        break;
-                      default:
-                        type = VarType.VARTYPE_SHORT;
-                    }
+                    type = firstType.type == CodeConstants.TYPE_INT ? null : VarType.VARTYPE_SHORT;
                     break;
                   case CodeConstants.TYPE_CHAR:
                     switch (firstType.type) {
