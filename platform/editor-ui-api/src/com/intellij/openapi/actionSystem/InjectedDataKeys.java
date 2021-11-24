@@ -39,7 +39,8 @@ public final class InjectedDataKeys {
     return dataId.startsWith(ourInjectedPrefix) ? dataId.substring(ourInjectedPrefix.length()) : null;
   }
 
-  private static <T> @NotNull DataKey<T> injectedKey(@NotNull DataKey<T> key) {
+  @ApiStatus.Internal
+  public static <T> @NotNull DataKey<T> injectedKey(@NotNull DataKey<T> key) {
     String injectedId = ourInjectedPrefix + key.getName();
     ourInjectableIds.put(key.getName(), injectedId);
     return DataKey.create(injectedId);

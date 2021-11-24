@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'filter' is never used
 import java.io.File
 import java.io.FileFilter

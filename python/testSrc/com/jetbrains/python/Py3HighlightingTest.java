@@ -28,6 +28,66 @@ public class Py3HighlightingTest extends PyTestCase {
     doTest(true, false);
   }
 
+  // PY-48010
+  public void testSingleStarPatternOutsideSequencePattern() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testDoubleStarPatternOutsideMappingPattern() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testIllegalNumericLiteralPattern() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testIllegalMappingKeyPattern() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testIrrefutablePatternIsNotLastOrPatternAlternative() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testIrrefutablePatternIsNotInLastCaseClause() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testOrPatternAlternativesBindDifferentNames() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testAttributeNameRepeatedInClassPattern() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testPatternBindsNameMultipleTimes() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testDuplicatedSingleStarPattern() {
+    doTest(true, false);
+  }
+
+  // PY-48010
+  public void testDuplicatedDoubleStarPattern() {
+    doTest(true, false);
+  }
+
+  // EA-350132
+  public void testIncompleteMatchStatementWithoutCaseClauses() {
+    doTest(true, false);
+  }
+
   private void doTest(boolean checkWarnings, boolean checkInfos) {
     myFixture.testHighlighting(checkWarnings, checkInfos, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
   }

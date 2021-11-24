@@ -11,8 +11,8 @@ data class VerticalGaps(val top: Int = 0, val bottom: Int = 0) {
   }
 
   init {
-    checkNonNegative(::top)
-    checkNonNegative(::bottom)
+    checkNonNegative("top", top)
+    checkNonNegative("bottom", bottom)
   }
 
   val height: Int

@@ -7,8 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="intellij.java.indexing.impl" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
   </component>
 </module>

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
@@ -67,15 +68,20 @@ public final class Utils extends DataContextUtils {
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
     Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof EdtDataContext) {
-      return new PreCachedDataContext(component);
+      return newPreCachedDataContext(component);
     }
     else if (dataContext instanceof SimpleDataContext && component != null) {
-      PreCachedDataContext wrapped = new PreCachedDataContext(component);
+      DataContext wrapped = newPreCachedDataContext(component);
       LOG.assertTrue(wrapped.getData(CommonDataKeys.PROJECT) == dataContext.getData(CommonDataKeys.PROJECT));
       LOG.warn(new Throwable("Use DataManager.getDataContext(component) instead of SimpleDataContext for wrapping."));
       return wrapped;
     }
     return dataContext;
+  }
+
+  private static @NotNull DataContext newPreCachedDataContext(@Nullable Component component) {
+    if (Registry.is("actionSystem.update.actions.async.data-context2")) return new PreCachedDataContext2(component);
+    return new PreCachedDataContext(component);
   }
 
   public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
@@ -85,7 +91,9 @@ public final class Utils extends DataContextUtils {
 
   @ApiStatus.Internal
   public static @NotNull DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
-    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) : dataContext;
+    return dataContext instanceof PreCachedDataContext2 ? ((PreCachedDataContext2)dataContext).frozenCopy(missedKeys) :
+           dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) :
+           dataContext;
   }
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
@@ -94,8 +102,16 @@ public final class Utils extends DataContextUtils {
 
   @ApiStatus.Internal
   public static @Nullable Object getRawDataIfCached(@NotNull DataContext dataContext, @NotNull String dataId) {
-    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
+    return dataContext instanceof PreCachedDataContext2 ? ((PreCachedDataContext2)dataContext).getRawDataIfCached(dataId) :
+           dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
            dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached(dataId) : null;
+  }
+
+  static void clearAllCachesAndUpdates() {
+    ActionUpdater.cancelAllUpdates("clear-all-caches-and-updates requested");
+    ActionUpdater.waitForAllUpdatesToFinish();
+    PreCachedDataContext2.clearAllCaches();
+    PreCachedDataContext.clearAllCaches();
   }
 
   @ApiStatus.Internal
@@ -131,6 +147,8 @@ public final class Utils extends DataContextUtils {
 
   }
 
+  private static int ourExpandActionGroupImplEDTLoopLevel;
+
   private static @NotNull List<AnAction> expandActionGroupImpl(boolean isInModalContext,
                                                                @NotNull ActionGroup group,
                                                                @NotNull PresentationFactory presentationFactory,
@@ -156,11 +174,19 @@ public final class Utils extends DataContextUtils {
           return list;
         }
       }
+      int maxLoops = Math.max(2, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20));
+      if (ourExpandActionGroupImplEDTLoopLevel >= maxLoops) {
+        LOG.warn("Maximum number of recursive EDT loops reached (" + maxLoops +") at '" + place + "'");
+        if (onProcessed != null) onProcessed.run();
+        ActionUpdater.cancelAllUpdates("recursive EDT loops limit reached at '" + place + "'");
+        throw new ProcessCanceledException();
+      }
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = expander.expandActionGroupAsync(
         project, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
       try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
+        ourExpandActionGroupImplEDTLoopLevel++;
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -171,6 +197,9 @@ public final class Utils extends DataContextUtils {
             queue.dispatchEvent(event);
           }
         });
+      }
+      finally {
+        ourExpandActionGroupImplEDTLoopLevel--;
       }
       if (promise.isCancelled()) {
         // to avoid duplicate "Nothing Here" items in menu bar
@@ -297,6 +326,8 @@ public final class Utils extends DataContextUtils {
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
     component.removeAll();
+    final @Nullable Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
+    if (nativePeer != null) nativePeer.beginFill();
     final ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
@@ -317,6 +348,7 @@ public final class Utils extends DataContextUtils {
           JPopupMenu.Separator separator = createSeparator(text);
           component.add(separator);
           children.add(separator);
+          if (nativePeer != null) nativePeer.add(null);
         }
       }
       else if (action instanceof ActionGroup &&
@@ -324,11 +356,13 @@ public final class Utils extends DataContextUtils {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
+        if (nativePeer != null) nativePeer.add(menu.getScreenMenuPeer());
       }
       else {
         ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons);
         component.add(each);
         children.add(each);
+        if (nativePeer != null) nativePeer.add(each.getScreenMenuItemPeer());
       }
     }
 
@@ -440,6 +474,8 @@ public final class Utils extends DataContextUtils {
     return updater;
   }
 
+  private static boolean ourInUpdateSessionForInputEventEDTLoop;
+
   @ApiStatus.Internal
   public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull InputEvent inputEvent,
                                                               @NotNull DataContext dataContext,
@@ -448,6 +484,15 @@ public final class Utils extends DataContextUtils {
                                                               @NotNull PresentationFactory factory,
                                                               @Nullable Consumer<? super AnActionEvent> eventTracker,
                                                               @NotNull Function<? super UpdateSession, ? extends T> function) {
+    ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
+      LOG.error("Actions cannot be updated when write-action is running or pending");
+      return null;
+    }
+    if (ourInUpdateSessionForInputEventEDTLoop) {
+      LOG.warn("Recursive shortcut processing invocation is ignored");
+      return null;
+    }
     long start = System.currentTimeMillis();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
@@ -488,7 +533,6 @@ public final class Utils extends DataContextUtils {
             }
           };
           boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
-          ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
           ProgressIndicator indicator = parentIndicator == null ? new EmptyProgressIndicator() : new SensitiveProgressWrapper(parentIndicator);
           promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().computePrioritized(() -> {
@@ -506,11 +550,17 @@ public final class Utils extends DataContextUtils {
           promise.setError(e);
         }
       });
-      result = runLoopAndWaitForFuture(promise, null, false, () -> {
-        Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
-        if (runnable != null) runnable.run();
-        if (parentIndicator != null) parentIndicator.checkCanceled();
-      });
+      try {
+        ourInUpdateSessionForInputEventEDTLoop = true;
+        result = runLoopAndWaitForFuture(promise, null, false, () -> {
+          Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
+          if (runnable != null) runnable.run();
+          if (parentIndicator != null) parentIndicator.checkCanceled();
+        });
+      }
+      finally {
+        ourInUpdateSessionForInputEventEDTLoop = false;
+      }
     }
     else {
       result = function.apply(actionUpdater.asUpdateSession());
@@ -574,6 +624,7 @@ public final class Utils extends DataContextUtils {
         lastCancellation = ex;
         String reasonStr = ex.reason instanceof String ? (String)ex.reason : "";
         if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
+          if (expire.getAsBoolean()) return;
           continue;
         }
         throw ex;
@@ -581,7 +632,6 @@ public final class Utils extends DataContextUtils {
       catch (Throwable ex) {
         ExceptionUtil.rethrow(ex);
       }
-      if (expire.getAsBoolean()) return;
     }
     if (retries > 1) {
       LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -27,7 +28,7 @@ public class InspectionProfileWrapper {
    * I.e. given strategy (if any) receives {@link InspectionProfileWrapper} object that is going to be used so far and returns
    * {@link InspectionProfileWrapper} object that should be used later.
    */
-  public static final Key<Function<InspectionProfileImpl, InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
+  private static final Key<Function<? super InspectionProfile, ? extends InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
   public static final Key<Map<Class<? extends PsiElement>, Set<PsiElement>>> PSI_ELEMENTS_BEING_COMMITTED = Key.create("PsiElements that are being committed");
 
   // check whether some inspection got registered twice by accident. 've bit once.
@@ -80,5 +81,27 @@ public class InspectionProfileWrapper {
 
   public @NotNull InspectionProfile getInspectionProfile() {
     return myProfile;
+  }
+
+  public static void runWithCustomInspectionWrapper(@NotNull PsiFile file, @NotNull Function<? super InspectionProfile, ? extends InspectionProfileWrapper> customizer, @NotNull Runnable runnable) {
+    file.putUserData(CUSTOMIZATION_KEY, customizer);
+    try {
+      runnable.run();
+    }
+    finally {
+      file.putUserData(CUSTOMIZATION_KEY, null);
+    }
+  }
+
+  public static Function<? super InspectionProfile, ? extends InspectionProfileWrapper> getCustomInspectionProfileWrapper(@NotNull PsiFile file) {
+    return file.getUserData(CUSTOMIZATION_KEY);
+  }
+
+  /**
+   * @deprecated use more structured {@link #runWithCustomInspectionWrapper(PsiFile, Function, Runnable)} instead
+   */
+  @Deprecated
+  public static void setCustomInspectionProfileWrapperTemporarily(@NotNull PsiFile file, @NotNull Function<? super InspectionProfile, ? extends InspectionProfileWrapper> function) {
+    file.putUserData(CUSTOMIZATION_KEY, function);
   }
 }

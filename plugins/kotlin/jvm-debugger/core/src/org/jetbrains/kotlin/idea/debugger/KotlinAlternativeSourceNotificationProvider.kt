@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.debugger.ui.AlternativeSourceNotificationProvider
 import com.intellij.ide.util.ModuleRendererFactory
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -38,13 +39,13 @@ class KotlinAlternativeSourceNotificationProvider(private val myProject: Project
 
         val session = XDebuggerManager.getInstance(myProject).currentSession
         if (session == null) {
-            FILE_PROCESSED_KEY.set(file, null)
+            AlternativeSourceNotificationProvider.setFileProcessed(file, false)
             return null
         }
 
         val position = session.currentPosition
         if (file != position?.file) {
-            FILE_PROCESSED_KEY.set(file, null)
+            AlternativeSourceNotificationProvider.setFileProcessed(file, false)
             return null
         }
 
@@ -61,7 +62,7 @@ class KotlinAlternativeSourceNotificationProvider(private val myProject: Project
             myProject,
         ).filterTo(HashSet()) { it.name == fileName }
 
-        FILE_PROCESSED_KEY.set(file, true)
+        AlternativeSourceNotificationProvider.setFileProcessed(file, true)
 
         if (alternativeKtFiles.size <= 1) {
             return null
@@ -134,7 +135,7 @@ class KotlinAlternativeSourceNotificationProvider(private val myProject: Project
 
             createActionLabel(KotlinDebuggerCoreBundle.message("alternative.sources.notification.hide")) {
                 DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false
-                FILE_PROCESSED_KEY.set(file, null)
+                AlternativeSourceNotificationProvider.setFileProcessed(file, false)
                 val fileEditorManager = FileEditorManager.getInstance(project)
                 val editor = fileEditorManager.getSelectedEditor(file)
                 if (editor != null) {
@@ -146,9 +147,5 @@ class KotlinAlternativeSourceNotificationProvider(private val myProject: Project
 
     companion object {
         private val KEY = Key.create<EditorNotificationPanel>("KotlinAlternativeSource")
-
-        // FIXME: Share AlternativeSourceNotificationProvider.FILE_PROCESSED_KEY
-        @Suppress("UNCHECKED_CAST", "DEPRECATION")
-        private val FILE_PROCESSED_KEY = Key.findKeyByName("AlternativeSourceCheckDone") as Key<Boolean>
     }
 }

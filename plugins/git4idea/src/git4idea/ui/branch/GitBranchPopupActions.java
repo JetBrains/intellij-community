@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -1050,9 +1050,10 @@ public class GitBranchPopupActions {
   private static String getCurrentBranchPresentation(@NotNull Project project,
                                                      @NotNull Collection<? extends GitRepository> repositories,
                                                      boolean truncateBranchName) {
-    Set<String> currentBranches = map2Set(repositories,
-                                          repo -> notNull(repo.getCurrentBranchName(),
-                                                          getShortHash(Objects.requireNonNull(repo.getCurrentRevision()))));
+    Set<String> currentBranches = map2SetNotNull(repositories,
+                                                 repo -> repo.isFresh() ? repo.getCurrentBranchName() :
+                                                         notNull(repo.getCurrentBranchName(),
+                                                                 getShortHash(Objects.requireNonNull(repo.getCurrentRevision()))));
 
     if (currentBranches.size() == 1) {
       String fullBranchName = currentBranches.iterator().next();

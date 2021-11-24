@@ -161,7 +161,9 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
       fixes = basicIntention == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {basicIntention};
       highlightType = ProblemHighlightType.ERROR;
     }
-    addElementsForTag(tag, localizedMessage, highlightType, holder, isOnTheFly, fixes);
+    if (isOnTheFly || highlightType != ProblemHighlightType.INFORMATION) {
+      addElementsForTag(tag, localizedMessage, highlightType, holder, isOnTheFly, fixes);
+    }
   }
 
   private static void addElementsForTag(XmlTag tag,

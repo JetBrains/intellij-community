@@ -9,10 +9,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationBuilder;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -36,6 +33,7 @@ class B implements AnnotationBuilder {
   private final @Nls String message;
   @NotNull
   private final PsiElement myCurrentElement;
+  private final @NotNull Object myCurrentAnnotator;
   @NotNull
   private final HighlightSeverity severity;
   private TextRange range;
@@ -44,7 +42,7 @@ class B implements AnnotationBuilder {
   private GutterIconRenderer gutterIconRenderer;
   private ProblemGroup problemGroup;
   private TextAttributes enforcedAttributes;
-  private TextAttributesKey textAttributes;
+  private TextAttributesKey textAttributesKey;
   private ProblemHighlightType highlightType;
   private Boolean needsUpdateOnTyping;
   private @NlsContexts.Tooltip String tooltip;
@@ -52,11 +50,16 @@ class B implements AnnotationBuilder {
   private boolean created;
   private final Throwable myDebugCreationPlace;
 
-  B(@NotNull AnnotationHolderImpl holder, @NotNull HighlightSeverity severity, @Nls String message, @NotNull PsiElement currentElement) {
+  B(@NotNull AnnotationHolderImpl holder,
+    @NotNull HighlightSeverity severity,
+    @Nls String message,
+    @NotNull PsiElement currentElement,
+    @NotNull Object currentAnnotator) {
     myHolder = holder;
     this.severity = severity;
     this.message = message;
     myCurrentElement = currentElement;
+    myCurrentAnnotator = currentAnnotator;
     holder.annotationBuilderCreated(this);
 
     Application app = ApplicationManager.getApplication();
@@ -217,8 +220,8 @@ class B implements AnnotationBuilder {
 
   @Override
   public @NotNull AnnotationBuilder textAttributes(@NotNull TextAttributesKey textAttributes) {
-    assertNotSet(this.textAttributes, "textAttributes");
-    this.textAttributes = textAttributes;
+    assertNotSet(this.textAttributesKey, "textAttributes");
+    this.textAttributesKey = textAttributes;
     return this;
   }
 
@@ -268,8 +271,8 @@ class B implements AnnotationBuilder {
     if (highlightType != null) {
       annotation.setHighlightType(highlightType);
     }
-    if (textAttributes != null) {
-      annotation.setTextAttributes(textAttributes);
+    if (textAttributesKey != null) {
+      annotation.setTextAttributes(textAttributesKey);
     }
     if (enforcedAttributes != null) {
       annotation.setEnforcedTextAttributes(enforcedAttributes);
@@ -329,7 +332,8 @@ class B implements AnnotationBuilder {
   public String toString() {
     return "Builder{" +
            "message='" + message + '\'' +
-           ", myCurrentElement=" + myCurrentElement +
+           ", myCurrentElement=" + myCurrentElement + " (" + myCurrentElement.getClass() + ")" +
+           ", myCurrentAnnotator=" + myCurrentAnnotator +
            ", severity=" + severity +
            ", range=" + (range == null ? "(implicit)"+myCurrentElement.getTextRange() : range) +
            omitIfEmpty(afterEndOfLine, "afterEndOfLine") +
@@ -337,7 +341,7 @@ class B implements AnnotationBuilder {
            omitIfEmpty(gutterIconRenderer, "gutterIconRenderer") +
            omitIfEmpty(problemGroup, "problemGroup") +
            omitIfEmpty(enforcedAttributes, "enforcedAttributes") +
-           omitIfEmpty(textAttributes, "textAttributes") +
+           omitIfEmpty(textAttributesKey, "textAttributesKey") +
            omitIfEmpty(highlightType, "highlightType") +
            omitIfEmpty(needsUpdateOnTyping, "needsUpdateOnTyping") +
            omitIfEmpty(tooltip, "tooltip") +
@@ -346,7 +350,6 @@ class B implements AnnotationBuilder {
   }
 
   @Override
-  @SuppressWarnings("removal")
   public Annotation createAnnotation() {
     PluginException.reportDeprecatedUsage("AnnotationBuilder#createAnnotation", "Use `#create()` instead");
     if (range == null) {
@@ -363,8 +366,8 @@ class B implements AnnotationBuilder {
     if (highlightType != null) {
       annotation.setHighlightType(highlightType);
     }
-    if (textAttributes != null) {
-      annotation.setTextAttributes(textAttributes);
+    if (textAttributesKey != null) {
+      annotation.setTextAttributes(textAttributesKey);
     }
     if (enforcedAttributes != null) {
       annotation.setEnforcedTextAttributes(enforcedAttributes);

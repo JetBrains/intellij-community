@@ -238,6 +238,11 @@ public abstract class DebuggerSupport {
     public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
       return false;
     }
+
+    @Override
+    public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+      return true;
+    }
   };
 
   @NotNull

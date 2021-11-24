@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
 
   @Override
   public boolean isApplicableFor(@NotNull Project project, @NotNull VirtualFile file) {
-    if (file.getFileType() != JavaClassFileType.INSTANCE) {
+    if (!FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile != null) {
         return psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE);

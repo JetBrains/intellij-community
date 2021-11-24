@@ -1,5 +1,5 @@
 // INTENTION_TEXT: "Add '@Throws' annotation"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class FooException : Exception()
 

@@ -368,6 +368,11 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/InitBlockInObject.kt");
     }
 
+    @TestMetadata("InnerClassInnerMethod.kt")
+    public void testInnerClassInnerMethod() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InnerClassInnerMethod.kt");
+    }
+
     @TestMetadata("LocalFunWithBody.kt")
     public void testLocalFunWithBody() throws Exception {
         runTest("testData/codeInsight/outOfBlock/LocalFunWithBody.kt");

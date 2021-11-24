@@ -54,6 +54,6 @@ public class RepositoryLibrarySupportInModuleConfigurable extends FrameworkSuppo
                          @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider) {
     final RepositoryLibrarySupport librarySupport = new RepositoryLibrarySupport(module.getProject(), libraryDescription, model);
-    librarySupport.addSupport(module, rootModel, modifiableModelsProvider);
+    librarySupport.addSupport(module, rootModel, modifiableModelsProvider, null);
   }
 }

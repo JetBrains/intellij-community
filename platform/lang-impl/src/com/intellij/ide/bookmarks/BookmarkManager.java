@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.bookmark.BookmarkType;
@@ -11,6 +11,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -49,6 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "BookmarkManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class BookmarkManager implements PersistentStateComponent<Element> {
+  private final static Logger LOG = Logger.getInstance(BookmarkManager.class);
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private final MultiMap<VirtualFile, Bookmark> myBookmarks = MultiMap.createConcurrentSet();
   private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks = new HashMap<>();
@@ -305,6 +307,11 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
         }
       }, ModalityState.NON_MODAL, myProject.getDisposed());
     });
+  }
+
+  @Override
+  public void noStateLoaded() {
+    LOG.info("no state loaded for old bookmarks");
   }
 
   @TestOnly

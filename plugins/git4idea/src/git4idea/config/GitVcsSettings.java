@@ -111,14 +111,6 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setPushAutoUpdate(value);
   }
 
-  public boolean shouldUpdateAllRootsIfPushRejected() {
-    return getState().isPushUpdateAllRoots();
-  }
-
-  public void setUpdateAllRootsIfPushRejected(boolean value) {
-    getState().setPushUpdateAllRoots(value);
-  }
-
   @Override
   @NotNull
   public Value getSyncSetting() {

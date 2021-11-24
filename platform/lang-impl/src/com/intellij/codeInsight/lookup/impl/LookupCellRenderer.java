@@ -269,7 +269,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
                                 Color foreground,
                                 int allowedWidth,
                                 boolean nonFocusedSelection, FontMetrics fontMetrics) {
-    int style = getStyle(false, presentation.isStrikeout(), false, false);
+    int style = getStyle(presentation.isStrikeout(), false, false);
 
     for (LookupElementPresentation.TextFragment fragment : presentation.getTailFragments()) {
       if (allowedWidth < 0) {
@@ -345,7 +345,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
     Font customItemFont = getCustomFont(item, bold, CUSTOM_NAME_FONT);
     myNameComponent.setFont(customItemFont != null ? customItemFont : bold ? myBoldFont : myNormalFont);
-    int style = getStyle(bold, presentation.isStrikeout(), presentation.isItemTextUnderlined(), presentation.isItemTextItalic());
+    int style = getStyle(presentation.isStrikeout(), presentation.isItemTextUnderlined(), presentation.isItemTextItalic());
 
     final FontMetrics metrics = getRealFontMetrics(item, bold, CUSTOM_NAME_FONT);
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
@@ -365,8 +365,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   @SimpleTextAttributes.StyleAttributeConstant
-  private static int getStyle(boolean bold, boolean strikeout, boolean underlined, boolean italic) {
-    int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
+  private static int getStyle(boolean strikeout, boolean underlined, boolean italic) {
+    int style = SimpleTextAttributes.STYLE_PLAIN;
     if (strikeout) {
       style |= SimpleTextAttributes.STYLE_STRIKEOUT;
     }

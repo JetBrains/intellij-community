@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
@@ -103,8 +104,15 @@ public class MavenProjectsManagerWatcher {
    */
   public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
-    Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
-    scheduleReadingTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
+    // display all import activities using the same build progress
+    MavenSyncConsole.startTransaction(myProject);
+    try {
+      Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
+      scheduleReadingTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
+    }
+    finally {
+      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+    }
     return promise;
   }
 
@@ -113,15 +121,22 @@ public class MavenProjectsManagerWatcher {
                                       boolean force,
                                       final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
-    Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
-    if (LOG.isDebugEnabled()) {
-      String withForceOptionMessage = force ? " with force option" : "";
-      LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
-                ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
-    }
+    // display all import activities using the same build progress
+    MavenSyncConsole.startTransaction(myProject);
+    try {
+      Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
+      if (LOG.isDebugEnabled()) {
+        String withForceOptionMessage = force ? " with force option" : "";
+        LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
+                  ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
+      }
 
-    scheduleReadingTask(new MavenProjectsProcessorReadingTask(
-      filesToUpdate, filesToDelete, force, myProjectsTree, myGeneralSettings, onCompletion));
+      scheduleReadingTask(new MavenProjectsProcessorReadingTask(
+        filesToUpdate, filesToDelete, force, myProjectsTree, myGeneralSettings, onCompletion));
+    }
+    finally {
+      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+    }
     return promise;
   }
 
@@ -142,7 +157,9 @@ public class MavenProjectsManagerWatcher {
 
       if (forceImportAndResolve) {
         MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        projectsManager.scheduleImportAndResolve().onSuccess(modules -> promise.setResult(null));
+        projectsManager.scheduleImportAndResolve()
+          .onSuccess(modules -> promise.setResult(null))
+          .onError(t -> promise.setError(t));
       }
       else {
         promise.setResult(null);

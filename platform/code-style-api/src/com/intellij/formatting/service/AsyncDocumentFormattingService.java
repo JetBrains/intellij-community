@@ -319,6 +319,17 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
         FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
       }
     }
+
+    @Override
+    public void onError(@NotNull @NlsContexts.NotificationTitle String title,
+                        @NotNull @NlsContexts.NotificationContent String message,
+                        int offset) {
+      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myTaskSemaphore.release();
+        FormattingNotificationService.getInstance(myContext.getProject())
+                                     .reportErrorAndNavigate(getNotificationGroupId(), title, message, myContext, offset);
+      }
+    }
   }
 
 

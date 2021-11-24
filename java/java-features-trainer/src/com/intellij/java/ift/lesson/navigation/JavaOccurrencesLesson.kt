@@ -102,4 +102,9 @@ class JavaOccurrencesLesson
     }
     text(JavaLessonsBundle.message("java.find.occurrences.note.about.cyclic", action("FindNext"), action("FindPrevious")))
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(JavaLessonsBundle.message("java.find.help.link"),
+         LessonUtil.getHelpLink("finding-and-replacing-text-in-file.html")),
+  )
 }

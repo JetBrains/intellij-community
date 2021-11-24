@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'flatMap{}.filter{}.mapIndexedTo(){}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().flatMap{}.filter{}.mapIndexedTo(){}'"
 fun foo(list: List<String>, target: MutableCollection<Int>) {

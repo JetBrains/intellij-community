@@ -13,6 +13,7 @@ interface ScriptTemplatesProvider {
     // for resolving ambiguities
     val id: String
 
+    @Suppress("InvalidBundleOrProperty") //workaround to avoid false-positive: KTIJ-19892
     @Deprecated("Parameter isn't used for resolving priorities anymore. " +
                 "com.intellij.openapi.extensions.LoadingOrder constants can be used to order providers when registered from Intellij plugin.",
                 ReplaceWith("0"))

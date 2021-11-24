@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun main() {
     MyClass { _<caret>: String -> 0 }

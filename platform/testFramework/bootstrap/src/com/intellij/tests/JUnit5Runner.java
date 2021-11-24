@@ -18,6 +18,7 @@ import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.runner.Description;
@@ -32,17 +33,21 @@ import java.util.*;
 
 public class JUnit5Runner {
   public static void main(String[] args) throws ClassNotFoundException {
-    Class<?> aClass = Class.forName(args[0], true, JUnit5Runner.class.getClassLoader());
-    Launcher launcher = LauncherFactory.create();
-    DiscoverySelector selector;
-    if (args.length == 1) {
-      selector = DiscoverySelectors.selectClass(aClass);
+    try {
+      Class<?> aClass = Class.forName(args[0], true, JUnit5Runner.class.getClassLoader());
+      Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());
+      DiscoverySelector selector;
+      if (args.length == 1) {
+        selector = DiscoverySelectors.selectClass(aClass);
+      }
+      else {
+        selector = DiscoverySelectors.selectMethod(aClass, args[1]);
+      }
+      launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), new TCExecutionListener());
     }
-    else {
-      selector = DiscoverySelectors.selectMethod(aClass, args[1]);
+    finally {
+      System.exit(0);
     }
-    launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), new TCExecutionListener());
-    System.exit(0);
   }
 
   public static JUnit4TestAdapterCache createJUnit4TestAdapterCache() {
@@ -82,13 +87,13 @@ public class JUnit5Runner {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static class TCExecutionListener implements TestExecutionListener {
+  static class TCExecutionListener implements TestExecutionListener {
     private final PrintStream myPrintStream;
     private TestPlan myTestPlan;
     private long myCurrentTestStart;
     private int myFinishCount = 0;
     
-    private TCExecutionListener() {
+    TCExecutionListener() {
       myPrintStream = System.out;
       myPrintStream.println("##teamcity[enteredTheMatrix]");
     }
@@ -135,6 +140,9 @@ public class JUnit5Runner {
       if (throwable != null && IgnoreException.isIgnoringThrowable(throwable)) {
         String message = throwable.getMessage();
         executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, message != null ? message : "");
+      }
+      else if (Retries.NUMBER > 0 && testIdentifier.isTest() && Retries.getAndClearSuccessfulStatus(testIdentifier)) {
+        executionFinished(testIdentifier, TestExecutionResult.Status.SUCCESSFUL, null, null);
       }
       else {
         executionFinished(testIdentifier, testExecutionResult.getStatus(), throwable, null);

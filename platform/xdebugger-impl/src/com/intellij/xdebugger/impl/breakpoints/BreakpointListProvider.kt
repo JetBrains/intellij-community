@@ -9,13 +9,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SizedIcon
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.PlatformUtils
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
@@ -30,13 +28,8 @@ import org.jetbrains.annotations.PropertyKey
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JTree
-import kotlin.Comparator
 
 internal class BreakpointListProvider(private val project: Project) : BookmarksListProvider {
-  init {
-    if (PlatformUtils.isDataGrip()) throw ExtensionNotApplicableException.INSTANCE
-  }
-
   @Suppress("SpellCheckingInspection")
   @PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE)
   private val rootNameKey = "xbreakpoints.dialog.title"
@@ -59,8 +52,8 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     val support = XBreakpointUtil.getDebuggerSupport(project, breakpoint) ?: return
     val bounds = (parent as? JTree)?.run { getPathBounds(leadSelectionPath) }
     val visible = parent.visibleRect.apply {
-      x = bounds?.run { x + width }?.coerceAtMost(x + width)?.coerceAtLeast(x) ?: (x + width / 2)
-      y = bounds?.run { y + height / 2 }?.coerceAtMost(y + height)?.coerceAtLeast(y) ?: (y + height / 2)
+      x = bounds?.run { x + width }?.coerceIn(x, x + width) ?: (x + width / 2)
+      y = bounds?.run { y + height / 2 }?.coerceIn(y, y + height) ?: (y + height / 2)
     }
     support.editBreakpointAction.editBreakpoint(project, parent, visible.location, breakpoint)
   }

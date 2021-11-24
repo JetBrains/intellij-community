@@ -48,7 +48,7 @@ class KotlinQuickFixIntentionPreviewTest : KotlinLightCodeInsightFixtureTestCase
             """
             data class X(val x: Int, val y: Int)
 
-            val lambda : (X) -> Unit = { (x1, y) -> println(x1+y) }""".trimIndent()
+            val lambda : (X) -> Unit = { (x1, y) -> println(x1 + y) }""".trimIndent()
         )
     }
 

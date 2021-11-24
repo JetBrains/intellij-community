@@ -3,26 +3,19 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.graph.DFSTBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 // if otherwise not specified, `module` in terms of v2 plugin model
 @ApiStatus.Internal
 class PluginSet internal constructor(
+  val moduleGraph: ModuleGraph,
   @JvmField val allPlugins: List<IdeaPluginDescriptorImpl>,
   @JvmField val enabledPlugins: List<IdeaPluginDescriptorImpl>,
   private val enabledModuleMap: Map<String, IdeaPluginDescriptorImpl>,
   private val enabledPluginAndV1ModuleMap: Map<PluginId, IdeaPluginDescriptorImpl>,
   private val enabledModules: List<IdeaPluginDescriptorImpl>,
-  @JvmField val moduleToDirectDependencies: Map<IdeaPluginDescriptorImpl, Array<IdeaPluginDescriptorImpl>>
 ) {
-  companion object {
-    fun getTopologicalComparator(allPlugins: List<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
-      val graph = CachingSemiGraph.createModuleGraph(allPlugins)
-      return CachingSemiGraph.getTopologicalComparator(DFSTBuilder(graph.nodes.toTypedArray(), null, true, graph))
-    }
-  }
 
   fun getRawListOfEnabledModules() = enabledModules
 
@@ -33,6 +26,10 @@ class PluginSet internal constructor(
 
   @TestOnly
   fun getUnsortedEnabledModules(): Collection<IdeaPluginDescriptorImpl> = ArrayList(enabledModuleMap.values)
+
+  fun isPluginInstalled(id: PluginId) = findInstalledPlugin(id) != null
+
+  fun findInstalledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = allPlugins.find { it.pluginId == id }
 
   fun isPluginEnabled(id: PluginId) = enabledPluginAndV1ModuleMap.containsKey(id)
 

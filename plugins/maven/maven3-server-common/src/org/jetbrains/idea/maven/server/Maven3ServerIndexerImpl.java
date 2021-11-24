@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import gnu.trove.TIntObjectHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -17,9 +16,9 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenIndexId;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexUtils;
@@ -43,8 +42,6 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   private final IndexUpdater myUpdater;
   private final ArtifactContextProducer myArtifactContextProducer;
 
-  private final TIntObjectHashMap<IndexingContext> myIndices = new TIntObjectHashMap<IndexingContext>();
-
   public Maven3ServerIndexerImpl(Maven3ServerEmbedder embedder) {
     myEmbedder = embedder;
 
@@ -61,36 +58,11 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public int createIndex(@NotNull String indexId,
-                         @NotNull String repositoryId,
-                         @Nullable File file,
-                         @Nullable String url,
-                         @NotNull File indexDir, MavenToken token) throws MavenServerIndexerException {
+  public void releaseIndex(MavenIndexId mavenIndexId, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
-
-      IndexingContext context = myIndexer.addIndexingContextForced(indexId,
-                                                                   repositoryId,
-                                                                   file,
-                                                                   indexDir,
-                                                                   url,
-                                                                   null, // repo update url
-                                                                   Arrays.asList(new TinyArtifactInfoIndexCreator(),
-                                                                                 new JarFileContentsIndexCreator()));
-      int id = System.identityHashCode(context);
-      myIndices.put(id, context);
-      return id;
-    }
-    catch (Exception e) {
-      throw new MavenServerIndexerException(wrapException(e));
-    }
-  }
-
-  @Override
-  public void releaseIndex(int id, MavenToken token) throws MavenServerIndexerException {
-    MavenServerUtil.checkToken(token);
-    try {
-      myIndexer.removeIndexingContext(getIndex(id), false);
+      IndexingContext context = myIndexer.getIndexingContexts().get(mavenIndexId.indexId);
+      if (context != null) myIndexer.removeIndexingContext(context, false);
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));
@@ -98,10 +70,22 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @NotNull
-  private IndexingContext getIndex(int id) {
-    IndexingContext index = myIndices.get(id);
-    if (index == null) throw new RuntimeException("Index not found for id: " + id);
-    return index;
+  private IndexingContext getIndex(MavenIndexId mavenIndexId) throws IOException {
+    IndexingContext context = myIndexer.getIndexingContexts().get(mavenIndexId.indexId);
+    if (context == null) {
+      synchronized (myIndexer) {
+        context = myIndexer.getIndexingContexts().get(mavenIndexId.indexId);
+        if (context == null) {
+          context = myIndexer.addIndexingContextForced(
+            mavenIndexId.indexId, mavenIndexId.repositoryId,
+            mavenIndexId.repositoryFilePath != null ? new File(mavenIndexId.repositoryFilePath) : null,
+            new File(mavenIndexId.indexDirPath), mavenIndexId.url, null,
+            Arrays.asList(new TinyArtifactInfoIndexCreator(), new JarFileContentsIndexCreator())
+          );
+        }
+      }
+    }
+    return context;
   }
 
   @Override
@@ -128,74 +112,76 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public void updateIndex(int id, MavenServerSettings settings, final MavenServerProgressIndicator indicator, MavenToken token)
+  public void updateIndex(MavenIndexId mavenIndexId, MavenServerSettings settings,
+                          final MavenServerProgressIndicator indicator, MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
-    final IndexingContext index = getIndex(id);
-
     try {
-      File repository = index.getRepository();
-      if (repository != null) { // is local repository
-        if (repository.exists()) {
-          indicator.setIndeterminate(true);
+      final IndexingContext index = getIndex(mavenIndexId);
+      synchronized (index) {
+        File repository = index.getRepository();
+        if (repository != null) { // is local repository
+          if (repository.exists()) {
+            indicator.setIndeterminate(true);
+            try {
+              myIndexer.scan(index, new MyScanningListener(indicator), false);
+            }
+            finally {
+              indicator.setIndeterminate(false);
+            }
+          }
+        }
+        else {
+          final Maven3ServerEmbedder embedder = createEmbedder(settings);
+
+          MavenExecutionRequest r =
+            embedder.createRequest(null, null, null, null);
+
+          final IndexUpdateRequest request = new IndexUpdateRequest(index);
+
           try {
-            myIndexer.scan(index, new MyScanningListener(indicator), false);
+            embedder.executeWithMavenSession(r, new Runnable() {
+              @Override
+              public void run() {
+                request.setResourceFetcher(new Maven3ServerIndexFetcher(index.getRepositoryId(),
+                                                                        index.getRepositoryUrl(),
+                                                                        embedder.getComponent(WagonManager.class),
+                                                                        embedder.getComponent(RepositorySystem.class),
+                                                                        new WagonTransferListenerAdapter(indicator) {
+                                                                          @Override
+                                                                          protected void downloadProgress(long downloaded, long total) {
+                                                                            super.downloadProgress(downloaded, total);
+                                                                            try {
+                                                                              myIndicator.setFraction(((double)downloaded) / total);
+                                                                            }
+                                                                            catch (RemoteException e) {
+                                                                              throw new RuntimeRemoteException(e);
+                                                                            }
+                                                                          }
+
+                                                                          @Override
+                                                                          public void transferCompleted(TransferEvent event) {
+                                                                            super.transferCompleted(event);
+                                                                            try {
+                                                                              myIndicator.setText2("Processing indices...");
+                                                                            }
+                                                                            catch (RemoteException e) {
+                                                                              throw new RuntimeRemoteException(e);
+                                                                            }
+                                                                          }
+                                                                        }));
+                try {
+                  myUpdater.fetchAndUpdateIndex(request);
+                }
+                catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+              }
+            });
           }
           finally {
-            indicator.setIndeterminate(false);
+            embedder.release(token);
           }
-        }
-      }
-      else {
-        final Maven3ServerEmbedder embedder = createEmbedder(settings);
-
-        MavenExecutionRequest r =
-          embedder.createRequest(null, null, null, null);
-
-        final IndexUpdateRequest request = new IndexUpdateRequest(index);
-
-        try {
-          embedder.executeWithMavenSession(r, new Runnable() {
-            @Override
-            public void run() {
-              request.setResourceFetcher(new Maven3ServerIndexFetcher(index.getRepositoryId(),
-                                                                      index.getRepositoryUrl(),
-                                                                      embedder.getComponent(WagonManager.class),
-                                                                      embedder.getComponent(RepositorySystem.class),
-                                                                      new WagonTransferListenerAdapter(indicator) {
-                                                                        @Override
-                                                                        protected void downloadProgress(long downloaded, long total) {
-                                                                          super.downloadProgress(downloaded, total);
-                                                                          try {
-                                                                            myIndicator.setFraction(((double)downloaded) / total);
-                                                                          }
-                                                                          catch (RemoteException e) {
-                                                                            throw new RuntimeRemoteException(e);
-                                                                          }
-                                                                        }
-
-                                                                        @Override
-                                                                        public void transferCompleted(TransferEvent event) {
-                                                                          super.transferCompleted(event);
-                                                                          try {
-                                                                            myIndicator.setText2("Processing indices...");
-                                                                          }
-                                                                          catch (RemoteException e) {
-                                                                            throw new RuntimeRemoteException(e);
-                                                                          }
-                                                                        }
-                                                                      }));
-              try {
-                myUpdater.fetchAndUpdateIndex(request);
-              }
-              catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-            }
-          });
-        }
-        finally {
-          embedder.release(token);
         }
       }
     }
@@ -214,40 +200,45 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
 
   @Override
-  public List<IndexedMavenId> processArtifacts(int indexId, int startFrom, MavenToken token) throws MavenServerIndexerException {
+  public List<IndexedMavenId> processArtifacts(MavenIndexId indexId, int startFrom, MavenToken token)
+    throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       final int CHUNK_SIZE = 10000;
 
-      IndexReader r = getIndex(indexId).getIndexReader();
-      int total = r.numDocs();
+      IndexingContext context = getIndex(indexId);
+      synchronized (context) {
+        IndexReader r = context.getIndexReader();
+        int total = r.numDocs();
 
-      List<IndexedMavenId> result = new ArrayList<IndexedMavenId>(Math.min(CHUNK_SIZE, total));
-      for (int i = startFrom; i < total; i++) {
-        if (r.isDeleted(i)) continue;
+        List<IndexedMavenId> result = new ArrayList<IndexedMavenId>(Math.min(CHUNK_SIZE, total));
+        for (int i = startFrom; i < total; i++) {
+          if (r.isDeleted(i)) continue;
 
-        Document doc = r.document(i);
-        String uinfo = doc.get(ArtifactInfo.UINFO);
-        if (uinfo == null) continue;
-        String[] uInfoParts = uinfo.split("\\|");
-        if (uInfoParts.length < 3) continue;
-        String groupId = uInfoParts[0];
-        String artifactId = uInfoParts[1];
-        String version = uInfoParts[2];
+          Document doc = r.document(i);
+          String uinfo = doc.get(ArtifactInfo.UINFO);
+          if (uinfo == null) continue;
+          String[] uInfoParts = uinfo.split("\\|");
+          if (uInfoParts.length < 3) continue;
+          String groupId = uInfoParts[0];
+          String artifactId = uInfoParts[1];
+          String version = uInfoParts[2];
 
-        String packaging = doc.get(ArtifactInfo.PACKAGING);
-        String description = doc.get(ArtifactInfo.DESCRIPTION);
+          String packaging = doc.get(ArtifactInfo.PACKAGING);
+          String description = doc.get(ArtifactInfo.DESCRIPTION);
 
-        result.add(new IndexedMavenId(groupId, artifactId, version, packaging, description));
+          result.add(new IndexedMavenId(groupId, artifactId, version, packaging, description));
 
-        if (result.size() == CHUNK_SIZE) {
+          if (result.size() == CHUNK_SIZE) {
+            return result;
+          }
+        }
+
+        if (result.isEmpty()) {
+          return null;
+        } else {
           return result;
         }
-      }
-      if (result.isEmpty()) {
-        return null;
-      } else {
-        return result;
       }
     }
     catch (Exception e) {
@@ -256,17 +247,19 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public IndexedMavenId addArtifact(int indexId, File artifactFile, MavenToken token) throws MavenServerIndexerException {
+  public IndexedMavenId addArtifact(MavenIndexId indexId, File artifactFile, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext index = getIndex(indexId);
-      ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
-      if (artifactContext == null) return null;
+      synchronized (index) {
+        ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
+        if (artifactContext == null) return null;
 
-      addArtifact(myIndexer, index, artifactContext);
+        addArtifact(myIndexer, index, artifactContext);
 
-      ArtifactInfo a = artifactContext.getArtifactInfo();
-      return new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
+        ArtifactInfo a = artifactContext.getArtifactInfo();
+        return new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
+      }
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));
@@ -284,12 +277,11 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
 
   @Override
-  public Set<MavenArtifactInfo> search(int indexId, String pattern, int maxResult, MavenToken token)
+  public Set<MavenArtifactInfo> search(MavenIndexId indexId, String pattern, int maxResult, MavenToken token)
     throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext index = getIndex(indexId);
-
       TopDocs docs = null;
       try {
         BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
@@ -405,7 +397,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   private static class TinyArtifactInfoIndexCreator extends MinimalArtifactInfoIndexCreator {
 
     private static final IndexerField FLD_PACKAGING_NOT_INDEXED =
-      new IndexerField(MAVEN.PACKAGING, IndexerFieldVersion.V1, ArtifactInfo.PACKAGING,"Artifact Packaging (not indexed, stored)",
+      new IndexerField(MAVEN.PACKAGING, IndexerFieldVersion.V1, ArtifactInfo.PACKAGING, "Artifact Packaging (not indexed, stored)",
                        Field.Store.YES, Field.Index.NO);
 
     private static final IndexerField FLD_DESCRIPTION_NOT_INDEXED =

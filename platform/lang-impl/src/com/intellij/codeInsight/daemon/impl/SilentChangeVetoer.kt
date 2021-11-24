@@ -5,7 +5,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface SilentChangeVetoer {
   companion object {
     @JvmField

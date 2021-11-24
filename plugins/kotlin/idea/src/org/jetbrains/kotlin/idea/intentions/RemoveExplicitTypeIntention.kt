@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -59,6 +61,7 @@ class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclar
             ) return null
 
             val initializer = (element as? KtDeclarationWithInitializer)?.initializer
+            if (element is KtProperty && element.isVar && initializer?.node?.elementType == KtNodeTypes.NULL) return null
 
             if (ExplicitApiDeclarationChecker.publicReturnTypeShouldBePresentInApiMode(
                     element,

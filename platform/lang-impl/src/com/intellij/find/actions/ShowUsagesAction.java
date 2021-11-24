@@ -103,7 +103,7 @@ import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocat
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
-public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
+public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore, UpdateInBackground {
   public static final String ID = "ShowUsages";
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
@@ -384,6 +384,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project);
+    UsageViewStatisticsCollector.logSearchStarted(project);
 
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
@@ -788,23 +789,25 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     toolbarComponent.setOpaque(false);
     northPanel.add(toolbarComponent, gc.next());
 
-    ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo(project, false, false, actionHandler.getSelectedScope().getDisplayName());
-    var scopeComboBox = scopeChooserCombo.getComboBox();
-    scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
-    scopeComboBox.addItemListener(event -> {
-      if (event.getStateChange() == ItemEvent.SELECTED) {
-        SearchScope scope = scopeChooserCombo.getSelectedScope();
-        if (scope != null) {
-          UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope,
-                                                       actionHandler.getTargetClass());
-          cancel(popupRef.get());
-          showElementUsages(parameters, actionHandler.withScope(scope));
-        }
-      }
-    });
-
+    ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo();
+    scopeChooserCombo.initialize(project, false, false, actionHandler.getSelectedScope().getDisplayName(), null)
+      .onSuccess(__ -> {
+        var scopeComboBox = scopeChooserCombo.getComboBox();
+        scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
+        scopeComboBox.addItemListener(event -> {
+          if (event.getStateChange() == ItemEvent.SELECTED) {
+            SearchScope scope = scopeChooserCombo.getSelectedScope();
+            if (scope != null) {
+              UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope,
+                                                           actionHandler.getTargetClass());
+              cancel(popupRef.get());
+              showElementUsages(parameters, actionHandler.withScope(scope));
+            }
+          }
+        });
+        scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
+      });
     Disposer.register(contentDisposable, scopeChooserCombo);
-    scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
     scopeChooserCombo.setButtonVisible(false);
     northPanel.add(scopeChooserCombo, gc.next());
 
@@ -876,7 +879,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         registerKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), __ -> itemChoseCallback.run());
 
       Runnable updatePreviewRunnable = () -> {
-        if (Disposer.isDisposed(popupRef.get())) return;
+        if (popupRef.get().isDisposed()) return;
         int[] selectedRows = table.getSelectedRows();
         final List<Promise<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
         String file = null;
@@ -914,7 +917,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       Alarm previewUpdater = new Alarm(contentDisposable);
 
       table.getSelectionModel().addListSelectionListener(e -> {
-        if (!e.getValueIsAdjusting() && !Disposer.isDisposed(previewUpdater)) {
+        if (!e.getValueIsAdjusting() && !previewUpdater.isDisposed()) {
           previewUpdater.addRequest(updatePreviewRunnable, 50);
         }
       });
@@ -984,6 +987,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
+          UsageViewStatisticsCollector.logOpenInFindToolWindow(project);
           hideHints();
           cancel(popupRef.get());
           findUsagesRunnable.run();

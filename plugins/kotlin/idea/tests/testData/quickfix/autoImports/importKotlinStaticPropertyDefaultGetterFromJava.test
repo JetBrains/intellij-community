@@ -2,7 +2,7 @@
 // "Import static method 'foo.Bar.getTestValue'" "true"
 // ERROR: Unresolved reference: getTestValue
 // ACTION: Create method 'foobar'
-// WITH_RUNTIME
+// WITH_STDLIB
 package bar;
 
 public class Foo {
@@ -24,7 +24,7 @@ object Bar {
 // "Import static method 'foo.Bar.getTestValue'" "true"
 // ERROR: Unresolved reference: getTestValue
 // ACTION: Create method 'foobar'
-// WITH_RUNTIME
+// WITH_STDLIB
 package bar;
 
 import static foo.Bar.getTestValue;

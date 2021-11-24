@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.platform.*
 
-object CommonIdePlatformKind : IdePlatformKind<CommonIdePlatformKind>() {
+object CommonIdePlatformKind : IdePlatformKind() {
     override fun supportsTargetPlatform(platform: TargetPlatform) = platform.isCommon()
 
     override fun platformByCompilerArguments(arguments: CommonCompilerArguments): TargetPlatform? {
@@ -46,7 +46,7 @@ object CommonIdePlatformKind : IdePlatformKind<CommonIdePlatformKind>() {
     }
 }
 
-val IdePlatformKind<*>?.isCommon
+val IdePlatformKind?.isCommon
     get() = this is CommonIdePlatformKind
 
 @Deprecated(

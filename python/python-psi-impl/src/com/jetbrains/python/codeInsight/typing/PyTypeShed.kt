@@ -43,6 +43,7 @@ object PyTypeShed {
     "_bootlocale" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON39),
     "_py_abc" to (LanguageLevel.PYTHON37 to null),
     "contextvars" to (LanguageLevel.PYTHON37 to null),
+    "dataclasses" to (LanguageLevel.PYTHON37 to null),
     "formatter" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
     "graphlib" to (LanguageLevel.PYTHON39 to null),
     "importlib.metadata" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now

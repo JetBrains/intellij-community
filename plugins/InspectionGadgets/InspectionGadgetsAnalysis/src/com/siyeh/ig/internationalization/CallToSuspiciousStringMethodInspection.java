@@ -1,29 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -67,35 +54,29 @@ public class CallToSuspiciousStringMethodInspection extends BaseInspection {
 
   private static class CallToSuspiciousStringMethodVisitor extends BaseInspectionVisitor {
 
+    private static final CallMatcher SUSPICIOUS_METHODS = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING,
+                                                                                   HardcodedMethodConstants.EQUALS,
+                                                                                   HardcodedMethodConstants.EQUALS_IGNORE_CASE,
+                                                                                   HardcodedMethodConstants.COMPARE_TO,
+                                                                                   "compareToIgnoreCase").parameterCount(1);
+    private static final CallMatcher TRIM = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "trim").parameterCount(0);
+
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      if (!MethodCallUtils.isEqualsCall(expression) &&
-          !MethodCallUtils.isEqualsIgnoreCaseCall(expression) &&
-          !MethodCallUtils.isCompareToCall(expression) &&
-          !MethodCallUtils.isCompareToIgnoreCaseCall(expression)) {
-        return;
+      if (SUSPICIOUS_METHODS.test(expression)) {
+        final PsiExpressionList argumentList = expression.getArgumentList();
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if (arguments.length != 1 || NonNlsUtils.isNonNlsAnnotated(arguments[0])) {
+          return;
+        }
       }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      final String className = aClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
+      else if (!TRIM.test(expression)) {
         return;
       }
 
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (NonNlsUtils.isNonNlsAnnotated(qualifier)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length != 1 || NonNlsUtils.isNonNlsAnnotated(arguments[0])) {
         return;
       }
       registerMethodCallError(expression, expression);

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Variable 's' is never used
 data class Foo(val name: String)
 

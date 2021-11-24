@@ -369,6 +369,10 @@ public abstract class QuickFixFactory {
                                                                             @NotNull String typeName,
                                                                             @NotNull String boxedTypeName);
 
+  @Nullable
+  public abstract IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiType operandType,
+                                                                            @NotNull PsiTypeElement checkTypeElement);
+
   @NotNull
   public abstract IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter);
 
@@ -528,8 +532,6 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
                                                                           @NotNull PsiType enclosingClassType);
-
-  public abstract @NotNull IntentionAction createVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type);
 
   public abstract @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass);
 

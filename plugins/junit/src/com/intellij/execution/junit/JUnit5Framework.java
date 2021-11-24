@@ -164,4 +164,9 @@ public class JUnit5Framework extends JUnitTestFramework {
   public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 Test Class.java");
   }
+
+  @Override
+  public boolean isSuiteClass(PsiClass psiClass) {
+    return AnnotationUtil.isAnnotated(psiClass, "org.junit.platform.suite.api.Suite", AnnotationUtil.CHECK_HIERARCHY);
+  }
 }

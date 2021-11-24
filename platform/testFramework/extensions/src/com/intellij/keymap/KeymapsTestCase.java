@@ -45,7 +45,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control B",                "GotoDeclaration", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
     { "control C",                "$Copy", "Terminal.CopySelectedText", "org.jetbrains.r.console.RConsoleView.RInterruptAction"},
     { "control D",                "EditorDuplicate", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop", "org.jetbrains.r.console.RConsoleView.REofAction"},
-    { "control E",                "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox", "Vcs.ShowMessageHistory"},
+    { "control E",                "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox"},
     { "control I",                "ImplementMethods", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
     { "control INSERT",           "$Copy", "Terminal.CopySelectedText"},
     { "control M",                "EditorScrollToCenter", "Vcs.ShowMessageHistory"},
@@ -418,7 +418,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   // @formatter:on
 
   @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = Set.of(
-    "ActivateCommitToolWindow", "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateBookmarksToolWindow", "ActivateCommanderToolWindow",
+    "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateBookmarksToolWindow", "ActivateCommanderToolWindow",
     "ActivateServicesToolWindow",
     "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateStructureToolWindow",
     "ActivateProblemsViewToolWindow",
@@ -428,7 +428,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow", "RiderBackendAction-EncapsulateField",
     "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
     "ActivateInspectionResultsToolWindow",
-    "GoFmtProjectAction", "GoGenerateFileAction", "GoShareInPlaygroundAction",
     ""
   );
 

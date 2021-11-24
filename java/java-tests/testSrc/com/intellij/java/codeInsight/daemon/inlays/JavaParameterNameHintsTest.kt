@@ -23,10 +23,14 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Inlay
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
 class JavaInlayParameterHintsTest : LightJavaCodeInsightFixtureTestCase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_8_ANNOTATED
+  }
 
   override fun tearDown() {
     val default = ParameterNameHintsSettings()
@@ -458,7 +462,7 @@ public class VarArgTest {
 class Test {
 
   public void main() {
-    String.format("line", "eee", "www");
+    String.format(<hint text="s:"/>"line", <hint text="...objects:"/>"eee", "www");
   }
 
 }
@@ -1167,6 +1171,18 @@ public class Test {
 }""")
   }
 
+  fun `test optional empty`() {
+    check("""
+import java.util.Optional;
+public class Test {
+    void main() {
+      foo(<hint text="s:"/>Optional.empty());
+    }
+
+    static void foo(Optional<String> s) {}
+}""")
+  }
+
   fun `test undo after typing space`() {
     check("""
 class C {
@@ -1188,6 +1204,30 @@ class C {
 }
 """)
     }
+  }
+
+
+  fun `test same argument and parameter names`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
+    check("""
+class A {
+    static class ClassA {
+        static String getName() {
+            return "Asd";
+        }
+    }
+
+    static void testHints(ClassA entity, String name) {
+
+    }
+
+    public static void main(String[] args) {
+        ClassA entity = new ClassA();
+        testHints(entity, ClassA.getName());
+    }
+}
+""")
   }
 
   fun getHints(): List<String> {

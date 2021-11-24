@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.Pair
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.trace.SpanBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.BuildContextImpl
@@ -14,7 +14,6 @@ import java.nio.file.Path
 
 @CompileStatic
 abstract class BuildContext implements CompilationContext {
-  ApplicationInfoProperties applicationInfo
   ProductProperties productProperties
   WindowsDistributionCustomizer windowsDistributionCustomizer
   LinuxDistributionCustomizer linuxDistributionCustomizer
@@ -22,6 +21,8 @@ abstract class BuildContext implements CompilationContext {
   ProprietaryBuildTools proprietaryBuildTools
   BundledJreManager bundledJreManager
   DependenciesProperties dependenciesProperties
+
+  abstract ApplicationInfoProperties getApplicationInfo()
 
   /**
    * Build number without product code (e.g. '162.500.10')
@@ -40,6 +41,11 @@ abstract class BuildContext implements CompilationContext {
   String systemSelector
 
   /**
+   * Names of JARs inside IDE_HOME/lib directory which need to be added to the Xbootclasspath to start the IDE
+   */
+  List<String> xBootClassPathJarNames
+
+  /**
    * Names of JARs inside IDE_HOME/lib directory which need to be added to bootclasspath to start the IDE
    */
   List<String> bootClassPathJarNames
@@ -47,9 +53,9 @@ abstract class BuildContext implements CompilationContext {
   /**
    * Add file to be copied into application.
    */
-  abstract void addDistFile(@NotNull Pair<Path, String> file)
+  abstract void addDistFile(@NotNull Map.Entry<Path, String> file)
 
-  abstract @NotNull Collection<Pair<Path, String>> getDistFiles();
+  abstract @NotNull Collection<Map.Entry<Path, String>> getDistFiles()
 
   abstract boolean includeBreakGenLibraries()
 
@@ -67,15 +73,17 @@ abstract class BuildContext implements CompilationContext {
 
   abstract JpsModule findApplicationInfoModule()
 
-  abstract @Nullable Path findFileInModuleSources(String moduleName, String relativePath)
+  abstract @Nullable Path findFileInModuleSources(@NotNull String moduleName, @NotNull String relativePath)
 
-  abstract void signFile(String path, Map<String, String> options = [:])
+  abstract void signFile(String path, Map<String, String> options = Collections.emptyMap())
 
   /**
    * Execute a build step or skip it if {@code stepId} is included into {@link BuildOptions#buildStepsToSkip}
    * @return {@code true} if the step was executed
    */
   abstract boolean executeStep(String stepMessage, String stepId, Runnable step)
+
+  abstract void executeStep(SpanBuilder spanBuilder, String stepId, Runnable step)
 
   abstract boolean shouldBuildDistributions()
 

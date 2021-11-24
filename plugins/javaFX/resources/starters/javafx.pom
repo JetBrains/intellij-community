@@ -5,9 +5,9 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>7.2</gradle.version>
+    <gradle.version>7.3</gradle.version>
     <junit.version>5.8.1</junit.version>
-    <kotlin.version>1.5.10</kotlin.version>
+    <kotlin.version>1.5.31</kotlin.version>
 
     <!-- OpenJFX release trains -->
     <fx.default.version>11.0.2</fx.default.version>
@@ -17,8 +17,8 @@
     <fx14.version>14.0.2.1</fx14.version>
     <fx15.version>15.0.1</fx15.version>
     <fx16.version>16</fx16.version>
-    <fx17.version>17.0.0.1</fx17.version>
-    <fx18.version>18-ea+2</fx18.version>
+    <fx17.version>17.0.1</fx17.version>
+    <fx18.version>18-ea+6</fx18.version>
   </properties>
 
   <dependencyManagement>
@@ -26,7 +26,7 @@
       <dependency>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
-        <version>0.0.7</version>
+        <version>0.0.8</version>
       </dependency>
       <dependency>
         <groupId>org.openjfx</groupId>

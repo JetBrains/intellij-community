@@ -21,10 +21,7 @@ import org.jetbrains.kotlin.idea.analysis.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.completion.handlers.createKeywordConstructLookupElement
-import org.jetbrains.kotlin.idea.completion.smart.ExpectedInfoMatch
-import org.jetbrains.kotlin.idea.completion.smart.SMART_COMPLETION_ITEM_PRIORITY_KEY
-import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
-import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionItemPriority
+import org.jetbrains.kotlin.idea.completion.smart.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
@@ -271,7 +268,7 @@ class BasicCompletionSession(
             ) {
                 //TODO: move this code somewhere else?
                 val packageNames = PackageIndexUtil.getSubPackageFqNames(FqName.ROOT, searchScope, project, prefixMatcher.asNameFilter())
-                    .toMutableSet()
+                    .toHashSet()
 
                 if (TargetPlatformDetector.getPlatform(parameters.originalFile as KtFile).isJvm()) {
                     JavaPsiFacade.getInstance(project).findPackage("")?.getSubPackages(searchScope)?.forEach { psiPackage ->
@@ -355,9 +352,18 @@ class BasicCompletionSession(
                     }
 
                     if (shouldCompleteExtensionsFromObjects) {
+                        val receiverKotlinTypes = receiverTypes.map { it.type }
+
                         staticMembersCompletion.completeObjectMemberExtensionsFromIndices(
-                            indicesHelper(false),
-                            receiverTypes.map { it.type },
+                            indicesHelper(mayIncludeInaccessible = false),
+                            receiverKotlinTypes,
+                            callTypeAndReceiver,
+                            collector
+                        )
+
+                        staticMembersCompletion.completeExplicitAndInheritedMemberExtensionsFromIndices(
+                            indicesHelper(mayIncludeInaccessible = false),
+                            receiverKotlinTypes,
                             callTypeAndReceiver,
                             collector
                         )
@@ -422,7 +428,7 @@ class BasicCompletionSession(
                     includeJavaClassesNotToBeUsed = configuration.javaClassesNotToBeUsed,
                 ).collect({ descriptors += it }, { descriptors.addIfNotNull(it.resolveToDescriptor(resolutionFacade)) })
 
-                val foundDescriptors = mutableSetOf<DeclarationDescriptor>()
+                val foundDescriptors = HashSet<DeclarationDescriptor>()
                 val classifiers = descriptors.asSequence().filter {
                     it.kind == ClassKind.OBJECT ||
                             it.kind == ClassKind.ENUM_CLASS ||
@@ -633,6 +639,17 @@ class BasicCompletionSession(
                         }
                     }
 
+                    "suspend", "out", "in" -> {
+                        if (position.isInsideKtTypeReference) {
+                            // aforementioned keyword modifiers are rarely needed in the type references and
+                            // most of the time can be quickly prefix-selected by typing the corresponding letter.
+                            // We mark them as low-priority, so they do not shadow actual types
+                            lookupElement.keywordProbability = KeywordProbability.LOW
+                        }
+
+                        collector.addElement(lookupElement)
+                    }
+
                     "get" -> {
                         collector.addElement(lookupElement)
 
@@ -733,6 +750,7 @@ class BasicCompletionSession(
             else -> false
         }
 
+        @Suppress("InvalidBundleOrProperty") //workaround to avoid false-positive: KTIJ-19892
         override fun addWeighers(sorter: CompletionSorter): CompletionSorter = if (shouldCompleteParameterNameAndType())
             sorter.weighBefore("prefix", VariableOrParameterNameWithTypeCompletion.Weigher)
         else

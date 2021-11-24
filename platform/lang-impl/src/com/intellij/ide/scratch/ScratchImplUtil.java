@@ -253,8 +253,9 @@ final class ScratchImplUtil {
         return o.language != null ? o.language.getID() : o.fileType.getName();
       }
     }
-      .withComparator(comparator)
       .forValues(items)
+      .withComparator(comparator)
+      .withExtraSpeedSearchNamer(o -> o.fileExtension)
       .withSelection(null);
   }
 

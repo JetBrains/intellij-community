@@ -67,13 +67,16 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static final CallMatcher ITERABLE_ITERATOR = instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "iterator").parameterCount(0);
   private static final CallMatcher MAP_KEY_SET = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "keySet").parameterCount(0);
   private static final CallMatcher MAP_VALUES = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "values").parameterCount(0);
-  private static final CallMatcher MAP_PUT_ALL = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "putAll").parameterCount(1);
+  private static final CallMatcher MAP_PUT_ALL =
+    instanceCall(CommonClassNames.JAVA_UTIL_MAP, "putAll").parameterTypes(CommonClassNames.JAVA_UTIL_MAP);
   private static final CallMatcher MAP_OF =
     anyOf(
       staticCall(CommonClassNames.JAVA_UTIL_MAP, "of").parameterCount(2),
       staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2));
-  private static final CallMatcher COLLECTION_ADD_ALL = instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll").parameterCount(1);
-  private static final CallMatcher COLLECTIONS_SINGLETON = staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1);
+  private static final CallMatcher COLLECTION_ADD_ALL =
+    instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll").parameterTypes(CommonClassNames.JAVA_UTIL_COLLECTION);
+  private static final CallMatcher COLLECTIONS_SINGLETON =
+    staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1);
 
   private static final CallMapper<RedundantCollectionOperationHandler> HANDLERS =
     new CallMapper<RedundantCollectionOperationHandler>()
@@ -399,7 +402,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     public static RedundantCollectionOperationHandler handler(PsiMethodCallExpression call,
                                                               CallMatcher nestedCallMatcher,
                                                               String replacementMethod) {
-      PsiExpression arg = call.getArgumentList().getExpressions()[0];
+      PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
+      if (arg == null) return null;
       PsiMethodCallExpression nestedCall = tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiMethodCallExpression.class);
       if (!nestedCallMatcher.test(nestedCall)) return null;
       return new ReplaceNestedCallHandler(replacementMethod);

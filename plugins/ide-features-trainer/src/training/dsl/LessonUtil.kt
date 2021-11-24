@@ -1,14 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl
 
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.codeInsight.documentation.DocumentationComponent
+import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
@@ -38,16 +38,20 @@ import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerManager
-import org.fest.swing.timing.Timeout
+import org.assertj.swing.timing.Timeout
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
+import training.learn.lesson.LessonManager
 import training.ui.*
+import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.getActionById
 import training.util.learningToolWindow
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JList
@@ -55,9 +59,19 @@ import javax.swing.KeyStroke
 
 object LessonUtil {
   val productName: String get() {
-    val name = ApplicationNamesInfo.getInstance().fullProductName
-    return if (name == "DataSpell") "JetBrains DataSpell" else name
+      return ApplicationNamesInfo.getInstance().fullProductName
     }
+
+  fun getHelpLink(topic: String): String  = getHelpLink(null, topic)
+
+  fun getHelpLink(ide: String?, topic: String): String {
+    val helpIdeName: String = ide ?: when (val name = ApplicationNamesInfo.getInstance().productName) {
+      "GoLand" -> "go"
+      "RubyMine" -> "ruby"
+      else -> name.lowercase(Locale.ENGLISH)
+    }
+    return "https://www.jetbrains.com/help/$helpIdeName/$topic"
+  }
 
   fun hideStandardToolwindows(project: Project) {
     val windowManager = ToolWindowManager.getInstance(project)
@@ -174,8 +188,7 @@ object LessonUtil {
   }
 
   fun actionName(actionId: String): @NlsActions.ActionText String {
-    val name = ActionManager.getInstance().getAction(actionId).templatePresentation.text?.replace("...", "")
-               ?: error("No action with ID $actionId")
+    val name = getActionById(actionId).templatePresentation.text?.replace("...", "")
     return "<strong>${name}</strong>"
   }
 
@@ -307,12 +320,23 @@ fun LessonContext.firstLessonCompletedMessage() {
 
 fun LessonContext.highlightDebugActionsToolbar() {
   task {
-    val needAction = ActionManager.getInstance().getAction("Resume")
-    triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-      val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == ActionPlaces.DEBUGGER_TOOLBAR
-      if (!b) return@triggerByUiComponentAndHighlight false
+    before {
+      LearningUiHighlightingManager.clearHighlights()
+    }
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", clearPreviousHighlights = false)
+    if (!Registry.`is`("debugger.new.tool.window.layout")) {
+      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", clearPreviousHighlights = false)
+    }
+  }
+}
+
+private fun TaskContext.highlightToolbarWithAction(place: String, actionId: String, clearPreviousHighlights: Boolean = true) {
+  val needAction = getActionById(actionId)
+  triggerByUiComponentAndHighlight(usePulsation = true, clearPreviousHighlights = clearPreviousHighlights) { ui: ActionToolbarImpl ->
+    if (ui.size.let { it.width > 0 && it.height > 0 } && ui.place == place) {
       ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
     }
+    else false
   }
 }
 
@@ -324,6 +348,16 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
     LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
   }
   addStep(gotIt)
+  test {
+    ideFrame {
+      val linkText = "Click to proceed"
+      val lessonMessagePane = findComponentWithTimeout(defaultTimeout) { _: LessonMessagePane -> true }
+      val offset = lessonMessagePane.text.indexOf(linkText)
+      if (offset == -1) error("Not found '$linkText' in the LessonMessagePane")
+      val rect = lessonMessagePane.modelToView2D(offset + linkText.length / 2)
+      robot.click(lessonMessagePane, Point(rect.centerX.toInt(), rect.centerY.toInt()))
+    }
+  }
 }
 
 fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
@@ -401,10 +435,10 @@ fun TaskContext.waitSmartModeStep() {
 private val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
 
 fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
-  if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) return
   task {
-    val step = CompletableFuture<Boolean>()
-    addStep(step)
+    val step = stateCheck {
+      EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled
+    }
     val callbackId = LearningUiManager.addCallback {
       EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled = true
       step.complete(true)
@@ -416,27 +450,49 @@ fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
                                       strong(ApplicationBundle.message("radiogroup.rename.local.variables").dropLast(1)),
                                       callbackId)
     ) {
-      if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-        step.complete(true)
-        false
+      !EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled
+    }
+  }
+}
+
+fun LessonContext.restoreRefactoringOptionsInformer() {
+  if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) return
+  restoreChangedSettingsInformer {
+    EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled = false
+  }
+}
+
+fun LessonContext.restoreChangedSettingsInformer(restoreSettings: () -> Unit) {
+  task {
+    runtimeText {
+      val newMessageIndex = LessonManager.instance.messagesNumber()
+      val callbackId = LearningUiManager.addCallback {
+        restoreSettings()
+        LessonManager.instance.removeMessageAndRepaint(newMessageIndex)
       }
-      else true
+      LessonsBundle.message("restore.settings.informer", callbackId)
     }
   }
 }
 
 fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean = true): CompletableFuture<Boolean> {
   val feature: CompletableFuture<Boolean> = CompletableFuture()
-  val needToFindButton = ActionManager.getInstance().getAction(actionId)
+  val needToFindButton = getActionById(actionId)
   prepareRuntimeTask {
     if (clearHighlights) {
       LearningUiHighlightingManager.clearHighlights()
     }
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val result =
+    invokeInBackground {
+      val result = try {
         LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
           ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
         }
+      }
+      catch (e: Throwable) {
+        // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
+        feature.complete(false)
+        throw IllegalStateException("Cannot find button for $actionId", e)
+      }
       taskInvokeLater {
         feature.complete(result.isNotEmpty())
         for (button in result) {
@@ -485,5 +541,14 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
         }
       }
     }
+  }
+}
+
+fun TaskContext.triggerOnQuickDocumentationPopup() {
+  if (Registry.`is`("documentation.v2")) {
+    triggerByUiComponentAndHighlight(false, false) { _: DocumentationEditorPane -> true }
+  }
+  else {
+    triggerByUiComponentAndHighlight(false, false) { _: DocumentationComponent -> true }
   }
 }

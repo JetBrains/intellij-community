@@ -5,6 +5,7 @@ import com.intellij.ui.dsl.builder.CellBase
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -21,6 +22,22 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
   var rightGap: RightGap? = null
     private set
+
+  abstract fun visibleFromParent(parentVisible: Boolean)
+
+  abstract fun enabledFromParent(parentEnabled: Boolean)
+
+  override fun visibleIf(predicate: ComponentPredicate): CellBase<T> {
+    visible(predicate())
+    predicate.addListener { visible(it) }
+    return this
+  }
+
+  override fun enabledIf(predicate: ComponentPredicate): CellBase<T> {
+    enabled(predicate())
+    predicate.addListener { enabled(it) }
+    return this
+  }
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
     this.horizontalAlign = horizontalAlign

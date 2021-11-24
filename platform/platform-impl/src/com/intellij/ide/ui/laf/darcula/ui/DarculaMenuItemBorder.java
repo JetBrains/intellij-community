@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 
@@ -35,8 +36,9 @@ public class DarculaMenuItemBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
+    int top = ExperimentalUI.isNewUI() ? 4 : 2;
     return (IdeaPopupMenuUI.isPartOfPopupMenu(c)
-            ? JBUI.insets(2, LEFT_BORDER.get(), 2, RIGHT_BORDER.get()) : JBUI.insets(2)).asUIResource();
+            ? JBUI.insets(top, LEFT_BORDER.get(), top, RIGHT_BORDER.get()) : JBUI.insets(2)).asUIResource();
   }
 
   @Override

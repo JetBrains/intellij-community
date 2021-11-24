@@ -10,6 +10,15 @@ class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSel
   override val primarySelectedCell: NotebookCellLines.Interval
     get() = editor.getCell(editor.caretModel.primaryCaret.logicalPosition.line)
 
+  override val primarySelectedRegion: List<NotebookCellLines.Interval>
+    get() {
+      val primary = primarySelectedCell
+      return selectedRegions.find { primary in it }!!
+    }
+
+  override val selectedRegions: List<List<NotebookCellLines.Interval>>
+    get() = groupNeighborCells(selectedCells)
+
   override val selectedCells: List<NotebookCellLines.Interval>
     get() {
       val notebookCellLines = NotebookCellLines.get(editor)

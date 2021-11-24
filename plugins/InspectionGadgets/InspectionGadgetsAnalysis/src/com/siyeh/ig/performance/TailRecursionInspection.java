@@ -224,7 +224,7 @@ public final class TailRecursionInspection extends BaseInspection {
         }
         out.append(element.getText());
       }
-      else if (element instanceof PsiThisExpression || element instanceof PsiSuperExpression) {
+      else if (element instanceof PsiQualifiedExpression) {
         out.append(thisVariableName == null ? element.getText() : thisVariableName);
       }
       else if (isTailCallReturn(element, method)) {

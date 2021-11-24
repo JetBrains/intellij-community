@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
 import com.intellij.build.events.MessageEvent
@@ -95,7 +95,7 @@ class TrustProjectQuickFix : BuildIssueQuickFix {
     val future = CompletableFuture<Void>()
     ApplicationManager.getApplication().invokeLater {
       try {
-        val result = MavenUtil.isProjectTrustedEnoughToImport(project, true)
+        val result = MavenUtil.isProjectTrustedEnoughToImport(project)
         if (result) {
           MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
         }
@@ -116,29 +116,24 @@ class TrustProjectQuickFix : BuildIssueQuickFix {
 }
 
 class DummyIndexer : MavenServerIndexer {
-  override fun createIndex(indexId: String, repositoryId: String, file: File?, url: String?, indexDir: File, token: MavenToken?): Int {
-    return 0
-  }
 
-  override fun releaseIndex(id: Int, token: MavenToken?) {
+  override fun releaseIndex(id: MavenIndexId, token: MavenToken?) {
   }
 
   override fun getIndexCount(token: MavenToken?): Int {
     return 0;
   }
 
-  override fun updateIndex(id: Int, settings: MavenServerSettings?, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
+  override fun updateIndex(id: MavenIndexId, settings: MavenServerSettings?, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
   }
 
-  override fun processArtifacts(indexId: Int, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? {
-    return null
-  }
+  override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? = null
 
-  override fun addArtifact(indexId: Int, artifactFile: File?, token: MavenToken?): IndexedMavenId {
+  override fun addArtifact(indexId: MavenIndexId, artifactFile: File?, token: MavenToken?): IndexedMavenId {
     return IndexedMavenId(null, null, null, null, null)
   }
 
-  override fun search(indexId: Int, query: String, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
+  override fun search(indexId: MavenIndexId, query: String, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
     return emptySet()
   }
 

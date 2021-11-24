@@ -9,6 +9,6 @@ public class Example {
   }
 
   void test() {
-    foo(bar("hello"<caret>, true));
+    foo(bar("hello", t<caret>rue));
   }
 }

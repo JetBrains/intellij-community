@@ -13,6 +13,18 @@
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <!-- Poetry -->
+  <depends optional="true" config-file="poetry-toml.xml">org.toml.lang</depends>
+
+  <projectListeners>
+    <listener
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
+      topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
+      topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
+  </projectListeners>
+
   <extensions defaultExtensionNs="com.intellij">
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
@@ -386,11 +398,15 @@
     <suggestedRefactoringSupport language="Python"
                                  implementationClass="com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport"/>
 
+    <!-- Poetry -->
+    <editorFactoryListener implementation="com.jetbrains.python.sdk.poetry.PyProjectTomlWatcher"/>
+    <projectService serviceImplementation="com.jetbrains.python.sdk.poetry.PoetryConfigService"/>
+    <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
+
     <!-- Targets API -->
-    <experimentalFeature id="python.use.targets.api.for.run.configurations">
-      <description>Switches Python Run Configurations to Targets API. This might be unstable.</description>
+    <experimentalFeature id="python.use.targets.api" percentOfUsers="0">
+      <description>Switches Python support to Targets API.</description>
     </experimentalFeature>
-    <experimentalFeature id="add.python.interpreter.dialog.on.targets" percentOfUsers="0"/>
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle" key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle" key="python.sdk.updater.notifications.group.title"/>
     <notificationGroup id="Sync Python requirements" displayType="BALLOON" bundle="messages.PyBundle" key="python.requirements.balloon"/>
@@ -500,6 +516,7 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.FStringsAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
 
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
@@ -545,6 +562,10 @@
     <pyAddSdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyAddPipEnvSdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
 
+    <!-- Poetry -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.poetry.PyAddPoetrySdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
+
     <!-- SDK Flavors -->
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor"/>
@@ -569,6 +590,9 @@
     <!-- Experimental packaging extensions-->
     <pySdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkProvider"/>
     <packageManagerProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipenvPackageManagerProvider"/>
+
+    <pySdkProvider implementation="com.jetbrains.python.sdk.poetry.PoetrySdkProvider"/>
+    <packageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetryPackageManagerProvider"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
@@ -682,6 +706,7 @@
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
+    <dictionary.runtimeDictionaryProvider implementation="com.jetbrains.python.packaging.PyPackagesDictionary$PyPackagesDictionaryProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains.python.console">

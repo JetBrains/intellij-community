@@ -1,18 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.inspection.SSBasedInspection;
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
@@ -20,9 +16,10 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.PairProcessor;
 
 import java.io.IOException;
+import java.util.Collections;
 
 public class SSRCodeInsightTest extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
@@ -112,20 +109,11 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     final ToolsImpl tools = profile.getToolsOrNull("SSBasedInspection", myFixture.getProject());
     final SSBasedInspection inspection = (SSBasedInspection)tools.getTool().getTool();
     final PsiFile file = myFixture.getFile();
-    final InspectionManager inspectionManager = InspectionManager.getInstance(myFixture.getProject());
-    final PsiElementVisitor visitor = inspection.buildVisitor(new ProblemsHolder(inspectionManager, file, true), true,
-                                                              new LocalInspectionToolSession(file, 0, file.getTextLength()));
-
     PlatformTestUtil.startPerformanceTest("Chained method call inspection performance", 1500,
-                                          () -> {
-                                            PsiTreeUtil.processElements(file, new PsiElementProcessor<>() {
-                                              @Override
-                                              public boolean execute(@NotNull PsiElement element) {
-                                                element.accept(visitor);
-                                                return true;
-                                              }
-                                            });
-                                          }).assertTiming();
+                                          () -> InspectionEngine.inspectEx(
+                                            Collections.singletonList(new LocalInspectionToolWrapper(inspection)), file,
+                                            file.getTextRange(),
+                                            file.getTextRange(), true, false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue())).assertTiming();
   }
 
   private void doTest(final String searchPattern, final String patternName) {

@@ -952,6 +952,38 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testAlign() {
+    getJavaSettings().MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTextTest(
+      "public class Main {\n" +
+      "\n" +
+      "    public static void main(String[] args) {\n" +
+      "      try {\n" +
+      "        \n" +
+      "      } catch (FooException | BarException | FooBarException | FooBarFooException | BarBarFooException | BarFooFooException e) {\n" +
+      "        \n" +
+      "      }\n" +
+      "    }\n" +
+      "}",
+
+      "public class Main {\n" +
+      "\n" +
+      "    public static void main(String[] args) {\n" +
+      "        try {\n" +
+      "\n" +
+      "        } catch (FooException |\n" +
+      "                 BarException |\n" +
+      "                 FooBarException |\n" +
+      "                 FooBarFooException |\n" +
+      "                 BarBarFooException |\n" +
+      "                 BarFooFooException e) {\n" +
+      "\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
   @SuppressWarnings("unused")
   public void _testIdea199677() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;

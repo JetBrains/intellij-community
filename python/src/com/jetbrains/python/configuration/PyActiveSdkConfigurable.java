@@ -16,8 +16,13 @@
 package com.jetbrains.python.configuration;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -29,16 +34,20 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
+import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
+import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +105,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     mySdkCombo = buildSdkComboBox(this::onShowAllSelected, this::onSdkSelected);
 
-    final PackagesNotificationPanel packagesNotificationPanel = new PackagesNotificationPanel();
+    final PackagesNotificationPanel packagesNotificationPanel = new PyPackagesNotificationPanel();
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
     myPackagesPanel.setShowGrid(false);
 
@@ -105,12 +114,39 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final Pair<PyCustomSdkUiProvider, Disposable> customizer =
       customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
-    final JButton detailsButton = buildDetailsButton(mySdkCombo, this::onShowDetailsClicked);
+    final JButton additionalAction;
+    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
+      additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
+                                            link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
+    }
+    else {
+      additionalAction = buildDetailsButton(mySdkCombo, this::onShowDetailsClicked);
+    }
 
-    myMainPanel = buildPanel(project, mySdkCombo, detailsButton, myPackagesPanel, packagesNotificationPanel, customizer);
+    myMainPanel = buildPanel(project, mySdkCombo, additionalAction, myPackagesPanel, packagesNotificationPanel, customizer);
 
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
+  }
+
+  @NotNull
+  private static ListPopup createAddInterpreterPopup(@NotNull Project project,
+                                                     @Nullable Module module,
+                                                     @NotNull Component dataContextComponent,
+                                                     @NotNull Consumer<Sdk> onSdkCreated) {
+    DataContext dataContext = DataManager.getInstance().getDataContext(dataContextComponent);
+    List<AnAction> actions = AddInterpreterActions.collectAddInterpreterActions(project, module, onSdkCreated);
+    return JBPopupFactory.getInstance().createActionGroupPopup(
+      null,
+      new DefaultActionGroup(actions),
+      dataContext,
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+      false,
+      null,
+      -1,
+      action -> false,
+      null
+    );
   }
 
   @NotNull
@@ -146,10 +182,13 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     return result;
   }
 
+  /**
+   * @param additionalAction either the gear button for the old UI or the link "Add Interpreter" for the new UI
+   */
   @NotNull
   private static JPanel buildPanel(@NotNull Project project,
                                    @NotNull ComboBox<?> sdkComboBox,
-                                   @NotNull JButton detailsButton,
+                                   @NotNull JComponent additionalAction,
                                    @NotNull PyInstalledPackagesPanel installedPackagesPanel,
                                    @NotNull PackagesNotificationPanel packagesNotificationPanel,
                                    @Nullable Pair<PyCustomSdkUiProvider, Disposable> customizer) {
@@ -174,7 +213,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.gridx = 2;
     c.gridy = 0;
     c.weightx = 0.0;
-    result.add(detailsButton, c);
+    result.add(additionalAction, c);
 
     if (customizer != null) {
       customizer.first.customizeActiveSdkPanel(project, sdkComboBox, result, c, customizer.second);

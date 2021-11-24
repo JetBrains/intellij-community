@@ -15,7 +15,10 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.util.NlsContexts.Label;
 
-
+/**
+ * Implement this class to describe some particular context that the user may associate with a live template, e.g., "Java String Start".
+ * Contexts are available for the user in the Live Template management UI.
+ */
 public abstract class TemplateContextType {
   public static final ExtensionPointName<TemplateContextType> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateContext");
 

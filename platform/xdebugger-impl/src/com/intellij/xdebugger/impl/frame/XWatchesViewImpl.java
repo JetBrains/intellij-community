@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
@@ -43,6 +44,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
+import com.intellij.xdebugger.impl.frame.actions.XToggleEvaluateExpressionFieldAction;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
@@ -134,15 +136,28 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   protected JPanel createMainPanel(@NotNull JComponent localsPanelComponent) {
-    var variablesPanel = new BorderLayoutPanel().addToCenter(localsPanelComponent);
     var top = createTopPanel();
-    if (top == null)
-      return variablesPanel;
-    return variablesPanel.addToTop(top);
+    //noinspection ConstantConditions
+    if (top == null) {
+      return super.createMainPanel(localsPanelComponent);
+    }
+    var layout = localsPanelComponent.getLayout();
+    boolean canAddComponentToTheRightOfToolbar = layout instanceof BorderLayout;
+    if (canAddComponentToTheRightOfToolbar) {
+      var panel = new BorderLayoutPanel()
+        .addToCenter(((BorderLayout)layout).getLayoutComponent(BorderLayout.CENTER))
+        .addToTop(top);
+      localsPanelComponent.add(panel, BorderLayout.CENTER);
+      return super.createMainPanel(localsPanelComponent);
+    } else {
+      return new BorderLayoutPanel()
+        .addToCenter(localsPanelComponent)
+        .addToTop(top);
+    }
   }
 
   private JComponent createTopPanel() {
-    if (Registry.is("debugger.new.tool.window.layout")) {
+    //if (Registry.is("debugger.new.tool.window.layout")) {
       XDebuggerTree tree = getTree();
       Ref<AnAction> addToWatchesActionRef = new Ref<>();
       myEvaluateComboBox =
@@ -150,7 +165,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           @Override
           protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
             AnAction addToWatchesAction =
-              new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.Watch) {
+              new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.AddToWatch) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent e) {
                   myEvaluateComboBox.saveTextInHistory();
@@ -177,7 +192,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           @Override
           protected void prepareEditor(EditorEx editor) {
             super.prepareEditor(editor);
-            editor.setPlaceholder(XDebuggerBundle.message("debugger.evaluate.expression.or.add.a.watch.hint"));
+            editor.setPlaceholder(XDebuggerBundle.message(
+              "debugger.evaluate.expression.or.add.a.watch.hint",
+              KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null)),
+              KeymapUtil.getShortcutText(new KeyboardShortcut(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE, null))
+            ));
             editor.addFocusListener(new FocusChangeListener() {
               private final Set<FocusEvent.Cause> myCauses = Set.of(
                 FocusEvent.Cause.UNKNOWN,
@@ -235,9 +254,19 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       JComponent component = myEvaluateComboBox.getComponent();
       //component.setBackground(tree.getBackground());
       component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+      if (!Registry.is("debugger.new.tool.window.layout")) {
+        XToggleEvaluateExpressionFieldAction.markAsEvaluateExpressionField(component);
+      }
       return component;
+    //}
+    //return null;
+  }
+
+  @Override
+  protected void beforeTreeBuild(@NotNull SessionEvent event) {
+    if (event != SessionEvent.SETTINGS_CHANGED) {
+      myRootNode.removeResultNode();
     }
-    return null;
   }
 
   private void addExpressionResultNode() {

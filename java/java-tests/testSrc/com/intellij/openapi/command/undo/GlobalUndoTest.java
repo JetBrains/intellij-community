@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -20,7 +20,9 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -562,6 +564,60 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     assertGlobalUndoNotAvailable();
     assertUndoIsAvailable(getEditor(f));
+  }
+
+  private Pair<Editor, Editor> prepareTestUndoFallback(){
+    createClass("Bar");
+    createClass("Foo");
+
+    Editor barEditor = openEditor("Bar.java");
+
+    // 1: extends Foo
+    WriteAction.runAndWait(() -> executeCommand(() -> barEditor.getDocument().insertString(17, "extends Foo")));
+
+    // 2: change local stack in second file
+    WriteAction.runAndWait(() -> executeCommand(() -> barEditor.getDocument().insertString(30, "public void Test(){}")));
+
+    // 3: rename Foo class
+    renameClassTo("FooRenamed");
+    Editor fooEditor = openEditor("FooRenamed.java");
+
+    // 4: change local stack in FooRenamed.java
+    WriteAction.runAndWait(() -> executeCommand(() -> fooEditor.getDocument().insertString(25, "public void Test(){}")));
+
+    return new Pair<>(barEditor, fooEditor);
+  }
+
+  public void testUndoFallbackToLocalStack() {
+    Registry.get("ide.undo.fallback").setValue(true, getTestRootDisposable());
+    Pair<Editor, Editor> pair = prepareTestUndoFallback();
+    var barEditor = pair.first;
+    var fooEditor = pair.second;
+
+    undo(barEditor);
+
+    assertFalse("Bar.java doesn't remove rename from Foo.java", barEditor.getDocument().getText().contains("FooRenamed"));
+    assertTrue("Foo.java doesn't contains last rename result", fooEditor.getDocument().getText().contains("FooRenamed"));
+
+  }
+  public void testUndoFallbackToLocalStackAndRedo() {
+    Registry.get("ide.undo.fallback").setValue(true, getTestRootDisposable());
+    Pair<Editor, Editor> pair = prepareTestUndoFallback();
+    var barEditor = pair.first;
+    var fooEditor = pair.second;
+
+    undo(barEditor);
+
+    // call redo to gather splitted command together
+    redo(barEditor);
+
+    assertTrue(barEditor.getDocument().getText().contains("FooRenamed"));
+
+    // 7: undo rename Foo -> FooRenamed to check that changes also applied to Bar.java
+    undo(fooEditor);
+    undo(fooEditor);
+
+    assertFalse("FooRenamed rename undo doesn't applied to Bar.java", barEditor.getDocument().getText().contains("FooRenamed"));
   }
 
   public void testUndoRedoNotAvailableAfterFileWasDeletedExternally() {
@@ -1196,7 +1252,12 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     final Document document1 = FileDocumentManager.getInstance().getDocument(file1);
     final Document document2 = FileDocumentManager.getInstance().getDocument(file2);
 
-    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2);
+    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2) {
+      @Override
+      public @NotNull VirtualFile getFile() {
+        return file1;
+      }
+    };
 
     UndoManager undoManager = UndoManager.getInstance(myProject);
 
@@ -1343,7 +1404,12 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     UndoManager undoManager = UndoManager.getInstance(myProject);
 
-    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2);
+    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2) {
+      @Override
+      public @NotNull VirtualFile getFile() {
+        return file1;
+      }
+    };
 
     assertTrue(undoManager.isUndoAvailable(fileEditor));
 

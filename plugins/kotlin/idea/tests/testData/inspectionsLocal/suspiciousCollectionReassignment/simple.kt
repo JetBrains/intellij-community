@@ -1,5 +1,5 @@
 // FIX: Change type to mutable
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     var list = listOf(1)
     list <selection>+=<caret></selection> 2

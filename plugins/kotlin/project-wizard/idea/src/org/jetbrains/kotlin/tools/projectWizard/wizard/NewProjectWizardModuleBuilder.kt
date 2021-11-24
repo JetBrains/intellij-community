@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaJpsWizardService
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaServices
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.asHtml
@@ -67,6 +68,10 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     override fun getDescription(): String = moduleType.description
     override fun getGroupName(): String = moduleType.name
     override fun isTemplateBased(): Boolean = false
+
+    override fun getWeight(): Int {
+        return ModuleBuilder.KOTLIN_WEIGHT
+    }
 
     companion object {
         const val MODULE_BUILDER_ID = "kotlin.newProjectWizard.builder"
@@ -129,15 +134,21 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     }
 
     private fun scheduleSampleFilesOpening(project: Project) = StartupManager.getInstance(project).runAfterOpened {
-        val projectPath = File(project.basePath)
+        val pathname = project.basePath ?: return@runAfterOpened
+        val projectPath = File(pathname)
 
         val wizardModules = wizard.context.read { KotlinPlugin.modules.settingValue }
-            .flatMap { module -> mutableListOf(*module.subModules.toTypedArray()).apply { add(module)} }
+            .flatMap { module ->
+                buildList<Module> {
+                    +module.subModules
+                    +module
+                }
+            }
 
         val filesToOpen = wizardModules
             .flatMap { it.template?.filesToOpenInEditor ?: emptyList() }
             .mapNotNull { expectedFileName ->
-                val file = FileUtil.findFilesByMask(Pattern.compile(expectedFileName), projectPath).firstOrNull()
+                val file = FileUtil.findFilesByMask(Pattern.compile(Pattern.quote(expectedFileName)), projectPath).firstOrNull()
                 file?.let { VirtualFileManager.getInstance().findFileByNioPath(file.toPath()) }
             }
 

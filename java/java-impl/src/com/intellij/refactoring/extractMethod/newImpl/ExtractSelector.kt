@@ -95,7 +95,7 @@ class ExtractSelector {
     val filteredStatements = statements
       .dropWhile { it is PsiSwitchLabelStatement || it is PsiWhiteSpace }
       .dropLastWhile { it is PsiSwitchLabelStatement || it is PsiWhiteSpace }
-    if (filteredStatements.any { it is PsiSwitchLabelStatement || it is PsiSwitchLabeledRuleStatement }) return emptyList()
+    if (filteredStatements.any { it is PsiSwitchLabelStatementBase }) return emptyList()
     return filteredStatements
   }
 

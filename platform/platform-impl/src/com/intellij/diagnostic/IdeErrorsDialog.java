@@ -541,9 +541,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
       myAttachmentsList.clear();
       myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
-      boolean internal = ApplicationManager.getApplication().isInternal();
       for (Attachment attachment : message.getAllAttachments()) {
-        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded() || internal);
+        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
       }
       myAttachmentsList.setSelectedIndex(0);
 
@@ -705,17 +704,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private static boolean morePluginsAffected(@NotNull Set<PluginId> pluginIdsToDisable) {
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    ModuleGraph moduleGraph = PluginManagerCore.getPluginSet().getModuleGraph();
     for (IdeaPluginDescriptor rootDescriptor : PluginManagerCore.getPlugins()) {
       if (!rootDescriptor.isEnabled() || pluginIdsToDisable.contains(rootDescriptor.getPluginId())) {
         continue;
       }
 
       if (!PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor,
-                                                               pluginIdMap,
-                                                               (pluginId, descriptor) ->
-                                                                 Objects.requireNonNull(descriptor).isEnabled() ?
-                                                                 pluginIdsToDisable.contains(pluginId) ?
+                                                               descriptor ->
+                                                                 descriptor.isEnabled() ?
+                                                                 pluginIdsToDisable.contains(descriptor.getPluginId()) ?
                                                                  FileVisitResult.TERMINATE :
                                                                  FileVisitResult.CONTINUE :
                                                                  FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */

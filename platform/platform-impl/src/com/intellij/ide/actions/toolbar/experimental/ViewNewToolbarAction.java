@@ -21,4 +21,10 @@ final class ViewNewToolbarAction extends ToggleAction implements DumbAware {
     ToolbarSettings.getInstance().setVisible(isVisible);
     UISettings.getInstance().fireUISettingsChanged();
   }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setEnabledAndVisible(ToolbarSettings.getInstance().isEnabled());
+  }
 }

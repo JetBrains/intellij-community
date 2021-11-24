@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -225,15 +225,15 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   private void annotateExternally(@NotNull VirtualFile root, @NotNull List<? extends ExternalAnnotation> annotations) {
     Project project = myPsiManager.getProject();
 
-    Map<Optional<XmlFile>, List<ExternalAnnotation>> annotationsByFiles = annotations.stream()
-      .collect(Collectors.groupingBy(annotation -> Optional.ofNullable(getFileForAnnotations(root, annotation.getOwner(), project))));
+    Map<Optional<VirtualFile>, List<ExternalAnnotation>> annotationsByFiles = annotations.stream()
+      .collect(Collectors.groupingBy(annotation -> Optional.ofNullable(getFileForAnnotations(root, annotation.getOwner(), project)).map(xmlFile -> xmlFile.getVirtualFile())));
 
-    List<VirtualFile> files = StreamEx.ofKeys(annotationsByFiles).flatMap(StreamEx::of).map(XmlFile::getVirtualFile).nonNull().toList();
+    List<VirtualFile> files = StreamEx.ofKeys(annotationsByFiles).flatMap(StreamEx::of).nonNull().toList();
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
     if (status.hasReadonlyFiles()) {
       VirtualFile[] readonlyFiles = status.getReadonlyFiles();
       annotationsByFiles.keySet()
-        .removeIf(opt -> opt.map(XmlFile::getVirtualFile).filter(f -> ArrayUtil.contains(f, readonlyFiles)).isPresent());
+        .removeIf(opt -> opt.filter(f -> ArrayUtil.contains(f, readonlyFiles)).isPresent());
     }
     
     if (annotationsByFiles.isEmpty()) return;
@@ -247,10 +247,14 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
           return;
         }
         try {
-          for (Map.Entry<Optional<XmlFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
-            XmlFile annotationsFile = entry.getKey().orElse(null);
+          for (Map.Entry<Optional<VirtualFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
+            VirtualFile annotationsFile = entry.getKey().orElse(null);
+            if (annotationsFile == null) continue;
             List<ExternalAnnotation> fileAnnotations = entry.getValue();
-            annotateExternally(annotationsFile, fileAnnotations);
+            PsiFile file = PsiManager.getInstance(project).findFile(annotationsFile);
+            if (file instanceof XmlFile) {
+              annotateExternally((XmlFile)file, fileAnnotations);
+            }
           }
 
           UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {

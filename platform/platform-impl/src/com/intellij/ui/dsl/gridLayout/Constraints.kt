@@ -5,6 +5,7 @@ import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.dsl.checkPositive
 import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
 @ApiStatus.Experimental
 enum class HorizontalAlign {
@@ -63,11 +64,10 @@ data class Constraints(
   /**
    * If true then vertical align is done by baseline:
    *
-   * 1. All components that have baselineAlign = true in the same row and with the same [verticalAlign] are aligned by baseline together
-   * 2. Components are aligned even if they are placed in different sub grids (see [GridImpl.registerSubGrid])
-   * 3. [VerticalAlign.FILL] alignment does not support [baselineAlign]
-   * 4. Cells with [height] more than 1 do not support [baselineAlign]
-   * 5. Only sub grids with one row can be aligned by baseline in parent grid
+   * 1. All cells in the same grid row with [baselineAlign] true, [height] equals 1 and with the same [verticalAlign]
+   * (except [VerticalAlign.FILL], which doesn't support baseline) are aligned by baseline together
+   * 2. Sub grids (see [GridImpl.registerSubGrid]) with only one row and that contain cells only with [VerticalAlign.FILL] and another
+   * specific [VerticalAlign] (at least one cell without fill align) have own baseline and can be aligned by baseline in parent grid
    */
   val baselineAlign: Boolean = false,
 
@@ -84,13 +84,32 @@ data class Constraints(
    * 1. Layout manager aligns components by their visual bounds
    * 2. Cell size with gaps is calculated as component.bounds + [gaps] - [visualPaddings]
    */
-  var visualPaddings: Gaps = Gaps.EMPTY
+  var visualPaddings: Gaps = Gaps.EMPTY,
+
+  /**
+   * Component helper for custom behaviour
+   */
+  val componentHelper: ComponentHelper? = null
 ) {
 
   init {
-    checkNonNegative(::x)
-    checkNonNegative(::y)
-    checkPositive(::width)
-    checkPositive(::height)
+    checkNonNegative("x", x)
+    checkNonNegative("y", y)
+    checkPositive("width", width)
+    checkPositive("height", height)
   }
+}
+
+/**
+ * A helper for custom behaviour for components in cells
+ */
+@ApiStatus.Experimental
+interface ComponentHelper {
+
+  /**
+   * Returns custom baseline or null if default baseline calculation should be used
+   *
+   * @see JComponent.getBaseline
+   */
+  fun getBaseline(width: Int, height: Int): Int?
 }

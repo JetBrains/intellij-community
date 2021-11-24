@@ -28,7 +28,9 @@ import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -53,6 +55,8 @@ public final class RunDashboardServiceViewContributor
   implements ServiceViewGroupingContributor<RunDashboardServiceViewContributor.RunConfigurationContributor, GroupingNode> {
 
   @NonNls private static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
+
+  private static final Key<DefaultActionGroup> MORE_ACTION_GROUP_KEY = Key.create("ServicesMoreActionGroup");
 
   private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
     new SimpleServiceViewDescriptor("Run Dashboard", AllIcons.Actions.Execute) {
@@ -151,9 +155,7 @@ public final class RunDashboardServiceViewContributor
       }
       for (AnAction action : leftToolbarActions) {
         if (action instanceof MoreActionGroup) {
-          DefaultActionGroup moreGroup = new MoreActionGroup(false);
-          moreGroup.addAll(((MoreActionGroup)action).getChildren(null));
-          actionGroup.add(moreGroup);
+          actionGroup.add(getServicesMoreActionGroup((MoreActionGroup)action, descriptor));
         }
         else if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
           actionGroup.add(action);
@@ -161,6 +163,22 @@ public final class RunDashboardServiceViewContributor
       }
     }
     return actionGroup;
+  }
+
+  private static DefaultActionGroup getServicesMoreActionGroup(MoreActionGroup contentGroup, RunContentDescriptor descriptor) {
+    if (descriptor == null) return contentGroup;
+
+    Content content = descriptor.getAttachedContent();
+    if (content == null) return contentGroup;
+
+    DefaultActionGroup moreGroup = content.getUserData(MORE_ACTION_GROUP_KEY);
+    if (moreGroup == null) {
+      moreGroup = new MoreActionGroup(false);
+      content.putUserData(MORE_ACTION_GROUP_KEY, moreGroup);
+    }
+    moreGroup.removeAll();
+    moreGroup.addAll(contentGroup.getChildren(null));
+    return moreGroup;
   }
 
   private static ActionGroup getPopupActions() {
@@ -305,13 +323,15 @@ public final class RunDashboardServiceViewContributor
     @Nullable
     @Override
     public VirtualFile getVirtualFile() {
-      for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-        PsiElement psiElement = customizer.getPsiElement(myNode);
-        if (psiElement != null) {
-          return PsiUtilCore.getVirtualFile(psiElement);
+      return ReadAction.compute(() -> {
+        for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
+          PsiElement psiElement = customizer.getPsiElement(myNode);
+          if (psiElement != null) {
+            return PsiUtilCore.getVirtualFile(psiElement);
+          }
         }
-      }
-      return null;
+        return null;
+      });
     }
 
     @Nullable

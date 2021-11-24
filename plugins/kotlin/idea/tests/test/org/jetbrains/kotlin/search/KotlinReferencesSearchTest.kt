@@ -63,11 +63,11 @@ class KotlinReferencesSearchTest : AbstractSearcherTest() {
 
         // check that local reference search gives the same result
         try {
-            ExpressionsOfTypeProcessor.mode = ExpressionsOfTypeProcessor.Mode.PLAIN_WHEN_NEEDED
+            ExpressionsOfTypeProcessor.prodMode()
             val localRefs = ReferencesSearch.search(func, LocalSearchScope(psiFile)).findAll()
             Assert.assertEquals(refs.size, localRefs.size)
         } finally {
-            ExpressionsOfTypeProcessor.mode = ExpressionsOfTypeProcessor.Mode.ALWAYS_SMART
+            ExpressionsOfTypeProcessor.resetMode()
         }
 
         return refs

@@ -4,9 +4,8 @@
 package com.jetbrains.python.target
 
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -36,11 +35,9 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
             val targetedCommandLineBuilder = TargetedCommandLineBuilder(targetEnvironmentRequest)
             targetedCommandLineBuilder.setExePath(interpreterPath)
             targetedCommandLineBuilder.addParameter(flavor.versionOption)
-            // TODO [targets] Use meaningful `TargetProgressIndicator` instead of `EMPTY`
-            val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
-            val progressIndicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+            val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
             val targetedCommandLine = targetedCommandLineBuilder.build()
-            val process = targetEnvironment.createProcess(targetedCommandLine, progressIndicator)
+            val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
             val commandLineString = targetedCommandLine.collectCommandsSynchronously().joinToString(separator = " ")
             val capturingProcessHandler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
             val processOutput = capturingProcessHandler.runProcess()
@@ -51,11 +48,12 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
                 return
               }
               else {
-                throw RemoteSdkException("Python interpreter returned the empty output as a version string")
+                throw RemoteSdkException(PyBundle.message("python.sdk.empty.version.string"), processOutput.stdout, processOutput.stderr)
               }
             }
             else {
-              throw RemoteSdkException("Python interpreter process exited with non-zero exit code")
+              throw RemoteSdkException(
+                PyBundle.message("python.sdk.non.zero.exit.code", processOutput.exitCode), processOutput.stdout, processOutput.stderr)
             }
           }
           catch (e: Exception) {

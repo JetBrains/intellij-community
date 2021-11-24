@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation.render;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.lang.documentation.InlineDocumentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.Nls;
@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.inlineDocumentationItems;
 
 public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
   private static final Logger LOG = Logger.getInstance(DocRenderPassFactory.class);
@@ -76,19 +78,19 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
   public static Items calculateItemsToRender(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     boolean enabled = DocRenderManager.isDocRenderingEnabled(editor);
     Items items = new Items();
-    DocumentationManager.getProviderFromElement(psiFile).collectDocComments(psiFile, comment -> {
-      TextRange range = comment.getTextRange();
-      if (range != null && DocRenderItem.isValidRange(editor, range)) {
-        String textToRender = enabled ? calcText(comment) : null;
+    for (InlineDocumentation documentation : inlineDocumentationItems(psiFile)) {
+      TextRange range = documentation.getDocumentationRange();
+      if (DocRenderItem.isValidRange(editor, range)) {
+        String textToRender = enabled ? calcText(documentation) : null;
         items.addItem(new Item(range, textToRender));
       }
-    });
+    }
     return items;
   }
 
-  static @NotNull @Nls String calcText(@Nullable PsiDocCommentBase comment) {
+  static @NotNull @Nls String calcText(@Nullable InlineDocumentation documentation) {
     try {
-      String text = comment == null ? null : DocumentationManager.getProviderFromElement(comment).generateRenderedDoc(comment);
+      String text = documentation == null ? null : documentation.renderText();
       return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
     }
     catch (IndexNotReadyException e) {

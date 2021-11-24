@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,6 +236,15 @@ public final class SideEffectChecker {
       if (exitedStatement != null && PsiTreeUtil.isAncestor(myStartElement, exitedStatement, false)) return;
       if (addSideEffect(statement)) return;
       super.visitContinueStatement(statement);
+    }
+
+    @Override
+    public void visitYieldStatement(PsiYieldStatement statement) {
+      final PsiSwitchExpression enclosingExpression = statement.findEnclosingExpression();
+      if (enclosingExpression == null || !PsiTreeUtil.isAncestor(myStartElement, enclosingExpression, false)) {
+        if (addSideEffect(statement)) return;
+      }
+      super.visitYieldStatement(statement);
     }
 
     @Override

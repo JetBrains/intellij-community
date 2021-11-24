@@ -6,6 +6,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
@@ -159,7 +160,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
   }
 
   private fun getCommandForPipInstall(requirementsTxtOrSetupPy: VirtualFile): List<String> {
-    return if (requirementsTxtOrSetupPy.fileType == PlainTextFileType.INSTANCE) {
+    return if (FileTypeRegistry.getInstance().isFileOfType(requirementsTxtOrSetupPy, PlainTextFileType.INSTANCE)) {
       listOf("-r", getAbsPath(requirementsTxtOrSetupPy))
     }
     else {

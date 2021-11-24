@@ -7,6 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentType.TargetSpecificVolumeC
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.HideableDecorator
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
@@ -85,14 +86,7 @@ abstract class LanguageRuntimeConfigurable(private val config: LanguageRuntimeCo
         get = { config.getTargetPathValue(volumeDescriptor).nullize(true) ?: volumeDescriptor.defaultPath },
         set = { config.setTargetPath(volumeDescriptor, it.nullize(true)) })
 
-      val cellBuilder: CellBuilder<*>
-      if (targetType is BrowsableTargetEnvironmentType) {
-        cellBuilder = TargetUIUtil.textFieldWithBrowseButton(this, targetType, targetProvider, project, volumeDescriptor.browsingTitle,
-          propertyBinding)
-      }
-      else {
-        cellBuilder = textField(propertyBinding)
-      }
+      val cellBuilder = browsableTextField(volumeDescriptor.browsingTitle, propertyBinding)
       cellBuilder.comment(volumeDescriptor.description)
     }
 
@@ -106,6 +100,14 @@ abstract class LanguageRuntimeConfigurable(private val config: LanguageRuntimeCo
       }
     }
   }
+
+  protected fun Row.browsableTextField(@NlsContexts.DialogTitle title: String, propertyBinding: PropertyBinding<String>): CellBuilder<*> =
+    if (targetType is BrowsableTargetEnvironmentType) {
+      textFieldWithBrowseTargetButton(this, targetType, targetProvider, project, title, propertyBinding)
+    }
+    else {
+      textField(propertyBinding)
+    }
 
   private fun TargetSpecificVolumeContributionUI.resetFrom(volume: VolumeDescriptor) {
     this.resetFrom(config.getTargetSpecificData(volume)?.toStorableMap() ?: emptyMap())

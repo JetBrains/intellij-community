@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.TagComponent
@@ -70,7 +71,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
             is PackagesTableItem.InstalledPackage -> {
                 val packageModel = value.packageModel
 
-                val name: String? = StringUtils.normalizeSpace(packageModel.remoteInfo?.name)
+                val name: String? = packageModel.remoteInfo?.name.normalizeWhitespace()
                 val rawIdentifier = packageModel.identifier.rawValue
 
                 createNamePanel(columnWidth, name, rawIdentifier, packageModel.isKotlinMultiplatform, isSelected).apply {
@@ -80,7 +81,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
             is PackagesTableItem.InstallablePackage -> {
                 val packageModel = value.packageModel
 
-                val name: String? = StringUtils.normalizeSpace(packageModel.remoteInfo?.name)
+                val name: String? = packageModel.remoteInfo?.name.normalizeWhitespace()
                 val rawIdentifier = packageModel.identifier.rawValue
 
                 createNamePanel(columnWidth, name, rawIdentifier, packageModel.isKotlinMultiplatform, isSelected).apply {

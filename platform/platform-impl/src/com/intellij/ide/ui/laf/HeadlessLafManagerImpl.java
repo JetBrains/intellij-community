@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.components.DefaultLinkButtonUI;
@@ -50,7 +49,7 @@ final class HeadlessLafManagerImpl extends LafManager {
   public void setCurrentLookAndFeel(UIManager.@NotNull LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) { }
 
   @Override
-  public CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
+  public @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
     return new CollectionComboBoxModel<>();
   }
 
@@ -86,9 +85,6 @@ final class HeadlessLafManagerImpl extends LafManager {
 
   @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) { }
-
-  @Override
-  public void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable) { }
 
   @Override
   public void removeLafManagerListener(@NotNull LafManagerListener listener) { }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.CustomFoldRegion;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.TestFileType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -252,7 +252,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
 
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
-    init(text, TestFileType.JAVA);
+    init(text, JavaFileType.INSTANCE);
     updateRenderedItems(enableRendering);
   }
 

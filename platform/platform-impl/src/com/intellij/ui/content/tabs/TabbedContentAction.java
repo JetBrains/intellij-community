@@ -190,7 +190,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       Content content = ObjectUtils.chooseNotNull(ObjectUtils.doIfCast(component, ContentTabLabel.class, o -> o.getContent()),
                                                   manager.getSelectedContent());
       if (content != null) {
-        decorator.splitWithContent(content, myHorizontal ? SwingConstants.RIGHT : SwingConstants.BOTTOM);
+        decorator.splitWithContent(content, myHorizontal ? SwingConstants.RIGHT : SwingConstants.BOTTOM, -1);
       }
     }
 

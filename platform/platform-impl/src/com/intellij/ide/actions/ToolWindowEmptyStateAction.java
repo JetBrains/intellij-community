@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.project.Project;
@@ -35,13 +35,10 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
       StatusText emptyText = ((ToolWindowEx)toolWindow).getEmptyText();
       if (emptyText != null) {
         setupEmptyText(project, emptyText);
-        ((ToolWindowImpl)toolWindow).setEmptyStateBackground(JBColor.background());
+        setEmptyStateBackground(toolWindow);
       }
     }
-    ContentManager manager = toolWindow.getContentManager();
-    if (manager instanceof ContentManagerImpl) {
-      ((ContentManagerImpl) manager).rebuildContentUi();
-    }
+    rebuildContentUi(toolWindow);
     toolWindow.show();
     toolWindow.activate(null, true);
   }
@@ -50,4 +47,16 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
 
   protected abstract void ensureToolWindowCreated(@NotNull Project project);
 
+  public static void setEmptyStateBackground(@NotNull ToolWindow toolWindow) {
+    if (toolWindow instanceof ToolWindowImpl) {
+      ((ToolWindowImpl)toolWindow).setEmptyStateBackground(JBColor.background());
+    }
+  }
+
+  public static void rebuildContentUi(@NotNull ToolWindow toolWindow) {
+    ContentManager manager = toolWindow.getContentManager();
+    if (manager instanceof ContentManagerImpl) {
+      ((ContentManagerImpl)manager).rebuildContentUi();
+    }
+  }
 }

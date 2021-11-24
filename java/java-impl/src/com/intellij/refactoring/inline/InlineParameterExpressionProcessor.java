@@ -257,22 +257,21 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     myInitializer = (PsiExpression)RefactoringUtil.replaceElementsWithMap(myInitializer, replacements);
 
     if (myCreateLocal) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
-      PsiDeclarationStatement localDeclaration =
-        factory.createVariableDeclarationStatement(myParameter.getName(), myParameter.getType(), myInitializer);
-      final PsiLocalVariable declaredVar = (PsiLocalVariable)localDeclaration.getDeclaredElements()[0];
-      PsiUtil.setModifierProperty(declaredVar, PsiModifier.FINAL, myParameter.hasModifierProperty(PsiModifier.FINAL));
-      final PsiExpression localVarInitializer =
-        InlineUtil.inlineVariable(myParameter, myInitializer, (PsiReferenceExpression)factory.createExpressionFromText(myParameter.getName(), myMethod));
-      final PsiExpression initializer = declaredVar.getInitializer();
-      LOG.assertTrue(initializer != null);
-      initializer.replace(localVarInitializer);
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
         PsiElement anchor = findAnchorForLocalVariableDeclaration(body);
-        body.addAfter(localDeclaration, anchor);
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
+        PsiExpression refExpression = factory.createExpressionFromText(myParameter.getName(), anchor);
+        PsiDeclarationStatement localDeclaration = 
+          factory.createVariableDeclarationStatement(myParameter.getName(), myParameter.getType(), refExpression);
+        
+        localDeclaration = (PsiDeclarationStatement)body.addAfter(localDeclaration, anchor);
+        final PsiLocalVariable declaredVar = (PsiLocalVariable)localDeclaration.getDeclaredElements()[0];
+        PsiUtil.setModifierProperty(declaredVar, PsiModifier.FINAL, myParameter.hasModifierProperty(PsiModifier.FINAL));
+        InlineUtil.inlineVariable(myParameter, myInitializer, (PsiReferenceExpression)declaredVar.getInitializer());
       }
-    } else {
+    }
+    else {
       for (PsiJavaCodeReferenceElement paramRef : paramRefsToInline) {
         InlineUtil.inlineVariable(myParameter, myInitializer, paramRef);
       }

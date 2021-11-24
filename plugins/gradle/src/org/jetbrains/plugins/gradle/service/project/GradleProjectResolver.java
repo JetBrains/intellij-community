@@ -692,13 +692,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final ExternalProject externalProject = resolverCtx.getExtraProject(pair.second, ExternalProject.class);
       if (externalProject == null) continue;
 
-      if (resolverCtx.isResolveModulePerSourceSet()) {
-        for (DataNode<GradleSourceSetData> sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
-          mergeModuleContentRoots(weightMap, externalProject, sourceSetNode);
-        }
-      }
-      else {
-        mergeModuleContentRoots(weightMap, externalProject, moduleNode);
+      mergeModuleContentRoots(weightMap, externalProject, moduleNode);
+      for (DataNode<GradleSourceSetData> sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
+        mergeModuleContentRoots(weightMap, externalProject, sourceSetNode);
       }
     }
   }

@@ -47,7 +47,7 @@ public abstract class LazyImageIcon extends ScaleContextSupport
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
     ScaleContext ctx = ScaleContext.create(g2d);
-    if (SVGLoader.isSelectionContext()) {
+    if (SVGLoader.isColorRedefinitionContext()) {
       getRealIconForSelection(ctx).paintIcon(c, g, x, y);
     } else {
       getRealIcon(ctx).paintIcon(c, g, x, y);

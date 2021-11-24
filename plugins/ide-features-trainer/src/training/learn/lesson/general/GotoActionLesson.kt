@@ -15,6 +15,7 @@ import training.dsl.*
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import java.awt.event.KeyEvent
 import javax.swing.JDialog
 
@@ -48,7 +49,7 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
         text(LessonsBundle.message("goto.action.invoke.about.action",
                                    LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter()))
         triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
-          dialog.title?.contains(IdeBundle.message("about.popup.about.app", ApplicationNamesInfo.getInstance().fullProductName)) ?: false
+          dialog.title.isToStringContains(IdeBundle.message("about.popup.about.app", ApplicationNamesInfo.getInstance().fullProductName))
         }
         test { actions(it) }
       }
@@ -126,4 +127,11 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
   }
 
   private fun isLineNumbersShown() = EditorSettingsExternalizable.getInstance().isLineNumbersShown
+
+  override val suitableTips = listOf("find_action", "GoToAction")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.search.everywhere"),
+         LessonUtil.getHelpLink("searching-everywhere.html")),
+  )
 }

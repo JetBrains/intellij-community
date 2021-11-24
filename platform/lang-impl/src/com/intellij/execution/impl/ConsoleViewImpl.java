@@ -230,6 +230,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       .expireWith(this)
       .finishOnUiThread(ModalityState.stateForComponent(this), filters -> {
         myPredefinedFilters = filters;
+        rehighlightHyperlinksAndFoldings();
       }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
@@ -317,12 +318,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         flushDeferredText();
         Editor editor = getEditor();
         if (editor == null) return;
+        int moveOffset = getEffectiveOffset(editor);
+        editor.getCaretModel().moveToOffset(moveOffset);
+        editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      }
+
+      private int getEffectiveOffset(@NotNull Editor editor) {
         int moveOffset = Math.min(offset, editor.getDocument().getTextLength());
         if (ConsoleBuffer.useCycleBuffer() && moveOffset >= editor.getDocument().getTextLength()) {
           moveOffset = 0;
         }
-        editor.getCaretModel().moveToOffset(moveOffset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+        return moveOffset;
       }
     }
     addFlushRequest(0, new ScrollRunnable());
@@ -757,7 +763,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.getInlayModel().getInlineElementsInRange(0, 0).forEach(Disposer::dispose); // remove inlays if any
   }
 
-  private static boolean isStickingToEnd(@NotNull Editor editor) {
+  protected static boolean isStickingToEnd(@NotNull Editor editor) {
     Document document = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
     return document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
@@ -835,7 +841,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private EditorEx createConsoleEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     EditorEx editor = doCreateConsoleEditor();
-    LOG.assertTrue(UndoUtil.isUndoDisabledFor(editor.getDocument()));
+    LOG.assertTrue(UndoUtil.isUndoDisabledFor(editor.getDocument()), "Undo must be disabled in console for performance reasons");
+    LOG.assertTrue(!((DocumentImpl)editor.getDocument()).isWriteThreadOnly(), "Console document must support background modifications, see e.g. ConsoleViewUtil.setupConsoleEditor() "+getClass());
     editor.installPopupHandler(new ContextMenuPopupHandler() {
       @Override
       public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {

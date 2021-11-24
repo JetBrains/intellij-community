@@ -1,13 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast
 
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
+import org.jetbrains.uast.internal.convertOrReport
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
@@ -45,28 +43,6 @@ interface UClass : UDeclaration, PsiClass {
    * Returns [UDeclaration] wrappers for the class declarations.
    */
   val uastDeclarations: List<UDeclaration>
-
-  private inline fun <reified T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement): T? =
-    convertOrReport(psiElement, parent, T::class.java)
-
-  private fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, expectedType: Class<T>): T? {
-    fun getInfoString() = buildString {
-      appendln("context:${this@UClass.javaClass}")
-      appendln("psiElement:${psiElement.javaClass}")
-      appendln("psiElementContent:${runCatching { psiElement.text }}")
-    }
-
-    val plugin = this.sourcePsi?.let { UastFacade.findPlugin(it) } ?: UastFacade.findPlugin(psiElement)
-    if (plugin == null) {
-      LOG.error("cant get UAST plugin for $this to convert element $psiElement", Attachment("info.txt", getInfoString()))
-      return null
-    }
-    val result = expectedType.cast(plugin.convertElement(psiElement, parent, expectedType))
-    if (result == null) {
-      LOG.error("failed to convert element $psiElement in $this", Attachment("info.txt", getInfoString()))
-    }
-    return result
-  }
 
   override fun getFields(): Array<UField> =
     javaPsi.fields.mapNotNull { convertOrReport<UField>(it, this) }.toTypedArray()
@@ -113,8 +89,6 @@ interface UClass : UDeclaration, PsiClass {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitClass(this, data)
 }
-
-private val LOG = Logger.getInstance(UClass::class.java)
 
 interface UAnonymousClass : UClass, PsiAnonymousClass {
   @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")

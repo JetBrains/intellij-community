@@ -349,6 +349,7 @@ final class SearchForUsagesRunnable implements Runnable {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
     AtomicBoolean findUsagesStartedShown = new AtomicBoolean();
+    UsageViewStatisticsCollector.logSearchStarted(myProject);
     searchUsages(findUsagesStartedShown);
     endSearchForUsages(findUsagesStartedShown);
 

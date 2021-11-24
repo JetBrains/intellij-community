@@ -36,8 +36,9 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
             ktFile.text,
             SKIP_ANALYZE_CHECK_DIRECTIVE
         )
+        val project = myFixture.project
         val tracker =
-            PsiManager.getInstance(myFixture.project).modificationTracker as PsiModificationTrackerImpl
+            PsiManager.getInstance(project).modificationTracker as PsiModificationTrackerImpl
         val element = ktFile.findElementAt(myFixture.caretOffset)
         assertNotNull("Should be valid element", element)
         val oobBeforeType = ktFile.outOfBlockModificationCount
@@ -47,7 +48,7 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
         ktFile.analyzeWithAllCompilerChecks()
 
         myFixture.type(stringToType)
-        PsiDocumentManager.getInstance(myFixture.project).commitDocument(myFixture.getDocument(myFixture.file))
+        PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
         val oobAfterCount = ktFile.outOfBlockModificationCount
         val modificationCountAfterType = tracker.modificationCount
         assertTrue(
@@ -60,6 +61,7 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
             expectedOutOfBlock, oobBeforeType != oobAfterCount
         )
         checkForUnexpectedErrors(ktFile)
+        DirectiveBasedActionUtils.inspectionChecks(name, ktFile)
 
         if (!isSkipCheckDefined) {
             checkOOBWithDescriptorsResolve(expectedOutOfBlock)

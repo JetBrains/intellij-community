@@ -348,6 +348,7 @@ public final class PackageAnnotator {
 
   private static boolean hasGeneratedConstructor(@NotNull final PsiClass aClass) {
     return aClass.getLanguage().isKindOf(JavaLanguage.INSTANCE) && ReadAction.compute(() -> {
+      if (!aClass.isValid()) return false;
       PsiMethod[] constructors = aClass.getConstructors();
       return constructors.length == 0;
     });

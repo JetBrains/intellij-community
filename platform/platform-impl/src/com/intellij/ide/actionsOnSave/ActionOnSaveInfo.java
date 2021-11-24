@@ -12,7 +12,6 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,6 @@ import java.util.List;
  * @see ActionOnSaveBackedByOwnConfigurable
  * @see ActionOnSaveInfo#ActionOnSaveInfo(ActionOnSaveContext)
  */
-@ApiStatus.Experimental
 public abstract class ActionOnSaveInfo {
 
   private final @NotNull ActionOnSaveContext myContext;

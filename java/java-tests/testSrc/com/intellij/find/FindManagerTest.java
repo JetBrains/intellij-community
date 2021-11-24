@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -807,6 +808,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(findResult.isStringFound());
   }
 
+  public void testRegExpWithWords() throws Exception {
+    createFile(myModule, "A.txt", "abc(edf)");
+    FindModel findModel = FindManagerTestUtils.configureFindModel("abc\\(edf");
+    findModel.setRegularExpressions(true);
+    List<UsageInfo> usages = findInProject(findModel);
+    assertEquals(1, usages.size());
+  }
+
   public void testRegExpInString2() throws Exception {
     FindModel findModel = FindManagerTestUtils.configureFindModel("\\b");
     String text = "\"abc def\"";
@@ -1172,5 +1181,26 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindInProjectUtil.findUsages(findModel, myProject, collector, presentation);
 
     assertEquals(100, result.size());
+  }
+
+  public void testFindInEditedAndNotSavedFile() throws Exception {
+    PsiFile file = createFile(myModule, "A.txt", "foo");
+    Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.insertString(document.getTextLength(), "bar");
+    });
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
+
+    FindModel findModel = new FindModel();
+    findModel.setWholeWordsOnly(false);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(true);
+    findModel.setProjectScope(true);
+
+    findModel.setStringToFind("bar");
+    List<UsageInfo> usages = findInProject(findModel);
+
+    assertEquals(1, usages.size());
   }
 }

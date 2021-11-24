@@ -13,6 +13,7 @@
       <action id="RunToolbarMoveToTopAction" class="com.intellij.execution.runToolbar.RunToolbarMoveToTopAction" icon="AllIcons.Toolbar.Pin"/>
       <action id="RunToolbarEditConfigurationAction" class="com.intellij.execution.runToolbar.RunToolbarEditConfigurationAction"/>
       <action id="RunToolbarRemoveSlotAction" class="com.intellij.execution.runToolbar.RunToolbarRemoveSlotAction"/>
+      <action id="RunToolbarShowToolWindowTab" class="com.intellij.execution.runToolbar.RunToolbarShowToolWindowTab"/>
     </group>
 
     <group id="RunToolbarActionsGroup" popup="false">

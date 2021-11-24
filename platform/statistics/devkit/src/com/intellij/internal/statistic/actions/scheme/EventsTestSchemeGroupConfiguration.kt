@@ -7,10 +7,11 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.InspectionEngine
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
@@ -27,24 +28,26 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.PairProcessor
 import com.intellij.util.TextFieldCompletionProviderDumbAware
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -57,7 +60,6 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
 
   val panel: JPanel
   val groupIdTextField: TextFieldWithCompletion
-  private val log = logger<EventsTestSchemeGroupConfiguration>()
   private var currentGroup: GroupValidationTestRule = initialGroup
   private lateinit var allowAllEventsRadioButton: JBRadioButton
   private lateinit var customRulesRadioButton: JBRadioButton
@@ -121,7 +123,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
         validationRulesEditorComponent(growX)
       }
       row {
-        generateSchemeButton = button("Generate scheme") {
+        generateSchemeButton = button("Generate Scheme") {
           val scheme = eventsScheme[groupIdTextField.text]
           if (scheme != null) {
             WriteAction.run<Throwable> { validationRulesEditor.document.setText(scheme) }
@@ -193,7 +195,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       editor.highlighter = highlighter
     }
     catch (e: Throwable) {
-      log.warn(e)
+      LOG.warn(e)
     }
     return editor
   }
@@ -230,7 +232,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
           tempFile.delete()
         }
         catch (e: IncorrectOperationException) {
-          log.warn(e)
+          LOG.warn(e)
         }
       })
 
@@ -282,6 +284,8 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
   }
 
   companion object {
+    private val LOG = logger<EventsTestSchemeGroupConfiguration>()
+
     internal val FUS_TEST_SCHEME_COMMON_RULES_KEY = Key.create<ProductionRules>("statistics.test.scheme.validation.rules.file")
 
     fun validateTestSchemeGroup(project: Project,
@@ -310,6 +314,8 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
                                                customRules: String,
                                                customRulesFile: PsiFile?): List<ValidationInfo> {
       if (customRules.isBlank()) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
+      if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
+      if (project === ProjectManager.getInstance().defaultProject) return emptyList()
       val file = if (customRulesFile != null) {
         customRulesFile
       }
@@ -318,16 +324,14 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
         psiFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
         psiFile
       }
-      if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
-      val problemHolder = ProblemsHolder(InspectionManager.getInstance(project), file, true)
-      val inspectionSession = LocalInspectionToolSession(file, file.textRange.startOffset, file.textRange.endOffset)
-      val inspectionVisitor = JsonSchemaComplianceInspection()
-        .buildVisitor(problemHolder, problemHolder.isOnTheFly, inspectionSession)
-      val traverser = SyntaxTraverser.psiTraverser(file)
-      for (element in traverser) {
-        element.accept(inspectionVisitor)
+      val map: Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> = InspectionEngine.inspectEx(
+        Collections.singletonList(LocalInspectionToolWrapper(JsonSchemaComplianceInspection())),
+        file, file.textRange, file.textRange, true, false, true, DaemonProgressIndicator(),
+        PairProcessor.alwaysTrue())
+
+      return map.values.flatten().map { descriptor ->
+        ValidationInfo("Line ${descriptor.lineNumber + 1}: ${descriptor.descriptionTemplate}")
       }
-      return problemHolder.results.map { ValidationInfo("Line ${it.lineNumber + 1}: ${it.descriptionTemplate}") }
     }
 
     private fun isValidJson(customRules: String): Boolean {
@@ -343,7 +347,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
 
   internal class ProductionRules(val regexps: Set<String>, val enums: Set<String>) {
     constructor(rules: EventGroupRemoteDescriptors.GroupRemoteRule?) : this(rules?.regexps?.keys ?: emptySet(),
-                                                                          rules?.enums?.keys ?: emptySet())
+                                                                            rules?.enums?.keys ?: emptySet())
   }
 
 }

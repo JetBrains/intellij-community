@@ -46,6 +46,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     if (patcher != null) {
       IconLoader.installPathPatcher(patcher);
     }
+    SVGLoader.setSelectionColorPatcherProvider(myTheme.getSelectionColorPatcher());
 
     SVGLoader.SvgElementColorPatcherProvider colorPatcher = myTheme.getColorPatcher();
     if (colorPatcher != null) {

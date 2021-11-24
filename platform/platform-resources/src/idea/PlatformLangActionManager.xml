@@ -55,31 +55,24 @@
       <action id="ProblemsView.ShowPreview"
               icon="AllIcons.Actions.PreviewDetails"
               class="com.intellij.analysis.problemsView.toolWindow.ShowPreview"/>
-      <separator/>
-      <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
-      <separator/>
-      <action id="ProblemsView.GroupByToolId"
-              icon="AllIcons.ObjectBrowser.SortByType"
-              class="com.intellij.analysis.problemsView.toolWindow.GroupByToolId"/>
-      <action id="ProblemsView.SortFoldersFirst"
-              icon="AllIcons.ObjectBrowser.SortByType"
-              class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
-      <action id="ProblemsView.SortBySeverity"
-              icon="AllIcons.Nodes.SortBySeverity"
-              class="com.intellij.analysis.problemsView.toolWindow.SortBySeverity"/>
-      <action id="ProblemsView.SortByName"
-              icon="AllIcons.ObjectBrowser.Sorted"
-              class="com.intellij.analysis.problemsView.toolWindow.SortByName"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.Toolbar">
       <group id="ProblemsView.Options" icon="AllIcons.Actions.Show" popup="true">
-        <reference ref="ProblemsView.SeverityFilters"/>
+        <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
         <separator/>
-        <reference ref="ProblemsView.GroupByToolId"/>
-        <reference ref="ProblemsView.SortFoldersFirst"/>
-        <reference ref="ProblemsView.SortBySeverity"/>
-        <reference ref="ProblemsView.SortByName"/>
+        <action id="ProblemsView.GroupByToolId"
+                icon="AllIcons.ObjectBrowser.SortByType"
+                class="com.intellij.analysis.problemsView.toolWindow.GroupByToolId"/>
+        <action id="ProblemsView.SortFoldersFirst"
+                icon="AllIcons.ObjectBrowser.SortByType"
+                class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
+        <action id="ProblemsView.SortBySeverity"
+                icon="AllIcons.Nodes.SortBySeverity"
+                class="com.intellij.analysis.problemsView.toolWindow.SortBySeverity"/>
+        <action id="ProblemsView.SortByName"
+                icon="AllIcons.ObjectBrowser.Sorted"
+                class="com.intellij.analysis.problemsView.toolWindow.SortByName"/>
       </group>
       <reference ref="ProblemsView.ShowPreview"/>
       <reference ref="ExpandAll"/>

@@ -127,6 +127,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     return getConfigurationModule().findClass(getMainClassName());
   }
 
+  @NlsSafe
   @Nullable
   public String getMainClassName() {
     return MAIN_CLASS_NAME;
@@ -135,10 +136,16 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @Override
   @Nullable
   public String suggestedName() {
-    if (getMainClassName() == null) {
+    String mainClassName = getMainClassName();
+    if (mainClassName == null) {
       return null;
     }
-    return JavaExecutionUtil.getPresentableClassName(getMainClassName());
+    String configName = JavaExecutionUtil.getPresentableClassName(mainClassName);
+    if (configName != null &&
+        RunManager.getInstance(getProject()).findConfigurationByTypeAndName(getType(), configName) != null) {
+      return mainClassName;
+    }
+    return configName;
   }
 
   @Override

@@ -7,13 +7,14 @@ import kotlin.random.Random
 
 abstract class AbstractCompilerArgumentsCacheMapper protected constructor() :
     AbstractCompilerArgumentsCacheAware(), CompilerArgumentsCacheMapper {
+    protected abstract val offset: Int
     private var nextId = 0
     final override var cacheByValueMap: HashMap<Int, String> = hashMapOf()
-    protected var valueByCacheMap: HashMap<String, Int> = hashMapOf()
+    var valueByCacheMap: HashMap<String, Int> = hashMapOf()
 
     override fun cacheArgument(arg: String): Int {
         if (checkCached(arg)) return valueByCacheMap.getValue(arg)
-        val retVal = nextId
+        val retVal = offset + nextId
         nextId += 1
         return retVal.also {
             cacheByValueMap[it] = arg
@@ -25,4 +26,6 @@ abstract class AbstractCompilerArgumentsCacheMapper protected constructor() :
 }
 
 data class CompilerArgumentsCacheMapperImpl(override val cacheOriginIdentifier: Long = Random.nextLong()) :
-    AbstractCompilerArgumentsCacheMapper()
+    AbstractCompilerArgumentsCacheMapper() {
+    override val offset: Int = 0
+}

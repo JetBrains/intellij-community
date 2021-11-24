@@ -25,15 +25,25 @@ import com.intellij.util.io.exists
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
+import org.jetbrains.annotations.Nls
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
-  private val wrapActionName: String
+internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
+  private val wrapActionBaseName: String
     get() = MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.text")
+
   private val unwrapActionName: String
     get() = MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.unwrap.text")
+
+  private fun obtainWrapActionName(place: String): @Nls String {
+    return when (place) {
+      MarkdownActionPlaces.INSERT_POPUP -> MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.insert.popup.text")
+      else -> wrapActionBaseName
+    }
+  }
 
   override fun isSelected(e: AnActionEvent): Boolean {
     val editor = MarkdownActionUtil.findMarkdownTextEditor(e)
@@ -48,23 +58,22 @@ class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
     val caretsWithLinks = editor.caretModel.allCarets
       .filter { it.getSelectedLinkElement(file) != null }
 
-    return when (caretsWithLinks.count()) {
-      0 -> {
+    val caretsWithLinksCount = caretsWithLinks.count()
+    return when {
+      caretsWithLinksCount == 0 || e.place == ActionPlaces.EDITOR_POPUP -> {
         e.presentation.isEnabled = !editor.isViewer
-        e.presentation.text = wrapActionName
+        e.presentation.text = obtainWrapActionName(e.place)
         e.presentation.description = MarkdownBundle.message(
           "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.description")
         false
       }
-
-      editor.caretModel.caretCount -> {
+      caretsWithLinksCount == editor.caretModel.caretCount -> {
         e.presentation.isEnabled = !editor.isViewer
         e.presentation.text = unwrapActionName
         e.presentation.description = MarkdownBundle.message(
           "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.unwrap.description")
         true
       }
-
       else -> { // some carets are located at links, others are not
         e.presentation.isEnabled = false
         false
@@ -111,7 +120,7 @@ class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
     val fileArray = file?.let { arrayOf(it) } ?: emptyArray()
     WriteCommandAction.writeCommandAction(project, *fileArray)
-      .withName(wrapActionName)
+      .withName(wrapActionBaseName)
       .run<Nothing> {
         caret.removeSelection()
 

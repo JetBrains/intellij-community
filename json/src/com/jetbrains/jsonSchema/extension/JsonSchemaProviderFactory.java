@@ -19,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URL;
 import java.util.List;
 
+/**
+ * Implement to contribute JSON Schemas for particular JSON documents to enable validation/completion based on JSON Schema.
+ */
 public interface JsonSchemaProviderFactory {
   ExtensionPointName<JsonSchemaProviderFactory> EP_NAME = ExtensionPointName.create("JavaScript.JsonSchema.ProviderFactory");
   Logger LOG = Logger.getInstance(JsonSchemaProviderFactory.class);

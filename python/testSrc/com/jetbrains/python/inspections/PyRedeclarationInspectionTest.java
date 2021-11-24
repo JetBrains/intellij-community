@@ -204,7 +204,7 @@ public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-48760
-  public void testPatternBindsSameNameTwice() {
+  public void testPatternBindsAndRepeatsName() {
     doTest();
   }
 

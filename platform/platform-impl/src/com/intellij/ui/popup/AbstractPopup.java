@@ -42,10 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicHTML;
@@ -977,10 +974,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
       root.setGlassPane(glass);
 
-      int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
       WindowResizeListener resizeListener = new WindowResizeListener(
         myComponent,
-        myMovable ? JBUI.insets(i) : JBUI.insets(0, 0, i, i),
+        myMovable ? JBUI.insets(4) : JBUI.insets(0, 0, 4, 4),
         null) {
         private Cursor myCursor;
 
@@ -1604,7 +1600,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
   }
 
-  boolean isCancelOnClickOutside() {
+  @ApiStatus.Internal
+  public boolean isCancelOnClickOutside() {
     return myCancelOnClickOutside;
   }
 

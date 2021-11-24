@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere
 
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -24,12 +23,12 @@ abstract class SearchEverywhereMlService {
 
   abstract fun shouldOrderByMl(tabId: String): Boolean
 
-  abstract fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double
+  abstract fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double
 
   abstract fun onSessionStarted(project: Project?)
 
   abstract fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
-                               keysTyped: Int, backspacesTyped: Int, textLength: Int,
+                               keysTyped: Int, backspacesTyped: Int, searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
 
   abstract fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,

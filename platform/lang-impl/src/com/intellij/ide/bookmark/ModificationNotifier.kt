@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmark
 
+import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowId.BOOKMARKS
+import com.intellij.openapi.wm.ToolWindowManager
 import java.util.concurrent.atomic.AtomicLong
 
 internal class ModificationNotifier(private val project: Project) : BookmarksListener {
@@ -16,7 +19,16 @@ internal class ModificationNotifier(private val project: Project) : BookmarksLis
       else -> project.messageBus.syncPublisher(BookmarksListener.TOPIC)
     }
 
+  internal fun selectLater(select: (BookmarksView) -> Unit) = invokeLater {
+    val window = if (project.isDisposed) null else ToolWindowManager.getInstance(project).getToolWindow(BOOKMARKS)
+    val view = window?.contentManagerIfCreated?.selectedContent?.component as? BookmarksView
+    view?.let { if (it.isShowing) select(it) }
+  }
+
+  internal var snapshot: List<BookmarkOccurrence>? = null
+
   private fun notifyLater(notify: (BookmarksListener) -> Unit) {
+    snapshot = null // cleanup cached snapshot
     modification.incrementAndGet()
     invokeLater { publisher?.let(notify) }
   }

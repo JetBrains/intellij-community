@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 public interface ProcessService {
@@ -23,7 +24,7 @@ public interface ProcessService {
   boolean sendWinProcessCtrlC(@NotNull Process process);
 
   /**
-   * pid is not enough to emulate CTRL+C on Windows, {@link java.lang.Process#getOutputStream} is also needed
+   * pid is not enough to emulate CTRL+C on Windows, {@link Process#getOutputStream} is also needed
    *
    * @deprecated use {@link #sendWinProcessCtrlC(Process)}
    */
@@ -38,9 +39,18 @@ public interface ProcessService {
   @Nullable
   Integer winPtyChildProcessId(@NotNull Process process);
 
+  boolean hasControllingTerminal(@NotNull Process process);
+
   static @NotNull ProcessService getInstance() {
     return ApplicationManager.getApplication().getService(ProcessService.class);
   }
 
   void killWinProcess(int pid);
+
+  /**
+   * @return the command line of the process
+   */
+  default @NotNull List<String> getCommand(@NotNull Process process) {
+    return List.of();
+  }
 }

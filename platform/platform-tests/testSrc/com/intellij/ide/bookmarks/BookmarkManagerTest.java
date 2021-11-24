@@ -12,12 +12,12 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.TestFileType;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int i = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
     List<Bookmark> bookmarksBefore = getManager().getBookmarks();
@@ -92,7 +92,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int i = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
     Document document = getEditor().getDocument();
@@ -110,7 +110,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int j = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
     addBookmark(3);
@@ -136,7 +136,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int j = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
     addBookmark(3);
@@ -153,7 +153,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     for (Bookmark bookmark : bookmarksAfter) {
       checkBookmarkNavigation(bookmark);
     }
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
     getEditor().getCaretModel().setCaretsAndSelections(
       Collections.singletonList(
         new CaretState(getEditor().visualToLogicalPosition(new VisualPosition(2, getEditor().getDocument().getLineEndOffset(2))), null, null)));
@@ -168,7 +168,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int i = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
     addBookmark(2);
     assertEquals(1, getManager().getBookmarks().size());
 

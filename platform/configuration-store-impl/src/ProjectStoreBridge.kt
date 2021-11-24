@@ -81,9 +81,9 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
   companion object {
     private val NULL_ELEMENT = Element("null")
   }
-  private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element?>> = if (!SystemInfoRt.isFileSystemCaseSensitive)
+  private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element>> = if (!SystemInfoRt.isFileSystemCaseSensitive)
     ConcurrentCollectionFactory.createConcurrentMap(HashingStrategy.caseInsensitive()) else ConcurrentCollectionFactory.createConcurrentMap()
-  private val externalModuleComponents = ConcurrentHashMap<String, ConcurrentHashMap<String, Element?>>()
+  private val externalModuleComponents = ConcurrentHashMap<String, ConcurrentHashMap<String, Element>>()
 
   fun setModuleComponentState(imlFilePath: String, componentName: String, componentTag: Element?) {
     val componentToElement = internalModuleComponents.computeIfAbsent(imlFilePath) { ConcurrentHashMap() }
@@ -96,7 +96,7 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
   }
 
   fun commitComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager) {
-    fun commitToStorage(storageSpec: Storage, componentToElement: Map<String, Element?>) {
+    fun commitToStorage(storageSpec: Storage, componentToElement: Map<String, Element>) {
       val storage = moduleStore.storageManager.getStateStorage(storageSpec)
       val producer = moduleSaveSessionManager.getProducer(storage)
       if (producer != null) {

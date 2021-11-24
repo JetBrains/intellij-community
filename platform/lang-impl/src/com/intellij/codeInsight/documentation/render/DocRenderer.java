@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.documentation.InlineDocumentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocCommentBase;
@@ -39,7 +41,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
@@ -64,6 +65,8 @@ import java.awt.image.ImageObserver;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.lang.documentation.ide.impl.DocumentationManager.instance;
 
 class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRenderer {
   private static final Logger LOG = Logger.getInstance(DocRenderer.class);
@@ -273,11 +276,19 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     }
     group.add(new DocRenderItem.ChangeFontSize());
 
+    PsiDocCommentBase comment = getComment();
     for (DocumentationActionProvider provider : DocumentationActionProvider.EP_NAME.getExtensions()) {
-      provider.additionalActions(myItem.editor, myItem.getComment(), myItem.textToRender).forEach(group::add);
+      provider.additionalActions(myItem.editor, comment, myItem.textToRender).forEach(group::add);
     }
 
     return group;
+  }
+
+  private @Nullable PsiDocCommentBase getComment() {
+    InlineDocumentation documentation = myItem.getInlineDocumentation();
+    return documentation instanceof PsiCommentInlineDocumentation
+           ? ((PsiCommentInlineDocumentation)documentation).getComment()
+           : null;
   }
 
   private static int scale(int value) {
@@ -408,16 +419,40 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     }
     if (location == null) return;
 
-    PsiDocCommentBase comment = myItem.getComment();
-    if (comment == null) return;
-
-    PsiElement context = ObjectUtils.notNull(comment.getOwner(), comment);
     String url = event.getDescription();
+    if (Registry.is("documentation.v2")) {
+      activateLinkV2(url, location);
+      return;
+    }
+
+    InlineDocumentation documentation = myItem.getInlineDocumentation();
+    if (documentation == null) return;
+
+    PsiElement context = ((PsiCommentInlineDocumentation)documentation).getContext();
     if (isGotoDeclarationEvent()) {
       navigateToDeclaration(context, url);
     }
     else {
       showDocumentation(myItem.editor, context, url, location);
+    }
+  }
+
+  private void activateLinkV2(@NotNull String url, @NotNull Rectangle2D location) {
+    Editor editor = myItem.editor;
+    Project project = editor.getProject();
+    if (project == null) {
+      return;
+    }
+    if (isGotoDeclarationEvent()) {
+      instance(project).navigateInlineLink(
+        url, myItem::getInlineDocumentation
+      );
+    }
+    else {
+      instance(project).activateInlineLink(
+        url, myItem::getInlineDocumentation,
+        editor, popupPosition(location)
+      );
     }
   }
 
@@ -448,21 +483,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     Project project = context.getProject();
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     if (QuickDocUtil.getActiveDocComponent(project) == null) {
-      Point rendererPosition;
-      Rectangle relativeBounds;
-      if (useOldBackend()) {
-        Inlay<DocRenderer> inlay = myItem.inlay;
-        rendererPosition = Objects.requireNonNull(inlay.getBounds()).getLocation();
-        relativeBounds = getEditorPaneBoundsWithinRenderer(inlay.getWidthInPixels(), inlay.getHeightInPixels());
-      }
-      else {
-        CustomFoldRegion foldRegion = (CustomFoldRegion)myItem.foldRegion;
-        rendererPosition = Objects.requireNonNull(foldRegion.getLocation());
-        relativeBounds = getEditorPaneBoundsWithinRenderer(foldRegion.getWidthInPixels(), foldRegion.getHeightInPixels());
-      }
-      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT,
-                         new Point(rendererPosition.x + relativeBounds.x + (int)linkLocationWithinInlay.getX(),
-                                   rendererPosition.y + relativeBounds.y + (int)Math.ceil(linkLocationWithinInlay.getMaxY())));
+      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, popupPosition(linkLocationWithinInlay));
       documentationManager.showJavaDocInfo(editor, context, context, () -> {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
       }, "", false, true);
@@ -487,6 +508,25 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
       }, disposable);
       documentationManager.muteAutoUpdateTill(disposable);
     }
+  }
+
+  private @NotNull Point popupPosition(@NotNull Rectangle2D linkLocationWithinInlay) {
+    Point rendererPosition;
+    Rectangle relativeBounds;
+    if (useOldBackend()) {
+      Inlay<DocRenderer> inlay = myItem.inlay;
+      rendererPosition = Objects.requireNonNull(inlay.getBounds()).getLocation();
+      relativeBounds = getEditorPaneBoundsWithinRenderer(inlay.getWidthInPixels(), inlay.getHeightInPixels());
+    }
+    else {
+      CustomFoldRegion foldRegion = (CustomFoldRegion)myItem.foldRegion;
+      rendererPosition = Objects.requireNonNull(foldRegion.getLocation());
+      relativeBounds = getEditorPaneBoundsWithinRenderer(foldRegion.getWidthInPixels(), foldRegion.getHeightInPixels());
+    }
+    return new Point(
+      rendererPosition.x + relativeBounds.x + (int)linkLocationWithinInlay.getX(),
+      rendererPosition.y + relativeBounds.y + (int)Math.ceil(linkLocationWithinInlay.getMaxY())
+    );
   }
 
   private static boolean isExternalLink(@NotNull String linkUrl) {

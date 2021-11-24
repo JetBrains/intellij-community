@@ -8,8 +8,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.LogicalPosition
@@ -29,9 +31,9 @@ import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.UIUtil
-import org.fest.swing.core.MouseButton
-import org.fest.swing.data.TableCell
-import org.fest.swing.fixture.JTableFixture
+import org.assertj.swing.core.MouseButton
+import org.assertj.swing.data.TableCell
+import org.assertj.swing.fixture.JTableFixture
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
@@ -45,6 +47,8 @@ import training.learn.lesson.LessonManager
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiHighlightingManager.HighlightingOptions
 import training.ui.LearningUiUtil
+import training.util.LessonEndInfo
+import training.util.isToStringContains
 import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
@@ -157,7 +161,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       text(LessonsBundle.message("local.history.imagine.restore", strong(ActionsBundle.message("action.\$Undo.text"))))
       text(LessonsBundle.message("local.history.invoke.context.menu", strong(localHistoryActionText)))
       triggerByUiComponentAndHighlight { ui: ActionMenu ->
-        ui.text?.contains(localHistoryActionText) == true
+        ui.text.isToStringContains(localHistoryActionText)
       }
       test {
         ideFrame { robot().rightClick(editor.component) }
@@ -174,8 +178,8 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       restoreByUi()
       test {
         ideFrame {
-          jMenuItem { item -> item.text?.contains(localHistoryActionText) == true }.click()
-          jMenuItem { item -> item.text == showHistoryActionText }.click()
+          jMenuItem { item: ActionMenu -> item.text.isToStringContains(localHistoryActionText) }.click()
+          jMenuItem { item: ActionMenuItem -> item.text == showHistoryActionText }.click()
         }
       }
     }
@@ -253,10 +257,13 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       before { LearningUiHighlightingManager.clearHighlights() }
       text(LessonsBundle.message("local.history.close.window", action("EditorEscape")))
       stateCheck {
-        previous.ui?.isShowing != true
+        val focusedEditor = focusOwner as? EditorComponentImpl
+        // check that it is editor from main IDE frame
+        focusedEditor != null && UIUtil.getParentOfType(SingleHeightTabs::class.java, focusedEditor) != null
       }
       test {
-        Thread.sleep(500)
+        invokeActionViaShortcut("ESCAPE")
+        // sometimes some small popup appears at mouse position so the first Escape may close just that popup
         invokeActionViaShortcut("ESCAPE")
       }
     }
@@ -266,22 +273,26 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
     text(LessonsBundle.message("local.history.congratulations"))
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
-    if (!lessonPassed) return
-    val editorComponent = LearningUiUtil.findComponentOrNull(project, EditorComponentImpl::class.java) { editor ->
-      UIUtil.getParentOfType(SingleHeightTabs::class.java, editor) != null
-    } ?: error("Failed to find editor component")
-    val lines = textToDelete.lines()
-    val rightColumn = lines.maxOf { it.length }
-    LearningUiHighlightingManager.highlightPartOfComponent(editorComponent, HighlightingOptions(highlightInside = false)) {
-      val editor = editorComponent.editor
-      val textToFind = lines[0].trim()
-      val offset = editor.document.charsSequence.indexOf(textToFind)
-      if (offset == -1) error("Failed to find '$textToFind' in the editor")
-      val leftPosition = editor.offsetToLogicalPosition(offset)
-      val leftPoint = editor.logicalPositionToXY(leftPosition)
-      val rightPoint = editor.logicalPositionToXY(LogicalPosition(leftPosition.line, rightColumn))
-      Rectangle(leftPoint.x - 3, leftPoint.y, rightPoint.x - leftPoint.x + 6, editor.lineHeight * lines.size)
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
+    if (!lessonEndInfo.lessonPassed) return
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val editorComponent = LearningUiUtil.findComponentOrNull(project, EditorComponentImpl::class.java) { editor ->
+        UIUtil.getParentOfType(SingleHeightTabs::class.java, editor) != null
+      } ?: error("Failed to find editor component")
+      invokeLater {
+        val lines = textToDelete.lines()
+        val rightColumn = lines.maxOf { it.length }
+        LearningUiHighlightingManager.highlightPartOfComponent(editorComponent, HighlightingOptions(highlightInside = false)) {
+          val editor = editorComponent.editor
+          val textToFind = lines[0].trim()
+          val offset = editor.document.charsSequence.indexOf(textToFind)
+          if (offset == -1) error("Failed to find '$textToFind' in the editor")
+          val leftPosition = editor.offsetToLogicalPosition(offset)
+          val leftPoint = editor.logicalPositionToXY(leftPosition)
+          val rightPoint = editor.logicalPositionToXY(LogicalPosition(leftPosition.line, rightColumn))
+          Rectangle(leftPoint.x - 3, leftPoint.y, rightPoint.x - leftPoint.x + 6, editor.lineHeight * lines.size)
+        }
+      }
     }
   }
 
@@ -361,4 +372,11 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       Thread.sleep(10)
     }
   }
+
+  override val suitableTips = listOf("local_history")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("local.history.help.link"),
+         LessonUtil.getHelpLink("local-history.html")),
+  )
 }

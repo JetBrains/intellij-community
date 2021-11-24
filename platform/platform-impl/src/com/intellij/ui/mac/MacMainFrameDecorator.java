@@ -16,6 +16,8 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
+import com.sun.jna.Native;
+import com.sun.jna.platform.mac.CoreFoundation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -28,53 +30,29 @@ import java.lang.reflect.Method;
 import java.util.EventListener;
 
 public final class MacMainFrameDecorator extends IdeFrameDecorator {
-  private interface FSListener extends FullScreenListener, EventListener {}
-  private static class FSAdapter extends FullScreenAdapter implements FSListener {}
-
-  private void enterFullScreen() {
-    myInFullScreen = true;
-    storeFullScreenStateIfNeeded();
-
-    myTabsHandler.enterFullScreen();
-  }
-
-  private void exitFullScreen() {
-    myInFullScreen = false;
-    storeFullScreenStateIfNeeded();
-
-    JRootPane rootPane = myFrame.getRootPane();
-    if (rootPane != null) {
-      rootPane.putClientProperty(FULL_SCREEN, null);
-    }
-
-    myTabsHandler.exitFullScreen();
-  }
-
-  private void storeFullScreenStateIfNeeded() {
-    // todo should we really check that frame has not null project as it was implemented previously?
-    myFrame.doLayout();
-  }
-
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
-
   private static Method toggleFullScreenMethod;
 
   static {
     try {
       //noinspection SpellCheckingInspection
       Class.forName("com.apple.eawt.FullScreenUtilities");
-
       toggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
     }
     catch (Exception e) {
       Logger.getInstance(MacMainFrameDecorator.class).warn(e);
     }
   }
+  interface MyCoreFoundation extends CoreFoundation {
+    MyCoreFoundation INSTANCE = Native.load("CoreFoundation", MyCoreFoundation.class);
+
+    CoreFoundation.CFStringRef CFPreferencesCopyAppValue(
+      CoreFoundation.CFStringRef key, CoreFoundation.CFStringRef applicationID);
+  }
 
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
   private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
-
   public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     super(frame);
 
@@ -131,7 +109,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           JRootPane rootPane = myFrame.getRootPane();
           if (Registry.is("ide.mac.transparentTitleBarAppearance")) {
             UIUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {
-              Disposer.register(parentDisposable, () -> runnable.run());
+              if(!Disposer.isDisposed(parentDisposable)) {
+                Disposer.register(parentDisposable, () -> runnable.run());
+              }
             });
           }
           exitFullScreen();
@@ -143,17 +123,66 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     JRootPane rootPane = myFrame.getRootPane();
 
     if (rootPane != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+
       IdeGlassPane glassPane = (IdeGlassPane)myFrame.getRootPane().getGlassPane();
       glassPane.addMousePreprocessor(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2 && e.getY() <= UIUtil.getTransparentTitleBarHeight(rootPane)) {
-            myFrame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            CoreFoundation.CFStringRef appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick");
+            CoreFoundation.CFStringRef apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain");
+            CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
+              appleActionOnDoubleClick,
+              apple_global_domain);
+            if (res != null && !res.stringValue().equals("Maximize")) {
+              if (frame.getExtendedState() == Frame.ICONIFIED) {
+                frame.setExtendedState(Frame.NORMAL);
+              }
+              else {
+                frame.setExtendedState(Frame.ICONIFIED);
+              }
+            }
+            else {
+              if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
+                frame.setExtendedState(Frame.NORMAL);
+              }
+              else {
+                frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+              }
+            }
+            apple_global_domain.release();
+            appleActionOnDoubleClick.release();
+            if(res != null) {
+              res.release();
+            }
           }
           super.mouseClicked(e);
         }
       }, parentDisposable);
     }
+  }
+
+  private void enterFullScreen() {
+    myInFullScreen = true;
+    storeFullScreenStateIfNeeded();
+    myTabsHandler.enterFullScreen();
+  }
+
+  private void exitFullScreen() {
+    myInFullScreen = false;
+    storeFullScreenStateIfNeeded();
+
+    JRootPane rootPane = myFrame.getRootPane();
+    if (rootPane != null) {
+      rootPane.putClientProperty(FULL_SCREEN, null);
+    }
+
+    myTabsHandler.exitFullScreen();
+  }
+
+  private void storeFullScreenStateIfNeeded() {
+    // todo should we really check that frame has not null project as it was implemented previously?
+    myFrame.doLayout();
   }
 
   @Override
@@ -219,5 +248,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     catch (Exception e) {
       Logger.getInstance(MacMainFrameDecorator.class).warn(e);
     }
+  }
+
+  private interface FSListener extends FullScreenListener, EventListener {
+  }
+
+  private static class FSAdapter extends FullScreenAdapter implements FSListener {
   }
 }

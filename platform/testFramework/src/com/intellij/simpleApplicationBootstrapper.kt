@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
+import com.intellij.testFramework.UITestUtil
 import com.intellij.util.SystemProperties
 import java.awt.EventQueue
 import java.util.concurrent.ExecutionException
@@ -39,7 +40,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
     isHeadless = false
   }
   else {
-    System.setProperty("java.awt.headless", "true")
+    UITestUtil.setHeadlessProperty(true)
   }
   Main.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true

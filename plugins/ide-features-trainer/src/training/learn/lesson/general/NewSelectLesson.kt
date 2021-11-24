@@ -3,6 +3,7 @@ package training.learn.lesson.general
 
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkPositionOfEditor
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskRuntimeContext
@@ -96,4 +97,11 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
     val selection = editor.document.charsSequence.subSequence(selectionModel.selectionStart, selectionModel.selectionEnd)
     return selection.toString().trim() == needSelection.trim()
   }
+
+  override val suitableTips = listOf("smart_selection", "CtrlW")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("selection.help.select.code.constructs"),
+         LessonUtil.getHelpLink("working-with-source-code.html#editor_code_selection")),
+  )
 }

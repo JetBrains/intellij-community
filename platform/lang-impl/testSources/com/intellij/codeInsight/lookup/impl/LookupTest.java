@@ -27,7 +27,6 @@ public class LookupTest extends LightPlatformCodeInsightTestCase {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     int width = lookup.myCellRenderer.getLookupTextWidth();
     lookup.hide();
-    Disposer.dispose(lookup);
     return width;
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
@@ -13,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import java.awt.Dimension
@@ -43,6 +45,14 @@ fun <T : Any> ProviderWithSettings<T>.getCollectorWrapperFor(file: PsiFile, edit
   return CollectorWithSettings(collector, key, language, sink)
 }
 
+internal fun <T : Any> ProviderWithSettings<T>.getPlaceholdersCollectorFor(file: PsiFile, editor: Editor): CollectorWithSettings<T>? {
+  val key = provider.key
+  val sink = InlayHintsSinkImpl(editor)
+  val collector = provider.getPlaceholdersCollectorFor(file, editor, settings, sink) ?: return null
+
+  return CollectorWithSettings(collector, key, language, sink)
+}
+
 internal fun <T : Any> InlayHintsProvider<T>.withSettings(language: Language, config: InlayHintsSettings): ProviderWithSettings<T> {
   val settings = getActualSettings(config, language)
   return ProviderWithSettings(ProviderInfo(language, this), settings)
@@ -51,7 +61,7 @@ internal fun <T : Any> InlayHintsProvider<T>.withSettings(language: Language, co
 internal fun <T : Any> InlayHintsProvider<T>.getActualSettings(config: InlayHintsSettings, language: Language): T =
   config.findSettings(key, language) { createSettings() }
 
-internal fun <T: Any> copySettings(from: T, provider: InlayHintsProvider<T>): T {
+internal fun <T : Any> copySettings(from: T, provider: InlayHintsProvider<T>): T {
   val settings = provider.createSettings()
   // Workaround to make a deep copy of settings. The other way is to parametrize T with something like
   // interface DeepCopyable<T> { fun deepCopy(from: T): T }, but there will be a lot of problems with recursive type bounds
@@ -80,6 +90,9 @@ class CollectorWithSettings<T : Any>(
     applyToEditor(file, editor, hintsBuffer)
   }
 
+  /**
+   * Same as [collectTraversingAndApply] but invoked on bg thread
+   */
   fun collectTraversingAndApplyOnEdt(editor: Editor, file: PsiFile, enabled: Boolean) {
     val hintsBuffer = collectTraversing(editor, file, enabled)
     invokeLater { applyToEditor(file, editor, hintsBuffer) }
@@ -116,13 +129,35 @@ fun InlayPresentation.dimension() = Dimension(width, height)
 
 private typealias ConstrPresent<C> = ConstrainedPresentation<*, C>
 
+@ApiStatus.Experimental
+fun InlayHintsSink.addCodeVisionElement(editor: Editor, offset: Int, priority: Int, presentation: InlayPresentation) {
+  val line = editor.document.getLineNumber(offset)
+  val column = offset - editor.document.getLineStartOffset(line)
+  val root = RecursivelyUpdatingRootPresentation(presentation)
+  val constraints = BlockConstraints(false, priority, InlayGroup.CODE_VISION_GROUP.ordinal, column)
+
+  addBlockElement(line, true, root, constraints)
+}
+
 object InlayHintsUtils {
   fun getDefaultInlayHintsProviderPopupActions(
     providerKey: SettingsKey<*>,
     providerName: Supplier<@Nls(capitalization = Title) String>
   ): List<AnAction> =
     listOf(
-      DisableInlayHintsProviderAction(providerKey, providerName),
+      DisableInlayHintsProviderAction(providerKey, providerName, false),
+      ConfigureInlayHintsProviderAction(providerKey)
+    )
+
+  fun getDefaultInlayHintsProviderCasePopupActions(
+    providerKey: SettingsKey<*>,
+    providerName: Supplier<@Nls(capitalization = Title) String>,
+    caseId: String,
+    caseName: Supplier<@Nls(capitalization = Title) String>
+  ): List<AnAction> =
+    listOf(
+      DisableInlayHintsProviderCaseAction(providerKey, providerName, caseId, caseName),
+      DisableInlayHintsProviderAction(providerKey, providerName, true),
       ConfigureInlayHintsProviderAction(providerKey)
     )
 
@@ -135,6 +170,7 @@ object InlayHintsUtils {
   fun <Constraint : Any> produceUpdatedRootList(
     new: List<ConstrPresent<Constraint>>,
     old: List<ConstrPresent<Constraint>>,
+    comparator: Comparator<ConstrPresent<Constraint>>,
     editor: Editor,
     factory: InlayPresentationFactory
   ): List<ConstrPresent<Constraint>> {
@@ -153,16 +189,15 @@ object InlayHintsUtils {
     while (true) {
       val newEl = new[newIndex]
       val oldEl = old[oldIndex]
-      val newPriority = newEl.priority
-      val oldPriority = oldEl.priority
+      val value = comparator.compare(newEl, oldEl)
       when {
-        newPriority > oldPriority -> {
+        value > 0 -> {
           oldIndex++
           if (oldIndex == oldSize) {
             break@loop
           }
         }
-        newPriority < oldPriority -> {
+        value < 0 -> {
           updatedPresentations.add(newEl)
           newIndex++
           if (newIndex == newSize) {

@@ -2,23 +2,31 @@
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.psi.PsiFile
 
 class ParameterInlayProviderSettingsModel(
   val provider: InlayParameterHintsProvider,
   language: Language
-) : InlayProviderSettingsModel(
-  isParameterHintsEnabledForLanguage(language), "parameter.hints.old", language) {
+) : InlayProviderSettingsModel(isParameterHintsEnabledForLanguage(language), ParameterInlayProviderSettingsModel.ID, language) {
+  companion object {
+    val ID = "parameter.hints.old"
+  }
+
   override val mainCheckBoxLabel: String
     get() = provider.mainCheckboxText
   override val name: String
     get() = CodeInsightBundle.message("settings.inlay.parameter.hints.panel.name")
-
+  override val group: InlayGroup
+    get() = InlayGroup.PARAMETERS_GROUP
   override val previewText: String?
     get() = null
 
@@ -41,7 +49,6 @@ class ParameterInlayProviderSettingsModel(
 
   override val cases: List<ImmediateConfigurable.Case> = provider.supportedOptions.mapIndexed { index, option ->
     val state = optionStates[index]
-    @Suppress("HardCodedStringLiteral") // inspection is unable to understand that extendedDescription.get() is safe
     ImmediateConfigurable.Case(option.name,
                                id = option.id,
                                loadFromSettings = { state.state },
@@ -50,9 +57,21 @@ class ParameterInlayProviderSettingsModel(
     )
   }
 
-  override fun collectAndApply(editor: Editor, file: PsiFile) = throw UnsupportedOperationException()
-
-  override fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) = throw UnsupportedOperationException()
+  override fun collectAndApply(editor: Editor, file: PsiFile) {
+    val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
+    ProgressManager.getInstance().runProcess({
+                                               val backup = ParameterInlayProviderSettingsModel(provider, language)
+                                               backup.reset()
+                                               try {
+                                                 apply()
+                                                 pass.collectInformation(ProgressIndicatorBase())
+                                               }
+                                               finally {
+                                                 backup.apply()
+                                               }
+                                             }, DaemonProgressIndicator())
+    ApplicationManager.getApplication().invokeLater { pass.applyInformationToEditor() }
+  }
 
   override val description: String?
     get() = null

@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling.arguments
 
 import org.gradle.api.Task
+import org.jetbrains.kotlin.idea.gradleTooling.get
 import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 import java.io.File
 import java.lang.reflect.Method
@@ -18,7 +19,7 @@ object CompilerArgumentsExtractor {
     @Suppress("UNCHECKED_CAST")
     fun extractCompilerArgumentsFromTask(compileTask: Task, defaultsOnly: Boolean = false): ExtractedCompilerArgumentsBucket {
         val compileTaskClass = compileTask.javaClass
-        val compilerArguments = compileTaskClass.getMethod(CREATE_COMPILER_ARGS).invoke(compileTask)
+        val compilerArguments = compileTask[CREATE_COMPILER_ARGS]!!
         compileTaskClass.getMethodOrNull(SETUP_COMPILER_ARGS, compilerArguments::class.java, Boolean::class.java, Boolean::class.java)
             ?.doSetupCompilerArgs(compileTask, compilerArguments, defaultsOnly, false)
             ?: compileTaskClass.getMethodOrNull(SETUP_COMPILER_ARGS, compilerArguments::class.java, Boolean::class.java)

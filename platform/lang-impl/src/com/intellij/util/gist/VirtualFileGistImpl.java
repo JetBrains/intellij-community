@@ -117,7 +117,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
         myExternalizer.save(out, result);
       }
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.error(e);
     }
   }

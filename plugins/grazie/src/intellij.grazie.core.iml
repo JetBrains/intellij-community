@@ -59,25 +59,25 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.nlp:nlp-common" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common:0.1.45" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common:0.1.50" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.45/nlp-common-0.1.45.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.50/nlp-common-0.1.50.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.45/nlp-common-0.1.45-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.50/nlp-common-0.1.50-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.nlp:nlp-tokenizer" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-tokenizer:0.1.45" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-tokenizer:0.1.50" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.45/nlp-tokenizer-0.1.45.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.50/nlp-tokenizer-0.1.50.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.45/nlp-tokenizer-0.1.45-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.50/nlp-tokenizer-0.1.50-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -88,13 +88,13 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
       <library name="org.languagetool:languagetool-core:5.5" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.5" />
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.5.5-grz" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.5/languagetool-core-5.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.5.5-grz/languagetool-core-5.5.5-grz.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.5/languagetool-core-5.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.5.5-grz/languagetool-core-5.5.5-grz-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -264,13 +264,13 @@
     <orderEntry type="library" name="lucene-analyzers-common" level="project" />
     <orderEntry type="module-library">
       <library name="ai.grazie.utils:utils-common" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-common:0.1.45" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-common:0.1.50" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common/0.1.45/utils-common-0.1.45.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common/0.1.50/utils-common-0.1.50.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common/0.1.45/utils-common-0.1.45-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common/0.1.50/utils-common-0.1.50-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -290,13 +290,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.spell:gec-spell-local-engine" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-local-engine:0.1.45" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-local-engine:0.1.50" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-local-engine/0.1.45/gec-spell-local-engine-0.1.45.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-local-engine/0.1.50/gec-spell-local-engine-0.1.50.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-local-engine/0.1.45/gec-spell-local-engine-0.1.45-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-local-engine/0.1.50/gec-spell-local-engine-0.1.50-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

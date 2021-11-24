@@ -9,7 +9,6 @@ import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LineNumberConverter
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
@@ -184,8 +183,7 @@ internal class IntentionPreviewModel {
     }
 
     private fun getEditorBackground(): Color {
-      val colorsScheme = EditorColorsManager.getInstance().globalScheme
-      return colorsScheme.getColor(EditorColors.CARET_ROW_COLOR) ?: colorsScheme.defaultBackground
+      return EditorColorsManager.getInstance().globalScheme.defaultBackground
     }
   }
 }

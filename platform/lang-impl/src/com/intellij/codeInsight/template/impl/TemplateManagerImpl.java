@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.completion.OffsetsInFile;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -102,8 +103,9 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     TemplateState prevState = clearTemplateState(topLevelEditor);
     if (prevState != null) Disposer.dispose(prevState);
-    TemplateState state = new TemplateState(myProject, topLevelEditor, topLevelEditor.getDocument(), new InteractiveTemplateStateProcessor()
-    );
+    TemplateStateProcessor processor =
+      editor instanceof IntentionPreviewEditor ? new NonInteractiveTemplateStateProcessor() : new InteractiveTemplateStateProcessor();
+    TemplateState state = new TemplateState(myProject, topLevelEditor, topLevelEditor.getDocument(), processor);
     Disposer.register(this, state);
     TemplateManagerUtilBase.setTemplateState(topLevelEditor, state);
     return state;
@@ -168,7 +170,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
 
       templateState.start(substitutedTemplate, processor, predefinedVarValues);
     };
-    if (inSeparateCommand) {
+    if (inSeparateCommand && templateState.requiresWriteAction()) {
       CommandProcessor.getInstance().executeCommand(myProject, r, AnalysisBundle.message("insert.code.template.command"), null);
     }
     else {

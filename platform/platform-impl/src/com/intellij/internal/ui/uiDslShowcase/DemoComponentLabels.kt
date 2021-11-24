@@ -6,14 +6,12 @@ import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 
 @Demo(title = "Components Labels",
-  description = "When modifiable components have text labels they must be connected together by one of two possible ways")
+  description = "When modifiable components have text labels they must be connected together by one of two possible ways: " +
+                "Row(\"label\") or Cell.label(\"label\")")
 fun demoComponentLabels(): DialogPanel {
   return panel {
-    row("Row Label:") {
+    row("Row label:") {
       textField()
-    }
-
-    row {
       textField()
         .label("Cell label at left:")
     }

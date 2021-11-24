@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
 import groovy.transform.CompileStatic
@@ -6,17 +6,12 @@ import groovy.transform.PackageScope
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.Future
-import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
 @CompileStatic
 @PackageScope
-class NamedThreadPoolExecutor extends ThreadPoolExecutor {
+final class NamedThreadPoolExecutor extends ThreadPoolExecutor {
   private final AtomicInteger counter = new AtomicInteger()
   private final List<Future> futures = new LinkedList<Future>()
   private final ConcurrentLinkedDeque<Throwable> errors = new ConcurrentLinkedDeque<Throwable>()

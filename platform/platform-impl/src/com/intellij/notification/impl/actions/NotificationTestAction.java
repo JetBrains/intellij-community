@@ -160,6 +160,9 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         else if (line.startsWith("Type:")) {
           notification.setType(StringUtil.substringAfter(line, ":"));
         }
+        else if (line.startsWith("LaterId:")) {
+          notification.setRemindLaterHandlerId(StringUtil.substringAfter(line, ":"));
+        }
         else if (line.equals("Suggestion")) {
           notification.setSuggestionType(true);
         }
@@ -199,6 +202,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
     private boolean mySuggestionType;
 
     private Notification myNotification;
+    private String myRemindLaterHandlerId;
 
     public Notification getNotification() {
       if (myNotification == null) {
@@ -216,6 +220,10 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         NotificationListener listener = getListener();
         if (listener != null) {
           myNotification.setListener(listener);
+        }
+
+        if (myRemindLaterHandlerId != null) {
+          myNotification.setRemindLaterHandlerId(myRemindLaterHandlerId);
         }
 
         myNotification.setSuggestionType(mySuggestionType);
@@ -264,6 +272,10 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
 
     public void setSticky(boolean sticky) {
       mySticky = sticky;
+    }
+
+    public void setRemindLaterHandlerId(String remindLaterHandlerId) {
+      myRemindLaterHandlerId = remindLaterHandlerId;
     }
 
     private void setSuggestionType(boolean suggestionType) {

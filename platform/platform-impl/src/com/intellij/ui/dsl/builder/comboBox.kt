@@ -32,11 +32,14 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(getter: () -> T?, setter: (T?) -> Unit
  * @see COLUMNS_TINY
  * @see COLUMNS_SHORT
  * @see COLUMNS_MEDIUM
+ * @see COLUMNS_LARGE
  */
-fun <T, C : ComboBox<T>> Cell<C>.columns(columns: Int): Cell<C> {
+fun <T, C : ComboBox<T>> Cell<C>.columns(columns: Int) = apply {
+  component.columns(columns)
+}
+
+fun <T, C : ComboBox<T>> C.columns(columns: Int) = apply {
   // See JTextField.getColumnWidth implementation
-  val columnWidth = component.getFontMetrics(component.font).charWidth('m')
-  val insets = component.insets
-  component.setMinimumAndPreferredWidth(columns * columnWidth + insets.left + insets.right)
-  return this
+  val columnWidth = getFontMetrics(font).charWidth('m')
+  setMinimumAndPreferredWidth(columns * columnWidth + insets.left + insets.right)
 }

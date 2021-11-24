@@ -266,8 +266,8 @@ public class HighlightInfo implements Segment {
   }
 
   void setVisitingTextRange(long range) {
-    visitingRangeDeltaStartOffset = Divider.startOffset(range) - getStartOffset();
-    visitingRangeDeltaEndOffset = Divider.endOffset(range) - getEndOffset();
+    visitingRangeDeltaStartOffset = TextRange.startOffset(range) - getStartOffset();
+    visitingRangeDeltaEndOffset = TextRange.endOffset(range) - getEndOffset();
   }
 
   @NotNull
@@ -1056,6 +1056,6 @@ public class HighlightInfo implements Segment {
   long getVisitingTextRange() {
     int visitStart = getActualStartOffset() + visitingRangeDeltaStartOffset;
     int visitEnd = getActualEndOffset() + visitingRangeDeltaEndOffset;
-    return TextRange.isProperRange(visitStart, visitEnd) ? Divider.toScalarRange(visitStart, visitEnd) : -1;
+    return TextRange.isProperRange(visitStart, visitEnd) ? TextRange.toScalarRange(visitStart, visitEnd) : -1;
   }
 }

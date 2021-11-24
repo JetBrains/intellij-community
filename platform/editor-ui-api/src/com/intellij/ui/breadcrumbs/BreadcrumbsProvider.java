@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.breadcrumbs;
 
 import com.intellij.lang.Language;
@@ -14,7 +14,8 @@ import java.util.List;
 import static java.util.Collections.emptyList;
 
 /**
- * @author Alexey.Pegov
+ * Allows to provide a language-specific breadcrumbs,
+ * i.e. path to the file root from a selected PSI element.
  */
 public interface BreadcrumbsProvider {
   ExtensionPointName<BreadcrumbsProvider> EP_NAME = ExtensionPointName.create("com.intellij.breadcrumbsInfoProvider");
@@ -66,6 +67,7 @@ public interface BreadcrumbsProvider {
 
   /**
    * Reserved for future releases. Not supported yet.
+   *
    * @param element that represents a single crumb
    * @return a list of elements to navigate
    */
@@ -83,6 +85,10 @@ public interface BreadcrumbsProvider {
     return emptyList();
   }
 
+  /**
+   * @return {@code false} if breadcrumbs for this provider should be hidden by default,
+   * but it's possible to configure their visibility via Settings/Preferences | Editor | General | Breadcrumbs
+   */
   default boolean isShownByDefault() {
     return true;
   }

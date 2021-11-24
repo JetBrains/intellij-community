@@ -16,6 +16,7 @@ public class TablePassInfo extends LayoutPassInfo {
   public final Rectangle tabRectangle = new Rectangle();
   final Map<TabInfo, TableRow> myInfo2Row = new HashMap<>();
   final JBTabsImpl myTabs;
+  @NotNull public final Rectangle entryPointRect = new Rectangle();
   @NotNull public final Rectangle moreRect = new Rectangle();
   @NotNull public final Rectangle titleRect = new Rectangle();
   public final List<TabInfo> invisible = new ArrayList<>();

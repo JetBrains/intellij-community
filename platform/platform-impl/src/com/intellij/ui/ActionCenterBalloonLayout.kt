@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.notification.impl.NotificationsToolWindowFactory
+import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.Balloon
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -200,9 +202,10 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
           return true
         }
 
-        override fun getTextColor(): Color = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
+        override fun getTextColor(): Color = NotificationsUtil.getMoreButtonForeground()
       }
       titleLabel.setPaintUnderline(false)
+      titleLabel.font = JBFont.medium()
       titleLabel.horizontalAlignment = SwingConstants.CENTER
       titleLabel.border = JBUI.Borders.empty(10, 0, 4, 0)
       titleLabel.icon = null
@@ -220,7 +223,7 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
       panel.add(titleLabel)
 
       val builder = JBPopupFactory.getInstance().createBalloonBuilder(panel)
-      builder.setFillColor(NotificationsManagerImpl.FILL_COLOR)
+      builder.setFillColor(NotificationsUtil.getMoreButtonBackground())
         .setCloseButtonEnabled(true)
         .setShowCallout(false)
         .setShadow(false)
@@ -239,7 +242,7 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
         balloon.setZeroPositionInLayer(false)
 
         balloon.setShadowBorderProvider(
-          NotificationBalloonRoundShadowBorderProvider(NotificationsManagerImpl.FILL_COLOR, NotificationsManagerImpl.BORDER_COLOR))
+          NotificationBalloonRoundShadowBorderProvider(NotificationsUtil.getMoreButtonBackground(), NotificationsManagerImpl.BORDER_COLOR))
 
         balloon.setActionProvider(object : BalloonImpl.ActionProvider {
           override fun createActions(): List<BalloonImpl.ActionButton> {

@@ -59,7 +59,7 @@ class MavenArtifactsBuilder {
       pomXmlFiles[module] = filePath
       generatePomXmlFile(filePath, artifactData)
     }
-    new LayoutBuilder(buildContext, true).layout("$buildContext.paths.artifacts/$outputDir") {
+    new LayoutBuilder(buildContext).layout("$buildContext.paths.artifacts/$outputDir") {
       modulesToPublish.each { aModule, artifactData ->
         dir(artifactData.coordinates.directoryPath) {
           ant.fileset(file: pomXmlFiles[aModule])

@@ -8,15 +8,8 @@
         // Python 2 only modules.
         "**/@python2",
         "stubs/enum34",
-        "stubs/fb303",
         "stubs/futures",
-        "stubs/ipaddress",
-        "stubs/kazoo",
-        "stubs/openssl-python",
-        "stubs/pathlib2",
-        "stubs/pymssql",
-        "stubs/scribe",
-        "stubs/tornado"
+        "stubs/ipaddress"
     ],
     "typeCheckingMode": "basic",
     "strictListInference": true,
@@ -40,7 +33,7 @@
     "reportUntypedClassDecorator": "error",
     "reportUntypedBaseClass": "error",
     "reportUntypedNamedTuple": "error",
-    "reportPrivateUsage": "error",
+    "reportPrivateUsage": "none",
     "reportConstantRedefinition": "error",
     "reportIncompatibleMethodOverride": "error",
     "reportIncompatibleVariableOverride": "error",

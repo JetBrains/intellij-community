@@ -448,7 +448,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           toPut.putCopyableUserData(REPLACE_QUALIFIER_KEY, (PsiClass)movedMember);
         }
       } else {
-        if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+        if (qualifier instanceof PsiQualifiedExpression) {
           final PsiJavaCodeReferenceElement qElement = ((PsiQualifiedExpression)qualifier).getQualifier();
           if (qElement != null && qElement.isReferenceTo(aClass)) {
             toPut.putCopyableUserData(REPLACE_QUALIFIER_KEY, aClass);
@@ -520,7 +520,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               ((PsiReferenceExpression)ref).setQualifierExpression(factory.createReferenceExpression(psiClass));
             }
             else {
-              if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+              if (qualifier instanceof PsiQualifiedExpression) {
                 qualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
               }
               qualifier.replace(factory.createReferenceElementByType(factory.createType(psiClass)));

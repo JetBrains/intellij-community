@@ -1,22 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse
 
-import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.PathUtil
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestName
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class EclipseClasspathTest {
   @JvmField
-  @Rule
+  @RegisterExtension
   val tempDirectory = TempDirectory()
 
   @JvmField
-  @Rule
-  val testName = TestName()
+  @RegisterExtension
+  val testName = TestNameExtension()
 
   @Test
   fun testAbsolutePaths() {
@@ -162,8 +161,8 @@ class EclipseClasspathTest {
 
   companion object {
     @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
+    @RegisterExtension
+    val appRule = ApplicationExtension()
 
   }
 }

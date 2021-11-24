@@ -5,6 +5,7 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
@@ -13,8 +14,9 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.layout.*
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
@@ -48,9 +50,14 @@ class GitGpgConfigDialog(
     foreground = ERROR_FOREGROUND_COLOR
     isVisible = false
   }
-  private val docLinkLabel = BrowserLink(message("gpg.error.see.documentation.link.text"), message("gpg.jb.manual.link")).apply {
-    isVisible = false
-  }
+  private val docLinkLabel = LinkLabel<String>(message("gpg.error.see.documentation.link.text"),
+                                               null,
+                                               LinkListener { _, _ ->
+                                                 HelpManager.getInstance().invokeHelp(message("gpg.jb.manual.link"))
+                                               })
+    .apply {
+      isVisible = false
+    }
 
   private var isLoading: Boolean by Delegates.observable(false) { _, _, _ -> updatePresentation() }
   private var hasLoadedKeys: Boolean by Delegates.observable(false) { _, _, _ -> updatePresentation() }

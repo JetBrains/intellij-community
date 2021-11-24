@@ -10,6 +10,7 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -52,6 +53,9 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
+    if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) return null;
+
     List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
     Icon icon = null;
     List<Info> infos = null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.application.options.CodeStyle;
@@ -329,6 +329,7 @@ public final class DiffUtil {
 
   public static void moveCaret(@Nullable final Editor editor, int line) {
     if (editor == null) return;
+    editor.getSelectionModel().removeSelection();
     editor.getCaretModel().removeSecondaryCarets();
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, 0));
   }
@@ -339,6 +340,7 @@ public final class DiffUtil {
 
   public static void scrollEditor(@Nullable final Editor editor, int line, int column, boolean animated) {
     if (editor == null) return;
+    editor.getSelectionModel().removeSelection();
     editor.getCaretModel().removeSecondaryCarets();
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
     scrollToCaret(editor, animated);
@@ -374,6 +376,7 @@ public final class DiffUtil {
   public static void moveCaretToLineRangeIfNeeded(@NotNull Editor editor, int startLine, int endLine) {
     int caretLine = editor.getCaretModel().getLogicalPosition().line;
     if (!isSelectedByLine(caretLine, startLine, endLine)) {
+      editor.getSelectionModel().removeSelection();
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(startLine, 0));
     }
   }
@@ -447,8 +450,17 @@ public final class DiffUtil {
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, @Nullable List<? extends AnAction> actions) {
+    addActionBlock(group, actions, true);
+  }
+
+  public static void addActionBlock(@NotNull DefaultActionGroup group,
+                                    @Nullable List<? extends AnAction> actions,
+                                    boolean prependSeparator) {
     if (actions == null || actions.isEmpty()) return;
-    group.addSeparator();
+
+    if (prependSeparator) {
+      group.addSeparator();
+    }
 
     AnAction[] children = group.getChildren(null);
     for (AnAction action : actions) {
@@ -525,9 +537,10 @@ public final class DiffUtil {
 
     List<JComponent> components = new ArrayList<>(titles.size());
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
+    boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(titles.get(i),
-                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
+      JComponent title = needCreateTitle ? createTitle(titles.get(i),
+                                                       diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null) : null;
       title = createTitleWithNotifications(viewer, title, contents.get(i));
       components.add(title);
     }
@@ -548,13 +561,14 @@ public final class DiffUtil {
     List<JComponent> result = new ArrayList<>(contents.size());
 
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
+    boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(titles.get(i),
-                                     contents.get(i),
-                                     equalCharsets,
-                                     equalSeparators,
-                                     editors.get(i),
-                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
+      JComponent title = needCreateTitle ? createTitle(titles.get(i),
+                                                       contents.get(i),
+                                                       equalCharsets,
+                                                       equalSeparators,
+                                                       editors.get(i),
+                                                       diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null) : null;
       title = createTitleWithNotifications(viewer, title, contents.get(i));
       result.add(title);
     }

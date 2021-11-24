@@ -15,23 +15,23 @@ class MoveActionNameTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testStaticMethod() {
-    assertEquals("Move Members…", doTest())
+    assertEquals("Move Members...", doTest())
   }
 
   fun testInstanceMethod() {
-    assertEquals("Move Instance Method…", doTest())
+    assertEquals("Move Instance Method...", doTest())
   }
 
   fun testMoveClass() {
-    assertEquals("Move Class…", doTest())
+    assertEquals("Move Class...", doTest())
   }
 
   fun testInnerClass() {
-    assertEquals("Move Inner Class…", doTest())
+    assertEquals("Move Inner Class...", doTest())
   }
 
   fun testAnonymousToInner() {
-    assertEquals("Convert Anonymous to Inner…", doTest())
+    assertEquals("Convert Anonymous to Inner...", doTest())
   }
 
   private fun doTest(): String? {

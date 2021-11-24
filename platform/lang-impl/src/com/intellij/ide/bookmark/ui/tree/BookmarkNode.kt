@@ -9,15 +9,21 @@ import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.presentation.FilePresentationService
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.BackgroundSupplier
 import com.intellij.ui.IconManager
+import com.intellij.ui.SimpleTextAttributes
 import javax.swing.Icon
 
 abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : BackgroundSupplier, AbstractTreeNode<B>(project, bookmark) {
+
+  val bookmarksView
+    get() = parentRootNode?.value
 
   val bookmarkType
     get() = bookmarksManager?.getType(value)
@@ -41,18 +47,46 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
     return when {
       icon == null -> type.icon
       type == BookmarkType.DEFAULT -> icon
-      else -> IconManager.getInstance().createRowIcon(icon, type.icon)
+      else -> IconManager.getInstance().createRowIcon(type.icon, icon)
     }
   }
 
   override fun update(presentation: PresentationData) {
-    val project = value?.provider?.project ?: return
     val file = virtualFile ?: return
     presentation.setIcon(wrapIcon(findIcon(PsiUtilCore.findFileSystemItem(project, file), 0)))
-    presentation.tooltip = bookmarkDescription
-    presentation.presentableText = file.presentableName
-    presentation.locationString = ProjectFileIndex.getInstance(project).getContentRootForFile(file)?.let {
-      VfsUtil.getRelativeLocation(file.parent, it)
+    addTextTo(presentation, file)
+  }
+
+  protected fun addTextTo(presentation: PresentationData, file: VirtualFile, line: Int = 0) {
+    val name = file.presentableName
+    val location = file.parent?.let { getRelativePath(it) }
+    val description = bookmarkDescription
+    if (description == null) {
+      presentation.presentableText = name // configure speed search
+      presentation.addText(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      location?.let { presentation.addText("  $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
     }
+    else {
+      presentation.presentableText = "$description $name" // configure speed search
+      presentation.addText("$description  ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      presentation.addText(name, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      location?.let { presentation.addText("  ($it)", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+    }
+  }
+
+  private fun getRelativePath(file: VirtualFile): @NlsSafe String? {
+    val project = project ?: return null
+    if (project.isDisposed) return null
+    val index = ProjectFileIndex.getInstance(project)
+    index.getModuleForFile(file, false) ?: return FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
+    var root = file
+    while (true) {
+      val parent = root.parent ?: break
+      index.getModuleForFile(parent, false) ?: break
+      root = parent
+    }
+    return if (file == root) null else VfsUtil.getRelativePath(file, root)
   }
 }

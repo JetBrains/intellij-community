@@ -9,13 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 
-class MarkdownViewNode(
+internal class MarkdownViewNode(
   project: Project?,
   value: MarkdownFileNode,
   viewSettings: ViewSettings?,
-  private val mdChildren: MutableCollection<out AbstractTreeNode<*>>
+  private val children: MutableCollection<out AbstractTreeNode<*>>
 ) : ProjectViewNode<MarkdownFileNode>(project, value, viewSettings) {
-  override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> = mdChildren
+  override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> = children
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(MarkdownFileType.INSTANCE.icon)
@@ -23,12 +23,6 @@ class MarkdownViewNode(
   }
 
   override fun contains(file: VirtualFile): Boolean {
-    for (child in mdChildren) {
-      require(child is ProjectViewNode)
-      if (child.contains(file)) {
-        return true
-      }
-    }
-    return false
+    return children.find { (it as? ProjectViewNode)?.contains(file) == true } != null
   }
 }

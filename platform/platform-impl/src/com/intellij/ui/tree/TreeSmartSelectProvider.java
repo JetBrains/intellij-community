@@ -91,6 +91,16 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
     return tree == null || SINGLE_TREE_SELECTION == tree.getSelectionModel().getSelectionMode() ? null : tree;
   }
 
+  @Override
+  public boolean canIncreaseSelection(JTree tree) {
+    return tree != null && SINGLE_TREE_SELECTION != tree.getSelectionModel().getSelectionMode();
+  }
+
+  @Override
+  public boolean canDecreaseSelection(JTree tree) {
+    return tree != null && tree.getSelectionModel().getSelectionCount() > 1;
+  }
+
   @Nullable
   private static TreePath getAnchor(@Nullable JTree tree) {
     if (tree == null || SINGLE_TREE_SELECTION == tree.getSelectionModel().getSelectionMode()) return null; // unexpected usage

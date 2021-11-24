@@ -7,10 +7,7 @@ import com.intellij.codeInsight.documentation.PopupDragListener
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.ide.DataManager
-import com.intellij.lang.documentation.ide.actions.AdjustFontSizeAction
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_POPUP_KEY
-import com.intellij.lang.documentation.ide.actions.TOGGLE_SHOW_IN_POPUP_ACTION_ID
-import com.intellij.lang.documentation.ide.actions.primaryActions
+import com.intellij.lang.documentation.ide.actions.*
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager.Companion.TOOL_WINDOW_ID
@@ -73,6 +70,7 @@ internal class DocumentationPopupUI(
     secondaryActions.add(openInToolwindowAction)
     secondaryActions.add(ActionManager.getInstance().getAction(TOGGLE_SHOW_IN_POPUP_ACTION_ID))
     secondaryActions.add(ToggleShowDocsOnHoverAction())
+    secondaryActions.add(ActionManager.getInstance().getAction(TOGGLE_AUTO_SHOW_ACTION_ID))
     secondaryActions.add(AdjustFontSizeAction())
     secondaryActions.add(ShowToolbarAction())
     secondaryActions.add(RestoreDefaultSizeAction())
@@ -123,7 +121,7 @@ internal class DocumentationPopupUI(
     myPopup = popup
 
     DataManager.registerDataProvider(component) { dataId ->
-      if (DOCUMENTATION_POPUP_KEY.`is`(dataId)) {
+      if (DOCUMENTATION_POPUP.`is`(dataId)) {
         popup
       }
       else {
@@ -164,7 +162,7 @@ internal class DocumentationPopupUI(
     override fun actionPerformed(e: AnActionEvent) {
       val documentationUI = detachUI()
       myPopup.cancel()
-      DocumentationToolWindowManager.instance(project).previewInToolWindow(documentationUI)
+      DocumentationToolWindowManager.instance(project).showInToolWindow(documentationUI)
     }
   }
 

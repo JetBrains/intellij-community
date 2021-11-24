@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
@@ -139,7 +140,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
       };
 
       return writeCommandAction(project)
-        .withName("Creating temp JSON file for event log")
+        .withName(StatisticsBundle.message("stats.creating.temp.json.file.for.event.log"))
         .withGlobalUndo().shouldRecordActionForActiveDocument(false)
         .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
         .compute(computable);
@@ -183,7 +184,6 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     return TestParseEventsSchemeDialog.class.getCanonicalName();
   }
 
-  @SuppressWarnings("TestOnlyProblems")
   @Override
   protected void doOKAction() {
     myEventsSchemeEditor.getSelectionModel().removeSelection();

@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.preview.jcef
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.NonHeadlessRule
 import com.intellij.ui.scale.TestScaleHelper
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.collectPageSource
@@ -12,7 +13,9 @@ import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.ClassRule
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
 import java.io.File
 
 /**
@@ -22,6 +25,10 @@ import java.io.File
  * stays the same after conversion to incremental DOM.
  */
 class MarkdownContentEscapingTest {
+  @Rule
+  @JvmField
+  val nonHeadless: TestRule = NonHeadlessRule();
+  
   @Test
   fun `applied patch sanity`() = doTest("appliedPatchSanity")
 
@@ -73,7 +80,6 @@ class MarkdownContentEscapingTest {
 
   companion object {
     init {
-      TestScaleHelper.setSystemProperty("java.awt.headless", "false")
       //TestScaleHelper.setRegistryProperty("ide.browser.jcef.headless.enabled", "true")
       TestScaleHelper.setRegistryProperty("ide.browser.jcef.testMode.enabled", "true")
     }
@@ -87,7 +93,7 @@ class MarkdownContentEscapingTest {
     @AfterClass
     @JvmStatic
     fun after() {
-      TestScaleHelper.restoreProperties()
+      TestScaleHelper.restoreRegistryProperties()
     }
   }
 }

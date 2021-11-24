@@ -120,6 +120,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
     if (correctedPath.isDirectory) return false
 
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
+    if (dataManager.logProviders[root]?.diffHandler == null) return false
     return dataManager.index.isIndexingEnabled(root) || Registry.`is`("vcs.force.new.history")
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -18,6 +18,7 @@ import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stub.JavaStubImplUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -305,5 +306,11 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isFieldEquivalentTo(this, another);
+  }
+
+  @Override
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiImplUtil.getMemberUseScope(this);
   }
 }

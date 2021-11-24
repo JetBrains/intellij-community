@@ -819,8 +819,9 @@ public class JBScrollPane extends JScrollPane {
           }
         }
       }
-      if (vsb != null && vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS) result.width += vsb.getPreferredSize().width;
-      if (hsb != null && hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS) result.height += hsb.getPreferredSize().height;
+      // disabled scroll bars should be minimized (see #adjustForVSB and #adjustForHSB)
+      if (vsb != null && vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS && vsb.isEnabled()) result.width += vsb.getPreferredSize().width;
+      if (hsb != null && hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS && hsb.isEnabled()) result.height += hsb.getPreferredSize().height;
 
       if (rowHead != null && rowHead.isVisible()) result.width += rowHead.getPreferredSize().width;
       if (colHead != null && colHead.isVisible()) result.height += colHead.getPreferredSize().height;

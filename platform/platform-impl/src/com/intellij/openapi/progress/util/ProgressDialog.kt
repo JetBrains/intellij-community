@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Window
-import java.awt.event.KeyEvent
+import java.awt.event.ActionEvent
 import java.io.File
 import javax.swing.*
 import javax.swing.border.Border
@@ -181,12 +181,14 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
 
     myCancelButton.addActionListener { doCancelAction() }
 
-    myCancelButton.registerKeyboardAction(
-      {
-        if (myCancelButton.isEnabled) {
-          doCancelAction()
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+    val cancelFunction: (e: ActionEvent) -> Unit = {
+      if (myCancelButton.isEnabled) {
+        doCancelAction()
+      }
+    }
+    for (shortcut in myProgressWindow.cancelShortcuts) {
+      myCancelButton.registerKeyboardAction(cancelFunction, shortcut, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+    }
 
     if (cancelText != null) {
       myProgressWindow.setCancelButtonText(cancelText)
@@ -317,8 +319,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
       myPopup!!.close(DialogWrapper.CANCEL_EXIT_CODE)
     }
 
-    val popup = if (myParentWindow.isShowing) MyDialogWrapper(myParentWindow, myProgressWindow.myShouldShowCancel)
-    else MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel)
+    val popup = createDialog(myParentWindow)
     myPopup = popup
     popup.setUndecorated(true)
     if (popup.peer is DialogWrapperPeerImpl) {
@@ -354,7 +355,28 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     return myProgressWindow is PotemkinProgress
   }
 
-  private inner class MyDialogWrapper : DialogWrapper {
+  private fun createDialog(window: Window): MyDialogWrapper {
+    if (System.getProperty("vintage.progress") != null || isWriteActionProgress()) {
+      if (window.isShowing) {
+        return object : MyDialogWrapper(window, myProgressWindow.myShouldShowCancel) {
+          override fun useLightPopup(): Boolean {
+            return false
+          }
+        }
+      }
+      return object : MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel) {
+        override fun useLightPopup(): Boolean {
+          return false
+        }
+      }
+    }
+    if (window.isShowing) {
+      return MyDialogWrapper(window, myProgressWindow.myShouldShowCancel)
+    }
+    return MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel)
+  }
+
+  private open inner class MyDialogWrapper : DialogWrapper {
     private val myIsCancellable: Boolean
 
     constructor(project: Project?, cancellable: Boolean) : super(project, false) {
@@ -403,8 +425,8 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
       }
     }
 
-    private fun useLightPopup(): Boolean {
-      return System.getProperty("vintage.progress") == null/* && !isWriteActionProgress()*/ // TODO: KT-46874
+    protected open fun useLightPopup(): Boolean {
+      return true
     }
 
     override fun createPeer(project: Project?, canBeParent: Boolean): DialogWrapperPeer {

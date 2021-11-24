@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'map{}'"
 // IS_APPLICABLE_2: false
 // AFTER-WARNING: Variable 'result' is never used

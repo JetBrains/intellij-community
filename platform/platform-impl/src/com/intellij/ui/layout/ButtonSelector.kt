@@ -10,14 +10,14 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
 import java.awt.Dimension
-import java.awt.Insets
 import java.util.function.Supplier
-import kotlin.math.max
 
 fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): ButtonSelectorToolbar {
   val actionGroup = DefaultActionGroup(options.map { ButtonSelectorAction(it, property, renderer(it)) })
-  val toolbar = ButtonSelectorToolbar("ButtonSelector", actionGroup, true)
+  val config = DialogPanelConfig()
+  val toolbar = ButtonSelectorToolbar("ButtonSelector", actionGroup, true, config)
   toolbar.targetComponent = null // any data context is supported, suppress warning
   component(toolbar)
   return toolbar
@@ -47,53 +47,44 @@ class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
   }
 }
 
-private const val LEFT_RIGHT_PADDING: Int = 8
-private const val TOP_BOTTOM_PADDING: Int = 2
-private const val BUTTONS_MARGIN: Int = 0
-
 private class ButtonSelector(
   action: ButtonSelectorAction<*>,
   presentation: Presentation,
   place: String?,
   minimumSize: Dimension,
-  private val forceFieldHeight: Boolean
+  private val config: DialogPanelConfig
 ) : ActionButtonWithText(action, presentation, place, minimumSize) {
   init {
     isFocusable = true
   }
 
-  override fun getInsets(): Insets = super.getInsets().apply {
-    right += left + BUTTONS_MARGIN
-    left = 0
-  }
-
   override fun getPreferredSize(): Dimension {
-    val old = super.getPreferredSize()
-    val proposedHeight = old.height + TOP_BOTTOM_PADDING * 2
-    return Dimension(old.width + LEFT_RIGHT_PADDING * 2, calcHeight(forceFieldHeight, proposedHeight))
+    val preferredSize = super.getPreferredSize()
+    return Dimension(preferredSize.width + config.spacing.segmentedButtonHorizontalGap * 2,
+                     preferredSize.height + config.spacing.segmentedButtonVerticalGap * 2)
   }
 }
 
-class ButtonSelectorToolbar @JvmOverloads constructor(
+class ButtonSelectorToolbar internal constructor(
   place: String,
   actionGroup: ActionGroup,
   horizontal: Boolean,
-  private val forceFieldHeight: Boolean = false
+  private val config: DialogPanelConfig
 ) : ActionToolbarImpl(place, actionGroup, horizontal, true) {
 
   init {
     setForceMinimumSize(true)
+    // Buttons preferred size is calculated in ButtonSelector.getPreferredSize, so reset default size
+    setMinimumButtonSize(Dimension(0, 0))
     ActionToolbarBorder.setOutlined(this, true)
   }
 
-  override fun getPreferredSize(): Dimension {
-    val size = super.getPreferredSize()
-    return Dimension(size.width, calcHeight(forceFieldHeight, size.height)) // there can be non-default font-size
-  }
+  override fun addNotify() {
+    super.addNotify()
 
-  override fun getMinimumSize(): Dimension {
-    val size = super.getMinimumSize()
-    return Dimension(size.width, calcHeight(forceFieldHeight, size.height)) // there can be non-default font-size
+    // Create actions immediately, otherwise first ButtonSelectorToolbar preferred size calculation can be done without actions.
+    // In such case ButtonSelectorToolbar will keep narrow width for preferred size because of ActionToolbar.WRAP_LAYOUT_POLICY
+    updateActionsImmediately(true)
   }
 
   init {
@@ -107,9 +98,5 @@ class ButtonSelectorToolbar @JvmOverloads constructor(
     place: String,
     presentation: Presentation,
     minimumSize: Dimension
-  ): ActionButton = ButtonSelector(action as ButtonSelectorAction<*>, presentation, place, minimumSize, forceFieldHeight)
-}
-
-private fun calcHeight(forceFieldHeight: Boolean, height: Int): Int {
-  return if (forceFieldHeight) max(30, height) else height
+  ): ActionButton = ButtonSelector(action as ButtonSelectorAction<*>, presentation, place, minimumSize, config)
 }

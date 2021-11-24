@@ -15,9 +15,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.vcs.log.VcsLogDataKeys.*;
 
@@ -70,5 +73,24 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
       return myUi.getNavigationHistory();
     }
     return null;
+  }
+
+  public static @NotNull List<VcsLogUiEx> getLogUis(@NotNull JComponent c) {
+    Set<VcsLogPanel> panels = new HashSet<>();
+    collectLogPanelInstances(c, panels);
+
+    return ContainerUtil.map(panels, VcsLogPanel::getUi);
+  }
+
+  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<VcsLogPanel> result) {
+    if (component instanceof VcsLogPanel) {
+      result.add((VcsLogPanel)component);
+      return;
+    }
+    for (Component childComponent : component.getComponents()) {
+      if (childComponent instanceof JComponent) {
+        collectLogPanelInstances((JComponent)childComponent, result);
+      }
+    }
   }
 }

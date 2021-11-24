@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.Disposable;
@@ -13,6 +13,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -25,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.Objects;
 
@@ -80,7 +78,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     JComponent quickAccessPanel = createQuickAccessPanel(this);
     quickAccessPanel.setBorder(JBUI.Borders.empty(5, 10));
     leftPanel.add(quickAccessPanel, BorderLayout.SOUTH);
-    leftPanel.setPreferredSize(new Dimension(JBUI.scale(205), leftPanel.getPreferredSize().height));
+    leftPanel.setPreferredSize(new Dimension(JBUI.scale(215), leftPanel.getPreferredSize().height));
 
     JComponent centralPanel = mainPanel;
     JComponent mainPanelToolbar = createMainPanelToolbar(this);
@@ -120,15 +118,35 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     leftPanel.setVisible(visible);
   }
 
+  @ApiStatus.Experimental
+  public void selectTab(@NotNull WelcomeScreenTab tab) {
+    TreeNode targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find((node) -> {
+      if (node instanceof DefaultMutableTreeNode) {
+        var currentTab = ((DefaultMutableTreeNode)node).getUserObject();
+        if (currentTab == tab) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    if (targetNode != null) {
+      TreeUtil.selectNode(tree, targetNode);
+    }
+  }
+
+
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public void navigateToTabAndSetMainComponent(Component component, int tabIndex) {
     tree.setSelectionRow(tabIndex);
     var selectedTab = getSelectedTab();
     if(selectedTab == null) return;
-    var panel = selectedTab.myAssociatedComponent;
-    panel.removeAll();
-    panel.add(component, "grow");
+    if(selectedTab.myAssociatedComponent.getComponentCount() == 0) return;
+
+    var panel = selectedTab.myAssociatedComponent.getComponent(0);
+    ((JComponent)panel).removeAll();
+    ((JComponent)panel).add(component, BorderLayout.CENTER);
     revalidate();
     repaint();
     leftPanel.setVisible(false);

@@ -10,7 +10,9 @@ import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
-import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
 object DownloadArtifactBuildIssue {
@@ -26,25 +28,35 @@ object DownloadArtifactBuildIssue {
   }
 }
 
-class CleanBrokenArtifactsAndReimportQuickFix(val unresolvedArtifactFiles: Collection<File>) : BuildIssueQuickFix {
+class CleanBrokenArtifactsAndReimportQuickFix(val unresolvedArtifactFiles: Collection<Path?>) : BuildIssueQuickFix {
 
   override val id: String = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    unresolvedArtifactFiles.forEach { deleteLastUpdatedFiles(it) }
+    unresolvedArtifactFiles.filterNotNull().forEach { deleteLastUpdatedFiles(it) }
     MavenProjectsManager.getInstance(project).forceUpdateProjects()
     return CompletableFuture.completedFuture(null)
   }
 
-  private fun deleteLastUpdatedFiles(unresolvedArtifactDirectory: File?) {
+  private fun deleteLastUpdatedFiles(unresolvedArtifactDirectory: Path) {
     MavenLog.LOG.info("start deleting lastUpdated file from $unresolvedArtifactDirectory")
-    val files: Array<File> = unresolvedArtifactDirectory
-                               ?.listFiles { dir, name -> name != null && name.endsWith(".lastUpdated", true) } ?: return
 
-    for (childFiles in files) {
-      val deleted = FileUtil.delete(childFiles)
-      if (!deleted) {
-        MavenLog.LOG.warn("$childFiles not deleted")
+    val listUpdatedFiles = try {
+      Files.list(unresolvedArtifactDirectory).filter { child ->
+        child.fileName.toString().endsWith(".lastUpdated", true)
+      }
+    }
+    catch (e: Exception) {
+      MavenLog.LOG.warn("error deleting lastUpdated file from $unresolvedArtifactDirectory", e)
+      return
+    }
+
+    for (childFiles in listUpdatedFiles) {
+      try {
+        FileUtil.delete(childFiles)
+      }
+      catch (e: IOException) {
+        MavenLog.LOG.warn("$childFiles not deleted", e)
       }
     }
   }

@@ -32,7 +32,7 @@ object CastReceiverInsertHandler {
             cast.left.replace(receiver)
 
             val psiDocumentManager = PsiDocumentManager.getInstance(project)
-            psiDocumentManager.commitAllDocuments()
+            psiDocumentManager.commitDocument(context.document)
             psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
 
             val expr = receiver.replace(parentCast) as KtParenthesizedExpression

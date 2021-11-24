@@ -3,10 +3,13 @@ import importlib.machinery
 import types
 from _typeshed import StrOrBytesPath
 from typing import Any, Callable
+from typing_extensions import ParamSpec
 
-def module_for_loader(fxn: Callable[..., types.ModuleType]) -> Callable[..., types.ModuleType]: ...
-def set_loader(fxn: Callable[..., types.ModuleType]) -> Callable[..., types.ModuleType]: ...
-def set_package(fxn: Callable[..., types.ModuleType]) -> Callable[..., types.ModuleType]: ...
+_P = ParamSpec("_P")
+
+def module_for_loader(fxn: Callable[_P, types.ModuleType]) -> Callable[_P, types.ModuleType]: ...  # type: ignore
+def set_loader(fxn: Callable[_P, types.ModuleType]) -> Callable[_P, types.ModuleType]: ...  # type: ignore
+def set_package(fxn: Callable[_P, types.ModuleType]) -> Callable[_P, types.ModuleType]: ...  # type: ignore
 def resolve_name(name: str, package: str | None) -> str: ...
 
 MAGIC_NUMBER: bytes

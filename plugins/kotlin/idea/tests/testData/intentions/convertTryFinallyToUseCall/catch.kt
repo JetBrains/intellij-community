@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 import java.io.File
 import java.io.IOException
 

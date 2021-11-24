@@ -15,7 +15,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
-import com.intellij.vcs.log.ui.table.column.VcsLogExternalStatusColumn
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import com.intellij.vcs.log.ui.table.column.isVisible
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
@@ -30,7 +30,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
 
   private val providers = mutableMapOf<GraphTableModel, CachingVcsCommitsDataLoader<T>>()
 
-  fun initialize(table: VcsLogGraphTable, column: VcsLogExternalStatusColumn<T>) {
+  fun initialize(table: VcsLogGraphTable, column: VcsLogCustomColumn<T>) {
     if (table.model in providers) return
 
     val loader = getDataLoader(table.logData.project)
@@ -59,7 +59,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
 
     @OptIn(FlowPreview::class)
     private fun <T : VcsCommitExternalStatus> loadDataForVisibleRows(table: VcsLogGraphTable,
-                                                                     column: VcsLogExternalStatusColumn<T>,
+                                                                     column: VcsLogCustomColumn<T>,
                                                                      dataProvider: VcsCommitsDataLoader<T>) {
 
       // `later()` is important here to ensure [VcsLogGraphTable] is already wrapped with scroll pane
@@ -77,7 +77,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
         ).collectLatest { (isColumnVisible, rowsRange) ->
           val commits: List<CommitId> =
             if (rowsRange.isEmpty() || !isColumnVisible) emptyList()
-            else rowsRange.mapNotNull(table.model::getCommitId)
+            else rowsRange.limitedBy(0 until table.model.rowCount).mapNotNull(table.model::getCommitId)
           dataProvider.loadData(commits) {
             table.onColumnDataChanged(column)
           }

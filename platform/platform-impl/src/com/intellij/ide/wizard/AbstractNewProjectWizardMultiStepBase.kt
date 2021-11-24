@@ -23,7 +23,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   val stepProperty = propertyGraph.graphProperty { "" }
   var step by stepProperty
 
-  final override fun setupUI(builder: Panel) {
+  override fun setupUI(builder: Panel) {
     with(builder) {
       row(label) {
         if (steps.size > 4) {
@@ -54,7 +54,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
     }
   }
 
-  final override fun setupProject(project: Project) {
+  override fun setupProject(project: Project) {
     steps[step]?.setupProject(project)
   }
 }

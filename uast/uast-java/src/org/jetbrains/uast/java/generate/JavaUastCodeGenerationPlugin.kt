@@ -12,9 +12,12 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.PsiDiamondTypeUtil
 import com.intellij.psi.impl.source.tree.CompositeElement
+import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.siblings
 import com.intellij.util.castSafelyTo
 import com.siyeh.ig.psiutils.ParenthesesUtils
 import org.jetbrains.uast.*
@@ -42,7 +45,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
           )
       ) {
         val emptyTypeArgumentsMethodCall = JavaPsiFacade.getElementFactory(methodCall.project)
-                                             .createExpressionFromText("foo()", null) as PsiMethodCallExpression
+          .createExpressionFromText("foo()", null) as PsiMethodCallExpression
 
         methodCall.typeArgumentList.replace(emptyTypeArgumentsMethodCall.typeArgumentList)
       }
@@ -75,7 +78,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
       else -> oldPsi
     }
     val updNewPsi = when {
-      updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpresionStatement(newPsi) ?: return null
+      updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpressionStatement(newPsi) ?: return null
       updOldPsi is PsiCodeBlock && newPsi is PsiBlockStatement -> newPsi.codeBlock
       else -> newPsi
     }
@@ -90,7 +93,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
   }
 }
 
-private fun PsiElementFactory.createExpresionStatement(expression: PsiExpression): PsiStatement? {
+private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression): PsiStatement? {
   val statement = createStatementFromText("x;", null) as? PsiExpressionStatement ?: return null
   statement.expression.replace(expression)
   return statement
@@ -130,7 +133,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     if (kind != UastCallKind.METHOD_CALL) return null
 
     val methodCall = psiFactory.createExpressionFromText(
-      if (receiver != null) "a.b()" else "a()", context
+      createCallExpressionTemplateRespectingChainStyle(receiver), context
     ) as? PsiMethodCallExpression ?: return null
 
     val methodIdentifier = psiFactory.createIdentifier(methodName)
@@ -145,10 +148,26 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
 
     return if (expectedReturnType == null)
-      methodCall.toUElementOfType<UCallExpression>()
+      methodCall.toUElementOfType()
     else
       MethodCallUpgradeHelper(project, methodCall, expectedReturnType).tryUpgradeToExpectedType()
         ?.let { JavaUCallExpression(it, null) }
+  }
+
+  private fun createCallExpressionTemplateRespectingChainStyle(receiver: UExpression?): String {
+    if (receiver == null) return "a()"
+    val siblings = receiver.sourcePsi?.siblings(withSelf = false) ?: return "a.b()"
+
+    (siblings.firstOrNull() as? PsiWhiteSpace)?.let { whitespace ->
+      return "a${whitespace.text}.b()"
+    }
+
+    if (siblings.firstOrNull()?.elementType == ElementType.DOT) {
+      (siblings.elementAt(2) as? PsiWhiteSpace)?.let { whitespace ->
+        return "a.${whitespace.text}b()"
+      }
+    }
+    return "a.b()"
   }
 
   override fun createCallableReferenceExpression(
@@ -262,7 +281,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
   }
 
-  override fun createDeclarationExpression(declarations: List<UDeclaration>, context: PsiElement?): UDeclarationsExpression? {
+  override fun createDeclarationExpression(declarations: List<UDeclaration>, context: PsiElement?): UDeclarationsExpression {
     return JavaUDeclarationsExpression(null, declarations)
   }
 
@@ -301,8 +320,12 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       context = initializerPsi
     ) ?: return null
     val variable = (type ?: initializer.getExpressionType())?.let { variableType ->
-      psiFactory.createVariableDeclarationStatement(name, variableType, initializerPsi,
-                                                    initializerPsi.context).declaredElements.firstOrNull() as? PsiLocalVariable
+      psiFactory.createVariableDeclarationStatement(
+        name,
+        variableType,
+        initializerPsi,
+        initializerPsi.context
+      ).declaredElements.firstOrNull() as? PsiLocalVariable
     } ?: return null
 
     variable.setMutability(immutable)
@@ -324,7 +347,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       }
 
       expression.sourcePsi?.let { psi ->
-        psi as? PsiStatement ?: (psi as? PsiExpression)?.let { psiFactory.createExpresionStatement(it) }
+        psi as? PsiStatement ?: (psi as? PsiExpression)?.let { psiFactory.createExpressionStatement(it) }
       }?.let { blockStatement.codeBlock.add(it) } ?: return null
     }
 
@@ -393,7 +416,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaUParenthesizedExpression(parenthesizedExpression, null)
   }
 
-  override fun createSimpleReference(name: String, context: PsiElement?): USimpleNameReferenceExpression? {
+  override fun createSimpleReference(name: String, context: PsiElement?): USimpleNameReferenceExpression {
     val reference = psiFactory.createExpressionFromText(name, null)
     return JavaUSimpleNameReferenceExpression(reference, name, null)
   }
@@ -440,7 +463,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
 
   private val PsiElement.branchStatement: PsiStatement?
     get() = when (this) {
-      is PsiExpression -> JavaPsiFacade.getElementFactory(project).createExpresionStatement(this)
+      is PsiExpression -> JavaPsiFacade.getElementFactory(project).createExpressionStatement(this)
       is PsiCodeBlock -> BlockUtils.createBlockStatement(project).also { it.codeBlock.replace(this) }
       is PsiStatement -> this
       else -> null

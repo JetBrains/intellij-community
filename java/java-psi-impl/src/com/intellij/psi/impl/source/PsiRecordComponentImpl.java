@@ -1,20 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRecordComponentStub;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.ref.Reference;
 
 public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponentStub> implements PsiRecordComponent {
@@ -154,5 +159,17 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
   @Override
   public String toString() {
     return "PsiRecordComponent:" + getName();
+  }
+
+  @Override
+  protected @Nullable Icon getElementIcon(int flags) {
+    return IconManager.getInstance()
+      .createLayeredIcon(this, PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
+  }
+
+  @Override
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiImplUtil.getMemberUseScope(this);
   }
 }

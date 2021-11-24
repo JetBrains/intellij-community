@@ -73,6 +73,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
    */
   public abstract boolean forceCloseProject(@NotNull Project project);
 
+  @ApiStatus.Internal
+  public abstract boolean saveAndForceCloseProject(@NotNull Project project);
+
   // return true if successful
   public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);
 

@@ -351,6 +351,11 @@ public final class CreateFromUsageUtils {
 
       CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifierName, classKind, false, module){
         @Override
+        protected @Nullable PsiDirectory getBaseDir(String packageName) {
+          return sourceFile.getContainingDirectory();
+        }
+
+        @Override
         protected boolean reportBaseInSourceSelectionInTest() {
           return true;
         }

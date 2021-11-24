@@ -259,15 +259,18 @@ public final class PluginInstallOperation {
       previousVersion
     );
 
-    IdeaPluginDescriptorImpl descriptor = downloader.prepareToInstallAndLoadDescriptor(myIndicator);
-    if (descriptor != null) {
+    boolean prepared = downloader.prepareToInstall(myIndicator);
+    if (prepared) {
+      IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)downloader.getDescriptor();
+
       if (pluginNode.getDependencies().isEmpty() && !descriptor.getDependencies().isEmpty()) {  // installing from custom plugins repo
         if (!checkMissingDependencies(descriptor, pluginIds)) return false;
       }
 
-      boolean allowNoRestart = myAllowInstallWithoutRestart && DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
+      boolean allowNoRestart = myAllowInstallWithoutRestart &&
+                               DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
       if (allowNoRestart) {
-        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile().toPath(), descriptor));
+        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFilePath(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
         if (state != null) {
           state.onPluginInstall(downloader.getDescriptor(), false, false);
@@ -279,18 +282,18 @@ public final class PluginInstallOperation {
           downloader.install();
         }
       }
-      myDependant.add(new PluginInstallCallbackData(downloader.getFile().toPath(), descriptor, !allowNoRestart));
+      myDependant.add(new PluginInstallCallbackData(downloader.getFilePath(), descriptor, !allowNoRestart));
       pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
       if (toDisable != null) {
-        myPluginEnabler.disablePlugins(Set.of(toDisable));
+        myPluginEnabler.disable(Set.of(toDisable));
       }
+
+      return true;
     }
     else {
       myShownErrors = downloader.isShownErrors();
       return false;
     }
-
-    return true;
   }
 
   @Nullable IdeaPluginDescriptor checkDependenciesAndReplacements(@NotNull IdeaPluginDescriptor pluginNode) {

@@ -1,0 +1,5 @@
+{
+  "type": "MARKED_ELEMENT",
+  "newName": "bar",
+  "mainFile": "RenameKotlinPrimaryConstructorPropertyWithPrivateModifier.kt"
+}

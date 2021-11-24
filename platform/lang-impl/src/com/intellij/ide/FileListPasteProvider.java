@@ -1,22 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +42,6 @@ public class FileListPasteProvider implements PasteProvider {
     final List<File> fileList = FileCopyPasteUtil.getFileList(contents);
     if (fileList == null) return;
 
-    if (DumbService.isDumb(project)) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        LangBundle.message("popup.content.sorry.file.copy.paste.available.during.indexing"));
-      return;
-    }
-
     final List<PsiElement> elements = new ArrayList<>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
@@ -56,16 +51,22 @@ public class FileListPasteProvider implements PasteProvider {
       }
     }
 
-    if (elements.size() > 0) {
-      final PsiDirectory dir = ideView.getOrChooseDirectory();
-      if (dir != null) {
-        final boolean move = LinuxDragAndDropSupport.isMoveOperation(contents);
-        if (move) {
-          new MoveFilesOrDirectoriesHandler().doMove(PsiUtilCore.toPsiElementArray(elements), dir);
+    if (elements.isEmpty()) {
+      return;
+    }
+    final PsiDirectory dir = ideView.getOrChooseDirectory();
+    if (dir != null) {
+      final boolean move = LinuxDragAndDropSupport.isMoveOperation(contents);
+      if (move) {
+        if (DumbService.isDumb(project) &&
+            Messages.showYesNoDialog(project, RefactoringBundle.message("move.handler.is.dumb.during.indexing"),
+                                     RefactoringBundle.message("move.title"), Messages.getQuestionIcon()) != Messages.YES) {
+          return;
         }
-        else {
-          new CopyFilesOrDirectoriesHandler().doCopy(PsiUtilCore.toPsiElementArray(elements), dir);
-        }
+        new MoveFilesOrDirectoriesHandler().doMove(PsiUtilCore.toPsiElementArray(elements), dir);
+      }
+      else {
+        new CopyFilesOrDirectoriesHandler().doCopy(PsiUtilCore.toPsiElementArray(elements), dir);
       }
     }
   }

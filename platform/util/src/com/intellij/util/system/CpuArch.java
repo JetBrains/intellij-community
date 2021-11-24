@@ -85,8 +85,9 @@ public enum CpuArch {
   private static boolean isUnderRosetta() {
     try {
       if (JnaLoader.isLoaded()) {
-        IntByReference size = new IntByReference(SystemB.INT_SIZE), p = new IntByReference();
-        if (SystemB.INSTANCE.sysctlbyname("sysctl.proc_translated", p.getPointer(), size, null, 0) != -1) {
+        IntByReference p = new IntByReference();
+        SystemB.size_t.ByReference size = new SystemB.size_t.ByReference(SystemB.INT_SIZE);
+        if (SystemB.INSTANCE.sysctlbyname("sysctl.proc_translated", p.getPointer(), size, null, SystemB.size_t.ZERO) != -1) {
           return p.getValue() == 1;
         }
       }

@@ -1,9 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
-import groovy.transform.CompileDynamic
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
@@ -11,6 +14,10 @@ import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
+import java.nio.file.DirectoryStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.function.Supplier
 import java.util.stream.Collectors
 
 @CompileStatic
@@ -84,19 +91,21 @@ final class CompilationTasksImpl extends CompilationTasks {
   }
 
   @Override
-  void buildProjectArtifacts(Collection<String> artifactNames) {
-    if (!artifactNames.isEmpty()) {
-      try {
-        def buildIncludedModules = !areCompiledClassesProvided(context.options)
-        if (buildIncludedModules && jpsCache.canBeUsed) {
-          jpsCache.downloadCacheAndCompileProject()
-          buildIncludedModules = false
-        }
-        new JpsCompilationRunner(context).buildArtifacts(artifactNames, buildIncludedModules)
+  void buildProjectArtifacts(Set<String> artifactNames) {
+    if (artifactNames.isEmpty()) {
+      return
+    }
+
+    try {
+      def buildIncludedModules = !areCompiledClassesProvided(context.options)
+      if (buildIncludedModules && jpsCache.canBeUsed) {
+        jpsCache.downloadCacheAndCompileProject()
+        buildIncludedModules = false
       }
-      catch (Throwable e) {
-        context.messages.error("Building project artifacts failed with exception: $e", e)
-      }
+      new JpsCompilationRunner(context).buildArtifacts(artifactNames, buildIncludedModules)
+    }
+    catch (Throwable e) {
+      context.messages.error("Building project artifacts failed with exception: $e", e)
     }
   }
 
@@ -142,7 +151,7 @@ final class CompilationTasksImpl extends CompilationTasks {
         CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
       }
       else if (context.options.pathToCompiledClassesArchive != null) {
-        unpackCompiledClasses(context.projectOutputDirectory)
+        unpackCompiledClasses(context.projectOutputDirectory.toPath())
       }
       else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
         jpsCache.downloadCacheAndCompileProject()
@@ -151,16 +160,20 @@ final class CompilationTasksImpl extends CompilationTasks {
     }
   }
 
-  @CompileDynamic
-  private void unpackCompiledClasses(File classesOutput) {
-    context.messages.block("Unpack compiled classes archive") {
-      FileUtil.delete(classesOutput)
-      context.ant.unzip(src: context.options.pathToCompiledClassesArchive, dest: classesOutput.absolutePath)
-    }
+  private void unpackCompiledClasses(Path classesOutput) {
+    context.messages.block("Unpack compiled classes archive", new Supplier<Void>() {
+      @Override
+      Void get() {
+        NioFiles.deleteRecursively(classesOutput)
+        new Decompressor.Zip(Path.of(context.options.pathToCompiledClassesArchive)).extract(classesOutput)
+        return null
+      }
+    })
   }
 
   private void cleanOutput() {
-    List<String> outputDirectoriesToKeep = ["log"]
+    Set<String> outputDirectoriesToKeep = new HashSet<>(5)
+    outputDirectoriesToKeep.add("log")
     if (areCompiledClassesProvided(context.options)) {
       outputDirectoriesToKeep.add("classes")
     }
@@ -169,18 +182,32 @@ final class CompilationTasksImpl extends CompilationTasks {
       outputDirectoriesToKeep.add("classes")
       outputDirectoriesToKeep.add("project-artifacts")
     }
-    context.messages.block("Clean output") {
-      def outputPath = context.paths.buildOutputRoot
-      context.messages.progress("Cleaning output directory $outputPath")
-      new File(outputPath).listFiles()?.each { File file ->
-        if (outputDirectoriesToKeep.contains(file.name)) {
-          context.messages.info("Skipped cleaning for $file.absolutePath")
+    Path outputPath = context.paths.buildOutputDir
+    context.messages.block(TracerManager.spanBuilder("clean output")
+                             .setAttribute("path", outputPath.toString())
+                             .setAttribute(AttributeKey.stringArrayKey("outputDirectoriesToKeep"),
+                                           List.<String> copyOf(outputDirectoriesToKeep)), new Supplier<Void>() {
+      @Override
+      Void get() {
+        DirectoryStream<Path> dirStream = Files.newDirectoryStream(outputPath)
+        try {
+          Span span = Span.current()
+          for (Path file : dirStream) {
+            Attributes attributes = Attributes.of(AttributeKey.stringKey("dir"), outputPath.relativize(file).toString())
+            if (outputDirectoriesToKeep.contains(file.fileName.toString())) {
+              span.addEvent("skip cleaning", attributes)
+            }
+            else {
+              span.addEvent("delete", attributes)
+              NioFiles.deleteRecursively(file)
+            }
+          }
         }
-        else {
-          context.messages.info("Deleting $file.absolutePath")
-          FileUtil.delete(file)
+        finally {
+          dirStream.close()
         }
+        return null
       }
-    }
+    })
   }
 }

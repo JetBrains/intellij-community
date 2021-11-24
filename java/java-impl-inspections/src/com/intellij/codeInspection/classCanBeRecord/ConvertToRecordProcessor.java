@@ -9,7 +9,11 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -20,10 +24,7 @@ import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
@@ -221,6 +222,8 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
 
     PsiClass result = (PsiClass)psiClass.replace(recordBuilder.build());
     tryToCompactCanonicalCtor(result);
+    generateJavaDocForDocumentedFields(result);
+    CodeStyleManager.getInstance(myProject).reformat(result);
   }
 
   private void renameMembers(UsageInfo @NotNull [] usages) {
@@ -248,6 +251,40 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       if (ctorSimplifier != null) {
         ctorSimplifier.simplify(canonicalCtor);
       }
+    }
+  }
+
+  private void generateJavaDocForDocumentedFields(@NotNull PsiClass record) {
+    Map<String, String> comments = new LinkedHashMap<>();
+    for (PsiField field : myRecordCandidate.getFieldAccessors().keySet()) {
+      StringBuilder fieldComment = new StringBuilder();
+      for (PsiComment comment : ObjectUtils.notNull(PsiTreeUtil.getChildrenOfType(field, PsiComment.class), new PsiComment[0])) {
+        if (comment instanceof PsiDocComment) {
+          Arrays.stream(((PsiDocComment)comment).getDescriptionElements()).map(PsiElement::getText).forEach(fieldComment::append);
+          continue;
+        }
+        String commentText = comment.getText();
+        String unwrappedText = comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT
+                               ? StringUtil.trimStart(commentText, "//")
+                               : StringUtil.trimEnd(commentText.substring(2), "*/");
+        fieldComment.append(unwrappedText);
+      }
+      if (fieldComment.length() > 0) {
+        comments.put(field.getName(), fieldComment.toString());
+      }
+    }
+    if (comments.isEmpty()) return;
+    PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myProject).getParserFacade();
+    PsiDocComment recordDoc = record.getDocComment();
+    if (recordDoc == null) {
+      PsiDocComment emptyDoc = parserFacade.createDocCommentFromText("/** */");
+      recordDoc = (PsiDocComment)record.addBefore(emptyDoc, record.getFirstChild());
+    }
+    for (var entry : comments.entrySet()) {
+      String paramName = entry.getKey();
+      String paramComment = entry.getValue();
+      PsiDocTag docTag = parserFacade.createDocTagFromText("@param " + paramName + " " + paramComment);
+      recordDoc.add(docTag);
     }
   }
 

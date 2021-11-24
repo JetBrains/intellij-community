@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
@@ -41,6 +42,85 @@ public class PyIntroduceConstantTest extends PyIntroduceTestCase {
   // PY-13484
   public void testFromParameterDefaultValue() {
     doTest();
+  }
+
+  // PY-23500
+  public void testInsertAfterGlobalVariableOnWhichDepends() {
+    doTest();
+  }
+
+  // PY-23500
+  public void testInsertAfterAllGlobalVariablesOnWhichDepends() {
+    doTest();
+  }
+
+  // PY-23500
+  public void testInsertAfterWithStatementOnWhichDependsRefactoringError() {
+    doTestThrowsRefactoringErrorHintException();
+  }
+
+  // PY-23500
+  public void testInsertAfterLocalVariableOnWhichDependsRefactoringError() {
+    doTestThrowsRefactoringErrorHintException();
+  }
+
+  // PY-23500
+  public void testInsertAfterFunctionParameterOnWhichDependsRefactoringError() {
+    doTestThrowsRefactoringErrorHintException();
+  }
+
+  // PY-23500
+  public void testInsertAfterForIteratorOnWhichDependsRefactoringError() {
+    doTestThrowsRefactoringErrorHintException();
+  }
+
+  // PY-23500
+  public void testInsertAfterLocalVariableInForLoopOnWhichDependsRefactoringError() {
+    doTestThrowsRefactoringErrorHintException();
+  }
+
+  // PY-23500
+  public void testInsertAfterIfElse() {
+    doTest();
+  }
+
+  // PY-23500
+  public void testFromImportTopLevel() {
+    doTest();
+  }
+
+  // PY-23500
+  public void testFromImportInFunctionRefactoringError() {
+    doTestThrowsRefactoringErrorHintException();
+  }
+
+  // PY-23500
+  public void testExpressionWithFunctionCall() {
+    doTest();
+  }
+
+  // PY-23500
+  public void testExpressionWithParameterRefactoringError() {
+    doTestThrowsRefactoringErrorHintException();
+  }
+
+  // PY-23500
+  public void testSubexpressionWithParameterRefactoringError() {
+    doTestThrowsRefactoringErrorHintException();
+  }
+
+  // PY-23500
+  public void testSubexpressionWithGlobal() {
+    doTest();
+  }
+
+  // PY-23500
+  public void testSubexpressionNotFullWordRefactoringError() {
+    doTestThrowsRefactoringErrorHintException();
+  }
+
+  private void doTestThrowsRefactoringErrorHintException() {
+    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class, () -> doTest());
   }
 
   @Override

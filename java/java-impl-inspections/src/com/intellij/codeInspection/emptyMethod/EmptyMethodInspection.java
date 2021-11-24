@@ -91,10 +91,9 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       }
     }
     else if (refMethod.hasBody() && hasEmptySuperImplementation(refMethod)) {
-
       message = JavaBundle.message("inspection.empty.method.problem.descriptor1");
     }
-    else if (areAllImplementationsEmpty(refMethod) && refSuper == null) {
+    else if (refSuper == null && areAllImplementationsEmpty(refMethod)) {
       if (refMethod.hasBody()) {
         if (refMethod.getDerivedMethods().isEmpty()) {
           if (refMethod.getSuperMethods().isEmpty()) {
@@ -107,7 +106,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
         }
       }
       else {
-        if (!refMethod.getDerivedMethods().isEmpty()) {
+        if (!refMethod.getDerivedReferences().isEmpty()) {
           needToDeleteHierarchy = true;
           message = JavaBundle.message("inspection.empty.method.problem.descriptor4");
         }
@@ -181,11 +180,16 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
-  private boolean areAllImplementationsEmpty(RefMethod refMethod) {
-    if (refMethod.hasBody() && !isBodyEmpty(refMethod)) return false;
+  private boolean areAllImplementationsEmpty(@NotNull RefOverridable reference) {
+    if (reference instanceof RefMethod) {
+      if (((RefMethod)reference).hasBody() && !isBodyEmpty((RefMethod)reference)) return false;
+    }
+    else if (reference instanceof RefFunctionalExpression) {
+      if (!((RefFunctionalExpression)reference).hasEmptyBody()) return false;
+    }
 
-    for (RefMethod refDerived : refMethod.getDerivedMethods()) {
-      if (!areAllImplementationsEmpty(refDerived)) return false;
+    for (RefOverridable derivedReference : reference.getDerivedReferences()) {
+      if (!areAllImplementationsEmpty(derivedReference)) return false;
     }
 
     return true;
@@ -208,6 +212,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
         if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
+              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
               context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
                 UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
                 if (uDerivedMethod == null) return true;

@@ -99,15 +99,14 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     val ptyOptions = request.ptyOptions
     val generalCommandLine = if (ptyOptions != null) {
-      PtyCommandLine(commandLine.collectCommandsSynchronously()).also {
-        it.withOptions(ptyOptions)
-      }
+      PtyCommandLine(commandLine.collectCommandsSynchronously()).withOptions(ptyOptions)
     }
     else {
       GeneralCommandLine(commandLine.collectCommandsSynchronously())
     }
     generalCommandLine.environment.putAll(commandLine.environmentVariables)
     request.wslOptions.remoteWorkingDirectory = commandLine.workingDirectory
+    generalCommandLine.withRedirectErrorStream(commandLine.isRedirectErrorStream)
     distribution.patchCommandLine(generalCommandLine, null, request.wslOptions)
     return generalCommandLine.createProcess()
   }
@@ -119,7 +118,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     @Throws(IOException::class)
     override fun resolveTargetPath(relativePath: String): String {
       val localPath = FileUtil.toCanonicalPath(FileUtil.join(localRoot.toString(), relativePath))
-      return toLinuxPath(localPath)!!
+      return toLinuxPath(localPath) ?: throw RuntimeException("Cannot find Linux path for $localPath (${distribution.msId})")
     }
 
     @Throws(IOException::class)

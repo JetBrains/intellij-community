@@ -2,8 +2,10 @@
 package git4idea.ift.lesson
 
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.popup.Balloon
@@ -33,16 +35,25 @@ import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.restoreCommitWindowStateInformer
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
+import org.assertj.swing.core.MouseButton
+import org.assertj.swing.data.TableCell
+import org.assertj.swing.fixture.JCheckBoxFixture
+import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiUtil.findComponentWithTimeout
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import javax.swing.JCheckBox
 import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.tree.TreePath
@@ -65,7 +76,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     |        condition: boring
     |        actions: [ run after mice or own tail ]""".trimMargin()
 
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
@@ -73,12 +84,14 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     showWarningIfModalCommitEnabled()
+    showWarningIfStagingAreaEnabled()
 
     task {
       openCommitWindowText(GitLessonsBundle.message("git.commit.open.commit.window"))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
       }
+      test { actions("CheckinProject") }
     }
 
     prepareRuntimeTask {
@@ -111,7 +124,10 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
            LearningBalloonConfig(Balloon.Position.below, 300, cornerToPointerDistance = 55))
       highlightVcsChange(firstFileName)
       triggerOnOneChangeIncluded(secondFileName)
-      showWarningIfCommitWindowClosed()
+      showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
+      test {
+        clickChangeElement(firstFileName)
+      }
     }
 
     task {
@@ -127,7 +143,12 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.open.options.tooltip", strong(commitWindowName)),
            LearningBalloonConfig(Balloon.Position.above, 0))
       triggerByUiComponentAndHighlight(false, false) { _: CommitOptionsPanel -> true }
-      showWarningIfCommitWindowClosed()
+      showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
+      test {
+        ideFrame {
+          actionButton(ActionsBundle.actionText("ChangesView.ShowCommitOptions")).click()
+        }
+      }
     }
 
     val reformatCodeButtonText = VcsBundle.message("checkbox.checkin.options.reformat.code").dropMnemonic()
@@ -145,6 +166,12 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
         ui.text == reformatCodeButtonText && ui.isSelected
       }
       restoreByUi(showOptionsTaskId)
+      test {
+        ideFrame {
+          val checkBox = findComponentWithTimeout(defaultTimeout) { ui: JBCheckBox -> ui.text == reformatCodeButtonText }
+          JCheckBoxFixture(robot, checkBox).check()
+        }
+      }
     }
 
     task {
@@ -152,6 +179,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       stateCheck {
         previous.ui?.isShowing != true
       }
+      test { invokeActionViaShortcut("ESCAPE") }
     }
 
     val commitButtonText = GitBundle.message("commit.action.name").dropMnemonic()
@@ -162,6 +190,11 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       }
       triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
       showWarningIfCommitWindowClosed()
+      test {
+        ideFrame {
+          button { b: JBOptionButton -> b.text == commitButtonText }.click()
+        }
+      }
     }
 
     task("ActivateVersionControlToolWindow") {
@@ -173,6 +206,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
       }
+      test { actions(it) }
     }
 
     resetGitLogWindow()
@@ -181,16 +215,23 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.select.top.commit"))
       triggerOnTopCommitSelected()
       showWarningIfGitWindowClosed()
+      test {
+        ideFrame {
+          val table: VcsLogGraphTable = findComponentWithTimeout(defaultTimeout)
+          JTableFixture(robot, table).click(TableCell.row(0).column(1), MouseButton.LEFT_BUTTON)
+        }
+      }
     }
 
     task {
       text(GitLessonsBundle.message("git.commit.committed.file.explanation"))
       triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: VcsLogChangesBrowser -> true }
       proceedLink()
-      showWarningIfGitWindowClosed(restoreTaskWhenResolved = false)
+      showWarningIfGitWindowClosed()
     }
 
     task {
+      before { LearningUiHighlightingManager.clearHighlights() }
       val amendCheckboxText = VcsBundle.message("checkbox.amend").dropMnemonic()
       text(GitLessonsBundle.message("git.commit.select.amend.checkbox",
                                     strong(amendCheckboxText),
@@ -203,6 +244,12 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
         ui.text?.contains(amendCheckboxText) == true && ui.isSelected
       }
       showWarningIfCommitWindowClosed()
+      test {
+        ideFrame {
+          val checkBox = findComponentWithTimeout(defaultTimeout) { ui: JBCheckBox -> ui.text?.contains(amendCheckboxText) == true }
+          JCheckBoxFixture(robot, checkBox).check()
+        }
+      }
     }
 
     task {
@@ -210,6 +257,9 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       highlightVcsChange(firstFileName)
       triggerOnOneChangeIncluded(firstFileName)
       showWarningIfCommitWindowClosed()
+      test {
+        clickChangeElement(firstFileName)
+      }
     }
 
     task {
@@ -220,15 +270,28 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       }
       triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
       showWarningIfCommitWindowClosed()
+      test {
+        ideFrame {
+          button { b: JBOptionButton -> b.text == amendButtonText }.click()
+        }
+      }
     }
 
     task {
       text(GitLessonsBundle.message("git.commit.select.top.commit.again"))
       triggerOnTopCommitSelected()
       showWarningIfGitWindowClosed()
+      test {
+        ideFrame {
+          val table: VcsLogGraphTable = findComponentWithTimeout(defaultTimeout)
+          JTableFixture(robot, table).click(TableCell.row(0).column(1), MouseButton.LEFT_BUTTON)
+        }
+      }
     }
 
     text(GitLessonsBundle.message("git.commit.two.committed.files.explanation"))
+
+    restoreCommitWindowStateInformer()
   }
 
   private fun TaskContext.highlightVcsChange(changeFileName: String, highlightBorder: Boolean = true) {
@@ -269,4 +332,25 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     val document = FileDocumentManager.getInstance().getDocument(file)!! // it's not directory or binary file and it isn't large
     document.insertString(document.textLength, text)
   }
+
+  private fun TaskTestContext.clickChangeElement(partOfText: String) {
+    val checkPath: (TreePath) -> Boolean = { p -> p.getPathComponent(p.pathCount - 1).toString().contains(partOfText) }
+    ideFrame {
+      val fixture = jTree(checkPath = checkPath)
+      val tree = fixture.target()
+      val pathRect = invokeAndWaitIfNeeded {
+        val path = TreeUtil.treePathTraverser(tree).find(checkPath)
+        tree.getPathBounds(path)
+      } ?: error("Failed to find path with text '$partOfText'")
+      val offset = JCheckBox().preferredSize.width / 2
+      robot.click(tree, Point(pathRect.x + offset, pathRect.y + offset))
+    }
+  }
+
+  override val suitableTips = listOf("partial_git_commit")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.commit.help.link"),
+         LessonUtil.getHelpLink("commit-and-push-changes.html")),
+  )
 }

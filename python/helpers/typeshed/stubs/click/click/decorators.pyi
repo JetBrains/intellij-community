@@ -1,6 +1,6 @@
 from _typeshed import IdentityFunction
 from distutils.version import Version
-from typing import Any, Callable, Iterable, Text, Tuple, Type, TypeVar, Union, overload
+from typing import Any, Callable, Iterable, Text, Type, TypeVar, Union, overload
 
 from click.core import Argument, Command, Context, Group, Option, Parameter, _ConvertibleType
 
@@ -69,7 +69,7 @@ def argument(
     expose_value: bool = ...,
     is_eager: bool = ...,
     envvar: str | list[str] | None = ...,
-    autocompletion: Callable[[Context, list[str], str], Iterable[str | Tuple[str, str]]] | None = ...,
+    autocompletion: Callable[[Context, list[str], str], Iterable[str | tuple[str, str]]] | None = ...,
 ) -> IdentityFunction: ...
 @overload
 def option(

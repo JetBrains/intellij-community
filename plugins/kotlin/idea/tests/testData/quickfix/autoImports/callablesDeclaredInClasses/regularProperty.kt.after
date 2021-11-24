@@ -1,0 +1,14 @@
+// "Import" "true"
+package p
+
+import p.RegObject.regularProperty
+
+open class Reg {
+    val regularProperty = 1
+}
+
+object RegObject : Reg()
+
+fun usage() {
+    val x = regularProperty
+}

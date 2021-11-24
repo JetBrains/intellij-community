@@ -45,19 +45,22 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.*;
 
 /**
  * @author Maxim.Mossienko
  */
-public final class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
+public final class MethodParameterInfoHandler
+  implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
   private static final Set<Class<?>> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
   private static final Set<Class<?>> ourStopSearch = Collections.singleton(PsiMethod.class);
   private static final String WHITESPACE_OR_LINE_BREAKS = " \t\n";
-  private static final Key<Inlay> CURRENT_HINT = Key.create("current.hint");
-  private static final Key<List<Inlay>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
+  private static final Key<Inlay<?>> CURRENT_HINT = Key.create("current.hint");
+  private static final Key<List<Inlay<?>>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
   private static final Set<String> NON_DOCUMENTED_JETBRAINS_ANNOTATIONS = Set.of(
     "org.jetbrains.annotations.Debug.Renderer",
     "org.intellij.lang.annotations.Flow",
@@ -192,25 +195,22 @@ public final class MethodParameterInfoHandler implements ParameterInfoHandlerWit
                 isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
               JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
               // make sure the statement above takes effect
-              ParameterHintsPass.asyncUpdate(parent, context.getEditor())
-                .then(o -> {
-                  highlightHints(context.getEditor(), null, -1, context.getCustomContext());
-                  return null;
-                });
+              asyncHighlightHints(context.getEditor(), null, -1, context.getCustomContext());
             }
             else {
               int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(),
                                                                       context.getOffset(), JavaTokenType.COMMA);
               TextRange textRange = expressionList.getTextRange();
               if (context.getOffset() <= textRange.getStartOffset() || context.getOffset() >= textRange.getEndOffset()) index = -1;
-              highlightHints(context.getEditor(), expressionList, context.isInnermostContext() ? index : -1, context.getCustomContext());
+              asyncHighlightHints(context.getEditor(), expressionList, context.isInnermostContext() ? index : -1,
+                                  context.getCustomContext());
             }
           }
         }
       }
     }
     else {
-      highlightHints(context.getEditor(), null, -1, context.getCustomContext());
+      asyncHighlightHints(context.getEditor(), null, -1, context.getCustomContext());
     }
   }
 
@@ -400,78 +400,120 @@ public final class MethodParameterInfoHandler implements ParameterInfoHandlerWit
     return ((PsiMethod)info.getElement()).getParameterList().getParametersCount();
   }
 
-  private static void highlightHints(@NotNull Editor editor, @Nullable PsiExpressionList expressionList, int currentHintIndex,
-                                     @NotNull UserDataHolder context) {
+  private static void asyncHighlightHints(@NotNull Editor editor,
+                                          @Nullable PsiExpressionList expressionList,
+                                          int currentHintIndex,
+                                          @NotNull UserDataHolder context) {
+
     if (editor.isDisposed() || editor instanceof EditorWindow) return;
     ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
-    Inlay currentHint = null;
-    List<Inlay> highlightedHints = null;
+    Promise<HighlightedInlays> inlaysPromise = Promises.resolvedPromise(new HighlightedInlays(null, null));
     if (expressionList != null && expressionList.isValid()) {
       int expressionCount = expressionList.getExpressionCount();
       if (currentHintIndex == 0 || currentHintIndex > 0 && currentHintIndex < expressionCount) {
-        highlightedHints = new ArrayList<>(expressionCount);
-        ParameterHintsPass.syncUpdate(expressionList.getParent(), editor);
-        PsiElement prevDelimiter, nextDelimiter;
-        for (int i = 0; i < Math.max(expressionCount, currentHintIndex == 0 ? 1 : 0); i++) {
-          if (i < expressionCount) {
-            PsiExpression expression = expressionList.getExpressions()[i];
-            //noinspection StatementWithEmptyBody
-            for (prevDelimiter = expression;
-                 prevDelimiter != null && !(prevDelimiter instanceof PsiJavaToken);
-                 prevDelimiter = prevDelimiter.getPrevSibling())
-              ;
-            //noinspection StatementWithEmptyBody
-            for (nextDelimiter = expression;
-                 nextDelimiter != null && !(nextDelimiter instanceof PsiJavaToken);
-                 nextDelimiter = nextDelimiter.getNextSibling())
-              ;
-          }
-          else {
-            prevDelimiter = expressionList.getFirstChild(); // left parenthesis
-            nextDelimiter = expressionList.getLastChild(); // right parenthesis
-          }
-          if (prevDelimiter != null && nextDelimiter != null) {
-            CharSequence text = editor.getDocument().getImmutableCharSequence();
-            int firstRangeStartOffset = prevDelimiter.getTextRange().getEndOffset();
-            int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE_OR_LINE_BREAKS);
-            for (Inlay inlay : presentationManager.getParameterHintsInRange(editor, firstRangeStartOffset, firstRangeEndOffset)) {
-              highlightedHints.add(inlay);
-              if (i == currentHintIndex && currentHint == null) currentHint = inlay;
-            }
-            int secondRangeEndOffset = nextDelimiter.getTextRange().getStartOffset();
-            if (secondRangeEndOffset > firstRangeEndOffset) {
-              int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE_OR_LINE_BREAKS) + 1;
-              highlightedHints.addAll(presentationManager.getParameterHintsInRange(editor, secondRangeStartOffset, secondRangeEndOffset));
-            }
-          }
+        SmartPsiElementPointer<PsiExpressionList> exprListPtr = SmartPointerManager.getInstance(expressionList.getProject())
+          .createSmartPsiElementPointer(expressionList);
+        inlaysPromise = ParameterHintsPass.asyncUpdate(expressionList.getParent(), editor)
+          .then(__ -> collectInlaysToHighlight(editor, currentHintIndex, presentationManager, expressionCount, exprListPtr));
+      }
+    }
+    inlaysPromise.onSuccess(inlays -> {
+      List<Inlay<?>> highlightedHints = inlays.highlightedHints;
+      Inlay<?> currentHint = inlays.currentHint;
+      if (currentHint == context.getUserData(CURRENT_HINT) &&
+          Objects.equals(highlightedHints, context.getUserData(HIGHLIGHTED_HINTS))) {
+        return;
+      }
+      resetHints(context);
+      if (currentHint != null) {
+        presentationManager.setCurrent(currentHint, true);
+        context.putUserData(CURRENT_HINT, currentHint);
+      }
+      if (!ContainerUtil.isEmpty(highlightedHints)) {
+        for (Inlay<?> highlightedHint : highlightedHints) {
+          presentationManager.setHighlighted(highlightedHint, true);
+        }
+        context.putUserData(HIGHLIGHTED_HINTS, highlightedHints);
+      }
+    });
+  }
+
+  private static HighlightedInlays collectInlaysToHighlight(Editor editor,
+                                             int currentHintIndex,
+                                             ParameterHintsPresentationManager presentationManager,
+                                             int expressionCount,
+                                             SmartPsiElementPointer<PsiExpressionList> exprListPtr) {
+    PsiExpressionList expressionList = exprListPtr.getElement();
+    if (expressionList == null || editor.isDisposed()) return new HighlightedInlays(null, null);
+    Inlay<?> currentHint = null;
+    List<Inlay<?>> highlightedHints = new ArrayList<>(expressionCount);
+    PsiElement prevDelimiter, nextDelimiter;
+    for (int i = 0; i < Math.max(expressionCount, currentHintIndex == 0 ? 1 : 0); i++) {
+      if (i < expressionCount) {
+        PsiExpression expression = expressionList.getExpressions()[i];
+        prevDelimiter = expression;
+        while (prevDelimiter != null && !(prevDelimiter instanceof PsiJavaToken)) {
+          prevDelimiter = prevDelimiter.getPrevSibling();
+        }
+        nextDelimiter = expression;
+        while (nextDelimiter != null && !(nextDelimiter instanceof PsiJavaToken)) {
+          nextDelimiter = nextDelimiter.getNextSibling();
+        }
+      }
+      else {
+        prevDelimiter = expressionList.getFirstChild(); // left parenthesis
+        nextDelimiter = expressionList.getLastChild(); // right parenthesis
+      }
+      if (prevDelimiter != null && nextDelimiter != null) {
+        CharSequence text = editor.getDocument().getImmutableCharSequence();
+        int firstRangeStartOffset = prevDelimiter.getTextRange().getEndOffset();
+        int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE_OR_LINE_BREAKS);
+
+        List<Inlay<?>> paramHintsInRange =
+          presentationManager.getParameterHintsInRange(editor, firstRangeStartOffset, firstRangeEndOffset);
+        for (Inlay<?> inlay : paramHintsInRange) {
+          highlightedHints.add(inlay);
+          if (i == currentHintIndex && currentHint == null) currentHint = inlay;
+        }
+        int secondRangeEndOffset = nextDelimiter.getTextRange().getStartOffset();
+        if (secondRangeEndOffset > firstRangeEndOffset) {
+          int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE_OR_LINE_BREAKS) + 1;
+          highlightedHints.addAll(
+            presentationManager.getParameterHintsInRange(editor, secondRangeStartOffset, secondRangeEndOffset));
         }
       }
     }
-    if (currentHint == context.getUserData(CURRENT_HINT) &&
-        Objects.equals(highlightedHints, context.getUserData(HIGHLIGHTED_HINTS))) return;
-    resetHints(context);
-    if (currentHint != null) {
-      presentationManager.setCurrent(currentHint, true);
-      context.putUserData(CURRENT_HINT, currentHint);
+    return new HighlightedInlays(currentHint, highlightedHints);
+  }
+
+  private static class HighlightedInlays {
+    final Inlay<?> currentHint;
+    final List<Inlay<?>> highlightedHints;
+
+    HighlightedInlays(Inlay<?> current, List<Inlay<?>> highlighted) {
+      currentHint = current;
+      highlightedHints = highlighted;
     }
-    if (!ContainerUtil.isEmpty(highlightedHints)) {
-      for (Inlay highlightedHint : highlightedHints) {
-        presentationManager.setHighlighted(highlightedHint, true);
-      }
-      context.putUserData(HIGHLIGHTED_HINTS, highlightedHints);
+
+    @Override
+    public String toString() {
+      return "HighlightedInlays{" +
+             "currentHint=" + currentHint +
+             ", highlightedHints=" + highlightedHints +
+             '}';
     }
   }
 
   private static void resetHints(@NotNull UserDataHolder context) {
     ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
-    Inlay currentHint = context.getUserData(CURRENT_HINT);
+    Inlay<?> currentHint = context.getUserData(CURRENT_HINT);
     if (currentHint != null) {
       presentationManager.setCurrent(currentHint, false);
       context.putUserData(CURRENT_HINT, null);
     }
-    List<Inlay> highlightedHints = context.getUserData(HIGHLIGHTED_HINTS);
+    List<Inlay<?>> highlightedHints = context.getUserData(HIGHLIGHTED_HINTS);
     if (highlightedHints != null) {
-      for (Inlay hint : highlightedHints) {
+      for (Inlay<?> hint : highlightedHints) {
         presentationManager.setHighlighted(hint, false);
       }
       context.putUserData(HIGHLIGHTED_HINTS, null);
@@ -849,9 +891,8 @@ public final class MethodParameterInfoHandler implements ParameterInfoHandlerWit
       if (!(exprList instanceof PsiExpressionList) || !exprList.isValid()) return;
       PsiElement call = exprList.getParent();
       if (call == null || !call.isValid()) return;
-      ParameterHintsPass.syncUpdate(call, editor);
       int index = ParameterInfoUtils.getCurrentParameterIndex(exprList.getNode(), editor.getCaretModel().getOffset(), JavaTokenType.COMMA);
-      highlightHints(editor, (PsiExpressionList)exprList, index, context.getCustomContext());
+      asyncHighlightHints(editor, (PsiExpressionList)exprList, index, context.getCustomContext());
     });
   }
 

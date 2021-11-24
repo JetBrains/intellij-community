@@ -48,6 +48,11 @@ public class ExpressionTypeTestGenerated extends AbstractExpressionTypeTest {
         runTest("testData/codeInsight/expressionType/IfAsExpressionInsideBlock.kt");
     }
 
+    @TestMetadata("IntersectionTypeWithStarProjection.kt")
+    public void testIntersectionTypeWithStarProjection() throws Exception {
+        runTest("testData/codeInsight/expressionType/IntersectionTypeWithStarProjection.kt");
+    }
+
     @TestMetadata("Kt11601.kt")
     public void testKt11601() throws Exception {
         runTest("testData/codeInsight/expressionType/Kt11601.kt");

@@ -25,6 +25,9 @@ internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
     val panel = BookmarksView(project, null)
     panel.preferredSize = JBUI.size(640, 240)
 
+    event.bookmarksManager?.assignedTypes?.forEach { panel.registerBookmarkTypeAction(panel, it) }
+    panel.registerEditSourceAction(panel)
+
     val popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(panel, panel.tree)
       .setDimensionServiceKey(project, "ShowBookmarks", false)

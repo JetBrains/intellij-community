@@ -1,0 +1,7 @@
+// "Remove @JvmField annotation" "true"
+// WITH_STDLIB
+interface I {
+    val x: Int
+}
+
+class C1 : I { override val x: Int = 1 }

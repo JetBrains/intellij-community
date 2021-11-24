@@ -47,7 +47,7 @@ interface PythonInterpreterTargetEnvironmentFactory {
       when (sdk.sdkAdditionalData) {
         is PyTargetAwareAdditionalData, is PyRemoteSdkAdditionalDataBase ->
           EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdk, project) }
-        else -> HelpersAwareLocalTargetEnvironmentRequest
+        else -> HelpersAwareLocalTargetEnvironmentRequest()
       }
 
     @JvmStatic

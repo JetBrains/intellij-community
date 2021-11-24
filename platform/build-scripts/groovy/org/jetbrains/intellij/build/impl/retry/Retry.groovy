@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.retry
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 
 import java.util.concurrent.TimeUnit
+import java.util.function.IntFunction
 
 @CompileStatic
-class Retry {
+final class Retry {
   private final int retries
   private final long delayMs
   private final BuildMessages log
@@ -21,11 +22,11 @@ class Retry {
     }
   }
 
-  def <T> T call(Closure<T> operation) {
-    def delayMs = delayMs
+  def <T> T call(IntFunction<T> operation) {
+    long delayMs = delayMs
     for (i in 1..retries) {
       try {
-        return operation(i)
+        return operation.apply(i)
       }
       catch (StopTrying e) {
         throw e.cause
@@ -43,7 +44,7 @@ class Retry {
   private static long backOffLimitMs = TimeUnit.MINUTES.toMillis(15)
   private static int backOffFactor = 2
   private static double backOffJitter = 0.1
-  private Random random = new Random()
+  private final Random random = new Random()
 
   private long backOff(long delayMs, int attempt, Exception e) {
     def rawDelay = Math.min(delayMs, backOffLimitMs)

@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,17 @@ public final class ModuleRootModificationUtil {
                                       @NotNull List<String> excludedRootUrls,
                                       @NotNull DependencyScope scope,
                                       boolean exported) {
+    addModuleLibrary(module, libName, classesRootUrls, sourceRootUrls, excludedRootUrls, scope, exported, EmptyConsumer.getInstance());
+  }
+
+  public static void addModuleLibrary(@NotNull Module module,
+                                      @Nullable String libName,
+                                      @NotNull List<String> classesRootUrls,
+                                      @NotNull List<String> sourceRootUrls,
+                                      @NotNull List<String> excludedRootUrls,
+                                      @NotNull DependencyScope scope,
+                                      boolean exported,
+                                      Consumer<? super LibraryEx.ModifiableModelEx> postProcessor) {
     updateModel(module, model -> {
       LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(libName);
       LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
@@ -80,6 +92,8 @@ public final class ModuleRootModificationUtil {
       assert entry != null : library;
       entry.setScope(scope);
       entry.setExported(exported);
+
+      postProcessor.consume(libraryModel);
 
       ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(libraryModel::commit));
     });

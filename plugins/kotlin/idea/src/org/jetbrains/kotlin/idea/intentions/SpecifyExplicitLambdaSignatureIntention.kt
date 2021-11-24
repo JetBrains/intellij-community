@@ -70,7 +70,8 @@ open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndepend
         fun applyWithParameters(element: KtLambdaExpression, parameterString: String) {
             val psiFactory = KtPsiFactory(element)
             val functionLiteral = element.functionLiteral
-            val newParameterList = psiFactory.createLambdaParameterListIfAny(parameterString)
+            val newParameterList =
+                (psiFactory.createExpression("{ $parameterString -> }") as KtLambdaExpression).functionLiteral.valueParameterList
             runWriteActionIfPhysical(element) {
                 functionLiteral.setParameterListIfAny(psiFactory, newParameterList)
                 ShortenReferences.DEFAULT.process(element.valueParameters)

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -71,8 +72,10 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   }
 
   @Override
-  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
-    return getDelegate().invokeForPreview(project, editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
+    return getDelegate().generatePreview(project, editor, file);
   }
 
   @Nullable

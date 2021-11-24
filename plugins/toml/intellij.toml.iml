@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.toml.core" exported="" />
+    <orderEntry type="module" module-name="intellij.toml.json" exported="" />
   </component>
 </module>

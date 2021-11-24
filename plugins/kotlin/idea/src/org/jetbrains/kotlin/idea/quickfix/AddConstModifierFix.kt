@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -46,7 +46,7 @@ class AddConstModifierFix(property: KtProperty) : AddModifierFix(property, KtTok
         fun addConstModifier(property: KtProperty) {
             val annotationsToRemove = removeAnnotations.mapNotNull { property.findAnnotation(it) }
             replaceReferencesToGetterByReferenceToField(property)
-            runWriteAction {
+            runWriteActionIfPhysical(property) {
                 property.addModifier(KtTokens.CONST_KEYWORD)
                 annotationsToRemove.forEach(KtAnnotationEntry::delete)
             }
@@ -104,7 +104,7 @@ fun replaceReferencesToGetterByReferenceToField(property: KtProperty) {
         val factory = PsiElementFactory.getInstance(project)
         val fieldFQName = backingField.containingClass!!.qualifiedName + "." + backingField.name
 
-        runWriteAction {
+        runWriteActionIfPhysical(property) {
             getterUsages.forEach {
                 val call = it.element.getNonStrictParentOfType<PsiMethodCallExpression>()
                 if (call != null && it.element == call.methodExpression) {

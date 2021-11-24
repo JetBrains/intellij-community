@@ -130,7 +130,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     try {
       String pattern = "*" + string;
       NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
-      String separators = "";
+      String separators = SpeedSearchUtil.getDefaultHardSeparators();
       myMatcher = myMatchAllOccurrences ? AllOccurrencesMatcher.create(pattern, caseSensitivity, separators)
                                         : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }

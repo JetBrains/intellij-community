@@ -32,9 +32,8 @@ public class TaintAnalyzer {
 
   public @NotNull TaintValue fromElement(@Nullable PsiElement target, @NotNull PsiElement ref, boolean processRecursively) {
     if (target == null || !myVisited.add(target)) return TaintValue.UNTAINTED;
-    PsiType type = getType(target);
-    if (type == null) return TaintValue.UNTAINTED;
-    TaintValue taintValue = fromAnnotation(target, type);
+    TaintValue taintValue = fromAnnotation(target);
+    if (taintValue == null) return TaintValue.UNTAINTED;
     if (taintValue != TaintValue.UNKNOWN) return taintValue;
     taintValue = fromModifierListOwner(target, ref, processRecursively);
     return taintValue == null ? TaintValue.UNTAINTED : taintValue;
@@ -246,8 +245,10 @@ public class TaintAnalyzer {
     return element instanceof PsiVariable ? ((PsiVariable)element).getType() : null;
   }
 
-  private static @NotNull TaintValue fromAnnotation(@Nullable PsiElement target, @NotNull PsiType type) {
-    if (target instanceof PsiClass) return TaintValue.UNTAINTED;
+  public static @Nullable TaintValue fromAnnotation(@Nullable PsiElement target) { 
+    PsiType type = getType(target);
+    if (type == null) return null;
+    if (target instanceof PsiClass) return null;
     if (target instanceof PsiModifierListOwner) {
       PsiModifierListOwner owner = (PsiModifierListOwner)target;
       TaintValue taintValue = TaintValueFactory.INSTANCE.fromModifierListOwner(owner);

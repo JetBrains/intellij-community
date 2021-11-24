@@ -21,11 +21,13 @@ class MarkdownTextExtractor : TextExtractor() {
           e.elementType == MarkdownElementTypes.IMAGE ||
           e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e)
         }
+        .removingIndents(" \t")
         .build(root, TextContent.TextDomain.PLAIN_TEXT)
     }
     return null
   }
 
   private fun isLinkText(e: PsiElement) =
-    (e.elementType == MarkdownTokenTypes.TEXT || e is PsiWhiteSpace) && e.parent.elementType == MarkdownElementTypes.LINK_TEXT
+    (e.elementType == MarkdownTokenTypes.TEXT || e.elementType == MarkdownTokenTypes.GFM_AUTOLINK || e is PsiWhiteSpace) &&
+    e.parent.elementType == MarkdownElementTypes.LINK_TEXT
 }

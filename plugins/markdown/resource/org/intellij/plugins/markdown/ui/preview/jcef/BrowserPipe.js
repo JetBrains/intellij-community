@@ -42,17 +42,17 @@
       }
     }
 
-    callBrowserListeners({tag, data}) {
-      const listeners = this.listeners[tag];
+    callBrowserListeners({type, data}) {
+      const listeners = this.listeners[type];
       if (!listeners) {
-        console.warn(`No listeners for messages with tag: ${tag}`);
+        console.warn(`No listeners for messages with tag: ${type}`);
         return;
       }
       for (const listener of listeners) {
         try {
           listener(data);
         } catch (error) {
-          console.log(`Error occurred while calling listener for ${tag}`);
+          console.log(`Error occurred while calling listener for ${type}`);
           console.error(error);
         }
       }

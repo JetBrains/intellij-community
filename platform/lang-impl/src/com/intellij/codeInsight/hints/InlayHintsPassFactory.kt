@@ -7,13 +7,17 @@ import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarI
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
-class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
     val ghl = intArrayOf(Pass.UPDATE_ALL).takeIf { (registrar as TextEditorHighlightingPassRegistrarImpl).isSerializeCodeInsightPasses }
     registrar.registerTextEditorHighlightingPass(this, ghl, null, false, -1)
@@ -26,16 +30,9 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
     val currentStamp = getCurrentModificationStamp(file)
     if (savedStamp != null && savedStamp == currentStamp) return null
 
-    val settings = InlayHintsSettings.instance()
     val language = file.language
-    val collectors = if (isHintsEnabledForEditor(editor)) {
-      HintUtils.getHintProvidersForLanguage(language, file.project)
-        .mapNotNull { it.getCollectorWrapperFor(file, editor, language) }
-        .filter { settings.hintsShouldBeShown(it.key, language) || isProviderAlwaysEnabledForEditor(editor, it.key) }
-    }
-    else {
-      emptyList()
-    }
+    val collectors = getProviders(file, editor).mapNotNull { it.getCollectorWrapperFor(file, editor, language) }
+
     return InlayHintsPass(file, collectors, editor)
   }
 
@@ -108,5 +105,30 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       editor.putUserData(ALWAYS_ENABLED_HINTS_PROVIDERS, keySet)
       forceHintsUpdateOnNextPass()
     }
+
+    private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWithSettings<out Any>> {
+      if (!isHintsEnabledForEditor(editor)) return emptyList()
+
+      val settings = InlayHintsSettings.instance()
+      val language = element.language
+
+      val project = element.project
+      val isDumbMode = DumbService.isDumb(project)
+
+      return HintUtils.getHintProvidersForLanguage(language, project)
+        .filter { (!isDumbMode || DumbService.isDumbAware(it.provider)) && (settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key)) }
+    }
+
+    @ApiStatus.Internal
+    fun collectPlaceholders(file: PsiFile, editor: Editor): HintsBuffer? {
+      val collector = getProviders(file, editor).firstNotNullOfOrNull { it.getPlaceholdersCollectorFor(file, editor) }
+
+      return collector?.collectTraversing(editor, file, true)
+    }
+
+    @ApiStatus.Internal
+    @RequiresEdt
+    fun applyPlaceholders(file: PsiFile, editor: Editor, hints: HintsBuffer) =
+      InlayHintsPass.applyCollected(hints, file, editor, true)
   }
 }

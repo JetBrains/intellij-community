@@ -17,6 +17,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +44,9 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
         final TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(arg));
         final PsiType type = constraint.getPsiType(holder.getProject());
         if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_LIST)) return;
+        final TypeConstraint qualifierConstraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(qualifier));
+        final PsiType qualifierType = qualifierConstraint.getPsiType(holder.getProject());
+        if (InheritanceUtil.isInheritor(qualifierType, "java.util.concurrent.CopyOnWriteArraySet")) return;
         final LongRangeSet setSizeRange = getSizeRangeOfCollection(qualifier);
         if (setSizeRange.isEmpty() || setSizeRange.max() <= 1) return;
         final LongRangeSet listSizeRange = getSizeRangeOfCollection(arg);

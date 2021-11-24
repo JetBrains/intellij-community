@@ -146,7 +146,7 @@ public final class AnnotationDocGenerator {
         .create()
         .generateLink(buffer, myTargetClass, styledName, format == AnnotationFormat.JavaDocComplete);
     }
-    else if (!red && name != null) {
+    else if (name != null) {
       appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
     }
     if (red) buffer.append("</font>");

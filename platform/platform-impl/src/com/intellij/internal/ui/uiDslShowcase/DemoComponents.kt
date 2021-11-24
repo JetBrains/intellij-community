@@ -2,11 +2,13 @@
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -15,8 +17,8 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 @Demo(title = "Components",
   description = "There are many different components supported by UI DSL. Here are some of them.",
   scrollbar = true)
-fun demoComponents(): DialogPanel {
-  return panel {
+fun demoComponents(parentDisposable: Disposable): DialogPanel {
+  val panel = panel {
     row {
       checkBox("checkBox")
     }
@@ -41,8 +43,8 @@ fun demoComponents(): DialogPanel {
       actionButton(action)
     }
 
-    row("gearButton:") {
-      gearButton(object : DumbAwareAction("Action one") {
+    row("actionsButton:") {
+      actionsButton(object : DumbAwareAction("Action one") {
         override fun actionPerformed(e: AnActionEvent) {
         }
       },
@@ -57,12 +59,12 @@ fun demoComponents(): DialogPanel {
       segmentedButton(listOf("Button 1", "Button 2", "Button Last"), property) { s -> s }
     }
 
-    row {
-      label("label")
+    row("label:") {
+      label("Some label")
     }
 
-    row("labelHtml:") {
-      labelHtml("labelHtml can contain links, for example try <a href='https://www.jetbrains.com'>jetbrains.com</a>")
+    row("text:") {
+      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>")
     }
 
     row("link:") {
@@ -71,6 +73,10 @@ fun demoComponents(): DialogPanel {
 
     row("browserLink:") {
       browserLink("jetbrains.com", "https://www.jetbrains.com")
+    }
+
+    row("dropDownLink:") {
+      dropDownLink("Item 1", listOf("Item 1", "Item 2", "Item 3"))
     }
 
     row("icon:") {
@@ -114,4 +120,10 @@ fun demoComponents(): DialogPanel {
       comboBox(arrayOf("Item 1", "Item 2"))
     }
   }
+
+  val disposable = Disposer.newDisposable()
+  panel.registerValidators(disposable)
+  Disposer.register(parentDisposable, disposable)
+
+  return panel
 }

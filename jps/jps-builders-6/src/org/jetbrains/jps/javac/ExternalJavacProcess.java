@@ -21,7 +21,8 @@ import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
@@ -192,7 +193,7 @@ public class ExternalJavacProcess {
       );
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }
-    catch (Throwable e) {
+    catch (Exception e) {
       //noinspection UseOfSystemOutOrSystemErr
       e.printStackTrace(System.err);
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(e.getMessage(), e));
@@ -258,6 +259,7 @@ public class ExternalJavacProcess {
               myThreadPool.execute(new Runnable() {
                 @Override
                 public void run() {
+                  boolean keepRunning = myKeepRunning;
                   try {
                     final JavacRemoteProto.Message result = compile(context, sessionId, options, files, cp, platformCp, modulePath, upgradeModulePath, srcPath, outs, new CanceledStatus() {
                       @Override
@@ -267,9 +269,20 @@ public class ExternalJavacProcess {
                     });
                     context.channel().writeAndFlush(result).awaitUninterruptibly();
                   }
+                  catch (Throwable throwable) {
+                    // in case of unexpected exception exit, to ensure the process is not stuck in a problematic state
+                    keepRunning = false;
+                    throwable.printStackTrace(System.err);
+                    try {
+                      // attempt to report via proto
+                      context.channel().writeAndFlush(JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(throwable.getMessage(), throwable)));
+                    }
+                    catch (Throwable ignored) {
+                    }
+                  }
                   finally {
                     myCanceled.remove(sessionId); // state cleanup
-                    if (myKeepRunning) {
+                    if (keepRunning) {
                       JavacMain.clearCompilerZipFileCache();
                       //noinspection CallToSystemGC
                       System.gc();

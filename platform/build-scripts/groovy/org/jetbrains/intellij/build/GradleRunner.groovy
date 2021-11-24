@@ -1,13 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
+import java.util.function.Supplier
+
 @CompileStatic
-class GradleRunner {
+final class GradleRunner {
   final File gradleProjectDir
   private final String projectDir
   private final BuildMessages messages
@@ -41,7 +44,11 @@ class GradleRunner {
    * Logs error and stops the build process if Gradle process is failed.
    */
   boolean run(String title, String... tasks) {
-    return runInner(title, null, false, tasks)
+    return runInner(title, null, false, false, tasks)
+  }
+
+  boolean runInParallel(String title, String... tasks) {
+    return runInner(title, null, false, true, tasks)
   }
 
   /**
@@ -50,7 +57,7 @@ class GradleRunner {
    * Logs error and stops the build process if Gradle process is failed.
    */
   boolean run(String title, File buildFile, String... tasks) {
-    return runInner(title, buildFile, false, tasks)
+    return runInner(title, buildFile, false, false, tasks)
   }
 
   /**
@@ -67,7 +74,7 @@ class GradleRunner {
    * Ignores the result of running Gradle.
    */
   boolean forceRun(String title, String... tasks) {
-    return runInner(title, null, true, tasks)
+    return runInner(title, null, true, false, tasks)
   }
 
   GradleRunner withParams(List<String> additionalParams) {
@@ -83,26 +90,37 @@ class GradleRunner {
     return Arrays.asList(rawParams.split(" "))
   }
 
-  private boolean runInner(String title, File buildFile, boolean force, String... tasks) {
-    def result = false
-    messages.block("Gradle $tasks") {
-      messages.progress(title)
-      result = runInner(buildFile, tasks)
-      if (!result) {
-        def errorMessage = "Failed to complete `gradle ${tasks.join(' ')}`"
+  boolean runOneTask(String task) {
+    boolean result = runInner(null, false, task)
+    if (!result) {
+      messages.error("Failed to complete `gradle $task`")
+    }
+    return result
+  }
+
+  private boolean runInner(String title, File buildFile, boolean force, boolean parallel, String... tasks) {
+    return messages.block("Gradle $tasks", new Supplier<Boolean>() {
+      @Override
+      Boolean get() {
+        Span.current().addEvent(title)
+        if (runInner(buildFile, parallel, tasks)) {
+          return Boolean.TRUE
+        }
+
+        String errorMessage = "Failed to complete `gradle ${String.join(" ", tasks)}`"
         if (force) {
           messages.warning(errorMessage)
         }
         else {
           messages.error(errorMessage)
         }
+        return Boolean.FALSE
       }
-    }
-    return result
+    }) == Boolean.TRUE
   }
 
-  private boolean runInner(File buildFile, String... tasks) {
-    def gradleScript = SystemInfo.isWindows ? 'gradlew.bat' : 'gradlew'
+  private boolean runInner(File buildFile, boolean parallel, String... tasks) {
+    String gradleScript = SystemInfoRt.isWindows ? "gradlew.bat" : "gradlew"
     List<String> command = new ArrayList()
     command.add("${gradleProjectDir.absolutePath}/$gradleScript".toString())
     command.add("-Djava.io.tmpdir=${System.getProperty('java.io.tmpdir')}".toString())
@@ -115,6 +133,11 @@ class GradleRunner {
     else {
       command.add('--no-daemon')
     }
+
+    if (parallel) {
+      command.add("--parallel")
+    }
+
     if (buildFile != null) {
       command.add('-b')
       command.add(buildFile.absolutePath)
@@ -141,7 +164,7 @@ class GradleRunner {
     }
     run('Downloading JBR 11', 'setupJbr11')
     def modularRuntime = "$projectDir/build/jdk/11"
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       modularRuntime += '/Contents/Home'
     }
     modularRuntime = FileUtil.toSystemIndependentName(new File(modularRuntime).canonicalPath)

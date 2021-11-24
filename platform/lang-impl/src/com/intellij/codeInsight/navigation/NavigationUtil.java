@@ -489,12 +489,12 @@ public final class NavigationUtil {
   @NotNull
   public static List<GotoRelatedItem> collectRelatedItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
     Set<GotoRelatedItem> items = new LinkedHashSet<>();
-    for (GotoRelatedProvider provider : GO_TO_EP_NAME.getExtensionList()) {
+    GO_TO_EP_NAME.forEachExtensionSafe(provider -> {
       items.addAll(provider.getItems(contextElement));
       if (dataContext != null) {
         items.addAll(provider.getItems(dataContext));
       }
-    }
+    });
     GotoRelatedItem[] result = items.toArray(new GotoRelatedItem[0]);
     Arrays.sort(result, (i1, i2) -> {
       String o1 = i1.getGroup();

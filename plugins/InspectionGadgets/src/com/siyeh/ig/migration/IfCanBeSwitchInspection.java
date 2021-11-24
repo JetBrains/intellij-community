@@ -2,6 +2,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyStatementImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -131,8 +133,82 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         return;
       }
       final PsiIfStatement ifStatement = (PsiIfStatement)element;
+      if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(ifStatement)) {
+        for (PsiIfStatement ifStatementInChain : getAllConditionalBranches(ifStatement)) {
+          replaceCastsWithPatternVariable(ifStatementInChain);
+        }
+      }
       replaceIfWithSwitch(ifStatement);
     }
+  }
+
+  private static List<PsiIfStatement> getAllConditionalBranches(PsiIfStatement ifStatement){
+    List<PsiIfStatement> ifStatements = new ArrayList<>();
+    while (ifStatement != null) {
+      ifStatements.add(ifStatement);
+      PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (elseBranch instanceof PsiIfStatement) {
+        ifStatement = (PsiIfStatement) elseBranch;
+      } else {
+        ifStatement = null;
+      }
+    }
+    return ifStatements;
+  }
+
+  private static void replaceCastsWithPatternVariable(PsiIfStatement ifStatement){
+    PsiInstanceOfExpression targetInstanceOf =
+      PsiTreeUtil.findChildOfType(ifStatement.getCondition(), PsiInstanceOfExpression.class, false);
+    if (targetInstanceOf == null) return;
+    if (targetInstanceOf.getPattern() != null) return;
+    PsiTypeElement type = targetInstanceOf.getCheckType();
+    if (type == null) return;
+
+    List<PsiTypeCastExpression> relatedCastExpressions =
+      SyntaxTraverser.psiTraverser(ifStatement.getThenBranch())
+        .filter(PsiTypeCastExpression.class)
+        .filter(cast -> InstanceOfUtils.findPatternCandidate(cast) == targetInstanceOf)
+        .toList();
+
+    PsiLocalVariable castedVariable = null;
+    for (PsiTypeCastExpression castExpression : relatedCastExpressions) {
+      castedVariable = findCastedLocalVariable(castExpression);
+      if (castedVariable != null) break;
+    }
+
+    String name = castedVariable != null
+                  ? castedVariable.getName()
+                  : new VariableNameGenerator(targetInstanceOf, VariableKind.LOCAL_VARIABLE).byType(type.getType()).generate(true);
+
+    CommentTracker ct = new CommentTracker();
+    for (PsiTypeCastExpression castExpression : relatedCastExpressions) {
+      ct.replace(skipParenthesizedExprUp(castExpression), name);
+    }
+    if (castedVariable != null) {
+      ct.delete(castedVariable);
+    }
+    ct.replaceExpressionAndRestoreComments(
+      targetInstanceOf,
+      ct.text(targetInstanceOf.getOperand()) + " instanceof " + ct.text(type) + " " + name
+    );
+  }
+
+  private static @Nullable PsiLocalVariable findCastedLocalVariable(PsiTypeCastExpression castExpression) {
+    PsiLocalVariable variable = PsiTreeUtil.getParentOfType(castExpression, PsiLocalVariable.class);
+    if (variable == null) return null;
+    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
+    if (initializer != castExpression) return null;
+    PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
+    if (scope == null) return null;
+    if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return null;
+    return variable;
+  }
+
+  private static PsiElement skipParenthesizedExprUp(@NotNull PsiElement expression) {
+    while (expression.getParent() instanceof PsiParenthesizedExpression) {
+      expression = expression.getParent();
+    }
+    return expression;
   }
 
   public static void replaceIfWithSwitch(PsiIfStatement ifStatement) {

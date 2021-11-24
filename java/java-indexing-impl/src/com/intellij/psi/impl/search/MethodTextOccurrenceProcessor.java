@@ -8,6 +8,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -20,7 +21,9 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   protected final PsiClass myContainingClass;
   private final boolean myStrictSignatureSearch;
 
-  public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass, final boolean strictSignatureSearch, PsiMethod @NotNull ... methods) {
+  public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass,
+                                       final boolean strictSignatureSearch,
+                                       PsiMethod @NotNull ... methods) {
     super(strictSignatureSearch, Arrays.asList(methods));
     myMethods = methods;
     myContainingClass = aClass;
@@ -28,7 +31,9 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   }
 
   @Override
-  public final boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull final Processor<? super PsiReference> consumer) {
+  public final boolean processTextOccurrence(@NotNull PsiElement element,
+                                             int offsetInElement,
+                                             @NotNull final Processor<? super PsiReference> consumer) {
     for (PsiReference ref : ourReferenceService.getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement))) {
       if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && !processReference(consumer, ref)) {
         return false;
@@ -37,7 +42,7 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
     return true;
   }
 
-  private boolean processReference(Processor<? super PsiReference> consumer, PsiReference ref) {
+  private boolean processReference(@NotNull Processor<? super PsiReference> consumer, @NotNull PsiReference ref) {
     for (PsiMethod method : myMethods) {
       if (!method.isValid()) {
         continue;
@@ -58,7 +63,10 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
     return true;
   }
 
-  protected boolean processInexactReference(PsiReference ref, PsiElement refElement, PsiMethod method, Processor<? super PsiReference> consumer) {
+  protected boolean processInexactReference(@NotNull PsiReference ref,
+                                            @Nullable PsiElement refElement,
+                                            @NotNull PsiMethod method,
+                                            @NotNull Processor<? super PsiReference> consumer) {
     if (refElement instanceof PsiMethod) {
       PsiMethod refMethod = (PsiMethod)refElement;
       PsiClass refMethodClass = refMethod.getContainingClass();
@@ -86,5 +94,4 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
 
     return true;
   }
-
 }

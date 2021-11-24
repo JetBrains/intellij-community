@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.intellij.util.ThreeState
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -122,20 +121,6 @@ fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, contex
   val virtualEnvs = detectVirtualEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
   val condaEnvs = detectCondaEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
   return virtualEnvs + condaEnvs
-}
-
-fun chooseEnvironmentToSuggest(module: Module, environments: List<PyDetectedSdk>, trustedState: ThreeState): Pair<PyDetectedSdk, Boolean>? {
-  return if (trustedState == ThreeState.YES) {
-    environments.firstOrNull()?.let { it to false }
-  }
-  else {
-    val (detectedInnerEnvs, detectedOuterEnvs) = environments.partition { it.isLocatedInsideModule(module) }
-
-    when {
-      detectedInnerEnvs.isEmpty() || trustedState == ThreeState.NO -> detectedOuterEnvs.firstOrNull()?.let { it to false }
-      else -> detectedInnerEnvs.firstOrNull()?.let { it to true }
-    }
-  }
 }
 
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
@@ -322,8 +307,13 @@ val Sdk.sdkFlavor: PythonSdkFlavor?
 val Sdk.remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase?
   get() = sdkAdditionalData as? PyRemoteSdkAdditionalDataBase
 
-private fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
-  return isLocatedInsideBaseDir(module?.baseDir?.toNioPath())
+fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
+  val baseDirPath = try {
+    module?.baseDir?.toNioPath()
+  } catch (e: UnsupportedOperationException) {
+    return false
+  }
+  return isLocatedInsideBaseDir(baseDirPath)
 }
 
 private fun Sdk.isLocatedInsideBaseDir(baseDir: Path?): Boolean {

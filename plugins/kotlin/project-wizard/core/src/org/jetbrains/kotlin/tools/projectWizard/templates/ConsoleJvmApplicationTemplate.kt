@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
-import java.nio.file.Path
 
 object ConsoleJvmApplicationTemplate : Template() {
     @NonNls
@@ -27,7 +26,7 @@ object ConsoleJvmApplicationTemplate : Template() {
     private const val fileToCreate = "Main.kt"
     override val filesToOpenInEditor = listOf(fileToCreate)
 
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
         module.configurator.moduleType == ModuleType.jvm
 
     override fun Writer.getIrsToAddToBuildFile(

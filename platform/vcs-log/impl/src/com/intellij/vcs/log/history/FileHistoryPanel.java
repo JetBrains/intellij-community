@@ -30,6 +30,7 @@ import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
+import com.intellij.vcs.log.ui.table.IndexSpeedSearch;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -59,6 +60,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VcsLogUiProperties myProperties;
 
   @NotNull private final VcsLogGraphTable myGraphTable;
+  @NotNull private final FileHistorySpeedSearch mySpeedSearch;
 
   @NotNull private final CommitDetailsListPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
@@ -78,11 +80,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
                                         logUi::requestMore, disposable) {
       @Override
-      protected boolean isSpeedSearchEnabled() {
-        return true;
-      }
-
-      @Override
       protected void updateEmptyText() {
         VisiblePack visiblePack = getModel().getVisiblePack();
         if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
@@ -96,6 +93,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       }
     };
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
+    mySpeedSearch = new FileHistorySpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
 
     myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
       return new CommitDetailsPanel(commit -> {
@@ -189,6 +187,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permanentGraphChanged) {
     myGraphTable.updateDataPack(visiblePack, permanentGraphChanged);
+    mySpeedSearch.setVisiblePack(visiblePack);
   }
 
   public void showDetails(boolean show) {

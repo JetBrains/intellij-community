@@ -27,10 +27,4 @@ public class JsonPathWildcardSegmentImpl extends ASTWrapperPsiElement implements
     else super.accept(visitor);
   }
 
-  @Override
-  @NotNull
-  public List<JsonPathSegmentExpression> getSegmentExpressionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathSegmentExpression.class);
-  }
-
 }

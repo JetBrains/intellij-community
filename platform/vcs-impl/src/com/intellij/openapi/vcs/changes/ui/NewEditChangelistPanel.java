@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -92,7 +93,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     return myMakeActiveCheckBox;
   }
 
-  public void init(final LocalChangeList initial) {
+  public void init(@Nullable LocalChangeList initial) {
     myMakeActiveCheckBox.setSelected(VcsConfiguration.getInstance(myProject).MAKE_NEW_CHANGELIST_ACTIVE);
     for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
       support.installSearch(myNameTextField, myDescriptionTextArea);
@@ -118,7 +119,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     }
   }
 
-  public void changelistCreatedOrChanged(LocalChangeList list) {
+  public void changelistCreatedOrChanged(@NotNull LocalChangeList list) {
     if (myConsumer != null) {
       myConsumer.consume(list);
     }

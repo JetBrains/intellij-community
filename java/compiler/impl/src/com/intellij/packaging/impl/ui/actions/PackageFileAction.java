@@ -64,7 +64,7 @@ public class PackageFileAction extends AnAction {
       }
     }
 
-    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabledAndVisible(visible);
   }
 
   @NotNull

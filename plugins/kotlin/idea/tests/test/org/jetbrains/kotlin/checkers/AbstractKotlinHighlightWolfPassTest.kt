@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.checkers
 
 import com.intellij.codeInsight.problems.MockWolfTheProblemSolver
-import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl
+import com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer

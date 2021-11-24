@@ -1,4 +1,7 @@
-from typing import Any
+from collections.abc import Iterable, Iterator
+from logging import Logger
+from typing import Any, Tuple
+from typing_extensions import Literal
 
 chardet_type: Any
 
@@ -25,44 +28,60 @@ class EntitySubstitution:
     def substitute_html(cls, s): ...
 
 class EncodingDetector:
-    override_encodings: Any
-    exclude_encodings: Any
-    chardet_encoding: Any
-    is_html: Any
-    declared_encoding: Any
+    known_definite_encodings: list[str]
+    user_encodings: list[str]
+    exclude_encodings: set[str]
+    chardet_encoding: Any | None
+    is_html: bool
+    declared_encoding: str | None
+    markup: Any
+    sniffed_encoding: str | None
     def __init__(
-        self, markup, override_encodings: Any | None = ..., is_html: bool = ..., exclude_encodings: Any | None = ...
+        self,
+        markup,
+        known_definite_encodings: Iterable[str] | None = ...,
+        is_html: bool = ...,
+        exclude_encodings: list[str] | None = ...,
+        user_encodings: list[str] | None = ...,
+        override_encodings: list[str] | None = ...,
     ) -> None: ...
     @property
-    def encodings(self) -> None: ...
+    def encodings(self) -> Iterator[str]: ...
     @classmethod
     def strip_byte_order_mark(cls, data): ...
     @classmethod
-    def find_declared_encoding(cls, markup, is_html: bool = ..., search_entire_document: bool = ...): ...
+    def find_declared_encoding(cls, markup, is_html: bool = ..., search_entire_document: bool = ...) -> str | None: ...
 
 class UnicodeDammit:
-    CHARSET_ALIASES: Any
-    ENCODINGS_WITH_SMART_QUOTES: Any
-    smart_quotes_to: Any
-    tried_encodings: Any
+    CHARSET_ALIASES: dict[str, str]
+    ENCODINGS_WITH_SMART_QUOTES: list[str]
+    smart_quotes_to: Literal["ascii", "xml", "html"] | None
+    tried_encodings: list[tuple[str, str]]
     contains_replacement_characters: bool
-    is_html: Any
-    log: Any
-    detector: Any
+    is_html: bool
+    log: Logger
+    detector: EncodingDetector
     markup: Any
-    unicode_markup: Any
-    original_encoding: Any
+    unicode_markup: str
+    original_encoding: Any | None
     def __init__(
-        self, markup, override_encodings=..., smart_quotes_to: Any | None = ..., is_html: bool = ..., exclude_encodings=...
+        self,
+        markup,
+        known_definite_encodings: list[str] | None = ...,
+        smart_quotes_to: Literal["ascii", "xml", "html"] | None = ...,
+        is_html: bool = ...,
+        exclude_encodings: list[str] | None = ...,
+        user_encodings: list[str] | None = ...,
+        override_encodings: list[str] | None = ...,
     ) -> None: ...
     @property
-    def declared_html_encoding(self): ...
-    def find_codec(self, charset): ...
-    MS_CHARS: Any
-    MS_CHARS_TO_ASCII: Any
-    WINDOWS_1252_TO_UTF8: Any
-    MULTIBYTE_MARKERS_AND_SIZES: Any
-    FIRST_MULTIBYTE_MARKER: Any
-    LAST_MULTIBYTE_MARKER: Any
+    def declared_html_encoding(self) -> str | None: ...
+    def find_codec(self, charset: str) -> str | None: ...
+    MS_CHARS: dict[bytes, str | Tuple[str, ...]]
+    MS_CHARS_TO_ASCII: dict[bytes, str]
+    WINDOWS_1252_TO_UTF8: dict[int, bytes]
+    MULTIBYTE_MARKERS_AND_SIZES: list[tuple[int, int, int]]
+    FIRST_MULTIBYTE_MARKER: int
+    LAST_MULTIBYTE_MARKER: int
     @classmethod
-    def detwingle(cls, in_bytes, main_encoding: str = ..., embedded_encoding: str = ...): ...
+    def detwingle(cls, in_bytes: bytes, main_encoding: str = ..., embedded_encoding: str = ...) -> bytes: ...

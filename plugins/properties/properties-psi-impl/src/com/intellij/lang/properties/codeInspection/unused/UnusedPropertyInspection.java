@@ -234,7 +234,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     private final PsiSearchHelper mySearchHelper;
 
     public UnusedPropertiesSearchHelper(Module module) {
-      myOwnUseScope = GlobalSearchScope.moduleWithDependentsScope(module);
+      myOwnUseScope = module.getModuleContentWithDependenciesScope();//GlobalSearchScope.moduleWithDependenciesScope(module);
       myModule = module;
       mySearchHelper = PsiSearchHelper.getInstance(module.getProject());
     }

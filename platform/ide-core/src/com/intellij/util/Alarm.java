@@ -4,10 +4,7 @@ package com.intellij.util;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -349,7 +346,8 @@ public class Alarm implements Disposable {
     private final ModalityState myModalityState;
     private Future<?> myFuture; // guarded by LOCK
     private final long myDelayMillis;
-    private final ClientId myClientId;
+    @NotNull
+    private final String myClientId;
 
     @Async.Schedule
     private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
@@ -358,7 +356,7 @@ public class Alarm implements Disposable {
 
         myModalityState = modalityState;
         myDelayMillis = delayMillis;
-        myClientId = ClientId.getCurrent();
+        myClientId = ClientId.getCurrentValue();
       }
     }
 
@@ -384,10 +382,7 @@ public class Alarm implements Disposable {
     private void runSafely(@Nullable Runnable task) {
       try {
         if (!myDisposed && task != null) {
-          if (ClientId.Companion.getPropagateAcrossThreads()) {
-            ClientId.withClientId(myClientId, () -> QueueProcessor.runSafely(task));
-          }
-          else {
+          try (AccessToken ignored = ClientId.withClientId(myClientId)) {
             QueueProcessor.runSafely(task);
           }
         }

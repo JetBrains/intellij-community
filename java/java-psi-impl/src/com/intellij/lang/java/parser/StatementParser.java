@@ -21,6 +21,24 @@ import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 public class StatementParser {
+  private static final TokenSet YIELD_STMT_INDICATOR_TOKENS = TokenSet.create(
+    JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.EXCL,
+
+    JavaTokenType.SUPER_KEYWORD, JavaTokenType.THIS_KEYWORD,
+
+    JavaTokenType.TRUE_KEYWORD, JavaTokenType.FALSE_KEYWORD, JavaTokenType.NULL_KEYWORD,
+
+    JavaTokenType.STRING_LITERAL, JavaTokenType.INTEGER_LITERAL, JavaTokenType.DOUBLE_LITERAL,
+    JavaTokenType.FLOAT_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.CHARACTER_LITERAL,
+
+    JavaTokenType.IDENTIFIER, JavaTokenType.SWITCH_KEYWORD, JavaTokenType.NEW_KEYWORD,
+
+    JavaTokenType.LPARENTH,
+
+    // recovery
+    JavaTokenType.RBRACE, JavaTokenType.SEMICOLON, JavaTokenType.CASE_KEYWORD
+  );
+
   private enum BraceMode {
     TILL_FIRST, TILL_LAST
   }
@@ -169,15 +187,19 @@ public class StatementParser {
           return declStatement;
         }
 
-        PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, 0);
-        if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {
+        ReferenceParser.TypeInfo type = myParser.getReferenceParser().parseTypeInfo(builder, 0);
+        if (suspectedLT == JavaTokenType.LT && (type == null || !type.isParameterized)) {
+          declStatement.rollbackTo();
+        }
+        else if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {
           error(builder, JavaPsiBundle.message("expected.identifier"));
           if (type == null) builder.advanceLexer();
           done(declStatement, JavaElementType.DECLARATION_STATEMENT);
           return declStatement;
         }
-
-        declStatement.rollbackTo();  // generic type followed by the double colon is a good candidate for being a constructor reference
+        else {
+          declStatement.rollbackTo();  // generic type followed by the double colon is a good candidate for being a constructor reference
+        }
       }
     }
 
@@ -245,9 +267,27 @@ public class StatementParser {
   }
 
   private static boolean isStmtYieldToken(@NotNull PsiBuilder builder, IElementType tokenType) {
-    return tokenType == JavaTokenType.IDENTIFIER &&
-           PsiKeyword.YIELD.equals(builder.getTokenText()) &&
-           getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14);
+    if (!(tokenType == JavaTokenType.IDENTIFIER &&
+          PsiKeyword.YIELD.equals(builder.getTokenText()) &&
+          getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14))) {
+      return false;
+    }
+    // we prefer to parse it as yield stmt wherever possible (even in incomplete syntax)
+    PsiBuilder.Marker maybeYieldStmt = builder.mark();
+    builder.advanceLexer();
+    IElementType tokenAfterYield = builder.getTokenType();
+    if (tokenAfterYield == null || YIELD_STMT_INDICATOR_TOKENS.contains(tokenAfterYield)) {
+      maybeYieldStmt.rollbackTo();
+      return true;
+    }
+    if (JavaTokenType.PLUSPLUS.equals(tokenAfterYield) || JavaTokenType.MINUSMINUS.equals(tokenAfterYield)) {
+      builder.advanceLexer();
+      boolean isYieldStmt = !builder.getTokenType().equals(JavaTokenType.SEMICOLON);
+      maybeYieldStmt.rollbackTo();
+      return isYieldStmt;
+    }
+    maybeYieldStmt.rollbackTo();
+    return false;
   }
 
   private static void skipQualifiedName(PsiBuilder builder) {

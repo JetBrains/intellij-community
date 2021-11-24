@@ -2,10 +2,13 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -38,6 +41,8 @@ abstract class ChangeCallableReturnTypeFix(
     type: KotlinType
 ) : KotlinQuickFixAction<KtCallableDeclaration>(element) {
 
+    // Not actually safe but handled especially inside invokeForPreview
+    @SafeFieldForPreview
     private val changeFunctionLiteralReturnTypeFix: ChangeFunctionLiteralReturnTypeFix?
 
     private val typeContainsError = ErrorUtils.containsErrorType(type)
@@ -155,6 +160,13 @@ abstract class ChangeCallableReturnTypeFix(
                 element.typeReference = null
             }
         }
+    }
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+        if (changeFunctionLiteralReturnTypeFix != null) {
+            return changeFunctionLiteralReturnTypeFix.generatePreview(project, editor, file)
+        }
+        return super.generatePreview(project, editor, file)
     }
 
     object ComponentFunctionReturnTypeMismatchFactory : KotlinSingleIntentionActionFactory() {

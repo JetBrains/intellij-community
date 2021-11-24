@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
@@ -34,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Predicate;
 
 public abstract class BaseRefactoringAction extends AnAction implements UpdateInBackground {
@@ -312,15 +309,6 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
       }
     }
 
-    if (psiElements == null) return PsiElement.EMPTY_ARRAY;
-
-    List<PsiElement> filtered = null;
-    for (PsiElement element : psiElements) {
-      if (element instanceof SyntheticElement) {
-        if (filtered == null) filtered = new ArrayList<>(Collections.singletonList(element));
-        filtered.remove(element);
-      }
-    }
-    return filtered == null ? psiElements : PsiUtilCore.toPsiElementArray(filtered);
+    return psiElements != null ? psiElements : PsiElement.EMPTY_ARRAY;
   }
 }

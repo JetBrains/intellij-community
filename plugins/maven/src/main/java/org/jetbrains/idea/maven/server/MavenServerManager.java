@@ -2,7 +2,8 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.impl.TrustChangeNotifier;
+import com.intellij.ide.impl.TrustStateListener;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -42,6 +43,7 @@ import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.function.Predicate;
@@ -106,12 +108,20 @@ public final class MavenServerManager implements Disposable {
       }
     });
 
-    connection.subscribe(TrustChangeNotifier.TOPIC, new TrustChangeNotifier() {
+    connection.subscribe(TrustStateListener.TOPIC, new TrustStateListener() {
       @Override
-      public void projectTrusted(@NotNull Project project) {
+      public void onProjectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         if (manager.isMavenizedProject()) {
           MavenUtil.restartMavenConnectors(project);
+        }
+      }
+
+      @Override
+      public void onProjectTrustedFromNotification(@NotNull Project project) {
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        if (manager.isMavenizedProject()) {
+          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
         }
       }
     });
@@ -134,7 +144,7 @@ public final class MavenServerManager implements Disposable {
         connector.connect();
       }
     }
-    MavenLog.LOG.warn("[connector] get " + connector);
+    MavenLog.LOG.debug("[connector] get " + connector);
     return connector;
   }
 
@@ -147,7 +157,7 @@ public final class MavenServerManager implements Disposable {
       if (connector != null) return connector;
       connector = findCompatibleConnector(project, jdk, multimoduleDirectory);
       if (connector != null) {
-        MavenLog.LOG.info("[connector] use existing connector for "  + connector);
+        MavenLog.LOG.debug("[connector] use existing connector for " + connector);
         connector.addMultimoduleDir(multimoduleDirectory);
       }
       else {
@@ -182,9 +192,9 @@ public final class MavenServerManager implements Disposable {
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
     MavenServerConnector connector;
-    if (MavenUtil.isProjectTrustedEnoughToImport(project, false)) {
+    if (TrustedProjects.isTrusted(project)) {
       connector = new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
-      MavenLog.LOG.info("[connector] new maven connector " + connector);
+      MavenLog.LOG.debug("[connector] new maven connector " + connector);
     }
     else {
       MavenLog.LOG.warn("Project " + project + " not trusted enough. Will not start maven for it");
@@ -334,7 +344,7 @@ public final class MavenServerManager implements Disposable {
   public static List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
     if (!distribution.isValid()) {
       MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
-      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().getAbsolutePath() + " is not valid");
+      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not valid");
     }
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     final String root = pluginFileOrDir.getParent();
@@ -350,7 +360,7 @@ public final class MavenServerManager implements Disposable {
       prepareClassPathForProduction(distribution.getVersion(), classpath, root);
     }
 
-    addMavenLibs(classpath, distribution.getMavenHome());
+    addMavenLibs(classpath, distribution.getMavenHome().toFile());
     MavenLog.LOG.debug("Collected classpath = ", classpath);
     return classpath;
   }
@@ -425,6 +435,7 @@ public final class MavenServerManager implements Disposable {
     }
   }
 
+  @NotNull
   public MavenEmbedderWrapper createEmbedder(final Project project,
                                              final boolean alwaysOnline,
                                              @Nullable String workingDirectory,
@@ -442,10 +453,19 @@ public final class MavenServerManager implements Disposable {
           settings.setOffline(false);
         }
 
-        settings.setProjectJdk(MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk()));
+        RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
+        String sdkPath = MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk());
+        if (sdkPath != null) {
+          sdkPath = transformer.toRemotePath(sdkPath);
+        }
+        settings.setProjectJdk(sdkPath);
         myConnector = MavenServerManager.this.getConnector(project, multiModuleProjectDirectory);
-        return myConnector.createEmbedder(new MavenEmbedderSettings(settings, workingDirectory, multiModuleProjectDirectory));
+
+        return myConnector.createEmbedder(
+          new MavenEmbedderSettings(settings, workingDirectory == null ? null : transformer.toRemotePath(workingDirectory),
+                                    transformer.toRemotePath(multiModuleProjectDirectory)));
       }
+
 
       @Override
       protected synchronized void cleanup() {
@@ -507,17 +527,30 @@ public final class MavenServerManager implements Disposable {
     }
   }
 
-  public static MavenServerSettings convertSettings(Project project, MavenGeneralSettings settings) {
+  public static MavenServerSettings convertSettings(@NotNull Project project, @Nullable MavenGeneralSettings settings) {
+    if (settings == null) {
+      settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings();
+    }
     RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
     MavenServerSettings result = new MavenServerSettings();
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
-    result.setMavenHome(settings.getEffectiveMavenHome());
-    result.setUserSettingsFile(
-      transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveUserSettingsIoFile() : null);
-    result.setGlobalSettingsFile(
-      transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveGlobalSettingsIoFile() : null);
-    result.setLocalRepository(transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveLocalRepository() : null);
+    File mavenHome = settings.getEffectiveMavenHome();
+    if (mavenHome != null) {
+      String remotePath = transformer.toRemotePath(mavenHome.getAbsolutePath());
+      result.setMavenHomePath(remotePath);
+    }
+
+
+    String userSettingsPath = MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig()).getAbsolutePath();
+    result.setUserSettingsPath(transformer.toRemotePath(userSettingsPath));
+
+    String globalSettingsPath = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig()).getAbsolutePath();
+    result.setGlobalSettingsPath(transformer.toRemotePath(globalSettingsPath));
+
+    String localRepository = settings.getEffectiveLocalRepository().getAbsolutePath();
+
+    result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
     result.setSnapshotUpdatePolicy(
       settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
@@ -539,11 +572,11 @@ public final class MavenServerManager implements Disposable {
     if (mavenHome == null) return null;
     //will be removed after IDEA-205421
     if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && MavenUtil.isMavenUnitTestModeEnabled()) {
-      return resolveEmbeddedMaven2HomeForTests().getMavenHome();
+      return resolveEmbeddedMaven2HomeForTests().getMavenHome().toFile();
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
         StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.title"), mavenHome)) {
-      return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome();
+      return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
     }
     final File home = new File(mavenHome);
     return MavenUtil.isValidMavenHome(home) ? home : null;
@@ -558,8 +591,8 @@ public final class MavenServerManager implements Disposable {
 
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     if (pluginFileOrDir.isDirectory()) {
-      File parentFile = MavenUtil.getMavenPluginParentFile();
-      return new LocalMavenDistribution(new File(parentFile, "maven2-server-impl/lib/maven2"), BUNDLED_MAVEN_2);
+      Path parentPath = MavenUtil.getMavenPluginParentFile().toPath();
+      return new LocalMavenDistribution(parentPath.resolve("maven2-server-impl/lib/maven2"), BUNDLED_MAVEN_2);
     }
     else {
       throw new IllegalStateException("Maven2 is not bundled anymore, please do not try to use it in tests");

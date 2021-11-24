@@ -2,21 +2,21 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -80,6 +80,16 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     super(tree, null, false, new RootContainerNode(stackFrame, watchesInVariables));
     myWatchesView = watchesView;
     myChildren = new ArrayList<>();
+    // copy evaluation result by default
+    if (stackFrame != null) {
+      XDebuggerTreeNode root = tree.getRoot();
+      if (root instanceof WatchesRootNode) {
+        StreamEx.of(((WatchesRootNode)root).myChildren)
+          .select(ResultNode.class)
+          .findFirst()
+          .ifPresent(node -> myChildren.add(new ResultNode(myTree, this, node.getExpression(), node.getValueContainer())));
+      }
+    }
     for (XExpression watchExpression : expressions) {
       myChildren.add(new WatchNodeImpl(myTree, this, watchExpression, stackFrame));
     }
@@ -128,6 +138,13 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       super(tree, parent, expression, stackFrame, XDebuggerBundle.message("debugger.result.node.name"));
     }
 
+    ResultNode(@NotNull XDebuggerTree tree,
+               @NotNull WatchesRootNode parent,
+               @NotNull XExpression expression,
+               @NotNull XValue value) {
+      super(tree, parent, expression, XDebuggerBundle.message("debugger.result.node.name"), value);
+    }
+
     @Override
     public void applyPresentation(@Nullable Icon icon, @NotNull XValuePresentation valuePresentation, boolean hasChildren) {
       Icon resultIcon = AllIcons.Debugger.Db_evaluateNode;
@@ -139,6 +156,20 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       }
       super.applyPresentation(icon, valuePresentation, hasChildren);
     }
+
+    @Override
+    protected void evaluated() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        XDebugSession session = XDebugView.getSession(getTree());
+        if (session != null) {
+          session.rebuildViews();
+        }
+      });
+    }
+  }
+
+  public void removeResultNode() {
+    myChildren.removeIf(node -> node instanceof ResultNode);
   }
 
   public void addResultNode(@Nullable XStackFrame stackFrame, @NotNull XExpression expression) {
@@ -159,13 +190,10 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                                  int index,
                                  boolean navigateToWatchNode) {
     WatchNodeImpl message = new WatchNodeImpl(myTree, this, expression, stackFrame);
-    if (index == -1) {
-      myChildren.add(message);
-      index = myChildren.size() - 1;
+    if (index < 0 || index > myChildren.size()) {
+      index = myChildren.size();
     }
-    else {
-      myChildren.add(index, message);
-    }
+    myChildren.add(index, message);
     fireNodeInserted(index);
     TreeUtil.selectNode(myTree, message);
     if (navigateToWatchNode) {

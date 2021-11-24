@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun f(s: String, action: (String.() -> Unit)?) {
     action?.let { s.foo().bar().it() }

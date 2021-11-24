@@ -8,7 +8,6 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -21,7 +20,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
@@ -41,7 +42,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import org.jdom.Element;
@@ -50,10 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -69,7 +66,7 @@ public class RefManagerImpl extends RefManager {
 
   private final Set<VirtualFile> myUnprocessedFiles = VfsUtilCore.createCompactVirtualFileSet();
   private final boolean processExternalElements = Registry.is("batch.inspections.process.external.elements");
-  private final Map<PsiAnchor, RefElement> myRefTable = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<PsiAnchor, RefElement> myRefTable = new ConcurrentHashMap<>();
 
   private volatile List<RefElement> myCachedSortedRefs; // holds cached values from myPsiToRefTable/myRefTable sorted by containing virtual file; benign data race
 
@@ -88,8 +85,8 @@ public class RefManagerImpl extends RefManager {
   private final Map<Language, RefManagerExtension<?>> myLanguageExtensions = new HashMap<>();
   private final Interner<String> myNameInterner = Interner.createStringInterner();
 
-  private final ArrayBlockingQueue<ThrowableRunnable<RuntimeException>> myTasks = new ArrayBlockingQueue<>(50);
-  private volatile boolean myParallelProcessing;
+  private volatile BlockingQueue<Runnable> myTasks;
+  private volatile List<Future<?>> myFutures;
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
@@ -156,7 +153,6 @@ public class RefManagerImpl extends RefManager {
   public @Nullable AnalysisScope getScope() {
     return myScope;
   }
-
 
   private void fireNodeInitialized(RefElement refElement) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
@@ -347,17 +343,28 @@ public class RefManagerImpl extends RefManager {
       if (scope != null) {
         scope.accept(myProjectIterator);
       }
-      myParallelProcessing = false;
+      waitForTasksToComplete();
       LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
     }
   }
 
-  /**
-   * To submit task during processing of project usages. The task will be run in a read action in parallel on a separate thread.
-   * @param runnable  the task to run.
-   */
-  public void addParallelTask(ThrowableRunnable<RuntimeException> runnable) {
-    if (myParallelProcessing) {
+  private void waitForTasksToComplete() {
+    final List<Future<?>> futures = myFutures;
+    if (futures == null) return;
+    myFutures = null;
+    try {
+      for (Future<?> future : futures) {
+        future.get();
+      }
+    }
+    catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void executeTask(Runnable runnable) {
+    if (myTasks != null) {
       try {
         myTasks.put(runnable);
       }
@@ -372,27 +379,35 @@ public class RefManagerImpl extends RefManager {
     if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
       return;
     }
-    myParallelProcessing = true;
     final int threadsCount = Math.min(4, Runtime.getRuntime().availableProcessors() - 1);
     if (threadsCount == 0) {
       // need more than 1 core for parallel processing
-      myParallelProcessing = false;
       return;
     }
     LOG.info("Processing project usages using " + threadsCount + " threads");
+    // unbounded queue because tasks are submitted under read action, so we mustn't block
+    myTasks = new LinkedBlockingQueue<>();
+    myFutures = new ArrayList<>();
     final Application application = ApplicationManager.getApplication();
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    final ProgressIndicator indicator = progressManager.getProgressIndicator();
     for (int i = 0; i < (threadsCount > 0 ? threadsCount : 4) ; i++) {
-      application.executeOnPooledThread(() -> {
-        while (myParallelProcessing || !myTasks.isEmpty()) {
+      final Future<?> future = application.executeOnPooledThread(() -> {
+        while (myTasks != null) {
+          if (myFutures == null && myTasks.isEmpty()) return;
           try {
-            final ThrowableRunnable<RuntimeException> task = myTasks.poll(100, TimeUnit.MILLISECONDS);
+            final Runnable task = myTasks.poll(50, TimeUnit.MILLISECONDS);
             if (task != null) {
-              ReadAction.run(task);
+              DumbService.getInstance(myProject).runReadActionInSmartMode(
+                () -> progressManager.executeProcessUnderProgress(task, indicator)
+              );
             }
           }
-          catch (InterruptedException ignore) {}
+          catch (InterruptedException ignore) {
+          }
         }
       });
+      myFutures.add(future);
     }
   }
 
@@ -400,15 +415,20 @@ public class RefManagerImpl extends RefManager {
     return myDeclarationsFound.get();
   }
 
-  public void inspectionReadActionStarted() {
+  public void runInsideInspectionReadAction(@NotNull Runnable runnable) {
     myIsInProcess = true;
-  }
-
-  public void inspectionReadActionFinished() {
-    myIsInProcess = false;
-    if (myScope != null) myScope.invalidate();
-
-    myCachedSortedRefs = null;
+    try {
+      runnable.run();
+    }
+    finally {
+      myTasks = null; // remove any pending tasks
+      waitForTasksToComplete();
+      myIsInProcess = false;
+      if (myScope != null) {
+        myScope.invalidate();
+      }
+      myCachedSortedRefs = null;
+    }
   }
 
   public void startOfflineView() {
@@ -417,10 +437,6 @@ public class RefManagerImpl extends RefManager {
 
   public boolean isOfflineView() {
     return myOfflineView;
-  }
-
-  public boolean isInProcess() {
-    return myIsInProcess;
   }
 
   @Override
@@ -508,6 +524,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   private class ProjectIterator extends PsiElementVisitor {
+
     @Override
     public void visitElement(@NotNull PsiElement element) {
       ProgressManager.checkCanceled();
@@ -600,7 +617,6 @@ public class RefManagerImpl extends RefManager {
         }
       }
       myPsiManager.dropResolveCaches();
-      InjectedLanguageManager.getInstance(myProject).dropFileCaches(file);
     }
   }
 
@@ -631,13 +647,14 @@ public class RefManagerImpl extends RefManager {
         }
         return null;
       }),
-      element -> ReadAction.run(() -> {
+      element -> {
         element.initialize();
+        element.setInitialized(true);
         for (RefManagerExtension<?> each : myExtensions.values()) {
           each.onEntityInitialized(element, elem);
         }
         fireNodeInitialized(element);
-      }));
+      });
   }
 
   private RefManagerExtension<?> getExtension(final Language language) {
@@ -677,11 +694,9 @@ public class RefManagerImpl extends RefManager {
   private @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
                                                                     @NotNull NullableFactory<? extends T> factory,
                                                                     @Nullable Consumer<? super T> whenCached) {
-
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked
     T result = (T)myRefTable.get(psiAnchor);
-
     if (result != null) return result;
 
     if (!isValidPointForReference()) {
@@ -689,20 +704,20 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
 
-    result = factory.create();
-    if (result == null) return null;
+    T newElement = factory.create();
+    if (newElement == null) return null;
 
     myCachedSortedRefs = null;
-    RefElement prev = myRefTable.putIfAbsent(psiAnchor, result);
+    RefElement prev = myRefTable.putIfAbsent(psiAnchor, newElement);
     if (prev != null) {
       //noinspection unchecked
-      result = (T)prev;
+      return (T)prev;
     }
-    else if (whenCached != null) {
-      whenCached.consume(result);
+    if (whenCached != null) {
+      ReadAction.nonBlocking(() -> whenCached.consume(newElement)).executeSynchronously();
     }
 
-    return result;
+    return newElement;
   }
 
   @Override

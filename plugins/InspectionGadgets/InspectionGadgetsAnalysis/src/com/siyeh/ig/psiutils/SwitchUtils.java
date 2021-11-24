@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -57,30 +58,52 @@ public final class SwitchUtils {
    * @return a negative number if a default case was encountered.
    */
   public static int calculateBranchCount(@NotNull PsiSwitchBlock block) {
+    List<PsiElement> switchBranches = getSwitchBranches(block);
+    if (switchBranches.isEmpty()) return 0;
+    int branches = 0;
+    boolean defaultFound = false;
+    for (PsiElement branch : switchBranches) {
+      if (branch instanceof PsiSwitchLabelStatementBase) {
+        if (((PsiSwitchLabelStatementBase)branch).isDefaultCase()) {
+          defaultFound = true;
+        }
+      }
+      else if (branch instanceof PsiCaseLabelElement) {
+        if (branch instanceof PsiDefaultCaseLabelElement) {
+          defaultFound = true;
+        }
+        else {
+          branches++;
+        }
+      }
+    }
     final PsiCodeBlock body = block.getBody();
     if (body == null) {
       return 0;
     }
-    int branches = 0;
-    boolean defaultFound = false;
-    for (final PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
+    return defaultFound ? -branches - 1 : branches;
+  }
+
+  /**
+   * @param block the switch block
+   * @return a list of switch branches consisting of either {@link PsiSwitchLabelStatementBase} or {@link PsiCaseLabelElement}
+   */
+  @NotNull
+  public static List<PsiElement> getSwitchBranches(@NotNull PsiSwitchBlock block) {
+    final PsiCodeBlock body = block.getBody();
+    if (body == null) return Collections.emptyList();
+    List<PsiElement> result = new SmartList<>();
+    for (PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
       if (child.isDefaultCase()) {
-        defaultFound = true;
+        result.add(child);
       }
       else {
         PsiCaseLabelElementList labelElementList = child.getCaseLabelElementList();
         if (labelElementList == null) continue;
-        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-          if (labelElement instanceof PsiDefaultCaseLabelElement) {
-            defaultFound = true;
-          }
-          else {
-            branches++;
-          }
-        }
+        Collections.addAll(result, labelElementList.getElements());
       }
     }
-    return defaultFound ? -branches - 1 : branches;
+    return result;
   }
 
   public static boolean canBeSwitchCase(PsiExpression expression, PsiExpression switchExpression, LanguageLevel languageLevel,
@@ -368,10 +391,9 @@ public final class SwitchUtils {
       if (pattern != null) return pattern.getText();
       final PsiTypeElement typeElement = instanceOf.getCheckType();
       final PsiType type = typeElement != null ? typeElement.getType() : null;
+      String name = new VariableNameGenerator(instanceOf, VariableKind.LOCAL_VARIABLE).byType(type).generate(true);
       String typeText = typeElement != null ? typeElement.getText() : CommonClassNames.JAVA_LANG_OBJECT;
-      VariableNameGenerator nameGenerator = new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE);
-      String variableName = nameGenerator.byName(typeText.substring(0, 1)).byType(type).generate(true);
-      return typeText + " " + variableName;
+      return typeText + " " + name;
     }
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;

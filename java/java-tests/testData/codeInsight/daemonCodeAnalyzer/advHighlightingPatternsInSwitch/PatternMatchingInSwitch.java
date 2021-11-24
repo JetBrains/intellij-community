@@ -153,6 +153,8 @@ class Main {
         break;
       case <error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error>:
         System.out.println("s5");
+      case ((((<error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error>)) && Math.random() > 0.5)):
+        System.out.println("");
       default:
         System.out.println("s");
     }
@@ -160,6 +162,7 @@ class Main {
     str = switch (i) {
       case Sub1 s2 -> "s1";
       case <error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error> -> "s5";
+      case ((((<error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error>)) && Math.random() > 0.5)) -> "";
       default -> "s";
     };
 
@@ -177,13 +180,29 @@ class Main {
     switch (list1) {
       case <error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>:
         break;
+      case ((((<error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>)) && Math.random() > 0.5)):
+        break;
     }
+
+    switch (list1.get(0)) {
+      case null: {}
+      default: {}
+    }
+
+    switch (new int[0]) {
+      case null: {}
+      default: {}
+    }
+    
+
     switch (list2) {
       case List<? extends Number> l:
         break;
     }
     switch (o) {
       case <error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> ll</error>:
+        break;
+      case ((((<error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> ll</error>)) && Math.random() > 0.5)):
         break;
       case default:
         break;
@@ -207,10 +226,12 @@ class Main {
 
     switch (o) {
       case <error descr="Unexpected type. Found: 'int', required: 'class or array'">int ii</error>: break;
+      case ((((<error descr="Unexpected type. Found: 'long', required: 'class or array'">long l</error>)) && Math.random() > 0.5)): break;
       default: break;
     }
     str = switch (o) {
       case <error descr="Unexpected type. Found: 'int', required: 'class or array'">int ii</error> -> "";
+      case ((((<error descr="Unexpected type. Found: 'long', required: 'class or array'">long l</error>)) && Math.random() > 0.5)) -> "";
       default -> "";
     };
   }

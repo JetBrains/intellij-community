@@ -52,8 +52,8 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
   }
 
   public static void waitForParameterInfo() {
-    // effective there is a chain of 3 nonBlockingRead actions
-    for (int i = 0; i < 3; i++) {
+    // effective there is a chain of 5 nonBlockingRead actions
+    for (int i = 0; i < 5; i++) {
       UIUtil.dispatchAllInvocationEvents();
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     }

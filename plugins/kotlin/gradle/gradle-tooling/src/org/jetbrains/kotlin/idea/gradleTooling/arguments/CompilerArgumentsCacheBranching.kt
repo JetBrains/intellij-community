@@ -12,6 +12,7 @@ interface CompilerArgumentsCacheBranching : CompilerArgumentsCacheMapper {
 class CompilerArgumentsCacheBranchingImpl(override val cacheOriginIdentifier: Long = RandomUtils.nextLong()) :
     AbstractCompilerArgumentsCacheMapper(), CompilerArgumentsCacheBranching {
     override fun branchOffDetachable(): CompilerArgumentsMapperDetachable = CompilerArgumentsMapperDetachableImpl(this)
+    override val offset: Int = 0
 }
 
 val CACHE_MAPPER_BRANCHING =

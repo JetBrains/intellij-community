@@ -23,6 +23,7 @@ import training.dsl.TaskContext
 import training.dsl.impl.LessonExecutor
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 import training.util.DataLoader
@@ -330,7 +331,7 @@ internal class ActionsRecorder(private val project: Project,
       val lesson = LessonManager.instance.currentLesson
       if (activeToolWindow != null && lesson != null) {
         val notification = TaskContext.RestoreNotification(LearnBundle.message("learn.restore.notification.editor.closed")) {
-          CourseManager.instance.openLesson(activeToolWindow.project, lesson)
+          CourseManager.instance.openLesson(activeToolWindow.project, lesson, LessonStartingWay.RESTORE_LINK)
         }
         LessonManager.instance.setRestoreNotification(notification)
       }

@@ -41,15 +41,16 @@ internal class BookmarkListProvider(private val project: Project) : BookmarksLis
       description,
       null
     )?.let {
-      if (description != null) group.setDescription(bookmark, { it })
-      else group.add(bookmark, BookmarkType.DEFAULT, { it })
+      if (description != null) group.setDescription(bookmark, it)
+      else group.add(bookmark, BookmarkType.DEFAULT, it)
     }
   }
 
   override fun getDeleteActionText() = message("bookmark.delete.action.text")
   override fun canDelete(selection: List<*>) = selection.all { it is BookmarkNode<*> }
-  override fun performDelete(selection: List<*>, parent: JComponent) = selection.forEach {
-    val node = it as? BookmarkNode<*>
-    node?.bookmarkGroup?.remove(node.value)
+  override fun performDelete(selection: List<*>, parent: JComponent) = selection.forEach { performDelete(it) }
+  private fun performDelete(node: Any?) {
+    if (node is FileNode) node.children.forEach { performDelete(it) }
+    if (node is BookmarkNode<*>) node.value?.let { node.bookmarkGroup?.remove(it) }
   }
 }

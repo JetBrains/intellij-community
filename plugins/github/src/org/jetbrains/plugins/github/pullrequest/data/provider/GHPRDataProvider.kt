@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
@@ -15,6 +15,7 @@ interface GHPRDataProvider {
   val changesData: GHPRChangesDataProvider
   val commentsData: GHPRCommentsDataProvider
   val reviewData: GHPRReviewDataProvider
+  val viewedStateData: GHPRViewedStateDataProvider
   val timelineLoader: GHListLoader<GHPRTimelineItem>?
   val diffRequestModel: GHPRDiffRequestModel
 

@@ -338,7 +338,6 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
 
       override fun onThrowable(error: Throwable) {
-        LOG.error(error)
         errorsByAccount[account] = GHRepositoryListItem.Error(account,
                                                               GithubBundle.message("clone.error.load.repositories"),
                                                               GithubBundle.message("retry.link"),

@@ -19,6 +19,7 @@ class MarkdownSettingsState: BaseState() {
   var previewPanelProviderInfo by property(MarkdownSettings.defaultProviderInfo) { it == MarkdownSettings.defaultProviderInfo }
   var isVerticalSplit by property(true)
   var isAutoScrollEnabled by property(true)
+  var isRunnerEnabled by property(true)
 
   var useCustomStylesheetPath by property(false)
   var customStylesheetPath by string()

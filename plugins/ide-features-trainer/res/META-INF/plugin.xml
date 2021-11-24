@@ -63,6 +63,8 @@
 
     <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>
 
+    <tipAndTrickPromotionFactory implementation="training.ui.IftTipAndTrickPromoter"/>
+
     <applicationService serviceImplementation="training.lang.LangManager"/>
     <applicationService serviceImplementation="training.ui.UISettings"/>
     <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
@@ -84,6 +86,7 @@
       <action internal="true" id="AutorunAllLessons" class="training.actions.AutorunAllLessons"/>
       <action internal="true" id="AutorunCurrentLesson" class="training.actions.AutorunCurrentLesson"/>
       <action internal="true" id="SetCurrentLessonAsPassed" class="training.actions.SetCurrentLessonAsPassed"/>
+      <action internal="true" id="ShowOnboardingFeedbackForm" class="training.actions.ShowOnboardingFeedbackForm"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
@@ -104,7 +107,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="ift.help.links"
                  description="Turn on IFT Help and Resources section"
-                 defaultValue="FALSE"
+                 defaultValue="TRUE"
                  restartRequired="false"/>
     <registryKey key="ift.experimental.lessons"
                  description="Turn on it to preview incomplete lessons"

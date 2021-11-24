@@ -13,4 +13,8 @@ class EditorConfigDocumentationHolderElement(
   override fun toString(): String {
     return "EditorConfigDocumentationHolderElement(descriptor=$descriptor)"
   }
+
+  override fun getText() : String {
+    return descriptor?.getPresentableText() ?: ""
+  }
 }

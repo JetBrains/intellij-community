@@ -162,6 +162,7 @@
       <action id="SwitcherIterateItems" class="com.intellij.ide.actions.SwitcherIterateThroughItemsAction"/>
       <action id="SwitcherNextProblem" use-shortcut-of="GotoNextError" class="com.intellij.ide.actions.SwitcherNextProblemAction"/>
       <action id="SwitcherPreviousProblem" use-shortcut-of="GotoPreviousError" class="com.intellij.ide.actions.SwitcherPreviousProblemAction"/>
+      <action id="DeleteRecentFiles" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
       <action id="RecentChangedFiles" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction"/>
       <add-to-group group-id="Other.KeymapGroup"/>
@@ -460,12 +461,11 @@
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.MenuSaveall"/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
+        <group id="CacheRecovery" class="com.intellij.ide.actions.cache.CacheRecoveryActionGroup"/>
+
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction">
           <synonym text="Restart"/>
         </action>
-        <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
-
-        <group id="CacheRecovery" class="com.intellij.ide.actions.cache.CacheRecoveryActionGroup"/>
         <separator/>
         <group id="ExportImportGroup" popup="true">
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
@@ -530,6 +530,7 @@
           <action id="ToggleFindInSelection" class="com.intellij.find.editorHeaderActions.ToggleSelectionOnlyAction"/>
           <separator/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
+          <action id="FindPrevWordAtCaret" class="com.intellij.openapi.editor.actions.FindPrevWordAtCaretAction"/>
           <separator/>
           <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction">
             <synonym key="action.FindInPath.synonym1"/>
@@ -603,6 +604,9 @@
           <group id="UIToggleActions">
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
+            <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
+            <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
+            <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>
             <group id="ViewToolbarActionsGroup" class="com.intellij.ide.actions.toolbar.experimental.ViewToolbarActionsGroup">
               <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
             </group>
@@ -611,15 +615,6 @@
             <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true"/>
             <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
           </group>
-        </group>
-
-        <group id="ViewToolbarNewGroup" class="com.intellij.ide.actions.toolbar.experimental.ViewToolbarNewActionGroup" popup="true">
-          <add-to-group group-id="UIToggleActions" relative-to-action="ViewToolButtons" anchor="before"/>
-          <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
-          <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
-          <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>
-          <separator/>
-          <action id="CustomizeToolbarAction" class="com.intellij.ide.actions.CustomizeToolbarAction"/>
         </group>
 
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
@@ -793,6 +788,20 @@
           <action id="ConfigureEditorTabs" class="com.intellij.ide.actions.ConfigureEditorTabsAction"/>
         </group>
 
+        <group id="EditorTabsEntryPoint" popup="true" icon="AllIcons.Actions.More">
+          <reference id="RecentFiles"/>
+          <reference id="RecentLocations"/>
+          <separator/>
+          <reference id="CloseAllEditors"/>
+          <reference id="ReopenClosedTab"/>
+          <separator/>
+          <reference id="Unsplit"/>
+          <reference id="UnsplitAll"/>
+          <reference id="ChangeSplitOrientation"/>
+          <separator/>
+          <reference id="ConfigureEditorTabs"/>
+        </group>
+
         <group id="Notifications" popup="true">
           <action class="com.intellij.ui.CloseFirstNotificationAction" id="CloseFirstNotification"/>
           <action class="com.intellij.ui.CloseAllNotificationsAction" id="CloseAllNotifications"/>
@@ -858,6 +867,8 @@
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
 
+    <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
+
     <group id="MainToolBar">
       <reference ref="OpenFile"/>
       <reference ref="SaveAll"/>
@@ -868,6 +879,11 @@
       <separator/>
       <group id="MainToolBarSettings"/>
       <separator/>
+      <reference ref="SearchEverywhere"/>
+      <reference ref="SettingsEntryPoint"/>
+    </group>
+
+    <group id="ExperimentalToolbarActions">
       <reference ref="SearchEverywhere"/>
       <reference ref="SettingsEntryPoint"/>
     </group>
@@ -1089,7 +1105,6 @@
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <group id="Internal.Trust" popup="true">
-        <action id="UnsureProject" internal="true" class="com.intellij.internal.UnsureTrustAction"/>
         <action id="TrustProject" internal="true" class="com.intellij.internal.YesTrustAction"/>
         <action id="UntrustProject" internal="true" class="com.intellij.internal.NoTrustAction"/>
       </group>
@@ -1120,10 +1135,11 @@
           <action id="LabelSizeDemoAction" internal="true" class="com.intellij.internal.LabelSizeDemoAction" />
           <action id="JEditorPaneDemoAction" internal="true" class="com.intellij.internal.ui.JEditorPaneDemoAction"/>
           <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
-          <action id="UiDslTestAction" internal="true" class="com.intellij.internal.ui.UiDslTestAction"/>
+          <action id="UiDslTestAction" internal="true" class="com.intellij.internal.ui.uiDslTestAction.UiDslTestAction"/>
           <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
           <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
         </group>
+        <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction"/>
         <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
@@ -1376,6 +1392,7 @@
               internal="true"/>
       <action id="SilentHeapDumpSnapshot" class="com.intellij.diagnostic.hprof.action.InternalNonuserInvokedHeapDumpSnapshotAction"
               internal="true"/>
+      <action id="AnalyzeHeapDumpSnapshot" class="com.intellij.diagnostic.hprof.action.AnalyzeReportAction" internal="true"/>
       <add-to-group group-id="Internal"/>
     </group>
 
@@ -1454,5 +1471,7 @@
       <reference id="ChangeKeymap"/>
       <reference id="ChangeView"/>
     </group>
+
+    <action id="CheckSuggestedPlugins" class="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.CheckSuggestedPluginsAction"/>
   </actions>
 </idea-plugin>

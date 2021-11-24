@@ -1,7 +1,7 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun simpleRange(x: Int) = when {
     x > 10 -> 10
-    <warning descr="Condition is always false">x > 15</warning> -> 15
+    <warning descr="Condition 'x > 15' is always false">x > 15</warning> -> 15
     else -> 0
 }
 fun inRange(obj : Int) {
@@ -30,7 +30,7 @@ fun whenIs(obj : Any?) {
         is X -> {}
         is Y -> {}
         else -> {
-            if (<warning descr="Condition is always false">obj is X</warning>) {}
+            if (<warning descr="Condition 'obj is X' is always false">obj is X</warning>) {}
         }
     }
     if (obj is X) {
@@ -101,7 +101,7 @@ fun returnFromWhen(x: Int): Unit {
         x > 10 -> return
         x < 0 -> return
     }
-    if (<warning descr="Condition is always false">x == 11</warning>) {}
+    if (<warning descr="Condition 'x == 11' is always false">x == 11</warning>) {}
 }
 fun throwBranch(x: Int) {
     when(x) {
@@ -119,7 +119,7 @@ fun throwBranch(x: Int) {
     when {
         x == 0 -> {}
         x == 1 -> {}
-        <warning descr="Condition is always false">x == 2</warning> -> throw Exception()
+        <warning descr="Condition 'x == 2' is always false">x == 2</warning> -> throw Exception()
         x == 3 -> {}
     }
 }

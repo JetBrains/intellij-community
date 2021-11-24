@@ -10,15 +10,16 @@ import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.VerticalBox
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.ui.*
 import training.util.*
@@ -48,8 +49,6 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val nextButton = JButton()
   private val prevButton = JButton()
 
-  private val footer = JPanel()
-
   private val lessonPanelBoxLayout = BoxLayout(lessonPanel, BoxLayout.Y_AXIS)
 
   internal var scrollToNewMessages = true
@@ -66,11 +65,10 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
     scrollToNewMessages = true
     clearMessages()
-    footer.removeAll()
     lessonPanel.removeAll()
     removeAll()
 
-    layout = BorderLayout()
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
     isOpaque = true
 
     initLessonPanel()
@@ -78,8 +76,8 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     add(lessonPanel, BorderLayout.CENTER)
 
     if (lesson.helpLinks.isNotEmpty() && Registry.`is`("ift.help.links", false)) {
-      initFooterPanel(lesson)
-      add(footer, BorderLayout.PAGE_END)
+      lessonPanel.add(rigid(0, 16))
+      lessonPanel.add(createFooterPanel(lesson))
     }
   }
 
@@ -95,7 +93,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonPanel.repaint()
   }
 
-  private fun initFooterPanel(lesson: Lesson) {
+  private fun createFooterPanel(lesson: Lesson): JPanel {
     val shiftedFooter = JPanel()
     shiftedFooter.name = "footerLessonPanel"
     shiftedFooter.layout = BoxLayout(shiftedFooter, BoxLayout.Y_AXIS)
@@ -105,7 +103,8 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
     val footerContent = JPanel()
     footerContent.isOpaque = false
-    footerContent.layout = VerticalLayout(5)
+    footerContent.layout = BoxLayout(footerContent, BoxLayout.Y_AXIS)
+    footerContent.add(rigid(0, 16))
     footerContent.add(JLabel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text")).also {
       it.font = UISettings.instance.getFont(1).deriveFont(Font.BOLD)
     })
@@ -114,17 +113,22 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       val link = helpLink.value
       val linkLabel = LinkLabel<Any>(text, null) { _, _ ->
         openLinkInBrowser(link)
+        StatisticBase.logHelpLinkClicked(lesson.id)
       }
+      footerContent.add(rigid(0, 5))
       footerContent.add(linkLabel.wrapWithUrlPanel())
     }
 
     shiftedFooter.add(footerContent)
     shiftedFooter.add(Box.createHorizontalGlue())
 
+    val footer = JPanel()
     footer.add(shiftedFooter)
+    footer.alignmentX = Component.LEFT_ALIGNMENT
     footer.isOpaque = false
     footer.layout = BoxLayout(footer, BoxLayout.Y_AXIS)
-    footer.border = UISettings.instance.checkmarkShiftBorder
+    footer.border = UISettings.instance.lessonHeaderBorder
+    return footer
   }
 
   private fun initLessonPanel() {
@@ -197,6 +201,12 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
           if (!StatisticBase.isLearnProjectCloseLogged) {
             StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
           }
+          LessonManager.instance.stopLesson()
+          val langSupport = LangManager.getInstance().getLangSupport()
+          langSupport?.onboardingFeedbackData?.let {
+            showOnboardingLessonFeedbackForm(learnToolWindow.project, it)
+            langSupport.onboardingFeedbackData = null
+          }
           CloseProjectWindowHelper().windowClosing(learnToolWindow.project)
         }
       })
@@ -259,7 +269,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
   }
 
-  private fun adjustMessagesArea() {
+  fun adjustMessagesArea() {
     updatePanelSize(learnToolWindow.getVisibleAreaWidth())
     revalidate()
     repaint()
@@ -292,23 +302,27 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     buttonPanel.removeAll()
     rootPane?.defaultButton = null
 
-    updateButton(prevButton, getPreviousLessonForCurrent(), LearnBundle.message("learn.new.ui.button.back"))
+    updateButton(prevButton, getPreviousLessonForCurrent(), isNext = false)
 
     val nextLesson = getNextLessonForCurrent()
-    updateButton(nextButton, nextLesson, LearnBundle.message("learn.new.ui.button.next", nextLesson?.name ?: ""))
+    updateButton(nextButton, nextLesson, isNext = true)
   }
 
 
-  private fun updateButton(button: JButton, targetLesson: Lesson?, @Nls buttonText: String) {
+  private fun updateButton(button: JButton, targetLesson: Lesson?, isNext: Boolean) {
     button.isVisible = targetLesson != null
     if (targetLesson != null) {
       button.action = object : AbstractAction() {
         override fun actionPerformed(actionEvent: ActionEvent) {
           StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.OPEN_NEXT_OR_PREV_LESSON)
-          CourseManager.instance.openLesson(learnToolWindow.project, targetLesson)
+          val startingWay = if (isNext) LessonStartingWay.NEXT_BUTTON else LessonStartingWay.PREV_BUTTON
+          CourseManager.instance.openLesson(learnToolWindow.project, targetLesson, startingWay)
         }
       }
-      button.text = buttonText
+      button.text = if (isNext) {
+        LearnBundle.message("learn.new.ui.button.next", targetLesson.name)
+      }
+      else LearnBundle.message("learn.new.ui.button.back")
       button.updateUI()
       button.isSelected = true
 

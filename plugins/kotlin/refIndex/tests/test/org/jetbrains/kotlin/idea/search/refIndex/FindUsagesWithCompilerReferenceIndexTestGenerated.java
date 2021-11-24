@@ -565,6 +565,11 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/highlightingOfSuperUsages.0.kt");
             }
 
+            @TestMetadata("interfaceOverrides.0.kt")
+            public void testInterfaceOverrides() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/interfaceOverrides.0.kt");
+            }
+
             @TestMetadata("javaAndKotlinOverrides.0.kt")
             public void testJavaAndKotlinOverrides() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/javaAndKotlinOverrides.0.kt");
@@ -723,6 +728,21 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
             @TestMetadata("objectExpressionMemberInTopLevel.0.kt")
             public void testObjectExpressionMemberInTopLevel() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/objectExpressionMemberInTopLevel.0.kt");
+            }
+
+            @TestMetadata("overrides.0.kt")
+            public void testOverrides() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/overrides.0.kt");
+            }
+
+            @TestMetadata("privateKotlinClass.0.kt")
+            public void testPrivateKotlinClass() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/privateKotlinClass.0.kt");
+            }
+
+            @TestMetadata("privateKotlinObject.0.kt")
+            public void testPrivateKotlinObject() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/privateKotlinObject.0.kt");
             }
 
             @TestMetadata("usagesOfBaseForFunction.0.kt")
@@ -1572,6 +1592,11 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
             @TestMetadata("OverriddenMethodSyntheticAccessor.0.java")
             public void testOverriddenMethodSyntheticAccessor() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessor.0.java");
+            }
+
+            @TestMetadata("OverriddenMethodSyntheticAccessor2.0.java")
+            public void testOverriddenMethodSyntheticAccessor2() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessor2.0.java");
             }
 
             @TestMetadata("OverridenArrayType.0.java")

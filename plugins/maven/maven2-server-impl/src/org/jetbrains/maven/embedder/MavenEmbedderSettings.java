@@ -29,10 +29,10 @@ public class MavenEmbedderSettings {
 
   private boolean workOffline = false;
   private boolean isRecursive = true;
-  private File mavenHome;
-  private File userSettingsFile;
-  private File globalSettingsFile;
-  private File localRepository;
+  private String mavenHome;
+  private String userSettingsFile;
+  private String globalSettingsFile;
+  private String localRepository;
   private boolean usePluginRegistry = false;
   private UpdatePolicy snapshotUpdatePolicy = UpdatePolicy.ALWAYS_UPDATE;
   private UpdatePolicy pluginUpdatePolicy = UpdatePolicy.DO_NOT_UPDATE;
@@ -60,38 +60,38 @@ public class MavenEmbedderSettings {
   }
 
   @Nullable
-  public File getMavenHome() {
+  public String getMavenHomePath() {
     return mavenHome;
   }
 
-  public void setMavenHome(@Nullable File mavenHome) {
+  public void setMavenHomePath(@Nullable String mavenHome) {
     this.mavenHome = mavenHome;
   }
 
   @Nullable
-  public File getUserSettingsFile() {
+  public String getUserSettingPath() {
     return userSettingsFile;
   }
 
-  public void setUserSettingsFile(@Nullable File userSettingsFile) {
+  public void setUserSettingsPath(@Nullable String userSettingsFile) {
     this.userSettingsFile = userSettingsFile;
   }
 
   @Nullable
-  public File getGlobalSettingsFile() {
+  public String getGlobalSettingsPath() {
     return globalSettingsFile;
   }
 
-  public void setGlobalSettingsFile(@Nullable File globalSettingsFile) {
+  public void setGlobalSettingsPath(@Nullable String globalSettingsFile) {
     this.globalSettingsFile = globalSettingsFile;
   }
 
   @Nullable
-  public File getLocalRepository() {
+  public String getLocalRepositoryPath() {
     return localRepository;
   }
 
-  public void setLocalRepository(@Nullable File localRepository) {
+  public void setLocalRepositoryPath(@Nullable String localRepository) {
     this.localRepository = localRepository;
   }
 

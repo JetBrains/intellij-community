@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Name shadowed: f
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Parameter 'f' is never used

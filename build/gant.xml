@@ -60,6 +60,7 @@
         <dependency coords="commons-cli:commons-cli:1.2"/>
         <dependency coords="org.apache.commons:commons-compress:1.21"/>
         <dependency coords="de.pdark:decentxml:1.4"/>
+        <exclusion coords="com.jetbrains.intellij.platform:build-scripts-downloader"/>
       </resolver:dependencies>
       <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
     </resolver:resolve>

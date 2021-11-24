@@ -30,7 +30,6 @@ public abstract class PyUnresolvedReferencesInspectionBase extends PyInspection 
     if (existingVisitor == null) {
       session.putUserData(KEY, visitor);
     }
-    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, this);
     return visitor;
   }
 

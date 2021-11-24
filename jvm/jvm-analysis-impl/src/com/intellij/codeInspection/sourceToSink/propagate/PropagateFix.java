@@ -7,28 +7,32 @@ import com.intellij.codeInspection.sourceToSink.MarkAsSafeFix;
 import com.intellij.codeInspection.sourceToSink.TaintAnalyzer;
 import com.intellij.codeInspection.sourceToSink.TaintValue;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
@@ -60,38 +64,25 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     // TODO: won't work if we start from kotlin
     PsiMethod method = PsiTreeUtil.getParentOfType(reportedElement, PsiMethod.class);
     if (method == null) return;
-    TaintNode root = getTree(project, method, target, reportedElement);
-    if (root == null) return;
-    String title = JvmAnalysisBundle.message(root.myTaintValue == TaintValue.TAINTED ?
-                                             "jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.conflicts.title" :
-                                             "jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
+    String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
+    TaintNode root = new TaintNode(null, target, reportedElement);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      if (root.myTaintValue == TaintValue.TAINTED) return;
-      Set<PsiModifierListOwner> toAnnotate = new HashSet<>();
-      toAnnotate = PropagateAnnotationPanel.getSelectedElements(root, root, toAnnotate);
-      if (toAnnotate == null) return;
-      if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, toAnnotate, false)) return;
+      Set<TaintNode> toAnnotate = new HashSet<>();
+      toAnnotate = PropagateAnnotationPanel.getSelectedElements(root, toAnnotate);
+      if (toAnnotate == null || root.myTaintValue == TaintValue.TAINTED) return;
       annotate(project, title, toAnnotate);
       return;
     }
-    Consumer<Collection<PsiModifierListOwner>> callback = toAnnotate -> annotate(project, title, toAnnotate); 
+    Consumer<Collection<TaintNode>> callback = toAnnotate -> {
+      annotate(project, title, toAnnotate);
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
+      if (toolWindow != null) toolWindow.hide();
+    };
     PropagateAnnotationPanel panel = new PropagateAnnotationPanel(project, root, callback);
     Content content = UsageViewContentManager.getInstance(project).addContent(title, false, panel, true, true);
     panel.setContent(content);
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
     if (toolWindow != null) toolWindow.activate(null);
-  }
-  
-  private static void annotate(Project project, @NlsSafe String actionTitle, @NotNull Collection<PsiModifierListOwner> toAnnotate) {
-    WriteCommandAction.runWriteCommandAction(project, actionTitle, null,
-                                             () -> toAnnotate.forEach(owner -> MarkAsSafeFix.markAsSafe(project, owner)));
-  }
-  
-  private static @Nullable TaintNode getTree(Project project, PsiMethod method, PsiModifierListOwner target, PsiElement reportedElement) {
-    String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.progress.title");
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(() -> skipLocal(setRoot(method, buildTree(target, reportedElement)))), 
-      title, true, project);
   }
 
   @Override
@@ -104,90 +95,33 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.family");
   }
 
-  private static @NotNull TaintNode buildTree(@NotNull PsiModifierListOwner target, @NotNull PsiElement ref) {
-    Deque<TaintNode> elements = new ArrayDeque<>();
-    TaintNode root = new TaintNode(target, ref, null, null);
-    for (TaintNode taintNode = root; taintNode != null; taintNode = elements.poll()) {
-      if (taintNode.myTaintValue != null) continue;
-      PsiModifierListOwner element = taintNode.getElement();
-      if (element == null) continue;
-      PsiElement elementRef = taintNode.getRef();
-      if (elementRef == null) continue;
-      TaintAnalyzer taintAnalyzer = new TaintAnalyzer();
-      TaintValue taintValue = taintAnalyzer.fromElement(element, elementRef, true);
-      taintNode.myTaintValue = taintValue;
-      if (taintValue == TaintValue.UNTAINTED) continue;
-      if (taintValue == TaintValue.TAINTED) {
-        propagateTaintedUp(taintNode.myParent);
-        continue;
-      }
-      Set<PsiModifierListOwner> parents = collectParents(taintNode);
-      TaintNode parentNode = taintNode;
-      Set<TaintNode> children = taintAnalyzer.getNonMarkedElements().stream()
-        .filter(c -> !parents.contains(c.myNonMarked))
-        .map(c -> new TaintNode(c.myNonMarked, c.myRef, parentNode, null))
-        .collect(Collectors.toSet());
-      
-      elements.addAll(children);
-      parentNode.myChildren = children;
-    }
-    if (root.myTaintValue == TaintValue.TAINTED) skipNonTainted(root);
-    return root;
-  }
-  
-  private static @NotNull Set<PsiModifierListOwner> collectParents(@NotNull TaintNode taintNode) {
-    Set<PsiModifierListOwner> parents = new HashSet<>();
-    while (taintNode != null) {
-      PsiModifierListOwner parent = taintNode.getElement();
-      if (parent != null) parents.add(parent);
-      taintNode = taintNode.myParent;
-    }
-    return parents;
+  private static void annotate(Project project, @NlsSafe String actionTitle, @NotNull Collection<TaintNode> toAnnotate) {
+    List<TaintNode> nonMarkedNodes = ContainerUtil.filter(toAnnotate, PropagateFix::isNonMarked);
+    if (getPsiElements(nonMarkedNodes) == null) return;
+    WriteCommandAction.runWriteCommandAction(project, actionTitle, null, () -> markSafe(project, nonMarkedNodes));
   }
 
-  private static void skipNonTainted(@NotNull TaintNode root) {
-    Set<TaintNode> children = root.myChildren;
-    if (children == null) return;
-    children.removeIf(c -> c.myTaintValue != TaintValue.TAINTED);
-    children.forEach(c -> skipNonTainted(c));
+  private static boolean isNonMarked(@NotNull TaintNode taintNode) {
+    if (taintNode.myTaintValue == TaintValue.TAINTED) return false;
+    PsiElement psiElement = taintNode.getPsiElement();
+    if (psiElement == null) return true;
+    return TaintAnalyzer.fromAnnotation(psiElement) != TaintValue.UNTAINTED; 
   }
 
-  private static @Nullable TaintNode skipLocal(@NotNull TaintNode root) {
-    Deque<TaintNode> taintNodes = new ArrayDeque<>();
-    for (TaintNode taintNode = root; taintNode != null; taintNode = taintNodes.poll()) {
-      if (taintNode.myChildren == null) continue;
-      Set<TaintNode> children = new HashSet<>();
-      Deque<TaintNode> workList = new ArrayDeque<>(taintNode.myChildren);
-      for (TaintNode childElement = workList.poll(); childElement != null; childElement = workList.poll()) {
-        PsiModifierListOwner child = childElement.getElement();
-        if (child == null) return null;
-        if (child instanceof PsiLocalVariable) {
-          if (childElement.myChildren != null) workList.addAll(childElement.myChildren);
-        }
-        else {
-          childElement.myParent = taintNode;
-          childElement.setParent(taintNode);
-          children.add(childElement);
-          taintNodes.add(childElement);
-        }
-      }
-      taintNode.myChildren = children;
+  private static void markSafe(Project project, @NotNull Collection<TaintNode> nonMarked) {
+    Set<PsiElement> psiElements = getPsiElements(nonMarked);
+    if (psiElements == null) return;
+    psiElements.forEach(e -> MarkAsSafeFix.markAsSafe(project, e));
+  }
+
+  private static @Nullable Set<@NotNull PsiElement> getPsiElements(@NotNull Collection<TaintNode> toAnnotate) {
+    Set<PsiElement> psiElements = new HashSet<>();
+    for (TaintNode node : toAnnotate) {
+      PsiElement psiElement = node.getPsiElement();
+      if (psiElement == null) return null;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(psiElement)) return null;
+      psiElements.add(psiElement);
     }
-    return root;
-  }
-
-  private static @NotNull TaintNode setRoot(@NotNull PsiModifierListOwner element, @NotNull TaintNode root) {
-    TaintNode newRoot = new TaintNode(element, null, null, root.myTaintValue.join(TaintValue.UNKNOWN));
-    root.myParent = newRoot;
-    newRoot.myChildren = new HashSet<>();
-    newRoot.myChildren.add(root);
-    return newRoot;
-  }
-
-  private static void propagateTaintedUp(@Nullable TaintNode taintNode) {
-    while (taintNode != null) {
-      taintNode.myTaintValue = TaintValue.TAINTED;
-      taintNode = taintNode.myParent;
-    }
+    return psiElements;
   }
 }

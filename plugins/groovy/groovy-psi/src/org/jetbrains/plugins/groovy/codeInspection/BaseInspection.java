@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
@@ -39,7 +40,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
   }
 
   @Nullable
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
+  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
     return null;
   }
 

@@ -1,5 +1,5 @@
 // IS_APPLICABLE: true
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo() {
     listOf(1).forEach { run { it.bar() } }

@@ -11,8 +11,8 @@ data class HorizontalGaps(val left: Int = 0, val right: Int = 0) {
   }
 
   init {
-    checkNonNegative(::left)
-    checkNonNegative(::right)
+    checkNonNegative("left", left)
+    checkNonNegative("right", right)
   }
 
   val width: Int

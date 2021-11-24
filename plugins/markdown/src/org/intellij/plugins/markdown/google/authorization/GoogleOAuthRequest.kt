@@ -8,16 +8,23 @@ import com.intellij.openapi.components.service
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.DigestUtil
-import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils
+import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
+import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.RestService
+import java.util.*
 
-internal class GoogleOAuthRequest(googleAppCred: GoogleCredentialUtils.GoogleAppCredentials) : OAuthRequest<GoogleCredentials> {
+internal fun getGoogleAuthRequest(): GoogleOAuthRequest {
+  val googleAppCred = GoogleAccountsUtils.getGoogleAppCredentials() ?: throw GoogleAppCredentialsException()
+  return GoogleOAuthRequest(googleAppCred)
+}
+
+internal class GoogleOAuthRequest(googleAppCred: GoogleAccountsUtils.GoogleAppCredentials) : OAuthRequest<GoogleCredentials> {
   private val port: Int get() = BuiltInServerManager.getInstance().port
 
+  private val encoder = Base64.getUrlEncoder().withoutPadding()
   private val codeVerifier = PkceUtils.generateCodeVerifier()
-
-  private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, true)
+  private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, encoder)
 
   override val authorizationCodeUrl: Url
     get() = Urls.newFromEncoded("http://localhost:${port}/${RestService.PREFIX}/${service<GoogleOAuthService>().name}/authorization_code")
@@ -39,7 +46,8 @@ internal class GoogleOAuthRequest(googleAppCred: GoogleCredentialUtils.GoogleApp
     private val scope
       get() = listOf(
         "https://www.googleapis.com/auth/drive.readonly",
-        "https://www.googleapis.com/auth/userinfo.profile"
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/userinfo.email"
       ).joinToString(" ")
 
     private const val responseType = "code" // For installed applications the parameter value is code

@@ -16,12 +16,17 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.List;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class MarkdownEditorWithPreview extends TextEditorWithPreview {
   public static final Key<MarkdownEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
   private boolean myAutoScrollPreview;
+  private final List<SplitLayoutListener> myLayoutListeners = new ArrayList<>();
 
   public MarkdownEditorWithPreview(@NotNull TextEditor editor, @NotNull MarkdownPreviewFileEditor preview) {
     super(
@@ -55,6 +60,21 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
     getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener());
   }
 
+
+  public void addLayoutListener(SplitLayoutListener listener) {
+    myLayoutListeners.add(listener);
+  }
+
+  public void removeLayoutListener(SplitLayoutListener listener) {
+    myLayoutListeners.remove(listener);
+  }
+
+  @Override
+  protected void onLayoutChange(Layout oldValue, Layout newValue) {
+    myLayoutListeners.forEach(listener -> listener.onLayoutChange(oldValue, newValue));
+    super.onLayoutChange(oldValue, newValue);
+  }
+
   public boolean isAutoScrollPreview() {
     return myAutoScrollPreview;
   }
@@ -66,6 +86,10 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
   @Override
   protected @Nullable ActionGroup createLeftToolbarActionGroup() {
     return null;
+  }
+
+  public interface SplitLayoutListener extends EventListener {
+    void onLayoutChange(Layout oldValue, Layout newValue);
   }
 
   private class MyVisibleAreaListener implements VisibleAreaListener {

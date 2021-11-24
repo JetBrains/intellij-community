@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
@@ -67,4 +68,11 @@ class CodeFormatLesson(private val sample: LessonSample, private val optimizeImp
       }
     }
   }
+
+  override val suitableTips = listOf("LayoutCode")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("code.format.help.link"),
+         LessonUtil.getHelpLink("configuring-code-style.html")),
+  )
 }

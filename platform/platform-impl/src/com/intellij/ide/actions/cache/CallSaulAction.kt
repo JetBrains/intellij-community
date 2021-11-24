@@ -20,9 +20,18 @@ internal class CacheRecoveryActionGroup: ComputableActionGroup() {
   override fun createChildrenProvider(actionManager: ActionManager): CachedValueProvider<Array<AnAction>> {
     return CachedValueProvider {
       isPopup = ApplicationManager.getApplication().isInternal
-      val actions = if (isSaulHere) arrayOf<AnAction>(actionManager.getAction("CallSaul"), Separator.getInstance()) + service<Saul>().sortedActions.map {
-        it.toAnAction()
-      }.toTypedArray() else emptyArray()
+      val actions = if (isSaulHere) {
+        val baseActions = arrayListOf<AnAction>(actionManager.getAction("CallSaul"))
+
+        if (isPopup) {
+          baseActions.add(Separator.getInstance())
+        }
+
+        (baseActions + service<Saul>().sortedActions.map {
+          it.toAnAction()
+        }).toTypedArray()
+      }
+      else emptyArray()
       CachedValueProvider.Result.create(actions, service<Saul>().modificationRecoveryActionTracker)
     }
   }
@@ -45,4 +54,4 @@ internal class CacheRecoveryActionGroup: ComputableActionGroup() {
 
 private val isSaulHere: Boolean
   get() = ApplicationManager.getApplication().isInternal ||
-          SystemProperties.getBooleanProperty("idea.cache.recovery.enabled", false)
+          SystemProperties.getBooleanProperty("idea.cache.recovery.enabled", true)

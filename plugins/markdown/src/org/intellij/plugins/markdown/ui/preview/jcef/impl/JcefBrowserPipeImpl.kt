@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.google.api.client.json.jackson2.JacksonFactory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowserBase
@@ -49,7 +48,7 @@ internal class JcefBrowserPipeImpl(private val browser: JBCefBrowserBase): Brows
   }
 
   override fun send(type: String, data: String) {
-    val raw = JacksonFactory.getDefaultInstance().toString(PackedMessage(type, data))
+    val raw = jacksonObjectMapper().writeValueAsString(PackedMessage(type, data))
     logger.debug("Sending message: $raw")
     browser.cefBrowser.executeJavaScript(postToBrowserFunctionCall(raw), null, 0)
   }

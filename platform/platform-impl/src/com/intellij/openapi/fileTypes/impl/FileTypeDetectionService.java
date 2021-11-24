@@ -88,7 +88,7 @@ final class FileTypeDetectionService implements Disposable {
   private final ConcurrentPackedBitsArray packedFlags = ConcurrentPackedBitsArray.create(4);
 
   private int cachedDetectFileBufferSize = -1;
-  private volatile boolean myRestrictCachedDetectedFileTypeAccess;
+  private volatile boolean myCanUseCachedDetectedFileType = true;
   private final FileTypeManagerImpl myFileTypeManager;
 
   FileTypeDetectionService(@NotNull FileTypeManagerImpl fileTypeManager) {
@@ -144,7 +144,7 @@ final class FileTypeDetectionService implements Disposable {
             return new ChangeApplier() {
               @Override
               public void beforeVfsChange() {
-                myRestrictCachedDetectedFileTypeAccess = true;
+                myCanUseCachedDetectedFileType = false;
               }
 
               @Override
@@ -157,7 +157,7 @@ final class FileTypeDetectionService implements Disposable {
                   }
                 }
                 finally {
-                  myRestrictCachedDetectedFileTypeAccess = false;
+                  myCanUseCachedDetectedFileType = true;
                 }
               }
             };
@@ -191,7 +191,12 @@ final class FileTypeDetectionService implements Disposable {
     myFileTypeManager.log(s);
   }
 
-  @NotNull FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
+  @NotNull
+  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
+    return getOrDetectFromContent(file, content, myCanUseCachedDetectedFileType);
+  }
+  @NotNull
+  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, boolean useCache) {
     if (!isDetectable(file)) {
       if (myFileTypeManager.getFileTypeByFileName(file.getName()) == DetectedByContentFileType.INSTANCE) {
         //allow to open empty file in IDEA's editor
@@ -204,7 +209,7 @@ final class FileTypeDetectionService implements Disposable {
     }
 
     // while vfs events are processing do not access cache, it can be in invalid state;
-    if (myRestrictCachedDetectedFileTypeAccess) {
+    if (!useCache) {
       try {
         return detectFromContent(file, getFirstBytes(file, content));
       }
@@ -719,9 +724,8 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   private static @NotNull String loadFile(@NotNull File file, int maxLength) throws IOException {
-    Reader reader = new InputStreamReader(new FileInputStream(file), Charset.defaultCharset());
-    try {
-      int length = Math.min((int)file.length(), maxLength);
+    try (Reader reader = new InputStreamReader(new FileInputStream(file), Charset.defaultCharset())) {
+      int length = (int)Math.min(file.length(), maxLength);
       char[] result = FileUtil.loadText(reader, length);
       if (file.length() > maxLength) {
         return new String(result) + "\n\n+" + (file.length() - maxLength) + " bytes more";
@@ -729,9 +733,6 @@ final class FileTypeDetectionService implements Disposable {
       else {
         return new String(result);
       }
-    }
-    finally {
-      reader.close();
     }
   }
 

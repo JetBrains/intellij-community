@@ -5,10 +5,15 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,67 +41,205 @@ public class GitExecutableDetector {
     "/opt/bin",
     "/usr/local/git/bin"};
 
-  private static final @NonNls String GIT = "git";
-  private static final @NonNls String UNIX_EXECUTABLE = GIT;
 
   private static final File WIN_ROOT = new File("C:\\"); // the constant is extracted to be able to create files in "Program Files" in tests
   private static final List<String> WIN_BIN_DIRS = Arrays.asList("cmd", "bin");
-  private static final @NonNls String GIT_EXE = "git.exe";
 
-  private static final String WIN_EXECUTABLE = GIT_EXE;
+  private static final @NonNls String UNIX_EXECUTABLE = "git";
+  private static final @NonNls String WIN_EXECUTABLE = "git.exe";
+
+  private static final int WSL_DETECTION_TIMEOUT_MS = 10000;
+  private final ScheduledExecutorService myWslExecutor =
+    AppExecutorUtil.createBoundedScheduledExecutorService("GitExecutableDetector WSL thread", 1);
 
   @NotNull private final Object DETECTED_EXECUTABLE_LOCK = new Object();
-  @NotNull private final Map<WSLDistribution, String> myWslExecutables = new ConcurrentHashMap<>(); // concurrent to read without lock
-  @Nullable private volatile String myDetectedExecutable;
-  private boolean myDetectionComplete;
+  @NotNull private final AtomicReference<DetectedPath> myEnvExecutable = new AtomicReference<>();
+  @NotNull private final AtomicReference<DetectedPath> mySystemExecutable = new AtomicReference<>();
+  @NotNull private final Map<WSLDistribution, DetectedPath> myWslExecutables = new ConcurrentHashMap<>();
+  private volatile boolean myWslDistributionsProcessed;
 
-  @Nullable
-  public String detect(@Nullable WSLDistribution distribution) {
-    synchronized (DETECTED_EXECUTABLE_LOCK) {
-      if (myDetectionComplete) {
-        return getExecutable(distribution);
-      }
-    }
-
-    return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"), () -> {
-      synchronized (DETECTED_EXECUTABLE_LOCK) {
-        if (!myDetectionComplete) {
-          myDetectedExecutable = runDetect();
-          myDetectionComplete = true;
-        }
-        return getExecutable(distribution);
-      }
-    });
-  }
-
-  public void clear() {
-    synchronized (DETECTED_EXECUTABLE_LOCK) {
-      myWslExecutables.clear();
-      myDetectedExecutable = null;
-      myDetectionComplete = false;
-    }
-  }
 
   @Nullable
   public String getExecutable(@Nullable WSLDistribution projectWslDistribution) {
-    if (projectWslDistribution != null) {
-      String exec = myWslExecutables.get(projectWslDistribution);
-      if (exec != null) return exec;
+    List<Detector> detectors = collectDetectors(projectWslDistribution);
+    return getExecutable(detectors);
+  }
+
+  @NotNull
+  public String detect(@Nullable WSLDistribution distribution) {
+    List<Detector> detectors = collectDetectors(distribution);
+
+    String detectedPath = getExecutable(detectors);
+    if (detectedPath != null) return detectedPath;
+
+    return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"),
+                                    () -> detectExecutable(detectors));
+  }
+
+  @NotNull
+  @RequiresBackgroundThread
+  private String detectExecutable(@NotNull List<Detector> detectors) {
+    String path = null;
+    boolean fireEvent = false;
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      for (Detector detector : detectors) {
+        DetectedPath detectedPath = detector.getPath();
+        if (detectedPath == null) {
+          detector.runDetection();
+          fireEvent = true;
+
+          detectedPath = detector.getPath();
+        }
+
+        if (detectedPath != null && detectedPath.path != null) {
+          path = detectedPath.path;
+          break;
+        }
+      }
     }
 
-    return myDetectedExecutable;
+    if (fireEvent) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
+    }
+
+    if (path != null) return path;
+    return getDefaultExecutable();
   }
 
+  @RequiresBackgroundThread
+  public void clear() {
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      myEnvExecutable.set(null);
+      mySystemExecutable.set(null);
+      myWslExecutables.clear();
+      myWslDistributionsProcessed = false;
+    }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
+  }
+
+  /**
+   * @return 'null' if detection was not finished yet. Otherwise, return our best guess.
+   */
   @Nullable
-  private String runDetect() {
-    detectAvailableWsl();
-
-    File gitExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? GIT_EXE : GIT, getPath(), null);
-    if (gitExecutableFromPath != null) return gitExecutableFromPath.getAbsolutePath();
-
-    return SystemInfo.isWindows ? detectForWindows() : detectForUnix();
+  private static String getExecutable(@NotNull List<Detector> detectors) {
+    for (Detector detector : detectors) {
+      DetectedPath path = detector.getPath();
+      if (path == null) return null; // not detected yet
+      if (path.path != null) return path.path;
+    }
+    return getDefaultExecutable();
   }
 
+  @NotNull
+  public List<Detector> collectDetectors(@Nullable WSLDistribution projectWslDistribution) {
+    List<Detector> detectors = new ArrayList<>();
+    if (projectWslDistribution != null &&
+        GitExecutableManager.supportWslExecutable()) {
+      detectors.add(new WslDetector(projectWslDistribution));
+    }
+
+    detectors.add(new EnvDetector());
+    detectors.add(new SystemPathDetector());
+
+    if (projectWslDistribution == null &&
+        GitExecutableManager.supportWslExecutable() &&
+        Registry.is("git.detect.wsl.executables")) {
+      detectors.add(new GlobalWslDetector());
+    }
+
+    return detectors;
+  }
+
+
+  private interface Detector {
+    /**
+     * @return 'null' if detection was not completed yet.
+     */
+    @Nullable DetectedPath getPath();
+
+    void runDetection();
+  }
+
+  private class EnvDetector implements Detector {
+    @Override
+    public @Nullable DetectedPath getPath() {
+      return myEnvExecutable.get();
+    }
+
+    @Override
+    public void runDetection() {
+      File executableFromEnv = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE, getPathEnv(), null);
+      String path = executableFromEnv != null ? executableFromEnv.getAbsolutePath() : null;
+      myEnvExecutable.set(new DetectedPath(path));
+    }
+  }
+
+  private class SystemPathDetector implements Detector {
+    @Override
+    public @Nullable DetectedPath getPath() {
+      return mySystemExecutable.get();
+    }
+
+    @Override
+    public void runDetection() {
+      String executable = SystemInfo.isWindows ? detectForWindows() : detectForUnix();
+      mySystemExecutable.set(new DetectedPath(executable));
+    }
+  }
+
+  private class WslDetector implements Detector {
+    private final WSLDistribution myDistribution;
+
+    private WslDetector(@NotNull WSLDistribution distribution) {
+      myDistribution = distribution;
+    }
+
+    @Override
+    public @Nullable DetectedPath getPath() {
+      return myWslExecutables.get(myDistribution);
+    }
+
+    @Override
+    public void runDetection() {
+      String result = checkWslDistributionSafe(myDistribution);
+      myWslExecutables.put(myDistribution, new DetectedPath(result));
+    }
+  }
+
+  private class GlobalWslDetector implements Detector {
+    @Override
+    public @Nullable DetectedPath getPath() {
+      if (!myWslDistributionsProcessed) return null;
+
+      List<String> knownDistros = ContainerUtil.mapNotNull(myWslExecutables.values(), it -> it.path);
+      if (knownDistros.size() != 1) return new DetectedPath(null);
+
+      String path = knownDistros.iterator().next();
+      return new DetectedPath(path);
+    }
+
+    @Override
+    public void runDetection() {
+      List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
+      for (WSLDistribution distribution : distributions) {
+        String result = checkWslDistributionSafe(distribution);
+        myWslExecutables.put(distribution, new DetectedPath(result));
+      }
+      myWslDistributionsProcessed = true;
+    }
+  }
+
+  private static class DetectedPath {
+    public final @Nullable String path;
+
+    private DetectedPath(@Nullable String path) {
+      this.path = path;
+    }
+  }
+
+  /**
+   * Default choice if detection failed - just an executable name to be resolved by $PATH.
+   */
   @NotNull
   public static String getDefaultExecutable() {
     return SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
@@ -120,11 +264,6 @@ public class GitExecutableDetector {
     }
 
     exec = checkCygwin();
-    if (exec != null) {
-      return exec;
-    }
-
-    exec = checkWsl();
     if (exec != null) {
       return exec;
     }
@@ -172,24 +311,6 @@ public class GitExecutableDetector {
   }
 
   @Nullable
-  private String checkWsl() {
-    if (myWslExecutables.size() == 1) {
-      return myWslExecutables.values().iterator().next();
-    }
-    return null;
-  }
-
-  private void detectAvailableWsl() {
-    if (!GitExecutableManager.supportWslExecutable()) return;
-
-    List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
-    for (WSLDistribution distribution : distributions) {
-      String path = checkWslDistribution(distribution);
-      if (path != null) myWslExecutables.put(distribution, path);
-    }
-  }
-
-  @Nullable
   private static String checkWslDistribution(@NotNull WSLDistribution distribution) {
     if (distribution.getVersion() != 2) return null;
 
@@ -202,6 +323,21 @@ public class GitExecutableDetector {
       }
     }
     return null;
+  }
+
+  /**
+   * Guard against potential lock in OS code while accessing paths under WSL distro
+   */
+  private String checkWslDistributionSafe(@NotNull WSLDistribution distribution) {
+    Future<String> future = myWslExecutor.submit(() -> checkWslDistribution(distribution));
+    try {
+      return future.get(WSL_DETECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+    }
+    catch (InterruptedException | ExecutionException | TimeoutException e) {
+      LOG.warn(String.format("WSL executable detection aborted for %s", distribution), e);
+      future.cancel(true);
+      return null;
+    }
   }
 
   @VisibleForTesting
@@ -232,7 +368,7 @@ public class GitExecutableDetector {
       return null;
     }
 
-    File fe = new File(binDir, GIT_EXE);
+    File fe = new File(binDir, WIN_EXECUTABLE);
     if (fe.exists()) {
       return fe.getPath();
     }
@@ -242,7 +378,7 @@ public class GitExecutableDetector {
 
   @VisibleForTesting
   @Nullable
-  protected String getPath() {
+  protected String getPathEnv() {
     return PathEnvironmentVariableUtil.getPathVariableValue();
   }
 

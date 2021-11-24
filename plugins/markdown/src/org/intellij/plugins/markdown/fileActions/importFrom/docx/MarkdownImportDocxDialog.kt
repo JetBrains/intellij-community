@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.fileActions.importFrom.docx
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,12 +25,21 @@ internal class MarkdownImportDocxDialog(
 
   override fun doAction(selectedFileUrl: String) {
     MarkdownImportExportUtils.copyAndConvertToMd(project, fileToImport, selectedFileUrl, importTaskTitle)
+    removeDocxFile()
   }
 
   override fun getFileNameIfExist(dir: String, fileNameWithoutExtension: String): String? {
     return when {
       FileUtil.exists(FileUtil.join(dir, "$fileNameWithoutExtension.md")) -> "$fileNameWithoutExtension.md"
       else -> null
+    }
+  }
+
+  private fun removeDocxFile() {
+    ApplicationManager.getApplication().runWriteAction {
+      if (fileToImport.exists()) {
+        fileToImport.delete(this)
+      }
     }
   }
 }

@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import groovy.transform.CompileDynamic
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.compressors.CompressorStreamFactory
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -14,19 +17,17 @@ import org.jetbrains.intellij.build.OsFamily
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
-import java.util.concurrent.ConcurrentHashMap
+import java.util.zip.GZIPInputStream
 
 import static java.nio.file.attribute.PosixFilePermission.*
 
 @CompileStatic
-class BundledJreManager {
+final class BundledJreManager {
   private final BuildContext buildContext
-  private final Map<File, String> jbrArchiveInspectionCache = new ConcurrentHashMap<>()
 
   @Lazy private String jreBuild = {
     buildContext.options.bundledJreBuild ?: buildContext.dependenciesProperties.property('jdkBuild')
@@ -36,80 +37,106 @@ class BundledJreManager {
     this.buildContext = buildContext
   }
 
-  private File dependenciesDir() {
-    new File(buildContext.paths.communityHome, 'build/dependencies')
-  }
-
   Path extractJre(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    Path targetDir = Paths.get(buildContext.paths.buildOutputRoot, "jre_${os.jbrArchiveSuffix}_$arch")
+    Path targetDir = Path.of(buildContext.paths.buildOutputRoot, "jre_${os.jbrArchiveSuffix}_$arch")
     if (Files.isDirectory(targetDir)) {
-      buildContext.messages.info("JRE is already extracted to $targetDir")
+      Span.current().addEvent("JRE is already extracted", Attributes.of(AttributeKey.stringKey("dir"), targetDir.toString()))
       return targetDir
     }
 
-    File archive = findJreArchive(os, arch)
+    Path archive = findJreArchive(os, arch)
     if (archive == null) {
       return null
     }
 
-    Path destinationDir = targetDir.resolve("jbr")
-    buildContext.messages.block("Extracting $archive into $destinationDir") {
-      FileUtil.delete(destinationDir)
-      untar(archive, destinationDir.toString())
-      fixJbrPermissions(destinationDir, os == OsFamily.WINDOWS)
-    }
-
+    doExtractJbr(archive, targetDir.resolve("jbr"), os, buildContext)
     return targetDir
   }
 
-  File findJreArchive(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    def build =
-      buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}_${getJBRArchSuffix(arch)}") ?:
-      buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}") ?:
-      jreBuild
-    findArchive(os, build, arch)
+  void extractJreTo(OsFamily os, Path destinationDir, JvmArchitecture arch) {
+    Path archive = findJreArchive(os, arch)
+    if (archive != null) {
+      doExtractJbr(archive, destinationDir, os, buildContext)
+    }
   }
 
-  private File findArchive(OsFamily os, String jreBuild, JvmArchitecture arch) {
-    String archiveName = jbrArchiveName(jreBuild, buildContext.options.bundledJreVersion, arch, os)
-    File jreDir = new File(dependenciesDir(), 'build/jbre')
-    File jreArchive = new File(jreDir, archiveName)
-    if (jreArchive.file) return jreArchive
+  private static void doExtractJbr(Path archive, Path destinationDir, OsFamily os, BuildContext context) {
+    BuildHelper.getInstance(context).span(TracerManager.spanBuilder("extract JBR")
+                                            .setAttribute("archive", archive.toString())
+                                            .setAttribute("os", os.osName)
+                                            .setAttribute("destination", destinationDir.toString())) {
+      NioFiles.deleteRecursively(destinationDir)
+      unTar(archive, destinationDir, context)
+      fixJbrPermissions(destinationDir, os == OsFamily.WINDOWS)
+    }
+  }
 
-    def errorMessage = "Cannot extract $os.osName JRE: file $jreArchive is not found (${jreDir.listFiles()})"
+  Path findJreArchive(OsFamily os, JvmArchitecture arch) {
+    String jreBuild = buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}_${getJBRArchSuffix(arch)}")
+      ?: buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}")
+                        ?: jreBuild
+
+    //noinspection SpellCheckingInspection
+    Path jreDir = buildContext.paths.communityHomeDir.resolve("build/dependencies/build/jbre")
+    Path jreArchive = jreDir.resolve(jbrArchiveName(jreBuild, buildContext.options.bundledJreVersion, arch, os, buildContext))
+    if (Files.exists(jreArchive)) {
+      return jreArchive
+    }
+
+    List<String> existingFiles = jreDir.toFile().listFiles().collect { jreDir.relativize(it.toPath()).toString() }
     if (buildContext.options.isInDevelopmentMode) {
-      buildContext.messages.warning(errorMessage)
+      buildContext.messages.warning("Cannot extract $os.osName JRE: file $jreArchive is not found (${ existingFiles})")
     }
     else {
-      buildContext.messages.error(errorMessage)
+      RuntimeException error = new RuntimeException("cannot extract JRE")
+      Span.current().recordException(error, Attributes.of(
+        AttributeKey.stringKey("os"), os.osName,
+        AttributeKey.stringKey("arch"), arch.name(),
+        AttributeKey.stringKey("archiveName"), jreArchive.fileName.toString(),
+        AttributeKey.stringArrayKey("existingFiles"), existingFiles,
+        ))
+      throw error
     }
     return null
   }
 
-  @CompileDynamic
-  private void untar(File archive, String destination) {
-    boolean stripRootDir = buildContext.bundledJreManager.hasJbrRootDir(archive)
-    if (SystemInfo.isWindows) {
-      buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip') {
-        if (stripRootDir) {
-          cutdirsmapper(dirs: 1)
-        }
+  private static void unTar(Path archive, Path destination, BuildContext context) {
+    // CompressorStreamFactory requires input stream with mark support
+    String rootDir = createTarGzInputStream(archive).withCloseable {
+      it.nextTarEntry?.name
+    }
+    if (rootDir == null) {
+      throw new IllegalStateException("Unable to detect root dir of $archive")
+    }
+
+    boolean stripRootDir = rootDir.startsWith("jbr")
+    if (SystemInfoRt.isWindows) {
+      Decompressor.Tar decompressor = new Decompressor.Tar(archive)
+      if (stripRootDir) {
+        decompressor.removePrefixPath(rootDir)
       }
+      decompressor.extract(destination)
     }
     else {
-      // 'tar' command is used instead of Ant task to ensure that executable flags will be preserved
-      buildContext.ant.mkdir(dir: destination)
-      buildContext.ant.exec(executable: "tar", dir: archive.parent, failonerror: true) {
-        arg(value: "xf")
-        arg(value: archive.name)
-        if (stripRootDir) {
-          arg(value: "--strip")
-          arg(value: "1")
-        }
-        arg(value: "--directory")
-        arg(value: destination)
+      // 'tar' command is used to ensure that executable flags will be preserved
+      Files.createDirectories(destination)
+      List<String> args = new ArrayList<>(10)
+      args.add("tar")
+      args.add("xf")
+      args.add(archive.fileName.toString())
+      if (stripRootDir) {
+        args.add("--strip")
+        args.add("1")
       }
+      args.add("--directory")
+      args.add(destination.toString())
+
+      BuildHelper.runProcess(context, args, archive.parent)
     }
+  }
+
+  private static TarArchiveInputStream createTarGzInputStream(@NotNull Path archive) {
+    return new TarArchiveInputStream(new GZIPInputStream(Files.newInputStream(archive), 64 * 1024))
   }
 
   private static void fixJbrPermissions(Path destinationDir, boolean forWin) {
@@ -121,7 +148,7 @@ class BundledJreManager {
     Files.walkFileTree(destinationDir, new SimpleFileVisitor<Path>() {
       @Override
       FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        if (dir != destinationDir && SystemInfo.isUnix) {
+        if (dir != destinationDir && SystemInfoRt.isUnix) {
           Files.setPosixFilePermissions(dir, exeOrDir)
         }
         return FileVisitResult.CONTINUE
@@ -129,7 +156,7 @@ class BundledJreManager {
 
       @Override
       FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        if (SystemInfo.isUnix) {
+        if (SystemInfoRt.isUnix) {
           boolean noExec = forWin || !(OWNER_EXECUTE in Files.getPosixFilePermissions(file))
           Files.setPosixFilePermissions(file, noExec ? regular : exeOrDir)
         }
@@ -147,7 +174,8 @@ class BundledJreManager {
    *  `build/dependencies/setupJdk.gradle`
    *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
   */
-  private String jbrArchiveName(String jreBuild, int version, JvmArchitecture arch, OsFamily os) {
+  @SuppressWarnings('SpellCheckingInspection')
+  private static String jbrArchiveName(String jreBuild, int version, JvmArchitecture arch, OsFamily os, BuildContext buildContext) {
     String update, build
     String[] split = jreBuild.split('b')
     if (split.length > 2) {
@@ -166,7 +194,7 @@ class BundledJreManager {
 
     String prefix
     if (buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
-      prefix = 'jbr-'
+      prefix = "jbr-"
     }
     else if (buildContext.options.bundledJrePrefix != null) {
       prefix = buildContext.options.bundledJrePrefix
@@ -175,37 +203,27 @@ class BundledJreManager {
       prefix = "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"
     }
 
-    def archSuffix = getJBRArchSuffix(arch)
-    "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
+    String archSuffix = getJBRArchSuffix(arch)
+    return "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
   }
 
   private static String getJBRArchSuffix(JvmArchitecture arch) {
     switch (arch) {
       case JvmArchitecture.x64:
-        return 'x64'
+        return "x64"
       case JvmArchitecture.aarch64:
-        return 'aarch64'
+        return "aarch64"
       default:
         throw new IllegalStateException("Unsupported arch: $arch")
     }
   }
 
   /**
-   * If {@code true} then JRE top directory was renamed to JBR, see JBR-1295
-   */
-  boolean hasJbrRootDir(File archive) {
-    String rootDir = jbrRootDir(archive)
-    rootDir != null && rootDir.startsWith('jbr')
-  }
-
-  /**
    * @return JBR top directory, see JBR-1295
    */
-  String jbrRootDir(File archive) {
-    jbrArchiveInspectionCache.computeIfAbsent(archive) {
-      new TarArchiveInputStream(new CompressorStreamFactory().createCompressorInputStream(archive.newInputStream())).withStream {
-        it.nextTarEntry?.name ?: { throw new IllegalStateException("Unable to read $archive") }()
-      }
+  static String jbrRootDir(Path archive) {
+    return createTarGzInputStream(archive).withCloseable {
+      it.nextTarEntry?.name ?: { throw new IllegalStateException("Unable to read $archive") }()
     }
   }
 }

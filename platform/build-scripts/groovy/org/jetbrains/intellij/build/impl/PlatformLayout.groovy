@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -9,6 +8,8 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
+
+import java.util.function.BiConsumer
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
  * <p>
@@ -71,8 +72,7 @@ final class PlatformLayout extends BaseLayout {
     }
   }
 
-  MultiMap<JpsLibrary, JpsModule> computeProjectLibrariesFromIncludedModules(BuildContext context) {
-    MultiMap<JpsLibrary, JpsModule> result = MultiMap.createLinked()
+  void collectProjectLibrariesFromIncludedModules(BuildContext context, BiConsumer<JpsLibrary, JpsModule> consumer) {
     Collection<String> libsToUnpack = projectLibrariesToUnpack.values()
     for (String moduleName in includedModuleNames) {
       JpsModule module = context.findRequiredModule(moduleName)
@@ -84,9 +84,8 @@ final class PlatformLayout extends BaseLayout {
           continue
         }
 
-        result.putValue(library, module)
+        consumer.accept(library, module)
       }
     }
-    return result
   }
 }

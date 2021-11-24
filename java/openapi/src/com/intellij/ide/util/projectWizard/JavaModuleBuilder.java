@@ -38,8 +38,8 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   private List<Pair<String,String>> mySourcePaths;
   // Pair<Library path, Source path>
   private final List<Pair<String, String>> myModuleLibraries = new ArrayList<>();
-  public static final int JAVA_WEIGHT = 100;
-  public static final int BUILD_SYSTEM_WEIGHT = 80;
+  public static final int BUILD_SYSTEM_WEIGHT = JVM_WEIGHT;
+  public static final int JAVA_WEIGHT = BUILD_SYSTEM_WEIGHT + 20;
   public static final int JAVA_MOBILE_WEIGHT = 60;
 
   public final void setCompilerOutputPath(String compilerOutputPath) {

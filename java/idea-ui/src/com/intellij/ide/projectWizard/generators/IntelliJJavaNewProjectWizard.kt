@@ -19,7 +19,8 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         builder.name = moduleName
         builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
         builder.contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
-        builder.moduleJdk = sdk
+
+        parent.context.projectJdk = sdk
 
         builder.commit(project)
       }

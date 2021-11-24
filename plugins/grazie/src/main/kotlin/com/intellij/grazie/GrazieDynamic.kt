@@ -3,7 +3,6 @@ package com.intellij.grazie
 
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
-import com.intellij.ide.plugins.CannotUnloadPluginException
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
@@ -14,7 +13,6 @@ import com.intellij.util.lang.UrlClassLoader
 import org.languagetool.Language
 import org.languagetool.Languages
 import java.io.InputStream
-import java.net.Authenticator
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
@@ -44,7 +42,6 @@ internal object GrazieDynamic : DynamicPluginListener {
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
     if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
       myDynClassLoaders.clear()
-      Authenticator.setDefault(null)
     }
   }
 

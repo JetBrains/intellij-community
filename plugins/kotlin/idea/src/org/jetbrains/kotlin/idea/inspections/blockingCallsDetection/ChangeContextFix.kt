@@ -19,9 +19,9 @@ internal class ChangeContextFix : LocalQuickFix {
     }
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val psiElement = descriptor.psiElement
-        val callExpression = psiElement.parentsOfType<KtCallExpression>()
-            .firstOrNull { it.calleeExpression?.textMatches("withContext") ?: false }
+        val callExpression = descriptor.psiElement
+            ?.parentsOfType<KtCallExpression>()
+            ?.firstOrNull { it.calleeExpression?.textMatches("withContext") ?: false }
             ?: return
 
         val ktPsiFactory = KtPsiFactory(project, true)

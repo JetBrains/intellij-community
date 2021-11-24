@@ -4,6 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.application.subscribe
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.application.ApplicationManager
@@ -16,11 +17,17 @@ class RunToolbarComponentService(val project: Project) {
   }
   private val extraSlots = RunToolbarSlotManager.getInstance(project)
 
-  private val executions: MutableMap<Long, ExecutionEnvironment> = mutableMapOf()
-
   init {
     if (RunToolbarProcess.isAvailable) {
       ExecutionManager.EXECUTION_TOPIC.subscribe(project, object : ExecutionListener {
+        override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
+          ApplicationManager.getApplication().invokeLater {
+            if (env.project == project) {
+              processNotStarted(env)
+            }
+          }
+        }
+
         override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {
             if (env.project == project) {
@@ -48,14 +55,18 @@ class RunToolbarComponentService(val project: Project) {
 
       extraSlots.addListener(object : ActiveListener {
         override fun enabled() {
-          if(RunToolbarProcess.logNeeded) LOG.info( "ENABLED. put data ${executions.map{it.value}.map{"$it (${it.executionId}); "}} RunToolbar" )
-          executions.forEach{
-            extraSlots.processStarted(it.value)
+          val environments = ExecutionManagerImpl.getAllDescriptors(project)
+            .mapNotNull { it.environment() }
+            .filter { it.contentToReuse?.processHandler?.isProcessTerminated == false }
+
+          if (RunToolbarProcess.logNeeded) LOG.info("ENABLED. put data ${environments.map { "$it (${it.executionId}); " }} RunToolbar")
+          environments.forEach {
+            extraSlots.processStarted(it)
           }
         }
 
         override fun disabled() {
-          if(RunToolbarProcess.logNeeded) LOG.info("DISABLED RunToolbar" )
+          if (RunToolbarProcess.logNeeded) LOG.info("DISABLED RunToolbar")
           super.disabled()
         }
       })
@@ -63,35 +74,46 @@ class RunToolbarComponentService(val project: Project) {
   }
 
   private fun start(env: ExecutionEnvironment) {
-    if(isRelevant(env)) {
-      executions[env.executionId] = env
-      if(RunToolbarProcess.logNeeded) LOG.info("new active: ${env.executor.id} ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar" )
-      if(extraSlots.active) {
+    if (isRelevant(env)) {
+      if (RunToolbarProcess.logNeeded) LOG.info(
+        "new active: ${env.executor.id} ${env}, slot manager ${if (extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar")
+      if (extraSlots.active) {
         extraSlots.processStarted(env)
       }
     }
   }
 
+  private fun processNotStarted(env: ExecutionEnvironment) {
+    if (env.getRunToolbarProcess() != null) {
+      if (RunToolbarProcess.logNeeded) LOG.info("Not started: ${env.executor.id} ${env} RunToolbar")
+      if (extraSlots.active) {
+        extraSlots.processNotStarted(env)
+      }
+    }
+  }
+
   private fun terminated(env: ExecutionEnvironment) {
-    if(isRelevant(env)) {
-      executions.remove(env.executionId)
-      if(RunToolbarProcess.logNeeded) LOG.info("removed: ${env.executor.id} ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar" )
-      if(extraSlots.active) {
+      if (RunToolbarProcess.logNeeded) LOG.info(
+        "removed: ${env.executor.id} ${env}, slot manager ${if (extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar")
+      if (extraSlots.active) {
+        extraSlots.processTerminated(env.executionId)
+      }
+  }
+
+  private fun terminating(env: ExecutionEnvironment) {
+    if (RunToolbarProcess.logNeeded) LOG.info(
+      "terminating: ${env.executor.id} ${env}, slot manager ${if (extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar")
+    if (extraSlots.active) {
+      if (isRelevant(env)) {
+        extraSlots.processTerminating(env)
+      }
+      else {
         extraSlots.processTerminated(env.executionId)
       }
     }
   }
 
-  private fun terminating(env: ExecutionEnvironment) {
-    if(isRelevant(env)) {
-      if(RunToolbarProcess.logNeeded) LOG.info("terminating: ${env.executor.id} ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar" )
-      if(extraSlots.active) {
-        extraSlots.processTerminating(env)
-      }
-    }
-  }
-
   private fun isRelevant(environment: ExecutionEnvironment): Boolean {
-    return environment.getRunToolbarProcess() != null
+    return environment.contentToReuse != null && environment.getRunToolbarProcess() != null
   }
 }

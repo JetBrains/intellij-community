@@ -8,7 +8,6 @@ PY2: bool
 string_types: Type[Any] | Sequence[Type[Any]]
 text_type: Type[Any] | Sequence[Type[Any]]
 bytes_types: Type[Any] | Sequence[Type[Any]]
-bytes = bytes
 integer_types: Type[Any] | Sequence[Type[Any]]
 long = int
 
@@ -28,6 +27,8 @@ else:
 
     StringIO = cStringIO.StringIO
     BytesIO = StringIO
+
+bytes = builtins.bytes
 
 def byte_ord(c: int | str) -> int: ...
 def byte_chr(c: int) -> bytes: ...

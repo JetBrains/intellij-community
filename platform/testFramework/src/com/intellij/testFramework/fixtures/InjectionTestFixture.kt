@@ -116,7 +116,10 @@ fun CodeInsightTestFixture.assertInjectedLanguage(langId: String?, vararg fragme
     val doc = editor.document
 
     for (text in fragmentTexts) {
-      val pos = doc.text.indexOf(text) + text.length / 2
+      val index = doc.text.indexOf(text)
+      if (index < 0) fail("No such text in document: $text")
+
+      val pos = index + text.length / 2
       val injectedElement = injectedLanguageManager.findInjectedElementAt(file, pos)
 
       if (langId != null) {

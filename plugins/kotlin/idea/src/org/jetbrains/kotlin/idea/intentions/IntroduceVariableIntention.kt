@@ -48,4 +48,8 @@ class IntroduceVariableIntention : SelfTargetingRangeIntention<PsiElement>(
             element.project, editor, expression, isVar = false, occurrencesToReplace = null, onNonInteractiveFinish = null
         )
     }
+
+    override fun startInWriteAction(): Boolean {
+        return false
+    }
 }

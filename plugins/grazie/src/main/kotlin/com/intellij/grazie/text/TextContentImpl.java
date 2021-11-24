@@ -39,8 +39,8 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
       }
       tokens.add(token);
     }
-    if (tokens.get(0) == WS_TOKEN) tokens.remove(0);
-    if (tokens.get(tokens.size() - 1) == WS_TOKEN) tokens.remove(tokens.size() - 1);
+    if (tokens.get(0) instanceof WSTokenInfo) tokens.remove(0);
+    if (tokens.get(tokens.size() - 1) instanceof WSTokenInfo) tokens.remove(tokens.size() - 1);
     if (tokens.isEmpty()) {
       throw new IllegalArgumentException("There should be at least one non-whitespace token");
     }
@@ -60,11 +60,11 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
     if (leanForward) {
       while (index < tokens.size() - 1 && tokens.get(index).length() == 0) index++;
-      if (tokens.get(index) == WS_TOKEN) {
+      if (tokens.get(index) instanceof WSTokenInfo) {
         index--;
       }
     } else {
-      if (index > 0 && tokens.get(index - 1) != WS_TOKEN) index--;
+      if (index > 0 && !(tokens.get(index - 1) instanceof WSTokenInfo)) index--;
     }
 
     return index;
@@ -323,20 +323,24 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
   }
 
   private static @Nullable TokenInfo merge(TokenInfo t1, TokenInfo t2) {
-    if (t1 == WS_TOKEN && t2 == WS_TOKEN) return t1;
-    if (t1 instanceof PsiToken && t2 instanceof PsiToken) {
-      if (((PsiToken) t1).unknown && ((PsiToken) t2).unknown) {
-        return t1;
-      }
-      if (!((PsiToken) t1).unknown && !((PsiToken) t2).unknown) {
-        if (t1.length() == 0) return t2;
-        if (t2.length() == 0) return t1;
+    if (t1 instanceof WSTokenInfo && t2 instanceof WSTokenInfo) return t1;
+    if (t1 instanceof PsiToken && t2 instanceof PsiToken) return mergePsiTokens((PsiToken)t1, (PsiToken)t2);
+    return null;
+  }
+
+  private static TokenInfo mergePsiTokens(PsiToken t1, PsiToken t2) {
+    if (t1.unknown && t2.unknown) {
+      return t1;
+    }
+    if (!t1.unknown && !t2.unknown) {
+      if (t1.length() == 0) return t2;
+      if (t2.length() == 0) return t1;
+      if (t1.psi == t2.psi && t1.rangeInPsi.getStartOffset() + t1.length() == t2.rangeInPsi.getStartOffset()) {
+        return new PsiToken(t1.text + t2.text, t1.psi, t1.rangeInPsi.union(t2.rangeInPsi), false);
       }
     }
     return null;
   }
-
-  static final TokenInfo WS_TOKEN = new TokenInfo(" ") {};
 
   abstract static class TokenInfo {
     final String text;
@@ -421,5 +425,9 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
       }
       return shreds;
     }
+  }
+
+  static class WSTokenInfo extends TokenInfo {
+    WSTokenInfo(char ws) { super(String.valueOf(ws)); }
   }
 }

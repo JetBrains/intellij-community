@@ -13,5 +13,6 @@
     <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5Vintage" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit5Jupiter" level="project" />
   </component>
 </module>

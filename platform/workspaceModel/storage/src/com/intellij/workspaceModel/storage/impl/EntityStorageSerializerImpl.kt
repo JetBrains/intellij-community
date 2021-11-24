@@ -21,6 +21,7 @@ import com.intellij.workspaceModel.storage.impl.indices.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
@@ -42,7 +43,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v29"
+    const val SERIALIZER_VERSION = "v30"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -431,9 +432,9 @@ class EntityStorageSerializerImpl(
 
   private fun EntityStorageInternalIndex<EntitySource>.write(kryo: Kryo, output: Output) {
     output.writeInt(this.index.keys.size)
-    this.index.forEach { key: EntityId, value: EntitySource ->
-      kryo.writeObject(output, key.toSerializableEntityId())
-      kryo.writeClassAndObject(output, value)
+    this.index.forEach { entry ->
+      kryo.writeObject(output, entry.longKey.toSerializableEntityId())
+      kryo.writeClassAndObject(output, entry.value)
     }
   }
 
@@ -447,7 +448,7 @@ class EntityStorageSerializerImpl(
     return res.toImmutable()
   }
 
-  private fun BidirectionalMultiMap<EntityId, VirtualFileUrl>.write(kryo: Kryo, output: Output) {
+  private fun EntityId2JarDir.write(kryo: Kryo, output: Output) {
     output.writeInt(this.keys.size)
     this.keys.forEach { key ->
       val values: Set<VirtualFileUrl> = this.getValues(key)
@@ -460,8 +461,8 @@ class EntityStorageSerializerImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun readBimap(kryo: Kryo, input: Input):BidirectionalMultiMap<EntityId, VirtualFileUrl> {
-    val res = BidirectionalMultiMap<EntityId, VirtualFileUrl>()
+  private fun readBimap(kryo: Kryo, input: Input): EntityId2JarDir {
+    val res = EntityId2JarDir()
     repeat(input.readInt()) {
       val key = kryo.readObject(input, SerializableEntityId::class.java).toEntityId()
       repeat(input.readInt()) {
@@ -484,11 +485,11 @@ class EntityStorageSerializerImpl(
   }
 
   private fun read(kryo: Kryo, input: Input): Vfu2EntityId {
-    val vfu2EntityId = Vfu2EntityId()
+    val vfu2EntityId = Vfu2EntityId(getHashingStrategy())
     repeat(input.readInt()) {
       val file = kryo.readObject(input, VirtualFileUrl::class.java) as VirtualFileUrl
       @Suppress("SSBasedInspection")
-      val data = Object2ObjectOpenHashMap<String, EntityId>()
+      val data = Object2LongOpenHashMap<String>()
       repeat(input.readInt()) {
         val internalKey = input.readString()
         val entityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId()
@@ -538,7 +539,7 @@ class EntityStorageSerializerImpl(
     return index
   }
 
-  internal fun serializeDiffLog(stream: OutputStream, log: WorkspaceBuilderChangeLog) {
+  internal fun serializeDiffLog(stream: OutputStream, log: ChangeLog) {
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
       val kryo = createKryo()
@@ -547,19 +548,19 @@ class EntityStorageSerializerImpl(
       output.writeString(serializerDataFormatVersion)
       saveContributedVersions(kryo, output)
 
-      val entityDataSequence = log.changeLog.values.mapNotNull {
+      val entityDataSequence = log.values.mapNotNull {
         when (it) {
-          is ChangeEntry.AddEntity<*> -> it.entityData
+          is ChangeEntry.AddEntity -> it.entityData
           is ChangeEntry.RemoveEntity -> null
-          is ChangeEntry.ReplaceEntity<*> -> it.newData
-          is ChangeEntry.ChangeEntitySource<*> -> it.newData
-          is ChangeEntry.ReplaceAndChangeSource<*> -> it.dataChange.newData
+          is ChangeEntry.ReplaceEntity -> it.newData
+          is ChangeEntry.ChangeEntitySource -> it.newData
+          is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.newData
         }
       }.asSequence()
 
       collectAndRegisterClasses(kryo, output, entityDataSequence)
 
-      kryo.writeClassAndObject(output, log.changeLog)
+      kryo.writeClassAndObject(output, log)
     }
     finally {
       flush(output)

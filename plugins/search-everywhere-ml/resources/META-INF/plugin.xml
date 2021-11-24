@@ -22,16 +22,29 @@
     <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>
+    <advancedSetting default="false" id="searcheverywhere.ml.sort.files"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlBundle"/>
 
     <registryKey defaultValue="false"
                  description="When enabled ML experiments with actions order won't be performed"
                  key="search.everywhere.force.disable.experiment.action.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with files order won't be performed"
+                 key="search.everywhere.force.disable.experiment.files.ml"/>
     <registryKey defaultValue="false"
                  description="When enabled ML logs and experiments in Search Everywhere will be disabled"
                  key="search.everywhere.force.disable.logging.ml"/>
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
                  key="search.everywhere.ml.experiment.group"/>
+
+    <registryKey defaultValue=""
+                 description="Path to the local action-ranking model."
+                 key="search.everywhere.ml.action.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local file-ranking model."
+                 key="search.everywhere.ml.files.model.path"/>
   </extensions>
 
   <extensionPoints>
@@ -55,12 +68,18 @@
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereOptionFeaturesProvider"/>
+    <!-- TODO: Uncomment when there are enough features and we can start collecting the data
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassFeaturesProvider"/>
+    -->
 
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.FileKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ClassAndFileKeyProvider"/>
 
     <rankingModelProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider"/>
+    <rankingModelProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereFilesRankingModelProvider"/>
   </extensions>
 
   <applicationListeners>

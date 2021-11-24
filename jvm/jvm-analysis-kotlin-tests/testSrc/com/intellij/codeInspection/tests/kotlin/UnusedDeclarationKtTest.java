@@ -1,13 +1,13 @@
 package com.intellij.codeInspection.tests.kotlin;
 
 import com.intellij.java.codeInspection.AbstractUnusedDeclarationTest;
-import com.intellij.java.codeInspection.UnusedDeclarationTest;
+import com.intellij.java.codeInspection.UnusedDeclarationInspectionTest;
 import com.intellij.openapi.application.ex.PathManagerEx;
 
 public class UnusedDeclarationKtTest extends AbstractUnusedDeclarationTest {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath(UnusedDeclarationTest.class) + "/inspection/jvm";
+    return PathManagerEx.getTestDataPath(UnusedDeclarationInspectionTest.class) + "/inspection/jvm";
   }
 
   public void testSingleton() {

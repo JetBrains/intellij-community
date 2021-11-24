@@ -166,6 +166,17 @@ public final class VcsCachingHistory {
   }
 
   @RequiresBackgroundThread
+  public static void collect(@NotNull AbstractVcs vcs,
+                             @NotNull FilePath filePath,
+                             @Nullable VcsRevisionNumber revision,
+                             @NotNull Consumer<VcsFileRevision> revisionConsumer) throws VcsException {
+    VcsCachingHistory history = new VcsCachingHistory(vcs, Objects.requireNonNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    LightweightVcsHistorySessionConsumer partner = new LightweightVcsHistorySessionConsumer(revisionConsumer);
+    history.reportHistory(filePath, revision, vcs.getKeyInstanceMethod(), partner, true);
+    partner.throwIfError();
+  }
+
+  @RequiresBackgroundThread
   public static List<VcsFileRevision> collect(@NotNull AbstractVcs vcs,
                                               @NotNull FilePath filePath,
                                               @Nullable VcsRevisionNumber revision) throws VcsException {

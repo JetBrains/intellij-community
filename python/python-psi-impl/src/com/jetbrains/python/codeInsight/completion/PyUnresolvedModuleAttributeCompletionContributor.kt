@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -28,7 +29,7 @@ import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher.Qualified
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor() {
+class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor(), DumbAware {
 
   private companion object {
     val UNRESOLVED_FIRST_COMPONENT = object : PatternCondition<PyReferenceExpression>("unresolved first component") {

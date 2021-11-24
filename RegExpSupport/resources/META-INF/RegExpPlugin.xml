@@ -62,9 +62,9 @@
     <localInspection language="RegExp" shortName="RegExpAnonymousGroup" enabledByDefault="false" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.anonymous.group.or.numeric.back.reference"
                      implementationClass="org.intellij.lang.regexp.inspection.AnonymousGroupInspection"/>
-    <localInspection language="RegExp" shortName="RegExpRedundantEscape" enabledByDefault="true" level="WARNING"
+    <localInspection language="RegExp" enabledByDefault="true" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.redundant.character.escape"
-                     implementationClass="org.intellij.lang.regexp.inspection.RedundantEscapeInspection"/>
+                     implementationClass="org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection"/>
     <localInspection language="RegExp" shortName="RegExpUnexpectedAnchor" enabledByDefault="true" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.begin.or.end.anchor.in.unexpected.position"
                      implementationClass="org.intellij.lang.regexp.inspection.UnexpectedAnchorInspection"/>

@@ -68,9 +68,9 @@ final class IntelliJCoreArtifactsBuilder {
   }
 
   void generateProjectStructureMapping(@NotNull File targetFile) {
-    def mapping = new ProjectStructureMapping()
+    ProjectStructureMapping mapping = new ProjectStructureMapping()
     processCoreLayout(buildContext.paths.tempDir, mapping, false)
-    mapping.addEntry(new ProjectLibraryEntry("annotations.jar", "jetbrains-annotations-java5", null, 0))
+    mapping.addEntry(new ProjectLibraryEntry(Path.of("annotations.jar"), "jetbrains-annotations-java5", null, 0))
     mapping.generateJsonFile(targetFile.toPath(), buildContext.paths)
   }
 
@@ -79,7 +79,7 @@ final class IntelliJCoreArtifactsBuilder {
     List<String> unversionedLibs = UNVERSIONED_LIBRARIES
     List<String> coreModules = CORE_MODULES
 
-    new LayoutBuilder(buildContext, false).process(coreArtifactDir.toString(), projectStructureMapping, copyFiles) {
+    new LayoutBuilder(buildContext).process(coreArtifactDir.toString(), projectStructureMapping, copyFiles) {
       jar("intellij-core.jar") {
         coreModules.each { module(it) }
       }

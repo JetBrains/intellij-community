@@ -70,22 +70,31 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
     generateStatements(switchBlock, isRuleBasedFormat).stream()
       .map(text -> factory.createStatementFromText(text, parent))
       .forEach(statement -> parent.addBefore(statement, anchor));
-    adjustEditor(switchBlock);
+    PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
+    startTemplateOnStatement(lastStatement);
   }
 
-  private static void adjustEditor(@NotNull PsiSwitchBlock block) {
-    if (!block.isPhysical()) return;
+  /**
+   * Method selects the statement inside the switch block and offers a user to replace the selected statement
+   * with the user-specified value.
+   */
+  public static void startTemplateOnStatement(@Nullable PsiStatement statementToAdjust) {
+    if (statementToAdjust == null) return;
+    SmartPsiElementPointer<PsiStatement> pointer = SmartPointerManager.createPointer(statementToAdjust);
+    Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(statementToAdjust);
+    if (editor == null) return;
+    statementToAdjust = pointer.getElement();
+    if (statementToAdjust == null) return;
+    PsiSwitchBlock block = PsiTreeUtil.getParentOfType(statementToAdjust, PsiSwitchBlock.class);
+    if (block == null || !block.isPhysical()) return;
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
-    Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(block);
-    if (editor == null) return;
-    PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
-    if (lastStatement instanceof PsiSwitchLabeledRuleStatement) {
-      lastStatement = ((PsiSwitchLabeledRuleStatement)lastStatement).getBody();
+    if (statementToAdjust instanceof PsiSwitchLabeledRuleStatement) {
+      statementToAdjust = ((PsiSwitchLabeledRuleStatement)statementToAdjust).getBody();
     }
-    if (lastStatement != null) {
+    if (statementToAdjust != null) {
       TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(block);
-      builder.replaceElement(lastStatement, new ConstantNode(lastStatement.getText()));
+      builder.replaceElement(statementToAdjust, new ConstantNode(statementToAdjust.getText()));
       builder.run(editor, true);
     }
   }

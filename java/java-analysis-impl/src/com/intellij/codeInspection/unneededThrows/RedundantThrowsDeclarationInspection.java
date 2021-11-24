@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
@@ -107,6 +107,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
         if (processor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
+              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
               globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
                 processor.ignoreElement(refMethod);
                 return true;

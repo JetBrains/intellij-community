@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.DocumentUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -38,6 +37,7 @@ import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -124,7 +124,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
             )
         }
 
-        if (isOnTheFly) {
+        if (isOnTheFly && !isUnitTestMode()) {
             scheduleOptimizeImportsOnTheFly(file, data.optimizerData)
         }
 
@@ -146,6 +146,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         val invokeFixLater = Disposable {
             // later because should invoke when highlighting is finished
             ApplicationManager.getApplication().invokeLater {
+                if (project.isDisposed) return@invokeLater
                 val editor = PsiEditorUtil.findEditor(file)
                 val currentModificationCount = PsiModificationTracker.SERVICE.getInstance(project).modificationCount
                 if (editor != null && currentModificationCount == modificationCount && timeToOptimizeImportsOnTheFly(
@@ -205,10 +206,12 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
     }
 
     private fun optimizeImportsOnTheFly(file: KtFile, optimizedImports: List<ImportPath>, editor: Editor, project: Project) {
-        PsiDocumentManager.getInstance(file.project).commitAllDocuments()
+        val documentManager = PsiDocumentManager.getInstance(file.project)
+        val doc = documentManager.getDocument(file) ?: editor.document
+        documentManager.commitDocument(doc)
         DocumentUtil.writeInRunUndoTransparentAction {
             KotlinImportOptimizer.replaceImports(file, optimizedImports)
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc)
         }
     }
 

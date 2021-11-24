@@ -1,0 +1,14 @@
+// "Import" "true"
+package p
+
+import p.FooObject.ext
+
+open class Foo {
+    fun Int.ext() {}
+}
+
+object FooObject : Foo()
+
+fun Int.anotherExt() {
+    <caret>ext()
+}

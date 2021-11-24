@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -243,8 +244,10 @@ public class FileChooserDescriptor implements Cloneable {
 
   /**
    * Defines whether a file can be chosen.
+   * @param file
    */
-  public boolean isFileSelectable(VirtualFile file) {
+  @Contract("null -> false")
+  public boolean isFileSelectable(@Nullable VirtualFile file) {
     if (file == null) return false;
 
     if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {

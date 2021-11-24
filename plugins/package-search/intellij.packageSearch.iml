@@ -9,6 +9,11 @@
         <compilerArguments>
           <option name="languageVersion" value="1.5" />
           <option name="apiVersion" value="1.5" />
+          <option name="pluginClasspaths">
+            <array>
+              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
+            </array>
+          </option>
         </compilerArguments>
       </configuration>
     </facet>
@@ -79,6 +84,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="org.junit.jupiter:junit-jupiter-params:5.7.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="library" name="commons-codec" level="project" />
   </component>
 </module>

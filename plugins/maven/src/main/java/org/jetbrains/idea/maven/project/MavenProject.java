@@ -739,7 +739,7 @@ public class MavenProject {
       if (state.myUnresolvedDependenciesCache == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myDependencies) {
-          if (!each.isResolved()) result.add(each);
+          if (!MavenArtifactUtilKt.resolved(each)) result.add(each);
         }
         state.myUnresolvedDependenciesCache = result;
       }
@@ -771,7 +771,7 @@ public class MavenProject {
       if (state.myUnresolvedAnnotationProcessors == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myAnnotationProcessors) {
-          if (!each.isResolved()) result.add(each);
+          if (!MavenArtifactUtilKt.resolved(each)) result.add(each);
         }
         state.myUnresolvedAnnotationProcessors = result;
       }
@@ -1078,7 +1078,7 @@ public class MavenProject {
   private @NotNull Map<String, String> getPropertiesFromConfig(ConfigFileKind kind) {
     Map<String, String> mavenConfig = getCachedValue(kind.CACHE_KEY);
     if (mavenConfig == null) {
-      mavenConfig = readConfigFile(MavenUtil.getBaseDir(getDirectoryFile()), kind);
+      mavenConfig = readConfigFile(MavenUtil.getBaseDir(getDirectoryFile()).toFile(), kind);
       putCachedValue(kind.CACHE_KEY, mavenConfig);
     }
 

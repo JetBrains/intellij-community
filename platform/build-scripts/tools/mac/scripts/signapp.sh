@@ -10,10 +10,14 @@ INPUT_FILE=$1
 EXPLODED=$2.exploded
 USERNAME=$3
 PASSWORD=$4
+
+set -x
+
 CODESIGN_STRING=$5
 JDK_ARCHIVE="$6"
 NOTARIZE=$7
 BUNDLE_ID=$8
+COMPRESS_INPUT=${9:-false}
 
 cd "$(dirname "$0")"
 
@@ -94,7 +98,9 @@ fi
 if [ "$CODESIGN_STRING" != "" ]; then
   log "Unlocking keychain..."
   # Make sure *.p12 is imported into local KeyChain
+  set +x
   security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain"
+  set -x
 
   log "Signing ..."
   retry "Signing" 3 ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING"
@@ -118,7 +124,9 @@ if [ "$NOTARIZE" = "yes" ]; then
   FAKE_ROOT="$(pwd)/fake-root"
   mkdir -p "$FAKE_ROOT"
   echo "Notarization will use fake root: $FAKE_ROOT"
+  set +x
   retry "Notarization" 3 ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME" "$BUNDLE_ID" "$FAKE_ROOT"
+  set -x
   rm -rf "$FAKE_ROOT"
 
   log "Stapling..."
@@ -128,11 +136,13 @@ else
   log "Stapling disabled"
 fi
 
-log "Zipping $BUILD_NAME to $INPUT_FILE ..."
-(
-  cd "$EXPLODED"
-  ditto -c -k --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
-  log "Finished zipping"
-)
-rm -rf "$EXPLODED"
+if [ "$COMPRESS_INPUT" != "false" ]; then
+  log "Zipping $BUILD_NAME to $INPUT_FILE ..."
+  (
+    cd "$EXPLODED"
+    ditto -c -k --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
+    log "Finished zipping"
+  )
+fi
+
 log "Done"

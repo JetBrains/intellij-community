@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
+import com.intellij.util.Base64
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
@@ -38,11 +39,11 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
   override fun onLAFChanged() = Unit
 
   private fun escapeContent(content: String): String {
-    return content.replace("<", "&lt;").replace(">", "&gt;")
+    return Base64.encode(content.toByteArray())
   }
 
   private fun createRawContentElement(hash: String, content: String): String {
-    return "<div class=\"mermaid\" cache-id=\"$hash\" id=\"$hash\">${escapeContent(content)}</div>"
+    return "<div class=\"mermaid\" data-cache-id=\"$hash\" id=\"$hash\" data-actual-fence-content=\"${escapeContent(content)}\"></div>"
   }
 
   companion object {

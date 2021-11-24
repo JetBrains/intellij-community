@@ -80,10 +80,10 @@
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
-      <option name="BookmarkIcon.background" value="F4AF3D"/>
-      <option name="BookmarkMnemonicIcon.foreground" value="000000"/>
-      <option name="BookmarkMnemonicIcon.background" value="FEF7EC"/>
-      <option name="BookmarkMnemonicIcon.borderColor" value="F4AF3D"/>
+      <option name="Bookmark.iconBackground" value="F4AF3D"/>
+      <option name="Bookmark.Mnemonic.iconForeground" value="000000"/>
+      <option name="Bookmark.Mnemonic.iconBackground" value="FEF7EC"/>
+      <option name="Bookmark.Mnemonic.iconBorderColor" value="F4AF3D"/>
       <option name="ScrollBar.background" value="F5F5F5"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
       <option name="ScrollBar.thumbColor" value="73737333"/>
@@ -1351,10 +1351,10 @@
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
-      <option name="BookmarkIcon.background" value="D9A343"/>
-      <option name="BookmarkMnemonicIcon.foreground" value="BBBBBB"/>
-      <option name="BookmarkMnemonicIcon.background" value="5B5341"/>
-      <option name="BookmarkMnemonicIcon.borderColor" value="D9A343"/>
+      <option name="Bookmark.iconBackground" value="D9A343"/>
+      <option name="Bookmark.Mnemonic.iconForeground" value="BBBBBB"/>
+      <option name="Bookmark.Mnemonic.iconBackground" value="5B5341"/>
+      <option name="Bookmark.Mnemonic.iconBorderColor" value="D9A343"/>
       <option name="ScrollBar.background" value="3F4244"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
       <option name="ScrollBar.thumbColor" value="A6A6A647"/>

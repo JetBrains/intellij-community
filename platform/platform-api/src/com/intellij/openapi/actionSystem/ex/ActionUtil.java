@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -25,7 +24,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -69,8 +67,7 @@ public final class ActionUtil {
     DumbService.getInstance(project).showDumbModeNotification(getActionUnavailableMessage(actionNames));
   }
 
-  @NotNull
-  private static @NlsContexts.PopupContent String getActionUnavailableMessage(@NotNull List<String> actionNames) {
+  private static @NotNull @NlsContexts.PopupContent String getActionUnavailableMessage(@NotNull List<String> actionNames) {
     String message;
     if (actionNames.isEmpty()) {
       message = getUnavailableMessage("This action", false);
@@ -85,8 +82,7 @@ public final class ActionUtil {
     return message;
   }
 
-  @NotNull
-  public static @NlsContexts.PopupContent String getUnavailableMessage(@NotNull String action, boolean plural) {
+  public static @NotNull @NlsContexts.PopupContent String getUnavailableMessage(@NotNull String action, boolean plural) {
     if (plural) {
       return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
     }
@@ -126,7 +122,7 @@ public final class ActionUtil {
     action.applyTextOverride(e);
 
     try {
-      ThrowableRunnable<RuntimeException> runnable = () -> {
+      Runnable runnable = () -> {
         e.setInjectedContext(action.isInInjectedContext());
         if (beforeActionPerformed) {
           action.beforeActionPerformedUpdate(e);
@@ -145,16 +141,7 @@ public final class ActionUtil {
         }
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
-      final String name;
-      if (isLikeUpdate) {
-        name = SlowOperations.ACTION_UPDATE;
-      }
-      else {
-        name = ModalityState.current() == ModalityState.NON_MODAL
-               ? SlowOperations.ACTION_PERFORM
-               : SlowOperations.MODAL_ACTION_PERFORM;
-      }
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(name)) {
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE : SlowOperations.ACTION_PERFORM)) {
         runnable.run();
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
@@ -273,13 +260,8 @@ public final class ActionUtil {
       manager.fireAfterActionPerformed(action, event, AnActionResult.IGNORED);
       return;
     }
-
-    final String activityName = ModalityState.current() == ModalityState.NON_MODAL
-                              ? SlowOperations.ACTION_PERFORM
-                              : SlowOperations.MODAL_ACTION_PERFORM;
-
     AnActionResult result = null;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(activityName)) {
+    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }
@@ -317,8 +299,7 @@ public final class ActionUtil {
     }
   }
 
-  @NotNull
-  public static AnActionEvent createEmptyEvent() {
+  public static @NotNull AnActionEvent createEmptyEvent() {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
   }
 
@@ -352,8 +333,7 @@ public final class ActionUtil {
     }
   }
 
-  @NotNull
-  public static List<AnAction> getActions(@NotNull JComponent component) {
+  public static @NotNull List<AnAction> getActions(@NotNull JComponent component) {
     return ContainerUtil.notNullize(ComponentUtil.getClientProperty(component, AnAction.ACTIONS_KEY));
   }
 
@@ -470,8 +450,7 @@ public final class ActionUtil {
     }
   }
 
-  @NotNull
-  public static ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
+  public static @NotNull ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
     return e -> {
       AnAction action = getAction(actionId);
       if (action == null) {
@@ -481,8 +460,7 @@ public final class ActionUtil {
     };
   }
 
-  @Nullable
-  public static ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
+  public static @Nullable ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
     return KeymapUtil.getMnemonicAsShortcut(action.getTemplatePresentation().getMnemonic());
   }
 

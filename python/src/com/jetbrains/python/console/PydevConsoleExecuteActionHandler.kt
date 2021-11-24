@@ -10,6 +10,8 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.util.PsiTreeUtil
@@ -206,27 +208,21 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   }
 
   private fun doRunExecuteAction(console: LanguageConsoleView) {
-    val doc = myConsoleView.editorDocument
-    val endMarker = doc.createRangeMarker(doc.textLength, doc.textLength)
-    endMarker.isGreedyToLeft = false
-    endMarker.isGreedyToRight = true
-    val isComplete = myEnterHandler.handleEnterPressed(console.consoleEditor)
-    if (isComplete || consoleCommunication.isWaitingForInput) {
+  val doc = myConsoleView.editorDocument
+  val endMarker = doc.createRangeMarker(doc.textLength, doc.textLength)
+  endMarker.isGreedyToLeft = false
+  endMarker.isGreedyToRight = true
+  val isComplete = myEnterHandler.handleEnterPressed(console.consoleEditor)
+  if (isComplete || consoleCommunication.isWaitingForInput) {
 
-      if (endMarker.endOffset - endMarker.startOffset > 0) {
-        ApplicationManager.getApplication().runWriteAction {
-          CommandProcessor.getInstance().runUndoTransparentAction {
-            doc.deleteString(endMarker.startOffset, endMarker.endOffset)
-          }
-        }
-      }
-      if (shouldCopyToHistory(console)) {
-        copyToHistoryAndExecute(console)
-      }
-      else {
-        processLine(myConsoleView.consoleEditor.document.text)
-      }
+    deleteString(doc, endMarker)
+    if (shouldCopyToHistory(console)) {
+      copyToHistoryAndExecute(console)
     }
+    else {
+      processLine(myConsoleView.consoleEditor.document.text)
+    }
+  }
   }
 
   private fun copyToHistoryAndExecute(console: LanguageConsoleView) = super.runExecuteAction(console)
@@ -246,6 +242,17 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
     private fun shouldCopyToHistory(console: LanguageConsoleView): Boolean {
       return !PyConsoleUtil.isPagingPrompt(console.prompt)
+    }
+
+
+    fun deleteString(document: Document, endMarker : RangeMarker) {
+      if (endMarker.endOffset - endMarker.startOffset > 0) {
+        ApplicationManager.getApplication().runWriteAction {
+          CommandProcessor.getInstance().runUndoTransparentAction {
+            document.deleteString(endMarker.startOffset, endMarker.endOffset)
+          }
+        }
+      }
     }
   }
 }

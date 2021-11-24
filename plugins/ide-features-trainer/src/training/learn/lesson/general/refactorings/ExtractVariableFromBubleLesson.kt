@@ -57,5 +57,14 @@ class ExtractVariableFromBubbleLesson(private val sample: LessonSample)
           actions(it)
         }
       }
+
+      restoreRefactoringOptionsInformer()
     }
+
+  override val suitableTips = listOf("IntroduceVariable")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("extract.variable.help.link"),
+         LessonUtil.getHelpLink("extract-variable.html")),
+  )
 }

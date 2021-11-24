@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'map{}.maxOrNull()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().map{}.maxOrNull()'"
 // AFTER-WARNING: Parameter 'i' is never used

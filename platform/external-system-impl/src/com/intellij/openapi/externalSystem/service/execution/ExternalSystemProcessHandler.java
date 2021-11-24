@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -46,11 +32,17 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     myTask = task;
     myExecutionName = executionName;
     if (task instanceof UserDataHolder) {
+      UserDataHolder dataHolder = (UserDataHolder)task;
+      InputStream stream = dataHolder.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
+      if (stream != null) {
+        LOG.warn("Unexpected stream found, closing it...");
+        StreamUtil.closeStream(stream);
+      }
       try {
         Pipe pipe = Pipe.open();
         InputStream inputStream = new BufferedInputStream(Channels.newInputStream(pipe.source()));
         myProcessInput = new BufferedOutputStream(Channels.newOutputStream(pipe.sink()));
-        ((UserDataHolder)task).putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, inputStream);
+        dataHolder.putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, inputStream);
       }
       catch (IOException e) {
         LOG.warn("Unable to setup process input", e);
@@ -84,8 +76,12 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
 
   @Override
   protected void detachProcessImpl() {
-    notifyProcessDetached();
-    closeInput();
+    try {
+      notifyProcessDetached();
+    }
+    finally {
+      closeInput();
+    }
   }
 
   @Override
@@ -101,8 +97,12 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
 
   @Override
   public void notifyProcessTerminated(int exitCode) {
-    super.notifyProcessTerminated(exitCode);
-    closeInput();
+    try {
+      super.notifyProcessTerminated(exitCode);
+    }
+    finally {
+      closeInput();
+    }
   }
 
   @Override
@@ -113,18 +113,17 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   protected void closeInput() {
     StreamUtil.closeStream(myProcessInput);
     myProcessInput = null;
+    if (myTask instanceof UserDataHolder) {
+      UserDataHolder taskDataHolder = (UserDataHolder)myTask;
+      InputStream inputStream = taskDataHolder.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
+      taskDataHolder.putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
+      StreamUtil.closeStream(inputStream);
+    }
   }
 
   @Override
   public void dispose() {
     try {
-      ExternalSystemTask task = myTask;
-      if (task instanceof UserDataHolder) {
-        UserDataHolder taskDataHolder = (UserDataHolder)task;
-        InputStream inputStream = taskDataHolder.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
-        StreamUtil.closeStream(inputStream);
-        taskDataHolder.putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
-      }
       detachProcessImpl();
     }
     finally {

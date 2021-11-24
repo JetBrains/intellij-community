@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
+import com.intellij.util.application
 import com.intellij.util.ui.JBUI
 import git4idea.config.GitExecutableListener
 import git4idea.config.GitExecutableManager
@@ -54,16 +55,14 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     updatePresentation()
 
     val connection = project.messageBus.connect(disposable)
-    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED,
-                         VcsRepositoryMappingListener { scheduleUpdate() })
-    connection.subscribe(GitExecutableManager.TOPIC,
-                         GitExecutableListener { scheduleUpdate() })
-    connection.subscribe(GitConfigListener.TOPIC,
-                         object : GitConfigListener {
-                           override fun notifyConfigChanged(repository: GitRepository) {
-                             scheduleUpdate()
-                           }
-                         })
+    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener { scheduleUpdate() })
+    connection.subscribe(GitConfigListener.TOPIC, object : GitConfigListener {
+      override fun notifyConfigChanged(repository: GitRepository) {
+        scheduleUpdate()
+      }
+    })
+
+    application.messageBus.connect(disposable).subscribe(GitExecutableManager.TOPIC, GitExecutableListener { scheduleUpdate() })
 
     updateRepoList()
     reloadConfigs()

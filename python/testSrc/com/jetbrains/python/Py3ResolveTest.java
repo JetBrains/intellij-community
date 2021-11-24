@@ -826,4 +826,35 @@ public class Py3ResolveTest extends PyResolveTestCase {
     final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
     assertEquals("g", function.getName());
   }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInstanceAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToClassAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToProperty() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInheritedInstanceAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInheritedClassAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInheritedProperty() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
 }

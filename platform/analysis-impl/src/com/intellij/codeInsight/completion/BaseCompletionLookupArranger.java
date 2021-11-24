@@ -213,11 +213,6 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   @Override
-  public synchronized @NotNull String itemPattern(@NotNull LookupElement element) {
-    return super.itemPattern(element);
-  }
-
-  @Override
   public synchronized void prefixReplaced(@NotNull Lookup lookup, @NotNull String newPrefix) {
     super.prefixReplaced(lookup, newPrefix);
   }

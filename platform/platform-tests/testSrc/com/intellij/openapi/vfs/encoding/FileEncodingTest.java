@@ -1104,21 +1104,16 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
   public void testForcedCharsetOverridesFileEncodingProvider() throws IOException {
     final String ext = "yyy";
-    class TestFileType extends LanguageFileType {
-      protected TestFileType() { super(new Language("test") {}); }
+    class MyForcedFileType extends LanguageFileType {
+      protected MyForcedFileType() { super(new Language("test") {}); }
       @Override public @NotNull String getName() { return "Test"; }
       @Override public @NotNull String getDescription() { return "Test"; }
       @Override public @NotNull String getDefaultExtension() { return ext; }
       @Override public @Nullable Icon getIcon() { return null; }
       @Override public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) { return StandardCharsets.ISO_8859_1.name(); }
     }
-    TestFileType fileType = new TestFileType();
-    FileEncodingProvider encodingProvider = new FileEncodingProvider() {
-      @Override
-      public Charset getEncoding(@NotNull VirtualFile virtualFile) {
-        return StandardCharsets.UTF_16;
-      }
-    };
+    MyForcedFileType fileType = new MyForcedFileType();
+    FileEncodingProvider encodingProvider = __ -> StandardCharsets.UTF_16;
     FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
     fileTypeManager.registerFileType(fileType, List.of(new ExtensionFileNameMatcher(ext)), getTestRootDisposable());
@@ -1128,12 +1123,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testDetectedCharsetOverridesFileEncodingProvider() throws IOException {
-    FileEncodingProvider encodingProvider = new FileEncodingProvider() {
-      @Override
-      public Charset getEncoding(@NotNull VirtualFile virtualFile) {
-        return WINDOWS_1251;
-      }
-    };
+    FileEncodingProvider encodingProvider = __ -> WINDOWS_1251;
     FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
     VirtualFile file = createTempFile("yyy", NO_BOM, "Some text" + THREE_RUSSIAN_LETTERS, StandardCharsets.UTF_8);
     assertEquals(StandardCharsets.UTF_8, file.getCharset());

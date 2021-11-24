@@ -549,6 +549,12 @@ public final class PathManager {
         log("Can't read property file '" + path + "': " + e.getMessage());
       }
     }
+
+    // Check and fix conflicting properties.
+    sysProperties.setProperty("disableJbScreenMenuBar", "true"); // temporary key (only for bundled runtime), will be removed soon
+    if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
+      sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
+    }
   }
 
   private static String getCustomPropertiesFile() {

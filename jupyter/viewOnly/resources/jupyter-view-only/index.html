@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" theme="light">
+<head>
+  <meta charset="UTF-8">
+  <script defer type="text/javascript" src="notebookViewer.tvm.min.js"></script>
+  <script defer type="text/javascript" src="notebookViewer.deps.min.js"></script>
+  <script defer type="text/javascript" src="editor.min.js"></script>
+  <link rel="stylesheet" href="notebookViewer.css">
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({ skipStartupTypeset: true, messageStyle: "none", tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']], processEscapes: true }, asciimath2jax: { delimiters: [['``','``']] }, CommonHTML: { linebreaks: { automatic: true, width: "container" } }, "HTML-CSS": { linebreaks: { automatic: true, width: "container" } }, SVG: { linebreaks: { automatic: true, width: "container" } }, showMathMenu: false });
+  </script>
+  <script type="application/javascript">
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    function render(obj) {
+      try {
+        IPythonRenderer.render(JSON.stringify(obj));
+      }
+      catch (ex) {
+        console.log(ex);
+        document.getElementsByClassName('main')[0].innerText = 'Notebook isn\'t supported by PyCharm';
+      }
+    }
+  </script>
+</head>
+<body style="overflow: auto;">
+<div class="adviser">
+  <p>PyCharm Community edition supports Jupyter notebooks in read-only mode, to get full support for local notebooks download and try <a
+    href="https://www.jetbrains.com/pycharm/download/">PyCharm Professional</a> now!</p>
+  <div class="products-container">
+    <div class="product">
+      <img src="./dataspell.svg" width="32" height="32"/>
+      <p>Try <a href="https://www.jetbrains.com/dataspell/">DataSpell</a> &#8212; a dedicated IDE for data science,<br/> with
+        full
+        support for local and remote notebooks</p>
+    </div>
+    <div class="product">
+      <img src="./datalore.svg" width="32" height="32"/>
+      <p>Try <a href="https://datalore.jetbrains.com/">Datalore</a> &#8212; an online environment <br/> for Jupyter notebooks in the browser</p>
+    </div>
+  </div>
+  <p>Also read more about JetBrains Data Solutions on our <a href="https://www.jetbrains.com/datascience/">website</a></p>
+</div>
+<div class="main"></div>
+</body>
+</html>

@@ -156,8 +156,11 @@ class WebServerPageConnectionService {
         for ((requestedPage, affectedFiles) in affectedClients) {
           val clientFuture = requestedPage.myClient
           if (affectedFiles.isEmpty()) {
-            LOGGER.debug("Reload page for clientId = ${requestedPage.myClientId}")
-            clientFuture.thenAccept { client: WebSocketClient? -> client!!.send(RELOAD_PAGE_MESSAGE.retainedDuplicate()) }
+            LOGGER.debug("Reload page for clientId = ${requestedPage.myClientId} scheduled")
+            clientFuture.thenAccept { client: WebSocketClient? ->
+              LOGGER.debug("Reload page for clientId = ${requestedPage.myClientId} sent")
+              client!!.send(RELOAD_PAGE_MESSAGE.retainedDuplicate())
+            }
           }
           else {
             val messageId = myState.getNextMessageId()
@@ -354,6 +357,7 @@ class WebServerPageConnectionService {
     fun clientConnected(client: WebSocketClient, clientId: Int) {
       val requestedPage = ContainerUtil.find(myRequestedPages.values()) { it?.myClientId == clientId }
       if (requestedPage != null) {
+        LOGGER.debug("WebSocket client connected for clientId = $clientId")
         requestedPage.myClient.complete(client)
       }
       else {

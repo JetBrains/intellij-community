@@ -203,7 +203,7 @@ public class TestAll implements Test {
       testResult.addListener(testListener);
     }
 
-    testResult = Retries.maybeEnable(testResult);
+    testResult = RetriesImpl.maybeEnable(testResult);
 
     List<Class<?>> classes = myTestCaseLoader.getClasses();
 
@@ -329,7 +329,7 @@ public class TestAll implements Test {
       }
 
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return createJUnit4Adapter(testCaseClass);
 
@@ -363,7 +363,7 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass))) {
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass.getSimpleName()))) {
               return;
             }
 
@@ -430,7 +430,7 @@ public class TestAll implements Test {
           cache = JUnit4TestAdapterCache.getDefault();
         }
       }
-      ourUnit4TestAdapterCache = Retries.maybeEnable(cache);
+      ourUnit4TestAdapterCache = RetriesImpl.maybeEnable(cache);
     }
     return ourUnit4TestAdapterCache;
   }

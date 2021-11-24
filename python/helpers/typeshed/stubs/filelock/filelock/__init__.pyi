@@ -1,9 +1,6 @@
 import sys
-from logging import Logger
 from types import TracebackType
 from typing import Type
-
-def logger() -> Logger: ...
 
 class Timeout(TimeoutError):
     def __init__(self, lock_file: str) -> None: ...

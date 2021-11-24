@@ -33,9 +33,6 @@ public class HyperlinkAnnotator implements Annotator {
     if (holder.isBatchMode()) return;
     for (PsiHighlightedReference reference : PsiSymbolReferenceService.getService().getReferences(element, PsiHighlightedReference.class)) {
       TextRange range = reference.getAbsoluteRange();
-      if (range.isEmpty()) {
-        continue;
-      }
       String message = reference.highlightMessage();
       AnnotationBuilder annotationBuilder = message == null ? holder.newSilentAnnotation(reference.highlightSeverity())
                                                             : holder.newAnnotation(reference.highlightSeverity(), message);

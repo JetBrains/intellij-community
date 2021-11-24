@@ -9,7 +9,6 @@ import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
@@ -249,7 +248,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
           row {
-            button(message("background.image.button"), ActionPlaces.UNKNOWN, backgroundImageAction)
+            button(message("background.image.button"), backgroundImageAction)
               .enabled(ProjectManager.getInstance().openProjects.isNotEmpty())
           }
         }
@@ -274,11 +273,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 0 to JLabel("0%"),
                 50 to JLabel("50%"),
                 100 to JLabel("100%")))
-              .bindValue(
-                PropertyBinding(
-                  { (settingsState.alphaModeRatio * 100f).toInt() },
-                  { settingsState.alphaModeRatio = it / 100f }
-                ))
+              .bindValue({ (settingsState.alphaModeRatio * 100f).toInt() }, { settingsState.alphaModeRatio = it / 100f })
               .showValueHint()
           }.enabledIf(checkbox.selected)
             .layout(RowLayout.INDEPENDENT)

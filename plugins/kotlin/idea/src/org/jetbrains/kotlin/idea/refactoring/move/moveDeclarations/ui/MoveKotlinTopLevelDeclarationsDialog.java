@@ -234,8 +234,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
                         setErrorText(s);
                     }
                 },
-                classPackageChooser.getChildComponent(),
-                !freezeTargets
+                classPackageChooser.getChildComponent()
         );
     }
 
@@ -337,6 +336,11 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
             @Override
             public String getTargetPackage() {
                 return MoveKotlinTopLevelDeclarationsDialog.this.getTargetPackage();
+            }
+
+            @Override
+            protected boolean sourceRootsInTargetDirOnly() {
+                return !freezeTargets;
             }
         };
     }

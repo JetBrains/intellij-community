@@ -1,5 +1,5 @@
 // "Wrap element with 'arrayOf()' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(a: String) {
     bar(a<caret>)

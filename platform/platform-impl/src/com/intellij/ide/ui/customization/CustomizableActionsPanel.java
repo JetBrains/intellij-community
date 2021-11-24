@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.impl.ui.ActionsTree;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
@@ -18,7 +17,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,7 +27,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
@@ -41,10 +38,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -72,7 +66,7 @@ public class CustomizableActionsPanel {
     myActionsTree.setModel(model);
     myActionsTree.setRootVisible(false);
     myActionsTree.setShowsRootHandles(true);
-    myActionsTree.setCellRenderer(new MyTreeCellRenderer());
+    myActionsTree.setCellRenderer(createDefaultRenderer());
 
     patchActionsTreeCorrespondingToSchema(root);
 
@@ -99,7 +93,7 @@ public class CustomizableActionsPanel {
     return toolbar;
   }
 
-  private static FilterComponent setupFilterComponent(JTree tree) {
+  static FilterComponent setupFilterComponent(JTree tree) {
     final TreeSpeedSearch mySpeedSearch = new TreeSpeedSearch(tree, new TreePathStringConvertor(), true) {
       @Override
       public boolean isPopupActive() {
@@ -125,6 +119,7 @@ public class CustomizableActionsPanel {
       @Override
       public void filter() {
         mySpeedSearch.findAndSelectElement(getFilter());
+        mySpeedSearch.getComponent().repaint();
       }
     };
     JTextField textField = filterComponent.getTextEditor();
@@ -193,6 +188,8 @@ public class CustomizableActionsPanel {
     if (SystemInfo.isMac) {
       TouchbarSupport.reloadAllActions();
     }
+
+    CustomActionsListener.fireSchemaChanged();
   }
 
   private void restorePathsAfterTreeOptimization(final List<? extends TreePath> treePaths) {
@@ -248,6 +245,10 @@ public class CustomizableActionsPanel {
     }
   }
 
+  static TreeCellRenderer createDefaultRenderer() {
+    return new MyTreeCellRenderer();
+  }
+
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
@@ -259,47 +260,11 @@ public class CustomizableActionsPanel {
                                       boolean hasFocus) {
       if (value instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-        Icon icon = null;
-        if (userObject instanceof Group) {
-          Group group = (Group)userObject;
-          String name = group.getName();
-          @NlsSafe String id = group.getId();
-          append(name != null ? name : ObjectUtils.notNull(id, IdeBundle.message("action.group.name.unnamed.group")));
-          icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
-        }
-        else if (userObject instanceof String) {
-          String actionId = (String)userObject;
-          AnAction action = ActionManager.getInstance().getAction(actionId);
-          String name = action != null ? action.getTemplatePresentation().getText() : null;
-          append(!StringUtil.isEmptyOrSpaces(name) ? name : actionId);
-          if (action != null) {
-            Icon actionIcon = action.getTemplatePresentation().getIcon();
-            if (actionIcon != null) {
-              icon = actionIcon;
-            }
-          }
-        }
-        else if (userObject instanceof Pair) {
-          String actionId = (String)((Pair<?, ?>)userObject).first;
-          AnAction action = ActionManager.getInstance().getAction(actionId);
-          String text = action != null ? action.getTemplatePresentation().getText() : null;
-          append(StringUtil.isNotEmpty(text) ? text : actionId);
-          icon = (Icon)((Pair<?, ?>)userObject).second;
-        }
-        else if (userObject instanceof Separator) {
-          append("-------------");
-        }
-        else if (userObject instanceof QuickList) {
-          append(((QuickList)userObject).getDisplayName());
-          icon = null; // AllIcons.Actions.QuickList;
-        }
-        else if (userObject != null) {
-          throw new IllegalArgumentException("unknown userObject: " + userObject);
-        }
-
-        setIcon(ActionsTree.getEvenIcon(icon));
+        CustomizationUtil.acceptObjectIconAndText(userObject, (text, icon) -> {
+          append(text);
+          setIcon(icon);
+        });
         setForeground(UIUtil.getTreeForeground(selected, hasFocus));
-        setIcon(icon);
       }
     }
   }
@@ -355,9 +320,8 @@ public class CustomizableActionsPanel {
     textField.setMinimumSize(new Dimension(200, textField.getPreferredSize().height));
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        //noinspection HardCodedStringLiteral
-        return file.getName().endsWith(".png") || file.getName().endsWith(".svg");
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && (file.getName().endsWith(".png") || file.getName().endsWith(".svg"));
       }
     };
     textField.addBrowseFolderListener(IdeBundle.message("title.browse.icon"), IdeBundle.message("prompt.browse.icon.for.selected.action"), null,
@@ -455,7 +419,7 @@ public class CustomizableActionsPanel {
       TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, new TreePathStringConvertor(), true);
       myTree.setModel(model);
       myTree.setRootVisible(false);
-      myTree.setCellRenderer(new MyTreeCellRenderer());
+      myTree.setCellRenderer(createDefaultRenderer());
       final ActionManager actionManager = ActionManager.getInstance();
 
       mySetIconButton = new JButton(IdeBundle.message("button.set.icon"));

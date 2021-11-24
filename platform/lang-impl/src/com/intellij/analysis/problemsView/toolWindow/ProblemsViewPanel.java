@@ -9,6 +9,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -390,9 +391,9 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
         Node node = getSelectedNode();
         Navigatable navigatable = node == null ? null : node.getNavigatable();
         if (navigatable != null && navigatable.canNavigateToSource()) {
-          ClientId.withClientId(myClientId, () -> {
+          try (AccessToken ignored = ClientId.withClientId(myClientId)) {
             navigate(false, navigatable);
-          });
+          }
         }
       });
     }
@@ -420,7 +421,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return ActionManager.getInstance().createActionToolbar(getClass().getName(), group, false);
   }
 
-  @NotNull Comparator<Node> createComparator() {
+  protected @NotNull Comparator<Node> createComparator() {
     return new NodeComparator(
       isNullableOrSelected(getSortFoldersFirst()),
       isNullableOrSelected(getSortBySeverity()),

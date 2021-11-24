@@ -37,7 +37,6 @@
     <orderEntry type="library" scope="RUNTIME" name="gant-groovy" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="gson" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="decentxml" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="org.jetbrains.intellij:blockmap:1.0.2" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="xz" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="RUNTIME" />
@@ -45,5 +44,9 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="opentelemetry" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jackson" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="okhttp" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jackson-jr-objects" level="project" />
   </component>
 </module>

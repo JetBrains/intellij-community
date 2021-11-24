@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.TrustedProjectSettings;
+import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -35,7 +35,6 @@ import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +53,7 @@ import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
  * Defines the new project wizard, which is used in small IDEs where we don't need to work with modules directly
  */
 public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware, ActionsWithPanelProvider {
-  static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME =
+  public static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME =
     new ExtensionPointName<>("com.intellij.directoryProjectGenerator");
 
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
@@ -227,21 +226,15 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
     OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false)
       .withBeforeOpenCallback((project) -> {
-        // set project trusted state directly to avoid notification
-        var service = project.getService(TrustedProjectSettings.class);
-        if (service != null) {
-          service.setTrustedState(ThreeState.YES);
-        }
-
         project.putUserData(CREATED_KEY, true);
         return true;
       });
+    TrustedPaths.getInstance().setProjectPathTrusted(location, true);
     Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
     if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
     logProjectGeneratedEvent(generator, project);
-
     return project;
   }
 

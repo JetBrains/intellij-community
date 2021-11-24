@@ -2,6 +2,9 @@
 package org.jetbrains.kotlin.idea.grazie
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextContentTest
+import com.intellij.grazie.text.TextExtractor
 
 class KotlinGrazieSupportTest : GrazieTestBase() {
     override val additionalEnabledRules: Set<String> = setOf("UPPERCASE_SENTENCE_START")
@@ -23,5 +26,11 @@ class KotlinGrazieSupportTest : GrazieTestBase() {
 
     fun `test grammar check in string literals`() {
         runHighlightTestForFile("grazie/StringLiterals.kt")
+    }
+
+    fun `test text extraction in string literals`() {
+        val file = myFixture.configureByText("a.kt", "val s = \"foo $" + "{injection} bar\" ")
+        val content = TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL)
+        assertEquals("foo | bar", TextContentTest.unknownOffsets(content))
     }
 }

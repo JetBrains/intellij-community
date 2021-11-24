@@ -16,7 +16,8 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
@@ -27,7 +28,9 @@ import javax.swing.ListSelectionModel
 
 object AccountsPanelFactory {
 
-  fun <A : Account, Cred, R> create(model: AccountsListModel<A, Cred>, listCellRendererFactory: () -> R): JComponent
+  fun <A : Account, Cred, R> create(model: AccountsListModel<A, Cred>,
+                                    needAddBtnWithDropdown: Boolean,
+                                    listCellRendererFactory: () -> R): JComponent
     where R : ListCellRenderer<A>, R : JComponent {
 
     val accountsListModel = model.accountsListModel
@@ -43,6 +46,8 @@ object AccountsPanelFactory {
       accountsList.setPaintBusy(it)
     }
 
+    accountsList.addListSelectionListener { model.selectedAccount = accountsList.selectedValue }
+
     accountsList.emptyText.apply {
       appendText(CollaborationToolsBundle.message("accounts.none.added"))
       appendSecondaryText(CollaborationToolsBundle.message("accounts.add.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
@@ -56,12 +61,15 @@ object AccountsPanelFactory {
       accountsList.setPaintBusy(it)
     }
 
-    return ToolbarDecorator.createDecorator(accountsList)
+    val addIcon: Icon = if (needAddBtnWithDropdown) LayeredIcon.ADD_WITH_DROPDOWN else AllIcons.General.Add
+
+    val toolbar = ToolbarDecorator.createDecorator(accountsList)
       .disableUpDownActions()
       .setAddAction { model.addAccount(accountsList, it.preferredPopupPoint) }
-      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
-      .addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"),
-                                                                    AllIcons.Actions.Checked) {
+      .setAddIcon(addIcon)
+
+    if (model is AccountsListModel.WithDefault) {
+      toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"), AllIcons.Actions.Checked) {
         override fun actionPerformed(e: AnActionEvent) {
           val selected = accountsList.selectedValue
           if (selected == model.defaultAccount) return
@@ -72,15 +80,64 @@ object AccountsPanelFactory {
           isEnabled = isEnabled && model.defaultAccount != accountsList.selectedValue
         }
       })
-      .createPanel()
+    }
+
+    return toolbar.createPanel()
+  }
+
+  fun <A : Account, Cred> Row.accountsPanel(accountManager: AccountManager<A, Cred>,
+                                            accountsModel: AccountsListModel<A, Cred>,
+                                            detailsProvider: AccountsDetailsProvider<A, *>,
+                                            disposable: Disposable,
+                                            needAddBtnWithDropdown: Boolean,
+                                            defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
+
+    accountsModel.addCredentialsChangeListener(detailsProvider::reset)
+    detailsProvider.loadingStateModel.addListener {
+      accountsModel.busyStateModel.value = it
+    }
+
+    fun isModified() = accountsModel.newCredentials.isNotEmpty()
+                       || accountsModel.accounts != accountManager.accounts
+
+    fun reset() {
+      accountsModel.accounts = accountManager.accounts
+      accountsModel.clearNewCredentials()
+      detailsProvider.resetAll()
+    }
+
+    fun apply() {
+      val newTokensMap = mutableMapOf<A, Cred?>()
+      newTokensMap.putAll(accountsModel.newCredentials)
+      for (account in accountsModel.accounts) {
+        newTokensMap.putIfAbsent(account, null)
+      }
+      accountManager.updateAccounts(newTokensMap)
+      accountsModel.clearNewCredentials()
+    }
+
+    accountManager.addListener(disposable, object : AccountsListener<A> {
+      override fun onAccountCredentialsChanged(account: A) {
+        if (!isModified()) reset()
+      }
+    })
+
+    val component = create(accountsModel, needAddBtnWithDropdown) {
+      SimpleAccountsListCellRenderer(accountsModel, detailsProvider, defaultAvatarIcon)
+    }
+    return cell(component)
+      .onIsModified(::isModified)
+      .onReset(::reset)
+      .onApply(::apply)
   }
 
   fun <A : Account, Cred> Row.accountsPanel(accountManager: AccountManager<A, Cred>,
                                             defaultAccountHolder: PersistentDefaultAccountHolder<A>,
-                                            accountsModel: AccountsListModel<A, Cred>,
+                                            accountsModel: AccountsListModel.WithDefault<A, Cred>,
                                             detailsProvider: AccountsDetailsProvider<A, *>,
                                             disposable: Disposable,
-                                            defaultAvatarIcon: Icon = EmptyIcon.ICON_16): CellBuilder<JComponent> {
+                                            needAddBtnWithDropdown: Boolean,
+                                            defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
 
     accountsModel.addCredentialsChangeListener(detailsProvider::reset)
     detailsProvider.loadingStateModel.addListener {
@@ -116,9 +173,10 @@ object AccountsPanelFactory {
       }
     })
 
-    return create(accountsModel) {
+    val component = create(accountsModel, needAddBtnWithDropdown) {
       SimpleAccountsListCellRenderer(accountsModel, detailsProvider, defaultAvatarIcon)
-    }(grow, push)
+    }
+    return cell(component)
       .onIsModified(::isModified)
       .onReset(::reset)
       .onApply(::apply)

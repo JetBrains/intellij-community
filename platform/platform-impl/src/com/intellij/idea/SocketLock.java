@@ -6,7 +6,6 @@ import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -135,7 +134,6 @@ public final class SocketLock {
     readPort(myConfigPath, portToPath);
     readPort(mySystemPath, portToPath);
     if (!portToPath.isEmpty()) {
-      args = JetBrainsProtocolHandler.checkForJetBrainsProtocolCommand(args);
       for (Map.Entry<Integer, List<String>> entry : portToPath.entrySet()) {
         Map.Entry<ActivationStatus, CliResult> status = tryActivate(entry.getKey(), entry.getValue(), args);
         if (status.getKey() != ActivationStatus.NO_INSTANCE) {

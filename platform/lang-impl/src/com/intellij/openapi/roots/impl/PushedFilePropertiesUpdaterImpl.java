@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
@@ -18,8 +18,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIteratorEx;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -36,9 +34,13 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.*;
+import com.intellij.util.gist.GistManager;
+import com.intellij.util.gist.GistManagerImpl;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.FileBasedIndexProjectHandler;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic;
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
@@ -55,20 +57,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.RunnableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance(PushedFilePropertiesUpdater.class);
-
-  private static final int SCANNING_EXECUTOR_THREAD_COUNT = Math.max(UnindexedFilesUpdater.getNumberOfScanningThreads() - 1, 1);
-  private static final ExecutorService GLOBAL_SCANNING_EXECUTOR  = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-    "Scanning", SCANNING_EXECUTOR_THREAD_COUNT
-  );
 
   private final Project myProject;
 
@@ -227,7 +221,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         else {
           statistics = null;
         }
-        performDelayedPushTasks(statistics);
+        ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
+        try {
+          performDelayedPushTasks(statistics);
+        }
+        finally {
+          ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
+        }
       }
     };
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -355,7 +355,9 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
             Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, project);
-            if (module == null) return Stream.empty();
+            if (module == null) {
+              return Stream.empty();
+            }
             ProgressManager.checkCanceled();
             return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, project), it -> new Object() {
                 final IndexableFilesIterator files = it;
@@ -392,37 +394,17 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     invokeConcurrentlyIfPossible(tasks);
   }
 
-  // TODO: this method may return earlier than all spawned threads have completed.
   public static void invokeConcurrentlyIfPossible(@NotNull List<? extends Runnable> tasks) {
     if (tasks.isEmpty()) return;
     if (tasks.size() == 1 || ApplicationManager.getApplication().isWriteAccessAllowed()) {
       for (Runnable r : tasks) r.run();
       return;
     }
-
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-
-    Runnable taskProcessor = new Runnable() {
-      final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<>(tasks);
-
-      @Override
-      public void run() {
-        Runnable runnable;
-        while ((runnable = tasksQueue.poll()) != null) runnable.run();
-      }
-    };
-
-    List<Future<?>> results = new ArrayList<>();
-    for (int i = 0; i < SCANNING_EXECUTOR_THREAD_COUNT; i++) {
-      results.add(GLOBAL_SCANNING_EXECUTOR.submit(() -> {
-        ProgressManager.getInstance().runProcess(taskProcessor, ProgressWrapper.wrap(progress));
-      }));
-    }
-
-    for (Future<?> result : results) {
-      ((RunnableFuture<?>)result).run();
-      ProgressIndicatorUtils.awaitWithCheckCanceled(result);
-    }
+    ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<>(tasks);
+    FilesScanExecutor.runOnAllThreads(() -> {
+      Runnable runnable;
+      while ((runnable = tasksQueue.poll()) != null) runnable.run();
+    });
   }
 
   public void applyPushersToFile(final VirtualFile fileOrDir,

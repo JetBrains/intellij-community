@@ -3,13 +3,13 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -383,9 +383,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   private static Exception wrapException(InvalidMirrorException e, VirtualFile file) {
     ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file, ClassFileDecompilers.Light.class);
     if (decompiler != null) {
-      PluginId pluginId = PluginManagerCore.getPluginByClassName(decompiler.getClass().getName());
-      if (pluginId != null) {
-        return new PluginException(e, pluginId);
+      PluginDescriptor plugin = PluginManager.getPluginByClass(decompiler.getClass());
+      if (plugin != null) {
+        return new PluginException(e, plugin.getPluginId());
       }
     }
 
@@ -562,7 +562,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       JavaSdkVersion jdkVersion = ClsParsingUtil.getJdkVersionByBytecode(reader.readUnsignedShort(6));
       LanguageLevel level = jdkVersion != null ? jdkVersion.getMaxLanguageLevel() : null;
       if (level != null && level.isAtLeast(LanguageLevel.JDK_11) && ClsParsingUtil.isPreviewLevel(reader.readUnsignedShort(4))) {
-        level = notNull(level.getPreviewLevel(), level);
+        level = notNull(level.getPreviewLevel(), LanguageLevel.HIGHEST);
       }
 
       if (module) {

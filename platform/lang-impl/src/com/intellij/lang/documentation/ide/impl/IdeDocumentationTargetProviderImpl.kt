@@ -7,15 +7,25 @@ import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
+import com.intellij.model.Pointer
+import com.intellij.model.Symbol
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
+import com.intellij.util.castSafelyTo
 
-class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
+open class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
 
   override fun documentationTarget(editor: Editor, file: PsiFile, lookupElement: LookupElement): DocumentationTarget? {
+    val symbolTargets = (lookupElement.`object` as? Pointer<*>)
+      ?.dereference()
+      ?.castSafelyTo<Symbol>()
+      ?.let { symbolDocumentationTargets(file.project, listOf(it)) }
+    if (symbolTargets != null && symbolTargets.isNotEmpty()) {
+      return symbolTargets.first()
+    }
     val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
                         ?: return null
     val sourceElement = file.findElementAt(editor.caretModel.offset)

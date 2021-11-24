@@ -50,6 +50,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -705,7 +706,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @com.intellij.testFramework.Parameterized.Parameters(name = "{0}")
   public static List<Object[]> params(@NotNull Class<?> klass) throws Throwable{
-    final LightPlatformCodeInsightTestCase testCase = (LightPlatformCodeInsightTestCase)klass.newInstance();
+    final Object testCase = klass.newInstance();
     if (!(testCase instanceof FileBasedTestCaseHelper)) {
       fail("Parameterized test should implement FileBasedTestCaseHelper");
     }
@@ -718,7 +719,21 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
 
     final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
-    String testDataPath = testCase.getTestDataPath();
+
+    String testDataPath;
+    if (testCase instanceof LightPlatformCodeInsightTestCase) {
+      testDataPath = ((LightPlatformCodeInsightTestCase)testCase).getTestDataPath();
+    }
+    else {
+      try {
+        Method dataPath = klass.getDeclaredMethod("getTestDataPath");
+        dataPath.setAccessible(true);
+        testDataPath = (String)dataPath.invoke(fileBasedTestCase);
+      }
+      catch (Throwable e) {
+        testDataPath = PathManagerEx.getTestDataPath();
+      }
+    }
 
     File testDir = null;
     if (fileBasedTestCase instanceof FileBasedTestCaseHelperEx) {

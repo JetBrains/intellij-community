@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
@@ -427,17 +427,19 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(final PsiMethodCallExpression methodCallExpression) {
-    super.visitMethodCallExpression(methodCallExpression);
-    final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
+  public void visitCallExpression(PsiCallExpression callExpression) {
+    super.visitCallExpression(callExpression);
+    final JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
     final PsiElement method = resolveResult.getElement();
     if (method instanceof PsiMethod) {
-      if (migrateEqualsMethod(methodCallExpression, (PsiMethod)method)) {
+      if (callExpression instanceof PsiMethodCallExpression && migrateEqualsMethod((PsiMethodCallExpression)callExpression, (PsiMethod)method)) {
         return;
       }
-      final PsiExpression[] psiExpressions = methodCallExpression.getArgumentList().getExpressions();
+      PsiExpressionList argumentList = callExpression.getArgumentList();
+      if (argumentList == null) return;
+      final PsiExpression[] psiExpressions = argumentList.getExpressions();
       final PsiParameter[] originalParams = ((PsiMethod)method).getParameterList().getParameters();
-      final PsiSubstitutor evalSubstitutor = myTypeEvaluator.createMethodSubstitution(originalParams, psiExpressions, (PsiMethod)method, methodCallExpression);
+      final PsiSubstitutor evalSubstitutor = myTypeEvaluator.createMethodSubstitution(originalParams, psiExpressions, (PsiMethod)method, callExpression);
       for (int i = 0; i < psiExpressions.length; i++) {
         PsiParameter originalParameter;
         if (originalParams.length <= i) {
@@ -452,7 +454,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         }
         processVariable(originalParameter, psiExpressions[i], null, resolveResult.getSubstitutor(), evalSubstitutor, true);
       }
-      final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
+      final PsiExpression qualifier = callExpression instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)callExpression).getMethodExpression().getQualifierExpression() : null;
       if (qualifier != null && qualifier.isPhysical() && !new TypeView(qualifier).isChanged()) { //substitute property otherwise
         final PsiType qualifierType = qualifier.getType();
         if (qualifierType instanceof PsiClassType) {

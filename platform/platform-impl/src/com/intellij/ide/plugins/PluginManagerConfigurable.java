@@ -845,11 +845,13 @@ public final class PluginManagerConfigurable
           String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
           visiblePlugins.get(Boolean.TRUE)
             .stream()
-            .collect(Collectors.groupingBy(descriptor -> StringUtil.notNullize(descriptor.getCategory())))
+            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getCategory(), defaultCategory)))
             .entrySet()
             .stream()
-            .map(entry -> new ComparablePluginsGroup(entry.getKey(), defaultCategory, entry.getValue()))
-            .sorted()
+            .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
+            .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
+                                defaultCategory.equals(o2.title) ? -1 :
+                                o1.compareTo(o2))
             .forEachOrdered(group -> {
               myInstalledPanel.addGroup(group);
               myPluginModel.addEnabledGroup(group);
@@ -1135,16 +1137,12 @@ public final class PluginManagerConfigurable
   private final class ComparablePluginsGroup extends PluginsGroup
     implements Comparable<ComparablePluginsGroup> {
 
-    private final @NotNull @Nls String myDefaultCategory;
     private boolean myIsEnable = false;
 
     private ComparablePluginsGroup(@NotNull @NlsSafe String category,
-                                   @NotNull @Nls String defaultCategory,
                                    @NotNull List<? extends IdeaPluginDescriptor> descriptors) {
-      super(StringUtil.defaultIfEmpty(category, defaultCategory),
-            PluginsGroupType.INSTALLED);
+      super(category, PluginsGroupType.INSTALLED);
 
-      myDefaultCategory = defaultCategory;
       this.descriptors.addAll(descriptors);
       sortByName();
 
@@ -1157,9 +1155,7 @@ public final class PluginManagerConfigurable
 
     @Override
     public int compareTo(@NotNull ComparablePluginsGroup other) {
-      return myDefaultCategory.equals(title) ? 1 :
-             myDefaultCategory.equals(other.title) ? -1 :
-             StringUtil.compare(title, other.title, true);
+      return StringUtil.compare(title, other.title, true);
     }
 
     @Override
@@ -1170,12 +1166,12 @@ public final class PluginManagerConfigurable
     }
 
     private void setEnabledState() {
-      myPluginModel.setEnabledState(descriptors,
-                                    PluginEnableDisableAction.globally(myIsEnable));
-    }
-
-    private @NotNull @Nls String getDefaultCategory() {
-      return IdeBundle.message("plugins.configurable.other.bundled");
+      if (myIsEnable) {
+        myPluginModel.enable(descriptors);
+      }
+      else {
+        myPluginModel.disable(descriptors);
+      }
     }
   }
 
@@ -1562,8 +1558,12 @@ public final class PluginManagerConfigurable
       }
 
       if (!descriptors.isEmpty()) {
-        myPluginModel.setEnabledState(descriptors,
-                                      PluginEnableDisableAction.globally(myEnable));
+        if (myEnable) {
+          myPluginModel.enable(descriptors);
+        }
+        else {
+          myPluginModel.disable(descriptors);
+        }
       }
     }
   }

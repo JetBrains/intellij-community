@@ -4,12 +4,15 @@ package git4idea.ift
 import com.intellij.dvcs.push.VcsPushAction
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.BranchChangeListener
@@ -28,10 +31,12 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
+import git4idea.config.GitVcsApplicationSettings
+import git4idea.i18n.GitBundle
+import git4idea.index.enableStagingArea
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
-import training.learn.lesson.LessonManager
 import training.ui.LearningUiManager
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
@@ -126,21 +131,16 @@ object GitLessonsUtil {
     }
   }
 
-  // Returns future that completes when checkout is started
-  fun TaskContext.triggerOnCheckout(checkBranch: (String) -> Boolean = { true }): CompletableFuture<Boolean> {
-    val checkoutStartedFuture = CompletableFuture<Boolean>()
+  fun TaskContext.triggerOnCheckout(checkBranch: (String) -> Boolean = { true }) {
     addFutureStep {
       subscribeForMessageBus(BranchChangeListener.VCS_BRANCH_CHANGED, object : BranchChangeListener {
-        override fun branchWillChange(branchName: String) {
-          checkoutStartedFuture.complete(true)
-        }
+        override fun branchWillChange(branchName: String) {}
 
         override fun branchHasChanged(branchName: String) {
           if (checkBranch(branchName)) completeStep()
         }
       })
     }
-    return checkoutStartedFuture
   }
 
   fun TaskContext.gotItStep(position: Balloon.Position,
@@ -153,9 +153,27 @@ object GitLessonsUtil {
       gotIt.complete(true)
     })
     addStep(gotIt)
+    test(waitEditorToBeReady = false) {
+      ideFrame { button(IdeBundle.message("got.it.button.name")).click() }
+    }
   }
 
-  fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
+  /**
+   * Restores task if [PreviousTaskInfo.ui] is not showing and background task is not running
+   */
+  fun TaskContext.restoreByUiAndBackgroundTask(taskTitleRegex: @Nls String, delayMillis: Int = 0, restoreId: TaskContext.TaskId? = null) {
+    val regex = Regex(taskTitleRegex)
+    restoreState(restoreId, delayMillis) {
+      previous.ui?.isShowing != true && !isBackgroundableTaskRunning(regex)
+    }
+  }
+
+  private fun isBackgroundableTaskRunning(titleRegex: Regex): Boolean {
+    val indicators = CoreProgressManager.getCurrentIndicators()
+    return indicators.find { it is BackgroundableProcessIndicator && it.isRunning && titleRegex.find(it.title) != null } != null
+  }
+
+  fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = false) {
     showWarningIfToolWindowClosed(ToolWindowId.COMMIT,
                                   GitLessonsBundle.message("git.window.closed.warning",
                                                            action("CheckinProject"),
@@ -163,7 +181,7 @@ object GitLessonsUtil {
                                   restoreTaskWhenResolved)
   }
 
-  fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
+  fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = false) {
     showWarningIfToolWindowClosed(ToolWindowId.VCS,
                                   GitLessonsBundle.message("git.window.closed.warning",
                                                            action("ActivateVersionControlToolWindow"), strong("Git")),
@@ -179,24 +197,52 @@ object GitLessonsUtil {
   }
 
   fun LessonContext.showWarningIfModalCommitEnabled() {
-    if (VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) return
     task {
       val step = stateCheck {
         VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
       }
-      before {
-        val callbackId = LearningUiManager.addCallback {
-          CommitModeManager.setCommitFromLocalChanges(project, true)
-          step.complete(true)
-        }
-        LessonManager.instance.setWarningNotification(TaskContext.RestoreNotification(
-          GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
-                                   action("ShowSettings"),
-                                   strong(VcsBundle.message("version.control.main.configurable.name")),
-                                   strong(VcsBundle.message("commit.dialog.configurable")),
-                                   strong(VcsBundle.message("settings.commit.without.dialog")),
-                                   callbackId), callback = {}))
+      val callbackId = LearningUiManager.addCallback {
+        CommitModeManager.setCommitFromLocalChanges(project, true)
+        step.complete(true)
       }
+      showWarning(GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
+                                           action("ShowSettings"),
+                                           strong(VcsBundle.message("version.control.main.configurable.name")),
+                                           strong(VcsBundle.message("commit.dialog.configurable")),
+                                           strong(VcsBundle.message("settings.commit.without.dialog")))
+                  + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
+        !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+      }
+    }
+  }
+
+  fun LessonContext.showWarningIfStagingAreaEnabled() {
+    task {
+      val step = stateCheck {
+        !GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
+      }
+      val callbackId = LearningUiManager.addCallback {
+        enableStagingArea(false)
+        step.complete(true)
+      }
+      showWarning(GitLessonsBundle.message("git.not.use.staging.area.warning",
+                                           action("ShowSettings"),
+                                           strong(VcsBundle.message("version.control.main.configurable.name")),
+                                           strong(GitBundle.message("settings.git.option.group")),
+                                           strong(GitBundle.message("settings.enable.staging.area")))
+                  + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
+        GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
+      }
+    }
+  }
+
+  fun LessonContext.restoreCommitWindowStateInformer() {
+    val enabledModalInterface = !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+    val enabledStagingArea = GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
+    if (!enabledModalInterface && !enabledStagingArea) return
+    restoreChangedSettingsInformer {
+      if (enabledModalInterface) CommitModeManager.setCommitFromLocalChanges(null, false)
+      if (enabledStagingArea) enableStagingArea(true)
     }
   }
 

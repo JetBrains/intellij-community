@@ -173,11 +173,15 @@ public class ComponentValidator {
    * Convenient wrapper for mostly used scenario.
    */
   public ComponentValidator andRegisterOnDocumentListener(@NotNull JTextComponent textComponent) {
-    textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
+    DocumentAdapter listener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         getInstance(textComponent).ifPresent(ComponentValidator::revalidate); // Don't use 'this' to avoid cyclic references.
       }
+    };
+    textComponent.getDocument().addDocumentListener(listener);
+    Disposer.register(parentDisposable, () -> {
+      textComponent.getDocument().removeDocumentListener(listener);
     });
     return this;
   }

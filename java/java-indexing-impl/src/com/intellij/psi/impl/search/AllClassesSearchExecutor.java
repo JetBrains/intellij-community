@@ -30,13 +30,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
 
     if (scope instanceof GlobalSearchScope) {
       PsiManager manager = PsiManager.getInstance(queryParameters.getProject());
-      manager.startBatchFilesProcessingMode();
-      try {
-        return processAllClassesInGlobalScope((GlobalSearchScope)scope, queryParameters, consumer);
-      }
-      finally {
-        manager.finishBatchFilesProcessingMode();
-      }
+      return manager.runInBatchFilesMode(() -> processAllClassesInGlobalScope((GlobalSearchScope)scope, queryParameters, consumer));
     }
 
     PsiElement[] scopeRoots = ((LocalSearchScope)scope).getScope();

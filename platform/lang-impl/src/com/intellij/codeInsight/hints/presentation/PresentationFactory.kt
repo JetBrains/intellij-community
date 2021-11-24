@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.JarFileSystem
@@ -39,7 +40,21 @@ import kotlin.math.max
  */
 @ApiStatus.Experimental
 class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFactory {
-  private val textMetricsStorage = InlayTextMetricsStorage(editor)
+  companion object {
+    private val TEXT_METRICS_STORAGE = Key.create<InlayTextMetricsStorage>("InlayTextMetricsStorage")
+
+    private fun getTextMetricStorage(editor: EditorImpl): InlayTextMetricsStorage {
+      val storage = editor.getUserData(TEXT_METRICS_STORAGE)
+      if (storage == null) {
+        val newStorage = InlayTextMetricsStorage(editor)
+        editor.putUserData(TEXT_METRICS_STORAGE, newStorage)
+        return newStorage
+      }
+      return storage
+    }
+  }
+
+  private val textMetricsStorage = getTextMetricStorage(editor)
   private val offsetFromTopProvider = object : InsetValueProvider {
     override val top: Int
       get() = textMetricsStorage.getFontMetrics(true).offsetFromTop()

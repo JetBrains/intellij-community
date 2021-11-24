@@ -1,5 +1,5 @@
 // ACTION_CLASS: org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateSecondaryConstructorAction
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo {<caret>
     constructor() {
 

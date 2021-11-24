@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.codeInspection.control.GroovyFallthroughInsp
  */
 class GroovyFallthroughInspectionTest extends LightGroovyTestCase {
 
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_4_0
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_4_0_REAL_JDK
 
   private void doTest(final String text) {
     myFixture.configureByText('_.groovy', text)

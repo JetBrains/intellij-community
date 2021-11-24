@@ -31,8 +31,8 @@ internal class MarkdownImportFromDocxAction : AnAction() {
   }
 
   private class DocxFileChooserDescriptor : FileChooserDescriptor(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()) {
-    override fun isFileSelectable(file: VirtualFile): Boolean {
-      return file.extension == MarkdownDocxExportProvider.format.extension
+    override fun isFileSelectable(file: VirtualFile?): Boolean {
+      return file != null && file.extension == MarkdownDocxExportProvider.format.extension
     }
   }
 }

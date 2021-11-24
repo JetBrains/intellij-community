@@ -1,0 +1,17 @@
+// "Import" "true"
+package p
+
+import p.FooObj.ext
+
+object Obj
+typealias StrangeName = Obj
+
+open class Foo {
+    fun StrangeName.ext() {}
+}
+
+object FooObj : Foo()
+
+fun usage() {
+    StrangeName.ext()
+}

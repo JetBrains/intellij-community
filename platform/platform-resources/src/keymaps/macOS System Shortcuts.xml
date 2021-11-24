@@ -70,6 +70,9 @@
     <keyboard-shortcut first-keystroke="ctrl meta K"/>
     <keyboard-shortcut first-keystroke="meta F3"/>
   </action>
+  <action id="ShowTypeBookmarks">
+    <keyboard-shortcut first-keystroke="meta alt F3"/>
+  </action>
 
   <action id="ToggleBookmarkWithMnemonic">
     <keyboard-shortcut first-keystroke="shift ctrl alt K"/>

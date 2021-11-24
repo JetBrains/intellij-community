@@ -1,4 +1,4 @@
 // "Replace with '@JvmInline value'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 <caret>inline class IC(val i: Int)

@@ -26,9 +26,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.formatting.FormatProcessor.FormatOptions;
@@ -460,6 +458,37 @@ public class FormatterImpl extends FormatterEx
     final Block block = model.getRootBlock();
     if (block.getTextRange().isEmpty()) return null; // handing empty document case
     final FormatProcessor processor = buildProcessorAndWrapBlocks(model, settings, indentOptions, affectedRange, offset);
+    return generateIndentWhitespace(processor, indentOptions, documentModel, offset);
+  }
+
+  @Override
+  @Nullable
+  public List<String> getLineIndents(final FormattingModel model,
+                                     final CodeStyleSettings settings,
+                                     final CommonCodeStyleSettings.IndentOptions indentOptions) {
+    final FormattingDocumentModel documentModel = model.getDocumentModel();
+    final Block block = model.getRootBlock();
+    if (block.getTextRange().isEmpty()) return Collections.emptyList(); // handing empty document case
+
+    Document document = model.getDocumentModel().getDocument();
+    FormatProcessor processor = buildProcessorAndWrapBlocks(model, settings, indentOptions, block.getTextRange(), 0);
+
+    int lines = document.getLineCount();
+    List<String> indents = new ArrayList<>(lines);
+    for (int i = 0; i < lines; i++) {
+      int offset = document.getLineStartOffset(i);
+      String indent = generateIndentWhitespace(processor, indentOptions, documentModel, offset);
+      indents.add(indent != null ? indent : "");
+    }
+
+    return indents;
+  }
+
+  @Nullable
+  private String generateIndentWhitespace(FormatProcessor processor,
+                                          CommonCodeStyleSettings.IndentOptions indentOptions,
+                                          FormattingDocumentModel documentModel,
+                                          int offset) {
     WhiteSpace whiteSpace = getWhiteSpaceAtOffset(offset, processor);
     if (whiteSpace != null) {
       final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
@@ -554,6 +583,11 @@ public class FormatterImpl extends FormatterEx
   @Override
   public Indent getSmartIndent(@NotNull Indent.Type type) {
     return new ExpandableIndent(type);
+  }
+
+  @Override
+  public Indent getSmartIndent(@NotNull Indent.Type type, boolean relativeToDirectParent) {
+    return new ExpandableIndent(type, relativeToDirectParent);
   }
 
   @Override

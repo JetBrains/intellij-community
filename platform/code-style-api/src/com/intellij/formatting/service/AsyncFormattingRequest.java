@@ -39,7 +39,6 @@ public interface AsyncFormattingRequest {
 
   /**
    * @return True if the service must provide a quick ad-hoc formatting rather than a long-lasting document processing.
-   *
    * @see FormattingService.Feature#AD_HOC_FORMATTING
    */
   boolean isQuickFormat();
@@ -56,6 +55,7 @@ public interface AsyncFormattingRequest {
    * an available {@link DocumentMerger} extension. If there are no suitable document merge extensions, the result will be ignored.
    * <p>
    * <b>Note:</b> {@code onTextReady()} may be called only once, subsequent calls will be ignored.
+   *
    * @param updatedText New document text.
    */
   void onTextReady(@NotNull String updatedText);
@@ -65,9 +65,22 @@ public interface AsyncFormattingRequest {
    * <p>
    * <b>Note:</b> {@code onError()} may be called only once, subsequent calls will be ignored.
    *
-   * @param title The notification title.
+   * @param title   The notification title.
    * @param message The notification message.
    */
   void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message);
 
+  /**
+   * Show an error notification to an end user. The notification uses {@link AsyncDocumentFormattingService#getNotificationGroupId()}. In
+   * addition, either navigate to the given offset in the open document or create a navigation link to a file from the formatting context.
+   * <p>
+   * <b>Note:</b> {@code onError()} may be called only once, subsequent calls will be ignored.
+   *
+   * @param title   The notification title.
+   * @param message The notification message.
+   * @param offset  Offset in the document to navigate to or -1 for no offset.
+   */
+  void onError(@NotNull @NlsContexts.NotificationTitle String title,
+               @NotNull @NlsContexts.NotificationContent String message,
+               int offset);
 }

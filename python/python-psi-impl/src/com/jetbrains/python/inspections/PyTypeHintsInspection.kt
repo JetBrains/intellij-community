@@ -39,9 +39,9 @@ class PyTypeHintsInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, session)
+                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, PyInspectionVisitor.getContext(session))
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     private val genericQName = QualifiedName.fromDottedString(PyTypingTypeProvider.GENERIC)
 

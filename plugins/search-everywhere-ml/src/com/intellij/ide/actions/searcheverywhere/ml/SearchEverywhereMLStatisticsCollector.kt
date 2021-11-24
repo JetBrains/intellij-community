@@ -3,13 +3,13 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
 import kotlin.math.round
 
@@ -26,8 +26,10 @@ internal class SearchEverywhereMLStatisticsCollector {
                      closePopup: Boolean,
                      timeToFirstResult: Int,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+    val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
     val data = arrayListOf<Pair<String, Any>>(
       CLOSE_POPUP_KEY to closePopup,
+      FORCE_EXPERIMENT_GROUP to experimentFromRegistry,
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
@@ -42,8 +44,10 @@ internal class SearchEverywhereMLStatisticsCollector {
                        cache: SearchEverywhereMlSearchState,
                        timeToFirstResult: Int,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+    val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
     val additional = listOf(
       CLOSE_POPUP_KEY to true,
+      FORCE_EXPERIMENT_GROUP to experimentFromRegistry,
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
@@ -108,13 +112,14 @@ internal class SearchEverywhereMLStatisticsCollector {
 
       val actionManager = ActionManager.getInstance()
       data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
+        if (project != null && project.isDisposed) {
+          return@execute
+        }
+
         val result: HashMap<String, Any> = hashMapOf(
           CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
         )
-
-        if (SearchEverywhereElementFeaturesProvider.isElementSupported(it.element)) {
-          addElementFeatures(elementIdProvider, it, state, result, actionManager)
-        }
+        addElementFeatures(elementIdProvider, it, state, result, actionManager)
         result
       }
 
@@ -173,7 +178,7 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 10)
+    private val GROUP = EventLogGroup("mlse.log", 13)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 
@@ -183,6 +188,7 @@ internal class SearchEverywhereMLStatisticsCollector {
 
     private const val ORDER_BY_ML_GROUP = "orderByMl"
     private const val EXPERIMENT_GROUP = "experimentGroup"
+    private const val FORCE_EXPERIMENT_GROUP = "isForceExperiment"
 
     private const val TIME_TO_FIRST_RESULT_DATA_KEY = "timeToFirstResult"
 

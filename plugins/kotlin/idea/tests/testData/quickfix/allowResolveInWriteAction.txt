@@ -16,6 +16,7 @@ org.jetbrains.kotlin.idea.intentions.AddPropertyGetterIntention
 org.jetbrains.kotlin.idea.intentions.AddPropertySetterIntention
 org.jetbrains.kotlin.idea.intentions.ConvertPropertyInitializerToGetterIntention
 org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention
+org.jetbrains.kotlin.idea.intentions.IntroduceImportAliasIntention
 org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
 org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorIntention
 org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
@@ -45,7 +46,7 @@ org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix
 org.jetbrains.kotlin.idea.quickfix.ConvertExtensionPropertyInitializerToGetterFix
 org.jetbrains.kotlin.idea.quickfix.ConvertMemberToExtensionFix
 org.jetbrains.kotlin.idea.quickfix.ConvertToAnonymousObjectFix
-org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$createAction$2
+org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction
 org.jetbrains.kotlin.idea.quickfix.DeprecatedJavaAnnotationFix
 org.jetbrains.kotlin.idea.quickfix.ImportFix
 org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$AddInitializerFix

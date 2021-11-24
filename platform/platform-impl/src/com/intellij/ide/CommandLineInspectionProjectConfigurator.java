@@ -91,14 +91,14 @@ public interface CommandLineInspectionProjectConfigurator {
   }
 
   /**
-   * This method is for {@link #isApplicable(ConfiguratorContext)} inspections
+   * This method is for {@link #isApplicable(ConfiguratorContext)} extensions
    * after project is opened.
    */
   default void preConfigureProject(@NotNull Project project, @NotNull ConfiguratorContext context) {
 
   }
   /**
-   * This method is for {@link #isApplicable(ConfiguratorContext)} inspections
+   * This method is for {@link #isApplicable(ConfiguratorContext)} extensions
    * after project is opened.
    */
   default void configureProject(@NotNull Project project,

@@ -119,7 +119,7 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
 
   @Override
   protected Class @NotNull [] getSuitableClasses() {
-    return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class, PsiLambdaExpression.class, PsiJavaFile.class};
+    return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class, PsiLambdaExpression.class, PsiJavaFile.class, PsiRecordComponent.class};
   }
 
   @Override

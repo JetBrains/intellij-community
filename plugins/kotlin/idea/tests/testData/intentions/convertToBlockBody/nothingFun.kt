@@ -1,3 +1,3 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun <caret>foo(): Nothing = throw UnsupportedOperationException()

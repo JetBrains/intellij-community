@@ -17,7 +17,8 @@ final class Message {
   // it allows us to cache MethodHandle per method and partially reuse it
   final Object[] args;
   final @Nullable Object @NotNull [] handlers;
-  final @Nullable ClientId clientId;
+  @NotNull
+  final String clientId;
 
   // to avoid creating Message for each handler
   // see note about pumpMessages in createPublisher (invoking job handlers can be stopped and continued as part of another pumpMessages call)
@@ -29,7 +30,7 @@ final class Message {
     this.methodName = methodName;
     this.args = args;
     this.handlers = handlers;
-    clientId = ClientId.getCurrentOrNull();
+    clientId = ClientId.getCurrentValue();
   }
 
   @Override

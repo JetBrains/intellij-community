@@ -140,7 +140,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         Trigger.LOG.debug("Starting SDK refresh for '" + mySdkKey + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")) {
+        if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
           PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(sdk, myProject);
           String version = targetsFacade.getInterpreterVersion(indicator);
           commitSdkVersionIfChanged(sdk, version);
@@ -200,16 +200,26 @@ public class PythonSdkUpdater implements StartupActivity.Background {
           updateSdkPaths(sdk, getRemoteSdkMappedPaths(sdk), getProject());
         }
       }
-      catch (UnsupportedPythonSdkTypeException e) {
+      catch (UnsupportedPythonSdkTypeException | InvalidSdkException e) {
+        notifyOfGenerationFailure(e, sdk);
+      }
+    }
+
+    private void notifyOfGenerationFailure(@NotNull Exception exception, @NotNull Sdk sdk) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        LOG.warn(exception);
+        return;
+      }
+      if (exception instanceof UnsupportedPythonSdkTypeException) {
         NOTIFICATION_GROUP
           .createNotification(PyBundle.message("sdk.gen.failed.notification.title"),
                               PyBundle.message("remote.interpreter.support.is.not.available", sdk.getName()),
                               NotificationType.WARNING)
           .notify(myProject);
       }
-      catch (InvalidSdkException e) {
+      else if (exception instanceof InvalidSdkException) {
         if (PythonSdkUtil.isRemote(PythonSdkUtil.findSdkByKey(mySdkKey))) {
-          PythonSdkType.notifyRemoteSdkSkeletonsFail(e, () -> {
+          PythonSdkType.notifyRemoteSdkSkeletonsFail((InvalidSdkException)exception, () -> {
             Sdk revalidatedSdk = PythonSdkUtil.findSdkByKey(mySdkKey);
             if (revalidatedSdk != null) {
               update(revalidatedSdk, myProject, null);
@@ -217,7 +227,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
           });
         }
         else if (!PythonSdkUtil.isInvalid(sdk)) {
-          LOG.error(e);
+          LOG.error(exception);
         }
       }
     }
@@ -240,7 +250,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         }
       }
 
-      if (requestData != null) {
+      if ( requestData != null) {
         ProgressManager.getInstance().run(new PyUpdateSdkTask(myProject, mySdkKey, requestData));
       }
     }
@@ -429,6 +439,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final var pathsToTransfer = new HashSet<VirtualFile>();
     pathsToTransfer.addAll(sdkRoots.second);
     pathsToTransfer.addAll(userAddedRoots.second);
+    pathsToTransfer.removeAll(moduleRoots);
 
     /*
     Don't run actions related to transferred roots on editable sdks since they can share data with original ones.

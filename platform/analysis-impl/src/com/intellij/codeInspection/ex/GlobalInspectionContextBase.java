@@ -249,26 +249,24 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     });
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     //init manager in read action
-    RefManagerImpl refManager = (RefManagerImpl)getRefManager();
-    try {
-      psiManager.startBatchFilesProcessingMode();
-      refManager.inspectionReadActionStarted();
-      getStdJobDescriptors().BUILD_GRAPH.setTotalAmount(scope.getFileCount());
-      getStdJobDescriptors().LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
-      getStdJobDescriptors().FIND_EXTERNAL_USAGES.setTotalAmount(0);
-      //to override current progress in order to hide useless messages/%
-      ProgressManager.getInstance().executeProcessUnderProgress(() -> runTools(scope, runGlobalToolsOnly, isOfflineInspections), new SensitiveProgressWrapper(myProgressIndicator));
-    }
-    catch (ProcessCanceledException | IndexNotReadyException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
-    finally {
-      refManager.inspectionReadActionFinished();
-      psiManager.finishBatchFilesProcessingMode();
-    }
+    ((RefManagerImpl)getRefManager()).runInsideInspectionReadAction(() ->
+      psiManager.runInBatchFilesMode(() -> {
+        try {
+          getStdJobDescriptors().BUILD_GRAPH.setTotalAmount(scope.getFileCount());
+          getStdJobDescriptors().LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
+          getStdJobDescriptors().FIND_EXTERNAL_USAGES.setTotalAmount(0);
+          //to override current progress in order to hide useless messages/%
+          ProgressManager.getInstance().executeProcessUnderProgress(() -> runTools(scope, runGlobalToolsOnly, isOfflineInspections), new SensitiveProgressWrapper(myProgressIndicator));
+        }
+        catch (ProcessCanceledException | IndexNotReadyException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+        return  null;
+      })
+    );
   }
 
   protected void canceled() {

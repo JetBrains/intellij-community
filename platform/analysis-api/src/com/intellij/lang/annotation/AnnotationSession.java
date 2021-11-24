@@ -43,7 +43,7 @@ public class AnnotationSession extends UserDataHolderBase {
   }
 
   /**
-   * @return text range for which annotators should be calculated sooner than for the remaining range in the file.
+   * @return text range (inside the {@link #getFile()}) for which annotators should be calculated sooner than for the remaining range in the file.
    * Usually this priority range corresponds to the range visible on screen.
    */
   @NotNull

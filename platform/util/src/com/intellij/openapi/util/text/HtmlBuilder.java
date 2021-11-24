@@ -33,6 +33,9 @@ public final class HtmlBuilder {
 
   @Contract("_ -> this")
   public HtmlBuilder append(@NotNull HtmlBuilder builder) {
+    if (this == builder) {
+      throw new IllegalArgumentException("Cannot add builder to itself");
+    }
     myChunks.addAll(builder.myChunks);
     return this;
   }

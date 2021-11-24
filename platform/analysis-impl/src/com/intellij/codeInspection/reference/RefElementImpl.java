@@ -7,12 +7,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,11 +21,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement, WritableRefElement {
   protected static final Logger LOG = Logger.getInstance(RefElement.class);
 
+  private static final int IS_INITIALIZED_MASK = 0b100000;
   private static final int IS_REACHABLE_MASK = 0b1000000;
   private static final int IS_ENTRY_MASK = 0b10000000;
   private static final int IS_PERMANENT_ENTRY_MASK = 0b1_00000000;
@@ -38,6 +41,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private String[] mySuppressions;
 
   private volatile boolean myIsDeleted;
+
+  private final CountDownLatch myInitSignal = new CountDownLatch(1);
 
   protected RefElementImpl(@NotNull String name, @NotNull RefElement owner) {
     super(name, owner.getRefManager());
@@ -128,8 +133,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  public boolean isReferenced() {
-    return !getInReferences().isEmpty();
+  public synchronized boolean isReferenced() {
+    return myInReferences != null;
   }
 
   public boolean hasSuspiciousCallers() {
@@ -143,19 +148,19 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @Override
   @NotNull
   public synchronized Collection<RefElement> getOutReferences() {
-    return ObjectUtils.notNull(myOutReferences, ContainerUtil.emptyList());
+    return (myOutReferences == null) ? ContainerUtil.emptyList() : Collections.unmodifiableList(myOutReferences);
   }
 
   @Override
   @NotNull
   public synchronized Collection<RefElement> getInReferences() {
-    return ObjectUtils.notNull(myInReferences, ContainerUtil.emptyList());
+    return (myInReferences == null) ? ContainerUtil.emptyList() : Collections.unmodifiableList(myInReferences);
   }
 
   @Override
   public synchronized void addInReference(RefElement refElement) {
     List<RefElement> inReferences = myInReferences;
-    if (inReferences == null){
+    if (inReferences == null) {
       myInReferences = inReferences = new ArrayList<>(1);
     }
     if (!inReferences.contains(refElement)) {
@@ -163,14 +168,30 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
   }
 
+  private synchronized void removeInReference(RefElement refElement) {
+    if (myInReferences == null) return;
+    myInReferences.remove(refElement);
+    if (myInReferences.isEmpty()) {
+      myInReferences = null;
+    }
+  }
+
   @Override
   public synchronized void addOutReference(RefElement refElement) {
     List<RefElement> outReferences = myOutReferences;
-    if (outReferences == null){
+    if (outReferences == null) {
       myOutReferences = outReferences = new ArrayList<>(1);
     }
     if (!outReferences.contains(refElement)) {
       outReferences.add(refElement);
+    }
+  }
+
+  private synchronized void removeOutReference(RefElement refElement) {
+    if (myOutReferences == null) return;
+    myOutReferences.remove(refElement);
+    if (myOutReferences.isEmpty()) {
+      myOutReferences = null;
     }
   }
 
@@ -209,11 +230,11 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
 
     for (RefElement refCallee : getOutReferences()) {
-      refCallee.getInReferences().remove(this);
+      ((RefElementImpl)refCallee).removeInReference(this);
     }
 
     for (RefElement refCaller : getInReferences()) {
-      refCaller.getOutReferences().remove(this);
+      ((RefElementImpl)refCaller).removeOutReference(this);
     }
   }
 
@@ -231,6 +252,29 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   protected abstract void initialize();
 
   @Override
+  public boolean isInitialized() {
+    return checkFlag(IS_INITIALIZED_MASK);
+  }
+
+  public void setInitialized(final boolean initialized) {
+    setFlag(initialized, IS_INITIALIZED_MASK);
+    if (initialized) {
+      myInitSignal.countDown();
+    }
+  }
+
+  @Override
+  public final void waitForInitialized() {
+    if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
+      return;
+    }
+    try {
+      myInitSignal.await();
+    }
+    catch (InterruptedException ignore) {}
+  }
+
+  @Override
   public void addSuppression(final String text) {
     mySuppressions = text.split("[, ]");
   }
@@ -241,7 +285,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
         for (String id : toolId) {
           if (suppression.equals(id)) return true;
         }
-        if (suppression.equalsIgnoreCase(SuppressionUtil.ALL)){
+        if (suppression.equalsIgnoreCase(SuppressionUtil.ALL)) {
           return true;
         }
       }

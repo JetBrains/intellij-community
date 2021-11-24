@@ -58,10 +58,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   private volatile boolean adaptersAreSorted = true;
 
   // guarded by this
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private ExtensionPointListener<T> @NotNull [] listeners = ExtensionPointListener.emptyArray();
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private @Nullable Class<T> extensionClass;
 
   private final boolean isDynamic;
@@ -187,6 +185,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     List<ExtensionComponentAdapter> newAdapters = doRegisterExtensions(extensions);
     // do not call notifyListeners under lock
+    ExtensionPointListener<T>[] listeners;
+    synchronized (this) {
+      listeners = this.listeners;
+    }
     notifyListeners(false, newAdapters, listeners);
   }
 
@@ -330,7 +332,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
   }
 
-  private @NotNull List<ExtensionComponentAdapter> getThreadSafeAdapterList(boolean failIfListenerAdded) {
+  private synchronized @NotNull List<ExtensionComponentAdapter> getThreadSafeAdapterList(boolean failIfListenerAdded) {
     CHECK_CANCELED.run();
 
     if (!isDynamic && listeners.length > 0) {
@@ -790,7 +792,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     if (invokeForLoadedExtensions) {
       //noinspection unchecked
-      notifyListeners(false, adapters, new ExtensionPointListener[]{listener});
+      notifyListeners(false, getSortedAdapters(), new ExtensionPointListener[]{listener});
     }
 
     if (parentDisposable != null) {
@@ -830,7 +832,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   @Override
-  public final void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable) {
+  public synchronized final void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable) {
     ExtensionPointAdapter<T> listenerAdapter = new ExtensionPointAdapter<T>() {
       @Override
       public void extensionListChanged() {

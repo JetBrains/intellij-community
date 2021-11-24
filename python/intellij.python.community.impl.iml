@@ -41,9 +41,9 @@
     <orderEntry type="module" module-name="intellij.python.sdk" exported="" />
     <orderEntry type="module-library">
       <library name="completion-ranking-python" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.2.2" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.2.3" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.2/completion-ranking-python-0.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.3/completion-ranking-python-0.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -79,5 +79,33 @@
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.toml" />
+    <orderEntry type="module-library">
+      <library name="tuweni-toml" type="repository">
+        <properties maven-id="org.apache.tuweni:tuweni-toml:2.0.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="com.google.code.findbugs:jsr305" />
+            <dependency maven-id="org.jetbrains:annotations" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="jsr305" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

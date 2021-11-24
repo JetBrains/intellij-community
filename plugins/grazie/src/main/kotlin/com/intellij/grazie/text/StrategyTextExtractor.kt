@@ -18,7 +18,7 @@ internal class StrategyTextExtractor(private val strategy: GrammarCheckingStrate
       .filter { it !is PsiCompiledElement && !wsTokens.contains(it.elementType) }
       .mapNotNull { buildTextContent(it) }
       .mapNotNull { trimLeadingQuotesAndSpaces(it) }
-    return TextContent.joinWithWhitespace(fragments)
+    return TextContent.joinWithWhitespace('\n', fragments)
   }
 
   private fun trimLeadingQuotesAndSpaces(content: TextContent): TextContent? {

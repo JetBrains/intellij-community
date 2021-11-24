@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -21,6 +23,7 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.AppUIUtil
+import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import java.util.function.Function
@@ -31,7 +34,9 @@ internal const val KEYMAPS_DIR_PATH = "keymaps"
 private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
 
-@State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))], additionalExportDirectory = KEYMAPS_DIR_PATH, category = SettingsCategory.KEYMAP)
+@State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))],
+       additionalExportDirectory = KEYMAPS_DIR_PATH,
+       category = SettingsCategory.KEYMAP)
 class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
   private val boundShortcuts = HashMap<String, String>()
@@ -99,15 +104,16 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
     BundledKeymapBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapBean> {
       override fun extensionAdded(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
-        val keymapName = ep.keymapName
+        val keymapName = getKeymapName(ep)
         //if (!SystemInfo.isMac &&
         //    keymapName != KeymapManager.MAC_OS_X_KEYMAP &&
         //    keymapName != KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP &&
         //    DefaultKeymap.isBundledKeymapHidden(keymapName) &&
         //    schemeManager.findSchemeByName(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP) == null) return
         val keymap = DefaultKeymap.getInstance().loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
-          override fun read() = pluginDescriptor.pluginClassLoader
-            .getResourceAsStream(ep.effectiveFile).use { JDOMUtil.load(it) }
+          override fun read(): Element {
+            return JDOMUtil.load(ResourceUtil.getResourceAsBytes(getEffectiveFile(ep), pluginDescriptor.classLoader))
+          }
         }, pluginDescriptor)
         schemeManager.addScheme(keymap)
         fireKeymapAdded(keymap)
@@ -115,7 +121,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
       }
 
       override fun extensionRemoved(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
-        removeKeymap(ep.keymapName)
+        removeKeymap(getKeymapName(ep))
       }
     }, null)
   }

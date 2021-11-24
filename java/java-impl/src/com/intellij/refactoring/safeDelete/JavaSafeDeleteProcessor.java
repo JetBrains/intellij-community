@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.impl.light.LightRecordMethod;
@@ -47,6 +49,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.siyeh.ig.style.LambdaCanBeReplacedWithAnonymousInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +72,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       findClassUsages((PsiClass) element, allElementsToDelete, usages);
       if (element instanceof PsiTypeParameter) {
         findTypeParameterExternalUsages((PsiTypeParameter)element, usages);
+      }
+      else {
+        appendCallees(((PsiClass)element), usages);
       }
       ModuleInfoUsageDetector.createSafeDeleteUsageInstance(element.getProject(), allElementsToDelete)
         .detectModuleStatementsUsed(usages, MultiMap.create());
@@ -691,7 +697,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             removeDeletedMethods(OverridingMethodsSearch.search(psiMethod).filtering(m -> !(m instanceof LightRecordMethod)).toArray(PsiMethod.EMPTY_ARRAY),
                                  allElementsToDelete);
 
-    findFunctionalExpressions(usages, ArrayUtil.prepend(psiMethod, overridingMethods));
+    findFunctionalExpressions(usages, true, ArrayUtil.prepend(psiMethod, overridingMethods));
 
     final HashMap<PsiMethod, Collection<PsiReference>> methodToReferences = new HashMap<>();
     for (PsiMethod overridingMethod : overridingMethods) {
@@ -725,11 +731,11 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
   }
 
-  private static void findFunctionalExpressions(final List<? super UsageInfo> usages, PsiMethod... methods) {
+  private static void findFunctionalExpressions(final List<? super UsageInfo> usages, boolean isMethodUsage, PsiMethod... methods) {
     for (PsiMethod method : methods) {
       final PsiClass containingClass = method.getContainingClass();
       FunctionalExpressionSearch.search(method).forEach(expression -> {
-        usages.add(new SafeDeleteFunctionalExpressionUsageInfo(expression, containingClass));
+        usages.add(new SafeDeleteFunctionalExpressionUsageInfo(expression, containingClass, isMethodUsage));
         return true;
       });
     }
@@ -1040,7 +1046,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       return true;
     });
 
-    findFunctionalExpressions(usages, method);
+    findFunctionalExpressions(usages, false, method);
   }
 
 
@@ -1083,12 +1089,46 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static class SafeDeleteFunctionalExpressionUsageInfo extends SafeDeleteReferenceUsageInfo {
-    SafeDeleteFunctionalExpressionUsageInfo(@NotNull PsiElement element, PsiElement referencedElement) {
-      super(element, referencedElement, false);
+    private final boolean myIsMethodUsage;
+
+    SafeDeleteFunctionalExpressionUsageInfo(@NotNull PsiElement element, PsiElement referencedElement, boolean isMethodUsage) {
+      super(element, referencedElement, isSafeToDelete(element, isMethodUsage));
+      myIsMethodUsage = isMethodUsage;
+    }
+
+    private static boolean isSafeToDelete(@NotNull PsiElement element, boolean isMethodUsage) {
+      if (isMethodUsage) {
+        if (element instanceof PsiLambdaExpression) {
+          return LambdaCanBeReplacedWithAnonymousInspection.isConvertibleLambdaExpression(element);
+        }
+        if (element instanceof PsiMethodReferenceExpression) {
+          // todo check if we can convert method ref to anonymous class
+        }
+      }
+      return false;
     }
 
     @Override
-    public void deleteElement() throws IncorrectOperationException {}
+    public void deleteElement() throws IncorrectOperationException {
+      if (!myIsMethodUsage) return;
+      PsiElement element = getElement();
+      if (element instanceof PsiLambdaExpression) {
+        PsiAnonymousClass aClass = LambdaCanBeReplacedWithAnonymousInspection.doFix(getProject(), (PsiLambdaExpression)element);
+        if (aClass == null) return;
+        PsiFile file = aClass.getContainingFile();
+        if (file == null) return;
+        if (!JavaCodeStyleSettings.getInstance(file).INSERT_OVERRIDE_ANNOTATION) return;
+        PsiMethod[] methods = aClass.getMethods();
+        if (methods.length != 1) return;
+        PsiAnnotation overrideAnnotation = AnnotationUtil.findAnnotation(methods[0], true, CommonClassNames.JAVA_LANG_OVERRIDE);
+        if (overrideAnnotation != null) {
+          overrideAnnotation.delete();
+        }
+      }
+      else if (element instanceof PsiMethodReferenceExpression) {
+        // todo convert method ref to anonymous class
+      }
+    }
   }
 
   private static class SafeDeleteExternalAnnotationsUsageInfo extends SafeDeleteReferenceUsageInfo {

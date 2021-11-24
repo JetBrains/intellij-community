@@ -192,6 +192,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     setupWorkingDirectory(javaParameters)
     setupEnvironment(javaParameters)
     setupClasspathAndParameters(javaParameters)
+    commandLine.setRedirectErrorStreamFromRegistry()
   }
 
   @Throws(CantRunException::class)

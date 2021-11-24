@@ -87,6 +87,37 @@ public class AttachDirectoryUtils {
     });
   }
 
+  public static void excludeEntriesWithUndo(@NotNull Project project, @NotNull List<VirtualFile> roots, boolean exclude) {
+    Module module = getAttachTargetModule(project);
+    if (module != null) {
+      excludeEntriesWithUndo(module, roots, exclude);
+    }
+  }
+  public static void excludeEntriesWithUndo(@NotNull Module module, @NotNull List<VirtualFile> roots, boolean exclude) {
+    if (roots.isEmpty()) return;
+    Project project = module.getProject();
+
+    class MyUndoable extends GlobalUndoableAction {
+      @Override
+      public void undo() {
+        excludeEntriesInner(module, roots, !exclude);
+      }
+
+      @Override
+      public void redo() {
+        excludeEntriesInner(module, roots, exclude);
+      }
+    }
+    String title = IdeBundle.message("command.name.choice.exclude.include", exclude ? 0 : 1, getDisplayName(roots));
+    WriteCommandAction.writeCommandAction(project)
+      .withName(title)
+      .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).run(()-> {
+        MyUndoable undoable = new MyUndoable();
+        undoable.redo();
+        UndoManager.getInstance(project).undoableActionPerformed(undoable);
+    });
+  }
+
   public static String getDisplayName(@NotNull List<VirtualFile> roots) {
     return roots.size() == 1 ? "directory '" + roots.get(0).getName() + "'" :
            roots.size() + " " + StringUtil.pluralize("directory", roots.size());
@@ -110,6 +141,27 @@ public class AttachDirectoryUtils {
       }
     });
   }
+
+  private static void excludeEntriesInner(@NotNull Module module, @NotNull List<VirtualFile> files, boolean exclude) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      for (ContentEntry entry : model.getContentEntries()) {
+        VirtualFile root = entry.getFile();
+        if (root == null) continue;
+        for (VirtualFile file : files) {
+          if (VfsUtilCore.isAncestor(root, file, true)) {
+            if (exclude) {
+              entry.addExcludeFolder(file);
+            }
+            else {
+              entry.removeExcludeFolder(file.getUrl());
+            }
+          }
+        }
+      }
+    });
+  }
+
+
 
   @Nullable
   private static Module getAttachTargetModule(@NotNull Project project) {

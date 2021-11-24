@@ -110,7 +110,7 @@ class ActionsLoader {
     }
 
     final Customizer customizer = new Customizer(
-      TOOLWINDOW_CROSS_ESC ? new TouchBar.CrossEscInfo(TOOLWINDOW_EMULATE_ESC, TOOLWINDOW_PERSISTENT) : null,
+      TOOLWINDOW_CROSS_ESC ? new TBPanel.CrossEscInfo(TOOLWINDOW_EMULATE_ESC, TOOLWINDOW_PERSISTENT) : null,
       getAutoCloseActions(id)
     );
     return Pair.create(actions, customizer);

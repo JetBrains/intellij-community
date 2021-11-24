@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LanguageWordCompletion;
@@ -62,7 +63,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
     final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findAlphanumericPrefix(parameters));
     consumeAllWords(position, startOffset, word -> {
       if (!realExcludes.contains(word)) {
-        final LookupElement item = LookupElementBuilder.create(word);
+        final LookupElement item = createWordSuggestion(word);
         javaResultSet.addElement(item);
         plainResultSet.addElement(item);
       }
@@ -106,7 +107,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
             public void visitElement(@NotNull PsiElement each) {
               String valueText = ElementManipulators.getValueText(each);
               if (StringUtil.isNotEmpty(valueText) && !realExcludes.contains(valueText)) {
-                final LookupElement item = LookupElementBuilder.create(valueText);
+                final LookupElement item = createWordSuggestion(valueText);
                 fullStringResult.addElement(item);
               }
             }
@@ -116,6 +117,11 @@ public class WordCompletionContributor extends CompletionContributor implements 
         super.visitElement(element);
       }
     });
+  }
+
+  private static LookupElement createWordSuggestion(String word) {
+    return LookupElementBuilder.create(word)
+      .withIcon(AllIcons.Nodes.Word);
   }
 
   private static boolean shouldPerformWordCompletion(CompletionParameters parameters) {

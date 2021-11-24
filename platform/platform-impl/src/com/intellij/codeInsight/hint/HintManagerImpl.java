@@ -607,7 +607,9 @@ public class HintManagerImpl extends HintManager {
       TooltipController.getInstance().cancelTooltips();
       ApplicationManager.getApplication().invokeLater(() -> hideHints(0, false, false));
 
-      ClientHintManager.getCurrentInstance().onProjectClosed(project);
+      for (ClientHintManager instance : ClientHintManager.getAllInstances()) {
+        instance.onProjectClosed(project);
+      }
     }
   }
 }

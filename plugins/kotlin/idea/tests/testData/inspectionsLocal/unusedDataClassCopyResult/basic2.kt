@@ -1,5 +1,5 @@
 // FIX: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun main() {
     val o = Foo("")
     o.run {

@@ -302,8 +302,7 @@ fun CallTypeAndReceiver<*, *>.receiverTypesWithIndex(
 
     val resolutionScope = contextElement.getResolutionScope(bindingContext, resolutionFacade)
 
-    fun extractReceiverTypeFrom(descriptor: ClassDescriptor): KotlinType? =  // companion object type or class itself
-            descriptor.classValueType ?: (if (descriptor.isFinalOrEnum || descriptor.isJavaDescriptor) null else descriptor.defaultType)
+    fun extractReceiverTypeFrom(descriptor: ClassDescriptor): KotlinType? = descriptor.classValueType
 
     fun tryExtractReceiver(context: BindingContext) = context.get(BindingContext.QUALIFIER, receiverExpression)
 

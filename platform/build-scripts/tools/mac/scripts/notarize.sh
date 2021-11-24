@@ -1,8 +1,10 @@
 #!/bin/bash
 
+# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 APP_DIRECTORY=$1
 APPL_USER=$2
 APPL_PASSWORD=$3
+
 APP_NAME=$4
 BUNDLE_ID=$5
 FAKE_ROOT="${6:-fake-root}"
@@ -56,6 +58,8 @@ function altool-upload() {
 
 #immediately exit script with an error if a command fails
 set -euo pipefail
+
+set -x
 
 file="$APP_NAME.zip"
 

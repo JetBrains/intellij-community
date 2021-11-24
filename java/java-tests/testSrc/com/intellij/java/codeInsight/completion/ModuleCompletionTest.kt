@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -39,12 +39,12 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testRequiresBare() =
     variants("module M { requires <caret>",
              "transitive", "static", "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws",
-             "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "all.fours")
+             "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "all.fours", "lib.with.module.info")
   fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
   @NeedsIndex.Full
   fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
   @NeedsIndex.ForStandardLibrary
-  fun testRequiresQualifiedName() = complete("module M { requires lib.m<caret> }", "module M { requires lib.multi.release;<caret> }")
+  fun testRequiresQualifiedName() = complete("module M { requires lib.mult<caret> }", "module M { requires lib.multi.release;<caret> }")
 
   fun testExportsBare() = variants("module M { exports <caret> }", "pkg")
   fun testExportsPrefixed() = complete("module M { exports p<caret> }", "module M { exports pkg.<caret> }")
@@ -54,7 +54,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   @NeedsIndex.Full
   fun testExportsToList() =
     variants("module M { exports pkg.other to <caret> }",
-             "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws", "lib.multi.release", "lib.named")
+             "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws", "lib.multi.release", "lib.named", "lib.with.module.info")
   @NeedsIndex.Full
   fun testExportsToUnambiguous() = complete("module M { exports pkg.other to M<caret> }", "module M { exports pkg.other to M2<caret> }")
 

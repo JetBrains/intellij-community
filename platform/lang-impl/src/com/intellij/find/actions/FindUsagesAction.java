@@ -20,7 +20,7 @@ import static com.intellij.find.actions.FindUsagesKt.findUsages;
 import static com.intellij.find.actions.ResolverKt.allTargets;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 
-public class FindUsagesAction extends AnAction {
+public class FindUsagesAction extends AnAction implements UpdateInBackground {
 
   @Experimental
   public static final DataKey<Collection<SearchTarget>> SEARCH_TARGETS = DataKey.create("search.targets");

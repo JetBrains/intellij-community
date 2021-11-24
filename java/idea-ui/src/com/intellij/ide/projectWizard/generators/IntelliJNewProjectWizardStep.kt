@@ -82,7 +82,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
           .columns(COLUMNS_MEDIUM)
       }
       customOptions()
-      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings"), topGroupGap = true) {
+      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
         if (context.isCreatingNewProject) {
           row(UIBundle.message("label.project.wizard.new.project.module.name")) {
             textField()
@@ -126,7 +126,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
               })
             }
         }.bottomGap(BottomGap.SMALL)
-      }
+      }.topGap(TopGap.MEDIUM)
     }
   }
 

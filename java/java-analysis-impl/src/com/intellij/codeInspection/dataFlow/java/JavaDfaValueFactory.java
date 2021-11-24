@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -100,7 +100,7 @@ public class JavaDfaValueFactory {
       }
     }
 
-    if (expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) {
+    if (expression instanceof PsiQualifiedExpression) {
       PsiJavaCodeReferenceElement qualifier = ((PsiQualifiedExpression)expression).getQualifier();
       PsiClass target;
       if (qualifier != null) {

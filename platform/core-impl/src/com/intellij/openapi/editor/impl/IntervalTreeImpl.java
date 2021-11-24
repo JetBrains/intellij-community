@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTree<T> {
-  static final Logger LOG = Logger.getInstance(RangeMarkerTree.class);
+  static final Logger LOG = Logger.getInstance(IntervalTreeImpl.class);
   static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
   final ReadWriteLock l = new ReentrantReadWriteLock();

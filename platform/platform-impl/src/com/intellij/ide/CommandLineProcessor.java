@@ -1,22 +1,31 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.CommandLineArgs;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -25,26 +34,30 @@ import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.concurrency.FutureResult;
+import com.intellij.util.containers.ContainerUtil;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
+import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
 public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
   private static final String OPTION_WAIT = "--wait";
+
   public static final Future<CliResult> OK_FUTURE = CompletableFuture.completedFuture(CliResult.OK);
+  public static final String SCHEME_INTERNAL = "!!!internal!!!";
 
   private CommandLineProcessor() { }
 
@@ -52,7 +65,7 @@ public final class CommandLineProcessor {
   @ApiStatus.Internal
   public static @NotNull CommandLineProcessorResult doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
     OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
-    // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
+    // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
     Project project = null;
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
@@ -66,16 +79,16 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull CommandLineProcessorResult doOpenFile(@NotNull Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
-    Project[] projects = tempProject ? new Project[0] : ProjectUtil.getOpenProjects();
+  private static CommandLineProcessorResult doOpenFile(Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
+    Project[] projects = tempProject ? new Project[0] : ProjectUtilCore.getOpenProjects();
     if (!tempProject && projects.length == 0 && PlatformUtils.isDataGrip()) {
       RecentProjectsManager recentProjectManager = RecentProjectsManager.getInstance();
       if (recentProjectManager.willReopenProjectOnStart() && recentProjectManager.reopenLastProjectsOnStart().join()) {
-        projects = ProjectUtil.getOpenProjects();
+        projects = ProjectUtilCore.getOpenProjects();
       }
     }
 
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(ioFile.toString()));
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile);
     if (file == null) {
       if (LightEditUtil.isLightEditEnabled()) {
         Project lightEditProject = LightEditUtil.openFile(ioFile, true);
@@ -116,7 +129,7 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
+  private static Project findBestProject(VirtualFile file, Project[] projects) {
     for (Project project : projects) {
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       if (ReadAction.compute(() -> fileIndex.isInContent(file))) {
@@ -135,6 +148,67 @@ public final class CommandLineProcessor {
     return projects[0];
   }
 
+  @ApiStatus.Internal
+  public static @NotNull CompletableFuture<CliResult> processProtocolCommand(@NotNull @NlsSafe String uri) {
+    LOG.info("external URI request:\n" + uri);
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      throw new IllegalStateException("cannot process URI requests in headless state");
+    }
+
+    int separatorStart = uri.indexOf(SCHEME_SEPARATOR);
+    if (separatorStart < 0) throw new IllegalArgumentException(uri);
+
+    String scheme = uri.substring(0, separatorStart), query = uri.substring(separatorStart + SCHEME_SEPARATOR.length());
+    CompletableFuture<CliResult> result = new CompletableFuture<>();
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("ide.protocol.progress.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        indicator.setText(uri);
+        (SCHEME_INTERNAL.equals(scheme) ? processInternalProtocol(query) : ProtocolHandler.process(scheme, query, indicator))
+          .exceptionally(t -> {
+            LOG.error(t);
+            return new CliResult(0, IdeBundle.message("ide.protocol.exception", t.getClass().getSimpleName(), t.getMessage()));
+          })
+          .thenAccept(cliResult -> {
+            result.complete(cliResult);
+            if (cliResult.message != null) {
+              String title = IdeBundle.message("ide.protocol.cannot.title");
+              new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, cliResult.message, NotificationType.WARNING)
+                .addAction(ShowLogAction.notificationAction())
+                .notify(null);
+            }
+          });
+      }
+    });
+    return result;
+  }
+
+  private static CompletableFuture<CliResult> processInternalProtocol(String query) {
+    try {
+      QueryStringDecoder decoder = new QueryStringDecoder(query);
+      if ("open".equals(decoder.path())) {
+        Map<String, List<String>> parameters = decoder.parameters();
+        String fileStr = ContainerUtil.getLastItem(parameters.get("file"));
+        if (fileStr != null && !fileStr.isBlank()) {
+          Path file = parseFilePath(fileStr, null);
+          if (file != null) {
+            int line = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("line")), -1);
+            int column = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("column")), -1);
+            openFileOrProject(file, line, column, false, false, false);
+            return CompletableFuture.completedFuture(CliResult.OK);
+          }
+        }
+      }
+
+      return CompletableFuture.completedFuture(new CliResult(0, IdeBundle.message("ide.protocol.internal.bad.query", query)));
+    }
+    catch (Throwable t) {
+      return CompletableFuture.failedFuture(t);
+    }
+  }
+
   public static @NotNull CommandLineProcessorResult processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
     StringBuilder logMessage = new StringBuilder();
     logMessage.append("External command line:").append('\n');
@@ -149,18 +223,13 @@ public final class CommandLineProcessor {
       return new CommandLineProcessorResult(null, OK_FUTURE);
     }
 
-    CommandLineProcessorResult result;
-    result = processApplicationStarters(args, currentDirectory);
-    if (result != null) return result;
-
-    result = processCustomHandlers(args);
+    CommandLineProcessorResult result = processApplicationStarters(args, currentDirectory);
     if (result != null) return result;
 
     return processOpenFile(args, currentDirectory);
   }
 
-  @Nullable
-  private static CommandLineProcessorResult processApplicationStarters(@NotNull List<String> args, @Nullable String currentDirectory) {
+  private static @Nullable CommandLineProcessorResult processApplicationStarters(List<String> args, @Nullable String currentDirectory) {
     String command = args.get(0);
     return ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
       if (!command.equals(starter.getCommandName())) {
@@ -189,15 +258,7 @@ public final class CommandLineProcessor {
     });
   }
 
-  @Nullable
-  private static CommandLineProcessorResult processCustomHandlers(@NotNull List<String> args) {
-    Future<CliResult> result = CommandLineCustomHandler.Companion.process(args);
-    if (result == null) return null;
-    return new CommandLineProcessorResult(null, result);
-  }
-
-  @NotNull
-  private static CommandLineProcessorResult processOpenFile(@NotNull List<String> args, @Nullable String currentDirectory) {
+  private static CommandLineProcessorResult processOpenFile(List<String> args, @Nullable String currentDirectory) {
     CommandLineProcessorResult projectAndCallback = null;
     int line = -1;
     int column = -1;
@@ -215,7 +276,7 @@ public final class CommandLineProcessor {
         //noinspection AssignmentToForLoopParameter
         i++;
         if (i == args.size()) break;
-        line = StringUtilRt.parseInt(args.get(i), -1);
+        line = StringUtil.parseInt(args.get(i), -1);
         continue;
       }
 
@@ -223,7 +284,7 @@ public final class CommandLineProcessor {
         //noinspection AssignmentToForLoopParameter
         i++;
         if (i == args.size()) break;
-        column = StringUtilRt.parseInt(args.get(i), -1);
+        column = StringUtil.parseInt(args.get(i), -1);
         continue;
       }
 
@@ -243,8 +304,8 @@ public final class CommandLineProcessor {
         continue;
       }
 
-      if (StringUtilRt.isQuotedString(arg)) {
-        arg = StringUtilRt.unquoteString(arg);
+      if (StringUtil.isQuotedString(arg)) {
+        arg = StringUtil.unquoteString(arg);
       }
 
       Path file = parseFilePath(arg, currentDirectory);
@@ -282,13 +343,11 @@ public final class CommandLineProcessor {
     }
   }
 
-  @Nullable
-  private static Path parseFilePath(@NotNull String path, @Nullable String currentDirectory) {
+  private static @Nullable Path parseFilePath(String path, @Nullable String currentDirectory) {
     try {
-      // handle paths like /file/foo\qwe
-      Path file = Paths.get(FileUtilRt.toSystemDependentName(path));
+      Path file = Path.of(FileUtilRt.toSystemDependentName(path));  // handle paths like '/file/foo\qwe'
       if (!file.isAbsolute()) {
-        file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
+        file = currentDirectory == null ? file.toAbsolutePath() : Path.of(currentDirectory).resolve(file);
       }
       return file.normalize();
     }
@@ -298,16 +357,12 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull CommandLineProcessorResult openFileOrProject(@NotNull Path file,
-                                                                       int line, int column,
-                                                                       boolean tempProject,
-                                                                       boolean shouldWait,
-                                                                       boolean lightEditMode) {
+
+  private static CommandLineProcessorResult openFileOrProject(Path file, int line, int column,
+                                                              boolean tempProject, boolean shouldWait, boolean lightEditMode) {
     return LightEditUtil.computeWithCommandLineOptions(shouldWait, lightEditMode, () -> {
-      if (line != -1 || tempProject) {
-        return doOpenFile(file, line, column, tempProject, shouldWait);
-      }
-      return doOpenFileOrProject(file, shouldWait);
+      boolean asFile = line != -1 || tempProject;
+      return asFile ? doOpenFile(file, line, column, tempProject, shouldWait) : doOpenFileOrProject(file, shouldWait);
     });
   }
 }

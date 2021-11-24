@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bindItem
 import org.jetbrains.annotations.Nls
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
@@ -20,20 +22,19 @@ internal val EXP_UI_TAB_PLACEMENTS = arrayOf(TOP, TABS_NONE)
 
 internal val TAB_PLACEMENT = ApplicationBundle.message("combobox.editor.tab.placement")
 
-internal val tabPlacementsOptionDescriptors = TAB_PLACEMENTS.map<Int, BooleanOptionDescription> { i -> asOptionDescriptor(i) }
+internal val tabPlacementsOptionDescriptors = TAB_PLACEMENTS.map { i -> asOptionDescriptor(i) }
 
-internal fun Cell.tabPlacementComboBox(): CellBuilder<ComboBox<Int>> {
+internal fun Row.tabPlacementComboBox(): Cell<ComboBox<Int>> {
   val model = if (ExperimentalUI.isNewEditorTabs()) DefaultComboBoxModel(EXP_UI_TAB_PLACEMENTS)
               else DefaultComboBoxModel(TAB_PLACEMENTS)
   return tabPlacementComboBox(model)
 }
 
-internal fun Cell.tabPlacementComboBox(model: ComboBoxModel<Int>): CellBuilder<ComboBox<Int>> {
+internal fun Row.tabPlacementComboBox(model: ComboBoxModel<Int>): Cell<ComboBox<Int>> {
   return comboBox(model,
-                  ui::editorTabPlacement,
-                  renderer = SimpleListCellRenderer.create<Int> { label, value, _ ->
+                  renderer = SimpleListCellRenderer.create { label, value, _ ->
                     label.text = value.asTabPlacement()
-                  })
+                  }).bindItem(ui::editorTabPlacement)
 }
 
 private fun asOptionDescriptor(i: Int): BooleanOptionDescription {

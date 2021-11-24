@@ -41,6 +41,7 @@ import training.learn.course.LessonType
 import training.learn.exceptons.LessonPreparationException
 import training.learn.lesson.LessonManager
 import training.project.ProjectUtils
+import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.statistic.StatisticLessonListener
 import training.ui.LearnToolWindowFactory
@@ -50,11 +51,17 @@ import training.util.isLearningProject
 import training.util.learningToolWindow
 import java.io.IOException
 
+internal class OpenLessonParameters(val projectWhereToStartLesson: Project,
+                                    val lesson: Lesson,
+                                    val forceStartLesson: Boolean,
+                                    val startingWay: LessonStartingWay)
+
 internal object OpenLessonActivities {
   private val LOG = logger<OpenLessonActivities>()
 
   @RequiresEdt
-  fun openLesson(projectWhereToStartLesson: Project, lesson: Lesson, forceStartLesson: Boolean) {
+  fun openLesson(params: OpenLessonParameters) {
+    val projectWhereToStartLesson = params.projectWhereToStartLesson
     LOG.debug("${projectWhereToStartLesson.name}: start openLesson method")
 
     // Stop the current lesson (if any)
@@ -70,10 +77,10 @@ internal object OpenLessonActivities {
       activeToolWindow.setModulesPanel()
     }
 
-    if (!forceStartLesson && LessonManager.instance.lessonShouldBeOpenedCompleted(lesson)) {
+    if (!params.forceStartLesson && LessonManager.instance.lessonShouldBeOpenedCompleted(params.lesson)) {
       // TODO: Do not stop lesson in another toolwindow IFT-110
       LearningUiManager.activeToolWindow?.setLearnPanel() ?: error("No active toolwindow in $projectWhereToStartLesson")
-      LessonManager.instance.openLessonPassed(lesson as KLesson, projectWhereToStartLesson)
+      LessonManager.instance.openLessonPassed(params.lesson as KLesson, projectWhereToStartLesson)
       return
     }
 
@@ -90,7 +97,7 @@ internal object OpenLessonActivities {
       if (learnProject != null) LearningUiManager.learnProject = learnProject
 
       when {
-        lesson.lessonType == LessonType.SCRATCH -> {
+        params.lesson.lessonType == LessonType.SCRATCH -> {
           LOG.debug("${projectWhereToStartLesson.name}: scratch based lesson")
         }
         learnProject == null || learnProject.isDisposed -> {
@@ -99,7 +106,7 @@ internal object OpenLessonActivities {
             LOG.debug("${projectWhereToStartLesson.name}: 1. learnProject is null or disposed")
             initLearnProject(projectWhereToStartLesson, null) {
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... LearnProject has been started")
-              openLessonWhenLearnProjectStart(lesson, it)
+              openLessonWhenLearnProjectStart(OpenLessonParameters(it, params.lesson, params.forceStartLesson, params.startingWay))
               LOG.debug("${projectWhereToStartLesson.name}: 1. ... open lesson when learn project has been started")
             }
             return
@@ -125,16 +132,16 @@ internal object OpenLessonActivities {
         }
       }
 
-      if (lesson.lessonType.isProject) {
+      if (params.lesson.lessonType.isProject) {
         if (projectWhereToStartLesson != learnProject) {
           LOG.error(Exception("Invalid learning project initialization: " +
                               "projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
           return
         }
-        prepareAndOpenLesson(projectWhereToStartLesson, lesson)
+        prepareAndOpenLesson(params)
       }
       else {
-        openLessonForPreparedProject(projectWhereToStartLesson, lesson)
+        openLessonForPreparedProject(params)
       }
     }
     catch (e: Exception) {
@@ -142,8 +149,10 @@ internal object OpenLessonActivities {
     }
   }
 
-  private fun prepareAndOpenLesson(project: Project, lessonToOpen: Lesson, withCleanup: Boolean = true) {
-    runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = project) l@{
+  private fun prepareAndOpenLesson(params: OpenLessonParameters, withCleanup: Boolean = true) {
+    runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = params.projectWhereToStartLesson) l@{
+      val project = params.projectWhereToStartLesson
+      val lessonToOpen = params.lesson
       try {
         if (withCleanup) {
           LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
@@ -159,13 +168,15 @@ internal object OpenLessonActivities {
         return@l
       }
       invokeLater {
-        openLessonForPreparedProject(project, lessonToOpen)
+        openLessonForPreparedProject(params)
       }
     }
   }
 
-  private fun openLessonForPreparedProject(project: Project, lesson: Lesson) {
+  private fun openLessonForPreparedProject(params: OpenLessonParameters) {
     val langSupport = LangManager.getInstance().getLangSupport() ?: throw Exception("Language should be defined by now")
+    val project = params.projectWhereToStartLesson
+    val lesson = params.lesson
 
     val vf: VirtualFile? = if (lesson.lessonType == LessonType.SCRATCH) {
       LOG.debug("${project.name}: scratch based lesson")
@@ -186,14 +197,15 @@ internal object OpenLessonActivities {
     }
     // We need to ensure that the learning panel is initialized
     if (showLearnPanel(project, lesson.preferredLearnWindowAnchor(project))) {
-      openLessonWhenLearnPanelIsReady(project, lesson, vf)
+      openLessonWhenLearnPanelIsReady(params, vf)
     }
-    else waitLearningToolwindow(project, lesson, vf)
+    else waitLearningToolwindow(params, vf)
   }
 
-  private fun openLessonWhenLearnPanelIsReady(project: Project, lesson: Lesson, vf: VirtualFile?) {
+  private fun openLessonWhenLearnPanelIsReady(params: OpenLessonParameters, vf: VirtualFile?) {
+    val project = params.projectWhereToStartLesson
     LOG.debug("${project.name}: Add listeners to lesson")
-    addStatisticLessonListenerIfNeeded(project, lesson)
+    addStatisticLessonListenerIfNeeded(project, params.lesson)
 
     //open next lesson if current is passed
     LOG.debug("${project.name}: Set lesson view")
@@ -201,7 +213,7 @@ internal object OpenLessonActivities {
       it.setLearnPanel()
     }
     LOG.debug("${project.name}: XmlLesson onStart()")
-    lesson.onStart()
+    params.lesson.onStart(params.startingWay)
 
     //to start any lesson we need to do 4 steps:
     //1. open editor or find editor
@@ -225,7 +237,7 @@ internal object OpenLessonActivities {
       }
       if (textEditor == null) {
         LOG.error("Cannot open editor for $vf")
-        if (lesson.lessonType == LessonType.SCRATCH) {
+        if (params.lesson.lessonType == LessonType.SCRATCH) {
           invokeLater {
             runWriteAction {
               vf.delete(this)
@@ -243,11 +255,12 @@ internal object OpenLessonActivities {
 
     //4. Process lesson
     LOG.debug("${project.name}: 4. Process lesson")
-    if (lesson is KLesson) processDslLesson(lesson, textEditor, project, vf)
+    if (params.lesson is KLesson) processDslLesson(params.lesson, textEditor, project, vf)
     else error("Unknown lesson format")
   }
 
-  private fun waitLearningToolwindow(project: Project, lesson: Lesson, vf: VirtualFile?) {
+  private fun waitLearningToolwindow(params: OpenLessonParameters, vf: VirtualFile?) {
+    val project = params.projectWhereToStartLesson
     val connect = project.messageBus.connect()
     connect.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun toolWindowsRegistered(ids: MutableList<String>, toolWindowManager: ToolWindowManager) {
@@ -256,8 +269,8 @@ internal object OpenLessonActivities {
           if (toolWindow != null) {
             connect.disconnect()
             invokeLater {
-              showLearnPanel(project, lesson.preferredLearnWindowAnchor(project))
-              openLessonWhenLearnPanelIsReady(project, lesson, vf)
+              showLearnPanel(project, params.lesson.preferredLearnWindowAnchor(project))
+              openLessonWhenLearnPanelIsReady(params, vf)
             }
           }
         }
@@ -297,11 +310,11 @@ internal object OpenLessonActivities {
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
           if (onboarding.properties.canStartInDumbMode) {
-            CourseManager.instance.openLesson(project, onboarding, true)
+            CourseManager.instance.openLesson(project, onboarding, LessonStartingWay.ONBOARDING_PROMOTER, true)
           }
           else {
             DumbService.getInstance(project).runWhenSmart {
-              CourseManager.instance.openLesson(project, onboarding, true)
+              CourseManager.instance.openLesson(project, onboarding, LessonStartingWay.ONBOARDING_PROMOTER, true)
             }
           }
         }
@@ -342,11 +355,12 @@ internal object OpenLessonActivities {
   }
 
   @RequiresEdt
-  private fun openLessonWhenLearnProjectStart(lesson: Lesson, myLearnProject: Project) {
-    if (lesson.properties.canStartInDumbMode) {
-      prepareAndOpenLesson(myLearnProject, lesson, withCleanup = false)
+  private fun openLessonWhenLearnProjectStart(params: OpenLessonParameters) {
+    if (params.lesson.properties.canStartInDumbMode) {
+      prepareAndOpenLesson(params, withCleanup = false)
       return
     }
+    val myLearnProject = params.projectWhereToStartLesson
     fun openLesson() {
       val toolWindowManager = ToolWindowManager.getInstance(myLearnProject)
       val learnToolWindow = toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
@@ -355,7 +369,7 @@ internal object OpenLessonActivities {
           // Try to fix PyCharm double startup indexing :(
           val openWhenSmart = {
             DumbService.getInstance(myLearnProject).runWhenSmart {
-              prepareAndOpenLesson(myLearnProject, lesson, withCleanup = false)
+              prepareAndOpenLesson(params, withCleanup = false)
             }
           }
           Alarm().addRequest(openWhenSmart, 500)
@@ -472,15 +486,30 @@ internal object OpenLessonActivities {
         return //if user abort to open lesson in a new Project
     try {
       NewLearnProjectUtil.createLearnProject(projectToClose, langSupport, selectedSdk) { learnProject ->
-        langSupport.applyToProjectAfterConfigure().invoke(learnProject)
-        LearningUiManager.learnProject = learnProject
-        runInEdt {
-          postInitCallback(learnProject)
+        try {
+          langSupport.applyToProjectAfterConfigure().invoke(learnProject)
         }
+        catch (e: Throwable) {
+          LOG.error(e)
+          LOG.error("The configuration will be retried after 2 seconds")
+          Alarm().addRequest({
+            langSupport.applyToProjectAfterConfigure().invoke(learnProject)
+            finishProjectInitialization(learnProject, postInitCallback)
+          }, 2000)
+          return@createLearnProject
+        }
+        finishProjectInitialization(learnProject, postInitCallback)
       }
     }
     catch (e: IOException) {
       LOG.error(e)
+    }
+  }
+
+  private fun finishProjectInitialization(learnProject: Project, postInitCallback: (learnProject: Project) -> Unit) {
+    LearningUiManager.learnProject = learnProject
+    runInEdt {
+      postInitCallback(learnProject)
     }
   }
 

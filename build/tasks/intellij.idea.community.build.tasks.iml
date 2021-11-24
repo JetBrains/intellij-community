@@ -38,7 +38,6 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
@@ -49,5 +48,14 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="blockmap" level="project" />
+    <orderEntry type="library" name="jackson-jr-objects" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="SSHJ" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
+    <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="bouncy-castle-provider" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
   </component>
 </module>

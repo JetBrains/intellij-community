@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test(foo: Foo): List<Int> {
     return foo.getList()

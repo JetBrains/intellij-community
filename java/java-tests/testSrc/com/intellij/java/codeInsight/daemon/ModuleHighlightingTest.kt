@@ -12,7 +12,9 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
+import com.intellij.psi.util.PsiUtilCore
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
 
@@ -120,7 +122,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           requires <error descr="Module is not in dependencies: M3">M3</error>;
           requires <warning descr="Ambiguous module reference: lib.auto">lib.auto</warning>;
           requires lib.multi.release;
-          requires lib.named;
+          requires <warning descr="Ambiguous module reference: lib.named">lib.named</warning>;
           requires lib.claimed;
           requires all.fours;
         }""".trimIndent())
@@ -493,6 +495,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     ProjectRootManager.getInstance(project).incModificationCount()
     assertNotSame(libModule, JavaModuleGraphUtil.findDescriptorByElement(libClass)!!)
+  }
+
+  fun testModuleInSources() {
+    val classInLibrary = myFixture.javaFacade.findClass("lib.named.C", GlobalSearchScope.allScope(project))!!
+    val elementInSources = classInLibrary.navigationElement
+    assertThat(JavaModuleGraphUtil.findDescriptorByFile (PsiUtilCore.getVirtualFile(elementInSources), project)).isNotNull
   }
 
   //<editor-fold desc="Helpers.">

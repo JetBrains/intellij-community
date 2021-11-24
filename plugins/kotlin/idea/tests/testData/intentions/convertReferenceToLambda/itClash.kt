@@ -1,5 +1,5 @@
 // IS_APPLICABLE: true
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'arg' is never used
 
 fun foo() {

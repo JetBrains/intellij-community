@@ -2,12 +2,18 @@
 
 package org.jetbrains.kotlin.idea.stubindex
 
+import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.load.java.AbstractJavaClassFinder
 
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
 class KotlinSourceFilterScope private constructor(
@@ -25,7 +31,24 @@ class KotlinSourceFilterScope private constructor(
     override fun getProject() = project
 
     override fun contains(file: VirtualFile): Boolean {
-        if (!super.contains(file)) return false
+        if (myBaseScope is AbstractJavaClassFinder.FilterOutKotlinSourceFilesScope) {
+            // KTIJ-20095: FilterOutKotlinSourceFilesScope optimization to avoid heavy file.fileType calculation
+            val extension = file.extension
+            val ktFile =
+                when {
+                    file.isDirectory -> false
+                    extension == KotlinFileType.EXTENSION -> true
+                    extension == JavaFileType.DEFAULT_EXTENSION || extension == JavaClassFileType.INSTANCE.defaultExtension -> false
+                    else -> {
+                        val fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(file.name)
+                        fileTypeByFileName == KotlinFileType.INSTANCE || fileTypeByFileName == FileTypes.UNKNOWN &&
+                                FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)
+                    }
+                }
+
+            if (ktFile || !myBaseScope.base.contains(file)) return false
+        } else
+            if (!super.contains(file)) return false
 
         return ProjectRootsUtil.isInContent(
             project,

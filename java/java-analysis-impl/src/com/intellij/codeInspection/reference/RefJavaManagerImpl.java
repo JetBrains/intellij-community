@@ -60,8 +60,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   public RefJavaManagerImpl(@NotNull RefManagerImpl manager) {
     myRefManager = manager;
     final Project project = manager.getProject();
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     myAppMainPattern = factory.createMethodFromText("void main(String[] args);", null);
     myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
@@ -197,17 +196,18 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public RefParameter getParameterReference(UParameter param, int index, RefMethod refMethod) {
+  public RefParameter getParameterReference(UParameter param, int index, RefElement refElement) {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
 
     PsiElement sourcePsi = param.getSourcePsi();
     LOG.assertTrue(sourcePsi != null, "UParameter " + param + " has null sourcePsi");
-    RefElement refElement = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
-      RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refMethod);
+    RefElement result = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
+      RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refElement);
       ref.initialize();
+      ref.setInitialized(true);
       return (RefElement)ref;
     });
-    return refElement instanceof RefParameter ? (RefParameter)refElement : null;
+    return result instanceof RefParameter ? (RefParameter)result : null;
   }
 
   @Override
@@ -270,6 +270,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     else if (uElement instanceof UField) {
       return new RefFieldImpl((UField)uElement, psi, myRefManager);
     }
+    else if (uElement instanceof ULambdaExpression || uElement instanceof UCallableReferenceExpression) {
+      return new RefFunctionalExpressionImpl((UExpression)uElement, psi, myRefManager);
+    }
     return null;
   }
 
@@ -330,6 +333,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     if (ref instanceof RefJavaModule) {
       return JAVA_MODULE;
     }
+    if (ref instanceof RefFunctionalExpression) {
+      return FUNCTIONAL_EXPRESSION;
+    }
     return null;
   }
 
@@ -353,12 +359,18 @@ public final class RefJavaManagerImpl extends RefJavaManager {
           if (element instanceof PsiJavaModule) {
             visitJavaModule((PsiJavaModule)element);
           }
+          else if (element instanceof PsiFunctionalExpression) {
+            RefElement decl = myRefManager.getReference(element);
+            if (decl != null) {
+              myRefManager.executeTask(() -> ((RefElementImpl)decl).buildReferences());
+            }
+          }
         }
 
         private void visitJavaModule(PsiJavaModule module) {
           RefElement refElement = myRefManager.getReference(module);
           if (refElement != null) {
-            myRefManager.addParallelTask(() -> ((RefJavaModuleImpl)refElement).buildReferences());
+            myRefManager.executeTask(() -> ((RefJavaModuleImpl)refElement).buildReferences());
           }
         }
       };
@@ -441,7 +453,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     public boolean visitFile(@NotNull UFile node) {
       RefElement refElement = myRefManager.getReference(node.getSourcePsi());
       if (refElement instanceof RefJavaFileImpl) {
-        myRefManager.addParallelTask(() -> ((RefJavaFileImpl)refElement).buildReferences());
+        myRefManager.executeTask(() -> ((RefJavaFileImpl)refElement).buildReferences());
       }
       return true;
     }
@@ -451,7 +463,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       processComments(node);
       RefElement decl = myRefManager.getReference(node.getSourcePsi());
       if (decl != null) {
-        myRefManager.addParallelTask(() -> ((RefElementImpl)decl).buildReferences());
+        myRefManager.executeTask(() -> ((RefElementImpl)decl).buildReferences());
       }
 
       PsiModifierListOwner javaModifiersListOwner = ObjectUtils.tryCast(node.getJavaPsi(), PsiModifierListOwner.class);
@@ -478,7 +490,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       if (variable instanceof UParameter) {
         final RefElement reference = myRefManager.getReference(variable.getSourcePsi());
         if (reference instanceof RefParameterImpl) {
-          myRefManager.addParallelTask(() -> ((RefParameterImpl)reference).buildReferences());
+          myRefManager.executeTask(() -> ((RefParameterImpl)reference).buildReferences());
         }
       }
       return false;

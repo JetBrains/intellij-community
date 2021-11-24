@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -1138,5 +1139,47 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "</dependencies>");
 
     checkHighlighting();
+  }
+
+  @Test
+  public void testImportDependencyChainedProperty() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+                     "<modules>" +
+                     "   <module>m1</module>" +
+                     "</modules>" +
+                     "<dependencyManagement>" +
+                     "    <dependencies>" +
+                     "        <dependency>" +
+                     "            <groupId>org.deptest</groupId>" +
+                     "            <artifactId>bom-depparent</artifactId>" +
+                     "            <version>1.0</version>" +
+                     "            <type>pom</type>" +
+                     "            <scope>import</scope>" +
+                     "        </dependency>" +
+                     "    </dependencies>" +
+                     "</dependencyManagement>");
+
+    createModulePom("m1", "<parent>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>project</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </parent>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>org.example</groupId>" +
+                          "    <artifactId>something</artifactId>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+    importProjectWithErrors();
+
+    MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(myProject, myProjectPom, MavenDomProjectModel.class);
+
+    MavenDomDependency dependency = MavenDependencyCompletionUtil.findManagedDependency(model, myProject, "org.example", "something");
+    assertNotNull(dependency);
+    assertEquals("42", dependency.getVersion().getStringValue());
   }
 }

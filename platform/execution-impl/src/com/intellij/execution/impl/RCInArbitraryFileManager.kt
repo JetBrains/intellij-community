@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.digest
@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.*
 import org.jdom.Element
 import java.io.ByteArrayInputStream
+import java.util.*
 
 /**
  * Manages run configurations that are stored in arbitrary `*.run.xml` files in project (not in .idea/runConfigurations or project.ipr file).
@@ -33,7 +34,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   private val filePathToRunConfigs = mutableMapOf<String, MutableList<RunnerAndConfigurationSettingsImpl>>()
 
   // Remember digest in order not to overwrite file with an equivalent content (e.g. different line endings or smth non-meaningful)
-  private val filePathToDigests = mutableMapOf<String, MutableList<ByteArray>>()
+  private val filePathToDigests = Collections.synchronizedMap(mutableMapOf<String, MutableList<ByteArray>>())
 
   private var saveInProgress = false
 
@@ -94,7 +95,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
   /**
    * This function doesn't change the model, caller should iterate through the returned list and remove/add run configurations as needed.
-   * This function should be called with RunManagerImpl.lock.write
+   * This function should be called with RunManagerImpl.lock.read
    */
   internal fun loadChangedRunConfigsFromFile(runManager: RunManagerImpl, filePath: String): DeletedAndAddedRunConfigs {
     if (saveInProgress) {

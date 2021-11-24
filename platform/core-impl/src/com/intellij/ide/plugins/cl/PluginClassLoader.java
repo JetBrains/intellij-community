@@ -16,10 +16,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -361,7 +358,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   private void collectClassLoaders(@NotNull Deque<ClassLoader> queue) {
     for (IdeaPluginDescriptorImpl parent : parents) {
-      ClassLoader classLoader = parent.classLoader;
+      ClassLoader classLoader = parent.getPluginClassLoader();
       if (classLoader != null && classLoader != coreLoader) {
         queue.add(classLoader);
       }
@@ -434,7 +431,46 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   @Override
   public @Nullable URL findResource(@NotNull String name) {
-    return findResource(name, Resource::getURL, ClassLoader::getResource);
+    return doFindResource(name, Resource::getURL, ClassLoader::getResource);
+  }
+
+  @Override
+  public byte @Nullable [] getResourceAsBytes(@NotNull String name, boolean checkParents) throws IOException {
+    byte[] result = super.getResourceAsBytes(name, checkParents);
+    if (result != null) {
+      return result;
+    }
+
+    if (!checkParents) {
+      return null;
+    }
+
+    for (ClassLoader classloader : getAllParents()) {
+      if (classloader instanceof UrlClassLoader) {
+        Resource resource = ((UrlClassLoader)classloader).getClassPath().findResource(name);
+        if (resource != null) {
+          return resource.getBytes();
+        }
+      }
+      else {
+        InputStream input = classloader.getResourceAsStream(name);
+        if (input != null) {
+          try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int read;
+            byte[] data = new byte[16384];
+            while ((read = input.read(data, 0, data.length)) != -1) {
+              buffer.write(data, 0, read);
+            }
+            return buffer.toByteArray();
+          }
+          finally {
+            input.close();
+          }
+        }
+      }
+    }
+    return result;
   }
 
   @Override
@@ -457,20 +493,11 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         return null;
       }
     };
-    return findResource(name, f1, f2);
+    return doFindResource(name, f1, f2);
   }
 
-  private <T> @Nullable T findResource(String name, Function<Resource, T> f1, BiFunction<ClassLoader, String, T> f2) {
+  private <T> @Nullable T doFindResource(String name, Function<Resource, T> f1, BiFunction<ClassLoader, String, T> f2) {
     String canonicalPath = toCanonicalPath(name);
-
-    if (canonicalPath.startsWith("/")) {
-      //noinspection SpellCheckingInspection
-      if (!canonicalPath.startsWith("/org/bridj/")) {
-        String message = "Do not request resource from classloader using path with leading slash";
-        Logger.getInstance(PluginClassLoader.class).error(message, new PluginException(name, pluginId));
-      }
-      canonicalPath = canonicalPath.substring(1);
-    }
 
     Resource resource = classPath.findResource(canonicalPath);
     if (resource != null) {
@@ -490,6 +517,13 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
           return t;
         }
       }
+    }
+
+    if (canonicalPath.startsWith("/") && classPath.findResource(canonicalPath.substring(1)) != null) {
+      // reporting malformed paths only when there's a resource at the right one - which is rarely the case
+      // (see also `UrlClassLoader#doFindResource`)
+      String message = "Calling `ClassLoader#getResource` with leading slash doesn't work; strip";
+      Logger.getInstance(PluginClassLoader.class).error(message, new PluginException(name, pluginId));
     }
 
     return null;

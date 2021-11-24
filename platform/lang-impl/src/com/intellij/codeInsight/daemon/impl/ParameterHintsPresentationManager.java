@@ -154,6 +154,11 @@ public final class ParameterHintsPresentationManager implements Disposable {
       updateState(editor, text, widthAdjustment, animated);
     }
 
+    @Override
+    public String toString() {
+      return "[" + this.getText() + "]";
+    }
+
     public void update(Editor editor, String newText, HintWidthAdjustment widthAdjustment, boolean animated) {
       updateState(editor, newText, widthAdjustment, animated);
     }

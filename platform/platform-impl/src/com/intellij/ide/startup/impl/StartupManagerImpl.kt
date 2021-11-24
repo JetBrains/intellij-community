@@ -175,10 +175,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
     indicator?.checkCanceled()
 
-    // opened on startup
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
-    // opened from the welcome screen
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)
+    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)  // opened on startup
+    StartUpMeasurer.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)        // opened from the welcome screen
 
     if (app.isUnitTestMode && !app.isDispatchThread) {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
@@ -189,8 +187,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           try {
             BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
           }
-          catch (ignore: ProcessCanceledException) {
-          }
+          catch (ignore: ProcessCanceledException) { }
         }
       }
       if (app.isUnitTestMode) {
@@ -204,7 +201,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     descriptor: PluginDescriptor,
     extensionPointName: String,
     supplier: Supplier<out StartupActivity?>,
-    indicator: ProgressIndicator?,
+    indicator: ProgressIndicator?
   ) {
     if (project.isDisposed) {
       return

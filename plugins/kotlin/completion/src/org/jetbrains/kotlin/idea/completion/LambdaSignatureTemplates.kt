@@ -97,8 +97,9 @@ object LambdaSignatureTemplates {
         return functionParameterTypes(lambdaType).joinToString(", ", transform = ::parameterPresentation) + " ->"
     }
 
-    fun explicitParameterTypesRequired(file: KtFile, placeholderRange: TextRange, lambdaType: KotlinType): Boolean {
-        PsiDocumentManager.getInstance(file.project).commitAllDocuments()
+    fun explicitParameterTypesRequired(context: InsertionContext, placeholderRange: TextRange, lambdaType: KotlinType): Boolean {
+        val file = context.file as? KtFile ?: return false
+        PsiDocumentManager.getInstance(file.project).commitDocument(context.document)
         val expression =
             PsiTreeUtil.findElementOfClassAtRange(file, placeholderRange.startOffset, placeholderRange.endOffset, KtExpression::class.java)
                 ?: return false

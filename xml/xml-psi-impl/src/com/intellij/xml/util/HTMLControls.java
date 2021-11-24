@@ -1,16 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.util.ResourceUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,15 +30,9 @@ public final class HTMLControls {
   private static Control[] loadControls() {
     Element element;
     try {
-      // use temporary bytes stream because otherwise inputStreamSkippingBOM will fail
-      // on ZipFileInputStream used in jar files
-      final byte[] bytes;
-      try (final InputStream stream = HTMLControls.class.getResourceAsStream("HtmlControls.xml")) {
-        bytes = FileUtilRt.loadBytes(stream);
-      }
-      try (final UnsyncByteArrayInputStream bytesStream = new UnsyncByteArrayInputStream(bytes)) {
-        element = JDOMUtil.load(CharsetToolkit.inputStreamSkippingBOM(bytesStream));
-      }
+      byte[] bytes = ResourceUtil.getResourceAsBytes("com/intellij/xml/util/HtmlControls.xml", HTMLControls.class.getClassLoader());
+      assert bytes != null;
+      element = JDOMUtil.load(bytes);
     }
     catch (Exception e) {
       LOG.error(e);

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject;
 
 import java.util.Collection;
 
-public class KotlinSuperClassIndex extends StringStubIndexExtension<KtClassOrObject> {
+public class KotlinSuperClassIndex extends AbstractStringStubIndexExtension<KtClassOrObject> {
     private static final StubIndexKey<String, KtClassOrObject> KEY = KotlinIndexUtil.createIndexKey(KotlinSuperClassIndex.class);
 
     private static final KotlinSuperClassIndex ourInstance = new KotlinSuperClassIndex();
@@ -22,7 +21,9 @@ public class KotlinSuperClassIndex extends StringStubIndexExtension<KtClassOrObj
         return ourInstance;
     }
 
-    private KotlinSuperClassIndex() {}
+    private KotlinSuperClassIndex() {
+        super(KtClassOrObject.class);
+    }
 
     @NotNull
     @Override

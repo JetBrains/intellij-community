@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -12,11 +12,9 @@ import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ImageLoader.Dimension2DDouble;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,14 +25,13 @@ import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.List;
 
-@ApiStatus.Internal
 final class RasterizedImageDataLoader implements ImageDataLoader {
   private final WeakReference<ClassLoader> classLoaderRef;
-  private final long cacheKey;
+  private final int cacheKey;
   private final int imageFlags;
   private final String path;
 
-  RasterizedImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int imageFlags) {
+  RasterizedImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int imageFlags) {
     this.path = path;
     classLoaderRef = new WeakReference<>(classLoader);
     this.cacheKey = cacheKey;
@@ -87,7 +84,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
                                                @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
                                                @NotNull ScaleContext scaleContext,
                                                boolean isUpScaleNeeded,
-                                               long rasterizedCacheKey,
+                                                int rasterizedCacheKey,
                                                @MagicConstant(flagsFromClass = ImageDescriptor.class) int imageFlags) {
     long loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled();
 
@@ -129,13 +126,13 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       }
     }
 
-    Dimension2DDouble originalUserSize = new Dimension2DDouble(0, 0);
+    ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
     try {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
       Image image;
       if (isSvg) {
-        image = SVGLoader
-          .loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark, originalUserSize);
+        image = SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark,
+                                                originalUserSize);
       }
       else {
         image = ImageLoader.loadPngFromClassResource(effectivePath, null, classLoader, imageScale, originalUserSize);
@@ -151,11 +148,11 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       if (image == null) {
         return null;
       }
-      return ImageLoader.convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, StartupUiUtil.isJreHiDPI(scaleContext), imageScale, isSvg,
-                          originalUserSize);
+      return ImageLoader.convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, StartupUiUtil.isJreHiDPI(scaleContext),
+                                      imageScale, isSvg);
     }
     catch (IOException e) {
-      Logger.getInstance(ImageLoader.class).debug(e);
+      Logger.getInstance(RasterizedImageDataLoader.class).debug(e);
       return null;
     }
   }

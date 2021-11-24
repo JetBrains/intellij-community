@@ -8,6 +8,7 @@ import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.*;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
+import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.ErrorDiffTool;
@@ -55,6 +56,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,14 +82,19 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Nullable private final DiffTool myForcedDiffTool;
 
   @NotNull private final DefaultActionGroup myToolbarGroup;
+  @NotNull private final DefaultActionGroup myRightToolbarGroup;
   @NotNull private final DefaultActionGroup myPopupActionGroup;
   @NotNull private final DefaultActionGroup myTouchbarActionGroup;
 
   @NotNull private final JPanel myPanel;
   @NotNull private final MyPanel myMainPanel;
-  @NotNull protected final Wrapper myContentPanel;
+  @NotNull private final Wrapper myContentPanel;
+  @NotNull private final JPanel myTopPanel;
   @NotNull private final ActionToolbar myToolbar;
+  @NotNull private final ActionToolbar myRightToolbar;
   @NotNull protected final Wrapper myToolbarWrapper;
+  @NotNull protected final Wrapper myDiffInfoWrapper;
+  @NotNull protected final Wrapper myRightToolbarWrapper;
   @NotNull private final Wrapper myToolbarStatusPanel;
   @NotNull private final MyProgressBar myProgressBar;
 
@@ -97,6 +104,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private DiffRequest myActiveRequest;
 
   @NotNull private ViewerState myState;
+
+  private final boolean myIsNewToolbar;
 
   public DiffRequestProcessor(@Nullable Project project) {
     this(project, new UserDataHolderBase());
@@ -115,6 +124,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     mySettings = DiffSettings.getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
     myForcedDiffTool = myContext.getUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL);
 
+    myIsNewToolbar = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_NEW_TOOLBAR, myContext);
+
     updateAvailableDiffTools();
     DiffTool.EP_NAME.addChangeListener(() -> {
       updateAvailableDiffTools();
@@ -124,6 +135,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     DiffIgnoredRangeProvider.EP_NAME.addChangeListener(() -> updateRequest(true), this);
 
     myToolbarGroup = new DefaultActionGroup();
+    myRightToolbarGroup = new DefaultActionGroup();
     myPopupActionGroup = new DefaultActionGroup();
     myTouchbarActionGroup = new DefaultActionGroup();
 
@@ -137,19 +149,26 @@ public abstract class DiffRequestProcessor implements Disposable {
     myProgressBar = new MyProgressBar();
 
     myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, myToolbarGroup, true);
+    if (myIsNewToolbar) {
+      myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    }
     myToolbar.setTargetComponent(myMainPanel);
     myToolbarWrapper = new Wrapper(myToolbar.getComponent());
 
-    myPanel = JBUI.Panels.simplePanel(myMainPanel);
+    myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarGroup, true);
+    myRightToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    myRightToolbar.setTargetComponent(myMainPanel);
 
-    JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
-    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarWrapper).addToRight(statusPanel);
-    GuiUtils.installVisibilityReferent(topPanel, myToolbar.getComponent());
+    myRightToolbarWrapper = new Wrapper(JBUI.Panels.simplePanel(myRightToolbar.getComponent()));
+
+    myPanel = JBUI.Panels.simplePanel(myMainPanel);
+    myDiffInfoWrapper = new Wrapper();
+    myTopPanel = buildTopPanel();
 
     Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
     bottomContentSplitter.setFirstComponent(myContentPanel);
 
-    myMainPanel.add(topPanel, BorderLayout.NORTH);
+    myMainPanel.add(myTopPanel, BorderLayout.NORTH);
     myMainPanel.add(bottomContentSplitter, BorderLayout.CENTER);
 
     myMainPanel.setFocusTraversalPolicyProvider(true);
@@ -161,6 +180,24 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myState = EmptyState.INSTANCE;
     myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
+  }
+
+  @NotNull
+  private BorderLayoutPanel buildTopPanel() {
+    BorderLayoutPanel topPanel;
+    if (myIsNewToolbar) {
+      BorderLayoutPanel rightPanel = JBUI.Panels.simplePanel(myRightToolbarWrapper).addToLeft(myProgressBar);
+      topPanel = JBUI.Panels.simplePanel(myDiffInfoWrapper).addToLeft(myToolbarWrapper).addToRight(rightPanel);
+      GuiUtils.installVisibilityReferent(topPanel, myToolbar.getComponent());
+      GuiUtils.installVisibilityReferent(topPanel, myRightToolbar.getComponent());
+    }
+    else {
+      JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
+      topPanel = JBUI.Panels.simplePanel(myToolbarWrapper).addToRight(statusPanel);
+      GuiUtils.installVisibilityReferent(topPanel, myToolbar.getComponent());
+    }
+
+    return topPanel;
   }
 
   protected boolean shouldAddToolbarBottomBorder(@NotNull FrameDiffTool.ToolbarComponents toolbarComponents) {
@@ -344,9 +381,11 @@ public abstract class DiffRequestProcessor implements Disposable {
       myState.destroy();
       myToolbarStatusPanel.setContent(null);
       myContentPanel.setContent(null);
-      myToolbarWrapper.setBorder(null);
+      myTopPanel.setBorder(null);
+      myDiffInfoWrapper.setContent(null);
 
       myToolbarGroup.removeAll();
+      myRightToolbarGroup.removeAll();
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
@@ -425,7 +464,8 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   private boolean isFocusedInWindow() {
     return DiffUtil.isFocusedComponentInWindow(myContentPanel) ||
-           DiffUtil.isFocusedComponentInWindow(myToolbar.getComponent());
+           DiffUtil.isFocusedComponentInWindow(myToolbar.getComponent()) ||
+           (myIsNewToolbar && DiffUtil.isFocusedComponentInWindow(myRightToolbar.getComponent()));
   }
 
   private void requestFocusInWindow() {
@@ -475,8 +515,10 @@ public abstract class DiffRequestProcessor implements Disposable {
       myState.destroy();
       myToolbarStatusPanel.setContent(null);
       myContentPanel.setContent(null);
+      myDiffInfoWrapper.setContent(null);
 
       myToolbarGroup.removeAll();
+      myRightToolbarGroup.removeAll();
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
@@ -492,12 +534,23 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected void collectToolbarActions(@Nullable List<? extends AnAction> viewerActions) {
     myToolbarGroup.removeAll();
 
+    boolean oldToolbar = !myIsNewToolbar;
     List<AnAction> navigationActions = new ArrayList<>(getNavigationActions());
-    navigationActions.add(new MyChangeDiffToolAction());
+    if (oldToolbar) {
+      navigationActions.add(new MyChangeDiffToolAction());
+    }
+    else {
+      myRightToolbarGroup.add(new MyDiffToolChooser(myMainPanel));
+    }
     DiffUtil.addActionBlock(myToolbarGroup,
                             navigationActions);
 
-    DiffUtil.addActionBlock(myToolbarGroup, viewerActions);
+    if (oldToolbar) {
+      DiffUtil.addActionBlock(myToolbarGroup, viewerActions, true);
+    }
+    else {
+      DiffUtil.addActionBlock(myRightToolbarGroup, viewerActions, false);
+    }
 
     List<AnAction> requestContextActions = myActiveRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(myToolbarGroup, requestContextActions);
@@ -505,9 +558,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(myToolbarGroup, contextActions);
 
-    DiffUtil.addActionBlock(myToolbarGroup,
-                            new ShowInExternalToolAction(),
-                            ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
+    if (oldToolbar) {
+      DiffUtil.addActionBlock(myToolbarGroup,
+                              new ShowInExternalToolAction(),
+                              ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
+    }
 
     if (SystemInfo.isMac) { // collect touchbar actions
       myTouchbarActionGroup.removeAll();
@@ -515,8 +570,9 @@ public abstract class DiffRequestProcessor implements Disposable {
         new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(), Separator.getInstance(),
         new MyPrevChangeAction(), new MyNextChangeAction()
       );
-      if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null)
+      if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null) {
         myTouchbarActionGroup.addAll(viewerActions);
+      }
     }
   }
 
@@ -539,8 +595,13 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     ((ActionToolbarImpl)myToolbar).clearPresentationCache();
     myToolbar.updateActionsImmediately();
-
     recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
+
+    if (myIsNewToolbar) {
+      ((ActionToolbarImpl)myRightToolbar).clearPresentationCache();
+      myRightToolbar.updateActionsImmediately();
+      recursiveRegisterShortcutSet(myRightToolbarGroup, myMainPanel, null);
+    }
   }
 
   @NotNull
@@ -646,6 +707,38 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
+  private class MyDiffToolChooser extends DiffToolChooser {
+    private MyDiffToolChooser(@Nullable JComponent targetComponent) {
+      super(targetComponent);
+    }
+
+    @Override
+    public void onSelected(@NotNull AnActionEvent e, @NotNull DiffTool diffTool) {
+      DiffUsageTriggerCollector.logToggleDiffTool(e.getProject(), diffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
+      moveToolOnTop(diffTool);
+
+      updateRequest(true);
+    }
+
+    @NotNull
+    @Override
+    public List<FrameDiffTool> getTools() {
+      return getAvailableFittedTools();
+    }
+
+    @NotNull
+    @Override
+    public DiffTool getActiveTool() {
+      return myState.getActiveTool();
+    }
+
+    @Nullable
+    @Override
+    public DiffTool getForcedDiffTool() {
+      return myForcedDiffTool;
+    }
+  }
+
   private class MyChangeDiffToolAction extends ComboBoxAction implements DumbAware {
     // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
 
@@ -700,7 +793,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myState.getActiveTool() == myDiffTool) return;
 
-      DiffUsageTriggerCollector.trigger(e.getProject(), "toggle.diff.tool", myDiffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
+      DiffUsageTriggerCollector.logToggleDiffTool(e.getProject(), myDiffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
       moveToolOnTop(myDiffTool);
 
       updateRequest(true);
@@ -1283,13 +1376,19 @@ public abstract class DiffRequestProcessor implements Disposable {
       setTitle(myActiveRequest.getTitle());
 
       FrameDiffTool.ToolbarComponents toolbarComponents = myViewer.init();
-
+      FrameDiffTool.DiffInfo diffInfo = toolbarComponents.diffInfo;
+      if (diffInfo != null) {
+        myDiffInfoWrapper.setContent(diffInfo.getComponent());
+      }
+      else {
+        myDiffInfoWrapper.setContent(null);
+      }
       buildToolbar(toolbarComponents.toolbarActions);
       buildActionPopup(toolbarComponents.popupActions);
 
       myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
       if (shouldAddToolbarBottomBorder(toolbarComponents)) {
-        myToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+        myTopPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       }
     }
 
@@ -1353,7 +1452,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       myToolbarStatusPanel.setContent(toolbarComponents1.statusPanel); // TODO: combine both panels ?
       if (shouldAddToolbarBottomBorder(toolbarComponents1)) {
-        myToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+        myTopPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       }
     }
 

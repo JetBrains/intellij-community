@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.infos.MethodCandidateInfo
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.TypeConversionUtil.calcTypeForBinaryExpression
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -189,12 +190,13 @@ class JavaToJKTreeBuilder constructor(
             )
             is PsiPolyadicExpression -> {
                 val token = JKOperatorToken.fromElementType(operationTokenType)
-                val type = type?.toJK() ?: typeFactory.types.nullableAny
-                val jkOperands = operands.map { it.toJK().withLineBreaksFrom(it).parenthesizeIfBinaryExpression() }
-                jkOperands.reduce { acc, operand ->
-                    JKBinaryExpression(acc, operand, JKKtOperatorImpl(token, type))
-                }.let { folded ->
-                    if (jkOperands.any { it.containsNewLine() }) folded.parenthesize()
+                val jkOperandsWithPsiTypes = operands.map { it.toJK().withLineBreaksFrom(it).parenthesizeIfBinaryExpression() to it.type }
+                jkOperandsWithPsiTypes.reduce { (left, leftType), (right, rightType) ->
+                    val psiType = calcTypeForBinaryExpression(leftType, rightType, operationTokenType, true)
+                    val jkType = psiType?.toJK() ?: typeFactory.types.nullableAny
+                    JKBinaryExpression(left, right, JKKtOperatorImpl(token, jkType)) to psiType
+                }.let { (folded, _) ->
+                    if (jkOperandsWithPsiTypes.any { it.first.containsNewLine() }) folded.parenthesize()
                     else folded
                 }
             }
@@ -1066,7 +1068,7 @@ class JavaToJKTreeBuilder constructor(
     }
 
 
-    private fun PsiSwitchBlock.collectSwitchCases(): List<JKJavaSwitchCase> = with (declarationMapper) {
+    private fun PsiSwitchBlock.collectSwitchCases(): List<JKJavaSwitchCase> = with(declarationMapper) {
         val statements = body?.statements ?: return emptyList()
         val cases = mutableListOf<JKJavaSwitchCase>()
         for (statement in statements) {
@@ -1075,7 +1077,9 @@ class JavaToJKTreeBuilder constructor(
                     cases += when {
                         statement.isDefaultCase -> JKJavaDefaultSwitchCase(emptyList())
                         else -> JKJavaClassicLabelSwitchCase(
-                            with(expressionTreeMapper) { statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty() },
+                            with(expressionTreeMapper) {
+                                statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
+                            },
                             emptyList()
                         )
                     }.withFormattingFrom(statement)
@@ -1085,7 +1089,9 @@ class JavaToJKTreeBuilder constructor(
                         statement.isDefaultCase -> JKJavaDefaultSwitchCase(listOf(body))
                         else -> {
                             JKJavaArrowSwitchLabelCase(
-                                with(expressionTreeMapper) { statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty() },
+                                with(expressionTreeMapper) {
+                                    statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
+                                },
                                 listOf(body),
                             )
                         }
@@ -1100,7 +1106,7 @@ class JavaToJKTreeBuilder constructor(
                     }
             }
         }
-       return cases
+        return cases
     }
 
     companion object {

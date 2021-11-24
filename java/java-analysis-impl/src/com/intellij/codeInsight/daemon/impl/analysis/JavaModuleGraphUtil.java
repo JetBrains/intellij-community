@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -86,6 +88,16 @@ public final class JavaModuleGraphUtil {
         });
       }
     }
+    else {
+      root = index.getSourceRootForFile(file);
+      if (root != null) {
+        VirtualFile moduleDescriptor = root.findChild(PsiJavaModule.MODULE_INFO_FILE);
+        PsiFile psiFile = moduleDescriptor != null ? PsiManager.getInstance(project).findFile(moduleDescriptor) : null;
+        if (psiFile instanceof PsiJavaFile) {
+          return ((PsiJavaFile)psiFile).getModuleDeclaration();
+        }
+      }
+    }
 
     return null;
   }
@@ -111,6 +123,12 @@ public final class JavaModuleGraphUtil {
   @Nullable
   private static PsiJavaModule findDescriptionByModuleInner(@NotNull Module module, boolean inTests) {
     Project project = module.getProject();
+    GlobalSearchScope moduleScope = module.getModuleScope();
+    if (!DumbService.isDumb(project) &&
+        FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, moduleScope).length == 0 &&
+        FilenameIndex.getFilesByName(project, JarFile.MANIFEST_NAME, moduleScope).length == 0) {
+      return null;
+    }
     JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(rootType);
     List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
@@ -310,7 +328,10 @@ public final class JavaModuleGraphUtil {
       Map<String, PsiJavaModule> exports = new HashMap<>();
       return processExports(source, (pkg, m) -> {
         PsiJavaModule found = exports.put(pkg, m);
-        return found == null || found instanceof LightJavaModule && m instanceof LightJavaModule ? null : new Trinity<>(pkg, found, m);
+        return found == null ||
+               found instanceof LightJavaModule && m instanceof LightJavaModule ||
+               found.getName().equals(m.getName())
+               ? null : new Trinity<>(pkg, found, m);
       });
     }
 

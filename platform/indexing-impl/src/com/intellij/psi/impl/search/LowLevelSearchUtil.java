@@ -180,6 +180,7 @@ public final class LowLevelSearchUtil {
     );
   }
 
+  @FunctionalInterface
   interface NodeTextOccurrenceProcessor {
     boolean execute(@NotNull ASTNode node, int offsetInNode);
   }

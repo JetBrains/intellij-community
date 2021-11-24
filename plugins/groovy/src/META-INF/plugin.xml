@@ -135,7 +135,6 @@
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.autoClone.AutoCloneTransformationSupport"/>
-    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuilderStrategySupport"/>
@@ -152,6 +151,13 @@
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.AutoFinalTransformationSupport"/>
     <astTransformationSupport id="defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultTransformationSupport"/>
+    <astTransformationSupport id="recordSupport"
+                              order="after defaultSupport"
+                              implementation="org.jetbrains.plugins.groovy.transformations.impl.RecordTransformationSupport"/>
+    <astTransformationSupport id="constructors"
+                              order="after recordSupport"
+                              implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor"/>
+
     <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultRenameHelper"/>
     <astTransformationSupport order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.FieldScriptTransformationSupport"/>
@@ -902,6 +908,9 @@
                      key="inspection.display.name.unnecessary.def.modifier" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
+                     key="inspection.display.name.unnecessary.final.modifier" cleanupTool="true" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryFinalModifierInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.sealed.modifier" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySealedModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
@@ -1080,6 +1089,11 @@
                      level="WEAK WARNING"
                      groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrSwitchExhaustivenessCheckInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy"
+                     key="inspection.display.name.pojo.without.compile.static"
+                     level="WARNING"
+                     groupKey="inspection.annotations" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.cs.GrPOJOInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.unresolved.labels.in.named.variant"
                      groupKey="inspection.annotations" enabledByDefault="true"
@@ -1263,7 +1277,6 @@
 
     <notificationGroup id="Groovy DSL errors" displayType="BALLOON"/>
     <notificationGroup id="Grape" displayType="BALLOON"/>
-    <backgroundPostStartupActivity implementation="org.jetbrains.plugins.groovy.dsl.GdslStartupActivity"/>
     <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.GroovyNewProjectWizard"/>
   </extensions>
 

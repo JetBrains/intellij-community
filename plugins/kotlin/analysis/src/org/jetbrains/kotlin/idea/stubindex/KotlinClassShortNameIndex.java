@@ -4,16 +4,14 @@ package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
 
 import java.util.Collection;
 
-public class KotlinClassShortNameIndex extends StringStubIndexExtension<KtClassOrObject> {
+public class KotlinClassShortNameIndex extends AbstractStringStubIndexExtension<KtClassOrObject> {
     private static final StubIndexKey<String, KtClassOrObject> KEY = KotlinIndexUtil.createIndexKey(KotlinClassShortNameIndex.class);
 
     private static final KotlinClassShortNameIndex ourInstance = new KotlinClassShortNameIndex();
@@ -23,7 +21,9 @@ public class KotlinClassShortNameIndex extends StringStubIndexExtension<KtClassO
         return ourInstance;
     }
 
-    private KotlinClassShortNameIndex() {}
+    private KotlinClassShortNameIndex() {
+        super(KtClassOrObject.class);
+    }
 
     @NotNull
     @Override

@@ -4,8 +4,6 @@ package com.intellij.execution.impl;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ObjectUtils;
@@ -85,9 +83,6 @@ public class ConsoleViewRunningState extends ConsoleState {
   public ConsoleState dispose() {
     if (myProcessHandler != null) {
       myProcessHandler.removeProcessListener(myProcessListener);
-      if (myProcessHandler instanceof Disposable) {
-        Disposer.dispose((Disposable) myProcessHandler);
-      }
     }
     return myFinishedStated;
   }

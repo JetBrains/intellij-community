@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.DataManager;
@@ -11,6 +11,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -36,11 +37,13 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
@@ -521,6 +524,9 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       myFile.putUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(myTabs));
       myFile.putUserData(EditorWindow.DRAG_START_PINNED_KEY, isPinnedAtStart);
       Presentation presentation = new Presentation(info.getText());
+      if (DockManagerImpl.REOPEN_WINDOW.isIn(myFile)) {
+        presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(myFile, true));
+      }
       presentation.setIcon(info.getIcon());
       EditorWithProviderComposite windowFileComposite = myWindow.findFileComposite(myFile);
       FileEditor[] editors = windowFileComposite != null ? windowFileComposite.getEditors() : FileEditor.EMPTY_ARRAY;
@@ -700,8 +706,24 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
+      if (!isHideTabs() && ExperimentalUI.isNewEditorTabs()) {
+        TabLabel label = getSelectedLabel();
+        if (label != null) {
+          int h = label.getHeight();
+          Color color = JBColor.namedColor("EditorTabs.underTabsBorderColor", myTabPainter.getTabTheme().getBorderColor());
+          g.setColor(color);
+          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h);
+        }
+      }
       super.paintChildren(g);
       drawBorder(g);
+    }
+
+    @Override
+    protected DefaultActionGroup getEntryPointActionGroup() {
+      AnAction source = ActionManager.getInstance().getAction("EditorTabsEntryPoint");
+      source.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      return new DefaultActionGroup(source);
     }
 
     @NotNull
@@ -724,8 +746,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
         @Override
         public void paint(Graphics g) {
-          if (ExperimentalUI.isNewEditorTabs() && getSelectedInfo() != info) {
-            GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, 0.75f);
+          if (ExperimentalUI.isNewEditorTabs() && getSelectedInfo() != info && !isHoveredTab(this)) {
+            GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f));
             super.paint(g);
             config.restore();
           } else {

@@ -114,7 +114,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
 
   public static void runInspection(@NotNull Project project,
                                    @NotNull String shortName,
-                                   VirtualFile @NotNull [] virtualFiles,
+                                   @NotNull VirtualFile @NotNull [] virtualFiles,
                                    @Nullable PsiElement psiElement,
                                    @Nullable PsiFile psiFile) {
     final PsiElement element = psiFile == null ? psiElement : psiFile;

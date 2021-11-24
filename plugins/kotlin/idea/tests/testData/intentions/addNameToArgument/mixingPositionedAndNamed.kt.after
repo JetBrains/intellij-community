@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+NewInference -XXLanguage:+MixedNamedArgumentsInTheirOwnPosition
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'b' is never used
 // AFTER-WARNING: Parameter 's' is never used
 

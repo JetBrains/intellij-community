@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import java.util.regex.Pattern
 
@@ -37,13 +38,16 @@ internal class KotlinTextExtractor : TextExtractor() {
       val roots = getNotSoDistantSimilarSiblings(root) {
         it == root || root.elementType == KtTokens.EOL_COMMENT && it.elementType == KtTokens.EOL_COMMENT
       }
-      return TextContent.joinWithWhitespace(roots.mapNotNull {
+      return TextContent.joinWithWhitespace('\n', roots.mapNotNull {
           TextContentBuilder.FromPsi.removingIndents(" \t*/").build(it, COMMENTS)
       })
     }
     if (LITERALS in allowedDomains && root is KtStringTemplateExpression) {
       // For multiline strings, we want to treat `'|'` as an indentation because it is commonly used with [String.trimMargin].
-      return TextContentBuilder.FromPsi.removingIndents(" \t|").build(root, LITERALS)
+      return TextContentBuilder.FromPsi
+          .withUnknown { it is KtStringTemplateEntryWithExpression }
+          .removingIndents(" \t|")
+          .build(root, LITERALS)
     }
     return null
   }

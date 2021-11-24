@@ -26,5 +26,10 @@
       <option name="name" value="kotlin-ide-plugin-dependencies" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="teamcity-repository" />
+      <option name="name" value="teamcity-repository" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository" />
+    </remote-repository>
   </component>
 </project>

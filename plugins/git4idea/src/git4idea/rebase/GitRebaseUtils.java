@@ -26,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static git4idea.GitNotificationIdsHolder.*;
@@ -193,7 +192,9 @@ public final class GitRebaseUtils {
 
   @Nullable
   public static File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
-    GitRepository repository = Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root));
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root);
+    if (repository == null) return null;
+
     File f = repository.getRepositoryFiles().getRebaseApplyDir();
     if (f.exists()) {
       return f;

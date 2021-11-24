@@ -4,6 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
 import org.junit.After;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
-public class VMOptionsTest {
+public class VMOptionsTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   private Path myFile;

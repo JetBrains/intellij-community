@@ -30,7 +30,7 @@ public class RerunTestsAction extends DumbAwareAction {
   private static final Set<RunContentDescriptor> REGISTRY = new HashSet<>();
 
   public static void register(@NotNull final RunContentDescriptor descriptor) {
-    if (!Disposer.isDisposed(descriptor) && REGISTRY.add(descriptor)) {
+    if (descriptor.getComponent() != null && REGISTRY.add(descriptor)) {
       Disposer.register(descriptor, new Disposable() {
         @Override
         public void dispose() {
@@ -44,7 +44,7 @@ public class RerunTestsAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     List<RunContentDescriptor> descriptors = new ArrayList<>(REGISTRY);
     for (RunContentDescriptor descriptor : descriptors) {
-      if (Disposer.isDisposed(descriptor)) {
+      if (descriptor.getComponent() == null) {
         REGISTRY.remove(descriptor);
       }
       else {

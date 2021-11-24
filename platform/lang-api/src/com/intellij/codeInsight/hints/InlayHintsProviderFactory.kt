@@ -20,5 +20,10 @@ interface InlayHintsProviderFactory {
 class ProviderInfo<T : Any>(
   val language: Language,
   val provider: InlayHintsProvider<T>
-)
+
+) {
+  override fun toString(): String {
+    return language.displayName + ": " + provider.javaClass.name
+  }
+}
 

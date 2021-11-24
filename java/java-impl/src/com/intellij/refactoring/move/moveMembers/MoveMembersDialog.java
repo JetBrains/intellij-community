@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -326,7 +328,9 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     }
 
 
-    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqName, GlobalSearchScope.projectScope(myProject));
+    PsiClass aClass = 
+      ActionUtil.underModalProgress(myProject, JavaBundle.message("progress.title.checking.if.class.exists", fqName), 
+                                    () -> JavaPsiFacade.getInstance(manager.getProject()).findClass(fqName, GlobalSearchScope.projectScope(myProject)));
     if (aClass != null) return aClass;
 
     final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(

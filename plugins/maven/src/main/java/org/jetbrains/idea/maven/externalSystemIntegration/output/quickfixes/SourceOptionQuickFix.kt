@@ -98,6 +98,9 @@ class SourceLevelBuildIssue(private val message: String,
 
 typealias MessagePredicate = (String) -> Boolean
 
+/**
+ * @deprecated use {@link JpsLanguageLevelQuickFix.kt
+ */
 class JpsReleaseVersionQuickFix : BuildIssueContributor {
   override fun createBuildIssue(project: Project,
                                 moduleNames: Collection<String>,

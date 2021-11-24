@@ -121,9 +121,12 @@ internal fun RecoveryAction.performUnderProgress(project: Project, fromGuide: Bo
           RecoveryWorker.LOG.error(err)
           return@handle
         }
-        for (problem in res.problems) {
-          RecoveryWorker.LOG.error("${recoveryAction.actionKey} found and fixed a problem: ${problem.message}")
+
+        if (res.problems.isNotEmpty()) {
+          RecoveryWorker.LOG.error("${recoveryAction.actionKey} found and fixed ${res.problems.size} problems, samples: " +
+                                   res.problems.take(10).joinToString(", ") { it.message })
         }
+
         onComplete(res.project)
       }
     }

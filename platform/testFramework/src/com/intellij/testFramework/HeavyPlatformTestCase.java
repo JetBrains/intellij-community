@@ -12,7 +12,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -35,6 +34,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
@@ -44,7 +44,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
@@ -187,7 +186,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     null,
     "AppCode", "SwiftTests",
     "DataGrip",
-    "Python", "PyCharmDS", "PyCharmCore",
+    "Python", "DataSpell", "PyCharmCore",
     "Ruby",
     "PhpStorm",
     "UltimateLangXml", "Idea", "PlatformLangXml"};
@@ -494,7 +493,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         JarFileSystemImpl.cleanupForNextTest();
-        LaterInvocator.dispatchPendingFlushes();
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       },
       () -> {
         if (!myAssertionsInTestDetected) {

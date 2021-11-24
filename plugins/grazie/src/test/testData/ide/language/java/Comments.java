@@ -5,6 +5,9 @@ class ForMultiLanguageSupport {
     // das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
     // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
 
+  // Cover following cases
+  // a) initially missing
+  // b) initially missing
 
     // My
     // <warning descr="COMMA_WHICH">name</warning>

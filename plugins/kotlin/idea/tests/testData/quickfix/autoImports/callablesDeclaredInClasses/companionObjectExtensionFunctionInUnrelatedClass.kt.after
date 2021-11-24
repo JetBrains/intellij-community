@@ -1,0 +1,18 @@
+// "Import" "true"
+package p
+
+import p.BObject.baz
+
+open class A {
+    companion object
+}
+
+open class B {
+    fun A.Companion.baz() {}
+}
+
+object BObject : B()
+
+fun usage() {
+    A.<caret>baz()
+}

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(s: String) {
     with<caret> (s, {
         println("1")

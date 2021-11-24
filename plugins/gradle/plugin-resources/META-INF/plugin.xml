@@ -111,6 +111,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleImportHintService"
                     configurationSchemaKey="importHint.gradle" />
     <createDirectoryCompletionContributor implementation="org.jetbrains.plugins.gradle.GradleDirectoryCompletionContributor"/>
+    <externalSystemContentRootContributor implementation="org.jetbrains.plugins.gradle.GradleContentRootContributor"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
@@ -151,7 +152,7 @@
                  description="Enable improved hotswap detection when build is delegated to Gradle"/>
     <registryKey key="gradle.exclude.build.files.when.in.source.set" defaultValue="false"
                  description="If build.gradle[.kts] and settings.gradle[.kts] files should be excluded from content root, if they are in source set"/>
-    <registryKey key="gradle.report.recently.saved.paths" defaultValue="false"
+    <registryKey key="gradle.report.recently.saved.paths" defaultValue="true"
                  description="Send information on recently saved files to Gradle Daemon right before executing a task"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>

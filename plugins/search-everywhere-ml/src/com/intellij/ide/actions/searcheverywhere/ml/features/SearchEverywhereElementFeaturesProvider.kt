@@ -1,11 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import kotlin.math.round
 
-abstract class SearchEverywhereElementFeaturesProvider {
+abstract class SearchEverywhereElementFeaturesProvider(private val supportedTab: Class<out SearchEverywhereContributor<*>>) {
   companion object {
     val EP_NAME: ExtensionPointName<SearchEverywhereElementFeaturesProvider>
       = ExtensionPointName.create("com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider")
@@ -14,8 +15,12 @@ abstract class SearchEverywhereElementFeaturesProvider {
       return EP_NAME.extensionList
     }
 
-    fun isElementSupported(element: Any): Boolean {
-      return getFeatureProviders().any { it.isElementSupported(element) }
+    fun getFeatureProvidersForTab(tabId: String): List<SearchEverywhereElementFeaturesProvider> {
+      return EP_NAME.extensionList.filter { it.isTabSupported(tabId) }
+    }
+
+    fun isTabSupported(tabId: String): Boolean {
+      return getFeatureProvidersForTab(tabId).isNotEmpty()
     }
   }
 
@@ -27,13 +32,15 @@ abstract class SearchEverywhereElementFeaturesProvider {
   }
 
   /**
-   * Returns true if the element is supported by the feature provider.
+   * Returns true if the Search Everywhere tab is supported by the feature provider.
    */
-  abstract fun isElementSupported(element: Any): Boolean
+  fun isTabSupported(tabId: String): Boolean {
+    return supportedTab.simpleName == tabId
+  }
 
   abstract fun getElementFeatures(element: Any,
                                   currentTime: Long,
-                                  queryLength: Int,
+                                  searchQuery: String,
                                   elementPriority: Int,
                                   cache: Any?): Map<String, Any>
 
@@ -45,5 +52,14 @@ abstract class SearchEverywhereElementFeaturesProvider {
   internal fun roundDouble(value: Double): Double {
     if (!value.isFinite()) return -1.0
     return round(value * 100000) / 100000
+  }
+
+  /**
+   * Associates the specified key with the value, only if the value is not null.
+   */
+  protected fun <K, V> MutableMap<K, V>.putIfValueNotNull(key: K, value: V?) {
+    value?.let {
+      this[key] = it
+    }
   }
 }

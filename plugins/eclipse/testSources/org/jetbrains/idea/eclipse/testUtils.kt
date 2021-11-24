@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.application.PathMacros
@@ -17,7 +17,6 @@ import com.intellij.testFramework.loadProject
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader

@@ -85,7 +85,7 @@
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-json" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-templates" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
-    <orderEntry type="library" name="org.jetbrains.intellij:blockmap:1.0.2" level="project" />
+    <orderEntry type="library" name="blockmap" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
@@ -106,5 +106,7 @@
     <orderEntry type="library" scope="RUNTIME" name="rhino" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.remoteDev.util" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.feedback" scope="RUNTIME" />
+    <orderEntry type="library" name="aalto-xml" level="project" />
   </component>
 </module>

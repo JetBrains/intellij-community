@@ -21,6 +21,7 @@ class MixedListFactory extends SEResultsListFactory {
 
   MixedListFactory() {
     prioritizedContributors.add(CalculatorSEContributor.class.getName());
+    prioritizedContributors.add("AutocompletionContributor");
     prioritizedContributors.add("CommandsContributor");
     prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
     if (Registry.is("search.everywhere.recent.at.top")) {

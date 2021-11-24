@@ -1,6 +1,6 @@
 {
+    "mainFile": "utilFile.kt",
     "usages": [
-        "utilFile.kt",
         "AllArguments.java",
         "AllArguments.kt",
         "WithoutAll.java",
@@ -8,6 +8,7 @@
         "WithoutLast.java",
         "WithoutLast.kt",
         "WithoutSecond.java",
-        "WithoutSecond.kt"
+        "WithoutSecond.kt",
+        "utilFile.kt"
     ]
 }

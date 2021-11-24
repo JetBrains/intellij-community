@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PyConstructorArgumentCompletionContributor extends CompletionContributor {
+public class PyConstructorArgumentCompletionContributor extends CompletionContributor implements DumbAware {
   public PyConstructorArgumentCompletionContributor() {
     extend(CompletionType.BASIC,
            psiElement()

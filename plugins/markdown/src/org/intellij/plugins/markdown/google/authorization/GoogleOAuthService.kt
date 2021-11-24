@@ -4,12 +4,15 @@ package org.intellij.plugins.markdown.google.authorization
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerHttp
 import com.intellij.collaboration.auth.services.OAuthServiceBase
 import com.intellij.collaboration.auth.services.OAuthServiceWithRefresh
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import org.apache.commons.lang.time.DateUtils
-import java.io.IOException
+import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -25,23 +28,19 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
 
   override val name: String get() = "google/oauth"
 
-  override fun updateAccessToken(refreshTokenRequest: OAuthServiceWithRefresh.RefreshTokenRequest): CompletableFuture<GoogleCredentials> {
-    // TODO: fix case when some updateAccessToken are started or auth flow is started before
-
-    val result = CompletableFuture<GoogleCredentials>()
-
-    result.whenComplete { _, _ -> currentRequest.set(null) }
-
-    try {
+  // TODO: fix case when some updateAccessToken are started or auth flow is started before
+  override fun updateAccessToken(refreshTokenRequest: OAuthServiceWithRefresh.RefreshTokenRequest): CompletableFuture<GoogleCredentials> =
+    ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
       val response = OAuthCredentialsAcquirerHttp.requestToken(refreshTokenRequest.refreshTokenUrlWithParameters)
       val responseDateTime = getLocalDateTime(response.headers().firstValue("date").get())
 
       if (response.statusCode() == 200) {
-        val responseData = with(jacksonMapper) {
+        val responseData = with(GoogleAccountsUtils.jacksonMapper) {
           propertyNamingStrategy = PropertyNamingStrategies.SnakeCaseStrategy()
           readValue(response.body(), RefreshResponseData::class.java)
         }
-        val creds = GoogleCredentials(
+
+        GoogleCredentials(
           responseData.accessToken,
           refreshTokenRequest.refreshToken,
           responseData.expiresIn,
@@ -49,19 +48,11 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
           responseData.scope,
           DateUtils.addSeconds(responseDateTime, responseData.expiresIn.toInt())
         )
-
-        result.complete(creds)
       }
       else {
-        result.completeExceptionally(Exception(response.body().ifEmpty { "No token provided" }))
+        throw RuntimeException(response.body().ifEmpty { "No token provided" })
       }
     }
-    catch (e: IOException) {
-      result.completeExceptionally(e)
-    }
-
-    return result
-  }
 
   override fun revokeToken(token: String) {
     TODO("Not yet implemented")

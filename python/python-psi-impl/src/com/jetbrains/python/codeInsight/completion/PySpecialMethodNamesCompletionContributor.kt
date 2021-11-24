@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
@@ -11,7 +12,7 @@ import com.jetbrains.python.extensions.afterDefInFunction
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PySpecialMethodNamesCompletionContributor : CompletionContributor() {
+class PySpecialMethodNamesCompletionContributor : CompletionContributor(), DumbAware {
   override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision = autoInsertSingleItem(context)
 
   init {

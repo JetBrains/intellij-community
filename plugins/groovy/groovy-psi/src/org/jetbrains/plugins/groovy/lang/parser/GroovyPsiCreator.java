@@ -116,6 +116,7 @@ public final class GroovyPsiCreator {
     if (elem == ENUM_TYPE_DEFINITION) return new GrEnumTypeDefinitionImpl(node);
     if (elem == ANNOTATION_TYPE_DEFINITION) return new GrAnnotationTypeDefinitionImpl(node);
     if (elem == TRAIT_TYPE_DEFINITION) return new GrTraitTypeDefinitionImpl(node);
+    if (elem == RECORD_TYPE_DEFINITION) return new GrRecordDefinitionImpl(node);
     if (elem == ANNOTATION_METHOD) return new GrAnnotationMethodImpl(node);
     if (elem == ANONYMOUS_TYPE_DEFINITION) return new GrAnonymousClassDefinitionImpl(node);
 

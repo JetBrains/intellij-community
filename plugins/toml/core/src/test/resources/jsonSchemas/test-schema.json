@@ -1,0 +1,88 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "type": "object",
+    "properties": {
+        "package": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "edition": {
+                    "$ref": "#/$defs/edition",
+                    "type": "string"
+                }
+            }
+        },
+        "bin": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "dependencies": {
+            "type": "object",
+            "$ref": "#/$defs/dependencies"
+        },
+        "target": {
+            "type": "object",
+            "patternProperties": {
+                "^.+$": {
+                    "type": "object",
+                    "properties": {
+                        "dependencies": {
+                            "type": "object",
+                            "$ref": "#/$defs/dependencies"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "$defs": {
+        "edition": {
+            "type": "string",
+            "enum": [
+                "2015",
+                "2018",
+                "2021"
+            ],
+            "default": "2018"
+        },
+        "dependencies": {
+            "patternProperties": {
+                "^.+$": {
+                    "type": "object",
+                    "properties": {
+                        "version": {
+                            "type": "string"
+                        },
+                        "features": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

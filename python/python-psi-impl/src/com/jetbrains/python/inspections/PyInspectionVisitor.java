@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -36,15 +37,28 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PyInspectionVisitor extends PyElementVisitor {
   @Nullable private final ProblemsHolder myHolder;
-  @NotNull private final LocalInspectionToolSession mySession;
   protected final TypeEvalContext myTypeEvalContext;
 
   public static final Key<TypeEvalContext> INSPECTION_TYPE_EVAL_CONTEXT = Key.create("PyInspectionTypeEvalContext");
 
-  public PyInspectionVisitor(@Nullable ProblemsHolder holder,
-                             @NotNull LocalInspectionToolSession session) {
+
+  /**
+   * @deprecated use {@link PyInspectionVisitor#PyInspectionVisitor(com.intellij.codeInspection.ProblemsHolder, com.jetbrains.python.psi.types.TypeEvalContext)} instead
+   */
+  @Deprecated
+  public PyInspectionVisitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
     myHolder = holder;
-    mySession = session;
+    myTypeEvalContext = PyInspectionVisitor.getContext(session);
+    PluginException.reportDeprecatedUsage("this constructor", "");
+  }
+
+  public PyInspectionVisitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+    myHolder = holder;
+    myTypeEvalContext = context;
+  }
+
+  @NotNull
+  public static TypeEvalContext getContext(@NotNull LocalInspectionToolSession session) {
     TypeEvalContext context;
     synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
       context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
@@ -57,7 +71,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
         session.putUserData(INSPECTION_TYPE_EVAL_CONTEXT, context);
       }
     }
-    myTypeEvalContext = context;
+    return context;
   }
 
   protected PyResolveContext getResolveContext() {
@@ -67,11 +81,6 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   @Nullable
   protected ProblemsHolder getHolder() {
     return myHolder;
-  }
-
-  @NotNull
-  public LocalInspectionToolSession getSession() {
-    return mySession;
   }
 
   protected final void registerProblem(@Nullable PsiElement element,

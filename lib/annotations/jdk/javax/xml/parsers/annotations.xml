@@ -2,4 +2,7 @@
     <item name='javax.xml.parsers.DocumentBuilderFactory javax.xml.parsers.DocumentBuilderFactory newInstance()'>
         <annotation name='java.lang.Deprecated'/>
     </item>
+  <item name='javax.xml.parsers.SAXParserFactory javax.xml.parsers.SAXParserFactory newInstance()'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
 </root>

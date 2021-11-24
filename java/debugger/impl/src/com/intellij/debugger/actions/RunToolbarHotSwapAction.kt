@@ -55,7 +55,7 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
     e.presentation.isVisible =
       session != null
       && HotSwapUIImpl.canHotSwap(session)
-      && RegistryManager.getInstance().`is`("ide.new.navbar.hotswap")
+      && RegistryManager.getInstance().`is`("ide.widget.toolbar.hotswap")
 
     if(e.presentation.isVisible) {
       e.presentation.isEnabled = !e.isProcessTerminating()

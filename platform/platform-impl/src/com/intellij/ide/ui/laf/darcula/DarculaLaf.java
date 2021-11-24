@@ -15,6 +15,7 @@ import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Alarm;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.StartupUiUtil;
@@ -27,20 +28,21 @@ import sun.awt.AppContext;
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
-import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.StringReader;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -65,17 +67,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   public DarculaLaf() {
   }
 
-  private void callInit(String method, UIDefaults defaults) {
-    try {
-      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod(method, UIDefaults.class);
-      superMethod.setAccessible(true);
-      superMethod.invoke(base, defaults);
-    }
-    catch (Exception e) {
-      log(e);
-    }
-  }
-
   @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
@@ -87,7 +78,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     myUserData.putUserData(key, value);
   }
 
-  protected static void log(Exception e) {
+  protected static void log(Throwable e) {
     Logger.getInstance(DarculaLaf.class).error(e);
   }
 
@@ -147,13 +138,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     return super.getDefaults();
   }
 
-  /** @deprecated metal themes are obsolete, since everything's in JSON now */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  protected DefaultMetalTheme createMetalTheme() {
-    return new DefaultMetalTheme();
-  }
-
   private static void patchComboBox(UIDefaults metalDefaults, UIDefaults defaults) {
     defaults.remove("ComboBox.ancestorInputMap");
     defaults.remove("ComboBox.actionMap");
@@ -162,32 +146,34 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   private void patchStyledEditorKit(UIDefaults defaults) {
-    URL url = getClass().getResource(getPrefix() + (JBUIScale.isUsrHiDPI() ? "@2x.css" : ".css"));
-    StyleSheet styleSheet = StartupUiUtil.loadStyleSheet(url);
-    defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
+    String relativePath = getPrefix() + (JBUIScale.isUsrHiDPI() ? "@2x.css" : ".css");
     try {
-      Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
-      keyField.setAccessible(true);
-      AppContext.getAppContext().put(keyField.get(null), StartupUiUtil.loadStyleSheet(url));
+      byte[] dataBytes = ResourceUtil.getResourceAsBytes(relativePath, DarculaLaf.class.getClassLoader());
+      if (dataBytes == null) {
+        Logger.getInstance(DarculaLaf.class).error("Cannot find " + relativePath + " file");
+        return;
+      }
+
+      StyleSheet styleSheet = new StyleSheet();
+      styleSheet.loadRules(new StringReader(new String(dataBytes, StandardCharsets.UTF_8)), null);
+      defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
+
+      Object defaultStylesKey = MethodHandles.privateLookupIn(HTMLEditorKit.class, MethodHandles.lookup())
+        .findStaticGetter(HTMLEditorKit.class, "DEFAULT_STYLES_KEY", Object.class).invokeExact();
+      AppContext.getAppContext().put(defaultStylesKey, styleSheet);
     }
-    catch (Exception e) {
-      log(e);
+    catch (Throwable e) {
+      Logger.getInstance(DarculaLaf.class).warn(relativePath + " loading failed", e);
     }
   }
 
-  @NotNull
-  protected String getPrefix() {
-    return "darcula";
+  protected @NotNull String getPrefix() {
+    return "com/intellij/ide/ui/laf/darcula/darcula";
   }
 
   @Nullable
   protected String getSystemPrefix() {
     return null;
-  }
-
-  @Override
-  public void initComponentDefaults(UIDefaults defaults) {
-    callInit("initComponentDefaults", defaults);
   }
 
   protected void initIdeaDefaults(UIDefaults defaults) {
@@ -254,16 +240,23 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   protected void loadDefaultsFromJson(UIDefaults defaults) {
     loadDefaultsFromJson(defaults, getPrefix());
-    if (getSystemPrefix() != null) {
-      loadDefaultsFromJson(defaults, getSystemPrefix());
+    String systemPrefix = getSystemPrefix();
+    if (systemPrefix != null) {
+      loadDefaultsFromJson(defaults, systemPrefix);
     }
   }
 
   private void loadDefaultsFromJson(UIDefaults defaults, String prefix) {
     String filename = prefix + ".theme.json";
-    try (InputStream stream = getClass().getResourceAsStream(filename)) {
-      assert stream != null : "Can't load " + filename;
-      UITheme theme = UITheme.loadFromJson(stream, "Darcula", getClass().getClassLoader(), Function.identity());
+    try {
+      // it is important to use class loader of a current instance class (LaF in plugin)
+      ClassLoader classLoader = getClass().getClassLoader();
+      // macOS light theme uses theme file from core plugin
+      byte[] data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */ true);
+      if (data == null) {
+        throw new RuntimeException("Can't load " + filename);
+      }
+      UITheme theme = UITheme.loadFromJson(data, "Darcula", classLoader, Function.identity());
       theme.applyProperties(defaults);
     }
     catch (IOException e) {
@@ -279,6 +272,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
    * @deprecated Use {@link UITheme#parseValue(String, String, ClassLoader)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   protected Object parseValue(String key, @NotNull String value) {
     return UITheme.parseValue(key, value, getClass().getClassLoader());
   }
@@ -310,16 +304,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   @Override
-  protected void initSystemColorDefaults(UIDefaults defaults) {
-    callInit("initSystemColorDefaults", defaults);
-  }
-
-  @Override
-  protected void initClassDefaults(UIDefaults defaults) {
-    callInit("initClassDefaults", defaults);
-  }
-
-  @Override
   public void initialize() {
     if (!isBaseInitialized) {
       try {
@@ -329,7 +313,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         base.initialize();
       }
       catch (Throwable e) {
-        Logger.getInstance(DarculaLaf.class).error(e);
+        log(e);
       }
     }
 
@@ -345,31 +329,31 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       return (BasicLookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
     }
 
-    Map<Object, Object> fontDefaults = new HashMap<>();
+    if (!SystemInfoRt.isLinux) {
+      return new IdeaLaf(null);
+    }
 
-    if (SystemInfoRt.isLinux) {
-      // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
-      // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
-      // and scale them based on Xft.dpi value.
-      try {
-        @SuppressWarnings("SpellCheckingInspection") String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-        Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(name);
-        LookAndFeel gtk = (LookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
-        if (gtk.isSupportedLookAndFeel()) {  // GTK is available
-          gtk.initialize();  // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
-          UIDefaults gtkDefaults = gtk.getDefaults();
-          for (Object key : gtkDefaults.keySet()) {
-            if (key.toString().endsWith(".font")) {
-              fontDefaults.put(key, gtkDefaults.get(key));  // `UIDefaults#get` unwraps lazy values
-            }
+    Map<Object, Object> fontDefaults = new HashMap<>();
+    // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
+    // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
+    // and scale them based on Xft.dpi value.
+    try {
+      @SuppressWarnings("SpellCheckingInspection") String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+      Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(name);
+      LookAndFeel gtk = (LookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
+      if (gtk.isSupportedLookAndFeel()) {  // GTK is available
+        gtk.initialize();  // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
+        UIDefaults gtkDefaults = gtk.getDefaults();
+        for (Object key : gtkDefaults.keySet()) {
+          if (key.toString().endsWith(".font")) {
+            fontDefaults.put(key, gtkDefaults.get(key));  // `UIDefaults#get` unwraps lazy values
           }
         }
       }
-      catch (Exception e) {
-        Logger.getInstance(DarculaLaf.class).debug(e);
-      }
     }
-
+    catch (Exception e) {
+      Logger.getInstance(DarculaLaf.class).debug(e);
+    }
     return new IdeaLaf(fontDefaults.isEmpty() ? null : fontDefaults);
   }
 

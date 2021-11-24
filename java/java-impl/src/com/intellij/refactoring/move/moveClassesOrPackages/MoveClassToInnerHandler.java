@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
+@ApiStatus.Internal
 public interface MoveClassToInnerHandler {
   ExtensionPointName<MoveClassToInnerHandler> EP_NAME = new ExtensionPointName<>("com.intellij.refactoring.moveClassToInnerHandler");
 

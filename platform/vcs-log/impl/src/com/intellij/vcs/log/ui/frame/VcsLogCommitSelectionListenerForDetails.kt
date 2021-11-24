@@ -6,12 +6,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.data.ContainingBranchesGetter
+import com.intellij.vcs.log.data.VcsCommitExternalStatus
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
@@ -31,18 +34,19 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
   : CommitSelectionListener<VcsCommitMetadata>(graphTable, graphTable.logData.miniDetailsGetter), Disposable {
 
   private val logData = graphTable.logData
-  private val containingBranchesGetter = logData.containingBranchesGetter
 
   private val refsLoader = CommitDataLoader()
   private val hashesResolver = CommitDataLoader()
+  private val containingBranchesLoader = ContainingBranchesAsyncLoader(logData.containingBranchesGetter, detailsPanel).also {
+    Disposer.register(this, it)
+  }
+  private val externalStatusesLoader = ExternalStatusesAsyncLoader(logData.project, detailsPanel).also {
+    Disposer.register(this, it)
+  }
 
   private var currentSelection = IntArray(0)
 
   init {
-    val containingBranchesListener = Runnable { branchesChanged() }
-    containingBranchesGetter.addTaskCompletedListener(containingBranchesListener)
-
-    Disposer.register(this) { containingBranchesGetter.removeTaskCompletedListener(containingBranchesListener) }
     Disposer.register(parentDisposable, this)
   }
 
@@ -65,7 +69,6 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
       panel.setCommit(presentation)
 
       val commit = commitIds[idx]
-      panel.setBranches(containingBranchesGetter.requestContainingBranches(commit.root, commit.hash))
       val root = commit.root
       if (colorManager.hasMultiplePaths()) {
         panel.setRoot(RootColor(root, VcsLogGraphTable.getRootBackgroundColor(root, colorManager)))
@@ -78,6 +81,9 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     refsLoader.loadData(
       { currentSelection.map(myGraphTable.model::getRefsAtRow) },
       { panel, refs -> panel.setRefs(sortRefs(refs)) })
+
+    containingBranchesLoader.requestData(commitIds)
+    externalStatusesLoader.requestData(commitIds)
 
     if (unResolvedHashes.isNotEmpty()) {
       hashesResolver.loadData(
@@ -144,15 +150,11 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     }
   }
 
-  private fun branchesChanged() {
-    detailsPanel.forEachPanel { commit, panel ->
-      panel.setBranches(containingBranchesGetter.requestContainingBranches(commit.root, commit.hash))
-    }
-  }
-
   private fun cancelLoading() {
     hashesResolver.cancelLoading()
     refsLoader.cancelLoading()
+    containingBranchesLoader.requestData(emptyList())
+    externalStatusesLoader.requestData(emptyList())
   }
 
   override fun dispose() {
@@ -168,11 +170,11 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
         val loaded = loadData(indicator)
         ApplicationManager.getApplication()
           .invokeLater({
-            progressIndicator = null
-            detailsPanel.forEachPanelIndexed { i: Int, panel: CommitDetailsPanel ->
-              setData(panel, loaded[i])
-            }
-          }, { indicator.isCanceled })
+                         progressIndicator = null
+                         detailsPanel.forEachPanelIndexed { i: Int, panel: CommitDetailsPanel ->
+                           setData(panel, loaded[i])
+                         }
+                       }, { indicator.isCanceled })
       }
     }
 
@@ -181,6 +183,128 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
         progressIndicator!!.cancel()
         progressIndicator = null
       }
+    }
+  }
+
+  private class ContainingBranchesAsyncLoader(private val getter: ContainingBranchesGetter,
+                                              private val detailsPanel: CommitDetailsListPanel) : Disposable {
+
+    private var requestedCommits: List<CommitId> = emptyList()
+
+    init {
+      val containingBranchesListener = Runnable { branchesChanged() }
+      getter.addTaskCompletedListener(containingBranchesListener)
+      Disposer.register(this) { getter.removeTaskCompletedListener(containingBranchesListener) }
+    }
+
+    private fun branchesChanged() {
+      requestData(requestedCommits, fromCache = true)
+    }
+
+    fun requestData(commits: List<CommitId>, fromCache: Boolean = false) {
+      val result = mutableMapOf<CommitId, List<String>>()
+      for (commit in commits) {
+        val branches = if (fromCache) {
+          getter.getContainingBranchesFromCache(commit.root, commit.hash)
+        }
+        else {
+          getter.requestContainingBranches(commit.root, commit.hash)
+        }
+        if (branches != null) result[commit] = branches
+      }
+
+      if (result.isNotEmpty()) {
+        detailsPanel.forEachPanel { commit, panel ->
+          panel.setBranches(result[commit])
+        }
+      }
+      requestedCommits = commits
+    }
+
+    override fun dispose() {}
+  }
+
+  private class ExternalStatusesAsyncLoader(private val project: Project,
+                                            private val detailsPanel: CommitDetailsListPanel)
+    : Disposable {
+
+    private var loadersDisposable: Disposable? = null
+    private var loaders: List<ProviderLoader<*>>? = null
+
+    private var statuses = mutableMapOf<CommitId, MutableMap<String, VcsCommitExternalStatusPresentation>>()
+
+    init {
+      VcsCommitExternalStatusProvider.addProviderListChangeListener(this) {
+        loadersDisposable?.let { Disposer.dispose(it) }
+        loaders = null
+        requestData(statuses.keys.toList())
+      }
+    }
+
+    fun requestData(commits: List<CommitId>) {
+      statuses = mutableMapOf()
+      if (commits.isEmpty()) {
+        loaders?.forEach {
+          it.requestData(emptyList()) {}
+        }
+        return
+      }
+
+      getLoaders().forEach { loader ->
+        loader.requestData(commits) { result ->
+
+          for ((commit, statusPresentation) in result) {
+            val presentations = statuses.getOrPut(commit) {
+              mutableMapOf()
+            }
+            if (statusPresentation == null) {
+              presentations.remove(loader.id)
+            }
+            else {
+              presentations[loader.id] = statusPresentation
+            }
+          }
+
+          detailsPanel.forEachPanel { commit, panel ->
+            panel.setStatuses(statuses[commit]?.values?.toList().orEmpty())
+          }
+        }
+      }
+    }
+
+    private fun getLoaders(): List<ProviderLoader<*>> {
+      if (loaders == null && !Disposer.isDisposed(this)) {
+        val disposable = Disposer.newDisposable(this, "Status loaders")
+        loaders = VcsCommitExternalStatusProvider.EP.extensions.map { provider ->
+          ProviderLoader(project, provider).also {
+            Disposer.register(disposable, it)
+          }
+        }
+        loadersDisposable = disposable
+      }
+      return loaders!!
+    }
+
+
+    override fun dispose() {}
+
+    private class ProviderLoader<T : VcsCommitExternalStatus>(private val project: Project,
+                                                              private val provider: VcsCommitExternalStatusProvider<T>)
+      : Disposable {
+
+      val id = provider.id
+      private val loader = provider.createLoader(project).also {
+        Disposer.register(this, it)
+      }
+
+      fun requestData(commits: List<CommitId>, onChange: (Map<CommitId, VcsCommitExternalStatusPresentation?>) -> Unit) {
+        loader.loadData(commits) {
+          val presentations = it.mapValues { (_, status) -> provider.getPresentation(project, status) }
+          onChange(presentations)
+        }
+      }
+
+      override fun dispose() {}
     }
   }
 

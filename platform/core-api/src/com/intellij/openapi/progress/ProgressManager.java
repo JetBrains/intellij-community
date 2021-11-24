@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,7 +84,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   }
 
   /**
-   * Runs the specified operation in non-cancellable manner synchronously on the same thread were it was called.
+   * Runs the specified operation in non-cancellable manner synchronously on the same thread where it was called.
    *
    * @see ProgressManager#computeInNonCancelableSection(ThrowableComputable)
    * @param runnable the operation to execute
@@ -92,7 +92,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
 
   /**
-   * Runs the specified operation and return its result in non-cancellable manner synchronously on the same thread were it was called.
+   * Runs the specified operation and return its result in non-cancellable manner synchronously on the same thread where it was called.
    *
    * @see ProgressManager#executeNonCancelableSection(Runnable)
    * @param computable the operation to execute
@@ -249,7 +249,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   /**
    * Performs the given computation while giving more priority to the current thread
-   * (by forcing all other non-prioritized threads to sleep a bit whenever they call {@link #checkCanceled()}.<p></p>
+   * (by forcing all other non-prioritized threads to sleep a bit whenever they call {@link #checkCanceled()}).<p></p>
    *
    * This is intended for relatively short (expected to be under 10 seconds) background activities that the user is waiting for
    * (e.g. code navigation), and which shouldn't be slowed down by CPU-intensive background tasks like highlighting or indexing.

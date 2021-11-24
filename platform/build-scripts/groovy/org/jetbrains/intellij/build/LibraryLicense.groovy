@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.containers.ContainerUtil
@@ -11,7 +11,7 @@ import groovy.transform.Immutable
  */
 @CompileStatic
 @Immutable
-class LibraryLicense {
+final class LibraryLicense {
   private static final String APACHE_LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
   private static final Map<String, String> PREDEFINED_LICENSE_URLS = ["Apache 2.0": APACHE_LICENSE_URL]
   public static final String JETBRAINS_OWN = "JetBrains"

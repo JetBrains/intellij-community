@@ -3,10 +3,10 @@ package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.lang.documentation.InlineDocumentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,9 +33,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ObjectUtils;
@@ -54,6 +52,8 @@ import java.awt.geom.AffineTransform;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
+
+import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.findInlineDocumentation;
 
 public final class DocRenderItem {
   private static final Key<Boolean> OLD_BACKEND = Key.create("doc.render.old.backend");
@@ -234,11 +234,9 @@ public final class DocRenderItem {
     int foundStartOffset = 0;
     for (DocRenderItem item : items) {
       if (!item.isValid()) continue;
-      PsiDocCommentBase comment = item.getComment();
-      if (comment == null) continue;
-      PsiElement owner = comment.getOwner();
-      if (owner == null) continue;
-      TextRange ownerTextRange = owner.getTextRange();
+      InlineDocumentation documentation = item.getInlineDocumentation();
+      if (documentation == null) continue;
+      TextRange ownerTextRange = documentation.getDocumentationOwnerRange();
       if (ownerTextRange == null || !ownerTextRange.containsOffset(offset)) continue;
       int startOffset = ownerTextRange.getStartOffset();
       if (foundItem != null && foundStartOffset >= startOffset) continue;
@@ -400,7 +398,7 @@ public final class DocRenderItem {
   }
 
   private void generateHtmlInBackgroundAndToggle() {
-    ReadAction.nonBlocking(() -> DocRenderPassFactory.calcText(getComment()))
+    ReadAction.nonBlocking(() -> DocRenderPassFactory.calcText(getInlineDocumentation()))
       .withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.any(), (@Nls String html) -> {
@@ -409,12 +407,12 @@ public final class DocRenderItem {
       }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  PsiDocCommentBase getComment() {
+  @Nullable InlineDocumentation getInlineDocumentation() {
     if (highlighter.isValid()) {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(Objects.requireNonNull(editor.getProject()));
       PsiFile file = psiDocumentManager.getPsiFile(editor.getDocument());
       if (file != null) {
-        return DocumentationManager.getProviderFromElement(file).findDocComment(file, TextRange.create(highlighter));
+        return findInlineDocumentation(file, TextRange.create(highlighter));
       }
     }
     return null;

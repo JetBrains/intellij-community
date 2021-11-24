@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
@@ -38,9 +38,13 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   protected Consumer<? super InputEvent> myApplyAction;
 
   public NewItemSimplePopupPanel() {
+    this(false);
+  }
+
+  public NewItemSimplePopupPanel(boolean liveValidation) {
     super(new BorderLayout());
 
-    myTextField = createTextField();
+    myTextField = createTextField(liveValidation);
     add(myTextField, BorderLayout.NORTH);
 
     myErrorShowPoint = new RelativePoint(myTextField, new Point(0, myTextField.getHeight()));
@@ -83,7 +87,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   }
 
   @NotNull
-  protected ExtendableTextField createTextField() {
+  protected ExtendableTextField createTextField(boolean liveErrorValidation) {
     ExtendableTextField res = new ExtendableTextField();
 
     Dimension minSize = res.getMinimumSize();
@@ -113,11 +117,15 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     res.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        setError(null);
+        if (!liveErrorValidation) setError(null);
       }
     });
 
     return res;
+  }
+  
+  public boolean hasError() {
+    return myErrorPopup != null;
   }
 
   private static final class ErrorBorder implements Border {

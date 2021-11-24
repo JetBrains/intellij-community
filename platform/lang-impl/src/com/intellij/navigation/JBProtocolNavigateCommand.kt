@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.project.DumbService
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
@@ -31,11 +32,13 @@ open class JBProtocolNavigateCommand: JBProtocolCommand(NAVIGATE_COMMAND) {
           t != null -> "${t.javaClass.name}: ${t.message}"
           project == null -> IdeBundle.message("jb.protocol.navigate.no.project")
           else -> {
-            NavigatorWithinProject(project, parameters, ::locationToOffset)
-              .navigate(listOf(
-                NavigatorWithinProject.NavigationKeyPrefix.FQN,
-                NavigatorWithinProject.NavigationKeyPrefix.PATH
-              ))
+            DumbService.getInstance(project).runWhenSmart {
+              NavigatorWithinProject(project, parameters, ::locationToOffset)
+                .navigate(listOf(
+                  NavigatorWithinProject.NavigationKeyPrefix.FQN,
+                  NavigatorWithinProject.NavigationKeyPrefix.PATH
+                ))
+            }
             null
           }
         }

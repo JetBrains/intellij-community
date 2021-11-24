@@ -17,13 +17,18 @@ interface RunToolbarProcess {
 
     @JvmStatic
     val isAvailable: Boolean
-      get() = RegistryManager.getInstance().`is`("ide.new.navbar")
+      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar")
 
-    const val logNeeded = true
+    @JvmStatic
+    val isSettingsAvailable: Boolean
+      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.is.settings.available") && isAvailable
+
+    val logNeeded: Boolean
+      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.logging")
 
     @JvmStatic
     val isExperimentalUpdatingEnabled: Boolean
-      get() = RegistryManager.getInstance().`is`("ide.new.navbar.experimentalUpdating")
+      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.experimentalUpdating")
 
     val EP_NAME: ExtensionPointName<RunToolbarProcess> = ExtensionPointName("com.intellij.runToolbarProcess")
 

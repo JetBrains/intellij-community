@@ -157,10 +157,10 @@ public abstract class DialogWrapper {
   private final Map<Action, JButton> myButtonMap = new LinkedHashMap<>();
   private final boolean myCreateSouthSection;
   private final List<JBOptionButton> myOptionsButtons = new ArrayList<>();
-  private final List<Function0<ValidationInfo>> myValidateCallbacks = new ArrayList<>();
   private final Alarm myValidationAlarm = new Alarm(getValidationThreadToUse(), myDisposable);
   private final Alarm myErrorTextAlarm = new Alarm(myRoot, myDisposable);
 
+  private JComponent centerPanel;
   private boolean myClosed;
   private boolean myDisposed;
   private int myExitCode = CANCEL_EXIT_CODE;
@@ -373,21 +373,18 @@ public abstract class DialogWrapper {
    * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
    */
   protected @NotNull List<ValidationInfo> doValidateAll() {
+    List<ValidationInfo> result = new ArrayList<>();
     ValidationInfo vi = doValidate();
-
-    if (!myValidateCallbacks.isEmpty()) {
-      List<ValidationInfo> result = new ArrayList<>();
-      if (vi != null) result.add(vi);
-      for (Function0<ValidationInfo> callback : myValidateCallbacks) {
-        ValidationInfo callbackInfo = callback.invoke();
-        if (callbackInfo != null) {
-          result.add(callbackInfo);
-        }
-      }
-      return result;
+    if (vi != null) {
+      result.add(vi);
     }
-
-    return vi != null ? List.of(vi) : List.of();
+    for (Function0<ValidationInfo> callback : getValidateCallbacks()) {
+      ValidationInfo callbackInfo = callback.invoke();
+      if (callbackInfo != null) {
+        result.add(callbackInfo);
+      }
+    }
+    return result;
   }
 
   public void setValidationDelay(int delay) {
@@ -480,8 +477,8 @@ public abstract class DialogWrapper {
    */
   protected @Nullable Border createContentPaneBorder() {
     if (getStyle() == DialogStyle.COMPACT) {
-      if ((SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance"))
-          || (SystemInfo.isWindows && SystemInfo.isJetBrainsJvm)) {
+      if (/*(SystemInfoRt.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", true)) ||*/
+          (SystemInfoRt.isWindows && SystemInfo.isJetBrainsJvm)) {
         return JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
       }
       return JBUI.Borders.empty();
@@ -636,7 +633,7 @@ public abstract class DialogWrapper {
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
     JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    Insets insets = SystemInfoRt.isMac && UIUtil.isUnderIntelliJLaF() ? JBInsets.create(0, 8) : JBUI.emptyInsets();
+    Insets insets = JBUI.emptyInsets();
 
     if (!rightSideButtons.isEmpty() || !leftSideButtons.isEmpty()) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -1074,7 +1071,7 @@ public abstract class DialogWrapper {
   /**
    * Creates actions for dialog.
    * <p/>
-   * By default "OK" and "Cancel" actions are returned. The "Help" action is automatically added if
+   * By default, "OK" and "Cancel" actions are returned. The "Help" action is automatically added if
    * {@link #getHelpId()} returns non-null value.
    * <p/>
    * Each action is represented by {@code JButton} created by {@link #createJButtonForAction(Action)}.
@@ -1306,14 +1303,13 @@ public abstract class DialogWrapper {
       centerSection.add(n, BorderLayout.NORTH);
     }
 
-    JComponent centerPanel = createCenterPanel();
+    centerPanel = createCenterPanel();
     if (centerPanel != null) {
       centerPanel.putClientProperty(DIALOG_CONTENT_PANEL_PROPERTY, true);
       centerSection.add(centerPanel, BorderLayout.CENTER);
       if (centerPanel instanceof DialogPanel) {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
-        myValidateCallbacks.addAll(dialogPanel.getValidateCallbacks());
         dialogPanel.registerValidators(myDisposable, map -> {
           setOKActionEnabled(map.isEmpty());
           return Unit.INSTANCE;
@@ -2181,5 +2177,10 @@ public abstract class DialogWrapper {
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public interface DoNotAskOption extends com.intellij.openapi.ui.DoNotAskOption {
     abstract class Adapter extends com.intellij.openapi.ui.DoNotAskOption.Adapter implements DoNotAskOption {}
+  }
+
+  private List<Function0<ValidationInfo>> getValidateCallbacks() {
+    return centerPanel != null && centerPanel instanceof DialogPanel ?
+           ((DialogPanel) centerPanel).getValidateCallbacks() : Collections.emptyList();
   }
 }

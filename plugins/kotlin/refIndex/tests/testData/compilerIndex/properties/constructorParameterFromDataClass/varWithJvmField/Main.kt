@@ -1,0 +1,1 @@
+data class Main(@JvmField var a<caret>: Int, val b: String)

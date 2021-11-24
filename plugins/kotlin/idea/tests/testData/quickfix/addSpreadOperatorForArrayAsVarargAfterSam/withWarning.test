@@ -2,7 +2,7 @@
 // "Add a spread operator before an array passing as 'vararg'" "true"
 // WARNING: Please use spread operator to pass an array as vararg. It will be an error in 1.5.
 // COMPILER_ARGUMENTS: -XXLanguage:-ProhibitVarargAsArrayAfterSamArgument
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun main() {
     Test.foo({}, <caret>arrayOf())
@@ -19,7 +19,7 @@ public class Test {
 // "Add a spread operator before an array passing as 'vararg'" "true"
 // WARNING: Please use spread operator to pass an array as vararg. It will be an error in 1.5.
 // COMPILER_ARGUMENTS: -XXLanguage:-ProhibitVarargAsArrayAfterSamArgument
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun main() {
     Test.foo({}, <caret>*arrayOf())

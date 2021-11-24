@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.util.PathUtilRt
@@ -7,11 +8,10 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
-import org.jetbrains.intellij.build.impl.LayoutBuilder
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.util.JpsPathUtil
@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit
 const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
 
 class IdeBuilder(val pluginBuilder: PluginBuilder,
-                 builder: DistributionJARsBuilder,
                  homePath: Path,
                  runDir: Path,
                  outDir: Path,
@@ -38,7 +37,7 @@ class IdeBuilder(val pluginBuilder: PluginBuilder,
   }
 
   init {
-    Files.writeString(runDir.resolve("libClassPath.txt"), createLibClassPath(pluginBuilder.buildContext, builder, homePath))
+    Files.writeString(runDir.resolve("libClassPath.txt"), createLibClassPath(pluginBuilder.buildContext, homePath))
   }
 
   fun checkChanged() {
@@ -108,34 +107,30 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
   }
 
-  val builder = DistributionJARsBuilder(buildContext)
-
   // initial building
   val start = System.currentTimeMillis()
-  // Ant is not able to build in parallel — not clear how correctly clone with all defined custom tasks
-  val pluginBuilder = PluginBuilder(builder, buildContext, outDir)
-  pluginBuilder.initialBuild(parallelCount = 1, plugins = pluginLayouts)
+  val pluginBuilder = PluginBuilder(buildContext, outDir)
+  pluginBuilder.initialBuild(plugins = pluginLayouts)
   LOG.info("Initial full build of ${pluginLayouts.size} plugins in ${TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start)}s")
   return IdeBuilder(pluginBuilder = pluginBuilder,
-                    builder = builder,
                     homePath = homePath,
                     runDir = runDir,
                     outDir = outDir,
                     moduleNameToPlugin = moduleNameToPlugin)
 }
 
-private fun createLibClassPath(buildContext: BuildContext,
-                               builder: DistributionJARsBuilder,
-                               homePath: Path): String {
-  val layoutBuilder = LayoutBuilder(buildContext, false)
-  val projectStructureMapping = ProjectStructureMapping()
-  builder.processLibDirectoryLayout(layoutBuilder, projectStructureMapping, false)
+private fun createLibClassPath(context: BuildContext, homePath: Path): String {
+  val platformLayout = DistributionJARsBuilder.createPlatformLayout(emptySet(), context)
+  val projectStructureMapping = DistributionJARsBuilder.processLibDirectoryLayout(ModuleOutputPatcher(),
+                                                                                  platformLayout,
+                                                                                  context,
+                                                                                  false).fork().join()
   // for some reasons maybe duplicated paths - use set
   val classPath = LinkedHashSet<String>()
-  for (entry in projectStructureMapping.entries) {
+  for (entry in projectStructureMapping) {
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.add(buildContext.getModuleOutputPath(buildContext.findRequiredModule(entry.moduleName)))
+        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
       }
       is LibraryFileEntry -> {
         classPath.add(entry.libraryFile.toString())
@@ -144,8 +139,8 @@ private fun createLibClassPath(buildContext: BuildContext,
     }
   }
 
-  for (libName in builder.platform.projectLibrariesToUnpack.values()) {
-    val library = buildContext.project.libraryCollection.findLibrary(libName) ?: throw IllegalStateException("Cannot find library $libName")
+  for (libName in platformLayout.projectLibrariesToUnpack.values()) {
+    val library = context.project.libraryCollection.findLibrary(libName) ?: throw IllegalStateException("Cannot find library $libName")
     library.getRootUrls(JpsOrderRootType.COMPILED).mapTo(classPath) {
       JpsPathUtil.urlToPath(it)
     }
@@ -166,6 +161,7 @@ private fun createLibClassPath(buildContext: BuildContext,
 private fun getBundledMainModuleNames(productProperties: ProductProperties): Set<String> {
   val bundledPlugins = LinkedHashSet(productProperties.productLayout.bundledPluginModules)
   getAdditionalModules()?.let {
+    println("Additional modules: ${it.joinToString()}")
     bundledPlugins.addAll(it)
   }
   bundledPlugins.removeAll(skippedPluginModules)
@@ -206,5 +202,6 @@ private fun createBuildOptions(homePath: Path): BuildOptions {
   buildOptions.cleanOutputFolder = false
   buildOptions.skipDependencySetup = true
   buildOptions.outputRootPath = homePath.resolve("out/dev-server").toString()
+  buildOptions.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
   return buildOptions
 }

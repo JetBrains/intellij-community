@@ -28,7 +28,8 @@ class StandaloneScriptsUIComponent(val project: Project) : UnnamedConfigurable {
         true, false, false,
         false, false, true
     ) {
-        override fun isFileSelectable(file: VirtualFile): Boolean {
+        override fun isFileSelectable(file: VirtualFile?): Boolean {
+            if (file == null) return false
             val rootsManager = GradleBuildRootsManager.getInstance(project)
             val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file)
             val notificationKind = scriptUnderRoot?.notificationKind

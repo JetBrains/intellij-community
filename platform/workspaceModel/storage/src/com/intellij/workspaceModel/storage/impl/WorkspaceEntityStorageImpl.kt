@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
@@ -20,11 +17,8 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
-import java.io.File
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.io.path.name
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -83,6 +77,39 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   @Volatile
   private var threadName: String? = null
+
+  override fun <T : WorkspaceEntity> addEntity(entity: T, source: EntitySource): T {
+    try {
+      lockWrite()
+
+      entity as ModifiableWorkspaceEntityBase<*>
+
+      entity.applyToBuilder(this, source)
+
+      // Entity adding happens inside of applyToBuilder
+      //entitiesByType.add(newEntityData, entity.getEntityClass().java.toClassId())
+
+      return entity
+    }
+    finally {
+      unlockWrite()
+    }
+  }
+
+  // This should be removed or not extracted into the interface
+  fun <T : WorkspaceEntity, D: WorkspaceEntityData<T>> putEntity(entity: D) {
+    try {
+      lockWrite()
+
+      entity as ModifiableWorkspaceEntityBase<*>
+
+      val newEntityData = entity.getEntityData()
+      entitiesByType.add(newEntityData, entity.getEntityClass().java.toClassId())
+    }
+    finally {
+      unlockWrite()
+    }
+  }
 
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
                                                                                  source: EntitySource,
@@ -157,17 +184,20 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     try {
       lockWrite()
+      val entityId = (e as WorkspaceEntityBase).id
+
+      val originalEntityData = this.getOriginalEntityData(entityId) as WorkspaceEntityData<T>
+
       // Get entity data that will be modified
       @Suppress("UNCHECKED_CAST")
-      val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
+      val copiedData = entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<T>
 
       @Suppress("UNCHECKED_CAST")
       val modifiableEntity = copiedData.wrapAsModifiable(this) as M
 
       val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId() else null
 
-      val entityId = e.id
-
+      val originalParents = this.getOriginalParents(entityId.asChild())
       val beforeParents = this.refs.getParentRefsOfChild(entityId.asChild())
       val beforeChildren = this.refs.getChildrenRefsOfParentBy(entityId.asParent()).flatMap { (key, value) -> value.map { key to it } }
 
@@ -203,7 +233,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       }
 
       // Add an entry to changelog
-      addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData)
+      addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData, originalEntityData, originalParents)
 
       val updatedEntity = copiedData.createEntity(this)
 
@@ -220,13 +250,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
     try {
       lockWrite()
 
+      val originalSource = this.getOriginalSource((e as WorkspaceEntityBase).id)
+
       @Suppress("UNCHECKED_CAST")
       val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
       copiedData.entitySource = newSource
 
       val entityId = copiedData.createEntityId()
 
-      this.changeLog.addChangeSourceEvent(entityId, copiedData)
+      this.changeLog.addChangeSourceEvent(entityId, copiedData, originalSource)
 
       indexes.entitySourceIndex.index(entityId, newSource)
       newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
@@ -277,7 +309,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
       for ((entityId, change) in this.changeLog.changeLog) {
         when (change) {
-          is ChangeEntry.AddEntity<*> -> {
+          is ChangeEntry.AddEntity -> {
             val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Added(addedEntity))
           }
@@ -286,7 +318,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val removedEntity = removedData.createEntity(originalImpl) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Removed(removedEntity))
           }
-          is ChangeEntry.ReplaceEntity<*> -> {
+          is ChangeEntry.ReplaceEntity -> {
             @Suppress("DuplicatedCode")
             val oldData = originalImpl.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
@@ -294,14 +326,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
               .add(EntityChange.Replaced(replacedData, replaceToData))
           }
-          is ChangeEntry.ChangeEntitySource<*> -> {
+          is ChangeEntry.ChangeEntitySource -> {
             val oldData = originalImpl.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
             val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
               .add(EntityChange.Replaced(replacedData, replaceToData))
           }
-          is ChangeEntry.ReplaceAndChangeSource<*> -> {
+          is ChangeEntry.ReplaceAndChangeSource -> {
             val oldData = originalImpl.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
             val replaceToData = change.dataChange.newData.createEntity(this) as WorkspaceEntityBase
@@ -365,9 +397,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  internal fun addDiffAndReport(message: String,
-                                left: WorkspaceEntityStorage?,
-                                right: WorkspaceEntityStorage) {
+  internal fun addDiffAndReport(message: String, left: WorkspaceEntityStorage?, right: WorkspaceEntityStorage) {
     reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
   }
 
@@ -394,6 +424,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     accumulateEntitiesToRemove(idx, accumulator, entityFilter)
 
+    val originals = accumulator.associateWith {
+      this.getOriginalEntityData(it) as WorkspaceEntityData<WorkspaceEntity> to this.getOriginalParents(it.asChild())
+    }
+
     for (id in accumulator) {
       val entityData = entityDataById(id)
       if (entityData is SoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
@@ -406,7 +440,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     accumulator.forEach {
       LOG.debug { "Cascade removing: ${ClassToIntConverter.getClassOrDie(it.clazz)}-${it.arrayId}" }
-      this.changeLog.addRemoveEvent(it)
+      this.changeLog.addRemoveEvent(it, originals[it]!!.first, originals[it]!!.second)
     }
   }
 
@@ -491,11 +525,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
       return newBuilder
     }
 
-    internal fun <T : WorkspaceEntity> addReplaceEvent(builder: WorkspaceEntityStorageBuilderImpl,
-                                                       entityId: EntityId,
-                                                       beforeChildren: List<Pair<ConnectionId, ChildEntityId>>,
-                                                       beforeParents: Map<ConnectionId, ParentEntityId>,
-                                                       copiedData: WorkspaceEntityData<T>) {
+    internal fun addReplaceEvent(
+      builder: WorkspaceEntityStorageBuilderImpl,
+      entityId: EntityId,
+      beforeChildren: List<Pair<ConnectionId, ChildEntityId>>,
+      beforeParents: Map<ConnectionId, ParentEntityId>,
+      copiedData: WorkspaceEntityData<out WorkspaceEntity>,
+      originalEntity: WorkspaceEntityData<out WorkspaceEntity>,
+      originalParents: Map<ConnectionId, ParentEntityId>,
+    ) {
       val parents = builder.refs.getParentRefsOfChild(entityId.asChild())
       val unmappedChildren = builder.refs.getChildrenRefsOfParentBy(entityId.asParent())
       val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
@@ -523,7 +561,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val removedKeys = beforeParents.keys - parents.keys
       removedKeys.forEach { parentsMapRes[it] = null }
 
-      builder.changeLog.addReplaceEvent(entityId, copiedData, addedChildren, removedChildren, parentsMapRes)
+      builder.changeLog.addReplaceEvent(entityId, copiedData, originalEntity, originalParents, addedChildren, removedChildren, parentsMapRes)
     }
   }
 }
@@ -626,64 +664,6 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
         }
       }
     }
-  }
-
-  internal fun reportConsistencyIssue(message: String,
-                                      e: Throwable,
-                                      sourceFilter: ((EntitySource) -> Boolean)?,
-                                      left: WorkspaceEntityStorage?,
-                                      right: WorkspaceEntityStorage?,
-                                      resulting: WorkspaceEntityStorage) {
-    val entitySourceFilter = if (sourceFilter != null) {
-      val allEntitySources = (left as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries()?.toHashSet() ?: hashSetOf()
-      allEntitySources.addAll((right as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries() ?: emptySet())
-      allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
-    }
-    else null
-
-    var finalMessage = "$message\n\nEntity source filter: $entitySourceFilter"
-    finalMessage += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
-
-    val zipFile = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) {
-      val dumpDirectory = getStoreDumpDirectory()
-      finalMessage += "\nSaving store content at: $dumpDirectory"
-      serializeContentToFolder(dumpDirectory, left, right, resulting)
-    }
-    else null
-
-    if (zipFile != null) {
-      val attachment = Attachment("workspaceModelDump.zip", zipFile.readBytes(), "Zip of workspace model store")
-      attachment.isIncluded = true
-      LOG.error(finalMessage, e, attachment)
-    }
-    else {
-      LOG.error(finalMessage, e)
-    }
-  }
-
-  private fun serializeContentToFolder(contentFolder: Path,
-                                       left: WorkspaceEntityStorage?,
-                                       right: WorkspaceEntityStorage?,
-                                       resulting: WorkspaceEntityStorage): File? {
-    left?.let { serializeEntityStorage(contentFolder.resolve("Left_Store"), it) }
-    right?.let { serializeEntityStorage(contentFolder.resolve("Right_Store"), it) }
-    serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting)
-    serializeContent(contentFolder.resolve("ClassToIntConverter")) { serializer, stream -> serializer.serializeClassToIntConverter(stream) }
-
-    if (right is WorkspaceEntityStorageBuilder) {
-      serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, stream ->
-        right as WorkspaceEntityStorageBuilderImpl
-        serializer.serializeDiffLog(stream, right.changeLog)
-      }
-    }
-
-    return if (!executingOnTC()) {
-      val zipFile = contentFolder.parent.resolve(contentFolder.name + ".zip").toFile()
-      Compressor.Zip(zipFile).use { it.addDirectory(contentFolder.toFile()) }
-      FileUtil.delete(contentFolder)
-      zipFile
-    }
-    else null
   }
 
   companion object {

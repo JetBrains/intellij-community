@@ -1384,15 +1384,12 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   private void reportToFUS(@NotNull Usage usage) {
-    if (usage instanceof PsiElementUsage) {
-      PsiElementUsage elementUsage = (PsiElementUsage)usage;
-      Class<? extends PsiReference> referenceClass = elementUsage.getReferenceClass();
-      PsiElement element = elementUsage.getElement();
-      if (referenceClass != null || element != null) {
-        Pair<Class<? extends PsiReference>, Language> pair = Pair.create(referenceClass, element != null ? element.getLanguage() : null);
-        if (myReportedReferenceClasses.add(pair)) {
-          UsageViewStatisticsCollector.logUsageShown(myProject, pair.first, pair.second);
-        }
+    Class<? extends PsiReference> referenceClass = UsageReferenceClassProvider.Companion.getReferenceClass(usage);
+    PsiElement element = usage instanceof PsiElementUsage ? ((PsiElementUsage)usage).getElement() : null;
+    if (element != null || referenceClass != null) {
+      Pair<Class<? extends PsiReference>, Language> pair = Pair.create(referenceClass, element != null ? element.getLanguage() : null);
+      if (myReportedReferenceClasses.add(pair)) {
+        UsageViewStatisticsCollector.logUsageShown(myProject, pair.first, pair.second);
       }
     }
   }

@@ -6,5 +6,5 @@ enum class E {
     }
 }
 
-val test<# : E# > = E.test
+val test<# [:  [temp:///src/KotlinReferencesTypeHintsProvider.kt:0]E] #> = E.test
             

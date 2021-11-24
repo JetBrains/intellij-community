@@ -134,12 +134,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
 
-    if (!isUnitTestMode && !isHeadless) {
-      Disposable uiRootDisposable = Disposer.newDisposable();
-      //noinspection deprecation
-      Disposer.register(this, uiRootDisposable, "ui");
-    }
-
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
     AtomicReference<Thread> edtThread = new AtomicReference<>();
     EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
@@ -345,7 +339,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
-    LaterInvocator.invokeLaterWithCallback(() -> runIntendedWriteActionOnCurrentThread(r), state, expired, null, true);
+    LaterInvocator.invokeLaterWithCallback(state, expired, null, wrapWithRunIntendedWriteAction(r));
   }
 
   @Override
@@ -447,7 +441,22 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
 
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, modalityState);
-    LaterInvocator.invokeAndWait(() -> runIntendedWriteActionOnCurrentThread(r), modalityState);
+    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
+  }
+
+  @NotNull
+  private Runnable wrapWithRunIntendedWriteAction(@NotNull Runnable runnable) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        runIntendedWriteActionOnCurrentThread(runnable);
+      }
+
+      @Override
+      public String toString() {
+        return runnable.toString();
+      }
+    };
   }
 
   @Override
@@ -608,6 +617,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         return;
       }
 
+      IdeaLogger.dropFrequentExceptionsCaches();
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
@@ -619,7 +629,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           exitCode = Main.RESTART_FAILED;
         }
       }
-      IdeaLogger.dropFrequentExceptionsCaches();
       System.exit(exitCode);
     }
     finally {
@@ -791,7 +800,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(action, modal);
     // EDT == Write Thread in legacy mode
-    LaterInvocator.invokeLaterWithCallback(() -> runIntendedWriteActionOnCurrentThread(r), modal, expired, null, !USE_SEPARATE_WRITE_THREAD);
+    LaterInvocator.invokeLaterWithCallback(modal, expired, null, wrapWithRunIntendedWriteAction(r));
   }
 
   @Override
@@ -1092,36 +1101,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public boolean tryRunWriteAction(@NotNull Runnable action) {
-    assertIsWriteThread();
-    boolean writeActionPending = myWriteActionPending;
-    myWriteActionPending = true;
-    Class<? extends Runnable> clazz = action.getClass();
-    boolean success;
-    try {
-      ActivityTracker.getInstance().inc();
-      fireBeforeWriteActionStart(clazz);
-
-      success = myLock.isWriteLocked() || myLock.startTryWrite();
-    }
-    finally {
-      myWriteActionPending = writeActionPending;
-    }
-    if (success) {
-      myWriteActionsStack.push(clazz);
-      try {
-        fireWriteActionStarted(clazz);
-
-        action.run();
-      }
-      finally {
-        endWrite(clazz);
-      }
-    }
-    return success;
-  }
-
-  @Override
   public boolean isActive() {
     if (isHeadlessEnvironment()) {
       return true;
@@ -1312,8 +1291,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     int prevBase = myWriteStackBase;
     myWriteStackBase = myWriteActionsStack.size();
-    try (AccessToken ignored = myLock.writeSuspend()) {
-      runModalProgress(project, title, runnable);
+    try {
+      myLock.writeSuspendWhilePumpingIdeEventQueueHopingForTheBest(()->runModalProgress(project, title, runnable));
     }
     finally {
       myWriteStackBase = prevBase;

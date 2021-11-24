@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -49,6 +50,7 @@ import java.util.function.Supplier;
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
+  public static final ArrayFactory<VirtualFile> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new VirtualFile[count];
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the name of a {@link VirtualFile} changes.

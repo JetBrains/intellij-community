@@ -36,100 +36,92 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                                                            @NotNull final InspectionManager manager,
                                                            @NotNull final GlobalInspectionContext globalContext,
                                                            @NotNull final ProblemDescriptionsProcessor processor) {
-    if (refEntity instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refEntity;
-
-      if (refMethod.isSyntheticJSP()) return null;
-
-      if (refMethod.isExternalOverride()) return null;
-
-      if (!(refMethod.isStatic() || refMethod.isConstructor()) && !refMethod.getSuperMethods().isEmpty()) return null;
-
-      RefClass aClass = refMethod.getOwnerClass();
-      if (aClass != null && ((refMethod.isAbstract() || aClass.isInterface()) && refMethod.getDerivedMethods().isEmpty())) {
-        return null;
-      }
-
-      if (refMethod.isAppMain()) return null;
-
-      final List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
-
-      if (unusedParameters.isEmpty()) return null;
-
-      if (refMethod.isEntry()) return null;
-
-      UDeclaration uMethod = refMethod.getUastElement();
-      if (uMethod == null) return null;
-      final PsiElement element = uMethod.getJavaPsi();
-      if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
-
-      final List<ProblemDescriptor> result = new ArrayList<>();
-      for (RefParameter refParameter : unusedParameters) {
-        UParameter parameter = refParameter.getUastElement();
-        PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
-        if (anchor != null) {
-          result.add(manager.createProblemDescriptor(anchor,
-                                                     JavaBundle.message(refMethod.isAbstract() ? "inspection.unused.parameter.composer" : "inspection.unused.parameter.composer1"),
-                                                     new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),
-                                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, false));
-        }
-      }
-      return result.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
+    if (!(refEntity instanceof RefMethod)) return null;
+    RefMethod refMethod = (RefMethod)refEntity;
+    if (refMethod.isSyntheticJSP()) return null;
+    if (refMethod.isExternalOverride()) return null;
+    if (!(refMethod.isStatic() || refMethod.isConstructor()) && !refMethod.getSuperMethods().isEmpty()) return null;
+    RefClass aClass = refMethod.getOwnerClass();
+    if (aClass != null && ((refMethod.isAbstract() || aClass.isInterface()) && refMethod.getDerivedReferences().isEmpty())) {
+      return null;
     }
-    return null;
+    if (refMethod.isAppMain()) return null;
+    List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+    if (unusedParameters.isEmpty()) return null;
+    if (refMethod.isEntry()) return null;
+    UDeclaration uMethod = refMethod.getUastElement();
+    if (uMethod == null) return null;
+    PsiElement element = uMethod.getJavaPsi();
+    if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
+
+    List<ProblemDescriptor> result = new ArrayList<>();
+    for (RefParameter refParameter : unusedParameters) {
+      UParameter parameter = refParameter.getUastElement();
+      PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
+      if (anchor != null) {
+        result.add(manager.createProblemDescriptor(anchor,
+                                                   JavaBundle.message(refMethod.isAbstract()
+                                                                      ? "inspection.unused.parameter.composer"
+                                                                      : "inspection.unused.parameter.composer1"),
+                                                   new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),
+                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, false));
+      }
+    }
+    return result.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
   protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
-    final Project project = manager.getProject();
+    Project project = manager.getProject();
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints(manager)) {
       processor.ignoreElement(entryPoint);
     }
 
-    final PsiSearchHelper helper = PsiSearchHelper.getInstance(project);
-    final AnalysisScope scope = manager.getScope();
+    PsiSearchHelper helper = PsiSearchHelper.getInstance(project);
+    AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefMethod) {
-          RefMethod refMethod = (RefMethod)refEntity;
-          UDeclaration uastElement = refMethod.getUastElement();
-          if (uastElement != null) {
-            PsiMethod element = (PsiMethod) uastElement.getJavaPsi();
-            if (element != null && !refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
-              final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
-              if (unusedParameters.isEmpty()) return;
-              PsiMethod[] derived = OverridingMethodsSearch.search(element).toArray(PsiMethod.EMPTY_ARRAY);
-              for (final RefParameter refParameter : unusedParameters) {
-                if (refMethod.isAbstract() && derived.length == 0) {
-                  refParameter.parameterReferenced(false);
-                  processor.ignoreElement(refParameter);
-                }
-                else {
-                  int idx = refParameter.getIndex();
-                  final boolean[] found = {false};
-                  for (int i = 0; i < derived.length && !found[0]; i++) {
-                    if (scope == null || !scope.contains(derived[i])) {
-                      final PsiParameter[] parameters = derived[i].getParameterList().getParameters();
-                      if (idx >= parameters.length) continue;
-                      PsiParameter psiParameter = parameters[idx];
-                      ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false)
-                                      .forEach(new PsiReferenceProcessorAdapter(
-                                        new PsiReferenceProcessor() {
-                                          @Override
-                                          public boolean execute(PsiReference element) {
-                                            refParameter.parameterReferenced(false);
-                                            processor.ignoreElement(refParameter);
-                                            found[0] = true;
-                                            return false;
-                                          }
-                                        }));
-                    }
+        if (!(refEntity instanceof RefMethod)) return;
+        RefMethod refMethod = (RefMethod)refEntity;
+        if (refMethod.isStatic() || refMethod.isConstructor() ||
+            PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
+          return;
+        }
+        UDeclaration uastElement = refMethod.getUastElement();
+        if (uastElement == null) return;
+        PsiMethod element = (PsiMethod)uastElement.getJavaPsi();
+        if (element == null) {
+          return;
+        }
+        List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+        if (unusedParameters.isEmpty()) return;
+        PsiMethod[] derived = OverridingMethodsSearch.search(element).toArray(PsiMethod.EMPTY_ARRAY);
+        for (RefParameter refParameter : unusedParameters) {
+          if (refMethod.isAbstract() && derived.length == 0) {
+            refParameter.parameterReferenced(false);
+            processor.ignoreElement(refParameter);
+            continue;
+          }
+          int idx = refParameter.getIndex();
+          boolean[] found = {false};
+          for (int i = 0; i < derived.length && !found[0]; i++) {
+            if (scope != null && scope.contains(derived[i])) continue;
+            PsiParameter[] parameters = derived[i].getParameterList().getParameters();
+            if (idx >= parameters.length) continue;
+            PsiParameter psiParameter = parameters[idx];
+            ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false)
+              .forEach(new PsiReferenceProcessorAdapter(
+                new PsiReferenceProcessor() {
+                  @Override
+                  public boolean execute(PsiReference element) {
+                    refParameter.parameterReferenced(false);
+                    processor.ignoreElement(refParameter);
+                    found[0] = true;
+                    return false;
                   }
-                }
-              }
-            }
+                }));
           }
         }
       }
@@ -152,7 +144,8 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return new AcceptSuggested(null, null, hint);
   }
 
-  public static ArrayList<RefParameter> getUnusedParameters(RefMethod refMethod) {
+  @NotNull
+  private static ArrayList<RefParameter> getUnusedParameters(@NotNull RefMethod refMethod) {
     boolean checkDeep = !refMethod.isStatic() && !refMethod.isConstructor();
     ArrayList<RefParameter> res = new ArrayList<>();
     RefParameter[] methodParameters = refMethod.getParameters();
@@ -161,7 +154,9 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     clearUsedParameters(refMethod, result, checkDeep);
 
     for (RefParameter parameter : result) {
-      if (parameter != null && !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME, UnusedSymbolLocalInspectionBase.UNUSED_ID)) {
+      if (parameter != null &&
+          !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME,
+                                                    UnusedSymbolLocalInspectionBase.UNUSED_ID)) {
         res.add(parameter);
       }
     }
@@ -169,16 +164,25 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return res;
   }
 
-  private static void clearUsedParameters(@NotNull RefMethod refMethod, RefParameter[] params, boolean checkDeep) {
-    RefParameter[] methodParams = refMethod.getParameters();
+  private static void clearUsedParameters(@NotNull RefOverridable refOverridable, RefParameter[] params, boolean checkDeep) {
+    RefParameter[] methodParams;
+    if (refOverridable instanceof RefMethod) {
+      methodParams = ((RefMethod)refOverridable).getParameters();
+    }
+    else if (refOverridable instanceof RefFunctionalExpression) {
+      methodParams = ((RefFunctionalExpression)refOverridable).getParameters().toArray(RefParameter[]::new);
+    }
+    else {
+      return;
+    }
 
     for (int i = 0; i < Math.min(methodParams.length, params.length); i++) {
       if (methodParams[i].isUsedForReading()) params[i] = null;
     }
 
     if (checkDeep) {
-      for (RefMethod refOverride : refMethod.getDerivedMethods()) {
-        clearUsedParameters(refOverride, params, true);
+      for (RefOverridable reference : refOverridable.getDerivedReferences()) {
+        clearUsedParameters(reference, params, true);
       }
     }
   }
@@ -188,15 +192,14 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     private final String myHint;
     private final ProblemDescriptionsProcessor myProcessor;
 
-    AcceptSuggested(@Nullable RefManager manager,
-                           @Nullable ProblemDescriptionsProcessor processor,
-                           final String hint) {
+    AcceptSuggested(@Nullable RefManager manager, @Nullable ProblemDescriptionsProcessor processor, @NotNull String hint) {
       myManager = manager;
       myProcessor = processor;
       myHint = hint;
     }
 
-    public String getHint() {
+    @NotNull
+    String getHint() {
       return myHint;
     }
 

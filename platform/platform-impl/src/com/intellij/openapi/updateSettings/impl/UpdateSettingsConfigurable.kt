@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
@@ -24,7 +23,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.JEditorPane
 
 private const val TOOLBOX_URL =
   "https://www.jetbrains.com/toolbox-app/?utm_source=product&utm_medium=link&utm_campaign=toolbox_app_in_IDE_updatewindow&utm_content=we_recommend"
@@ -33,12 +32,12 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
   BoundConfigurable(IdeBundle.message("updates.settings.title"), "preferences.updates") {
 
   private lateinit var myLink: JComponent
-  private lateinit var myLastCheckedLabel: JLabel
+  private lateinit var myLastCheckedLabel: JEditorPane
 
   override fun createPanel(): DialogPanel {
     val settings = UpdateSettings.getInstance()
     val manager = ExternalUpdateManager.ACTUAL
-    val eapLocked = ApplicationInfoEx.getInstanceEx().isMajorEAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()
+    val channelSelectionLockedMessage = UpdateStrategyCustomization.getInstance().getChannelSelectionLockedMessage()
     val appInfo = ApplicationInfo.getInstance()
     val channelModel = CollectionComboBoxModel(settings.activeChannels)
 
@@ -52,10 +51,10 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
           manager != null -> {
             comment(IdeBundle.message("updates.settings.external", manager.toolName))
           }
-          eapLocked -> {
+          channelSelectionLockedMessage != null -> {
             checkBox(IdeBundle.message("updates.settings.checkbox"))
               .bindSelected(settings.state::isCheckNeeded)
-            comment(IdeBundle.message("updates.settings.channel.locked"))
+            comment(channelSelectionLockedMessage)
           }
           else -> {
             val checkBox = checkBox(IdeBundle.message("updates.settings.checkbox.for"))

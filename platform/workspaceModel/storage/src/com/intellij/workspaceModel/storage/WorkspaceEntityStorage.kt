@@ -29,6 +29,52 @@ import kotlin.reflect.KProperty1
  *
  * Currently the entities are representing by classes inheriting from WorkspaceEntityBase, and need to have a separate class with `Data`
  * suffix extending WorkspaceEntityData to store the actual data.
+ *
+ * # Equality and identity
+ *
+ * Entities follow the java equality approach where by default objects are compared by identity. So, two different entities are never equal.
+ * However, even requesting the same entity multiple times may return different java objects, they are still considered as equal.
+ *
+ * Entities from independent snapshots are never equal.
+ *
+ * Requesting the same entity from two different snapshots will return two different java objects.
+ * However, they are equal if one snapshot is a modification of another, and this particular entity was not modified.
+ *
+ * This is the default behaviour of `equals` method that may be changed for any particular inheritor.
+ *
+ * ### Examples:
+ * ```kotlin
+ * val entityOne = builderOne.addEntity("data")
+ * val entityTwo = builderTwo.addEntity("data")
+ * entityOne != entityTwo
+ * ```
+ *
+ * ```kotlin
+ * val entityOne = snapshot.getEntity()
+ * val entityTwo = snapshot.getEntity()
+ * entityOne !== entityTwo
+ * entityOne == entityTwo
+ * ```
+ *
+ * ```kotlin
+ * val entityA = snapshot.getEntityA()
+ * val entityB = snapshot.getEntityB()
+ * entityA != entityB
+ * ```
+ *
+ * ```kotlin
+ * val entityAOne = snapshot1.getEntityA()
+ * val snapshot2 = snapshot1.toBuilder().modifyEntityB().toSnapshot()
+ * val entityATwo = snapshot2.getEntityA()
+ * entityAOne == entityATwo
+ * ```
+ *
+ * ```kotlin
+ * val entityAOne = snapshot1.getEntityA()
+ * val snapshot2 = snapshot1.toBuilder().modifyEntityA().toSnapshot()
+ * val entityATwo = snapshot2.getEntityA()
+ * entityAOne != entityATwo
+ * ```
  */
 interface WorkspaceEntity {
   val entitySource: EntitySource
@@ -206,6 +252,8 @@ interface WorkspaceEntityStorageDiffBuilder {
   fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
 
   fun addDiff(diff: WorkspaceEntityStorageDiffBuilder)
+
+  fun <T : WorkspaceEntity> addEntity(entity: T, source: EntitySource): T
 
   /**
    * Please see [WorkspaceEntityStorage.getExternalMapping] for naming conventions

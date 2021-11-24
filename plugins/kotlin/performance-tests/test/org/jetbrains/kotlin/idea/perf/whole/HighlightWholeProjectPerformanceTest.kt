@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.testFramework.relativePath
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
@@ -49,87 +50,81 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
 
         val projectSpecs = projectSpecs()
         logMessage { "projectSpecs: $projectSpecs" }
-        try {
-            for (projectSpec in projectSpecs) {
-                val projectName = projectSpec.name
-                val projectPath = projectSpec.path
+        for (projectSpec in projectSpecs) {
+            val projectName = projectSpec.name
+            val projectPath = projectSpec.path
 
-                val suiteName =
-                    listOfNotNull("allKtFilesIn", "emptyProfile".takeIf { emptyProfile }, projectName)
-                        .joinToString(separator = "-")
-                suite(suiteName = suiteName) {
-                    app {
-                        warmUpProject()
+            val suiteName =
+                listOfNotNull("allKtFilesIn", "emptyProfile".takeIf { emptyProfile }, projectName)
+                    .joinToString(separator = "-")
+            suite(suiteName = suiteName) {
+                app {
+                    ExpressionsOfTypeProcessor.prodMode()
+                    warmUpProject()
 
-                        with(config) {
-                            warmup = warmUpIterations
-                            iterations = numberOfIterations
-                            fastIterations = true
-                        }
+                    with(config) {
+                        warmup = warmUpIterations
+                        iterations = numberOfIterations
+                        fastIterations = true
+                    }
 
-                        try {
-                            project(ExternalProject.autoOpenProject(projectPath), refresh = true) {
-                                profile(if (emptyProfile) EmptyProfile else DefaultProfile)
+                    try {
+                        project(ExternalProject.autoOpenProject(projectPath), refresh = true) {
+                            profile(if (emptyProfile) EmptyProfile else DefaultProfile)
 
-                                val ktFiles = mutableSetOf<VirtualFile>()
-                                project.runReadActionInSmartMode {
-                                    val projectFileIndex = ProjectFileIndex.getInstance(project)
-                                    val modules = mutableSetOf<Module>()
-                                    val ktFileProcessor = { ktFile: VirtualFile ->
-                                        if (projectFileIndex.isInSourceContent(ktFile)) {
-                                            ktFiles.add(ktFile)
-                                        }
-                                        true
+                            val ktFiles = mutableSetOf<VirtualFile>()
+                            project.runReadActionInSmartMode {
+                                val projectFileIndex = ProjectFileIndex.getInstance(project)
+                                val modules = mutableSetOf<Module>()
+                                val ktFileProcessor = { ktFile: VirtualFile ->
+                                    if (projectFileIndex.isInSourceContent(ktFile)) {
+                                        ktFiles.add(ktFile)
                                     }
-                                    FileTypeIndex.processFiles(
-                                        KotlinFileType.INSTANCE,
-                                        ktFileProcessor,
-                                        GlobalSearchScope.projectScope(project)
-                                    )
-                                    modules
+                                    true
                                 }
+                                FileTypeIndex.processFiles(
+                                    KotlinFileType.INSTANCE,
+                                    ktFileProcessor,
+                                    GlobalSearchScope.projectScope(project)
+                                )
+                                modules
+                            }
 
-                                logStatValue("number of kt files", ktFiles.size)
-                                val filesToProcess =
-                                    limitedFiles(
-                                        ktFiles,
-                                        percentOfFiles = percentOfFiles,
-                                        maxFilesPerPart = maxFilesPerPart,
-                                        minFileSize = minFileSize
-                                    )
-                                logStatValue("limited number of kt files", filesToProcess.size)
+                            logStatValue("number of kt files", ktFiles.size)
+                            val filesToProcess =
+                                limitedFiles(
+                                    ktFiles,
+                                    percentOfFiles = percentOfFiles,
+                                    maxFilesPerPart = maxFilesPerPart,
+                                    minFileSize = minFileSize
+                                )
+                            logStatValue("limited number of kt files", filesToProcess.size)
 
-                                filesToProcess.forEach {
-                                    logMessage { "${project.relativePath(it)} fileSize: ${Files.size(it.toNioPath())}" }
-                                }
+                            filesToProcess.forEach {
+                                logMessage { "${project.relativePath(it)} fileSize: ${Files.size(it.toNioPath())}" }
+                            }
 
-                                filesToProcess.forEachIndexed { idx, file ->
-                                    logMessage { "${idx + 1} / ${filesToProcess.size} : ${project.relativePath(file)} fileSize: ${Files.size(file.toNioPath())}" }
+                            filesToProcess.forEachIndexed { idx, file ->
+                                logMessage { "${idx + 1} / ${filesToProcess.size} : ${project.relativePath(file)} fileSize: ${Files.size(file.toNioPath())}" }
 
-                                    try {
-                                        fixture(file).use {
-                                            measure<List<HighlightInfo>>(it.fileName, clearCaches = clearPsiCaches) {
-                                                test = {
-                                                    highlight(it)
-                                                }
+                                try {
+                                    fixture(file).use {
+                                        measure<List<HighlightInfo>>(it.fileName, clearCaches = clearPsiCaches) {
+                                            test = {
+                                                highlight(it)
                                             }
                                         }
-                                    } catch (e: Exception) {
-                                        // nothing as it is already caught by perfTest
                                     }
+                                } catch (e: Exception) {
+                                    // nothing as it is already caught by perfTest
                                 }
                             }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            // nothing as it is already caught by perfTest
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // nothing as it is already caught by perfTest
                     }
                 }
-            }
-        } finally {
-            pathToResource("").takeIf { it.exists() }?.let {
-                logMessage { "uploadAggregateResults: ${it.absolutePath}" }
-                uploadAggregateResults(it)
             }
         }
     }

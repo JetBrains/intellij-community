@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
@@ -68,6 +69,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
                 doKotlinQuickFixTest(beforeFileName)
                 checkForUnexpectedErrors()
+                PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
             } finally {
                 myFixture.disableInspections(*inspections)
             }

@@ -34,8 +34,8 @@ class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameter
   override val key: SettingsKey<Settings>
     get() = ourKey
 
-  override val groupId: String
-    get() = TYPES_GROUP
+  override val group: InlayGroup
+    get() = InlayGroup.TYPES_GROUP
 
   override fun getProperty(key: String): String {
     return GroovyBundle.message(key)
