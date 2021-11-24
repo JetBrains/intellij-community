@@ -107,6 +107,7 @@ final class PlatformModules {
     "intellij.platform.ml.impl",
     "intellij.remoteDev.util",
     "intellij.platform.feedback",
+    "intellij.platform.warmup",
     )
 
   private static final String UTIL_JAR = "util.jar"

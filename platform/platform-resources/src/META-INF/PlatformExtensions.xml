@@ -16,6 +16,7 @@
     <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
     <appStarter implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
+    <appStarter implementation="com.intellij.warmup.ProjectIndexesWarmup"/>
     <appStarter implementation="com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilderAppStarter"/>
     <appStarter implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
     <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>

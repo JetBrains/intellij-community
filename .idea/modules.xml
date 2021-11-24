@@ -815,6 +815,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vfs-impl/intellij.platform.vfs.impl.iml" filepath="$PROJECT_DIR$/platform/vfs-impl/intellij.platform.vfs.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/warmup/intellij.platform.warmup.iml" filepath="$PROJECT_DIR$/platform/warmup/intellij.platform.warmup.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel/jps/intellij.platform.workspaceModel.jps.iml" filepath="$PROJECT_DIR$/platform/workspaceModel/jps/intellij.platform.workspaceModel.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel/jps/tests/intellij.platform.workspaceModel.jps.tests.iml" filepath="$PROJECT_DIR$/platform/workspaceModel/jps/tests/intellij.platform.workspaceModel.jps.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel/storage/intellij.platform.workspaceModel.storage.iml" filepath="$PROJECT_DIR$/platform/workspaceModel/storage/intellij.platform.workspaceModel.storage.iml" />
