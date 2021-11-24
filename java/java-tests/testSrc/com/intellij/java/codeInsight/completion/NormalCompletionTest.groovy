@@ -2592,6 +2592,19 @@ class Abc {
                           "}")
   }
 
+  void testVariableIntoScopeInAnnotation() {
+    String source = "public class Demo {\n" +
+                    "    public static void main(String[] args) {\n" +
+                    "        @SuppressWarnings(<caret>)\n" +
+                    "        final String code = \"println('Hello world')\";\n" +
+                    "    }\n" +
+                    "}"
+    myFixture.configureByText("Test.java", source)
+    myFixture.complete(CompletionType.SMART)
+    assert myFixture.lookupElementStrings == []
+    myFixture.checkResult(source)
+  }
+
   void testLookupUpDownActions() {
     myFixture.configureByText("Test.java", "class Test {<caret>}")
     myFixture.completeBasic() // 'abstract' selected
