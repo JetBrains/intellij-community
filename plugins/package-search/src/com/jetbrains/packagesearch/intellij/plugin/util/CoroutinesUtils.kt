@@ -238,14 +238,30 @@ internal inline fun <reified T> Flow<T>.batchAtIntervals(duration: Duration) = c
         if (job == null || job?.isCompleted == true) {
             job = launch {
                 delay(duration)
-                val data = mutex.withLock {
-                    val d = buffer.toTypedArray()
+                mutex.withLock {
+                    send(buffer.toTypedArray())
                     buffer.clear()
-                    d
                 }
-                send(data)
             }
         }
+    }
+}
+
+internal inline fun <reified T> Flow<T>.batchUntil(duration: Duration) = channelFlow {
+    val mutex = Mutex()
+    val buffer = mutableListOf<T>()
+    var job: Job? = null
+    collect {
+        job?.cancel()
+        mutex.withLock { buffer.add(it) }
+        job = launch {
+            delay(duration)
+            mutex.withLock {
+                send(buffer.toTypedArray())
+                buffer.clear()
+            }
+        }
+
     }
 }
 
@@ -283,7 +299,6 @@ internal fun CoroutineScope.showBackgroundLoadingBar(
                 }
                 val internalJob = launch {
                     syncSignal.lock()
-                    logWarn { "lock released" }
                 }
                 select<Unit> {
                     internalJob.onJoin { }

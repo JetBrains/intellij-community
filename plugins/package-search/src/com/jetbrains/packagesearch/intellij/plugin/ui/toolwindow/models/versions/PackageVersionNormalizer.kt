@@ -24,15 +24,16 @@ internal class PackageVersionNormalizerService : Disposable {
         allowStructuredMapKeys = true
     }
 
-    private val cacheMap = persistentCacheFile.takeIf { it.exists() }
-        ?.runCatching {
-            json.decodeFromString(
-                CoroutineLRUCache.serializer<PackageVersion.Named, NormalizedPackageVersion<PackageVersion.Named>>(),
-                readText()
-            )
-        }
-        ?.getOrNull()
-        ?: CoroutineLRUCache(4_000)
+    private val cacheMap: CoroutineLRUCache<PackageVersion.Named, NormalizedPackageVersion<PackageVersion.Named>> =
+        persistentCacheFile.takeIf { it.exists() }
+            ?.runCatching {
+                json.decodeFromString(
+                    CoroutineLRUCache.serializer<PackageVersion.Named, NormalizedPackageVersion<PackageVersion.Named>>(),
+                    readText()
+                )
+            }
+            ?.getOrNull()
+            ?: CoroutineLRUCache(4_000)
 
     val normalizer = PackageVersionNormalizer(cacheMap)
 
