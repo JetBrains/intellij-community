@@ -10,13 +10,7 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import java.io.File
 
-internal fun findLibrary(
-        repoLocation: RepoLocation,
-        library: String,
-        groupId: String,
-        artifactId: String,
-        kind: LibraryFileKind = LibraryFileKind.CLASSES
-): File {
+internal fun findMavenLibrary(library: String, groupId: String, artifactId: String, kind: LibraryFileKind = LibraryFileKind.CLASSES): File {
     val librariesDir = File(PathManager.getHomePath(), ".idea/libraries")
     if (!librariesDir.exists()) {
         throw IllegalStateException("Can't find $librariesDir")
@@ -28,30 +22,43 @@ internal fun findLibrary(
     }
 
     val document = libraryFile.inputStream().use { stream -> SAXBuilder().build(stream) }
+
     val urlScheme = "jar://"
+    val allowedJarLocations = listOf(
+        "$urlScheme\$PROJECT_DIR\$/../build/repo",
+        "$urlScheme\$MAVEN_REPOSITORY\$"
+    )
+
+    val roots = document.rootElement
+        .getChild("library")
+        ?.getChild(kind.name)
+        ?.getChildren("root")
+        .orEmpty()
+
     val pathInRepository = groupId.replace('.', '/') + '/' + artifactId
-    val pathPrefix = "$urlScheme$repoLocation/$pathInRepository/"
 
-    val root = document.rootElement
-                       .getChild("library")
-                       ?.getChild(kind.name)
-                       ?.getChildren("root")
-                       ?.singleOrNull { (it.getAttributeValue("url") ?: "").startsWith(pathPrefix) }
-               ?: throw IllegalStateException("Root '$pathInRepository' not found in library $library")
+    for (root in roots) {
+        val url = root.getAttributeValue("url") ?: continue
+        for (locationPrefix in allowedJarLocations) {
+            if (url.startsWith("$locationPrefix/$pathInRepository/")) {
+                require(url.endsWith("!/"))
+                val path = url.drop(urlScheme.length).dropLast("!/".length)
+                val result = File(substitutePathVariables(path))
+                if (!result.exists()) {
+                    if (kind == LibraryFileKind.SOURCES) {
+                        val version = result.nameWithoutExtension.drop(artifactId.length + 1).dropLast(kind.classifierSuffix.length)
+                        return resolveArtifact(groupId, artifactId, version, kind)
+                    }
 
-    val url = root.getAttributeValue("url") ?: ""
-    val path = url.drop(urlScheme.length).dropLast(2) // last '!/'
+                    throw IllegalStateException("File $result doesn't exist")
+                }
 
-    val result = File(substitutePathVariables(path))
-    if (!result.exists()) {
-        if (kind == LibraryFileKind.SOURCES) {
-            val version = result.nameWithoutExtension.drop(artifactId.length + 1).dropLast(kind.classifierSuffix.length)
-            return resolveArtifact(groupId, artifactId, version, kind)
+                return result
+            }
         }
-
-        throw IllegalStateException("File $result doesn't exist")
     }
-    return result
+
+    throw IllegalStateException("${kind.name} root '$pathInRepository' not found in library $library")
 }
 
 internal enum class RepoLocation {
@@ -96,9 +103,8 @@ private val remoteMavenRepositories: List<RemoteRepository> by lazy {
 private fun substitutePathVariables(path: String): String {
     if (path.startsWith("${RepoLocation.PROJECT_DIR}/")) {
         val projectDir = File(PathManager.getHomePath())
-        return projectDir.resolve(path.drop(RepoLocation.PROJECT_DIR.toString().length)).absolutePath
-    }
-    else if (path.startsWith("${RepoLocation.MAVEN_REPOSITORY}/")) {
+        return projectDir.resolve(path.drop(RepoLocation.PROJECT_DIR.toString().length + 1)).absolutePath
+    } else if (path.startsWith("${RepoLocation.MAVEN_REPOSITORY}/")) {
         val homeDir = System.getProperty("user.home", null)?.let { File(it) }
 
         fun File.extractLocalRepository() = inputStream()

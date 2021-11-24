@@ -6,27 +6,31 @@ import java.io.File
 
 object AdditionalKotlinArtifacts {
     val jetbrainsAnnotations: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "jetbrains_annotations.xml", "org.jetbrains", "annotations")
+        findMavenLibrary("jetbrains_annotations.xml", "org.jetbrains", "annotations")
     }
 
     val kotlinStdlibCommon: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common")
+        findMavenLibrary("kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common")
     }
 
     val kotlinStdlibCommonSources: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common", LibraryFileKind.SOURCES)
+        findMavenLibrary("kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common", LibraryFileKind.SOURCES)
     }
 
     val kotlinStdlibMinimalForTest: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlinc_kotlin_stdlib_minimal_for_test_for_ide.xml", "org.jetbrains.kotlin", "kotlin-stdlib-minimal-for-test-for-ide")
+        findMavenLibrary(
+            "kotlinc_kotlin_stdlib_minimal_for_test_for_ide.xml",
+            "org.jetbrains.kotlin",
+            "kotlin-stdlib-minimal-for-test-for-ide"
+        )
     }
 
     val jsr305: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "jsr305.xml", "com.google.code.findbugs", "jsr305")
+        findMavenLibrary("jsr305.xml", "com.google.code.findbugs", "jsr305")
     }
 
     val junit3: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "JUnit3.xml", "junit", "junit")
+        findMavenLibrary("JUnit3.xml", "junit", "junit")
     }
 
     val parcelizeRuntime: File by lazy {
@@ -39,8 +43,7 @@ object AdditionalKotlinArtifacts {
 
     @JvmStatic
     val compilerTestDataDir = run {
-        val testDataJar = findLibrary(
-            RepoLocation.MAVEN_REPOSITORY,
+        val testDataJar = findMavenLibrary(
             "kotlinc_kotlin_compiler_testdata.xml",
             "org.jetbrains.kotlin",
             "kotlin-compiler-testdata-for-ide"
