@@ -4873,6 +4873,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertConcatenationToBuildString/basic.kt");
         }
 
+        @TestMetadata("inAnnotation.kt")
+        public void testInAnnotation() throws Exception {
+            runTest("testData/intentions/convertConcatenationToBuildString/inAnnotation.kt");
+        }
+
         @TestMetadata("withComments.kt")
         public void testWithComments() throws Exception {
             runTest("testData/intentions/convertConcatenationToBuildString/withComments.kt");
@@ -7672,6 +7677,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("empty.kt")
         public void testEmpty() throws Exception {
             runTest("testData/intentions/convertStringTemplateToBuildString/empty.kt");
+        }
+
+        @TestMetadata("inAnnotation.kt")
+        public void testInAnnotation() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/inAnnotation.kt");
         }
 
         @TestMetadata("raw.kt")
