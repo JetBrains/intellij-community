@@ -14,6 +14,7 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -409,6 +410,9 @@ public final class JavaFormatterUtil {
     else if (nodeType == JavaElementType.SWITCH_LABELED_RULE && childType == JavaElementType.BLOCK_STATEMENT) {
       boolean dontNeedBreak = settings.BRACE_STYLE == CommonCodeStyleSettings.END_OF_LINE;
       return Wrap.createWrap(dontNeedBreak ? WrapType.NONE : WrapType.NORMAL, true);
+    }
+    else if (nodeType == JavaElementType.SWITCH_LABELED_RULE && ElementType.JAVA_STATEMENT_BIT_SET.contains(childType)) {
+      return Wrap.createWrap(WrapType.NORMAL, true);
     }
 
     return suggestedWrap;

@@ -1110,4 +1110,23 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testExprInSwitchWrapping() {
+    doClassTest(
+      "  String process(E e) {\n" +
+      "    return switch (e) {\n" +
+      "      case LONG_NAME_A -> throw new IllegalStateException(\"long text long text long text long text long text long text  |  long text\");\n" +
+      "      case LONG_NAME_B -> \"text\";\n" +
+      "    };\n" +
+      "  }",
+
+      "String process(E e) {\n" +
+      "    return switch (e) {\n" +
+      "        case LONG_NAME_A ->\n" +
+      "                throw new IllegalStateException(\"long text long text long text long text long text long text  |  long text\");\n" +
+      "        case LONG_NAME_B -> \"text\";\n" +
+      "    };\n" +
+      "}"
+    );
+  }
 }
