@@ -1008,6 +1008,16 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointVariants.kt");
             }
 
+            @TestMetadata("inlineFunctionDeepInlining.kt")
+            public void testInlineFunctionDeepInlining() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInlining.kt");
+            }
+
+            @TestMetadata("inlineFunctionDeepInliningSameFile.kt")
+            public void testInlineFunctionDeepInliningSameFile() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInliningSameFile.kt");
+            }
+
             @TestMetadata("inlineMethodsInSignature.kt")
             public void testInlineMethodsInSignature() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
