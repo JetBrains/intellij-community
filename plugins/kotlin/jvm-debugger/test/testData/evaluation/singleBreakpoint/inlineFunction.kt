@@ -23,5 +23,10 @@ inline fun myFun(f: () -> Int): Int = f()
 
 val String.prop: String
     get() {
-        return "a"
+        return secondUnrelatedLib.x
     }
+
+// FILE: secondUnrelatedLib.kt
+package secondUnrelatedLib
+
+val x: String = "a"
