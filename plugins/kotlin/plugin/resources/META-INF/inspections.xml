@@ -2944,6 +2944,15 @@
                      language="kotlin"
                      runForWholeFile="true"
                      key="inspection.unnecessary.opt_in.annotation.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinJvmAnnotationInJavaInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="JAVA"
+                     key="inspection.kotlin.jvm.annotation.in.java.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 
 </idea-plugin>
