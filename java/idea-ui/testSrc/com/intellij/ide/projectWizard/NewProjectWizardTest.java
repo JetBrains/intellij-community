@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -9,6 +10,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -30,6 +32,14 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
     assertNotNull(version);
     assertEquals(version.getMaxLanguageLevel(), LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
+  }
+
+  public void testDefaultModule() throws Exception {
+    Project project = createProject(step -> {});
+    final var manager = ModuleManager.getInstance(project);
+    assertSize(1, manager.getModules());
+    final var module = manager.getModules()[0];
+    assertTrue(ModuleRootManager.getInstance(module).isSdkInherited());
   }
 
   public void testDefaultLanguageLevel13() throws Exception {
