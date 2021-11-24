@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.annotations.*
+import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -72,10 +72,27 @@ private fun KtClassKind.toDescriptorKlassKind(): ClassKind =
         KtClassKind.INTERFACE -> ClassKind.INTERFACE
     }
 
+private fun KtAnnotationValue.toConstantValue(): ConstantValue<*> {
+    return when (this) {
+        KtUnsupportedAnnotationValue -> ErrorValue.create("Unsupported annotation value")
+        is KtArrayAnnotationValue -> ArrayValue(values.map { it.toConstantValue() }) { TODO() }
+        is KtAnnotationApplicationValue -> TODO()
+        is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue -> KClassValue(classId, arrayDimensions = 0)
+        is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> TODO()
+        is KtKClassAnnotationValue.KtErrorClassAnnotationValue -> ErrorValue.create("Unresolved class")
+        is KtEnumEntryAnnotationValue -> {
+            val callableId = callableId ?: return ErrorValue.create("Unresolved enum entry")
+            val classId = callableId.classId ?: return ErrorValue.create("Unresolved enum entry")
+            EnumValue(classId, callableId.callableName)
+        }
+        is KtConstantAnnotationValue -> constantValue.toConstantValue()
+    }
+}
+
 private fun KtConstantValue.toConstantValue(): ConstantValue<*> =
     when (this) {
-        KtUnsupportedConstantValue -> ErrorValue.create("Error value for KtUnsupportedConstantValue")
-        is KtLiteralConstantValue<*> -> when (constantValueKind) {
+        is KtConstantValue.KtErrorConstantValue -> ErrorValue.create(errorMessage)
+        else -> when (constantValueKind) {
             ConstantValueKind.Null -> NullValue()
             ConstantValueKind.Boolean -> BooleanValue(value as Boolean)
             ConstantValueKind.Char -> CharValue(value as Char)
@@ -92,10 +109,6 @@ private fun KtConstantValue.toConstantValue(): ConstantValue<*> =
             ConstantValueKind.UnsignedLong -> ULongValue(value as Long)
             else -> error("Unexpected constant KtSimpleConstantValue: $value (class: ${value?.javaClass}")
         }
-        is KtArrayConstantValue -> ErrorValue.create("Unsupported")
-        is KtAnnotationConstantValue -> ErrorValue.create("Unsupported")
-        is KtEnumEntryConstantValue ->  ErrorValue.create("Unsupported")
-        is KtErrorValue ->  ErrorValue.create(message)
     }
 
 abstract class KtSymbolBasedDeclarationDescriptor(val context: FE10BindingContext) : DeclarationDescriptorWithSource {
@@ -163,7 +176,7 @@ class KtSymbolBasedAnnotationDescriptor(
         get() = ktAnnotationCall.classId?.asSingleFqName()
 
     override val allValueArguments: Map<Name, ConstantValue<*>> =
-        ktAnnotationCall.arguments.associate { Name.identifier(it.name) to it.expression.toConstantValue() }
+        ktAnnotationCall.arguments.associate { it.name to it.expression.toConstantValue() }
 
     override val source: SourceElement
         get() = ktAnnotationCall.psi.toSourceElement()
@@ -441,7 +454,7 @@ class KtSymbolBasedAnonymousFunctionDescriptor(
     override fun newCopyBuilder(): FunctionDescriptor.CopyBuilder<out SimpleFunctionDescriptor> = noImplementation()
 }
 
-private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KtPossibleMemberSymbol): ReceiverParameterDescriptor? {
+private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KtCallableSymbol): ReceiverParameterDescriptor? {
     val ktDispatchTypeAndAnnotations = context.withAnalysisSession { ktSymbol.getDispatchReceiverType() } ?: return null
     return KtSymbolStubDispatchReceiverParameterDescriptor(ktDispatchTypeAndAnnotations, context)
 }
