@@ -22,6 +22,11 @@ import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import java.util.function.Supplier
@@ -116,12 +121,17 @@ object VcsLogContentUtil {
     VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING)
   }
 
+  private fun isMainLogTab(content: Content?): Boolean {
+    if (content == null) return false
+    return VcsLogContentProvider.TAB_NAME == content.tabName
+  }
+
   private fun selectMainLog(cm: ContentManager): Boolean {
     val contents = cm.contents
     for (content in contents) {
       // here tab name is used instead of log ui id to select the correct tab
       // it's done this way since main log ui may not be created when this method is called
-      if (VcsLogContentProvider.TAB_NAME == content.tabName) {
+      if (isMainLogTab(content)) {
         cm.setSelectedContent(content)
         return true
       }
@@ -132,6 +142,40 @@ object VcsLogContentUtil {
   fun selectMainLog(project: Project): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
     return selectMainLog(toolWindow.contentManager)
+  }
+
+  private suspend fun runInCurrentOrCreateNewTab(project: Project, consumer: suspend (MainVcsLogUi) -> Boolean): Boolean {
+    val logInitFuture = VcsProjectLog.waitWhenLogIsReady(project)
+    if (!logInitFuture.isDone) {
+      withContext(Dispatchers.IO) {
+        logInitFuture.get()
+      }
+    }
+
+    val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
+    if (!window.isVisible) {
+      suspendCancellableCoroutine<Unit> { continuation ->
+        window.activate { continuation.resumeWith(Result.success(Unit)) }
+      }
+    }
+
+    val manager = VcsProjectLog.getInstance(project).logManager ?: return false
+
+    val visibleLogUis = manager.getVisibleLogUis(VcsLogManager.LogWindowKind.TOOL_WINDOW)
+    val selectedUi = visibleLogUis.filterIsInstance<MainVcsLogUi>().firstOrNull() // can't filter out update logs
+    if (selectedUi != null && consumer(selectedUi)) return true
+
+    if (selectedUi == null && isMainLogTab(window.contentManager.selectedContent)) {
+      // main log tab is already selected, just need to wait for initialization
+      val mainLogUi = VcsLogContentProvider.getInstance(project)!!.waitMainUiCreation().await()
+      if (mainLogUi != null && consumer(mainLogUi)) return true
+    }
+
+    val newUi = VcsProjectLog.getInstance(project).openLogTab(VcsLogFilterObject.EMPTY_COLLECTION,
+                                                              VcsLogManager.LogWindowKind.TOOL_WINDOW)
+    if (newUi != null && consumer(newUi)) return true
+
+    return false
   }
 
   @JvmStatic

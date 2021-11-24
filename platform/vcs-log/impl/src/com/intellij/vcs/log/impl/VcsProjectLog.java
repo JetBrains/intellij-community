@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBus;
@@ -48,10 +49,7 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -212,8 +210,8 @@ public final class VcsProjectLog implements Disposable {
   }
 
   @NotNull
-  Future<VcsLogManager> createLogInBackground(boolean forceInit) {
-    return myExecutor.submit(() -> createLog(forceInit));
+  CompletableFuture<VcsLogManager> createLogInBackground(boolean forceInit) {
+    return CompletableFuture.supplyAsync(() -> createLog(forceInit), myExecutor);
   }
 
   @Nullable
@@ -317,6 +315,18 @@ public final class VcsProjectLog implements Disposable {
           }
         }
       }.queue();
+    }
+  }
+
+  @RequiresEdt
+  static Future<Boolean> waitWhenLogIsReady(@NotNull Project project) {
+    VcsProjectLog log = getInstance(project);
+    VcsLogManager manager = log.getLogManager();
+    if (manager != null) {
+      return new FutureResult<>(true);
+    }
+    else {
+      return log.createLogInBackground(true).thenApply(Objects::nonNull);
     }
   }
 

@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -38,7 +43,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel<>(new BorderLayout());
-  @Nullable private Consumer<? super MainVcsLogUi> myOnCreatedListener;
+  @Nullable private SettableFuture<MainVcsLogUi> myLogCreationCallback;
 
   @Nullable private MainVcsLogUi myUi;
   @Nullable private Content myContent;
@@ -98,8 +103,10 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
       updateDisplayName();
       myUi.getFilterUi().addFilterListener(this::updateDisplayName);
 
-      if (myOnCreatedListener != null) myOnCreatedListener.consume(myUi);
-      myOnCreatedListener = null;
+      if (myLogCreationCallback != null) {
+        myLogCreationCallback.set(myUi);
+        myLogCreationCallback = null;
+      }
     }
   }
 
@@ -115,7 +122,10 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
 
     myContainer.removeAll();
     DataManager.removeDataProvider(myContainer);
-    myOnCreatedListener = null;
+    if (myLogCreationCallback != null) {
+      myLogCreationCallback.set(null);
+      myLogCreationCallback = null;
+    }
     if (myUi != null) {
       MainVcsLogUi ui = myUi;
       myUi = null;
@@ -133,11 +143,30 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
   public void executeOnMainUiCreated(@NotNull Consumer<? super MainVcsLogUi> consumer) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
+    ListenableFuture<MainVcsLogUi> future = waitMainUiCreation();
+    future.addListener(() -> {
+      try {
+        MainVcsLogUi result = future.get();
+        if (result != null) consumer.consume(result);
+      }
+      catch (InterruptedException | ExecutionException ignore) {
+      }
+    }, MoreExecutors.directExecutor());
+  }
+
+  @RequiresEdt
+  public ListenableFuture<MainVcsLogUi> waitMainUiCreation() {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+
     if (myUi == null) {
-      myOnCreatedListener = consumer;
+      if (myLogCreationCallback != null) {
+        myLogCreationCallback.set(null);
+      }
+      myLogCreationCallback = SettableFuture.create();
+      return myLogCreationCallback;
     }
     else {
-      consumer.consume(myUi);
+      return Futures.immediateFuture(myUi);
     }
   }
 
