@@ -52,7 +52,7 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.j2k.old.tests", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.j2k.new.tests", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.fir-fe10-binding", JpsDepScope.COMPILE)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.fir-low-level-aip-ide-impl", JpsDepScope.COMPILE)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.fir-low-level-api-ide-impl", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.analysis-api-providers-ide-impl", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.jps-plugin", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.uast.uast-kotlin-fir", JpsDepScope.TEST)
