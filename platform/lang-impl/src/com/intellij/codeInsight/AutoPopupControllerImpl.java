@@ -106,12 +106,6 @@ public class AutoPopupControllerImpl extends AutoPopupController {
     scheduleAutoPopup(editor, CompletionType.BASIC, null);
   }
 
-  private void addRequest(final Runnable request, final int delay) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!myAlarm.isDisposed()) myAlarm.addRequest(request, delay);
-    });
-  }
-
   @Override
   public void cancelAllRequests() {
     myAlarm.cancelAllRequests();
@@ -160,7 +154,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
             }
           };
 
-          addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
+          myAlarm.addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
         }).expireWith(myAlarm)
         .expireWhen(() -> editor.isDisposed() || editor.getCaretModel().getOffset() != offset)
         .submit(AppExecutorUtil.getAppExecutorService());
