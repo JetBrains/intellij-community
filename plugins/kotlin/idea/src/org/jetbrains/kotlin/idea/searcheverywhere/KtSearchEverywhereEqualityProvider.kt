@@ -10,15 +10,12 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.findFacadeClass
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
- * Q: Why is [KtSearchEverywhereEqualityProvider] implemented as a bunch of methods but not as a bunch of extension points?
- * A: Because we want to make sure that "native Psi vs KtLightElement" is checked first
- *
  * @see org.jetbrains.kotlin.idea.searcheverywhere.NativePsiAndKtLightElementEqualityProviderTest
  * @see org.jetbrains.kotlin.idea.searcheverywhere.KtSearchEverywhereEqualityProviderTest
  */
@@ -27,21 +24,22 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
         newItem: SearchEverywhereFoundElementInfo,
         alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
     ): SEEqualElementsActionType {
-        return compareNativePsiAndKtLightElement(newItem, alreadyFoundItems).takeIf { it != DoNothing }
-            ?: compare(newItem, alreadyFoundItems)
+        return compareNativePsiAndUltraLightClass(newItem, alreadyFoundItems).takeIf { it != DoNothing }
+            ?: compareByPriority(newItem, alreadyFoundItems)
     }
 
-    private fun compare(
+    private fun compareByPriority(
         newItem: SearchEverywhereFoundElementInfo,
         alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
     ): SEEqualElementsActionType {
-        val newItemWithKind = newItem.toPsi()?.withKind() ?: return DoNothing
+        val newItemWithKind = newItem.toPsi()?.let { it.unwrapped ?: it }?.withKind() ?: return DoNothing
         return alreadyFoundItems
             .map { alreadyFoundItem ->
-                val alreadyFoundItemWithKind = alreadyFoundItem.toPsi()?.withKind() ?: return@map DoNothing
+                val alreadyFoundItemWithKind = alreadyFoundItem.toPsi()?.let { it.unwrapped ?: it }?.withKind()
+                    ?: return@map DoNothing
                 if (getGroupLeader(newItemWithKind.first)?.equals(getGroupLeader(alreadyFoundItemWithKind.first)) == true) {
                     val winner = minOf(newItemWithKind, alreadyFoundItemWithKind, compareBy { it.second })
-                    if (winner == newItemWithKind) Replace(alreadyFoundItem) else Skip
+                    if (winner === newItemWithKind) Replace(alreadyFoundItem) else Skip
                 } else {
                     DoNothing
                 }
@@ -50,7 +48,7 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
             ?: DoNothing
     }
 
-    private fun compareNativePsiAndKtLightElement(
+    private fun compareNativePsiAndUltraLightClass(
         newItem: SearchEverywhereFoundElementInfo,
         alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
     ): SEEqualElementsActionType {

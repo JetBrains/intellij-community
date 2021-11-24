@@ -2,9 +2,10 @@
 
 package org.jetbrains.kotlin.idea.searcheverywhere
 
-import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.Replace
-import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.Skip
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.java.navigation.ChooseByNameTest
 import com.intellij.java.navigation.SearchEverywhereTest
 import com.intellij.openapi.util.Disposer
@@ -45,6 +46,7 @@ class NativePsiAndKtLightElementEqualityProviderTest : LightJavaCodeInsightFixtu
         val ulc = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass)!!
         val syntheticClass = file.declarations.last().cast<KtNamedFunction>().toLightMethods().single().parent
         findByPattern("MyKotlinClassWithStrangeName") { results ->
+            assertTrue(results.toString(), results.size == 1)
             assertTrue(klass in results)
             assertFalse(file in results)
             assertFalse(syntheticClass in results)
