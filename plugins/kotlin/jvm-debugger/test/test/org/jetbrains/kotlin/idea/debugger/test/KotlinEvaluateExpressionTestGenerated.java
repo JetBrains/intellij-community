@@ -236,6 +236,16 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointVariants.kt");
         }
 
+        @TestMetadata("inlineFunctionDeepInlining.kt")
+        public void testInlineFunctionDeepInlining() throws Exception {
+            runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInlining.kt");
+        }
+
+        @TestMetadata("inlineFunctionDeepInliningSameFile.kt")
+        public void testInlineFunctionDeepInliningSameFile() throws Exception {
+            runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInliningSameFile.kt");
+        }
+
         @TestMetadata("inlineMethodsInSignature.kt")
         public void testInlineMethodsInSignature() throws Exception {
             runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
@@ -504,6 +514,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
         @TestMetadata("unsafeCall.kt")
         public void testUnsafeCall() throws Exception {
             runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
+        }
+
+        @TestMetadata("unusedTransitiveDependencies.kt")
+        public void testUnusedTransitiveDependencies() throws Exception {
+            runTest("testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");
         }
 
         @TestMetadata("valueParameterName.kt")
