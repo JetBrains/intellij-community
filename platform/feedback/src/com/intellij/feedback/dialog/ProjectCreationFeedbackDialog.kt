@@ -191,7 +191,6 @@ class ProjectCreationFeedbackDialog(
           }
           cell(it)
             .label(FeedbackBundle.message("dialog.created.project.rating.label"), LabelPosition.TOP)
-            .focused()
         }
 
         missingRatingTooltip = label(FeedbackBundle.message("dialog.created.project.rating.required")).applyToComponent {
