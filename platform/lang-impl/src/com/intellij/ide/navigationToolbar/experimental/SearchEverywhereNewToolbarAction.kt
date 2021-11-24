@@ -10,6 +10,7 @@ import com.intellij.ide.actions.SearchEverywhereAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
@@ -38,7 +39,7 @@ import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
   companion object {
-    private const val SHOW_HOT_KEY = "ide.newtoolbar.searcheverywhere.hotkey"
+    const val SHOW_HOT_KEY_TIP = "com.intellij.ide.navigationToolbar.experimental.showSearchEverywhereHotKeyTip"
   }
 
   private val margin = JBUI.scale(4)
@@ -148,7 +149,8 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
                                     textRect.x, textRect.y + fm.ascent)
 
           return
-        } else {
+        }
+        else {
           cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
         }
 
@@ -169,15 +171,16 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   }
 
   private fun showHotkey(): Boolean {
-    return !AdvancedSettings.getBoolean("ide.suppress.double.click.handler")
-           && AdvancedSettings.getBoolean(SHOW_HOT_KEY)
+    return PropertiesComponent.getInstance().getBoolean(SHOW_HOT_KEY_TIP, true) && !AdvancedSettings.getBoolean(
+      "ide.suppress.double.click.handler")
+
   }
 
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
     if (action is SearchEverywhereAction && showHotkey()) {
       if (event.inputEvent is KeyEvent) {
         if ((event.inputEvent as KeyEvent).keyCode == KeyEvent.VK_SHIFT) {
-          AdvancedSettings.setBoolean(SHOW_HOT_KEY, false)
+          PropertiesComponent.getInstance().setValue(SHOW_HOT_KEY_TIP, false, true)
         }
       }
     }
