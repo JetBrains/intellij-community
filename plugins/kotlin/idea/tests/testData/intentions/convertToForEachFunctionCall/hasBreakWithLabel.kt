@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 fun main() {
     outer@
     <caret>for (i in 1..100) {

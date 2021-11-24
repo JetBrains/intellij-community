@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'i' is never used, could be renamed to _
 fun main() {
     (1..100).forEach { i ->

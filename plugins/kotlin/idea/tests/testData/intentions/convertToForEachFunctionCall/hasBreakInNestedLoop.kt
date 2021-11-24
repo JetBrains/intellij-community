@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'i' is never used, could be renamed to _
 fun main() {
     <caret>for (i in 1..100) {
