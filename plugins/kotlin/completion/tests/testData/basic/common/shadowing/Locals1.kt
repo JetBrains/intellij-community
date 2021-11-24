@@ -11,5 +11,5 @@ class C {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "Boolean" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "Boolean", icon: "org/jetbrains/kotlin/idea/icons/value.svg"}
 // NOTHING_ELSE

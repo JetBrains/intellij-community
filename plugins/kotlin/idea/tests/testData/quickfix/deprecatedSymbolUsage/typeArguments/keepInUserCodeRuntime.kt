@@ -1,5 +1,5 @@
 // "Replace with 'newFun(p)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @Deprecated("", ReplaceWith("newFun(p)"))
 fun oldFun(p: List<String>) {

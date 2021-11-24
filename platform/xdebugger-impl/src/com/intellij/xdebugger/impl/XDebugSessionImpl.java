@@ -934,6 +934,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
         if (mySessionTab != null) {
           AppUIUtil.invokeOnEdt(() -> {
+            mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION);
             ((XWatchesViewImpl)mySessionTab.getWatchesView()).updateSessionData();
             mySessionTab.detachFromSession();
           });

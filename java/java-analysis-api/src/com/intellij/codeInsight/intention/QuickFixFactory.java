@@ -369,6 +369,10 @@ public abstract class QuickFixFactory {
                                                                             @NotNull String typeName,
                                                                             @NotNull String boxedTypeName);
 
+  @Nullable
+  public abstract IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiType operandType,
+                                                                            @NotNull PsiTypeElement checkTypeElement);
+
   @NotNull
   public abstract IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter);
 
@@ -549,4 +553,8 @@ public abstract class QuickFixFactory {
 
   @Nullable
   public abstract IntentionAction createMergeDuplicateAttributesFix(@NotNull PsiNameValuePair pair);
+
+  @NotNull
+  public abstract IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
+                                                              @NotNull PsiCaseLabelElement labelElement);
 }

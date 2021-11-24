@@ -104,7 +104,7 @@ fun KotlinFacetSettings.initializeIfNeeded(
     }
 }
 
-val mavenLibraryIdToPlatform: Map<String, IdePlatformKind<*>> by lazy {
+val mavenLibraryIdToPlatform: Map<String, IdePlatformKind> by lazy {
     IdePlatformKind.ALL_KINDS
         .flatMap { platform -> platform.tooling.mavenLibraryIds.map { it to platform } }
         .sortedByDescending { it.first.length }
@@ -117,15 +117,26 @@ fun Module.getOrCreateFacet(
     externalSystemId: String? = null,
     commitModel: Boolean = false
 ): KotlinFacet {
+    return getOrCreateConfiguredFacet(modelsProvider, useProjectSettings, externalSystemId, commitModel)
+}
+
+fun Module.getOrCreateConfiguredFacet(
+    modelsProvider: IdeModifiableModelsProvider,
+    useProjectSettings: Boolean,
+    externalSystemId: String? = null,
+    commitModel: Boolean = false,
+    configure: KotlinFacet.() -> Unit = {}
+): KotlinFacet {
     val facetModel = modelsProvider.getModifiableFacetModel(this)
 
     val facet = facetModel.findFacet(KotlinFacetType.TYPE_ID, KotlinFacetType.INSTANCE.defaultFacetName)
-        ?: with(KotlinFacetType.INSTANCE) { createFacet(this@getOrCreateFacet, defaultFacetName, createDefaultConfiguration(), null) }
+        ?: with(KotlinFacetType.INSTANCE) { createFacet(this@getOrCreateConfiguredFacet, defaultFacetName, createDefaultConfiguration(), null) }
             .apply {
                 val externalSource = externalSystemId?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
                 facetModel.addFacet(this, externalSource)
             }
     facet.configuration.settings.useProjectSettings = useProjectSettings
+    facet.configure()
     if (commitModel) {
         runWriteAction {
             facetModel.commit()
@@ -311,7 +322,7 @@ private fun Module.configureSdkIfPossible(compilerArguments: CommonCompilerArgum
 private fun Module.hasNonOverriddenExternalSdkConfiguration(compilerArguments: CommonCompilerArguments): Boolean =
     hasExternalSdkConfiguration && (compilerArguments !is K2JVMCompilerArguments || compilerArguments.jdkHome == null)
 
-private fun substituteDefaults(args: List<String>, compilerArguments: CommonCompilerArguments): List<String> =
+fun substituteDefaults(args: List<String>, compilerArguments: CommonCompilerArguments): List<String> =
     args + defaultSubstitutors[compilerArguments::class]?.filter { it.isSubstitutable(args) }?.flatMap { it.oldSubstitution }.orEmpty()
 
 fun parseCompilerArgumentsToFacet(

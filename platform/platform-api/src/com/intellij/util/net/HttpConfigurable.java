@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
@@ -56,7 +55,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public boolean PROXY_TYPE_IS_SOCKS;
   public boolean USE_HTTP_PROXY;
   public boolean USE_PROXY_PAC;
-  public volatile transient boolean AUTHENTICATION_CANCELLED;
+  public transient volatile boolean AUTHENTICATION_CANCELLED;
   public String PROXY_HOST;
   public int PROXY_PORT = 80;
 
@@ -72,14 +71,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public String PAC_URL;
 
   private transient IdeaWideProxySelector mySelector;
-  private transient final Object myLock = new Object();
+  private final transient Object myLock = new Object();
 
-  private transient final PropertiesEncryptionSupport myEncryptionSupport = new PropertiesEncryptionSupport(new SecretKeySpec(new byte[] {
+  private final transient PropertiesEncryptionSupport myEncryptionSupport = new PropertiesEncryptionSupport(new SecretKeySpec(new byte[] {
     (byte)0x50, (byte)0x72, (byte)0x6f, (byte)0x78, (byte)0x79, (byte)0x20, (byte)0x43, (byte)0x6f,
     (byte)0x6e, (byte)0x66, (byte)0x69, (byte)0x67, (byte)0x20, (byte)0x53, (byte)0x65, (byte)0x63
   }, "AES"));
 
-  private transient final NotNullLazyValue<Properties> myProxyCredentials = NotNullLazyValue.createValue(() -> {
+  private final transient NotNullLazyValue<Properties> myProxyCredentials = NotNullLazyValue.createValue(() -> {
     try {
       if (!Files.exists(PROXY_CREDENTIALS_FILE)) {
         return new Properties();
@@ -217,8 +216,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Transient
-  @Nullable
-  public String getProxyLogin() {
+  public @Nullable String getProxyLogin() {
     return getSecure("proxy.login");
   }
 
@@ -228,8 +226,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Transient
-  @Nullable
-  public String getPlainProxyPassword() {
+  public @Nullable String getPlainProxyPassword() {
     return getSecure("proxy.password");
   }
 
@@ -344,7 +341,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return value[0];
   }
 
-  private static void runAboveAll(@NotNull final Runnable runnable) {
+  private static void runAboveAll(final @NotNull Runnable runnable) {
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null && progressIndicator.isModal()) {
       WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable);
@@ -403,12 +400,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  @NotNull
-  public URLConnection openConnection(@NotNull String location) throws IOException {
-    final URL url = new URL(location);
+  public @NotNull URLConnection openConnection(@NotNull String location) throws IOException {
+    URL url = new URL(location);
     URLConnection urlConnection = null;
-    final List<Proxy> proxies = CommonProxy.getInstance().select(url);
-    if (ContainerUtil.isEmpty(proxies)) {
+    List<Proxy> proxies = CommonProxy.getInstance().select(url);
+    if (proxies.isEmpty()) {
       urlConnection = url.openConnection();
     }
     else {
@@ -439,8 +435,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
    * @return instance of {@link HttpURLConnection}
    * @throws IOException in case of any I/O troubles or if created connection isn't instance of HttpURLConnection.
    */
-  @NotNull
-  public HttpURLConnection openHttpConnection(@NotNull String location) throws IOException {
+  public @NotNull HttpURLConnection openHttpConnection(@NotNull String location) throws IOException {
     URLConnection urlConnection = openConnection(location);
     if (urlConnection instanceof HttpURLConnection) {
       return (HttpURLConnection) urlConnection;
@@ -456,8 +451,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return uri == null || !isProxyException(uri.getHost());
   }
 
-  @NotNull
-  public List<Pair<String, String>> getJvmProperties(boolean withAutodetection, @Nullable URI uri) {
+  public @NotNull List<Pair<String, String>> getJvmProperties(boolean withAutodetection, @Nullable URI uri) {
     if (!USE_HTTP_PROXY && !USE_PROXY_PAC) {
       return Collections.emptyList();
     }

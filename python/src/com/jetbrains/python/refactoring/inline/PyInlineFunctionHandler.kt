@@ -73,7 +73,8 @@ class PyInlineFunctionHandler : InlineActionHandler() {
   }
 
   private fun isSpecialMethod(function: PyFunction): Boolean {
-    return function.containingClass != null && PyNames.getBuiltinMethods(LanguageLevel.forElement(function)).contains(function.name)
+    return function.containingClass != null && function.name != null && 
+           PyNames.getBuiltinMethods(LanguageLevel.forElement(function)).contains(function.name)
   }
 
   private fun hasNestedFunction(function: PyFunction): Boolean = SyntaxTraverser.psiTraverser(function.statementList).traverse().any { it is PyFunction }

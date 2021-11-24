@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -370,9 +370,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       JLabel label = new JLabel(myModel.getPromptText());
       label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
       caption2Tools.add(label, BorderLayout.WEST);
+      caption2Tools.add(hBox, BorderLayout.EAST);
     }
-
-    caption2Tools.add(hBox, BorderLayout.EAST);
 
     String checkBoxName = myModel.getCheckBoxName();
     Color fg = UIUtil.getLabelDisabledForeground();

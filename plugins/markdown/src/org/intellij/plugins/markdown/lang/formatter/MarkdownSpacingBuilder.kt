@@ -24,8 +24,8 @@ import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeS
  * [MarkdownFormattingBlock]
  *
  * As a source of inspiration following styleguides were used:
- * * https://github.com/google/styleguide/blob/gh-pages/docguide/style.md
- * * https://github.com/arcticicestudio/styleguide-markdown
+ * * [Google Markdown code style](https://github.com/google/styleguide/blob/gh-pages/docguide/style.md)
+ * * [The Arctic Ice Studio Markdown code style](https://github.com/arcticicestudio/styleguide-markdown)
  */
 internal object MarkdownSpacingBuilder {
   fun get(settings: CodeStyleSettings): SpacingBuilder {
@@ -77,9 +77,8 @@ internal object MarkdownSpacingBuilder {
       .blankLinesRange(markdown.MIN_LINES_BETWEEN_PARAGRAPHS, markdown.MAX_LINES_BETWEEN_PARAGRAPHS)
       .apply {
         val spaces = if (markdown.FORCE_ONE_SPACE_BETWEEN_WORDS) 1 else Integer.MAX_VALUE
-        between(MarkdownTokenTypes.TEXT, MarkdownTokenTypes.TEXT).spacing(1, spaces, 0, false, 0)
+        between(MarkdownTokenTypes.TEXT, MarkdownTokenTypes.TEXT).spacing(1, spaces, 0, markdown.KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS, 0)
       }
-
   }
 
   private fun SpacingBuilder.RuleBuilder.blankLinesRange(from: Int, to: Int): SpacingBuilder {

@@ -1,5 +1,5 @@
 // API_VERSION: 1.3
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'sumByDouble{}'"
 // IS_APPLICABLE_2: false
 fun foo(list: List<String>): Double {

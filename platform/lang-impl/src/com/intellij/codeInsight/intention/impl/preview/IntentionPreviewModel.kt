@@ -5,10 +5,10 @@ import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LineNumberConverter
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -56,27 +57,46 @@ internal class IntentionPreviewModel {
       val diff = ComparisonManager.getInstance().compareLines(origText, fileText,
                                                               ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE)
       var diffs = diff.mapNotNull { fragment ->
-        var start = getOffset(fileText, fragment.startLine2)
-        var end = getOffset(fileText, fragment.endLine2)
-
+        val start = getOffset(fileText, fragment.startLine2)
+        val end = getOffset(fileText, fragment.endLine2)
         if (start > end) return@mapNotNull null
 
-        var text = fileText.substring(start, end).trimStart('\n').trimEnd('\n').trimIndent()
-        val deleted = text.isBlank()
+        val origStart = getOffset(origText, fragment.startLine1)
+        val origEnd = getOffset(origText, fragment.endLine1)
+        if (origStart > origEnd) return@mapNotNull null
+
+        val newText = fileText.substring(start, end).trimStart('\n').trimEnd('\n').trimIndent()
+        val oldText = origText.substring(origStart, origEnd).trimStart('\n').trimEnd('\n').trimIndent()
+
+        val deleted = newText.isBlank()
         if (deleted) {
-          start = getOffset(origText, fragment.startLine1)
-          end = getOffset(origText, fragment.endLine1)
-          if (start >= end) return@mapNotNull null
-          text = origText.substring(start, end).trimStart('\n').trimEnd('\n').trimIndent()
-          if (text.isBlank()) return@mapNotNull null
-          return@mapNotNull DiffInfo(text, fragment.startLine1, fragment.endLine1 - fragment.startLine1, true)
+          if (oldText.isBlank()) return@mapNotNull null
+          return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1, true)
         }
 
-        return@mapNotNull DiffInfo(text, fragment.startLine1, fragment.endLine2 - fragment.startLine2, false)
+        var highlightRange: TextRange? = null
+        if (fragment.endLine2 - fragment.startLine2 == 1 && fragment.endLine1 - fragment.startLine1 == 1) {
+          val prefix = StringUtil.commonPrefixLength(oldText, newText)
+          val suffix = StringUtil.commonSuffixLength(oldText, newText)
+          if (prefix > 0 || suffix > 0) {
+            var endPos = newText.length - suffix
+            if (endPos > prefix) {
+              highlightRange = TextRange.create(prefix, endPos)
+            } else {
+              endPos = oldText.length - suffix
+              if (endPos > prefix) {
+                highlightRange = TextRange.create(prefix, endPos)
+                return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1, true, highlightRange)
+              }
+            }
+          }
+        }
+
+        return@mapNotNull DiffInfo(newText, fragment.startLine1, fragment.endLine2 - fragment.startLine2, updatedRange = highlightRange)
       }
-      if (diffs.any { info -> !info.deleted }) {
+      if (diffs.any { info -> !info.deleted || info.updatedRange != null }) {
         // Do not display deleted fragments if anything is added
-        diffs = diffs.filter { info -> !info.deleted }
+        diffs = diffs.filter { info -> !info.deleted || info.updatedRange != null }
       }
       if (diffs.isNotEmpty()) {
         val last = diffs.last()
@@ -89,7 +109,8 @@ internal class IntentionPreviewModel {
     private data class DiffInfo(val fileText: String,
                                 val startLine: Int,
                                 val length: Int,
-                                val deleted: Boolean) {
+                                val deleted: Boolean = false,
+                                val updatedRange: TextRange? = null) {
       fun createEditor(project: Project,
                        fileType: FileType,
                        maxLine: Int): EditorEx {
@@ -97,18 +118,27 @@ internal class IntentionPreviewModel {
         if (deleted) {
           val colorsScheme = editor.colorsScheme
           val attributes = TextAttributes(null, null, colorsScheme.defaultForeground, EffectType.STRIKEOUT, Font.PLAIN)
-          val document = editor.document
-          val lineCount = document.lineCount
-          for (line in 0 until lineCount) {
-            var start = document.getLineStartOffset(line)
-            var end = document.getLineEndOffset(line) - 1
-            while (start <= end && Character.isWhitespace(fileText[start])) start++
-            while (start <= end && Character.isWhitespace(fileText[end])) end--
-            if (start <= end) {
-              editor.markupModel.addRangeHighlighter(start, end + 1, HighlighterLayer.ERROR + 1, attributes,
-                                                     HighlighterTargetArea.EXACT_RANGE)
+          if (updatedRange != null) {
+            editor.markupModel.addRangeHighlighter(updatedRange.startOffset, updatedRange.endOffset, HighlighterLayer.ERROR + 1, attributes,
+              HighlighterTargetArea.EXACT_RANGE)
+          } else {
+            val document = editor.document
+            val lineCount = document.lineCount
+            for (line in 0 until lineCount) {
+              var start = document.getLineStartOffset(line)
+              var end = document.getLineEndOffset(line) - 1
+              while (start <= end && Character.isWhitespace(fileText[start])) start++
+              while (start <= end && Character.isWhitespace(fileText[end])) end--
+              if (start <= end) {
+                editor.markupModel.addRangeHighlighter(start, end + 1, HighlighterLayer.ERROR + 1, attributes,
+                                                       HighlighterTargetArea.EXACT_RANGE)
+              }
             }
           }
+        }
+        else if (updatedRange != null) {
+          editor.markupModel.addRangeHighlighter(DiffColors.DIFF_MODIFIED, updatedRange.startOffset, updatedRange.endOffset,
+            HighlighterLayer.ERROR + 1, HighlighterTargetArea.EXACT_RANGE)
         }
         return editor
       }
@@ -153,8 +183,7 @@ internal class IntentionPreviewModel {
     }
 
     private fun getEditorBackground(): Color {
-      val colorsScheme = EditorColorsManager.getInstance().globalScheme
-      return colorsScheme.getColor(EditorColors.CARET_ROW_COLOR) ?: colorsScheme.defaultBackground
+      return EditorColorsManager.getInstance().globalScheme.defaultBackground
     }
   }
 }

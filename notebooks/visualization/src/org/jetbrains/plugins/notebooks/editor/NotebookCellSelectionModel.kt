@@ -5,6 +5,10 @@ interface NotebookCellSelectionModel {
 
   val selectedCells: List<NotebookCellLines.Interval>
 
+  val primarySelectedRegion: List<NotebookCellLines.Interval>
+
+  val selectedRegions: List<List<NotebookCellLines.Interval>>
+
   fun isSelectedCell(cell: NotebookCellLines.Interval): Boolean
 
   fun selectCell(cell: NotebookCellLines.Interval, makePrimary: Boolean = false)

@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -655,6 +657,32 @@ public final class ExternalSystemApiUtil {
   @Contract(pure = true)
   public static String getExternalProjectGroup(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleGroup() : null;
+  }
+
+  private static final ExtensionPointName<ExternalSystemContentRootContributor> ExternalSystemContentRootContributorEP =
+    ExtensionPointName.create("com.intellij.externalSystemContentRootContributor");
+
+  @Contract(pure = true)
+  public static @Nullable Collection<ExternalSystemContentRootContributor.@NotNull ExternalContentRoot> getExternalProjectContentRoots(
+    @NotNull Module module,
+    @NotNull Collection<@NotNull ExternalSystemSourceType> sourceTypes
+  ) {
+    if (module.isDisposed()) return null;
+    String systemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
+    if (systemId == null) return null;
+    ExternalSystemContentRootContributor contributor =
+      ExternalSystemContentRootContributorEP.findFirstSafe((c) -> c.isApplicable(systemId));
+
+    if (contributor == null) return null;
+    return contributor.findContentRoots(module, sourceTypes);
+  }
+
+  @Contract(pure = true)
+  public static @Nullable Collection<ExternalSystemContentRootContributor.@NotNull ExternalContentRoot> getExternalProjectContentRoots(
+    @NotNull Module module,
+    @NotNull ExternalSystemSourceType sourceType
+  ) {
+    return getExternalProjectContentRoots(module, List.of(sourceType));
   }
 
   @Nullable

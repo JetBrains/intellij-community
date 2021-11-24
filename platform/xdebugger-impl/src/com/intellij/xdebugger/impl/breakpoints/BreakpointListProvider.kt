@@ -8,10 +8,13 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.util.PlatformUtils
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.SizedIcon
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerBundle.message
@@ -25,13 +28,8 @@ import org.jetbrains.annotations.PropertyKey
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JTree
-import kotlin.Comparator
 
 internal class BreakpointListProvider(private val project: Project) : BookmarksListProvider {
-  init {
-    if (PlatformUtils.isDataGrip()) throw ExtensionNotApplicableException.INSTANCE
-  }
-
   @Suppress("SpellCheckingInspection")
   @PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE)
   private val rootNameKey = "xbreakpoints.dialog.title"
@@ -54,14 +52,14 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     val support = XBreakpointUtil.getDebuggerSupport(project, breakpoint) ?: return
     val bounds = (parent as? JTree)?.run { getPathBounds(leadSelectionPath) }
     val visible = parent.visibleRect.apply {
-      x = bounds?.run { x + width }?.coerceAtMost(x + width)?.coerceAtLeast(x) ?: (x + width / 2)
-      y = bounds?.run { y + height / 2 }?.coerceAtMost(y + height)?.coerceAtLeast(y) ?: (y + height / 2)
+      x = bounds?.run { x + width }?.coerceIn(x, x + width) ?: (x + width / 2)
+      y = bounds?.run { y + height / 2 }?.coerceIn(y, y + height) ?: (y + height / 2)
     }
     support.editBreakpointAction.editBreakpoint(project, parent, visible.location, breakpoint)
   }
 
   override fun getDeleteActionText() = message("xdebugger.remove.line.breakpoint.action.text")
-  override fun canDelete(selection: List<*>) = selection.all { it is ItemNode }
+  override fun canDelete(selection: List<*>) = selection.all { it is ItemNode && it.value?.canNavigate() == true }
   override fun performDelete(selection: List<*>, parent: JComponent) = selection.forEach {
     val node = it as? ItemNode
     node?.value?.removed(project)
@@ -72,15 +70,12 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     private val map = mutableMapOf<Any, Any>()
     private val valid = AtomicBoolean()
     private val providers = XBreakpointUtil.collectPanelProviders().onEach { it.addListener(this, project, project) }
+    private val icon16x12 = JBUIScale.scaleIcon(SizedIcon(AllIcons.Debugger.Db_set_breakpoint, 16, 12))
     private val cache = AbstractTreeNodeCache<Any, AbstractTreeNode<*>>(this) {
       if (it is BreakpointItem) ItemNode(project, it) else if (it is XBreakpointGroup) GroupNode(project, it) else null
     }
 
-    fun getKeys(value: Any): List<Any> {
-      validate()
-      val keys = synchronized(map) { map.mapNotNull { if (it.value == value) it.key else null } }
-      return keys.sortedWith(this)
-    }
+    fun getKeys(value: Any) = synchronized(map) { map.mapNotNull { if (it.value == value) it.key else null } }.sortedWith(this)
 
     override fun compare(o1: Any?, o2: Any?) = when {
       o1 is BreakpointItem && o2 is BreakpointItem -> {
@@ -93,46 +88,55 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
       else -> 1
     }
 
-    override fun breakpointsChanged() {
-      valid.set(false)
-      project?.run { if (isDisposed) null else messageBus.syncPublisher(BookmarksListener.TOPIC) }?.structureChanged(this)
-    }
+    override fun breakpointsChanged() = breakpointsUpdater.cancelAndRequest()
 
     override fun getChildren() = cache.getNodes(getKeys(value))
 
     override fun update(presentation: PresentationData) {
-      presentation.setIcon(AllIcons.Debugger.Db_set_breakpoint)
+      presentation.setIcon(icon16x12)
       presentation.presentableText = message(value)
     }
 
-    private fun validate() = synchronized(map) {
-      if (valid.getAndSet(true)) return
-      map.clear()
-      val project = project ?: return
+    private val breakpointsUpdater = SingleAlarm.pooledThreadSingleAlarm(50, project) {
+      if (project.isDisposed) return@pooledThreadSingleAlarm
+      val breakpoints = mutableMapOf<Any, Any>()
+      ReadAction.run<Exception> {
+        val items = mutableListOf<BreakpointItem>()
+        providers.forEach { it.provideBreakpointItems(project, items) }
 
-      val items = mutableListOf<BreakpointItem>()
-      providers.forEach { it.provideBreakpointItems(project, items) }
+        val manager = XDebuggerManager.getInstance(project).breakpointManager as? XBreakpointManagerImpl
+        val selectedRules = manager?.breakpointsDialogSettings?.selectedGroupingRules
+        val enabledRules = mutableListOf<XBreakpointGroupingRule<Any, XBreakpointGroup>>()
+          .apply { providers.forEach { it.createBreakpointsGroupingRules(this) } }
+          .apply { addAll(XBreakpointGroupingRule.EP.extensionList) }
+          .filter { it.isAlwaysEnabled || true == selectedRules?.contains(it.id) }
+          .toSortedSet(XBreakpointGroupingRule.PRIORITY_COMPARATOR)
 
-      val manager = XDebuggerManager.getInstance(project).breakpointManager as? XBreakpointManagerImpl
-      val selectedRules = manager?.breakpointsDialogSettings?.selectedGroupingRules
-      val enabledRules = mutableListOf<XBreakpointGroupingRule<Any, XBreakpointGroup>>()
-        .apply { providers.forEach { it.createBreakpointsGroupingRules(this) } }
-        .apply { addAll(XBreakpointGroupingRule.EP.extensionList) }
-        .filter { it.isAlwaysEnabled || true == selectedRules?.contains(it.id) }
-        .toSortedSet(XBreakpointGroupingRule.PRIORITY_COMPARATOR)
-
-      for (item in items) {
-        if (item.canNavigate()) {
-          var key = item as Any
-          for (rule in enabledRules) {
-            rule.getGroup(item.breakpoint, emptyList())?.let {
-              map[key] = it
-              key = it
+        for (item in items) {
+          if (item.canNavigate() || Registry.`is`("ide.bookmark.show.all.breakpoints", false)) {
+            var any = item as Any
+            for (rule in enabledRules) {
+              rule.getGroup(item.breakpoint, emptyList())?.let {
+                breakpoints[any] = it
+                any = it
+              }
             }
+            breakpoints[any] = value
           }
-          map[key] = value
         }
       }
+      synchronized(map) {
+        map.clear()
+        map.putAll(breakpoints)
+      }
+      val newValid = breakpoints.any { it.value == value }
+      val oldValid = valid.getAndSet(newValid)
+      val node = if (newValid != oldValid) parent else if (newValid) this else null
+      node?.let { project.messageBus.syncPublisher(BookmarksListener.TOPIC).structureChanged(it) }
+    }
+
+    init {
+      breakpointsUpdater.cancelAndRequest()
     }
   }
 

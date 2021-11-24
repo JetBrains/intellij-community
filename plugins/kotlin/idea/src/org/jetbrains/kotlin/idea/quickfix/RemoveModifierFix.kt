@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.types.Variance
 
 class RemoveModifierFix(
     element: KtModifierListOwner,
+    @FileModifier.SafeFieldForPreview
     private val modifier: KtModifierKeywordToken,
     private val isRedundant: Boolean
 ) : KotlinCrossLanguageQuickFixAction<KtModifierListOwner>(element), IntentionActionWithFixAllOption {

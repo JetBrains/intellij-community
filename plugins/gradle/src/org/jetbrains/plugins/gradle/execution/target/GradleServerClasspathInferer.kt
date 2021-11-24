@@ -36,4 +36,10 @@ internal class GradleServerClasspathInferer {
     }
     return paths.toList()
   }
+
+  fun getClassloaders(): Collection<ClassLoader> {
+    return (classesUsedInBuildAction + classesUsedByGradleProxyApp)
+      .map { it.classLoader }
+      .toSet()
+  }
 }

@@ -8,11 +8,13 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.UITestUtil;
 import com.intellij.util.SystemProperties;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -101,5 +103,10 @@ public class _FirstInSuiteTest extends TestCase {
     assertEquals(
       "The `sun.io.useCanonCaches` makes `File#getCanonical*` methods unreliable and should be set to `false`",
       "false", System.getProperty("sun.io.useCanonCaches", Runtime.version().feature() >= 13 ? "false" : ""));
+  }
+
+  public void testTestsAreRunInHeadlessMode() {
+    UITestUtil.setHeadlessProperty(true);
+    assertTrue("Tests must be run in the headless mode for performance reasons but headless mode is off for some reason", GraphicsEnvironment.isHeadless());
   }
 }

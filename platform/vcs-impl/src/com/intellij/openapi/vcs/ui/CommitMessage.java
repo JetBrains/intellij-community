@@ -306,7 +306,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
       if (file != null) {
-        file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY,
+        InspectionProfileWrapper.setCustomInspectionProfileWrapperTemporarily(file,
                          profile -> new InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(myProject)));
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);

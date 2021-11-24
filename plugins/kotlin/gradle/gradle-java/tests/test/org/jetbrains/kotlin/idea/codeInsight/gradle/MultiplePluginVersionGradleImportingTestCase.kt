@@ -55,8 +55,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
 
     override fun setUp() {
-        if (kotlinPluginVersionString == masterKotlinPluginVersion) {
+        if (kotlinPluginVersionString == masterKotlinPluginVersion && IS_UNDER_TEAMCITY) {
             assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+        } else if  (kotlinPluginVersionString == masterKotlinPluginVersion) {
+            assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
         }
         super.setUp()
         setupSystemProperties()
@@ -90,7 +92,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     companion object {
         val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.6.255-SNAPSHOT"
         const val kotlinAndGradleParametersName: String = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}"
-        private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("6.8.2", "master"))
+        private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("7.2", "master"))
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
@@ -99,18 +101,14 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             if (IS_UNDER_SAFE_PUSH)
                 return safePushParams
             else
-                return safePushParams.plus(
-                    listOf(
-                        arrayOf("4.9", "1.3.30"),
-                        arrayOf("5.6.4", "1.3.72"),
-                        arrayOf("6.7.1", "1.4.0"),
-                        arrayOf("6.8.2", "1.4.32"),
-                        arrayOf("7.0.2", "1.5.10"),
-                        arrayOf("7.0.2", "1.5.21"),
-                        arrayOf("7.0.2", "1.5.31"),
-                        arrayOf("7.0.2", "master")
-                    )
-                )
+                return listOf<Array<Any>>(
+                    arrayOf("4.9", "1.3.30"),
+                    arrayOf("5.6.4", "1.3.72"),
+                    arrayOf("6.8.2", "1.4.32"),
+                    arrayOf("6.8.2", "master"),
+                    arrayOf("7.2", "1.5.21"),
+                    arrayOf("7.2", "1.5.31"),
+                ).plus(safePushParams)
         }
     }
 
@@ -121,7 +119,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         )
     }
 
-    private fun repositories(useKts: Boolean): String {
+    protected fun repositories(useKts: Boolean): String {
         val repositories = mutableListOf<String>()
 
         fun MutableList<String>.addUrl(url: String) {
@@ -140,7 +138,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         return repositories.joinToString("\n")
     }
 
-    override fun configureByFiles(properties: Map<String, String>?): List<VirtualFile> {
+    override fun configureByFiles(properties: Map<String, String>?, subPath: String?): List<VirtualFile> {
         val unitedProperties = HashMap(properties ?: emptyMap())
 
         unitedProperties.putAll(androidProperties())
@@ -149,7 +147,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
         unitedProperties["kotlin_plugin_repositories"] = repositories(false)
         unitedProperties["kts_kotlin_plugin_repositories"] = repositories(true)
-        return super.configureByFiles(unitedProperties)
+        return super.configureByFiles(unitedProperties, subPath)
     }
 
 

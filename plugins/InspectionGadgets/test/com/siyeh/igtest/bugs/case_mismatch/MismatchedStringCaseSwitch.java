@@ -1,5 +1,3 @@
-import java.util.Locale;
-
 class X {
   void test(String s1, String s2) {
     switch(s1.toLowerCase()) {

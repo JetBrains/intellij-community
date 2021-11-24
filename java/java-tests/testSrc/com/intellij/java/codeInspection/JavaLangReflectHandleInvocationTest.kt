@@ -25,9 +25,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 /**
  * @author Pavel.Dolgov
  */
-
-class JavaLangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestBase(LanguageLevel.JDK_1_7,
-                                                                                    LightJavaCodeInsightFixtureTestCase.JAVA_8) {
+class JavaLangReflectHandleInvocationTest : LightJavaCodeInsightFixtureTestCase() {
   fun testVirtual() = doTest()
   fun testStatic() = doTest()
   fun testConstructor() = doTest()
@@ -37,28 +35,22 @@ class JavaLangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestB
 
   fun testStaticGetter() = doTest()
   fun testStaticSetter() = doTest()
-}
 
-class Java9LangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestBase(LanguageLevel.JDK_1_9,
-                                                                                     LightJavaCodeInsightFixtureTestCase.JAVA_9) {
   fun testVarHandle() = doTest()
   fun testStaticVarHandle() = doTest()
   fun testArrayVarHandle() = doTest()
-}
 
-abstract class JavaLangReflectHandleInvocationTestBase(val languageLevel: LanguageLevel,
-                                                       val descriptor: LightProjectDescriptor) : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
+    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_9
     myFixture.enableInspections(JavaLangInvokeHandleSignatureInspection())
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javaLangReflectHandleInvocation"
 
-  protected fun doTest() {
+  private fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")
   }
 }

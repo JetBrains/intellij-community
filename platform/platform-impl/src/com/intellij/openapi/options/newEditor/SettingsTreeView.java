@@ -36,6 +36,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -320,8 +321,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
            : null;
   }
 
-  @Nullable
-  private static Project prepareProject(CachingSimpleNode parent, Configurable configurable) {
+  @ApiStatus.Internal
+  public static @Nullable Project prepareProject(@Nullable CachingSimpleNode parent,
+                                                 @Nullable Configurable configurable) {
     if (configurable instanceof ConfigurableWrapper) {
       ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
       return wrapper.getExtensionPoint().getProject();
@@ -340,6 +342,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         }
         return project;
       }
+    }
+    if (configurable instanceof ConfigurableProjectProvider) {
+      return ((ConfigurableProjectProvider)configurable).getProject();
     }
     return parent == null ? null : parent.getProject();
   }
@@ -647,6 +652,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
                       getIcon((DefaultMutableTreeNode)value, selected) :
                       null;
       myNodeIcon.setIcon(nodeIcon);
+
+      if (configurable instanceof ConfigurableMarkerProvider) {
+        String label = ((ConfigurableMarkerProvider)configurable).getMarkerText();
+        if (label != null) {
+          myTextLabel.append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
+          myTextLabel.append(label, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
+        }
+      }
 
       if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
         ConfigurableWrapper wrapper = configurable instanceof ConfigurableWrapper ?

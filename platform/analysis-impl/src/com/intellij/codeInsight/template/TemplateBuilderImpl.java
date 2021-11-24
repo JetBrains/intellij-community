@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -182,16 +183,18 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   public Template initInlineTemplate(Template template) {
     template.setInline(true);
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (myFile.isPhysical()) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
+    }
 
     //this is kinda hacky way of doing things, but have not got a better idea
-    //DocumentUtil.executeInBulk(myDocument, true, () -> {
+    DocumentUtil.executeInBulk(myDocument, true, () -> {
       for (RangeMarker element : myElements) {
         if (element != myEndElement) {
           myDocument.deleteString(element.getStartOffset(), element.getEndOffset());
         }
       }
-    //});
+    });
 
     return template;
   }

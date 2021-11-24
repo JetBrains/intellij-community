@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -23,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -176,7 +176,6 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     ProcessCanceledException exception = null;
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    DumbService dumbService = DumbService.getInstance(myProject);
     // repeat several times when accidental background activity cancels highlighting
     int retries = 100;
     for (int i = 0; i < retries; i++) {
@@ -191,11 +190,14 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
         else {
           currentProfile = null;
         }
-        if (currentProfile != null) {
-          psiFile.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, p -> new InspectionProfileWrapper(currentProfile, p.getProfileManager()));
-        }
         settings.setAutoReparseDelay(0);
-        return dumbService.runReadActionInSmartMode(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator));
+        Ref<List<HighlightInfo>> infos = new Ref<>();
+        InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, p -> currentProfile == null ? new InspectionProfileWrapper(
+          (InspectionProfileImpl)p) : new InspectionProfileWrapper(currentProfile,
+                                                                   ((InspectionProfileImpl)p).getProfileManager()), () -> {
+          infos.set(ReadAction.nonBlocking(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator)).inSmartMode(myProject).executeSynchronously());
+        });
+        return infos.get();
       }
       catch (ProcessCanceledException e) {
         Throwable cause = e.getCause();
@@ -207,7 +209,6 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
         exception = e;
       }
       finally {
-        psiFile.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, null);
         settings.setAutoReparseDelay(oldDelay);
       }
     }

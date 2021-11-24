@@ -117,6 +117,9 @@ abstract class ProductProperties {
    */
   boolean scrambleMainJar = false
 
+  @ApiStatus.Experimental
+  boolean useProductJar = true
+
   /**
    * If {@code false} names of private fields won't be scrambled (to avoid problems with serialization). This field is ignored if
    * {@link #scrambleMainJar} is {@code false}.
@@ -209,15 +212,6 @@ abstract class ProductProperties {
    */
   List<String> modulesToCompileTests = []
 
-  /**
-   * Specify list of modules on which some modules packaged into the main jar depend, but which aren't included into the main jar. These
-   * modules will be added to the classpath to properly scramble the main jar.
-   * <strong>This is a temporary hack added specifically for AppCode. It's strongly recommended to either include these modules into the
-   * main jar or get rid of such dependencies.</strong> <br>
-   * todo[nik] get rid of this
-   */
-  List<String> additionalModulesRequiredForScrambling = []
-
   JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.DCEVM
 
   /**
@@ -264,4 +258,9 @@ abstract class ProductProperties {
    * Build steps which are always skipped for this product. Can be extended via {@link org.jetbrains.intellij.build.BuildOptions#buildStepsToSkip} but not overridden.
    */
   List<String> incompatibleBuildSteps = []
+
+  /**
+   * Names of JARs inside IDE_HOME/lib directory which need to be added to the Xbootclasspath to start the IDE
+   */
+  List<String> xBootClassPathJarNames = []
 }

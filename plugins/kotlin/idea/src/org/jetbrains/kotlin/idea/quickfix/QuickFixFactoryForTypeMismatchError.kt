@@ -21,18 +21,17 @@ import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParentResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getValueArgumentForExpression
+import org.jetbrains.kotlin.resolve.calls.callUtil.*
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.types.CommonSupertypes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.TypeUtils.NO_EXPECTED_TYPE
@@ -199,7 +198,16 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         else
             PsiTreeUtil.getParentOfType(diagnosticElement, KtFunction::class.java, true)
         if (function is KtFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function, diagnosticElement)) {
-            addChangeTypeFix(function, expressionType, ChangeCallableReturnTypeFix::ForEnclosing)
+            val returnExpressions = function.collectDescendantsOfType<KtReturnExpression> {
+                it.getStrictParentOfType<KtFunction>() == function || it.getTargetFunction(context) == function
+            }
+            val returnType = if (returnExpressions.size > 1) {
+                val returnTypes = returnExpressions.mapNotNull { it.returnedExpression?.getType(context) }
+                if (returnTypes.isNotEmpty()) CommonSupertypes.commonSupertype(returnTypes) else expressionType
+            } else {
+                expressionType
+            }
+            addChangeTypeFix(function, returnType, ChangeCallableReturnTypeFix::ForEnclosing)
         }
 
         // Fixing overloaded operators:

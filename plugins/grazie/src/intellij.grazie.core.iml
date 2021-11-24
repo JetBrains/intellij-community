@@ -59,25 +59,25 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.nlp:nlp-common" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common:0.1.45" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common:0.1.50" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.45/nlp-common-0.1.45.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.50/nlp-common-0.1.50.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.45/nlp-common-0.1.45-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.50/nlp-common-0.1.50-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.nlp:nlp-tokenizer" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-tokenizer:0.1.45" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-tokenizer:0.1.50" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.45/nlp-tokenizer-0.1.45.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.50/nlp-tokenizer-0.1.50.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.45/nlp-tokenizer-0.1.45-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.50/nlp-tokenizer-0.1.50-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -87,26 +87,26 @@
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
-      <library name="org.languagetool:languagetool-core:5.4" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.4" />
+      <library name="org.languagetool:languagetool-core:5.5" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.5.5-grz" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.4/languagetool-core-5.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.5.5-grz/languagetool-core-5.5.5-grz.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.4/languagetool-core-5.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.5.5-grz/languagetool-core-5.5.5-grz-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.languagetool:language-en:5.4" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.4" />
+      <library name="org.languagetool:language-en:5.5" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.5" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.4/language-en-5.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.5/language-en-5.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.4/language-en-5.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.5/language-en-5.5-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -225,36 +225,6 @@
     <orderEntry type="library" name="jaxb-api" level="project" />
     <orderEntry type="library" name="jaxb-runtime" level="project" />
     <orderEntry type="module-library">
-      <library name="com.gitlab.dumonts:hunspell:1.1.1" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.gitlab.dumonts:hunspell:1.1.1" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/gitlab/dumonts/hunspell/1.1.1/hunspell-1.1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="com.nativelibs4java:bridj:0.7.0" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.nativelibs4java:bridj:0.7.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/nativelibs4java/bridj/0.7.0/bridj-0.7.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="com.google.android.tools:dx:1.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.google.android.tools:dx:1.7" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/android/tools/dx/1.7/dx-1.7.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
       <library name="com.hankcs:aho-corasick-double-array-trie:1.2.2" type="repository">
         <properties include-transitive-deps="false" maven-id="com.hankcs:aho-corasick-double-array-trie:1.2.2" />
         <CLASSES>
@@ -290,5 +260,45 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="lucene-core" level="project" />
+    <orderEntry type="library" name="lucene-analyzers-common" level="project" />
+    <orderEntry type="module-library">
+      <library name="ai.grazie.utils:utils-common" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-common:0.1.50" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common/0.1.50/utils-common-0.1.50.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common/0.1.50/utils-common-0.1.50-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="java-string-similarity" type="repository">
+        <properties include-transitive-deps="false" maven-id="info.debatty:java-string-similarity:2.0.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.spell:gec-spell-local-engine" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-local-engine:0.1.50" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-local-engine/0.1.50/gec-spell-local-engine-0.1.50.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-local-engine/0.1.50/gec-spell-local-engine-0.1.50-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

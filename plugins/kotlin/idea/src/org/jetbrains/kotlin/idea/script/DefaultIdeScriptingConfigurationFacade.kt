@@ -12,9 +12,9 @@ import kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade
 
 class DefaultIdeScriptingConfigurationFacade : IdeScriptConfigurationControlFacade {
     override fun reloadScriptConfiguration(scriptFile: PsiFile, updateEditorWithoutNotification: Boolean) {
-
         (scriptFile as? KtFile) ?: error("Should be called with script KtFile, but called with $scriptFile")
-        DefaultScriptingSupport.getInstance(scriptFile.project)
+        val project = scriptFile.project.takeIf { !it.isDisposed } ?: return
+        DefaultScriptingSupport.getInstance(project)
             .ensureUpToDatedConfigurationSuggested(
                 scriptFile,
                 skipNotification = updateEditorWithoutNotification,

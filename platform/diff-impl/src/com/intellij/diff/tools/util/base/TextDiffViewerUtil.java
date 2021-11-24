@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
@@ -221,8 +221,13 @@ public final class TextDiffViewerUtil {
     @NotNull
     protected abstract @Nls String getText(@NotNull T option);
 
-    private class MyAction extends AnAction implements DumbAware {
+    private class MyAction extends AnAction implements Toggleable, DumbAware {
       @NotNull private final T myOption;
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        Toggleable.setSelected(e.getPresentation(), getValue() == myOption);
+      }
 
       MyAction(@NotNull T option) {
         super(getText(option));
@@ -292,7 +297,7 @@ public final class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull HighlightPolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.highlight.policy", option, mySettings.getPlace());
+      DiffUsageTriggerCollector.logToggleHighlightPolicy(option, mySettings.getPlace());
       mySettings.setHighlightPolicy(option);
     }
 
@@ -334,7 +339,7 @@ public final class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull IgnorePolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.ignore.policy", option, mySettings.getPlace());
+      DiffUsageTriggerCollector.logToggleIgnorePolicy(option, mySettings.getPlace());
       mySettings.setIgnorePolicy(option);
     }
 
@@ -366,6 +371,11 @@ public final class TextDiffViewerUtil {
 
   public static class ToggleAutoScrollAction extends ToggleActionButton implements DumbAware {
     @NotNull protected final TextDiffSettings mySettings;
+
+    @Override
+    public boolean isVisible() {
+      return super.isVisible() && !mySettings.isEnableAligningChangesMode();
+    }
 
     public ToggleAutoScrollAction(@NotNull TextDiffSettings settings) {
       super(DiffBundle.message("synchronize.scrolling"), AllIcons.Actions.SynchronizeScrolling);

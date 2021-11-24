@@ -143,14 +143,31 @@ def unpackJdk(File jbrArchive, String outputDir) {
   }
 }
 
+/**
+ * Inspired with com.intellij.util.system.CpuArch
+ */
+static def currentArch() {
+  String arch = System.getProperty("os.arch")
+  if ("x86_64" == arch || "amd64" == arch) {
+    return 'x64'
+  }
+  else if ("i386" == arch || "x86" == arch) {
+    // x86 JVMs are sometimes used as JAVA_HOME to reduce memory consumption on TeamCity, shouldn't affect SDK choice
+    return 'x64'
+  }
+  else if ("aarch64" == arch || "arm64" == arch) {
+    return 'aarch64'
+  }
+  else {
+    throw new IllegalStateException("Unknown arch '$arch'")
+  }
+}
+
 static def jbrArch() {
   def arch = System.getProperty("intellij.jdk.arch", "")
-  if (arch == '32') return 'i586'
+  if (arch == '32') return 'x86'
   if (arch == '64') return 'x64'
-  def os = OperatingSystem.current()
-  if (os.isWindows()) return System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'i586'
-  else if (os.isMacOsX()) return System.getProperty("os.arch") != 'aarch64' ? 'x64' : 'aarch64'
-  else return 'x64'
+  return currentArch()
 }
 
 @SuppressWarnings("GrMethodMayBeStatic")

@@ -24,15 +24,6 @@ abstract class KotlinDslScriptModelResolverCommon : AbstractProjectResolverExten
         return setOf(KotlinDslScriptAdditionalTask::class.java)
     }
 
-    override fun getExtraJvmArgs(): List<Pair<String, String>> {
-        return listOf(
-            Pair(
-                PROVIDER_MODE_SYSTEM_PROPERTY_NAME,
-                CLASSPATH_MODE_SYSTEM_PROPERTY_VALUE
-            )
-        )
-    }
-
     override fun getExtraCommandLineArgs(): List<String> {
         return listOf("-P$CORRELATION_ID_GRADLE_PROPERTY_NAME=${System.nanoTime()}")
     }

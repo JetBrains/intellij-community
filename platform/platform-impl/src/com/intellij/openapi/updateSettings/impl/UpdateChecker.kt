@@ -326,7 +326,7 @@ object UpdateChecker {
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
     if (System.getProperty("idea.ignore.disabled.plugins") == null) {
-      val brokenPlugins = MarketplaceRequests.Instance.getBrokenPlugins(ApplicationInfo.getInstance().build)
+      val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
         PluginManagerCore.updateBrokenPlugins(brokenPlugins)
       }
@@ -429,7 +429,7 @@ object UpdateChecker {
                                                buildNumber: BuildNumber?,
                                                state: InstalledPluginsState,
                                                indicator: ProgressIndicator?) {
-    val marketplacePluginIds = MarketplaceRequests.Instance.getMarketplacePlugins(indicator)
+    val marketplacePluginIds = MarketplaceRequests.getInstance().getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.keys.filter { it in marketplacePluginIds }.toSet()
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     updateable.forEach { (id, descriptor) ->
@@ -637,7 +637,7 @@ object UpdateChecker {
       UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, incompatiblePlugins)
 
       if (showNotification) {
-        IdeUpdateUsageTriggerCollector.trigger("notification.shown")
+        IdeUpdateUsageTriggerCollector.NOTIFICATION_SHOWN.log(project)
         val message = IdeBundle.message(
           "updates.new.build.notification.title",
           ApplicationNamesInfo.getInstance().fullProductName,
@@ -650,7 +650,7 @@ object UpdateChecker {
           "",
           message,
           NotificationAction.createSimpleExpiring(IdeBundle.message("updates.notification.update.action")) {
-            IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
+            IdeUpdateUsageTriggerCollector.NOTIFICATION_CLICKED.log(project)
             runnable()
           })
       }

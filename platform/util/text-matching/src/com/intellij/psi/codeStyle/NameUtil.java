@@ -8,10 +8,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class NameUtil {
   private static final int MAX_LENGTH = 40;
@@ -20,7 +18,12 @@ public final class NameUtil {
 
   @NotNull
   public static List<String> nameToWordsLowerCase(@NotNull String name){
-    return Arrays.stream(NameUtilCore.nameToWords(name)).map(Strings::toLowerCase).collect(Collectors.toList());
+    String[] words = NameUtilCore.nameToWords(name);
+    List<String> list = new ArrayList<>(words.length);
+    for (String word : words) {
+      list.add(Strings.toLowerCase(word));
+    }
+    return list;
   }
 
   @NotNull

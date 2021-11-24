@@ -166,6 +166,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testAddMethodBodyFromInsideAnnotation() { doTest(); }
   public void testArrayInitializerRBracket() { doTest(); }
   public void testArrayInitializerRBrace() { doTest(); }
+  public void testArrayInitializerRBrace2() { doTest(); }
+  public void testMultiArrayInitializerRBrace() { doTest(); }
+  public void testMultiArrayInitializerRBrace2() { doTest(); }
   public void testArrayInitializerSeveralLines() { doTest(); }
   public void testReturnInLambda() { doTest(); }
   public void testSemicolonAfterLambda() { doTest(); }
@@ -201,6 +204,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testReturnSwitchExpression3() {
     doTest();
   }
+  public void testSwitchAtTheEndOfClass() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

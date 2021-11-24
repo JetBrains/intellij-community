@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -29,7 +15,8 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,7 +35,7 @@ import java.awt.event.MouseEvent;
  */
 public class ArrangementMatchingRulesControl extends JBTable {
   @NotNull protected final IntObjectMap<ArrangementListRowDecorator> myComponents   = new IntObjectMap<>();
-  @NotNull private final TIntArrayList mySelectedRows = new TIntArrayList();
+  @NotNull private final IntList mySelectedRows = new IntArrayList();
 
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
   @NotNull protected ArrangementMatchingRuleEditor        myEditor;
@@ -144,12 +131,12 @@ public class ArrangementMatchingRulesControl extends JBTable {
       return;
     }
 
-    final TIntArrayList rows = getSelectedModelRows();
+    final IntList rows = getSelectedModelRows();
     if (rows.size() != 1) {
       return;
     }
 
-    final int row = rows.get(0);
+    final int row = rows.getInt(0);
     showEditor(row);
     scrollRowToVisible(row);
   }
@@ -380,9 +367,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
 
     Rectangle bounds = getRowsBounds(rowToEdit, myEditorRow);
-    if (bounds != null) {
-      myRepresentationCallback.ensureVisible(bounds);
-    }
+    myRepresentationCallback.ensureVisible(bounds);
 
     // We can't just subscribe to the model modification events and update cached renderers automatically because we need to use
     // the cached renderer on atom condition removal (via click on 'close' button). The model is modified immediately then but
@@ -414,7 +399,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
    * @return    selected model rows sorted in descending order
    */
   @NotNull
-  public TIntArrayList getSelectedModelRows() {
+  public IntList getSelectedModelRows() {
     mySelectedRows.clear();
     int min = selectionModel.getMinSelectionIndex();
     if (min >= 0) {

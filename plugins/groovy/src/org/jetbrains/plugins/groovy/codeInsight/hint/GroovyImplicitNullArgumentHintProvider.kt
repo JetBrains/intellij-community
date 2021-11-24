@@ -23,8 +23,8 @@ class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<NoSettings> {
   override val name: String
     get() = GroovyBundle.message("settings.inlay.implicit.null.argument")
   override val key: SettingsKey<NoSettings> = ourKey
-  override val groupId: String
-    get() = VALUES_GROUP
+  override val group: InlayGroup
+    get() = InlayGroup.VALUES_GROUP
   override val previewText: String
     get() = """
       def foo(a) {}
@@ -36,5 +36,9 @@ class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<NoSettings> {
     override fun createComponent(listener: ChangeListener): JPanel = panel {}
 
     override val mainCheckboxText: String = GroovyBundle.message("settings.inlay.show.hints.for.implicit.null.argument")
+  }
+
+  override fun getProperty(key: String): String {
+    return GroovyBundle.message(key)
   }
 }

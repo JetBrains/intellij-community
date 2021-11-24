@@ -15,8 +15,6 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.runInEdtAsync
 import git4idea.index.GitStageTracker
@@ -29,14 +27,11 @@ import java.util.stream.Stream
 class GitStageDiffPreview(project: Project,
                           private val tree: GitStageTree,
                           tracker: GitStageTracker,
-                          isInEditor: Boolean,
+                          private val isInEditor: Boolean,
                           parent: Disposable) :
   ChangeViewDiffRequestProcessor(project, "Stage") {
 
   init {
-    if (!isInEditor) {
-      myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    }
     tree.addSelectionListener(Runnable {
       val modelUpdateInProgress = tree.isModelUpdateInProgress
       runInEdtAsync(this) { updatePreview(component.isShowing, modelUpdateInProgress) }
@@ -49,7 +44,9 @@ class GitStageDiffPreview(project: Project,
     Disposer.register(parent, this)
   }
 
-  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean = false
+  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
+    return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
+  }
 
   fun getToolbarWrapper(): com.intellij.ui.components.panels.Wrapper = myToolbarWrapper
 

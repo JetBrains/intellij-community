@@ -1,4 +1,5 @@
 import org.gradle.internal.os.OperatingSystem
+
 import java.util.concurrent.TimeUnit
 
 apply from: 'retries.gradle'
@@ -33,19 +34,24 @@ task setupCidr
     path: "CIDR/clion/bin/clang"
   ],
   lldb: [
-    version: "e0cccbacab5cf5ee621edddca1ea452353192e6b",
     platforms: [
       win: [
         version: "6f6d0a12e1260e0fd79fbcd1f5df2ebb48002db8",
         archs: ["x64", "x86"]
       ],
-      linux: [archs: ["x64"]],
-      mac: [archs: ["x64"]]
+      linux: [
+        version: "26e38627b2203e151539e9c1259927b981ea0ffd",
+        archs: ["x64"]
+      ],
+      mac: [
+        version: "26e38627b2203e151539e9c1259927b981ea0ffd",
+        archs: ["x64"]
+      ]
     ],
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   lldbfrontend: [
-    version: "1e5c6ed011d85d7547e00afb083a96a5a46719aa",
+    version: "420e4957430a022113c0489b51a6549c001137be",
     platforms: [
       win: [archs: ["x64", "x86"]],
       linux: [archs: ["x64"]],

@@ -20,6 +20,7 @@ import com.intellij.packaging.impl.artifacts.InvalidArtifact
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.artifacts.workspacemodel.forThisAndFullTree
+import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
@@ -388,6 +389,27 @@ class ArtifactTest : ArtifactsTestCase() {
     (bridgeArtifact.rootElement.children.single() as MyCompositeWorkspacePackagingElement).children
     val artifactEntity = artifactEntity(project, "Artifact-0")
     assertTreesEquals(project, bridgeArtifact.rootElement, artifactEntity.rootElement!!)
+  }
+
+  fun `test async artifact initializing`() {
+    assumeTrue(WorkspaceModel.enabledForArtifacts)
+
+    repeat(1_000) {
+      val rootEntity = runWriteAction {
+        WorkspaceModel.getInstance(project).updateProjectModel {
+          it.addArtifactRootElementEntity(emptyList(), MySource)
+        }
+      }
+      val threads = List(10) {
+        Callable {
+          rootEntity.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+        }
+      }
+
+      val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test executor", JobSchedulerImpl.getCPUCoresCount())
+      val res = ConcurrencyUtil.invokeAll(threads, service).map { it.get() }.toSet()
+      assertOneElement(res)
+    }
   }
 
   fun `test async artifacts requesting`() {

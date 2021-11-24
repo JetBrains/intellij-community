@@ -23,6 +23,12 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Implementations may override {@link #equals(Object)} and {@link #hashCode()}.
+ * These will be used by {@link com.intellij.diff.impl.CacheDiffRequestProcessor} implementations, that might return
+ * a different instance of 'same' producer in {@link com.intellij.diff.impl.CacheDiffRequestProcessor#getCurrentRequestProvider()}
+ * (ex: {@link com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor}).
+ */
 public interface DiffRequestProducer {
   @Nls
   @NotNull

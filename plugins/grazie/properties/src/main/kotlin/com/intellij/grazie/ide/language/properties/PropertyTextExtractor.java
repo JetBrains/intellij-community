@@ -31,7 +31,7 @@ public class PropertyTextExtractor extends TextExtractor {
     if (root instanceof PsiComment) {
       List<PsiElement> roots = PsiUtilsKt.getNotSoDistantSimilarSiblings(root, e ->
         PropertiesTokenTypes.COMMENTS.contains(PsiUtilCore.getElementType(e)));
-      return TextContent.joinWithWhitespace(ContainerUtil.mapNotNull(roots, c ->
+      return TextContent.joinWithWhitespace('\n', ContainerUtil.mapNotNull(roots, c ->
         TextContentBuilder.FromPsi.removingIndents(" \t#!").build(c, COMMENTS)));
     }
     if (PsiUtilCore.getElementType(root) == PropertiesTokenTypes.VALUE_CHARACTERS) {

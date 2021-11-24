@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -79,6 +80,9 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
   }
 
   private static void updateToolWindowNotificationsIcon(@NotNull Project project) {
+    if (Registry.is("ide.notification.action.center", false)) {
+      return;
+    }
     ToolWindow eventLog = EventLog.getEventLog(project);
     if (eventLog != null) {
       List<Notification> notifications = EventLog.getNotifications(project);

@@ -23,11 +23,10 @@ object ConsoleJvmApplicationTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.console.jvm.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.console.jvm.description")
 
-    private val fileToCreate = "Main.kt".asPath()
-    val fileWithMain = fileToCreate
+    private const val fileToCreate = "Main.kt"
+    override val filesToOpenInEditor = listOf(fileToCreate)
 
-
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
         module.configurator.moduleType == ModuleType.jvm
 
     override fun Writer.getIrsToAddToBuildFile(
@@ -38,6 +37,6 @@ object ConsoleJvmApplicationTemplate : Template() {
 
     override fun Reader.getFileTemplates(module: ModuleIR) =
         buildList<FileTemplateDescriptorWithPath> {
-            +(FileTemplateDescriptor("$id/main.kt.vm", fileToCreate) asSrcOf SourcesetType.main)
+            +(FileTemplateDescriptor("$id/main.kt.vm", fileToCreate.asPath()) asSrcOf SourcesetType.main)
         }
 }

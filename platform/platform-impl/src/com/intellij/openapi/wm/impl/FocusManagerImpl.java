@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -201,8 +201,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
       IdeFrame frame = getLastFocusedFrame();
       if (frame != null) {
         LOG.assertTrue(frame instanceof Window);
+        result = myLastFocusedAtDeactivation.get(frame);
       }
-      result = myLastFocusedAtDeactivation.get(frame);
     }
     else if (myRunContext != null) {
       result = myRunContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);

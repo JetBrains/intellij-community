@@ -4,6 +4,8 @@ package com.intellij.spellchecker.grazie
 import ai.grazie.spell.GrazieSpeller
 import ai.grazie.spell.GrazieSplittingSpeller
 import ai.grazie.spell.language.English
+import ai.grazie.spell.utils.DictionaryResources
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.spellchecker.dictionary.Dictionary
@@ -16,6 +18,7 @@ import com.intellij.spellchecker.grazie.async.WordListLoader
 import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import com.intellij.util.containers.SLRUCache
+import org.apache.lucene.analysis.hunspell.TimeoutPolicy
 
 internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
   override fun getTransformation(): Transformation = Transformation()
@@ -29,7 +32,9 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
       GrazieSpeller(
         GrazieSpeller.UserConfig(
           GrazieSpeller.UserConfig.Dictionary(
-            dictionary = ExtendedWordListWithFrequency(English.hunspell, adapter),
+            dictionary = ExtendedWordListWithFrequency(
+              DictionaryResources.getHunspellDict("/dictionary/en", TimeoutPolicy.NO_TIMEOUT) { ProgressManager.checkCanceled() },
+              adapter),
             isAlien = { word -> English.isAlien(word) && adapter.isAlien(word) }
           )
         )

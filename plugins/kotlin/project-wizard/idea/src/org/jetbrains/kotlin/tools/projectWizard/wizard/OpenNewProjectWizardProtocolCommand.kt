@@ -2,15 +2,19 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.JBProtocolCommand
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 
 class OpenNewProjectWizardProtocolCommand : JBProtocolCommand(COMMAND_NAME) {
-    override fun perform(target: String?, parameters: Map<String, String?>) {
-        when (target) {
-            NEW_PROJECT_TARGET -> showCreateNewProjectWizard(parameters)
+    override fun perform(target: String?, parameters: MutableMap<String, String>, fragment: String?): Future<String?> =
+        if (target != NEW_PROJECT_TARGET) CompletableFuture.completedFuture(IdeBundle.message("jb.protocol.unknown.target", target))
+        else {
+            showCreateNewProjectWizard(parameters)
+            CompletableFuture.completedFuture(null)
         }
-    }
 
     private fun showCreateNewProjectWizard(parameters: Map<String, String?>) {
         val template = parameters[NEW_PROJECT_TARGET_TEMPLATE_PARAMETER]

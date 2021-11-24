@@ -1,5 +1,5 @@
 // "Add 'return' before the expression" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ACTION: Add full qualifier
 // ACTION: Compiler warning 'UNUSED_EXPRESSION' options
 // ACTION: Introduce import alias

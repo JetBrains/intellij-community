@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 data class XY(val x: String, val y: Int)
 fun test(xys: Array<XY>) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import git4idea.ift.lesson.*
+import org.jetbrains.annotations.NonNls
 import training.learn.course.IftModule
 import training.learn.course.KLesson
 import training.learn.course.LearningCourse
@@ -16,7 +17,7 @@ import training.learn.course.LessonType
 
 class GitLearningCourse : LearningCourse {
   override fun modules(): Collection<IftModule> {
-    return listOf(GitLearningModule {
+    return listOf(GitLearningModule("Git") {
       listOf(GitQuickStartLesson(),
              GitProjectHistoryLesson(),
              GitCommitLesson(),
@@ -27,9 +28,9 @@ class GitLearningCourse : LearningCourse {
     })
   }
 
-  private class GitLearningModule(initLessons: () -> List<KLesson>) : IftModule(GitLessonsBundle.message("git.module.name"),
-                                                                                GitLessonsBundle.message("git.module.description"),
-                                                                                null, LessonType.PROJECT, initLessons) {
+  private class GitLearningModule(@NonNls id: String, initLessons: () -> List<KLesson>)
+    : IftModule(id, GitLessonsBundle.message("git.module.name"), GitLessonsBundle.message("git.module.description"),
+                null, LessonType.PROJECT, initLessons) {
     override val sanitizedName: String = ""
 
     override fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor {

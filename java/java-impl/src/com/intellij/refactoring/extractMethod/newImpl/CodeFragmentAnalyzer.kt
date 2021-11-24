@@ -83,9 +83,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   }
 
   fun findOutputVariables(): List<PsiVariable> {
-    val exitPoints = IntArrayList()
-    ControlFlowUtil.findExitPointsAndStatements(flow, flowRange.first, flowRange.last, exitPoints, *DEFAULT_EXIT_STATEMENTS_CLASSES)
-    return ControlFlowUtil.getOutputVariables(flow, flowRange.first, flowRange.last, exitPoints.toIntArray()).distinct()
+    return ControlFlowUtil.getOutputVariables(flow, flowRange.first, flowRange.last, findExitPoints().toIntArray()).distinct()
   }
 
   fun findUndeclaredVariables(): List<PsiVariable> {
@@ -198,22 +196,6 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
   fun findThrownExceptions(): List<PsiClassType> {
     return ExceptionUtil.getThrownCheckedExceptions(*elements.toTypedArray())
-  }
-
-  fun findExposedLocalVariables(expressions: List<PsiExpression>): List<PsiVariable> {
-    val exposedLocalVariables = HashSet<PsiVariable>()
-    val visitor = object : JavaRecursiveElementWalkingVisitor() {
-
-      override fun visitReferenceExpression(reference: PsiReferenceExpression) {
-        val variable = reference.resolve() as? PsiVariable ?: return
-        if (variable.textRange in TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)) {
-          exposedLocalVariables += variable
-        }
-      }
-    }
-    expressions.forEach { it.accept(visitor) }
-
-    return exposedLocalVariables.toList()
   }
 
   fun findWrittenVariables(): List<PsiVariable> {

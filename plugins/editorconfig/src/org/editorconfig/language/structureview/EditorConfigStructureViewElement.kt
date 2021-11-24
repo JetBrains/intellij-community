@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.smartTree.SortableTreeElement
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.childrenOfType
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigRootDeclaration
 import org.editorconfig.language.psi.EditorConfigSection
@@ -21,8 +22,8 @@ class EditorConfigStructureViewElement(private val element: NavigatablePsiElemen
 
   override fun getChildren(): Array<out TreeElement> = when (element) {
     is EditorConfigPsiFile -> {
-      val roots = PsiTreeUtil
-        .getChildrenOfTypeAsList(element, EditorConfigRootDeclaration::class.java)
+      val roots = element
+        .childrenOfType<EditorConfigRootDeclaration>()
         .map(::EditorConfigStructureViewElement)
 
       val sections = element.sections

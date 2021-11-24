@@ -26,7 +26,6 @@ public final class CommandQueueForPythonConsoleService {
   @NlsSafe
   private static final String STUB = "pass";
 
-
   @NotNull
   private Queue<ConsoleCommunication.ConsoleCodeFragment> getQueue(@NotNull ConsoleCommunication consoleComm) {
     return queues.get(consoleComm);
@@ -106,6 +105,10 @@ public final class CommandQueueForPythonConsoleService {
   public synchronized void addNewCommand(@NotNull PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler,
                                          @NotNull ConsoleCommunication.ConsoleCodeFragment code) {
     var console = pydevConsoleExecuteActionHandler.getConsoleCommunication();
+    if (console.isWaitingForInput()) {
+      execCommand(console, code);
+      return;
+    }
     if (!queues.containsKey(console)) {
       queues.put(console, new ConcurrentLinkedDeque<>());
       handlers.put(console, pydevConsoleExecuteActionHandler);

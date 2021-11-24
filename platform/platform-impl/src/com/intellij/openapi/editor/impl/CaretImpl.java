@@ -46,6 +46,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private final EditorImpl myEditor;
   @NotNull private final CaretModelImpl myCaretModel;
   private boolean isValid = true;
+  private Throwable myDisposalTrace;
 
   private LogicalPosition myLogicalCaret;
   private VerticalInfo myVerticalInfo;
@@ -628,6 +629,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       mySelectionMarker = null;
     }
     isValid = false;
+    myDisposalTrace = new Throwable();
   }
 
   @Override
@@ -1146,7 +1148,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         }
       }
       else {
-        setRangeMarkerEndPositionIsLead(true); // for compatibility with older behaviour
+        setRangeMarkerEndPositionIsLead(endOffset != getOffset());
       }
       mySelectionMarker = marker;
 
@@ -1470,7 +1472,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   private void checkDisposal() {
     if (myEditor.isDisposed()) myEditor.throwDisposalError("Editor is already disposed");
-    if (!isValid) throw new IllegalStateException("Caret is invalid");
+    if (!isValid) throw new IllegalStateException("Caret is invalid", myDisposalTrace);
   }
 
   private void stopKillRings() {

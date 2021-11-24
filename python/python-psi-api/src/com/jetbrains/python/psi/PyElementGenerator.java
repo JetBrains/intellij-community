@@ -47,6 +47,9 @@ public abstract class PyElementGenerator {
 
   @NotNull
   public abstract PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
+  
+  @NotNull
+  public abstract PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
 
   /**
    * Adds elements to list inserting required commas.

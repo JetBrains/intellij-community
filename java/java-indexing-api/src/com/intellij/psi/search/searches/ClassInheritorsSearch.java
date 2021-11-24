@@ -163,7 +163,7 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
         throw new ProcessCanceledException();
       }
       PsiFile file = aClass.getContainingFile();
-      return PsiSearchHelper.getInstance(aClass.getProject()).getCodeUsageScope(file != null ? file : aClass);
+      return PsiSearchHelper.getInstance(aClass.getProject()).getUseScope(file != null ? file : aClass);
     }), checkDeep);
   }
 

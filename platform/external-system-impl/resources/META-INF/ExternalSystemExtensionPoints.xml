@@ -72,14 +72,11 @@
       <with attribute="implementationClass"
             implements="com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.externalResolverIsSafe"
-                    beanClass="com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe"
-                    dynamic="true"/>
-    <extensionPoint name="untrustedModeProvider"
-                    interface="com.intellij.openapi.externalSystem.service.project.UntrustedProjectModeProvider"
-                    dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.externalSystemCrcCalculator"
                     interface="com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.externalSystemContentRootContributor"
+                    interface="com.intellij.openapi.externalSystem.util.ExternalSystemContentRootContributor"
                     dynamic="true" />
     <extensionPoint name="externalSystemDependencyAnalyzer"
                     interface="com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerExtension"

@@ -36,7 +36,7 @@ import java.util.*
 
 private val PROCESSED = Key.create<Boolean>("GitStageTracker.file.processed")
 
-class GitStageTracker(val project: Project) : Disposable {
+open class GitStageTracker(val project: Project) : Disposable {
   private val eventDispatcher = EventDispatcher.create(GitStageTrackerListener::class.java)
   private val dirtyScopeManager
     get() = VcsDirtyScopeManager.getInstance(project)
@@ -124,7 +124,7 @@ class GitStageTracker(val project: Project) : Disposable {
    *   but CLM is slow to notice new saved unstaged changes - so file is removed from thee and added again in a second.
    */
   private fun markDirty(file: VirtualFile) {
-    if (!isStagingAreaAvailable(project)) return
+    if (!isStagingAreaAvailable()) return
     val root = getRoot(project, file) ?: return
     if (!gitRoots().contains(root)) return
     LOG.debug("Mark dirty ${file.filePath()}")
@@ -141,7 +141,7 @@ class GitStageTracker(val project: Project) : Disposable {
 
     if (pathsToDirty.isNotEmpty()) {
       LOG.debug("Mark dirty on index VFiles save: ", pathsToDirty)
-      VcsDirtyScopeManager.getInstance(project).filePathsDirty(pathsToDirty, emptyList())
+      dirtyScopeManager.filePathsDirty(pathsToDirty, emptyList())
     }
   }
 
@@ -188,6 +188,8 @@ class GitStageTracker(val project: Project) : Disposable {
     LOG.debug("New state", state)
     eventDispatcher.multicaster.update()
   }
+
+  protected open fun isStagingAreaAvailable() = isStagingAreaAvailable(project)
 
   override fun dispose() {
     state = State.EMPTY

@@ -4,4 +4,4 @@ fun foo() {
     lis<caret>
 }
 
-// EXIST: { lookupString: "list", itemText: "list", tailText: "() (kotlin.collections.listOf)" }
+// EXIST: { lookupString: "list", itemText: "list", tailText: "() (kotlin.collections.listOf)", icon: "nodes/function.svg"}

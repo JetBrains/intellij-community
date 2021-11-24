@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.booleanIsAlwaysInverted;
 
 import com.intellij.analysis.AnalysisScope;
@@ -11,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.invertBoolean.InvertBooleanDelegate;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
@@ -96,7 +95,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
                                                       boolean onTheFly) {
     return manager.createProblemDescriptor(psiIdentifier,
                                            JavaBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
-                                           getInvertBooleanFix(onTheFly),
+                                           InvertBooleanDelegate.findInvertBooleanDelegate(psiIdentifier.getParent()) != null ? getInvertBooleanFix(onTheFly) : null,
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly);
   }
 
@@ -107,6 +106,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     manager.iterate(new RefJavaVisitor() {
       @Override
       public void visitMethod(@NotNull final RefMethod refMethod) {
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
         if (descriptionsProcessor.getDescriptions(refMethod) != null) { //suspicious method -> need to check external usages
           final GlobalJavaInspectionContext.UsagesProcessor usagesProcessor = new GlobalJavaInspectionContext.UsagesProcessor() {
             @Override

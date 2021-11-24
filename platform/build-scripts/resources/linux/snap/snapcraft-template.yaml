@@ -6,6 +6,8 @@ summary: $SUMMARY$
 description: $DESCRIPTION$
 grade: $GRADE$
 confinement: classic
+base: core18
+compression: lzo
 architectures: [amd64]
 
 apps:

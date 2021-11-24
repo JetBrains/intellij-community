@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -247,7 +247,7 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link #load(CharSequence)}
    * <p>
-   * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
+   * Direct usage of element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
   public static @NotNull Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
@@ -322,6 +322,21 @@ public final class JDOMUtil {
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
     return stream == null ? null : loadUsingStaX(stream, null);
+  }
+
+  public static @NotNull Element load(byte @NotNull [] data) throws JDOMException, IOException {
+    try {
+      XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(data);
+      try {
+        return SafeStAXStreamBuilder.build(xmlStreamReader, true, true, null == null ? SafeStAXStreamBuilder.FACTORY : null);
+      }
+      finally {
+        xmlStreamReader.close();
+      }
+    }
+    catch (XMLStreamException e) {
+      throw new JDOMException(e.getMessage(), e);
+    }
   }
 
   @ApiStatus.Internal

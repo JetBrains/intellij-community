@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     val x = when<caret> (val a = create()) {
         else -> use("")

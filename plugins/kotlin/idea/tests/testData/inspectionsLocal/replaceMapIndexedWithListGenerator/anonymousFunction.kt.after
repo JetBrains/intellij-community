@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     List(emptyList<String>().size, fun(index: Int): Int {
         return index

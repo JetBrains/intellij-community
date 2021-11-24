@@ -846,50 +846,56 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processDoWhileExpression(expr: KtDoWhileExpression) {
-        val offset = ControlFlow.FixedOffset(flow.instructionCount)
-        processExpression(expr.body)
-        addInstruction(PopInstruction())
-        processExpression(expr.condition)
-        addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
-        flow.finishElement(expr)
+        inlinedBlock(expr) {
+            val offset = ControlFlow.FixedOffset(flow.instructionCount)
+            processExpression(expr.body)
+            addInstruction(PopInstruction())
+            processExpression(expr.condition)
+            addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
+            flow.finishElement(expr)
+        }
         pushUnknown()
         addInstruction(FinishElementInstruction(expr))
     }
 
     private fun processWhileExpression(expr: KtWhileExpression) {
-        val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
-        val condition = expr.condition
-        processExpression(condition)
-        val endOffset = DeferredOffset()
-        addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE, condition))
-        processExpression(expr.body)
-        addInstruction(PopInstruction())
-        addInstruction(GotoInstruction(startOffset))
-        setOffset(endOffset)
-        flow.finishElement(expr)
+        inlinedBlock(expr) {
+            val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
+            val condition = expr.condition
+            processExpression(condition)
+            val endOffset = DeferredOffset()
+            addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE, condition))
+            processExpression(expr.body)
+            addInstruction(PopInstruction())
+            addInstruction(GotoInstruction(startOffset))
+            setOffset(endOffset)
+            flow.finishElement(expr)
+        }
         pushUnknown()
         addInstruction(FinishElementInstruction(expr))
     }
 
     private fun processForExpression(expr: KtForExpression) {
-        val parameter = expr.loopParameter
-        if (parameter == null) {
-            broken = true
-            return
+        inlinedBlock(expr) {
+            val parameter = expr.loopParameter
+            if (parameter == null) {
+                broken = true
+                return@inlinedBlock
+            }
+            val parameterVar = factory.varFactory.createVariableValue(KtVariableDescriptor(parameter))
+            val parameterType = parameter.type()
+            val pushLoopCondition = processForRange(expr, parameterVar, parameterType)
+            val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
+            val endOffset = DeferredOffset()
+            flushParameter(parameter)
+            pushLoopCondition()
+            addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE))
+            processExpression(expr.body)
+            addInstruction(PopInstruction())
+            addInstruction(GotoInstruction(startOffset))
+            setOffset(endOffset)
+            flow.finishElement(expr)
         }
-        val parameterVar = factory.varFactory.createVariableValue(KtVariableDescriptor(parameter))
-        val parameterType = parameter.type()
-        val pushLoopCondition = processForRange(expr, parameterVar, parameterType)
-        val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
-        val endOffset = DeferredOffset()
-        flushParameter(parameter)
-        pushLoopCondition()
-        addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE))
-        processExpression(expr.body)
-        addInstruction(PopInstruction())
-        addInstruction(GotoInstruction(startOffset))
-        setOffset(endOffset)
-        flow.finishElement(expr)
         pushUnknown()
         addInstruction(FinishElementInstruction(expr))
     }
@@ -1463,8 +1469,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             } else {
                 kotlinType = subjectExpression.getKotlinType()
                 dfVar = flow.createTempVariable(kotlinType.toDfType(expr))
+                addInstruction(JvmAssignmentInstruction(null, dfVar))
             }
-            addInstruction(JvmAssignmentInstruction(null, dfVar))
             addInstruction(PopInstruction())
         }
         val endOffset = DeferredOffset()

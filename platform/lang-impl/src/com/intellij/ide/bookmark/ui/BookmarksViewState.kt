@@ -15,6 +15,7 @@ class BookmarksViewState : BaseState() {
   var proportionView by property(0.5f)
 
   var groupLineBookmarks by property(true)
+  var rewriteBookmarkType by property(false)
   var autoscrollFromSource by property(false)
   var autoscrollToSource by property(false)
   var showPreview by property(false)

@@ -23,7 +23,7 @@ internal class FilesHistoryProvider(val traverser: GitHistoryTraverser) {
     val commitsData = mutableSetOf<Commit>()
 
     val requirements = GitCommitRequirements(
-      diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NO_RENAMES,
+      diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NoRenames,
       diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.NO_DIFF
     )
     var commitsWithFilesCount = 0

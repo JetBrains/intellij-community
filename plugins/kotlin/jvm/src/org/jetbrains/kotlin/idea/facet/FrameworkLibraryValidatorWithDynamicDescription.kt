@@ -26,10 +26,10 @@ class FrameworkLibraryValidatorWithDynamicDescription(
     private val libraryCategoryName: String,
     private val getPlatform: () -> TargetPlatform?
 ) : FrameworkLibraryValidator() {
-    private val IdePlatformKind<*>.libraryDescription: CustomLibraryDescription?
+    private val IdePlatformKind.libraryDescription: CustomLibraryDescription?
         get() = this.tooling.getLibraryDescription(context.module.project)
 
-    private fun checkLibraryIsConfigured(platform: IdePlatformKind<*>): Boolean {
+    private fun checkLibraryIsConfigured(platform: IdePlatformKind): Boolean {
         // TODO: propose to configure kotlin-stdlib-common once it's available
         if (platform.isCommon) return true
 
@@ -80,7 +80,7 @@ class FrameworkLibraryValidatorWithDynamicDescription(
         }
 
         return ValidationResult(
-            IdeBundle.message("label.missed.libraries.text", libraryCategoryName),
+            KotlinJvmBundle.message("label.missed.libraries.text", libraryCategoryName),
             LibrariesQuickFix(targetPlatform.idePlatformKind.libraryDescription!!)
         )
     }

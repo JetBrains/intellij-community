@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
+import org.jetbrains.kotlin.idea.core.script.logScriptingConfigurationErrors
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.psi.KtFile
@@ -34,6 +35,8 @@ open class DefaultScriptConfigurationLoader(val project: Project) : ScriptConfig
         scriptDefinition: ScriptDefinition,
         context: ScriptConfigurationLoadingContext
     ): Boolean {
+        if (project.isDisposed) return false
+
         val virtualFile = ktFile.originalFile.virtualFile
 
         val result = getConfigurationThroughScriptingApi(ktFile, virtualFile, scriptDefinition)
@@ -72,6 +75,8 @@ open class DefaultScriptConfigurationLoader(val project: Project) : ScriptConfig
         )
 
         scriptingDebugLog(file) { "finish dependencies loading" }
+        logScriptingConfigurationErrors(vFile, result)
+
         return result
     }
 

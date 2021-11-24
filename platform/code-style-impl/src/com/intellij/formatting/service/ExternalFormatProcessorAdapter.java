@@ -52,7 +52,7 @@ public final class ExternalFormatProcessorAdapter implements FormattingService {
   public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat) {
     List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     CoreCodeStyleUtil.postProcessRanges(
-      file, infos, range -> ExternalFormatProcessor.formatRangeInFile(file, range, false, false));
+      file, infos, range -> ExternalFormatProcessor.formatRangeInFile(file, range, canChangeWhiteSpaceOnly, false));
   }
 
   @Override

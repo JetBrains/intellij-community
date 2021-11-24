@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -26,13 +26,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
+public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
   public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
@@ -170,12 +171,17 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
+    var context = createBookmarkContext(project, url, moduleName);
+    return context == null ? null : new Object[]{context};
+  }
+
+  @Override
+  public @Nullable Object createBookmarkContext(@NotNull Project project, @NotNull String url, @Nullable String moduleName) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     // module can be null if 'show module' turned off
     final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(url);
     if (aPackage == null) return null;
-    PackageElement packageElement = new PackageElement(module, aPackage, false);
-    return new Object[]{packageElement};
+    return new PackageElement(module, aPackage, false);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// "Annotate annotation 'Test' as @Retention" "false"
+// "Annotate annotation 'Test' as @Retention(RetentionPolicy.RUNTIME)" "true"
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

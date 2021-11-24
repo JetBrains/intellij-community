@@ -7,6 +7,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
@@ -14,6 +16,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.ui.LightweightHint
@@ -23,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import javax.swing.JComponent
 import kotlin.properties.Delegates
 
 @ApiStatus.Internal
@@ -49,10 +53,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     if (hint != null || !canBeShownAtCurrentSelection()) {
       return
     }
-    val leftGroup = ActionManager.getInstance().getAction(actionGroupId) as ActionGroup
-    val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, leftGroup, true)
-    toolbar.setTargetComponent(editor.contentComponent)
-    toolbar.setReservePlaceAutoPopupIcon(false)
+    val toolbar = createActionToolbar(editor.contentComponent)
     buttonSize = toolbar.maxButtonHeight
 
     val newHint = LightweightHint(toolbar.component)
@@ -69,6 +70,21 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
 
   override fun dispose() {
     unregisterListeners()
+    hideIfShown()
+    hint = null
+  }
+
+  private fun createActionToolbar(targetComponent: JComponent): ActionToolbar {
+    val group = ActionManager.getInstance().getAction(actionGroupId) as ActionGroup
+    val toolbar = object: ActionToolbarImpl(ActionPlaces.EDITOR_TOOLBAR, group, true) {
+      override fun addNotify() {
+        super.addNotify()
+        updateActionsImmediately(true)
+      }
+    }
+    toolbar.targetComponent = targetComponent
+    toolbar.setReservePlaceAutoPopupIcon(false)
+    return toolbar
   }
 
   private fun showOrUpdateLocation(hint: LightweightHint) {
@@ -98,9 +114,9 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     val file = PsiEditorUtil.getPsiFile(editor)
     PsiDocumentManager.getInstance(file.project).commitDocument(editor.document)
     val selectionModel = editor.selectionModel
-    val elementAtStart = file.findElementAt(selectionModel.selectionStart)
-    val elementAtEnd = file.findElementAt(selectionModel.selectionEnd)
-    return elementAtStart?.let(::hasIgnoredParent) == false && elementAtEnd?.let(::hasIgnoredParent) == false
+    val elementAtStart = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionStart)
+    val elementAtEnd = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionEnd)
+    return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd))
   }
 
   protected open fun hasIgnoredParent(element: PsiElement): Boolean {
@@ -150,14 +166,8 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
       if (e.source != editor.contentComponent) {
         return
       }
-      updateOnProbablyChangedSelection { selection ->
-        if ('\n' in selection) {
-          hideIfShown()
-        } else if (isShown()) {
-          updateLocationIfShown()
-        } else {
-          showIfHidden()
-        }
+      updateOnProbablyChangedSelection {
+        hideIfShown()
       }
     }
   }

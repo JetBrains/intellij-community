@@ -99,9 +99,6 @@ public class PerformanceTestInfo {
     }
     int initialMaxRetries = maxRetries;
 
-    boolean testPassed = false;
-    String logMessage;
-
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       CpuUsageData data;
       try {
@@ -117,11 +114,10 @@ public class PerformanceTestInfo {
       int expectedOnMyMachine = getExpectedTimeOnThisMachine();
       IterationResult iterationResult = data.getIterationResult(expectedOnMyMachine);
 
-      testPassed |= iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
+      boolean testPassed = iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
+      String logMessage = formatMessage(data, expectedOnMyMachine, iterationResult, initialMaxRetries);
 
-      logMessage = formatMessage(data, expectedOnMyMachine, iterationResult, initialMaxRetries);
-
-      if (iterationResult == IterationResult.ACCEPTABLE) {
+      if (testPassed) {
         TeamCityLogger.info(logMessage);
         System.out.println("\nSUCCESS: " + logMessage);
         return;
@@ -133,7 +129,6 @@ public class PerformanceTestInfo {
 
       JitUsageResult jitUsage = updateJitUsage();
       if (attempt == maxRetries) {
-        if (testPassed) return;
         throw new AssertionFailedError(logMessage);
       }
       if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < initialMaxRetries+30 && maxRetries != 1) {

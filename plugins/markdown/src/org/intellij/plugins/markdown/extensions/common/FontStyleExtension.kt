@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.common
 
+import com.intellij.openapi.project.Project
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtension
-import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
+import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 
-internal class FontStyleExtension : MarkdownJCEFPreviewExtension, ResourceProvider {
+internal class FontStyleExtension(private val project: Project): MarkdownBrowserPreviewExtension, ResourceProvider {
   private val settings
     get() = MarkdownExtension.currentProjectSettings
 
@@ -22,6 +23,15 @@ internal class FontStyleExtension : MarkdownJCEFPreviewExtension, ResourceProvid
   override fun loadResource(resourceName: String): ResourceProvider.Resource {
     val css = getFontSizeCss(settings.fontSize, checkNotNull(settings.fontFamily))
     return ResourceProvider.Resource(css.toByteArray())
+  }
+
+  override fun dispose() = Unit
+
+  class Provider: MarkdownBrowserPreviewExtension.Provider {
+    override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
+      val project = panel.project ?: return null
+      return FontStyleExtension(project)
+    }
   }
 
   companion object {

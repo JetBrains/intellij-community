@@ -270,20 +270,21 @@ public final class HighlightClassUtil {
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
       range(aClass, range.getStartOffset(), range.getEndOffset()).
       descriptionAndTooltip(message).create();
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.PUBLIC, false, false));
     PsiClass[] classes = file.getClasses();
+    boolean containsClassForFile = ContainerUtil.exists(classes, otherClass ->
+                                                              !otherClass.getManager().areElementsEquivalent(otherClass, aClass) &&
+                                                              otherClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+                                                              virtualFile.getNameWithoutExtension().equals(otherClass.getName()));
+    if (!containsClassForFile) {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameFileFix(aClass.getName() + JavaFileType.DOT_DEFAULT_EXTENSION));
+    }
     if (classes.length > 1) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMoveClassToSeparateFileFix(aClass));
     }
-    for (PsiClass otherClass : classes) {
-      if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) &&
-          otherClass.hasModifierProperty(PsiModifier.PUBLIC) &&
-          virtualFile.getNameWithoutExtension().equals(otherClass.getName())) {
-        return errorResult;
-      }
+    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.PUBLIC, false, false));
+    if (!containsClassForFile) {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
     }
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameFileFix(aClass.getName() + JavaFileType.DOT_DEFAULT_EXTENSION));
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
     return errorResult;
   }
 
@@ -306,6 +307,7 @@ public final class HighlightClassUtil {
    * @return true if file correspond to the shebang script
    */
   public static boolean isJavaHashBangScript(@Nullable PsiFile containingFile) {
+    if (!(containingFile instanceof PsiJavaFile)) return false;
     if (containingFile instanceof PsiFileEx && !((PsiFileEx)containingFile).isContentsLoaded()) {
       final VirtualFile vFile = containingFile.getVirtualFile();
       if (vFile.isInLocalFileSystem()) {
@@ -318,7 +320,6 @@ public final class HighlightClassUtil {
         }
       }
     }
-    if (!(containingFile instanceof PsiJavaFile)) return false;
     PsiElement firstChild = containingFile.getFirstChild();
     if (firstChild instanceof PsiImportList && firstChild.getTextLength() == 0) {
       PsiElement sibling = firstChild.getNextSibling();
@@ -1085,6 +1086,15 @@ public final class HighlightClassUtil {
       }
     }
     return null;
+  }
+  
+  static HighlightInfo checkExtendsSealedClass(PsiFunctionalExpression expression, PsiType functionalInterfaceType) {
+    PsiClass functionalInterface = PsiUtil.resolveClassInClassTypeOnly(functionalInterfaceType);
+    if (functionalInterface == null || !functionalInterface.hasModifierProperty(PsiModifier.SEALED)) return null;
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+      .range(expression)
+      .descriptionAndTooltip(JavaErrorBundle.message("sealed.cannot.be.functional.interface"))
+      .create();
   }
 
    public static HighlightInfo checkExtendsSealedClass(PsiClass aClass, PsiClass superClass, PsiJavaCodeReferenceElement elementToHighlight) {

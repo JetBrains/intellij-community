@@ -1,6 +1,6 @@
 // "Add '@MyExperimentalAPI' annotation to containing class 'Derived'" "false"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
-// WITH_RUNTIME
+// WITH_STDLIB
 // ACTION: Add '@MyExperimentalAPI' annotation to 'foo'
 // ACTION: Add '@OptIn(MyExperimentalAPI::class)' annotation to containing file 'override.kt'
 // ACTION: Add '@OptIn(MyExperimentalAPI::class)' annotation to 'foo'

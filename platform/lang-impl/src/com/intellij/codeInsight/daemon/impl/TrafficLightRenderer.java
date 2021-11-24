@@ -42,8 +42,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +63,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final Document myDocument;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;
-  private final TObjectIntHashMap<HighlightSeverity> errorCount = new TObjectIntHashMap<>();
+  @SuppressWarnings("SSBasedInspection")
+  private final Object2IntOpenHashMap<HighlightSeverity> errorCount = new Object2IntOpenHashMap<>();
   private int[] cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
 
   public TrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
@@ -118,7 +119,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     for (HighlightSeverity severity : severities) {
       int severityIndex = mySeverityRegistrar.getSeverityIdx(severity);
-      cachedErrors[severityIndex] = errorCount.get(severity);
+      cachedErrors[severityIndex] = errorCount.getInt(severity);
     }
   }
 
@@ -135,7 +136,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (infoSeverity.myVal <= HighlightSeverity.INFORMATION.myVal) return;
 
     if (errorCount.containsKey(infoSeverity)) {
-      errorCount.adjustValue(infoSeverity, delta);
+      errorCount.addTo(infoSeverity, delta);
     }
     else {
       errorCount.put(infoSeverity, delta);
@@ -165,7 +166,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       for (ProgressableTextEditorHighlightingPass passStatus : passes) {
         s.append(String.format("(%s %2.0f%% %b)", passStatus.getPresentableName(), passStatus.getProgress() * 100, passStatus.isFinished()));
       }
-      s.append("; error count: ").append(errorCount.length).append(": ").append(new TIntArrayList(errorCount));
+      s.append("; error count: ").append(errorCount.length).append(": ").append(new IntArrayList(errorCount));
       return s.toString();
     }
   }

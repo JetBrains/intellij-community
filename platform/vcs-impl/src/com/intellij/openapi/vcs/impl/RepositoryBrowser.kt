@@ -16,12 +16,15 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.VcsActions
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.openapi.vcs.impl.RepositoryBrowserPanel.Companion.REPOSITORY_BROWSER_DATA_KEY
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
@@ -34,41 +37,51 @@ import java.io.File
 import javax.swing.Icon
 import javax.swing.JPanel
 
-const val TOOLWINDOW_ID: String = "Repositories" // NON-NLS
+object RepositoryBrowser {
+  const val TOOLWINDOW_ID: String = "Repositories" // NON-NLS
 
-fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, @NlsContexts.TabTitle title: String) {
-  val toolWindowManager = ToolWindowManager.getInstance(project)
-  val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager, project)
+  fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, @NlsContexts.TabTitle title: String) {
+    val toolWindowManager = ToolWindowManager.getInstance(project)
+    val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager)
 
-  for (content in repoToolWindow.contentManager.contents) {
-    val component = content.component as? RepositoryBrowserPanel ?: continue
-    if (component.root == root) {
-      repoToolWindow.contentManager.setSelectedContent(content)
-      return
+    for (content in repoToolWindow.contentManager.contents) {
+      val component = content.component as? RepositoryBrowserPanel ?: continue
+      if (component.root == root) {
+        repoToolWindow.contentManager.setSelectedContent(content)
+        return
+      }
     }
+
+    val contentPanel = RepositoryBrowserPanel(project, root, localRoot)
+
+    val content = ContentFactory.SERVICE.getInstance().createContent(contentPanel, title, true)
+    repoToolWindow.contentManager.addContent(content)
+    repoToolWindow.contentManager.setSelectedContent(content, true)
+    repoToolWindow.activate(null)
   }
 
-  val contentPanel = RepositoryBrowserPanel(project, root, localRoot)
-
-  val content = ContentFactory.SERVICE.getInstance().createContent(contentPanel, title, true)
-  repoToolWindow.contentManager.addContent(content)
-  repoToolWindow.contentManager.setSelectedContent(content, true)
-  repoToolWindow.activate(null)
+  private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager): ToolWindow {
+    val toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
+      id = TOOLWINDOW_ID,
+      anchor = ToolWindowAnchor.LEFT,
+      canCloseContent = true,
+      canWorkInDumbMode = true,
+      stripeTitle = { VcsBundle.message("RepositoryBrowser.toolwindow.name") }
+    ))
+    ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
+    return toolWindow
+  }
 }
-
-private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager, project: Project): ToolWindow {
-  val toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.LEFT, project, true)
-  ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
-  return toolWindow
-}
-
-val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
 
 class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
   val localRoot: VirtualFile
 ) : JPanel(BorderLayout()), DataProvider, Disposable {
+  companion object {
+    val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
+  }
+
   private val fileSystemTree: FileSystemTreeImpl
 
   init {

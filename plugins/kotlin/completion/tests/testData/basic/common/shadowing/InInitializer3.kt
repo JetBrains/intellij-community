@@ -4,5 +4,5 @@ fun foo(xxx: Int) {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "Int" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "Int", icon: "nodes/parameter.svg"}
 // NOTHING_ELSE

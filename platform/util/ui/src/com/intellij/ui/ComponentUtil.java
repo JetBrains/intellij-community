@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,12 +16,21 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class ComponentUtil {
+  /**
+   * @deprecated use {@link ClientProperty#get(Component, Key)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
-    Object value = component.getClientProperty(key);
-    //noinspection unchecked
-    return value != null ? (T)value : null;
+    return ClientProperty.get(component, key);
   }
 
+  /**
+   * @deprecated use {@link JComponent#putClientProperty(Object, Object)}
+   * or {@link ClientProperty#put(JComponent, Key, Object)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
     component.putClientProperty(key, value);
   }

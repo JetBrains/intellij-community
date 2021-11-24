@@ -62,10 +62,10 @@
     <option name="WHITESPACES" value="ffffff" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="666666" />
     <option name="STRING_CONTENT_INDENT_GUIDE" value="54b33e"/>
-    <option name="BookmarkIcon.background" value="E0861F"/>
-    <option name="BookmarkMnemonicIcon.foreground" value="FFFFFF"/>
-    <option name="BookmarkMnemonicIcon.background" value="000000"/>
-    <option name="BookmarkMnemonicIcon.borderColor" value="E0861F"/>
+    <option name="Bookmark.iconBackground" value="E0861F"/>
+    <option name="Bookmark.Mnemonic.iconForeground" value="FFFFFF"/>
+    <option name="Bookmark.Mnemonic.iconBackground" value="000000"/>
+    <option name="Bookmark.Mnemonic.iconBorderColor" value="E0861F"/>
     <option name="ScrollBar.background" value="000000"/>
     <option name="ScrollBar.trackColor" value="000000"/>
     <option name="ScrollBar.thumbColor" value="FFFFFFBE"/>

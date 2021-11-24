@@ -200,6 +200,22 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(descriptors.size(), strings.size());
   }
 
+  public void testGeneratedNames() {
+    RunManager manager = RunManager.getInstance(getProject());
+    ApplicationConfiguration first = new ApplicationConfiguration("Unknown", getProject());
+    first.setMainClass(myFixture.addClass("package a; public class Main {public static void main(String[] args) {}}"));
+    first.setGeneratedName();
+    assertEquals("Main", first.getName());
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager, first);
+    manager.addConfiguration(settings);
+    myTempSettings.add(settings);
+    
+    ApplicationConfiguration second = new ApplicationConfiguration("Unknown", getProject());
+    second.setMainClass(myFixture.addClass("package b; public class Main {public static void main(String[] args) {}}"));
+    second.setGeneratedName();
+    assertEquals("b.Main", second.getName());
+  }
+
   public void testTooltip() {
     myFixture.configureByText("Main.java", "public class Main {\n" +
                                            "    public static void m<caret>ain(String[] args) {\n" +

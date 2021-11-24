@@ -5,7 +5,7 @@ public class Foo {
     public static int X;
 
     public Foo(int n) {
-
+        new PrivateLibraryClass();
     }
 
     public void bar(int n) {

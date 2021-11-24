@@ -20,7 +20,7 @@ new Bar<String>().f<caret>oo();
   '''
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) ==
-           """<span style="color:#000000;">Bar</span>\n<a href="psi_element://java.util.List"><code><span style="color:#000000;">List</span></code></a><span style="">&lt;</span><a href="psi_element://java.lang.String"><code><span style="color:#000000;">String</span></code></a><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><a href="psi_element://java.lang.String"><code><span style="color:#000000;">String</span></code></a> <span style="">param</span><span style="">)</span>"""
+           """<span style="color:#000000;">Bar</span>\n<a href="psi_element://java.util.List"><code><span style="color:#0000ff;">List</span></code></a><span style="">&lt;</span><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a> <span style="">param</span><span style="">)</span>"""
   }
 
   void testGenericField() {
@@ -30,7 +30,7 @@ new Bar<Integer>().fi<caret>eld
   '''
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) ==
-           """<span style="color:#000000;">Bar</span>\n<a href="psi_element://java.lang.Integer"><code><span style="color:#000000;">Integer</span></code></a> <span style="color:#000000;">getField</span><span style="">(</span><span style="">)</span>"""
+           """<span style="color:#000000;">Bar</span>\n<a href="psi_element://java.lang.Integer"><code><span style="color:#0000ff;">Integer</span></code></a> <span style="color:#000000;">getField</span><span style="">(</span><span style="">)</span>"""
   }
 
   void testLink() {
@@ -45,7 +45,7 @@ class Gr {
 new Gr().fo<caret>o()
 ''', '''\
 <div class='definition'><pre><span style="color:#000043;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-     Use <a href="psi_element://Gr#bar()"><code><span style="color:#000000;">bar</span><span style="">()</span></code></a> from class <a href="psi_element://Gr"><code><span style="color:#000000;">Gr</span></code></a> instead
+     Use <a href="psi_element://Gr#bar()"><code><span style="color:#0000ff;">bar</span><span style="">()</span></code></a> from class <a href="psi_element://Gr"><code><span style="color:#0000ff;">Gr</span></code></a> instead
    </div><table class='sections'></table>'''
   }
 
@@ -58,7 +58,7 @@ def docs() {}
 
 <caret>docs()
 ''', '''<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-   check this out <a href="psi_element://java.lang.CharSequence"><code><span style="color:#000000;">character sequences</span></code></a>
+   check this out <a href="psi_element://java.lang.CharSequence"><code><span style="color:#0000ff;">character sequences</span></code></a>
  </div><table class='sections'></table>'''
   }
 
@@ -80,11 +80,11 @@ class Main {
 Main.<caret>docs()
 ''', '''\
 <div class='definition'><pre><span style="color:#000043;font-weight:bold;">static</span>&nbsp;<span style="color:#000043;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-     Link 1: <a href="psi_element://Main#foo(java.lang.String[])"><code><span style="color:#000000;">foo</span><span style="">(String[])</span></code></a> 
+     Link 1: <a href="psi_element://Main#foo(java.lang.String[])"><code><span style="color:#0000ff;">foo</span><span style="">(String[])</span></code></a> 
      <p>
-     Link 2: <a href="psi_element://Main#bar(java.lang.String[])"><code><span style="color:#000000;">bar</span><span style="">(String[])</span></code></a>
+     Link 2: <a href="psi_element://Main#bar(java.lang.String[])"><code><span style="color:#0000ff;">bar</span><span style="">(String[])</span></code></a>
      <p>
-     Link 3: <a href="psi_element://Main#bar(java.lang.String[], java.lang.Integer)"><code><span style="color:#000000;">bar</span><span style="">(String[],&#32;Integer)</span></code></a>
+     Link 3: <a href="psi_element://Main#bar(java.lang.String[], java.lang.Integer)"><code><span style="color:#0000ff;">bar</span><span style="">(String[],&#32;Integer)</span></code></a>
    </div><table class='sections'></table>\
 '''
   }
@@ -94,7 +94,7 @@ Main.<caret>docs()
 def aa = 1
 a<caret>a
 ''', '''\
-<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a> <span style="color:#000000;">aa</span></pre></div><table class='sections'></table><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.Integer"><code><span style="color:#000000;">Integer</span></code></a>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a> <span style="color:#000000;">aa</span></pre></div><table class='sections'></table><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.Integer"><code><span style="color:#0000ff;">Integer</span></code></a>'''
   }
 
   void 'test implicit closure parameter'() {
@@ -102,7 +102,7 @@ a<caret>a
 List<String> ss = []
 ss.collect { i<caret>t }
 ''', '''\
-<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a> <span style="color:#000000;">it</span></pre></div><table class='sections'></table><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.String"><code><span style="color:#000000;">String</span></code></a>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a> <span style="color:#000000;">it</span></pre></div><table class='sections'></table><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a>'''
   }
 
   void 'test code tag'() {
@@ -118,7 +118,7 @@ class Foo {
 new Foo().<caret>foo()
 ''', '''\
 <div class='definition'><pre><a href="psi_element://java.lang.String"><code><span style="color:#000000;">String</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-       May return <code><span style=""><span style="color:#000043;font-weight:bold;">null</span></span></code>
+       May return <code style='font-size:100%;'><span style=""><span style="color:#000043;font-weight:bold;">null</span></span></code>
      </div><table class='sections'></table>\
 '''
   }
@@ -157,7 +157,7 @@ new Gr<caret>oovyDocTest<Integer>()""", """\
 class GroovyDocTest<T> { }
 
 new Gr<caret>oovyDocTest<Integer>()""", """\
-<div class='definition'><pre><span style="color:#000043;font-weight:bold;">class</span> <span style="color:#000000;">GroovyDocTest</span><span style="">&lt;</span><span style="color:#20999d;">T</span><span style="">&gt;</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'>&lt;<span style="color:#20999d;">T</span>&gt; &ndash;  kej</td></table>\
+<div class='definition'><pre><span style="color:#000043;font-weight:bold;">class</span> <span style="color:#000000;">GroovyDocTest</span><span style="">&lt;</span><span style="color:#20999d;">T</span><span style="">&gt;</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'><code>&lt;<span style="color:#20999d;">T</span>&gt;</code> &ndash;  kej</td></table>\
 """
   }
 

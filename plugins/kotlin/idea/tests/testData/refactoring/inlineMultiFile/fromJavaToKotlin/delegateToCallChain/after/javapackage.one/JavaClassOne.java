@@ -1,8 +1,6 @@
 package javapackage.one;
 
 import javapackage.two.JavaClassTwo;
-import kotlinpackage.one.KotlinClassOneKt;
-import kotlinpackage.two.KotlinClassTwoKt;
 
 public class JavaClassOne {
 

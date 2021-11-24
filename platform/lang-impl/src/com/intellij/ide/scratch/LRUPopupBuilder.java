@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -46,6 +47,7 @@ public abstract class LRUPopupBuilder<T> {
   private JBIterable<T> myTopValues = JBIterable.empty();
   private JBIterable<T> myMiddleValues = JBIterable.empty();
   private JBIterable<T> myBottomValues = JBIterable.empty();
+  private Function<? super T, String> myExtraSpeedSearchNamer;
 
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
@@ -132,8 +134,15 @@ public abstract class LRUPopupBuilder<T> {
     return this;
   }
 
+  @NotNull
   public LRUPopupBuilder<T> withComparator(@Nullable Comparator<? super T> comparator) {
     myComparator = comparator;
+    return this;
+  }
+
+  @NotNull
+  public LRUPopupBuilder<T> withExtraSpeedSearchNamer(@Nullable Function<? super T, String> function) {
+    myExtraSpeedSearchNamer = function;
     return this;
   }
 
@@ -177,6 +186,13 @@ public abstract class LRUPopupBuilder<T> {
         @Override
         public boolean isSpeedSearchEnabled() {
           return true;
+        }
+
+        @Override
+        public String getIndexedString(T value) {
+          String extra = myExtraSpeedSearchNamer != null ? StringUtil.nullize(myExtraSpeedSearchNamer.apply(value)) : null;
+          if (extra == null) return super.getIndexedString(value);
+          return super.getIndexedString(value) + SpeedSearchUtil.getDefaultHardSeparators() + extra;
         }
 
         @Override

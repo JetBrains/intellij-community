@@ -96,7 +96,6 @@ public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
     Filter.ResultItem resultItem = resultItems.get(0);
     Assert.assertTrue(resultItem.getHyperlinkInfo() instanceof OpenFileHyperlinkInfo);
     Assert.assertEquals(expectedPath, ((OpenFileHyperlinkInfo)resultItem.getHyperlinkInfo()).getVirtualFile().getCanonicalPath());
-    Assert.assertEquals(expectedStart, resultItem.getHighlightStartOffset());
     Assert.assertEquals(expectedStart + expectedPath.length(), resultItem.getHighlightEndOffset());
   }
 

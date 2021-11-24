@@ -404,7 +404,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return true;
   }
 
-
   /**
    * @deprecated does nothing
    */

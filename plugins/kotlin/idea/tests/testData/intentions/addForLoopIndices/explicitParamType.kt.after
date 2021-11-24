@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Variable 'c' is never used
 // AFTER-WARNING: Variable 'index' is never used
 fun a() {

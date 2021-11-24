@@ -208,6 +208,11 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   }
 
   @Override
+  public int getParameterCount() {
+    return getReference().getTypeParameterCount();
+  }
+
+  @Override
   public @NotNull String getPresentableText(boolean annotated) {
     PsiJavaCodeReferenceElement ref = getReference();
     if (!annotated) return PsiNameHelper.getPresentableText(ref);

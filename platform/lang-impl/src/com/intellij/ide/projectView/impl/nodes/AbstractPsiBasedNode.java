@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -29,12 +30,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.StatePreservingNavigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredText;
-import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
@@ -129,10 +128,12 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Nullable
   private VirtualFile getVirtualFileForValue() {
-    PsiElement psiElement = extractPsiFromValue();
-    if (psiElement == null) {
-      return null;
+    Object value = getEqualityObject();
+    if (value instanceof SmartPsiElementPointer<?>) {
+      SmartPsiElementPointer<?> pointer = (SmartPsiElementPointer<?>)value;
+      return pointer.getVirtualFile(); // do not retrieve PSI element
     }
+    PsiElement psiElement = extractPsiFromValue();
     return PsiUtilCore.getVirtualFile(psiElement);
   }
 
@@ -177,7 +178,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
         tagIcon = tagIconAndText.first;
         tagText = tagIconAndText.second;
       }
-      data.setIcon(IconUtil.rowIcon(tagIcon, icon));
+      data.setIcon(withIconMarker(icon, tagIcon));
       data.setPresentableText(myName);
       if (deprecated) {
         data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
@@ -216,22 +217,26 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
     Icon icon = original;
 
-    Icon bookmarkIcon = getBookmarkIcon(project, file);
-    if (bookmarkIcon != null) {
-      final RowIcon composite = IconManager.getInstance().createRowIcon(2, RowIcon.Alignment.CENTER);
-      composite.setIcon(icon, 0);
-      composite.setIcon(bookmarkIcon, 1);
-      icon = composite;
-    }
-
     if (file.is(VFileProperty.SYMLINK)) {
       icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
+    }
+
+    Icon bookmarkIcon = getBookmarkIcon(project, file);
+    if (bookmarkIcon != null) {
+      icon = withIconMarker(icon, bookmarkIcon);
     }
 
     return icon;
   }
 
+  private static @Nullable Icon withIconMarker(@Nullable Icon icon, @Nullable Icon marker) {
+    return Registry.is("ide.project.view.bookmarks.icon.before", false)
+           ? IconUtil.rowIcon(marker, icon)
+           : IconUtil.rowIcon(icon, marker);
+  }
+
   private static @Nullable Icon getBookmarkIcon(@NotNull Project project, @Nullable Object context) {
+    if (Registry.is("ide.project.view.bookmarks.icon.hide", false)) return null;
     BookmarksManager manager = BookmarksManager.getInstance(project);
     if (manager == null) return null; // bookmarks manager is not available
     Bookmark bookmark = manager.createBookmark(context);
@@ -247,17 +252,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Override
   public boolean contains(@NotNull final VirtualFile file) {
-    final PsiElement psiElement = extractPsiFromValue();
-    if (psiElement == null || !psiElement.isValid()) {
-      return false;
-    }
-
-    final PsiFile containingFile = psiElement.getContainingFile();
-    if (containingFile == null) {
-      return false;
-    }
-    final VirtualFile valueFile = containingFile.getVirtualFile();
-    return file.equals(valueFile);
+    return file.equals(getVirtualFileForValue());
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution;
 
@@ -11,6 +11,7 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,7 +23,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -231,17 +231,14 @@ public final class ExecutionHelper {
 
   public static Collection<RunContentDescriptor> findRunningConsole(@NotNull Project project,
                                                                     @NotNull NotNullFunction<? super RunContentDescriptor, Boolean> descriptorMatcher) {
-    final Ref<Collection<RunContentDescriptor>> ref = new Ref<>();
-
-    final Runnable computeDescriptors = () -> {
+    return ReadAction.compute(() -> {
       RunContentManager contentManager = RunContentManager.getInstance(project);
       final RunContentDescriptor selectedContent = contentManager.getSelectedContent();
       if (selectedContent != null) {
         final ToolWindow toolWindow = contentManager.getToolWindowByDescriptor(selectedContent);
         if (toolWindow != null && toolWindow.isVisible()) {
           if (descriptorMatcher.fun(selectedContent)) {
-            ref.set(Collections.singletonList(selectedContent));
-            return;
+            return Collections.singletonList(selectedContent);
           }
         }
       }
@@ -252,18 +249,8 @@ public final class ExecutionHelper {
           result.add(runContentDescriptor);
         }
       }
-      ref.set(result);
-    };
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      computeDescriptors.run();
-    }
-    else {
-      LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
-      ApplicationManager.getApplication().invokeAndWait(computeDescriptors);
-    }
-
-    return ref.get();
+      return result;
+    });
   }
 
   public static List<RunContentDescriptor> collectConsolesByDisplayName(@NotNull Project project,

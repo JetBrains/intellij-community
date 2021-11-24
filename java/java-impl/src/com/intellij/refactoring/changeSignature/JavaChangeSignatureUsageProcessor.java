@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -776,11 +776,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
     if (changeInfo.isVisibilityChanged()) {
       PsiModifierList modifierList = method.getModifierList();
-      final String highestVisibility = isOriginal
-                                       ? changeInfo.getNewVisibility()
-                                       : VisibilityUtil.getHighestVisibility(changeInfo.getNewVisibility(),
-                                                                             VisibilityUtil.getVisibilityModifier(modifierList));
-      VisibilityUtil.setVisibility(modifierList, highestVisibility);
+      final String targetVisibility;
+      if (isOriginal || changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).propagateVisibility) {
+        targetVisibility = changeInfo.getNewVisibility();
+      }
+      else {
+        targetVisibility =
+          VisibilityUtil.getHighestVisibility(changeInfo.getNewVisibility(), VisibilityUtil.getVisibilityModifier(modifierList));
+      }
+      VisibilityUtil.setVisibility(modifierList, targetVisibility);
     }
 
     if (changeInfo.isNameChanged()) {
@@ -1273,10 +1277,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       VisibilityUtil.setVisibility(modifierList, visibility);
 
       searchForHierarchyConflicts(method, conflictDescriptions, visibility);
+      boolean propagateVisibility = myChangeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)myChangeInfo).propagateVisibility;
 
       for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
         UsageInfo usageInfo = iterator.next();
         PsiElement element = usageInfo.getElement();
+        PsiReference reference = usageInfo.getReference();
+        if (!propagateVisibility && reference != null && !method.equals(reference.resolve())) continue;
         if (element != null) {
           if (element instanceof PsiQualifiedReference) {
             PsiClass accessObjectClass = null;

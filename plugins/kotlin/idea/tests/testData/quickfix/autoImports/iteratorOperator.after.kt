@@ -1,6 +1,6 @@
 // "Import" "true"
 // ERROR: For-loop range must have an 'iterator()' method
-// WITH_RUNTIME
+// WITH_STDLIB
 
 package bar
 

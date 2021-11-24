@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.util
 
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.MacKeymapUtil
@@ -94,7 +93,7 @@ object KeymapUtil {
   fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
     val keyStroke = getShortcutByActionId("GotoAction")
     val gotoAction = getKeyStrokeData(keyStroke)
-    val actionName = ActionManager.getInstance().getAction(actionId).templatePresentation.text.replaceSpacesWithNonBreakSpace()
+    val actionName = getActionById(actionId).templatePresentation.text.replaceSpacesWithNonBreakSpace()
     val updated = ArrayList<IntRange>(gotoAction.second)
     val start = gotoAction.first.length + 5
     updated.add(IntRange(start, start + actionName.length - 1))

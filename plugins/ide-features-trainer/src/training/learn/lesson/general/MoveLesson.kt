@@ -3,6 +3,7 @@ package training.learn.lesson.general
 
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -35,6 +36,13 @@ class MoveLesson(private val caretText: String, private val sample: LessonSample
         LessonsBundle.message("move.whole.method.down", action(it))
       }
     }
+
+  override val suitableTips = listOf("MoveUpDown")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.lines.of.code"),
+         LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),
+  )
 }
 
 fun checkSwapMoreThan2Lines(before: String, now: String): Boolean {

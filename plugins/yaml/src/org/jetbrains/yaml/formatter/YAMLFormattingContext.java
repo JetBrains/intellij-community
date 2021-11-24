@@ -34,7 +34,6 @@ import org.jetbrains.yaml.psi.YAMLValue;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 class YAMLFormattingContext {
@@ -72,6 +71,7 @@ class YAMLFormattingContext {
     mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
       .between(YAMLTokenTypes.COLON, YAMLElementTypes.KEY_VALUE_PAIR).lineBreakInCode()
       .between(YAMLTokenTypes.COLON, YAMLElementTypes.SEQUENCE_ITEM).lineBreakInCode()
+      .between(YAMLElementTypes.ALIAS_NODE, YAMLTokenTypes.COLON).spaces(1)
       .before(YAMLTokenTypes.COLON).spaceIf(custom.SPACE_BEFORE_COLON)
       .after(YAMLTokenTypes.COLON).spaces(1)
       .after(YAMLTokenTypes.LBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)
@@ -85,14 +85,28 @@ class YAMLFormattingContext {
     getValueAlignment = custom.ALIGN_VALUES_PROPERTIES;
   }
 
-  private static final TokenSet NON_SIGNIFICANT_TOKES_BEFORE_TEMPLATE =
+  private static final TokenSet NON_SIGNIFICANT_TOKENS_BEFORE_TEMPLATE =
     TokenSet.create(TokenType.WHITE_SPACE, YAMLTokenTypes.SEQUENCE_MARKER);
 
   private static boolean isAfterKey(ASTNode node) {
     List<ASTNode> nodes = StreamEx.iterate(node, Objects::nonNull, TreeUtil::prevLeaf).skip(1)
-      .dropWhile(n -> NON_SIGNIFICANT_TOKES_BEFORE_TEMPLATE.contains(n.getElementType())).limit(2).toList();
+      .dropWhile(n -> NON_SIGNIFICANT_TOKENS_BEFORE_TEMPLATE.contains(n.getElementType())).limit(2).toList();
     if (nodes.size() != 2) return false;
     return YAMLTokenTypes.COLON.equals(nodes.get(0).getElementType()) && YAMLTokenTypes.SCALAR_KEY.equals(nodes.get(1).getElementType());
+  }
+
+  private static boolean isAfterSequenceMarker(ASTNode node) {
+    List<ASTNode> nodes = StreamEx.iterate(node, Objects::nonNull, n -> n.getTreePrev()).skip(1)
+      .filter(n -> !YAMLElementTypes.SPACE_ELEMENTS.contains(n.getElementType()))
+      .takeWhile(n -> !YAMLTokenTypes.EOL.equals(n.getElementType())).limit(2).toList();
+    if (nodes.size() != 1) return false;
+    return YAMLTokenTypes.SEQUENCE_MARKER.equals(nodes.get(0).getElementType());
+  }
+
+  private static boolean isAdjectiveToMinus(ASTNode node) {
+    ASTNode prevLeaf = TreeUtil.prevLeaf(node);
+    // we don't consider`-` before template as a seq marker if there is no space before it, because it could be a `-1` value for instance
+    return prevLeaf != null && YAMLTokenTypes.SEQUENCE_MARKER.equals(prevLeaf.getElementType());
   }
 
   @Nullable
@@ -100,12 +114,16 @@ class YAMLFormattingContext {
     if (child1 instanceof ASTBlock && endsWithTemplate(((ASTBlock)child1).getNode())) {
       return null;
     }
-    
+
     if (child2 instanceof ASTBlock && startsWithTemplate(((ASTBlock)child2).getNode())) {
-      if (isAfterKey(((ASTBlock)child2).getNode())) {
-        IElementType parentType = Optional.of(parent)
-          .map(it -> ObjectUtils.tryCast(it, ASTBlock.class)).map(it -> it.getNode()).map(it -> it.getElementType()).orElse(null);
-        return mySpaceBuilder.getSpacing(parent, parentType, YAMLTokenTypes.COLON, YAMLTokenTypes.SCALAR_TEXT);
+      ASTNode astNode = ((ASTBlock)child2).getNode();
+      if (!isAdjectiveToMinus(astNode)) {
+        if (isAfterKey(astNode)) {
+          return mySpaceBuilder.getSpacing(parent, getNodeElementType(parent), YAMLTokenTypes.COLON, YAMLTokenTypes.SCALAR_TEXT);
+        }
+        if (isAfterSequenceMarker(astNode)) {
+          return getSpacingAfterSequenceMarker(child1, child2);
+        }
       }
       return null;
     }
@@ -115,6 +133,10 @@ class YAMLFormattingContext {
       return simpleSpacing;
     }
 
+    return getSpacingAfterSequenceMarker(child1, child2);
+  }
+
+  private Spacing getSpacingAfterSequenceMarker(Block child1, Block child2) {
     if (!(child1 instanceof ASTBlock && child2 instanceof ASTBlock)) {
       return null;
     }
@@ -156,10 +178,19 @@ class YAMLFormattingContext {
     return Spacing.createSpacing(spaces, spaces, minLineFeeds, false, 0);
   }
 
+  private static @Nullable IElementType getNodeElementType(Block parent) {
+    if (parent == null) return null;
+    ASTBlock it = ObjectUtils.tryCast(parent, ASTBlock.class);
+    if (it == null) return null;
+    ASTNode node = it.getNode();
+    if (node == null) return null;
+    return node.getElementType();
+  }
+
   private static boolean startsWithTemplate(@Nullable ASTNode astNode) {
     while (astNode != null) {
       if (astNode instanceof OuterLanguageElement) return true;
-      if (NON_SIGNIFICANT_TOKES_BEFORE_TEMPLATE.contains(astNode.getElementType())) {
+      if (NON_SIGNIFICANT_TOKENS_BEFORE_TEMPLATE.contains(astNode.getElementType())) {
         astNode = astNode.getTreeNext();
       }
       else {

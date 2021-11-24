@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicInteger
@@ -43,9 +42,9 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
   }
 
-  override fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {
+  override fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
     val session = getCurrentSession() ?: return -1.0
-    return session.getMLWeight(contributor, element)
+    return session.getMLWeight(contributor, element, matchingDegree)
   }
 
   fun getCurrentSession(): SearchEverywhereMLSearchSession? {
@@ -66,10 +65,10 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
                                reason: SearchRestartReason,
                                keysTyped: Int,
                                backspacesTyped: Int,
-                               textLength: Int,
+                               searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (experiment.isAllowed) {
-      getCurrentSession()?.onSearchRestart(project, previousElementsProvider, reason, tabId, keysTyped, backspacesTyped, textLength)
+      getCurrentSession()?.onSearchRestart(project, previousElementsProvider, reason, tabId, keysTyped, backspacesTyped, searchQuery)
     }
   }
 
@@ -83,6 +82,12 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   override fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (experiment.isAllowed) {
       getCurrentSession()?.onSearchFinished(project, experiment, elementsProvider)
+    }
+  }
+
+  override fun notifySearchResultsUpdated() {
+    if (experiment.isAllowed) {
+      getCurrentSession()?.notifySearchResultsUpdated()
     }
   }
 

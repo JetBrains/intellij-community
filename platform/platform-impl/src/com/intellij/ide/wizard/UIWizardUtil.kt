@@ -17,19 +17,43 @@ fun getCanonicalPath(path: String, removeLastSlash: Boolean = true): String {
   return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
 }
 
-fun <P : NewProjectWizardStep, C : NewProjectWizardStep> P.chain(factory: (P) -> C) = chainSteps(this, factory)
+fun <T1, T2> T1.chain(f1: (T1) -> T2): NewProjectWizardStep
+  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep {
 
-fun <P : NewProjectWizardStep, C : NewProjectWizardStep> chainSteps(parent: P, factory: (P) -> C): NewProjectWizardStep {
-  val child = factory(parent)
-  return object : AbstractNewProjectWizardStep(parent) {
+  val s1 = f1(this)
+  return stepSequence(this, s1)
+}
+
+fun <T1, T2, T3> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3): NewProjectWizardStep
+  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep {
+
+  val s1 = f1(this)
+  val s2 = f2(s1)
+  return stepSequence(this, s1, s2)
+}
+
+fun <T1, T2, T3, T4> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4): NewProjectWizardStep
+  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep, T4 : NewProjectWizardStep {
+
+  val s1 = f1(this)
+  val s2 = f2(s1)
+  val s3 = f3(s2)
+  return stepSequence(this, s1, s2, s3)
+}
+
+fun stepSequence(first: NewProjectWizardStep, vararg rest: NewProjectWizardStep): NewProjectWizardStep {
+  val steps = listOf(first) + rest
+  return object : AbstractNewProjectWizardStep(first) {
     override fun setupUI(builder: Panel) {
-      parent.setupUI(builder)
-      child.setupUI(builder)
+      for (step in steps) {
+        step.setupUI(builder)
+      }
     }
 
     override fun setupProject(project: Project) {
-      parent.setupProject(project)
-      child.setupProject(project)
+      for (step in steps) {
+        step.setupProject(project)
+      }
     }
   }
 }

@@ -176,7 +176,17 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (psiElement().afterLeaf(PsiKeyword.INSTANCEOF).accepts(position)) {
-      return new ElementExtractorFilter(ElementClassFilter.CLASS);
+      return new ElementFilter() {
+        @Override
+        public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+          return element instanceof PsiClass && !(element instanceof PsiTypeParameter);
+        }
+
+        @Override
+        public boolean isClassAcceptable(Class hintClass) {
+          return PsiClass.class.isAssignableFrom(hintClass) && !PsiTypeParameter.class.isAssignableFrom(hintClass);
+        }
+      };
     }
 
     if (JavaKeywordCompletion.VARIABLE_AFTER_FINAL.accepts(position)) {
@@ -1162,15 +1172,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   public static boolean semicolonNeeded(PsiFile file, int startOffset) {
-    return semicolonNeeded(null, file, startOffset);
-  }
-
-  /**
-   * @deprecated use {@link #semicolonNeeded(PsiFile, int)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean semicolonNeeded(@Nullable Editor editor, PsiFile file, int startOffset) {
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiJavaCodeReferenceElement.class, false);
     if (ref != null && !(ref instanceof PsiReferenceExpression)) {
       if (ref.getParent() instanceof PsiTypeElement) {

@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.ide
 
 import com.intellij.ide.PasteProvider
-import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.awt.Image
@@ -34,15 +32,8 @@ open class ImagePasteProvider : PasteProvider {
   open fun isEnabledForDataContext(dataContext: DataContext): Boolean = true
 
   final override fun performPaste(dataContext: DataContext) {
-    val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
     val currentFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val pasteContents = CopyPasteManager.getInstance().contents ?: return
-
-    if (DumbService.isDumb(project)) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        LangBundle.message("popup.content.sorry.file.copy.paste.available.during.indexing"))
-      return
-    }
 
     val newFileParent = if (currentFile.isDirectory) currentFile else currentFile.parent
     if (newFileParent == null || !newFileParent.isDirectory) return

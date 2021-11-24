@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PROBLEM: Logger initialized with foreign class 'Bar::class'
 // FIX: Replace with 'Foo::class'
 package org.apache.commons.logging

@@ -275,6 +275,16 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
+  public @NotNull PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text)
+    throws IncorrectOperationException {
+    String matchStatement = "match x:\n" +
+                            "    case C(" + text + "):\n" +
+                            "        pass ";
+    int[] pathToAttrPattern = {0, 5, 2, 1, 1};
+    return createFromText(languageLevel, PyPattern.class, matchStatement, pathToAttrPattern);
+  }
+
+  @Override
   @NotNull
   public PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName) {
     final PsiFile dummyFile = createDummyFile(langLevel, functionName + "()");

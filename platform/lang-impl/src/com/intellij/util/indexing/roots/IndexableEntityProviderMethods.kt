@@ -53,7 +53,7 @@ object IndexableEntityProviderMethods {
     @Suppress("DEPRECATION")
     if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
       val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
-      val entityStorage = WorkspaceModel.Companion.getInstance(project).entityStorage.current
+      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
         if (provider is IndexableEntityProvider.Existing) {
           builders.addAll(provider.getIteratorBuildersForExistingModule(entity, entityStorage, project))

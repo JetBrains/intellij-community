@@ -67,9 +67,10 @@ internal class InstallPluginService : RestService() {
     context: ChannelHandlerContext,
     pluginIds: List<String>,
   ): Nothing? {
+    val marketplaceRequests = MarketplaceRequests.getInstance()
     val compatibleUpdatesInfo = pluginIds
       .mapNotNull { PluginId.findId(it) }
-      .map { id -> id.idString to (MarketplaceRequests.Instance.getLastCompatiblePluginUpdate(id) != null) }
+      .map { id -> id.idString to (marketplaceRequests.getLastCompatiblePluginUpdate(id) != null) }
       .let { info ->
         if (info.size != 1) info
         else listOf("compatible" to info[0].second)

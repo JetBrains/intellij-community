@@ -22,6 +22,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+/**
+ * This extension is used to implement support for 'Parameter Info' action for a specific language. That action shows a popup with
+ * information about formal method parameters, when caret is located at method invocation site.<p>
+ * The extension should implement methods finding target method's PSI element based on caret position
+ * ({@link #findElementForParameterInfo(CreateParameterInfoContext)} and
+ * {@link #findElementForUpdatingParameterInfo(UpdateParameterInfoContext)}, the former also should specify information about all method
+ * overloads to display), method to select currently used overload and parameter caret is currently on
+ * ({@link #updateParameterInfo(Object, UpdateParameterInfoContext)}), method defining the presentation of popup elements
+ * ({@link #updateUI(Object, ParameterInfoUIContext)} and method to actually show the popup
+ * ({@link #showParameterInfo(Object, CreateParameterInfoContext)});
+ */
 public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> {
 
   /**
@@ -31,7 +42,11 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
    */
   @Nullable
   ParameterOwner findElementForParameterInfo(@NotNull CreateParameterInfoContext context);
-  // Usually context.showHint
+
+  /**
+   * This method is called to show parameter info popup. Usually it just invokes
+   * {@link CreateParameterInfoContext#showHint(PsiElement, int, ParameterInfoHandler)}.
+   */
   void showParameterInfo(@NotNull final ParameterOwner element, @NotNull CreateParameterInfoContext context);
 
   /**

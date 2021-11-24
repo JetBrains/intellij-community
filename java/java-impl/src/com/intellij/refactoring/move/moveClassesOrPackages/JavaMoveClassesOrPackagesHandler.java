@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
@@ -9,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -20,12 +22,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -124,14 +126,10 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         return;
       }
 
-      int ret = Messages.showDialog(project,
-                                    JavaBundle.message("where.do.you.want.to.move.directory.prompt", directories[0].getVirtualFile().getPresentableUrl()),
-                                    MoveHandler.getRefactoringName(),
-                                    new String[] {
-                                      JavaBundle.message("button.to.another.directory"),
-                                      JavaBundle.message("button.to.another.source.root")},
-                                    0,
-                                    null);
+      int ret = Messages.showYesNoCancelDialog(project,
+                                               JavaBundle.message("where.do.you.want.to.move.directory.prompt", "../" + SymbolPresentationUtil.getFilePathPresentation(directories[0])),
+                                               JavaBundle.message("dialog.title.move.directory"), JavaBundle.message("button.to.another.directory"), JavaBundle.message("button.to.another.source.root"), CommonBundle.getCancelButtonText(),
+                                               Messages.getQuestionIcon());
       if (ret == Messages.YES) {
         moveAsDirectory(project, null, callback, directories);
       }
@@ -194,7 +192,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         return;
       }
       final MoveClassesOrPackagesToNewDirectoryDialog dlg =
-        new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], PsiElement.EMPTY_ARRAY, false, callback) {
+        new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], directories, false, callback) {
           @Override
           protected BaseRefactoringProcessor createRefactoringProcessor(Project project,
                                                                         final PsiDirectory targetDirectory,
@@ -235,7 +233,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     for (PsiDirectory directory : directories) {
       final boolean [] containsJava = new boolean[]{false};
       VfsUtil.processFileRecursivelyWithoutIgnored(directory.getVirtualFile(), file -> {
-        if (file.getFileType() == JavaFileType.INSTANCE) {
+        if (FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE)) {
           containsJava[0] = true;
           return false;
         }

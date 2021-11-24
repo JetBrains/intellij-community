@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.*
@@ -17,7 +17,6 @@ import javax.swing.SwingUtilities
 
 open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
  companion object {
-
    fun doRightClick(dataContext: DataContext) {
      ActionManager.getInstance().getAction("RunToolbarSlotContextMenuGroup")?.let {
        if(it is ActionGroup) {
@@ -31,6 +30,10 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
      }
    }
  }
+
+  open fun trace(e: AnActionEvent, add: String? = null) {
+
+  }
 
   override fun getEditRunConfigurationAction(): AnAction? {
     return ActionManager.getInstance().getAction(RunToolbarEditConfigurationAction.ACTION_ID)
@@ -54,11 +57,11 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isVisible = e.project?.let {
-      !e.isActiveProcess() && e.presentation.isVisible
-    } ?: false
+    if(!e.presentation.isVisible) return
 
-    if (!RunToolbarProcess.experimentalUpdating()) {
+    e.presentation.isVisible = !e.isActiveProcess()
+
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
         e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
@@ -116,6 +119,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
 
     override fun actionPerformed(e: AnActionEvent) {
       e.project?.let {
+        e.runToolbarData()?.clear()
         e.setConfiguration(configuration)
         RunToolbarSlotManager.getInstance(it).saveSlotsConfiguration()
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),

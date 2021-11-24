@@ -22,24 +22,25 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public final class VfsEventsMerger {
   private static final boolean DEBUG = FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE || Boolean.getBoolean("log.index.vfs.events");
-  public static final Logger LOG = MyLoggerFactory.getLoggerInstance();
+  private static final Logger LOG = MyLoggerFactory.getLoggerInstance();
 
   void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
-    if (LOG != null) LOG.info("Request build indices for file:" + file.getPath() + ", contentChange:" + contentChange);
+    tryLog(contentChange ? "FILE_CONTENT_CHANGED" : "FILE_ADDED", file);
     updateChange(file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
   }
 
   void recordFileRemovedEvent(@NotNull VirtualFile file) {
-    //if (LOG != null) LOG.info("Request invalidate indices for file:" + file.getPath() + ", deletion");
+    tryLog("FILE_REMOVED", file);
     updateChange(file, FILE_REMOVED);
   }
 
   void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
-    if (LOG != null) LOG.info("Transient state changed for file:" + file.getPath());
+    tryLog("FILE_TRANSIENT_STATE_CHANGED", file);
     updateChange(file, FILE_TRANSIENT_STATE_CHANGED);
   }
 
@@ -180,6 +181,25 @@ public final class VfsEventsMerger {
       int fileId = FileBasedIndex.getFileId(file);
       assert fileId >= 0;
       return fileId;
+    }
+  }
+
+  public static void tryLog(@NotNull String eventName, @NotNull VirtualFile file) {
+    tryLog(eventName, file, null);
+  }
+
+  public static void tryLog(@NotNull String eventName, @NotNull VirtualFile file, @Nullable Supplier<String> additionalMessage) {
+    tryLog(() -> {
+      return "event=" + eventName +
+             ",f=" + file.getPath() +
+             (file instanceof VirtualFileWithId ? (",id=" + ((VirtualFileWithId)file).getId()) : "") +
+             (additionalMessage == null ? "" : ("," + additionalMessage.get()));
+    });
+  }
+
+  public static void tryLog(Supplier<String> message) {
+    if (LOG != null) {
+      LOG.info(message.get());
     }
   }
 

@@ -63,7 +63,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return canCopyClass(fromUpdate, elements);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getActionName(PsiElement[] elements) {
     if (elements.length == 1 && !(elements[0] instanceof PsiPackage) && !(elements[0] instanceof PsiDirectory)) {
@@ -184,26 +184,20 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       LOG.assertTrue(defaultTargetDirectory != null, psiFile);
     }
     Project project = defaultTargetDirectory.getProject();
-    if (DumbService.isDumb(elements[0].getProject())) {
-      DumbService.getInstance(project).showDumbModeNotification(JavaRefactoringBundle.message(
-        "copy.handler.is.not.available.during.indexing"));
+    if (DumbService.isDumb(project)) {
+      int copyDumb = Messages.showYesNoDialog(project,
+                                              JavaRefactoringBundle.message("copy.handler.is.dumb.during.indexing"),
+                                              getActionName(elements), Messages.getQuestionIcon());
+      if (copyDumb == Messages.YES) {
+        copyAsFiles(elements, defaultTargetDirectory, project);
+      }
       return;
     }
 
     VirtualFile sourceRootForFile =
       ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(defaultTargetDirectory.getVirtualFile());
     if (sourceRootForFile == null) {
-      final List<PsiElement> files = new ArrayList<>();
-      for (PsiElement element : elements) {
-        PsiFile containingFile = element.getContainingFile();
-        if (containingFile != null) {
-          files.add(containingFile);
-        }
-        else if (element instanceof PsiDirectory) {
-          files.add(element);
-        }
-      }
-      CopyFilesOrDirectoriesHandler.copyAsFiles(files.toArray(PsiElement.EMPTY_ARRAY), defaultTargetDirectory, project);
+      copyAsFiles(elements, defaultTargetDirectory, project);
       return;
     }
     Object targetDirectory = null;
@@ -258,6 +252,20 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       copyClassesImpl(className, project, classes, relativePathsMap, targetDirectory, defaultTargetDirectory, JavaRefactoringBundle.message(
         "copy.handler.copy.class"), false, openInEditor);
     }
+  }
+
+  private static void copyAsFiles(PsiElement[] elements, PsiDirectory defaultTargetDirectory, Project project) {
+    final List<PsiElement> files = new ArrayList<>();
+    for (PsiElement element : elements) {
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile != null) {
+        files.add(containingFile);
+      }
+      else if (element instanceof PsiDirectory) {
+        files.add(element);
+      }
+    }
+    CopyFilesOrDirectoriesHandler.copyAsFiles(files.toArray(PsiElement.EMPTY_ARRAY), defaultTargetDirectory, project);
   }
 
   private static boolean copyOneClass(Map<PsiFile, PsiClass[]> classes) {

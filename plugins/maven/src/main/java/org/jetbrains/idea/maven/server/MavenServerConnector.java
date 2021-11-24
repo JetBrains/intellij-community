@@ -67,7 +67,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
       MavenModel m = getServer().interpolateAndAlignModel(model, basedir, MavenRemoteObjectWrapper.ourToken);
       RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(myProject);
       if (transformer != RemotePathTransformerFactory.Transformer.ID) {
-        new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(m);
+        new MavenBuildPathsChange((String s) -> transformer.toIdePath(s), s -> transformer.canBeRemotePath(s)).perform(m);
       }
       return m;
     });
@@ -146,7 +146,8 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   @Override
   public String toString() {
     return "MavenServerConnector{" +
-           "myDistribution=" + myDistribution.getMavenHome() +
+           Integer.toHexString(this.hashCode()) +
+           ", myDistribution=" + myDistribution.getMavenHome() +
            ", myJdk=" + myJdk.getName() +
            ", myMultimoduleDirectories=" + myMultimoduleDirectories +
            '}';

@@ -124,6 +124,10 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testFoldReturnExpression(){
+    doTest()
+  }
+
   fun testOverlappingRanges(){
     doTest()
   }
@@ -151,6 +155,50 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testExpressionStatementInSwitchStatement(){
+    doTest()
+  }
+
+  fun testIDEA278872(){
+    doTest()
+  }
+
+  fun testLocalAssignmentDuplicates(){
+    doTest()
+  }
+
+  fun testWrongLocalAssignmentDuplicates(){
+    doTest()
+  }
+
+  fun testDuplicateWithLocalMethodReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithAnonymousMethodReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithAnonymousFieldReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithLocalReferenceInLambda(){
+    doTest()
+  }
+
+  fun testAvoidChangeSignatureForLocalRefsInPattern(){
+    doTest()
+  }
+
+  fun testAvoidChangeSignatureForLocalRefsInCandidate(){
+    doTest()
+  }
+
+  fun testDiamondTypesConsideredAsEqual(){
+    doTest()
+  }
+
+  fun testDuplicatedExpressionAndChangeSignature(){
     doTest()
   }
 

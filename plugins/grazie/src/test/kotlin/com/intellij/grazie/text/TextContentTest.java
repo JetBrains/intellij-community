@@ -76,12 +76,19 @@ public class TextContentTest extends BasePlatformTestCase {
     }
   }
 
+  public void testJoinAdjacentFileRanges() {
+    var file = myFixture.configureByText("a.txt", "abc");
+    TextContent c1 = psiFragment(file, 0, 1);
+    TextContent c2 = psiFragment(file, 1, 2);
+    assertOrderedEquals(TextContent.join(List.of(c1, c2)).getRangesInFile(), new TextRange(0, 2));
+  }
+
   public void testJoinWithWhitespace() {
     var file = myFixture.configureByText("a.txt", "abbbc");
     var f1 = psiFragment(file, 0, 1);
     var f2 = psiFragment(file, 4, 5).markUnknown(new TextRange(1, 1));
 
-    var joined = TextContent.joinWithWhitespace(List.of(f1, f2));
+    var joined = TextContent.joinWithWhitespace(' ', List.of(f1, f2));
     assertNotNull(joined);
     assertEquals("a c|", unknownOffsets(joined));
     assertEquals(List.of(0, 1, 4, 5), IntStreamEx.range(4).mapToObj(joined::textOffsetToFile).toList());

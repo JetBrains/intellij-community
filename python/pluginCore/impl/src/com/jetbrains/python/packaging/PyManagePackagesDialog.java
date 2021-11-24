@@ -35,7 +35,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
     sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
-    PackagesNotificationPanel notificationPanel = new PackagesNotificationPanel();
+    PackagesNotificationPanel notificationPanel = new PyPackagesNotificationPanel();
     final PyInstalledPackagesPanel packagesPanel = new PyInstalledPackagesPanel(project, notificationPanel);
     packagesPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
     packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, sdk));

@@ -109,8 +109,8 @@ public class ScopePanel extends JPanel implements Disposable{
 
         myModuleSelection.addItemListener(scopeListener);
 
-        ((ScopeChooserCombo)myCustomScopeSelection).init(myProject, true, true, scope.getScopeName());
-        myCustomScopeSelection.getComboBox().addItemListener(scopeListener);
+      ((ScopeChooserCombo)myCustomScopeSelection).init(myProject, true, true, scope.getScopeName(), null);
+      myCustomScopeSelection.getComboBox().addItemListener(scopeListener);
 
         myDirectory.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
             @Override

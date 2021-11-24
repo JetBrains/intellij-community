@@ -95,7 +95,7 @@ public class DebuggerSteppingHelper {
     }
 
     public static DebugProcessImpl.ResumeCommand createStepIntoCommand(
-            SuspendContextImpl suspendContext,
+            @NotNull SuspendContextImpl suspendContext,
             boolean ignoreBreakpoints,
             @Nullable MethodFilter methodFilter
     ) {
@@ -104,7 +104,7 @@ public class DebuggerSteppingHelper {
             @Override
             public void contextAction() {
                 try {
-                    new KotlinStepAction.StepInto(methodFilter)
+                    new KotlinStepAction.KotlinStepInto(methodFilter)
                             .createCommand(debugProcess, suspendContext, ignoreBreakpoints)
                             .contextAction(suspendContext);
                 } catch (Exception e) {

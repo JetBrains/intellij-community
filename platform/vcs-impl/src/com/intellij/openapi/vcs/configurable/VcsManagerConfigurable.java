@@ -37,7 +37,7 @@ public final class VcsManagerConfigurable extends SortedConfigurableGroup implem
     super(ID,
           VcsBundle.message("version.control.main.configurable.name"),
           VcsBundle.message("version.control.main.configurable.description"),
-          ID,
+          VcsMappingConfigurable.HELP_ID,
           GROUP_WEIGHT);
     myProject = project;
   }

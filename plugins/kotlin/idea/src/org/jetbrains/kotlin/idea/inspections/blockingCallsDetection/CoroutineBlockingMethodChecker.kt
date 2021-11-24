@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isCalledInsideNonIoContext
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isInSuspendLambdaOrFunction
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isInsideFlowChain
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isKotlinxOnClasspath
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.projectStructure.module
@@ -43,9 +45,11 @@ internal class CoroutineBlockingMethodChecker : BlockingMethodChecker {
         val resolvedCall = element.parentOfType<KtCallExpression>()?.resolveToCall(BodyResolveMode.PARTIAL)
 
         return when {
-            resolvedCall != null && isCalledInsideNonIoContext(resolvedCall) -> arrayOf(ChangeContextFix(), WrapInWithContextFix())
+            !isApplicable(element.containingFile) || !isKotlinxOnClasspath(element) -> emptyArray()
+            resolvedCall != null && isCalledInsideNonIoContext(resolvedCall) && isInSuspendLambdaOrFunction(element) -> arrayOf(ChangeContextFix(), WrapInWithContextFix())
             resolvedCall != null && isInsideFlowChain(resolvedCall) -> arrayOf(FlowOnIoContextFix(), WrapInWithContextFix())
-            else -> arrayOf(WrapInWithContextFix())
+            isInSuspendLambdaOrFunction(element) -> arrayOf(WrapInWithContextFix())
+            else -> emptyArray()
         }
     }
 

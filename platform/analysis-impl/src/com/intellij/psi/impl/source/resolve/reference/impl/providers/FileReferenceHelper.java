@@ -34,7 +34,10 @@ import java.util.List;
 import static java.util.Collections.emptyList;
 
 /**
- * @author peter
+ * This extension point allows codeinsight features (e.g., "Goto Declaration") to work for custom file references
+ * by defining their root, their resolving mechanism and quickfixes to repair broken urls.
+ * For example, {@link com.intellij.codeInsight.daemon.impl.analysis.HtmlFileReferenceHelper} defines resolving mechanism for
+ * relative "href=" references based on the current module content root.
  */
 public abstract class FileReferenceHelper {
 

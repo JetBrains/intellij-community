@@ -36,5 +36,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="microba" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
   </component>
 </module>

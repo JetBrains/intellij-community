@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,8 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TIntProcedure;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -34,7 +36,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public final class Mappings {
+public class Mappings {
   private final static Logger LOG = Logger.getInstance(Mappings.class);
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
   private boolean myProcessConstantsIncrementally = !Boolean.valueOf(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
@@ -53,7 +55,7 @@ public final class Mappings {
   private boolean myIsDifferentiated = false;
   private boolean myIsRebuild = false;
 
-  private final TIntHashSet myChangedClasses;
+  private final IntSet myChangedClasses;
   private final Set<File> myChangedFiles;
   private final Set<Pair<ClassFileRepr, File>> myDeletedClasses;
   private final Set<ClassRepr> myAddedClasses;
@@ -95,7 +97,7 @@ public final class Mappings {
   private Mappings(final Mappings base) throws IOException {
     myLock = base.myLock;
     myIsDelta = true;
-    myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+    myChangedClasses = new IntOpenHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myChangedFiles = FileCollectionFactory.createCanonicalFileSet();
     myDeletedClasses = new HashSet<>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myAddedClasses = new HashSet<>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
@@ -1466,7 +1468,7 @@ public final class Mappings {
         if (it.isAnnotation()) {
           if (d.defaultRemoved()) {
             debug("Class is annotation, default value is removed => adding annotation query");
-            final TIntHashSet l = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+            IntSet l = new IntOpenHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
             l.add(m.name);
             final UsageRepr.AnnotationUsage annotationUsage = (UsageRepr.AnnotationUsage)UsageRepr
               .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), l, null);
@@ -2731,8 +2733,6 @@ public final class Mappings {
             myClassToRelativeSourceFilePath.replace(className, sourceFiles);
 
             cleanupBackDependency(className, null, dependenciesTrashBin);
-
-            return true;
           });
 
           delta.getChangedFiles().forEach(fileName -> {
@@ -2951,8 +2951,7 @@ public final class Mappings {
     }
   }
 
-  @Nullable
-  public Collection<File> getClassSources(int className) {
+  public @NotNull Collection<File> getClassSources(int className) {
     synchronized (myLock) {
       final Iterable<File> files = classToSourceFileGet(className);
       return files == null? Collections.emptyList() : ContainerUtil.collect(files.iterator());
@@ -3091,7 +3090,7 @@ public final class Mappings {
     return myAddedClasses == null ? Collections.emptySet() : Collections.unmodifiableSet(myAddedClasses);
   }
 
-  private TIntHashSet getChangedClasses() {
+  private IntSet getChangedClasses() {
     return myChangedClasses;
   }
 

@@ -1,4 +1,4 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun plusNullable(arg: String?) = arg?.let<caret> { it + "#" } ?: ""

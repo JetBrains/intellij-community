@@ -16,10 +16,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -52,6 +49,7 @@ import java.util.*;
 public final class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Icon CLOSE_ICON = AllIcons.Nodes.Folder;
+  private final SimpleTextAttributes GRAY_LINK = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.gray);
 
   private final JTree myTree;
   private DefaultMutableTreeNode myRoot;
@@ -102,7 +100,7 @@ public final class ActionsTree {
       @Override
       public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (value instanceof DefaultMutableTreeNode) {
-          String path = ActionsTree.this.getPath((DefaultMutableTreeNode)value);
+          String path = ActionsTree.this.getPath((DefaultMutableTreeNode)value, true);
           return StringUtil.notNullize(path);
         }
         return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
@@ -355,10 +353,10 @@ public final class ActionsTree {
   }
 
   public void selectAction(String actionId) {
-    String path = myMainGroup.getActionQualifiedPath(actionId);
+    String path = myMainGroup.getActionQualifiedPath(actionId, false);
     String boundId = path == null ? KeymapManagerEx.getInstanceEx().getActionBinding(actionId) : null;
     if (path == null && boundId != null) {
-      path = myMainGroup.getActionQualifiedPath(boundId);
+      path = myMainGroup.getActionQualifiedPath(boundId, false);
       if (path == null) {
         return;
       }
@@ -377,7 +375,7 @@ public final class ActionsTree {
     Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-      if (Objects.equals(getPath(node), path)) {
+      if (Objects.equals(getPath(node, false), path)) {
         return node;
       }
     }
@@ -389,7 +387,7 @@ public final class ActionsTree {
     Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-      final String path = getPath(node);
+      final String path = getPath(node, false);
       if (paths.contains(path)) {
         result.add(node);
       }
@@ -398,7 +396,7 @@ public final class ActionsTree {
   }
 
   @Nullable
-  private String getPath(DefaultMutableTreeNode node) {
+  private String getPath(DefaultMutableTreeNode node, boolean presentable) {
     final Object userObject = node.getUserObject();
     if (userObject instanceof String) {
       String actionId = (String)userObject;
@@ -407,14 +405,14 @@ public final class ActionsTree {
       if (parent instanceof DefaultMutableTreeNode) {
         final Object object = ((DefaultMutableTreeNode)parent).getUserObject();
         if (object instanceof Group) {
-          return ((Group)object).getActionQualifiedPath(actionId);
+          return ((Group)object).getActionQualifiedPath(actionId, presentable);
         }
       }
 
-      return myMainGroup.getActionQualifiedPath(actionId);
+      return myMainGroup.getActionQualifiedPath(actionId, presentable);
     }
     if (userObject instanceof Group) {
-      return ((Group)userObject).getQualifiedPath();
+      return ((Group)userObject).getQualifiedPath(presentable);
     }
     if (userObject instanceof QuickList) {
       return ((QuickList)userObject).getName();
@@ -453,7 +451,7 @@ public final class ActionsTree {
     }
 
     private void addPathToList(DefaultMutableTreeNode root, ArrayList<? super String> list) {
-      String path = getPath(root);
+      String path = getPath(root, false);
       if (!StringUtil.isEmpty(path)) {
         list.add(path);
       }
@@ -521,6 +519,7 @@ public final class ActionsTree {
       String text;
       @NlsSafe String actionId = null;
       String boundId = null;
+      @NlsActions.ActionText
       String boundText = null;
       setToolTipText(null);
 
@@ -625,7 +624,8 @@ public final class ActionsTree {
       putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
     }
 
-    private String getActionText(@Nullable AnAction action, String actionId) {
+    @NlsActions.ActionText
+    private String getActionText(@Nullable AnAction action, @NlsSafe String actionId) {
       String text = action == null ? null : action.getTemplatePresentation().getText();
       if (text == null || text.length() == 0) { //fill dynamic presentation gaps
         text = actionId;
@@ -728,8 +728,8 @@ public final class ActionsTree {
     private class ActionHyperlink extends Hyperlink {
       private final String myActionId;
 
-      public ActionHyperlink(String actionId, String actionText) {
-        super(actionText);
+      ActionHyperlink(String actionId, @NlsContexts.LinkLabel String actionText) {
+        super(null, actionText, GRAY_LINK);
         myActionId = actionId;
       }
 
@@ -754,8 +754,7 @@ public final class ActionsTree {
     }
     if (actionId == null) return new RowData(null, null);
     Shortcut[] shortcuts = myKeymap.getShortcuts(actionId);
-    Set<String> abbreviations = data instanceof String ?
-                          AbbreviationManager.getInstance().getAbbreviations(actionId) : null;
+    Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
     return new RowData(shortcuts, abbreviations);
   }
 

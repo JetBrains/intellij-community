@@ -1,6 +1,6 @@
 // "Import" "true"
 // ERROR: Unresolved reference: Delegates
-// WITH_RUNTIME
+// WITH_STDLIB
 package testing
 
 import some.Delegates

@@ -4,7 +4,7 @@
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
   <about url="/idea_community_about.png"/>
-  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size12="/toolwindows/toolWindowProject.png" ico="idea_CE.ico"/>
+  <icon size12="/toolwindows/toolWindowProject.png" ico="idea_CE.ico"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"/>

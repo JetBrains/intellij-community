@@ -26,7 +26,11 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class MavenAttachSourcesProvider implements AttachSourcesProvider {
   @Override
@@ -101,15 +105,22 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
 
   private static void cleanUpUnresolvedSourceFiles(Project project, Collection<MavenId> mavenIds) {
     for (MavenId mavenId : mavenIds) {
-      File parentFile = MavenUtil.getRepositoryParentFile(project, mavenId);
+      Path parentFile = MavenUtil.getRepositoryParentFile(project, mavenId);
       if (parentFile == null) continue;
-      File[] files = parentFile.listFiles((dir, name) -> isTargetFile(name, MavenExtraArtifactType.SOURCES));
-      if (files == null) continue;
-      for (File file : files) {
-        var deleted = FileUtil.delete(file);
-        if (!deleted) {
-          MavenLog.LOG.warn(file + " not deleted");
-        }
+      try (Stream<Path> paths = Files.list(parentFile)) {
+        paths
+          .filter(path -> isTargetFile(path.getFileName().toString(), MavenExtraArtifactType.SOURCES))
+          .forEach(path -> {
+            try {
+              FileUtil.delete(path);
+            }
+            catch (IOException e) {
+              MavenLog.LOG.warn(path + " not deleted", e);
+            }
+          });
+      }
+      catch (IOException e) {
+        MavenLog.LOG.warn(parentFile + " cannot be listed", e);
       }
     }
   }

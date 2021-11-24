@@ -151,11 +151,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected abstract String getForkMode();
 
   @NotNull
-  private OSProcessHandler createHandler(Executor executor, SMTestRunnerResultsForm viewer) throws ExecutionException {
-    downloadAdditionalDependencies(getJavaParameters()); //required for fork info
-    appendForkInfo(executor);
-    appendRepeatMode();
-
+  private OSProcessHandler createHandler(SMTestRunnerResultsForm viewer) throws ExecutionException {
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
@@ -249,6 +245,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Override
   protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
     throws ExecutionException {
+
+    downloadAdditionalDependencies(getJavaParameters());
+    appendForkInfo(getEnvironment().getExecutor());
+    appendRepeatMode();
+
     TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request);
     File inputFile = InputRedirectAware.getInputFile(getConfiguration());
     if (inputFile != null) {
@@ -274,7 +275,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
     Disposer.register(getConfiguration().getProject(), consoleView);
 
-    OSProcessHandler handler = createHandler(executor, viewer);
+    OSProcessHandler handler = createHandler(viewer);
 
     for (ArgumentFileFilter filter : myArgumentFileFilters) {
       consoleView.addMessageFilter(filter);
@@ -571,7 +572,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   /**
    * called on EDT
    */
-  protected static void collectSubPackages(List<String> options, PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
+  protected static void collectSubPackages(List<String> options, @NotNull PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
     if (aPackage.getClasses(globalSearchScope).length > 0) {
       options.add(aPackage.getQualifiedName());
     }
@@ -701,7 +702,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
-  private static void writeClasspath(PrintWriter wWriter, JavaParameters parameters) {
+  private static void writeClasspath(PrintWriter wWriter, JavaParameters parameters) { //todo TargetValue expected
     wWriter.println(parameters.getClassPath().getPathsString());
     wWriter.println(parameters.getModulePath().getPathsString());
     ParamsGroup paramsGroup = getJigsawOptions(parameters);

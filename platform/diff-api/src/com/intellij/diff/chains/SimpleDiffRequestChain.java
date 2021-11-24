@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class SimpleDiffRequestChain extends DiffRequestChainBase {
   @NotNull private final List<? extends DiffRequestProducer> myRequests;
@@ -88,6 +89,19 @@ public class SimpleDiffRequestChain extends DiffRequestChainBase {
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws ProcessCanceledException {
       return myRequest;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DiffRequestProducerWrapper wrapper = (DiffRequestProducerWrapper)o;
+      return myRequest == wrapper.myRequest;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myRequest);
     }
   }
 }

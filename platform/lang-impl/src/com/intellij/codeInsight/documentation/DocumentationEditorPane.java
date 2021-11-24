@@ -1,11 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.lang.documentation.DocumentationImageResolver;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiElement;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -25,21 +28,35 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Map;
-import java.util.function.Supplier;
 
 @Internal
 public class DocumentationEditorPane extends JEditorPane {
 
+  private static final Color BACKGROUND_COLOR = new JBColor(() -> {
+    ColorKey colorKey = DocumentationComponent.COLOR_KEY;
+    EditorColorsScheme scheme = EditorColorsUtil.getColorSchemeForBackground(null);
+    Color color;
+    color = scheme.getColor(colorKey);
+    if (color != null) {
+      return color;
+    }
+    color = colorKey.getDefaultColor();
+    if (color != null) {
+      return color;
+    }
+    return scheme.getDefaultBackground();
+  });
+
   private final Map<KeyStroke, ActionListener> myKeyboardActions;
-  private final Supplier<? extends @Nullable PsiElement> myElementSupplier;
+  private final @NotNull DocumentationImageResolver myImageResolver;
   private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
 
   public DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
-    @NotNull Supplier<? extends @Nullable PsiElement> elementSupplier
+    @NotNull DocumentationImageResolver imageResolver
   ) {
     myKeyboardActions = keyboardActions;
-    myElementSupplier = elementSupplier;
+    myImageResolver = imageResolver;
     enableEvents(AWTEvent.KEY_EVENT_MASK);
     setEditable(false);
     if (ScreenReader.isActive()) {
@@ -50,7 +67,7 @@ public class DocumentationEditorPane extends JEditorPane {
       putClientProperty("caretWidth", 0); // do not reserve space for caret (making content one pixel narrower than component)
       UIUtil.doNotScrollToCaret(this);
     }
-    setBackground(EditorColorsUtil.getGlobalOrDefaultColor(DocumentationComponent.COLOR_KEY));
+    setBackground(BACKGROUND_COLOR);
     setEditorKit(new DocumentationHtmlEditorKit(this));
     setBorder(JBUI.Borders.empty());
   }
@@ -89,7 +106,7 @@ public class DocumentationEditorPane extends JEditorPane {
     super.setDocument(doc);
     doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
     if (doc instanceof StyledDocument) {
-      doc.putProperty("imageCache", new DocumentationImageProvider(this, myElementSupplier));
+      doc.putProperty("imageCache", new DocumentationImageProvider(this, myImageResolver));
     }
   }
 

@@ -76,6 +76,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             GenerationPhase.PROJECT_GENERATION
         ) {
             defaultValue = value(JsCompiler.BOTH)
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.tooltip")
             filter = { reference, compilerCandidate ->
                 when {
                     reference !is ModuleConfiguratorSettingReference<*, *> -> false
@@ -257,7 +258,7 @@ object JsComposeMppConfigurator : JsBrowserBasedConfigurator, SimpleTargetConfig
         module: Module,
         modulePath: Path,
     ): TaskResult<Unit> = compute {
-        GradlePlugin.gradleProperties.addValues("kotlin.js.webpack.major.version" to 4) //workaround for KT-48273 TODO:remove once 1.5.31 is released
+        GradlePlugin.gradleProperties.addValues("kotlin.js.webpack.major.version" to 4) //workaround for KT-48273 TODO:remove once the issue is fixed
     }
 
 }

@@ -310,7 +310,7 @@
       "name": "branchColor",
       "type": "ordinal",
       "domain": {"data": "table", "field": "branch"},
-      "range": "category"
+      "range": {"scheme": "dark2"}
     }
   ],
   "legends": [

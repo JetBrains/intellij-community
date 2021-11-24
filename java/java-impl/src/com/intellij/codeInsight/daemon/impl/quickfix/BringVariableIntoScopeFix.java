@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +23,7 @@ import java.util.Objects;
 /**
  * @author ven
  */
-public final class BringVariableIntoScopeFix implements IntentionAction {
+public final class BringVariableIntoScopeFix implements IntentionAction, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(BringVariableIntoScopeFix.class);
   private final @NotNull PsiReferenceExpression myUnresolvedReference;
   private final @NotNull PsiLocalVariable myOutOfScopeVariable;

@@ -7,12 +7,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class GroovyRtJarPaths {
-  public static List<String> getGroovyRtRoots(File jpsPluginRoot) {
+  public static List<String> getGroovyRtRoots(File jpsPluginRoot, boolean addClassLoaderJar) {
     List<String> result = new ArrayList<String>();
     addGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar",
                        Collections.singletonList("intellij.groovy.rt"), "groovy-rt", result);
     addGroovyRtJarPath(jpsPluginRoot, "groovy-constants-rt.jar",
                        Collections.singletonList("intellij.groovy.constants.rt"), "groovy-constants-rt", result);
+    if (addClassLoaderJar) {
+      addGroovyRtJarPath(jpsPluginRoot, "groovy-rt-class-loader.jar",
+                         Collections.singletonList("intellij.groovy.rt.classLoader"), "groovy-rt-class-loader", result);
+    }
     return result;
   }
 

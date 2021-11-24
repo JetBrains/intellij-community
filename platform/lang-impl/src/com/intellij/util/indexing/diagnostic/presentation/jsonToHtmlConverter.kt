@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("unused", "DuplicatedCode", "HardCodedStringLiteral")
 
 package com.intellij.util.indexing.diagnostic.presentation
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.indexing.diagnostic.ChangedFilesPushedEvent
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics
 import com.intellij.util.indexing.diagnostic.JsonSharedIndexDiagnosticEvent
@@ -17,7 +18,8 @@ import org.jetbrains.annotations.Nls
 fun createAggregateHtml(
   projectName: String,
   diagnostics: List<IndexDiagnosticDumper.ExistingDiagnostic>,
-  sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>
+  sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>,
+  changedFilesPushEvents: List<ChangedFilesPushedEvent>
 ): String = html {
   head {
     title("Indexing diagnostics of '$projectName'")
@@ -38,6 +40,7 @@ fun createAggregateHtml(
               th("Time", colspan = "6")
               th("Files", colspan = "6")
               th("IDE", rowspan = "2")
+              th("Type", rowspan = "2")
             }
             tr {
               th("Started")
@@ -88,6 +91,9 @@ fun createAggregateHtml(
 
                 // IDE section.
                 td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
+
+                //Indexing type section
+                td(if (diagnostic.indexingTimes.wasFullIndexing) "Full" else "Partial")
               }
             }
           }
@@ -134,9 +140,77 @@ fun createAggregateHtml(
           }
         }
       }
+
+      if (changedFilesPushEvents.isNotEmpty()) {
+        div {
+          h1("Scanning to push properties of changed files")
+          table {
+            thead {
+              tr {
+                th("Time")
+                th("Reason")
+                th("Full duration")
+                th("Is cancelled")
+                th("Number")
+              }
+            }
+            tbody {
+              val eventsToUnify = mutableListOf<ChangedFilesPushedEvent>()
+              for (event in changedFilesPushEvents.sortedByDescending { it.startTime.instant }) {
+                if (canUnify(event, eventsToUnify)) {
+                  eventsToUnify.add(event)
+                }
+                else {
+                  printUnified(eventsToUnify)
+                  eventsToUnify.clear()
+                  print(event)
+                }
+              }
+              printUnified(eventsToUnify)
+            }
+          }
+        }
+      }
     }
   }
 }.toString()
+
+private fun HtmlBuilder.print(event: ChangedFilesPushedEvent) {
+  tr {
+    td(event.startTime.presentableLocalDateTime())
+    td(event.reason)
+    td(event.duration.presentableDuration())
+    td(if (event.isCancelled) "cancelled" else "fully finished")
+    td("1")
+  }
+}
+
+private fun HtmlBuilder.printUnified(eventsToUnify: List<ChangedFilesPushedEvent>) {
+  if (eventsToUnify.isEmpty()) return
+  val event = eventsToUnify[0]
+  if (eventsToUnify.size == 1) {
+    print(event)
+    return
+  }
+  tr {
+    td(event.startTime.presentableLocalDateTime())
+    td(event.reason)
+    td(JsonDuration(eventsToUnify.sumOf { it.duration.nano }).presentableDuration())
+    td(if (event.isCancelled) "cancelled" else "fully finished")
+    td(eventsToUnify.size.toString())
+  }
+}
+
+private fun canUnify(event: ChangedFilesPushedEvent, baseList: List<ChangedFilesPushedEvent>): Boolean {
+  if (event.isCancelled || event.duration.nano > 1_000_000) {
+    return false
+  }
+  if (baseList.isEmpty()) {
+    return true
+  }
+  val first = baseList[0]
+  return first.reason == event.reason
+}
 
 private const val NOT_APPLICABLE = "N/A"
 
@@ -294,7 +368,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               }
               tr {
                 td("Number of too large for indexing files")
-                td(projectIndexingHistory.fileProviderStatistics.sumBy { it.numberOfTooLargeForIndexingFiles }.toString())
+                td(projectIndexingHistory.fileProviderStatistics.sumOf { it.numberOfTooLargeForIndexingFiles }.toString())
               }
 
               val times = projectIndexingHistory.times
@@ -302,6 +376,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               if (times.indexingReason != null) {
                 tr { td("Reason"); td(times.indexingReason) }
               }
+              tr { td("Full or partial"); td(if (times.wasFullIndexing) "full" else "partial") }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }

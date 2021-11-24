@@ -11,10 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.RawPluginDescriptor;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
@@ -181,6 +178,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
+  private static @NotNull ActionManagerListener managerPublisher() {
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(ActionManagerListener.TOPIC);
+  }
+
   static @Nullable AnAction convertStub(@NotNull ActionStub stub) {
     AnAction anAction = instantiate(stub.getClassName(), stub.getPlugin(), AnAction.class);
     if (anAction == null) {
@@ -253,7 +254,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                        @NotNull String iconPath,
                                        @NotNull Presentation presentation) {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    Icon icon = IconLoader.findIcon(iconPath, actionClass, module.getPluginClassLoader(), null, true);
+    Icon icon = IconLoader.findIcon(iconPath, actionClass, module.getClassLoader(), null, true);
     if (icon == null) {
       reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
       icon = AllIcons.Nodes.Unknown;
@@ -418,7 +419,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @Override
   public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
-    return new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+    ActionToolbar toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
+    return toolbar;
   }
 
   private void registerPluginActions(@NotNull IdeaPluginDescriptorImpl module, @NotNull KeymapManagerEx keymapManager) {
@@ -448,7 +451,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
       else {
         try {
-          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, module.getPluginClassLoader());
+          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, module.getClassLoader());
           lastBundle = bundle;
           lastBundleName = bundleName;
         }
@@ -460,10 +463,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
       switch (descriptor.name) {
         case ACTION_ELEMENT_NAME:
-          processActionElement(element, module, bundle, keymapManager, module.getPluginClassLoader());
+          processActionElement(element, module, bundle, keymapManager, module.getClassLoader());
           break;
         case GROUP_ELEMENT_NAME:
-          processGroupElement(element, module, bundle, keymapManager, module.getPluginClassLoader());
+          processGroupElement(element, module, bundle, keymapManager, module.getClassLoader());
           break;
         case SEPARATOR_ELEMENT_NAME:
           processSeparatorNode(null, element, module, bundle);
@@ -1437,8 +1440,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @Override
   public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    PluginId pluginId = callerClass != null ? PluginManagerCore.getPluginByClassName(callerClass.getName()) : null;
-    replaceAction(actionId, newAction, pluginId);
+    PluginDescriptor plugin = callerClass == null ? null : PluginManager.getPluginByClass(callerClass);
+    replaceAction(actionId, newAction, plugin == null ? null : plugin.getPluginId());
   }
 
   private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
@@ -1449,6 +1452,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
 
     AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
+    int oldIndex = idToIndex.getOrDefault(actionId, -1);  // Valid indices >= 0
     if (oldAction != null) {
       if (newAction instanceof OverridingAction) {
         myBaseActions.put((OverridingAction)newAction, oldAction);
@@ -1467,6 +1471,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       unregisterAction(actionId, false);
     }
     registerAction(actionId, newAction, pluginId);
+    if (oldIndex >= 0) {
+      idToIndex.put(actionId, oldIndex);
+    }
     return oldAction;
   }
 

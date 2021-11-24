@@ -4,6 +4,7 @@ package com.jetbrains.python.ift.lesson.run
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.checkToolWindowState
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 
@@ -16,12 +17,15 @@ class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.co
       text(PythonLessonsBundle.message("python.run.configuration.lets.run", action(it)))
       //Wait toolwindow
       checkToolWindowState("Run", true)
-      stateCheck {
-        configurations().isNotEmpty()
-      }
       test {
         actions(it)
       }
     }
   }
+
+  // Redefine the base class links:
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(PythonLessonsBundle.message("python.run.configuration.help.link"),
+         LessonUtil.getHelpLink("pycharm", "code-running-assistance-tutorial.html")),
+  ) + super.helpLinks
 }

@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.disposeLogUis
+import com.intellij.vcs.log.ui.VcsLogPanel
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -51,7 +51,7 @@ class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogF
   }
 
   override fun getComponent(): JComponent = rootComponent
-  override fun getPreferredFocusedComponent(): JComponent? = VcsLogContentUtil.getLogUis(component).firstOrNull()?.mainComponent
+  override fun getPreferredFocusedComponent(): JComponent? = VcsLogPanel.getLogUis(component).firstOrNull()?.mainComponent
   override fun getName(): String = VcsLogBundle.message("vcs.log.editor.name")
   override fun getFile() = vcsLogFile
 }

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'mapIndexed{}.maxOrNull()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().mapIndexed{}.maxOrNull()'"
 fun getMaxLineWidth(list: List<Double>): Double {

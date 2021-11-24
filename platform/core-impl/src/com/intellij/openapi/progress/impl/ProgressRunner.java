@@ -59,6 +59,8 @@ public final class ProgressRunner<R> {
     FJ
   }
 
+  private static final Logger LOG = Logger.getInstance(ProgressRunner.class);
+
   @NotNull
   private final Function<? super @NotNull ProgressIndicator, ? extends R> myComputation;
 
@@ -262,6 +264,15 @@ public final class ProgressRunner<R> {
 
     return resultFuture.handle((result, e) -> {
       Throwable throwable = unwrap(e);
+      if (LOG.isDebugEnabled()) {
+        if (throwable != null) {
+          LOG.debug("ProgressRunner: task completed with throwable", throwable);
+        }
+
+        if (isCanceled(progressFuture)) {
+          LOG.debug("ProgressRunner: task cancelled");
+        }
+      }
       return new ProgressResult<>(result, throwable instanceof ProcessCanceledException || isCanceled(progressFuture), throwable);
     });
   }

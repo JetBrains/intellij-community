@@ -25,37 +25,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
  */
 public final class VcsLogContentUtil {
-  @Nullable
-  public static VcsLogUiEx getLogUi(@NotNull JComponent c) {
-    return ContainerUtil.getFirstItem(getLogUis(c));
-  }
 
-  public static List<VcsLogUiEx> getLogUis(@NotNull JComponent c) {
-    Set<VcsLogPanel> panels = new HashSet<>();
-    collectLogPanelInstances(c, panels);
-
-    return ContainerUtil.map(panels, VcsLogPanel::getUi);
-  }
-
-  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<VcsLogPanel> result) {
-    if (component instanceof VcsLogPanel) {
-      result.add((VcsLogPanel)component);
-      return;
-    }
-    for (Component childComponent : component.getComponents()) {
-      if (childComponent instanceof JComponent) {
-        collectLogPanelInstances((JComponent)childComponent, result);
-      }
-    }
+  private static @Nullable VcsLogUiEx getLogUi(@NotNull JComponent c) {
+    List<VcsLogUiEx> uis = VcsLogPanel.getLogUis(c);
+    if (uis.size() > 1) throw new IllegalArgumentException("Component " + c + " has more than one log ui: " + uis);
+    return ContainerUtil.getOnlyItem(uis);
   }
 
   @Nullable

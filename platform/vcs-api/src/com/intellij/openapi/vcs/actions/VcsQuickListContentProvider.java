@@ -11,17 +11,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @author Roman.Chernyatchik
+ * Allow customizing Vcs Operations popup actions available in the context dependant {@link VcsQuickListPopupAction}
  */
 public interface VcsQuickListContentProvider {
   ExtensionPointName<VcsQuickListContentProvider> EP_NAME = ExtensionPointName.create("com.intellij.vcsPopupProvider");
 
   /**
-   * Allows to customise VCS actions popup for both custom VCS and general list
-   * @param project Project
-   * @param activeVcs Active vcs for current file. Null if context doesn't contain file or vcs is unknown
+   * Allows customising VCS popup actions for both custom VCS and general list
+   *
+   * @param project     Project
+   * @param activeVcs   Active VCS for current file. Null if context doesn't contain file or vcs is unknown
    * @param dataContext Context
-   * @return actions list or null if do nothing
+   * @return action list or null if we do nothing
    */
   @Nullable
   default List<AnAction> getVcsActions(@Nullable Project project,
@@ -29,20 +30,22 @@ public interface VcsQuickListContentProvider {
                                        @Nullable DataContext dataContext) { return null; }
 
   /**
-   * Allows to customise VCS actions popup if project isn't in VCS
-   * @param project Project
+   * Allows customising VCS popup actions if a project isn't in VCS
+   *
+   * @param project     Project
    * @param dataContext Context
-   * @return actions list or null if do nothing
+   * @return action list or null if provider should be ignored
    */
   @Nullable
   default List<AnAction> getNotInVcsActions(@Nullable Project project,
                                             @Nullable DataContext dataContext) { return null; }
 
   /**
-   * @param activeVcs Active vcs for current file
+   * @param activeVcs   Active VCS for current file
    * @param dataContext Context
-   * @return True if replace general actions with actions specified in getVcsActions() method. Otherwise
-   * custom actions will be inserted in general popup. Usually should be false.
+   * @return True, if provider replaces general actions with actions specified in getVcsActions() method.
+   * Otherwise, custom actions will be inserted in general popup.
+   * Usually it should be false.
    */
   default boolean replaceVcsActionsFor(@NotNull AbstractVcs activeVcs,
                                        @Nullable DataContext dataContext) { return false; }

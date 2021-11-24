@@ -15,12 +15,6 @@
  */
 package com.jetbrains.python.inspections;
 
-import static com.jetbrains.python.PyNames.CANONICAL_SELF;
-import static com.jetbrains.python.PyNames.INIT;
-import static com.jetbrains.python.PyNames.OBJECT;
-import static com.jetbrains.python.PyNames.SUPER;
-import static com.jetbrains.python.PyNames.__CLASS__;
-
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
@@ -30,10 +24,13 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.AddCallSuperQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import java.util.Objects;
-import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.Optional;
+
+import static com.jetbrains.python.PyNames.*;
 
 /**
  * User: catherine
@@ -45,15 +42,14 @@ public class PyMissingConstructorInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitPyClass(@NotNull PyClass node) {
       final PsiElement[] superClasses = node.getSuperClassExpressions();

@@ -1,5 +1,5 @@
 // INTENTION_TEXT: "Replace with a 'forEach' function call"
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: The expression is unused
 fun foo() {
     val list = 1..4

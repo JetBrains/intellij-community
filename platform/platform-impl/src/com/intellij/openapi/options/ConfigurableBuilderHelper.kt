@@ -2,6 +2,7 @@
 package com.intellij.openapi.options
 
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.layout.*
 
 class ConfigurableBuilderHelper {
@@ -24,6 +25,29 @@ class ConfigurableBuilderHelper {
           component(field.component)
             .onApply { field.apply() }
             .onIsModified { field.isModified() }
+            .onReset { field.reset() }
+        }
+      }
+    }
+
+    @JvmStatic
+    internal fun Panel.buildFieldsPanel(@NlsContexts.BorderTitle title: String?, fields: List<ConfigurableBuilder.BeanField<*, *>>) {
+      if (title != null) {
+        group(title) {
+          appendFields(fields)
+        }
+      }
+      else {
+        appendFields(fields)
+      }
+    }
+
+    private fun Panel.appendFields(fields: List<ConfigurableBuilder.BeanField<*, *>>) {
+      for (field in fields) {
+        row {
+          cell(field.component)
+            .onApply { field.apply() }
+            .onIsModified { field.isModified }
             .onReset { field.reset() }
         }
       }

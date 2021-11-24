@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -31,6 +33,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 
 open class AddModifierFix(
     element: KtModifierListOwner,
+    @SafeFieldForPreview
     protected val modifier: KtModifierKeywordToken
 ) : KotlinCrossLanguageQuickFixAction<KtModifierListOwner>(element), KotlinUniversalQuickFix {
     override fun getText(): String {

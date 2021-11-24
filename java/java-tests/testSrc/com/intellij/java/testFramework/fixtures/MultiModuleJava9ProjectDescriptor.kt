@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.testFramework.fixtures
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -76,6 +76,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
       val libDir = "jar://${PathManagerEx.getTestDataPath()}/codeInsight/jigsaw"
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-1.0.jar!/")
+      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-2.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-with-claimed-name.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-1.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-2.0.jar!/")
@@ -94,6 +95,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       ModuleRootModificationUtil.addModuleLibrary(m2, "${libDir}/lib-auto-1.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(m4, "${libDir}/lib-auto-2.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(m6, "${libDir}/lib-named-2.0.jar!/")
+      ModuleRootModificationUtil.addModuleLibrary(m8, "lib-with-module-info", listOf("${libDir}/lib-with-module-info.jar!/"), listOf("${libDir}/lib-with-module-info-sources.zip!/src"))
     }
   }
 

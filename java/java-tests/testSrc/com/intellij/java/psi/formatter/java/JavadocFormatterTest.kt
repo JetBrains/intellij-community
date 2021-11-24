@@ -177,7 +177,7 @@ public class T {
 
       "class A {\n" +
       "    /**\n" +
-      "     * @return a is one line \n" +
+      "     * @return a is one line\n" +
       "     * javadoc\n" +
       "     */\n" +
       "    public int get(int a) {\n" +
@@ -261,7 +261,8 @@ class A{}""",
       """/**
  * <p/>
  * Another paragraph
- * of the description
+ * of the
+ * description
  * placed after
  * blank line.
  */
@@ -1292,8 +1293,8 @@ public class Test {
 public class Test {
 
     /**
-     * Shortcut method for EntryDto items. This method will fetch the id from {@code item} and pass it to {@link #test2(Object, Object, Object, Object,
-     * Object)}. Make sure the dto item returns a non-null id.
+     * Shortcut method for EntryDto items. This method will fetch the id from {@code item} and pass it to
+     * {@link #test2(Object, Object, Object, Object, Object)}. Make sure the dto item returns a non-null id.
      */
     public void test() {
     }
@@ -1620,5 +1621,30 @@ public class Test {
     finally {
       config.isMultiLine = currFlag
     }
+  }
+
+  fun testIdea122233() {
+    settings.apply {
+      RIGHT_MARGIN = 60
+      WRAP_COMMENTS = true
+    }
+      doTextTest(
+        """
+        /**
+         * object that can be loaded into a {@link javax.sound.midi.Synthesizer}.
+         */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         * object that can be loaded into a
+         * {@link javax.sound.midi.Synthesizer}.
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
   }
 }

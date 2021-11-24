@@ -10,9 +10,7 @@ import kotlinx.coroutines.cancel
 
 internal class ProjectLifecycleHolderService : CoroutineScope, Disposable {
 
-    override val coroutineContext = SupervisorJob() + CoroutineName("ProjectLifecycleScopeService")
+    override val coroutineContext = SupervisorJob() + CoroutineName(this::class.qualifiedName!!)
 
-    override fun dispose() {
-        cancel("Disposing ProjectLifecycleScopeService")
-    }
+    override fun dispose() = cancel("Disposing ${this::class.qualifiedName}")
 }

@@ -4,20 +4,20 @@ class LocalInference {
   fun simpleInit() {
     val s1 = source()
     val s = s1
-    sink(<warning descr="Unsafe string is passed to safe method">s</warning>)
+    sink(<warning descr="Unsafe string is used as safe parameter">s</warning>)
   }
 
   fun concatInit() {
     val s1 = "foo" + source() + "bar"
     val s = "foo" + s1 + "bar"
-    sink(<warning descr="Unsafe string is passed to safe method">s</warning>)
+    sink(<warning descr="Unsafe string is used as safe parameter">s</warning>)
   }
 
   fun recursive() {
     var s1 = source()
     val s = s1
     <warning descr="[UNUSED_VALUE] The value 's' assigned to 'var s1: String defined in org.checkerframework.checker.tainting.qual.LocalInference.recursive' is never used">s1 =</warning> s
-    sink(<warning descr="Unsafe string is passed to safe method">s</warning>)
+    sink(<warning descr="Unsafe string is used as safe parameter">s</warning>)
   }
 
   fun blocks() {
@@ -26,7 +26,7 @@ class LocalInference {
         s1 = source()
         run {
             val s = s1
-            sink(<warning descr="Unsafe string is passed to safe method">s</warning>)
+            sink(<warning descr="Unsafe string is used as safe parameter">s</warning>)
         }
     }
   }
@@ -35,7 +35,7 @@ class LocalInference {
     val s2: String = source() + source()
     val s1 = s2 + safe()
     val s = s1
-    sink(<warning descr="Unsafe string is passed to safe method">s</warning>)
+    sink(<warning descr="Unsafe string is used as safe parameter">s</warning>)
   }
 
   fun transitiveRecursive(b: Boolean) {
@@ -44,7 +44,7 @@ class LocalInference {
     val s2 = s1 + foo()
     val s3 = s2
     if (b) s = s3
-    sink(<warning descr="Unknown string is passed to safe method">s</warning>)
+    sink(<warning descr="Unknown string is used as safe parameter">s</warning>)
   }
 
   fun foo(): String {

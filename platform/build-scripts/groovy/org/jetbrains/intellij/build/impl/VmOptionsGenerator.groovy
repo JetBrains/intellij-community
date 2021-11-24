@@ -21,10 +21,10 @@ final class VmOptionsGenerator {
     '-Djdk.module.illegalAccess.silent=true',
     '-Dkotlinx.coroutines.debug=off')
 
-  static final Map<String, String> MEMORY_OPTIONS = Map.of(
-    '-Xms', '128m',
-    '-Xmx', '750m',
-    '-XX:ReservedCodeCacheSize=', '512m')
+  static final List<Map.Entry<String, String>> MEMORY_OPTIONS = List.of(
+    Map.entry('-Xms', '128m'),
+    Map.entry('-Xmx', '750m'),
+    Map.entry('-XX:ReservedCodeCacheSize=', '512m'))
 
   static List<String> computeVmOptions(boolean isEAP, ProductProperties productProperties) {
     List<String> result = new ArrayList<>()
@@ -34,12 +34,14 @@ final class VmOptionsGenerator {
     memory.putAll(productProperties.customJvmMemoryOptions)
     memory.each { k, v -> result.add(k + v) }
 
-    if (isEAP) {
-      // must be consistent with `com.intellij.openapi.application.ConfigImportHelper#updateVMOptions`
-      result.add('-XX:MaxJavaStackTraceDepth=10000')
-    }
-
     result.addAll(COMMON_VM_OPTIONS)
+
+    if (isEAP) {
+      int place = result.indexOf('-ea')
+      if (place < 0) place = result.findIndexOf { it.startsWith('-D') }
+      if (place < 0) place = result.size()
+      result.add(place, '-XX:MaxJavaStackTraceDepth=10000')  // must be consistent with `ConfigImportHelper#updateVMOptions`
+    }
 
     return result
   }

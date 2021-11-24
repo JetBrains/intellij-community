@@ -6,6 +6,8 @@ import com.intellij.ide.actions.NewProjectAction
 import com.intellij.ide.util.projectWizard.*
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
@@ -14,9 +16,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
@@ -36,12 +41,15 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaJpsWizardService
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaServices
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.asHtml
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep.FirstWizardStepComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.SecondStepWizardComponent
+import java.io.File
+import java.util.regex.Pattern
 import javax.swing.JButton
 import javax.swing.JComponent
 import com.intellij.openapi.module.Module as IdeaModule
@@ -60,6 +68,10 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     override fun getDescription(): String = moduleType.description
     override fun getGroupName(): String = moduleType.name
     override fun isTemplateBased(): Boolean = false
+
+    override fun getWeight(): Int {
+        return ModuleBuilder.KOTLIN_WEIGHT
+    }
 
     companion object {
         const val MODULE_BUILDER_ID = "kotlin.newProjectWizard.builder"
@@ -109,12 +121,41 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         if (success) {
             logToFUS(project)
         }
+
+        scheduleSampleFilesOpening(project)
+
         return when {
             !success -> null
             wizard.buildSystemType == BuildSystemType.Jps -> runWriteAction {
                 modulesModel.modules.toList().onEach { setupModule(it) }
             }
             else -> emptyList()
+        }
+    }
+
+    private fun scheduleSampleFilesOpening(project: Project) = StartupManager.getInstance(project).runAfterOpened {
+        val pathname = project.basePath ?: return@runAfterOpened
+        val projectPath = File(pathname)
+
+        val wizardModules = wizard.context.read { KotlinPlugin.modules.settingValue }
+            .flatMap { module ->
+                buildList<Module> {
+                    +module.subModules
+                    +module
+                }
+            }
+
+        val filesToOpen = wizardModules
+            .flatMap { it.template?.filesToOpenInEditor ?: emptyList() }
+            .mapNotNull { expectedFileName ->
+                val file = FileUtil.findFilesByMask(Pattern.compile(Pattern.quote(expectedFileName)), projectPath).firstOrNull()
+                file?.let { VirtualFileManager.getInstance().findFileByNioPath(file.toPath()) }
+            }
+
+        ApplicationManager.getApplication().invokeLater {
+            filesToOpen.forEach {
+                FileEditorManager.getInstance(project).openFile(it, true)
+            }
         }
     }
 

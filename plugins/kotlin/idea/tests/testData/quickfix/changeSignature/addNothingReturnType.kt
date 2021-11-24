@@ -1,3 +1,3 @@
 // "Specify return type explicitly" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 <caret>fun foo() = throw IllegalArgumentException()

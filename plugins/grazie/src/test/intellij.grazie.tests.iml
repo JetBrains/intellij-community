@@ -12,87 +12,26 @@
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-ru:5.4" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:5.4" />
+      <library name="org.languagetool:language-ru:5.5" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:5.5" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/5.4/language-ru-5.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/5.5/language-ru-5.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-de:5.4" type="repository">
-        <properties maven-id="org.languagetool:language-de:5.4">
+      <library name="org.languagetool:language-de:5.5" type="repository">
+        <properties maven-id="org.languagetool:language-de:5.5">
           <exclude>
-            <dependency maven-id="com.carrotsearch:hppc" />
-            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
-            <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
-            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
-            <dependency maven-id="com.gitlab.dumonts:hunspell" />
-            <dependency maven-id="com.google.android.tools:dx" />
-            <dependency maven-id="com.google.android:annotations" />
-            <dependency maven-id="com.google.api.grpc:proto-google-common-protos" />
-            <dependency maven-id="com.google.code.findbugs:jsr305" />
-            <dependency maven-id="com.google.code.gson:gson" />
-            <dependency maven-id="com.google.errorprone:error_prone_annotations" />
-            <dependency maven-id="com.google.guava:failureaccess" />
-            <dependency maven-id="com.google.guava:guava" />
-            <dependency maven-id="com.google.guava:listenablefuture" />
-            <dependency maven-id="com.google.j2objc:j2objc-annotations" />
-            <dependency maven-id="com.google.protobuf:protobuf-java" />
-            <dependency maven-id="com.hankcs:aho-corasick-double-array-trie" />
-            <dependency maven-id="com.intellij:annotations" />
-            <dependency maven-id="com.nativelibs4java:bridj" />
-            <dependency maven-id="com.optimaize.languagedetector:language-detector" />
-            <dependency maven-id="com.sun.istack:istack-commons-runtime" />
-            <dependency maven-id="com.sun.xml.fastinfoset:FastInfoset" />
-            <dependency maven-id="com.vdurmont:emoji-java" />
-            <dependency maven-id="commons-logging:commons-logging" />
-            <dependency maven-id="io.grpc:grpc-api" />
-            <dependency maven-id="io.grpc:grpc-context" />
-            <dependency maven-id="io.grpc:grpc-core" />
-            <dependency maven-id="io.grpc:grpc-netty-shaded" />
-            <dependency maven-id="io.grpc:grpc-protobuf" />
-            <dependency maven-id="io.grpc:grpc-protobuf-lite" />
-            <dependency maven-id="io.grpc:grpc-stub" />
-            <dependency maven-id="io.perfmark:perfmark-api" />
-            <dependency maven-id="io.prometheus:simpleclient" />
-            <dependency maven-id="io.prometheus:simpleclient_guava" />
-            <dependency maven-id="javax.activation:javax.activation-api" />
-            <dependency maven-id="javax.annotation:javax.annotation-api" />
-            <dependency maven-id="javax.measure:unit-api" />
-            <dependency maven-id="javax.xml.bind:jaxb-api" />
-            <dependency maven-id="net.arnx:jsonic" />
-            <dependency maven-id="net.loomchild:segment" />
-            <dependency maven-id="org.apache.commons:commons-csv" />
-            <dependency maven-id="org.apache.commons:commons-lang3" />
-            <dependency maven-id="org.apache.commons:commons-pool2" />
-            <dependency maven-id="org.apache.commons:commons-text" />
-            <dependency maven-id="org.apache.lucene:lucene-backward-codecs" />
-            <dependency maven-id="org.apache.lucene:lucene-core" />
-            <dependency maven-id="org.carrot2:morfologik-fsa" />
-            <dependency maven-id="org.carrot2:morfologik-fsa-builders" />
-            <dependency maven-id="org.carrot2:morfologik-speller" />
-            <dependency maven-id="org.carrot2:morfologik-stemming" />
-            <dependency maven-id="org.checkerframework:checker-qual" />
-            <dependency maven-id="org.codehaus.mojo:animal-sniffer-annotations" />
-            <dependency maven-id="org.glassfish.jaxb:jaxb-core" />
-            <dependency maven-id="org.glassfish.jaxb:jaxb-runtime" />
-            <dependency maven-id="org.glassfish.jaxb:txw2" />
-            <dependency maven-id="org.jetbrains.intellij.deps:trove4j" />
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.json:json" />
-            <dependency maven-id="org.jvnet.staxex:stax-ex" />
             <dependency maven-id="org.languagetool:languagetool-core" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
-            <dependency maven-id="tech.units:indriya" />
-            <dependency maven-id="tech.uom.lib:uom-lib-common" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.4/language-de-5.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.5/language-de-5.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.2/german-pos-dict-1.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5.jar!/" />
         </CLASSES>
@@ -101,10 +40,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-it:5.4" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:5.4" />
+      <library name="org.languagetool:language-it:5.5" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:5.5" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/5.4/language-it-5.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/5.5/language-it-5.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -113,5 +52,7 @@
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.grazie.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
   </component>
 </module>

@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.remoteDev.downloader.RemoteDevStatisticsCollector" />
+    <applicationService serviceInterface="com.intellij.remoteDev.downloader.JetBrainsClientDownloaderConfigurationProvider"
+                        serviceImplementation="com.intellij.remoteDev.downloader.RealJetBrainsClientDownloaderConfigurationProvider"
+                        testServiceImplementation="com.intellij.remoteDev.downloader.TestJetBrainsClientDownloaderConfigurationProvider"/>
+  </extensions>
+</idea-plugin>

@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.skeletons;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -117,7 +118,10 @@ public class PySkeletonRefresher {
     myIndicator = indicator;
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
-    if (PythonSdkUtil.isRemote(sdk)) {
+    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
+      mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder, myProject);
+    }
+    else if (PythonSdkUtil.isRemote(sdk)) {
       try {
         mySkeletonsGenerator = createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
       }
@@ -126,7 +130,7 @@ public class PySkeletonRefresher {
       }
     }
     else {
-      mySkeletonsGenerator = new PySkeletonGenerator(getSkeletonsPath(), mySdk, folder);
+      mySkeletonsGenerator = new PyLegacySkeletonGenerator(getSkeletonsPath(), mySdk, folder);
     }
   }
 

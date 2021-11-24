@@ -15,18 +15,18 @@ class ProjectAwareWrapper(val delegate: ExternalSystemProjectAware,
   override val settingsFiles = delegate.settingsFiles
 
   init {
-    delegate.subscribe(object : ExternalSystemProjectRefreshListener {
-      override fun beforeProjectRefresh() {
+    delegate.subscribe(object : ExternalSystemProjectListener {
+      override fun onProjectReloadStart() {
         beforeRefreshCounter.incrementAndGet()
       }
 
-      override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
+      override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
         afterRefreshCounter.incrementAndGet()
       }
     }, parentDisposable)
   }
 
-  override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
+  override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
     delegate.subscribe(listener, parentDisposable)
     subscribeCounter.incrementAndGet()
     Disposer.register(parentDisposable, Disposable { unsubscribeCounter.incrementAndGet() })

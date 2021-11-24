@@ -28,6 +28,7 @@
     <action id="Git.Init" class="git4idea.actions.GitInit">
       <add-to-group group-id="Vcs.Import"/>
       <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
+      <add-to-group group-id="Vcs.ToolWindow.CreateRepository"/>
     </action>
 
     <action id="Git.Log" class="git4idea.log.GitShowExternalLogAction">
@@ -44,6 +45,7 @@
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag"/>
+    <action  id="Git.PushUpToCommit" class="git4idea.actions.GitPushUpToCommitAction"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" icon="AllIcons.Actions.Rollback"/>
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
@@ -143,7 +145,7 @@
       </action>
       <reference ref="Git.CreateNewBranch"/>
       <action id="Git.Tag" class="git4idea.actions.GitTag"/>
-      <action id="Git.Reset" class="git4idea.actions.GitResetHead" icon="AllIcons.Actions.Rollback"/>
+      <action id="Git.Reset" class="git4idea.actions.GitResetHead"/>
       <separator/>
       <reference ref="Vcs.Show.Log"/>
       <reference id="Patch.MainMenu"/>
@@ -254,6 +256,7 @@
       <reference id="Git.Drop.Commits"/>
       <reference id="Git.Squash.Commits" />
       <reference id="Git.Interactive.Rebase"/>
+      <reference id="Git.PushUpToCommit"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
       <reference id="Git.CreateNewBranch"/>
@@ -421,13 +424,6 @@
                  description="Adds &quot;--full-history --simplify-merges&quot; to git log arguments when retrieving history for a file.
                               This may sometimes result in empty merges being shown in the file history.
                               However, skipping this arguments hides some side branches if the end result is the same."/>
-    <registryKey key="git.diff.renameLimit" defaultValue="1"
-                 description="Sets diff.renameLimit configuration variable value.\n
-                              Essentially this variable tells Git the maximal size of commit for which to perform rename detection.
-                              Zero value means detecting renames in all commits.
-                              Setting this value too high (or zero) may lead to increased memory consumption by a Git process and longer execution time.\n
-                              This variable only used when reading git commits for indexing.
-                              Value from git configuration (1000 by default) is used for other purposes (eg for displaying changes in changes view)."/>
     <registryKey key="git.refresh.vfs.total" defaultValue="false"
                  description="If set to true, the whole Git repository root will be refreshed after performing a Git operation.
                               Otherwise only the affected files will be refreshed.
@@ -471,6 +467,8 @@
                  description="If set to a value &gt; 0, load base contents for shelving in batches: by reading the given number of files at once. If set to -1, contents are loaded as usual, one by one."/>
     <registryKey key="git.allow.wsl1.executables" defaultValue="false"
                  description="If set to false, IDE will ignore configured WSL1 executables. See IDEA-242469"/>
+    <registryKey key="git.detect.wsl.executables" defaultValue="true"
+                 description="Search for available executables in WSL on Windows"/>
     <registryKey key="git.enable.stash.toolwindow" defaultValue="false"
                  description="Show toolwindow tab with stashes"/>
     <registryKey key="git.can.use.restore.command" defaultValue="true"
@@ -494,7 +492,7 @@
     <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
-    <vcsLogCustomColumn implementation="git4idea.log.GitCommitSignatureLogColumn"/>
+    <vcsLogCommitStatusProvider implementation="git4idea.log.GitCommitSignatureStatusProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     <vcs.branchStateProvider implementation="git4idea.branch.GitBranchStateProvider"/>
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
@@ -583,6 +581,10 @@
     <registryKey key="git.search.everywhere.commit.by.message" defaultValue="true"
                  description="Use Git log index to lookup commits by message in Search Everywhere" restartRequired="false"/>
 
+    <registryKey key="git.push.upto.commit.with.head.reference" defaultValue="false"
+                 description="Detect HEAD relative reference while pushing up to selected commit to the current branch"
+                 restartRequired="false"/>
+
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
@@ -654,6 +656,8 @@
     <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitDelayedCommitTemplateMessageProvider" order="first"/>
     <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
+
+    <toolbarWidget implementation="git4idea.ui.toolbar.GitToolbarWidgetFactory"/>
   </extensions>
 
   <extensionPoints>
@@ -678,7 +682,8 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="git4idea.index.CommitModeListener" topic="com.intellij.vcs.commit.CommitModeManager$CommitModeListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="git4idea.actions.GitQuickActionsToolbarPopup$MyGitRepositoryListener" activeInHeadlessMode="false" activeInTestMode="false"
-              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+    <listener class="git4idea.actions.GitQuickActionsToolbarPopup$MyGitRepositoryListener"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </projectListeners>
 </idea-plugin>

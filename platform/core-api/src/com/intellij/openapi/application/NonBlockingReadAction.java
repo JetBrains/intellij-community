@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -68,17 +67,6 @@ public interface NonBlockingReadAction<T> {
   @Contract(pure = true)
   @NotNull
   NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition);
-
-  /**
-   * @deprecated use {@link #wrapProgress}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  default NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator) {
-    return wrapProgress(progressIndicator);
-  }
 
   /**
    * @return a copy of this builder that synchronizes the specified progress indicator with the inner one created by {@link NonBlockingReadAction}.

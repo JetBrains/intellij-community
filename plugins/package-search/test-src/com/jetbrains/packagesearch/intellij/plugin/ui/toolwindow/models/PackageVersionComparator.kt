@@ -1,8 +1,12 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
+import kotlinx.coroutines.runBlocking
 
 internal object PackageVersionComparator : Comparator<PackageVersion> {
+
+    val normalizer = PackageVersionNormalizer()
 
     override fun compare(first: PackageVersion?, second: PackageVersion?): Int {
         @Suppress("KotlinConstantConditions") // True, but it's clearer if it's explicitly spelled out
@@ -19,6 +23,6 @@ internal object PackageVersionComparator : Comparator<PackageVersion> {
     }
 
     private fun compareNamed(first: PackageVersion.Named, second: PackageVersion.Named): Int {
-        return NormalizedPackageVersion.parseFrom(first).compareTo(NormalizedPackageVersion.parseFrom(second))
+        return runBlocking { NormalizedPackageVersion.parseFrom(first, normalizer).compareTo(NormalizedPackageVersion.parseFrom(second, normalizer)) }
     }
 }

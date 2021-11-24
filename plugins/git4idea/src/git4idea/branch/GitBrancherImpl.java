@@ -169,7 +169,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void showDiffWithLocal(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    new ShowDiffWithBranchDialog(myProject, branchName, repositories, GitBranchUtil.getCurrentBranchOrRev(repositories)).show();
+    new GitShowDiffWithBranchPanel(myProject, branchName, repositories, GitBranchUtil.getCurrentBranchOrRev(repositories)).showAsTab();
   }
 
   @Override

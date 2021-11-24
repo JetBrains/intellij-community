@@ -50,12 +50,15 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Document your service using [apiDoc](http://apidocjs.com). To extract big example from source code, consider to use *.coffee file near your source file.
- * (or Python/Ruby, but coffee recommended because it's plugin is lightweight). See [AboutHttpService] for example.
+ * Document your service using [apiDoc](http://apidocjs.com).
+ * To extract a big example from source code, consider adding a *.coffee file near the sources
+ * (or Python/Ruby, but CoffeeScript is recommended because it's plugin is lightweight).
+ * See [AboutHttpService] for example.
  *
- * Don't create JsonReader/JsonWriter directly, use only provided [.createJsonReader], [.createJsonWriter] methods (to ensure that you handle in/out according to REST API guidelines).
+ * Don't create [JsonReader]/[JsonWriter] directly, use only provided [createJsonReader] and [createJsonWriter] methods
+ * (to ensure that you handle in/out according to REST API guidelines).
  *
- * @see [Best Practices for Designing a Pragmatic REST API](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api).
+ * @see <a href="http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api">Best Practices for Designing a Pragmatic REST API</a>.
  */
 @Suppress("HardCodedStringLiteral")
 abstract class RestService : HttpRequestHandler() {
@@ -123,7 +126,7 @@ abstract class RestService : HttpRequestHandler() {
     @Suppress("SameParameterValue")
     @JvmStatic
     fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? {
-      return urlDecoder.parameters().get(name)?.lastOrNull()
+      return urlDecoder.parameters()[name]?.lastOrNull()
     }
 
     @JvmStatic
@@ -134,7 +137,7 @@ abstract class RestService : HttpRequestHandler() {
     @JvmOverloads
     @JvmStatic
     fun getBooleanParameter(name: String, urlDecoder: QueryStringDecoder, defaultValue: Boolean = false): Boolean {
-      val values = urlDecoder.parameters().get(name) ?: return defaultValue
+      val values = urlDecoder.parameters()[name] ?: return defaultValue
       // if just name specified, so, true
       val value = values.lastOrNull() ?: return true
       return value.toBoolean()

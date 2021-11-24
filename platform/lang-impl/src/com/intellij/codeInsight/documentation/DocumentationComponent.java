@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -13,6 +14,12 @@ import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ide.DocumentationUtil;
+import com.intellij.lang.documentation.impl.DocumentationRequest;
+import com.intellij.lang.documentation.impl.ImplKt;
+import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
+import com.intellij.model.Pointer;
+import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -20,6 +27,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -48,6 +56,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
@@ -112,10 +121,24 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private AbstractPopup myHint;
 
-  @NotNull
-  public static DocumentationComponent createAndFetch(@NotNull Project project,
-                                                      @NotNull PsiElement element,
-                                                      @NotNull Disposable disposable) {
+  /**
+   * @deprecated This method is executed on the EDT, but at the same time it works with PSI.
+   * To migrate: compute pointer and presentation on a BG thread, then transfer to the EDT
+   * and call {@link DocumentationUtil#documentationComponent(Project, Pointer, TargetPresentation, Disposable)} with the prepared data.
+   */
+  @Deprecated
+  public static @NotNull JComponent createAndFetch(
+    @NotNull Project project,
+    @NotNull PsiElement element,
+    @NotNull Disposable disposable
+  ) {
+    if (Registry.is("documentation.v2") && Registry.is("documentation.v2.component")) {
+      DocumentationRequest request;
+      try (AccessToken ignored = SlowOperations.allowSlowOperations("old API fallback")) {
+        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element));
+      }
+      return DocumentationUtil.documentationComponent(project, request, disposable);
+    }
     DocumentationManager manager = DocumentationManager.getInstance(project);
     DocumentationComponent component = new DocumentationComponent(manager);
     Disposer.register(disposable, component);
@@ -136,7 +159,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane = new DocumentationHintEditorPane(
       manager.getProject(),
       DocumentationScrollPane.keyboardActions(myScrollPane),
-      this::getElement
+      this::getElementImage
     );
     myScrollPane.setViewportView(myEditorPane);
     myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener(myEditorPane::applyFontProps));
@@ -207,6 +230,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     toolbarActions.addAction(new ToggleShowDocsOnHoverAction()).setAsSecondary(true);
     toolbarActions.addAction(new MyShowSettingsAction()).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
+    toolbarActions.addAction(new ShowPopupAutomaticallyAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
     myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true);
     myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
@@ -248,6 +272,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.add(new ToggleShowDocsOnHoverAction());
     gearActions.add(new MyShowSettingsAction());
     gearActions.add(new ShowToolbarAction());
+    gearActions.add(new ShowPopupAutomaticallyAction());
     gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
     gearActions.addAll(navigationAndAdditionalActions);
@@ -696,6 +721,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myManager.myToolWindow == null && Registry.is("documentation.show.toolbar");
   }
 
+  private @Nullable Image getElementImage(@NotNull String imageSpec) {
+    PsiElement element = getElement();
+    return element == null ? null : DocumentationManager.getElementImage(element, imageSpec);
+  }
+
   private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     MyGearActionGroup(AnAction @NotNull ... actions) {
       super(actions);
@@ -888,6 +918,29 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       Registry.get("documentation.show.toolbar").setValue(state);
       updateControlState();
       showHint();
+    }
+  }
+
+  protected static class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+    ShowPopupAutomaticallyAction() {
+      super(CodeInsightBundle.messagePointer("javadoc.show.popup.automatically"));
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      var project = e.getProject();
+      e.getPresentation().setEnabledAndVisible(project != null && LookupManager.getInstance(project).getActiveLookup() != null);
+      super.update(e);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO = state;
     }
   }
 

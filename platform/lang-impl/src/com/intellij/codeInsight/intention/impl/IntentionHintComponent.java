@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -126,6 +127,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
       else {
         myPopup.showInBestPositionFor(myEditor);
+      }
+
+      if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+        ApplicationManager.getApplication().invokeLater(() -> showPreview(this));
       }
 
       IntentionsCollector.reportShownIntentions(myFile.getProject(), myPopup, myFile.getLanguage());
@@ -529,6 +534,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       public void onClosed(@NotNull LightweightWindowEvent event) {
         highlighter.dropHighlight();
         injectionHighlighter.dropHighlight();
+        that.myPreviewPopupUpdateProcessor.hide();
         that.myPopupShown = false;
       }
     });
@@ -593,13 +599,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static void updatePreviewPopup(@NotNull IntentionHintComponent.IntentionPopup that, @NotNull IntentionAction action, int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    that.myPreviewPopupUpdateProcessor.setup((@NlsContexts.PopupAdvertisement var text) -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      if (!that.myPopup.isDisposed()) {
-        that.myPopup.setAdText(text, SwingConstants.LEFT);
-      }
-      return Unit.INSTANCE;
-    }, index);
+    that.myPreviewPopupUpdateProcessor.setup(that.myPopup, index);
     that.myPreviewPopupUpdateProcessor.updatePopup(action);
   }
 
@@ -608,21 +608,43 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        that.myPreviewPopupUpdateProcessor.toggleShow();
-        if (that.myPopup instanceof ListPopupImpl) {
-          JList<?> list = ((ListPopupImpl)that.myPopup).getList();
-          int selectedIndex = list.getSelectedIndex();
-          Object selectedValue = list.getSelectedValue();
-          if (selectedValue instanceof IntentionActionWithTextCaching) {
-            updatePreviewPopup(that, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
-          }
+        IntentionPreviewPopupUpdateProcessor processor = that.myPreviewPopupUpdateProcessor;
+        boolean shouldShow = !processor.isShown();
+        EditorSettingsExternalizable.getInstance().setShowIntentionPreview(shouldShow);
+        if (shouldShow) {
+          showPreview(that);
+        }
+        else {
+          processor.hide();
+          advertisePopup(that, true);
         }
       }
     };
     ((WizardPopup)that.myPopup).registerAction("showIntentionPreview",
             KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet()), action);
-    that.myPopup.setAdText(CodeInsightBundle.message("intention.preview.adv.show.text",
-            IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
+    advertisePopup(that, true);
+  }
+
+  private static void advertisePopup(@NotNull IntentionPopup that, boolean show) {
+    ListPopup popup = that.myPopup;
+    if (!popup.isDisposed()) {
+      popup.setAdText(CodeInsightBundle.message(
+        show ? "intention.preview.adv.show.text" : "intention.preview.adv.hide.text",
+        IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
+    }
+  }
+
+  private static void showPreview(@NotNull IntentionHintComponent.IntentionPopup that) {
+    that.myPreviewPopupUpdateProcessor.show();
+    if (that.myPopup instanceof ListPopupImpl) {
+      JList<?> list = ((ListPopupImpl)that.myPopup).getList();
+      int selectedIndex = list.getSelectedIndex();
+      Object selectedValue = list.getSelectedValue();
+      if (selectedValue instanceof IntentionActionWithTextCaching) {
+        updatePreviewPopup(that, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
+      }
+    }
+    advertisePopup(that, false);
   }
 
   private static final class MyComponentHint extends LightweightHint {

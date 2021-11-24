@@ -4,15 +4,15 @@ package training.ui
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import org.fest.swing.core.GenericTypeMatcher
-import org.fest.swing.core.Robot
-import org.fest.swing.exception.ComponentLookupException
-import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.fixture.ContainerFixture
-import org.fest.swing.timing.Condition
-import org.fest.swing.timing.Pause
-import org.fest.swing.timing.Timeout
+import org.assertj.swing.core.GenericTypeMatcher
+import org.assertj.swing.core.Robot
+import org.assertj.swing.exception.ComponentLookupException
+import org.assertj.swing.exception.WaitTimedOutError
+import org.assertj.swing.timing.Condition
+import org.assertj.swing.timing.Pause
+import org.assertj.swing.timing.Timeout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Rectangle
@@ -57,6 +57,7 @@ object LearningUiUtil {
                                                 matcher: GenericTypeMatcher<T>,
                                                 timeout: Timeout,
                                                 getRoots: () -> Collection<Container>): Collection<T> {
+    checkIsNotEdt()
     val reference = AtomicReference<Collection<T>>()
     Pause.pause(object : Condition("Find component using $matcher") {
       override fun test(): Boolean {
@@ -77,6 +78,7 @@ object LearningUiUtil {
                                      matcher: GenericTypeMatcher<T>,
                                      timeout: Timeout,
                                      getRoots: () -> Collection<Container>): T {
+    checkIsNotEdt()
     val allFound = waitUntilFoundAll(robot, matcher, timeout, getRoots)
     if (allFound.size > 1) {
       // Only allow a single component to be found, otherwise you can get some really confusing
@@ -86,6 +88,12 @@ object LearningUiUtil {
       throw ComponentLookupException(exceptionText)
     }
     return allFound.single()
+  }
+
+  private fun checkIsNotEdt() {
+    if (EDT.isCurrentThreadEdt()) {
+      thisLogger().error("UI detection should not be called from the EDT thread. Please, move it to the background thread.")
+    }
   }
 
   fun <ComponentType : Component?> typeMatcher(componentTypeClass: Class<ComponentType>,
@@ -151,7 +159,7 @@ object LearningUiUtil {
    *
    * @throws ComponentLookupException if desired component haven't been found under the container (gets from receiver) in specified timeout
    */
-  inline fun <reified ComponentType : Component, ContainerComponentType : Container> ContainerFixture<ContainerComponentType>.findComponentWithTimeout(
+  inline fun <reified ComponentType : Component, ContainerComponentType : Container> IftTestContainerFixture<ContainerComponentType>.findComponentWithTimeout(
     timeout: Timeout = Timeout.timeout(10, TimeUnit.SECONDS),
     crossinline finderFunction: (ComponentType) -> Boolean = { true }): ComponentType {
     try {

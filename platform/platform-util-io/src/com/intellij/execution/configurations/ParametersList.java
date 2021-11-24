@@ -186,6 +186,10 @@ public final class ParametersList implements Cloneable {
     return group;
   }
 
+  public int getParametersCount() {
+    return myParameters.size();
+  }
+
   public int getParamsGroupsCount() {
     return myGroups.size();
   }

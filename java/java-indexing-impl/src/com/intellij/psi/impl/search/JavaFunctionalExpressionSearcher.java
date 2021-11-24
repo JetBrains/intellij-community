@@ -455,7 +455,6 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     private final Processor<? super PsiFunctionalExpression> consumer;
     private final Project project;
     private final SearchScope scope;
-    private final PsiManager psiManager;
     private final PsiClass elementToSearch;
 
     // statistics
@@ -471,7 +470,6 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       elementToSearch = parameters.getElementToSearch();
       method = parameters.getMethod();
       project = parameters.getProject();
-      psiManager = PsiManager.getInstance(project);
       scope = parameters.getEffectiveSearchScope();
     }
 
@@ -489,13 +487,10 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
         return;
       }
 
-      psiManager.startBatchFilesProcessingMode();
-      try {
+      PsiManager.getInstance(project).runInBatchFilesMode(() -> {
         processOffsets(descriptors, this);
-      }
-      finally {
-        psiManager.finishBatchFilesProcessingMode();
-      }
+        return null;
+      });
     }
 
     @Override

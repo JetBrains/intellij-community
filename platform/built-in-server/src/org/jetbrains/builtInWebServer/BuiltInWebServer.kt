@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("HardCodedStringLiteral")
+@file:Suppress("HardCodedStringLiteral", "ReplaceGetOrSet")
 package org.jetbrains.builtInWebServer
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -44,7 +45,6 @@ import java.net.InetAddress
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
@@ -56,6 +56,8 @@ internal val LOG = logger<BuiltInWebServer>()
 private val notificationManager by lazy {
   SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP, NotificationType.INFORMATION)
 }
+
+private val WEB_SERVER_PATH_HANDLER_EP_NAME = ExtensionPointName.create<WebServerPathHandler>("org.jetbrains.webServerPathHandler")
 
 class BuiltInWebServer : HttpRequestHandler() {
   override fun isAccessible(request: HttpRequest): Boolean {
@@ -100,7 +102,7 @@ const val TOKEN_HEADER_NAME = "x-ijt"
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
   val configPath = PathManager.getConfigPath()
-  val file = Paths.get(configPath, USER_WEB_TOKEN)
+  val file = Path.of(configPath, USER_WEB_TOKEN)
   var token: String? = null
   if (file.exists()) {
     try {
@@ -219,7 +221,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   }) ?: candidateByDirectoryName ?: return false
 
   if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active")) {
-    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), null)
+    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), project)
     return false
   }
 
@@ -241,7 +243,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
     return true
   }
 
-  for (pathHandler in WebServerPathHandler.EP_NAME.extensionList) {
+  for (pathHandler in WEB_SERVER_PATH_HANDLER_EP_NAME.extensionList) {
     LOG.runAndLogException {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
         return true
@@ -261,7 +263,7 @@ fun HttpRequest.isSignedRequest(): Boolean {
       ?: QueryStringDecoder(uri()).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
       ?: referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
 
-  // we don't invalidate token - allow to make subsequent requests using it (it is required for our javadoc DocumentationComponent)
+  // we don't invalidate token - allow making subsequent requests using it (it is required for our javadoc DocumentationComponent)
   return token != null && tokens.getIfPresent(token) != null
 }
 

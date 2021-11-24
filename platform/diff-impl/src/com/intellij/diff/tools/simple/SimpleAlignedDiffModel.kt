@@ -7,7 +7,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeMarkerEx
+import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -17,6 +19,7 @@ import com.intellij.ui.ColorUtil
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -30,13 +33,17 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
    * Inlay lines mapped to corresponding aligning empty line inlay from other diff side.
    */
   private val emptyInlays = mutableMapOf<InlayId, Inlay<EmptyLineAlignDiffInlayPresentation>>()
-  private val adjustedInlaysHeights = mutableMapOf<SideAndChange, Int>()
+  private val adjustedInlaysHeights = mutableMapOf<SideAndChange, HashSet<InlayHeight>>()
   private val inlayHighlighters = mutableMapOf<Side, MutableList<RangeHighlighter>>()
 
   init {
     val inlayListener = MyInlayModelListener()
-    viewer.getEditor(Side.LEFT).inlayModel.addListener(inlayListener, viewer)
-    viewer.getEditor(Side.RIGHT).inlayModel.addListener(inlayListener, viewer)
+    editor1.inlayModel.addListener(inlayListener, viewer)
+    editor2.inlayModel.addListener(inlayListener, viewer)
+
+    val softWrapListener = MySoftWrapModelListener()
+    editor1.softWrapModel.addSoftWrapChangeListener(softWrapListener)
+    editor2.softWrapModel.addSoftWrapChangeListener(softWrapListener)
   }
 
   fun alignChange(change: SimpleDiffChange) {
@@ -64,11 +71,15 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     val inlayStartLine = change.getStartLine(inlaySide)
     val inlayEndLine = change.getEndLine(inlaySide)
     val isLastLine = changeEndLine == DiffUtil.getLineCount(viewer.getEditor(changeSide).document)
-
+    val changeSideSoftWraps = change.countSoftWraps(changeSide)
+    val inlaySideSoftWraps = change.countSoftWraps(inlaySide)
     val delta = (changeEndLine - changeStartLine) - (inlayEndLine - inlayStartLine)
-    if (delta <= 0) return
 
-    createAlignInlay(inlaySide, change, delta, isLastLine)
+    if (delta < 0) return
+    if (delta == 0 && changeSideSoftWraps == inlaySideSoftWraps) return
+    if (delta == 0 && inlaySideSoftWraps > changeSideSoftWraps) return
+
+    createAlignInlay(inlaySide, change, delta, inlaySideSoftWraps, isLastLine)
       .also { createInlayHighlighter(inlaySide, it, diffType, isLastLine) }
       .also { alignedInlays[SideAndChange(inlaySide, change)] = it }
   }
@@ -89,13 +100,14 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   private fun createAlignInlay(side: Side,
                                change: SimpleDiffChange,
                                linesToAdd: Int,
+                               inlaySideSoftWraps: Int,
                                isLastLineToAdd: Boolean): Inlay<ChangeAlignDiffInlayPresentation> {
     val editor = viewer.getEditor(side)
-    val offset = DiffUtil.getOffset(editor.document, change.getStartLine(side), 0)
-    val inlayPresentation = adjustedInlaysHeights.entries
-                              .find { it.key.side == side && it.key.change.isSame(change)}
-                              ?.let { ChangeAlignDiffInlayPresentation(editor, it.value, change.diffType) }
-                            ?: ChangeAlignDiffInlayPresentation(editor, editor.lineHeight * linesToAdd, change.diffType)
+    val line = if (change.diffType === TextDiffType.MODIFIED) change.getEndLine(side) else change.getStartLine(side)
+    val offset = DiffUtil.getOffset(editor.document, line, 0)
+    val inlayPresentation =
+      ChangeAlignDiffInlayPresentation(editor,
+        calculateHeight(side, change, linesToAdd, inlaySideSoftWraps), change.diffType)
 
     return editor.inlayModel
       .addBlockElement(offset,
@@ -103,6 +115,35 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
           .showAbove(!isLastLineToAdd)
           .priority(ALIGNED_CHANGE_INLAY_PRIORITY),
         inlayPresentation)!!
+  }
+
+  private fun calculateHeight(side: Side, change: SimpleDiffChange, linesToAdd: Int, inlaySideSoftWraps: Int): Int {
+    val inlayEditor = viewer.getEditor(side)
+    val changeSide = side.other()
+    val changeEditor = viewer.getEditor(changeSide)
+    var height = adjustedInlaysHeights[SideAndChange(side, change)]?.sumOf(InlayHeight::height) ?: 0
+
+    height += linesToAdd * changeEditor.lineHeight
+
+    for (line in change.getStartLine(changeSide) until change.getEndLine(changeSide)) {
+      height += changeEditor.lineHeight * changeEditor.softWrapModel.getSoftWrapsForLine(line).size
+    }
+
+    if (change.diffType === TextDiffType.MODIFIED) {
+      val inlaySoftWrapHeight = inlayEditor.lineHeight * inlaySideSoftWraps
+      if (height > inlaySoftWrapHeight) {
+        height -= inlayEditor.lineHeight * inlaySideSoftWraps
+      }
+    }
+
+    return height
+  }
+
+  private fun realignChanges() {
+    if (viewer.editors.any { (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
+
+    clear()
+    viewer.diffChanges.forEach(::alignChange)
   }
 
   fun clear() {
@@ -140,6 +181,23 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   private class ChangeAlignDiffInlayPresentation(editor: EditorEx, height: Int, diffType: TextDiffType) :
     BaseAlignDiffInlayPresentation(editor, height, getAlignedChangeColor(diffType, editor))
 
+  private inner class MySoftWrapModelListener : SoftWrapChangeListener {
+    override fun softWrapsChanged() {
+      if (!viewer.needAlignChanges()) return
+
+      if (!viewer.textSettings.isUseSoftWraps) {
+        // this would also be called in case if editor font size changed and provide more clean view for aligning inlays
+        realignChanges()
+      }
+    }
+
+    override fun recalculationEnds() {
+      if (!viewer.needAlignChanges()) return
+
+      realignChanges()
+    }
+  }
+
   private inner class MyInlayModelListener : InlayModel.Listener {
     override fun onAdded(inlay: Inlay<*>) = processInlay(inlay, ProcessType.ADDED)
 
@@ -171,15 +229,11 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
 
     when (processType) {
       ProcessType.REMOVED -> {
-        changeAlignedInlayHeight(changeIntersection, alignSide) { affectedInlay ->
-          affectedInlay.renderer.height - inlay.heightInPixels
-        }
+        changeAlignedInlayHeight(changeIntersection, alignSide, inlay, processType)
         emptyInlays.remove(inlayId)?.let(Disposer::dispose)
       }
       ProcessType.HEIGHT_UPDATED -> {
-        changeAlignedInlayHeight(changeIntersection, alignSide) {
-          (changeIntersection as InsideChange).change.calculateDeltaHeight() + inlay.heightInPixels
-        }
+        changeAlignedInlayHeight(changeIntersection, alignSide, inlay, processType)
         emptyInlays[inlayId]?.run { renderer.height = inlay.heightInPixels; update() }
       }
       ProcessType.ADDED -> {
@@ -189,9 +243,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
             addEmptyInlay(inlayId, lineToBeAligned, inlay.heightInPixels, isAboveInlay, alignInlayPriority, parent = inlay)
           }
           is InsideChange -> {
-            changeAlignedInlayHeight(changeIntersection, alignSide) { affectedInlay ->
-              affectedInlay.renderer.height + inlay.heightInPixels
-            }
+            changeAlignedInlayHeight(changeIntersection, alignSide, inlay, processType)
             val change = changeIntersection.change
             if (!alignedInlays.containsKey(SideAndChange(alignSide, change))) {
               val alignInlayPriority = if (isAboveInlay) ALIGNED_CHANGE_INLAY_PRIORITY else Int.MIN_VALUE
@@ -217,17 +269,33 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
            DiffUtil.getLineCount(alignEditor.document) <= DiffUtil.getLineCount(inlayEditor.document)
   }
 
-  private fun changeAlignedInlayHeight(changeIntersection: ChangeIntersection, side: Side,
-                                       heightCalculator: (Inlay<ChangeAlignDiffInlayPresentation>) -> Int) {
+  private fun changeAlignedInlayHeight(changeIntersection: ChangeIntersection, side: Side, inlay: Inlay<*>, processType: ProcessType) {
     if (changeIntersection !is InsideChange) return
 
     val change = changeIntersection.change
+    val inlayHeight = inlay.heightInPixels
+    val inlayId = InlayId(side, inlay.offset, inlay.id)
 
     val sideAndChange = SideAndChange(side, change)
     alignedInlays[sideAndChange]
       ?.run {
-        renderer.height = heightCalculator(this)
-        adjustedInlaysHeights[sideAndChange] = renderer.height
+        val storedInlaysHeights = adjustedInlaysHeights.getOrPut(sideAndChange) { hashSetOf() }
+        val storedInlayHeight = storedInlaysHeights.find { it.id == inlayId } ?: InlayHeight(inlayId, inlayHeight)
+
+        when (processType) {
+          ProcessType.REMOVED -> {
+            storedInlaysHeights.removeIf { it.id == storedInlayHeight.id }
+            renderer.height -= inlayHeight
+          }
+          ProcessType.ADDED -> {
+            storedInlaysHeights.add(storedInlayHeight)
+            renderer.height += inlayHeight
+          }
+          ProcessType.HEIGHT_UPDATED -> {
+            storedInlayHeight.height = inlayHeight
+            renderer.height = change.calculateDeltaHeight() + storedInlaysHeights.sumOf(InlayHeight::height)
+          }
+        }
         update()
       }
   }
@@ -265,8 +333,19 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     object NoIntersection : ChangeIntersection()
   }
 
+  private data class InlayHeight(val id: InlayId, var height: Int)
   private data class InlayId(val side: Side, val offset: Int, val id: Long)
-  private data class SideAndChange(val side: Side, val change: SimpleDiffChange)
+  private data class SideAndChange(val side: Side, val change: SimpleDiffChange) {
+    override fun equals(other: Any?): Boolean {
+      return other is SideAndChange && side == other.side && change.isSame(other.change)
+    }
+
+    override fun hashCode(): Int {
+      return Objects.hash(side,
+        change.getStartLine(Side.LEFT), change.getEndLine(Side.LEFT),
+        change.getStartLine(Side.RIGHT), change.getEndLine(Side.RIGHT))
+    }
+  }
 
   private fun getRelatedLogicalLine(side: Side, logicalLine: Int, isAboveInlay: Boolean): Int {
     val needAlignLastLine = logicalLine == DiffUtil.getLineCount(viewer.getEditor(side).document) - 1
@@ -288,9 +367,8 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   private val Inlay<*>.logicalLine get() = editor.offsetToLogicalPosition(offset).line
   private val Inlay<*>.id get() = (this as RangeMarkerEx).id
 
-  private fun SimpleDiffChange.isSame(other: SimpleDiffChange) =
-    getStartLine(Side.LEFT) == other.getStartLine(Side.LEFT) && getEndLine(Side.LEFT) == other.getEndLine(Side.LEFT) &&
-    getStartLine(Side.RIGHT) == other.getStartLine(Side.RIGHT) && getEndLine(Side.RIGHT) == other.getEndLine(Side.RIGHT)
+  private val editor1 get() = viewer.editor1
+  private val editor2 get() = viewer.editor2
 
   private fun SimpleDiffChange.calculateDeltaHeight(): Int {
     val leftStartLine = getStartLine(Side.LEFT)
@@ -303,8 +381,38 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     return abs(delta) * viewer.getEditor(Side.LEFT).lineHeight
   }
 
+  private fun SimpleDiffChange.countSoftWraps(side: Side): Int {
+    val editor = viewer.getEditor(side)
+    val softWrapModel = editor.softWrapModel
+
+    if (!softWrapModel.isSoftWrappingEnabled) return 0
+
+    val document = editor.document
+    val startOffset = document.getLineStartOffsetSafe(getStartLine(side))
+    val endOffset = document.getLineEndOffsetSafe(getEndLine(side) - 1)
+    return softWrapModel.getSoftWrapsForRange(startOffset, endOffset).size
+  }
+
+  fun Document.getLineEndOffsetSafe(line: Int): Int {
+    if (line < 0) return 0
+    if (line >= DiffUtil.getLineCount(this)) return textLength
+
+    return getLineEndOffset(line)
+  }
+
+  fun Document.getLineStartOffsetSafe(line: Int): Int {
+    if (line < 0) return 0
+    if (line >= DiffUtil.getLineCount(this)) return textLength
+
+    return getLineStartOffset(line)
+  }
+
   companion object {
     const val ALIGNED_CHANGE_INLAY_PRIORITY = 0
+
+    private fun SimpleDiffChange.isSame(other: SimpleDiffChange) =
+      getStartLine(Side.LEFT) == other.getStartLine(Side.LEFT) && getEndLine(Side.LEFT) == other.getEndLine(Side.LEFT) &&
+      getStartLine(Side.RIGHT) == other.getStartLine(Side.RIGHT) && getEndLine(Side.RIGHT) == other.getEndLine(Side.RIGHT)
 
     fun getAlignedChangeColor(type: TextDiffType, editor: Editor): Color? {
       return if (type === TextDiffType.MODIFIED) null else type.getColor(editor).let { ColorUtil.toAlpha(it, 200) }

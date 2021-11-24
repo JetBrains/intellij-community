@@ -293,6 +293,9 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private List<Root> getRoots() {
+      if (!model.invoker.isValidThread()) {
+        LOG.error(new IllegalStateException(Thread.currentThread().getName()));
+      }
       List<VirtualFile> files = roots;
       if (files == null) files = getSystemRoots();
       if (files.isEmpty()) return Collections.emptyList();

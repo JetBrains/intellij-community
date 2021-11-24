@@ -239,8 +239,16 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue[] args = callArguments.toArray();
     for (DfaMemoryState state : finalStates) {
       ContractValue.flushContractTempVariables(state);
+      boolean keepNonFlushed = state.peek() instanceof DfaVariableValue;
+      DfaValue tos = null;
+      if (keepNonFlushed) {
+        tos = state.pop();
+      }
       callArguments.flush(state, factory, realMethod);
-      pushResult(interpreter, state, state.pop(), args);
+      if (!keepNonFlushed) {
+        tos = state.pop();
+      }
+      pushResult(interpreter, state, tos, args);
       result[i++] = nextState(interpreter, state);
     }
     return result;
@@ -485,17 +493,9 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         if (paramList != null) {
           PsiParameter parameter = paramList.getParameter(paramIndex);
           if (parameter != null) {
-            if (TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
-              arg = CheckNotNullInstruction.dereference(interpreter, memState, arg, NullabilityProblemKind.unboxingMethodRefParameter.problem(methodRef, null));
-            }
-            arg = DfaUtil.boxUnbox(arg, parameter.getType());
+            Nullability nullability = getArgRequiredNullability(paramIndex);
+            arg = MethodReferenceInstruction.adaptMethodRefArgument(interpreter, memState, arg, methodRef, parameter, nullability);
           }
-        }
-        Nullability nullability = getArgRequiredNullability(paramIndex);
-        if (nullability == Nullability.NOT_NULL) {
-          arg = CheckNotNullInstruction.dereference(interpreter, memState, arg, NullabilityProblemKind.passingToNotNullMethodRefParameter.problem(methodRef, null));
-        } else if (nullability == Nullability.UNKNOWN) {
-          CheckNotNullInstruction.checkNotNullable(interpreter, memState, arg, NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.problem(methodRef, null));
         }
       }
       if (myMutation.mutatesArg(paramIndex)) {

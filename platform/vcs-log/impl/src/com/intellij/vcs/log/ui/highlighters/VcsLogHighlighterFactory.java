@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.highlighters;
 
 import com.intellij.vcs.log.VcsLogHighlighter;
@@ -21,16 +7,49 @@ import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A factory for creating {@link VcsLogHighlighter} instances to customize commit presentation (such as color and text style)
+ * in the Vcs Log table.
+ *
+ * @see VcsLogHighlighter
+ * @see VcsLogHighlighter.VcsCommitStyle
+ */
 public interface VcsLogHighlighterFactory {
+  /**
+   * Creates a new {@link VcsLogHighlighter} instance for the specified {@link VcsLogData} and {@link VcsLogUi}.
+   *
+   * @param logData a {@link VcsLogData} instance
+   * @param logUi   a {@link VcsLogUi} instance
+   * @return a new highlighter instance
+   * @see VcsLogHighlighter
+   */
   @NotNull
-  VcsLogHighlighter createHighlighter(@NotNull VcsLogData logDataHolder, @NotNull VcsLogUi logUi);
+  VcsLogHighlighter createHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi);
 
+  /**
+   * A unique id of this factory.
+   *
+   * @return id string
+   */
   @NotNull
   String getId();
 
+  /**
+   * A name for this highlighter. This name is used for showing a toggle action to enable or disable the highlighter
+   * from the Vcs Log presentation settings.
+   *
+   * @return a name string
+   * @see VcsLogHighlighterFactory#showMenuItem()
+   */
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Title)
   String getTitle();
 
+  /**
+   * Return true to show a toggle action to enable or disable this highlighter in the Vcs Log presentation settings.
+   *
+   * @return true to display a toggle action for the highlighter, false otherwise
+   * @see VcsLogHighlighterFactory#getTitle()
+   */
   boolean showMenuItem();
 }

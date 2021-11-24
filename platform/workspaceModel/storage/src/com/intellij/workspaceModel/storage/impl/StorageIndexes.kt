@@ -255,15 +255,18 @@ internal class MutableStorageIndexes(
   }
 
   private fun updateComposedIds(builder: WorkspaceEntityStorageBuilderImpl,
-                                beforePersistentId: PersistentEntityId<*>, newPersistentId: PersistentEntityId<*>) {
+                                beforePersistentId: PersistentEntityId<*>,
+                                newPersistentId: PersistentEntityId<*>) {
     val idsWithSoftRef = HashSet(this.softLinks.getIdsByEntry(beforePersistentId))
     for (entityId in idsWithSoftRef) {
-      val entity = builder.entitiesByType.getEntityDataForModification(entityId)
+      val originalEntityData = builder.getOriginalEntityData(entityId) as WorkspaceEntityData<WorkspaceEntity>
+      val originalParentsData = builder.getOriginalParents(entityId.asChild())
+      val entity = builder.entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<WorkspaceEntity>
       val editingBeforePersistentId = entity.persistentId()
       (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
 
       // Add an entry to changelog
-      builder.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptySet(), emptyMap())
+      builder.changeLog.addReplaceEvent(entityId, entity, originalEntityData, originalParentsData, emptyList(), emptySet(), emptyMap())
       // TODO :: Avoid updating of all soft links for the dependent entity
       builder.indexes.updatePersistentIdIndexes(builder, entity.createEntity(builder), editingBeforePersistentId, entity)
     }

@@ -35,7 +35,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -268,8 +270,9 @@ public class MavenUtil {
     return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
-  public static File getBaseDir(@NotNull VirtualFile file) {
-    return VfsUtilCore.virtualToIoFile(getVFileBaseDir(file));
+  public static java.nio.file.Path getBaseDir(@NotNull VirtualFile file) {
+    VirtualFile virtualBaseDir = getVFileBaseDir(file);
+    return virtualBaseDir.toNioPath();
   }
 
   public static VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
@@ -851,7 +854,25 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static File getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
+  public static java.nio.file.Path getArtifactPath(@NotNull java.nio.file.Path localRepository,
+                                                   @NotNull MavenId id,
+                                                   @NotNull String extension,
+                                                   @Nullable String classifier) {
+    if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
+      return null;
+    }
+    String[] artifactPath = id.getGroupId().split("\\.");
+    for (String path : artifactPath) {
+      localRepository = localRepository.resolve(path);
+    }
+    return localRepository
+      .resolve(id.getArtifactId())
+      .resolve(id.getVersion())
+      .resolve(id.getArtifactId() + "-" + id.getVersion() + (classifier == null ? "." + extension : "-" + classifier + "." + extension));
+  }
+
+  @Nullable
+  public static java.nio.file.Path getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
       return null;
     }
@@ -859,13 +880,12 @@ public class MavenUtil {
     return getParentFile(id, projectsManager.getLocalRepository());
   }
 
-  @NotNull
-  private static File getParentFile(@NotNull MavenId id, File localRepository) {
+  private static java.nio.file.Path getParentFile(@NotNull MavenId id, File localRepository) {
     assert id.getGroupId() != null;
     String[] pathParts = id.getGroupId().split("\\.");
     java.nio.file.Path path = Paths.get(localRepository.getAbsolutePath(), pathParts);
     path = Paths.get(path.toString(), id.getArtifactId(), id.getVersion());
-    return path.toFile();
+    return path;
   }
 
   @Nullable
@@ -1039,7 +1059,7 @@ public class MavenUtil {
 
       for (Pair<Pattern, String> path : SUPER_POM_PATHS) {
         if (path.first.matcher(library.getName()).matches()) {
-          VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(library);
+          VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(library.toPath());
           if (libraryVirtualFile == null) continue;
 
           VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(libraryVirtualFile);
@@ -1088,24 +1108,9 @@ public class MavenUtil {
     }
   }
 
-  public static void notifySyncForUnresolved(@NotNull Project project, @NotNull Collection<MavenProjectReaderResult> results) {
-    Set<MavenArtifact> unresolvedArtifacts = new HashSet<>();
-    for (MavenProjectReaderResult result : results) {
-      if (result.mavenModel.getDependencies() != null) {
-        for (MavenArtifact artifact : result.mavenModel.getDependencies()) {
-          if (!artifact.isResolved()) {
-            unresolvedArtifacts.add(artifact);
-          }
-        }
-      }
-    }
-
-    if (unresolvedArtifacts.isEmpty()) {
-      return;
-    }
-
+  public static void notifySyncForUnresolved(@NotNull Project project, @NotNull Collection<MavenArtifact> unresolvedArtifacts) {
     MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
-    List<File> files = ContainerUtil.map(unresolvedArtifacts, a -> a.getFile().getParentFile());
+    List<java.nio.file.Path> files = ContainerUtil.map(unresolvedArtifacts, a -> a.getFile().toPath().getParent());
     CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
     for (MavenArtifact artifact : unresolvedArtifacts) {
       syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
@@ -1113,12 +1118,27 @@ public class MavenUtil {
     }
   }
 
+  @NotNull
+  public static Set<MavenArtifact> getUnresolvedArtifacts(@NotNull Collection<MavenProjectReaderResult> results) {
+    Set<MavenArtifact> unresolvedArtifacts = new HashSet<>();
+    for (MavenProjectReaderResult result : results) {
+      if (result.mavenModel.getDependencies() != null) {
+        for (MavenArtifact artifact : result.mavenModel.getDependencies()) {
+          if (!MavenArtifactUtilKt.resolved(artifact)) {
+            unresolvedArtifacts.add(artifact);
+          }
+        }
+      }
+    }
+    return unresolvedArtifacts;
+  }
+
   public static boolean newModelEnabled(Project project) {
     return Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY, false);
   }
 
-  public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {
-    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, askConfirmation, SYSTEM_ID);
+  public static boolean isProjectTrustedEnoughToImport(Project project) {
+    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID);
   }
 
   public static void restartMavenConnectors(Project project) {
@@ -1140,7 +1160,7 @@ public class MavenUtil {
     try {
       final CRC32 crc = new CRC32();
 
-      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+      SAXParser parser = SAXParserFactory.newDefaultInstance().newSAXParser();
       parser.getXMLReader().setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
       parser.parse(in, new DefaultHandler() {
 
@@ -1375,8 +1395,9 @@ public class MavenUtil {
   }
 
   public static void restartConfigHighlightning(Project project, Collection<MavenProject> projects) {
-    invokeLater(project, () -> {
-      FileContentUtilCore.reparseFiles(getConfigFiles(projects));
+    VirtualFile[] configFiles = getConfigFiles(projects);
+    ApplicationManager.getApplication().invokeLater(()-> {
+      FileContentUtilCore.reparseFiles(configFiles);
     });
   }
 
@@ -1403,7 +1424,7 @@ public class MavenUtil {
   }
 
   public static Path toPath(@Nullable MavenProject mavenProject, String path) {
-    if (!FileUtil.isAbsolute(path)) {
+    if (!Paths.get(path).isAbsolute()) {
       if (mavenProject == null) {
         throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
       }
@@ -1424,7 +1445,7 @@ public class MavenUtil {
       Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
 
       if (res == null) {
-        res = getProjectJDKOnImportingStageWhileJdkIsNotSet(project);
+        res =  suggestProjectSdk(project);
       }
 
       if (res != null && res.getSdkType() instanceof JavaSdkType) {
@@ -1446,9 +1467,6 @@ public class MavenUtil {
     throw new InvalidSdkException(name);
   }
 
-  private static Sdk getProjectJDKOnImportingStageWhileJdkIsNotSet(Project project) {
-    return MavenProjectBuilder.suggestProjectSdk(project);
-  }
 
   @Nullable
   protected static Sdk getSdkByExactName(@NotNull String name) {
@@ -1488,5 +1506,30 @@ public class MavenUtil {
   public static boolean isWrapper(@NotNull MavenGeneralSettings settings) {
     return MavenServerManager.WRAPPED_MAVEN.equals(settings.getMavenHome()) ||
            StringUtil.equals(settings.getMavenHome(), MavenProjectBundle.message("maven.wrapper.version.title"));
+  }
+
+  public static void setupProjectSdk(@NotNull Project project) {
+    if (ProjectRootManager.getInstance(project).getProjectSdk() == null) {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        Sdk projectSdk = suggestProjectSdk(project);
+        if (projectSdk == null) return;
+        JavaSdkUtil.applyJdkToProject(project, projectSdk);
+      });
+    }
+  }
+
+  @Nullable
+  public static Sdk suggestProjectSdk(@NotNull Project project) {
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    ProjectRootManager defaultProjectManager = ProjectRootManager.getInstance(defaultProject);
+    Sdk defaultProjectSdk = defaultProjectManager.getProjectSdk();
+    if (defaultProjectSdk != null) return null;
+    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
+    SdkType sdkType = ExternalSystemJdkUtil.getJavaSdkType();
+    return projectJdkTable.getSdksOfType(sdkType).stream()
+      .filter(it -> it.getHomePath() != null && JdkUtil.checkForJre(it.getHomePath()))
+      .filter(it -> MavenWslUtil.tryGetWslDistributionForPath(it.getHomePath()) == MavenWslUtil.tryGetWslDistribution(project))
+      .max(sdkType.versionComparator())
+      .orElse(null);
   }
 }

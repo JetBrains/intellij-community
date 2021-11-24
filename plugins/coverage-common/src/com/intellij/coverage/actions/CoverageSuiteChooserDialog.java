@@ -135,7 +135,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static CoverageRunner getCoverageRunner(VirtualFile file) {
+  private static CoverageRunner getCoverageRunner(@NotNull VirtualFile file) {
     for (CoverageRunner runner : CoverageRunner.EP_NAME.getExtensionList()) {
       for (String extension : runner.getDataFileExtensions()) {
         if (Comparing.strEqual(file.getExtension(), extension)) return runner;
@@ -279,8 +279,8 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       final VirtualFile file =
         FileChooser.chooseFile(new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return getCoverageRunner(file) != null;
+          public boolean isFileSelectable(@Nullable VirtualFile file) {
+            return file != null && getCoverageRunner(file) != null;
           }
         }, myProject, null);
       if (file != null) {

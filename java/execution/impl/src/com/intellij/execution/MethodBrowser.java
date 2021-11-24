@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -29,7 +30,9 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.TextFieldCompletionProvider;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class MethodBrowser extends BrowseModuleValueActionListener {
+import javax.swing.*;
+
+public abstract class MethodBrowser extends BrowseModuleValueActionListener<JComponent> {
 
   public MethodBrowser(final Project project) {
     super(project);
@@ -47,7 +50,8 @@ public abstract class MethodBrowser extends BrowseModuleValueActionListener {
                                  ExecutionBundle.message("cannot.browse.method.dialog.title"), Messages.getInformationIcon());
       return null;
     }
-    final PsiClass testClass = getModuleSelector().findClass(className);
+
+    final PsiClass testClass = getTestClass(className);
     if (testClass == null) {
       Messages.showMessageDialog(getField(), ExecutionBundle.message("class.does.not.exists.error.message", className),
                                  ExecutionBundle.message("cannot.browse.method.dialog.title"),
@@ -62,6 +66,14 @@ public abstract class MethodBrowser extends BrowseModuleValueActionListener {
       }
     }
     return null;
+  }
+
+  private PsiClass getTestClass(String className) {
+    final ConfigurationModuleSelector selector = getModuleSelector();
+    return ActionUtil.underModalProgress(getProject(),
+                                  ExecutionBundle.message("browse.method.dialog.looking.for.class"),
+                                  () -> selector.findClass(className)
+    );
   }
 
   public void installCompletion(EditorTextField field) {

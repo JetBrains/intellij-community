@@ -691,11 +691,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
+  @Override
+  public void visitPyMatchStatement(@NotNull PyMatchStatement matchStatement) {
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310), 
+                                   PyPsiBundle.message("INSP.compatibility.feature.support.match.statements"), 
+                                   matchStatement.getFirstChild());
+  }
+
   private void checkBitwiseOrUnionSyntax(@NotNull PyBinaryExpression node) {
     if (node.getOperator() != PyTokenTypes.OR) return;
 
     final PsiFile file = node.getContainingFile();
-    final boolean isInAnnotation = PsiTreeUtil.getParentOfType(node, PyAnnotation.class, false, ScopeOwner.class) != null;
+    final boolean isInAnnotation = PsiTreeUtil.getParentOfType(node, PyAnnotation.class, false, PyStatement.class) != null;
     if (file == null ||
         file instanceof PyFile &&
         ((PyFile)file).hasImportFromFuture(FutureFeature.ANNOTATIONS) &&

@@ -42,6 +42,14 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   @NlsSafe public static final String GROOVY3_0 = "3.0";
   @NlsSafe public static final String GROOVY4_0 = "4.0";
 
+  /**
+   * @deprecated At the time of writing, the latest version of Groovy 4 is beta-1,
+   * and we need to restrict features of beta-2 from their instant usage.
+   * We should remove dependency on unstable version when groovy 4 gets fully released
+   */
+  @Deprecated(since = "2022.1", forRemoval = true)
+  @NlsSafe public static final String GROOVY4_0_BETA_2 = "4.0.0-beta-2";
+
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
   @NonNls private static final String LIB = "/lib";
   @NonNls private static final String EMBEDDABLE = "/embeddable";
@@ -49,6 +57,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   @NlsSafe private static final String ALPHA = "alpha";
   @NlsSafe private static final String BETA = "beta";
   @NlsSafe private static final String RC = "rc";
+  @NlsSafe private static final String SNAPSHOT = "SNAPSHOT";
 
 
   private GroovyConfigUtils() {}
@@ -70,8 +79,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public static boolean isAtLeastGroovy40(@NotNull PsiElement element) {
-    //return getInstance().isVersionAtLeast(element, GROOVY4_0);
-    return true;
+    return getInstance().isVersionAtLeast(element, GROOVY4_0);
   }
 
   @Override
@@ -138,20 +146,20 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   private static int getVersionPart(String[] parts, int index) {
-    String part = index < parts.length ? parts[index] : "0";
-    int partNumber;
-    if (part.equals(ALPHA)) {
-      partNumber = -3;
+    String part = index < parts.length ? parts[index] : "-4";
+    if (part.equals(SNAPSHOT)) {
+      return 999;
+    } else if (part.equals(ALPHA)) {
+      return -3;
     } else if (part.equals(BETA)) {
-      partNumber = -2;
+      return -2;
     } else if (part.equals(RC)) {
-      partNumber = -1;
+      return -1;
     } else try {
-      partNumber = Integer.parseInt(part);
+      return Integer.parseInt(part);
     } catch (NumberFormatException __) {
-      partNumber = -4;
+      return -4;
     }
-    return partNumber;
   }
 
   @NotNull

@@ -3,29 +3,31 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
-import org.apache.commons.lang3.StringUtils
+import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 
 internal sealed class PackageModel(
     val groupId: String,
     val artifactId: String,
-    val remoteInfo: ApiStandardPackage?
+    val remoteInfo: ApiStandardPackage?,
+    val remoteVersions: List<NormalizedPackageVersion<PackageVersion.Named>>
 ) : Comparable<PackageModel> {
 
     val identifier = PackageIdentifier("$groupId:$artifactId")
 
-    val sortKey = (StringUtils.normalizeSpace(remoteInfo?.name) ?: identifier.rawValue.lowercase())
+    val sortKey = (remoteInfo?.name.normalizeWhitespace() ?: identifier.rawValue.lowercase())
 
     val isKotlinMultiplatform = remoteInfo?.mpp != null
 
-    fun getAvailableVersions(onlyStable: Boolean): List<PackageVersion> {
-        val remoteVersions = remoteInfo?.versions
-            ?.map { PackageVersion.from(it) }
-            ?.filter { it != PackageVersion.Missing }
-
-        val allVersions = additionalAvailableVersions()
-            .union(remoteVersions ?: emptyList())
-            .toList()
+    fun getAvailableVersions(onlyStable: Boolean): List<NormalizedPackageVersion<*>> {
+        val allVersions = declaredVersions.union(remoteVersions)
 
         return allVersions.asSequence()
             .filter { if (onlyStable) it.isStable else true }
@@ -34,7 +36,7 @@ internal sealed class PackageModel(
             .toList()
     }
 
-    protected abstract fun additionalAvailableVersions(): List<PackageVersion>
+    protected abstract val declaredVersions: List<NormalizedPackageVersion<*>>
 
     override fun compareTo(other: PackageModel): Int = sortKey.compareTo(other.sortKey)
 
@@ -44,14 +46,48 @@ internal sealed class PackageModel(
         groupId: String,
         artifactId: String,
         remoteInfo: ApiStandardPackage?,
-        val usageInfo: List<DependencyUsageInfo>
-    ) : PackageModel(groupId, artifactId, remoteInfo) {
+        remoteVersions: List<NormalizedPackageVersion<PackageVersion.Named>>,
+        val usageInfo: List<DependencyUsageInfo>,
+        val latestInstalledVersion: NormalizedPackageVersion<*>,
+        override val declaredVersions: List<NormalizedPackageVersion<*>>
+    ) : PackageModel(groupId, artifactId, remoteInfo, remoteVersions) {
+
+        companion object {
+
+            suspend operator fun invoke(
+                groupId: String,
+                artifactId: String,
+                remoteInfo: ApiStandardPackage?,
+                usageInfo: List<DependencyUsageInfo>,
+                normalizer: PackageVersionNormalizer
+            ) = coroutineScope {
+                val remoteVersions = async { evaluateRemoteVersions(remoteInfo, normalizer) }
+                val latestInstalledVersion = async {
+                    usageInfo.asFlow()
+                        .map { it.version }
+                        .map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                        .toList()
+                        .maxOrNull()
+                        ?: error("An installed package must always have at least one usage")
+                }
+                val declaredVersions = async {
+                    usageInfo.map { it.version }.map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                }
+                Installed(
+                    groupId,
+                    artifactId,
+                    remoteInfo,
+                    remoteVersions.await(),
+                    usageInfo,
+                    latestInstalledVersion.await(),
+                    declaredVersions.await()
+                )
+            }
+        }
 
         init {
             require(usageInfo.isNotEmpty()) { "An installed package must always have at least one usage" }
         }
-
-        override fun additionalAvailableVersions(): List<PackageVersion> = usageInfo.map { it.version }
 
         fun findUsagesIn(moduleModels: List<ModuleModel>): List<DependencyUsageInfo> =
             findUsagesIn(moduleModels.map { it.projectModule })
@@ -62,15 +98,7 @@ internal sealed class PackageModel(
         }
 
         fun copyWithUsages(usages: List<DependencyUsageInfo>) =
-            Installed(groupId, artifactId, remoteInfo, usages)
-
-        fun getLatestInstalledVersion(): PackageVersion = PackageVersionUtils.highestSensibleVersionByNameOrNull(
-            usageInfo.asSequence()
-                .map { it.version }
-                .toList()
-        )
-            ?: usageInfo.maxByOrNull { it.version }?.version
-            ?: error("An installed package must always have at least one usage")
+            Installed(groupId, artifactId, remoteInfo, remoteVersions, usages, latestInstalledVersion, declaredVersions)
 
         override val searchableInfo =
             buildString {
@@ -90,6 +118,8 @@ internal sealed class PackageModel(
             if (other !is Installed) return false
 
             if (usageInfo != other.usageInfo) return false
+            if (latestInstalledVersion != other.latestInstalledVersion) return false
+            if (declaredVersions != other.declaredVersions) return false
             if (searchableInfo != other.searchableInfo) return false
 
             return true
@@ -97,20 +127,35 @@ internal sealed class PackageModel(
 
         override fun hashCode(): Int {
             var result = usageInfo.hashCode()
+            result = 31 * result + latestInstalledVersion.hashCode()
+            result = 31 * result + declaredVersions.hashCode()
             result = 31 * result + searchableInfo.hashCode()
             return result
         }
 
-        override fun toString(): String = "Installed(usageInfo=$usageInfo, searchableInfo='$searchableInfo')"
+        override fun toString(): String =
+            "Installed(usageInfo=$usageInfo, latestInstalledVersion=$latestInstalledVersion, declaredVersions=$declaredVersions, " +
+                "searchableInfo='$searchableInfo')"
     }
 
     class SearchResult(
         groupId: String,
         artifactId: String,
-        remoteInfo: ApiStandardPackage
-    ) : PackageModel(groupId, artifactId, remoteInfo) {
+        remoteInfo: ApiStandardPackage,
+        remoteVersions: List<NormalizedPackageVersion<PackageVersion.Named>>
+    ) : PackageModel(groupId, artifactId, remoteInfo, remoteVersions) {
 
-        override fun additionalAvailableVersions(): List<PackageVersion> = emptyList()
+        companion object {
+
+            suspend operator fun invoke(
+                groupId: String,
+                artifactId: String,
+                remoteInfo: ApiStandardPackage,
+                normalizer: PackageVersionNormalizer
+            ) = SearchResult(groupId, artifactId, remoteInfo, evaluateRemoteVersions(remoteInfo, normalizer))
+        }
+
+        override val declaredVersions: List<NormalizedPackageVersion<*>> = emptyList()
 
         override val searchableInfo =
             buildString {
@@ -123,41 +168,54 @@ internal sealed class PackageModel(
             if (this === other) return true
             if (other !is SearchResult) return false
 
+            if (declaredVersions != other.declaredVersions) return false
             if (searchableInfo != other.searchableInfo) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            return searchableInfo.hashCode()
+            var result = declaredVersions.hashCode()
+            result = 31 * result + searchableInfo.hashCode()
+            return result
         }
 
-        override fun toString(): String = "SearchResult(searchableInfo='$searchableInfo')"
+        override fun toString(): String = "SearchResult(declaredVersions=$declaredVersions, searchableInfo='$searchableInfo')"
     }
 
     companion object {
 
-        fun fromSearchResult(remoteInfo: ApiStandardPackage): SearchResult? {
+        suspend fun evaluateRemoteVersions(remoteInfo: ApiStandardPackage?, normalizer: PackageVersionNormalizer) =
+            remoteInfo?.versions?.asFlow()
+                ?.map { PackageVersion.from(it) }
+                ?.filterIsInstance<PackageVersion.Named>()
+                ?.map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                ?.toList()
+                ?: emptyList()
+
+        suspend fun fromSearchResult(remoteInfo: ApiStandardPackage, normalizer: PackageVersionNormalizer): SearchResult? {
             if (remoteInfo.versions.isEmpty()) return null
 
             return SearchResult(
                 remoteInfo.groupId,
                 remoteInfo.artifactId,
-                remoteInfo = remoteInfo
+                remoteInfo,
+                normalizer
             )
         }
 
-        fun fromInstalledDependency(
+        suspend fun fromInstalledDependency(
             unifiedDependency: UnifiedDependency,
             usageInfo: List<DependencyUsageInfo>,
-            remoteInfo: ApiStandardPackage?
+            remoteInfo: ApiStandardPackage?,
+            normalizer: PackageVersionNormalizer
         ): Installed? {
             val groupId = unifiedDependency.coordinates.groupId ?: return null
             val artifactId = unifiedDependency.coordinates.artifactId ?: return null
 
             if (usageInfo.isEmpty()) return null
 
-            return Installed(groupId, artifactId, remoteInfo, usageInfo)
+            return Installed(groupId, artifactId, remoteInfo, usageInfo, normalizer)
         }
     }
 }

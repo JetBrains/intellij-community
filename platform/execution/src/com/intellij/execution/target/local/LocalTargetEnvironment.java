@@ -5,7 +5,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
-import com.intellij.execution.process.PtyCommandLineOptions;
+import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.target.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
@@ -136,7 +136,7 @@ public class LocalTargetEnvironment extends TargetEnvironment implements TargetE
   @NotNull
   public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
-      PtyCommandLineOptions ptyOptions = getRequest().getPtyOptions();
+      LocalPtyOptions ptyOptions = getRequest().getPtyOptions();
       GeneralCommandLine generalCommandLine;
       if (ptyOptions != null) {
         PtyCommandLine ptyCommandLine = new PtyCommandLine(commandLine.collectCommandsSynchronously());
@@ -157,6 +157,7 @@ public class LocalTargetEnvironment extends TargetEnvironment implements TargetE
         generalCommandLine.withWorkDirectory(workingDirectory);
       }
       generalCommandLine.withEnvironment(commandLine.getEnvironmentVariables());
+      generalCommandLine.setRedirectErrorStream(commandLine.isRedirectErrorStream());
       return generalCommandLine;
     }
     catch (ExecutionException e) {

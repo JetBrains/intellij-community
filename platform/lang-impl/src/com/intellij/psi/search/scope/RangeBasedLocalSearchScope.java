@@ -59,11 +59,18 @@ public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
 
     final PsiElement[] children = parent.getChildren();
     TextRange range = new TextRange(start, end);
-    for (PsiElement child : children) {
-      if (!(child instanceof PsiWhiteSpace) &&
-          child.getContainingFile() != null &&
-          range.intersects(child.getTextRange())) {
-        elements.add(child);
+    if (children.length == 0) {
+      if (parent.getContainingFile() != null && range.intersects(parent.getTextRange())) {
+        elements.add(parent);
+      }
+    }
+    else {
+      for (PsiElement child : children) {
+        if (!(child instanceof PsiWhiteSpace) &&
+            child.getContainingFile() != null &&
+            range.intersects(child.getTextRange())) {
+          elements.add(child);
+        }
       }
     }
   }

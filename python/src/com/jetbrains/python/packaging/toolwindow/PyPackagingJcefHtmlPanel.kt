@@ -38,15 +38,10 @@ class PyPackagingJcefHtmlPanel(project: Project) : JCEFHtmlPanel(uniqueUrl) {
 
 
   init {
-    jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
-      override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean =
-        if (userGesture) { BrowserUtil.browse(request.url); true }
-        else false
-    }, cefBrowser)
-
     project.messageBus.connect(this).subscribe(LafManagerListener.TOPIC, LafManagerListener {
       if (myLastHtml != null) setHtml(myLastHtml!!)
     })
+    setOpenLinksInExternalBrowser(true)
   }
 
   override fun prepareHtml(html: String): String = html.replaceFirst("<head>", "<head>$cssStyleCodeToInject")

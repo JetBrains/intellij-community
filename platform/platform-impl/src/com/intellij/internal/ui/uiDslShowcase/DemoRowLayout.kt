@@ -6,7 +6,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 
 @Suppress("DialogTitleCapitalization")
-@Demo(title = "RowLayout",
+@Demo(title = "Row Layout",
   description = "Every row has one of three possible RowLayout. Default value is LABEL_ALIGNED when label is provided for the row, " +
                 "INDEPENDENT otherwise. See documentation for Row.layout method and RowLayout enum")
 fun demoRowLayout(): DialogPanel {
@@ -33,7 +33,6 @@ fun demoRowLayout(): DialogPanel {
 
     row {
       label("Row label is not provided, INDEPENDENT is used:")
-        .gap(RightGap.SMALL)
       textField("textField1")
       textField("textField2")
     }

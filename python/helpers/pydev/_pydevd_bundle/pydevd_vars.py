@@ -457,11 +457,17 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
 
         if attr[:7] == "Globals":
             attr = attr[8:]
+            if is_complex(attr):
+                Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_globals)
+                return value
             if attr in frame.f_globals:
                 frame.f_globals[attr] = value
                 return frame.f_globals[attr]
         else:
             if pydevd_save_locals.is_save_locals_available():
+                if is_complex(attr):
+                    Exec('%s=%s' % (attr, expression), frame.f_locals, frame.f_locals)
+                    return value
                 frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)
                 return frame.f_locals[attr]
@@ -474,6 +480,12 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
     except Exception:
         traceback.print_exc()
 
+def is_complex(attr):
+    complex_indicators = ['[', ']', '.']
+    for indicator in complex_indicators:
+        if attr.find(indicator) != -1:
+            return True
+    return False
 
 MAXIMUM_ARRAY_SIZE = float('inf')
 

@@ -46,91 +46,59 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import static java.util.Collections.*;
+import static org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt.kotlinCompilerVersionShort;
 
 @RunWith(JUnit38ClassRunner.class)
 public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
-    public void testNewLibrary_copyJar() {
-        doTestSingleJvmModule(KotlinWithLibraryConfigurator.FileState.COPY);
+    public void testNewLibrary() {
+        doTestSingleJvmModule();
 
         ModuleRootManager.getInstance(getModule()).orderEntries().forEachLibrary(library -> {
             assertSameElements(
                     Arrays.stream(library.getRootProvider().getFiles(OrderRootType.CLASSES)).map(VirtualFile::getName).toArray(),
-                    KotlinArtifactNames.KOTLIN_STDLIB,
-                    KotlinArtifactNames.KOTLIN_REFLECT,
-                    KotlinArtifactNames.KOTLIN_TEST,
-                    KotlinArtifactNames.KOTLIN_STDLIB_JDK7,
-                    KotlinArtifactNames.KOTLIN_STDLIB_JDK8
+                    PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinCompilerVersionShort() + ".jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinCompilerVersionShort() + ".jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinCompilerVersionShort() + ".jar",
+                    "kotlin-stdlib-common-" + kotlinCompilerVersionShort() + ".jar",
+                    "annotations-13.0.jar"
             );
 
             assertSameElements(
                     Arrays.stream(library.getRootProvider().getFiles(OrderRootType.SOURCES)).map(VirtualFile::getName).toArray(),
-                    KotlinArtifactNames.KOTLIN_STDLIB_SOURCES,
-                    PathUtil.KOTLIN_TEST_SRC_JAR,
-                    PathUtil.KOTLIN_REFLECT_SRC_JAR,
-                    KotlinArtifactNames.KOTLIN_STDLIB_JDK7_SOURCES,
-                    KotlinArtifactNames.KOTLIN_STDLIB_JDK8_SOURCES
+                    PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinCompilerVersionShort() + "-sources.jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinCompilerVersionShort() + "-sources.jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinCompilerVersionShort() + "-sources.jar",
+                    "kotlin-stdlib-common-" + kotlinCompilerVersionShort() + "-sources.jar",
+                    "annotations-13.0-sources.jar"
             );
 
             return true;
         });
     }
 
-    public void testNewLibrary_doNotCopyJar() {
-        doTestSingleJvmModule(KotlinWithLibraryConfigurator.FileState.DO_NOT_COPY);
+    public void testLibraryWithoutPaths() {
+        doTestSingleJvmModule();
     }
 
-    public void testLibraryWithoutPaths_jarExists() {
-        doTestSingleJvmModule(KotlinWithLibraryConfigurator.FileState.EXISTS);
+    public void testStdlibDoesntHaveCompileScope() {
+        doTestSingleJvmModule();
     }
 
-    public void testNewLibrary_jarExists() {
-        doTestSingleJvmModule(KotlinWithLibraryConfigurator.FileState.EXISTS);
-    }
-
-    public void testLibraryWithoutPaths_copyJar() {
-        doTestSingleJvmModule(KotlinWithLibraryConfigurator.FileState.COPY);
-    }
-
-    public void testLibraryWithoutPaths_doNotCopyJar() {
-        doTestSingleJvmModule(KotlinWithLibraryConfigurator.FileState.DO_NOT_COPY);
-    }
-
-    public void testTwoModules_exists() {
+    public void testTwoModules() {
         Module[] modules = getModules();
         for (Module module : modules) {
-            if (module.getName().equals("module1")) {
-                configure(module, KotlinWithLibraryConfigurator.FileState.DO_NOT_COPY, getJvmConfigurator());
-                assertConfigured(module, getJvmConfigurator());
-            } else if (module.getName().equals("module2")) {
-                assertNotConfigured(module, getJvmConfigurator());
-                configure(module, KotlinWithLibraryConfigurator.FileState.EXISTS, getJvmConfigurator());
-                assertConfigured(module, getJvmConfigurator());
-            }
+            assertNotConfigured(module, getJvmConfigurator());
+            configure(module, getJvmConfigurator());
+            assertConfigured(module, getJvmConfigurator());
         }
     }
 
-    public void testNewLibrary_jarExists_js() {
-        doTestSingleJsModule(KotlinWithLibraryConfigurator.FileState.EXISTS);
+    public void testNewLibrary_js() {
+        doTestSingleJsModule();
     }
 
-    public void testNewLibrary_copyJar_js() {
-        doTestSingleJsModule(KotlinWithLibraryConfigurator.FileState.COPY);
-    }
-
-    public void testNewLibrary_doNotCopyJar_js() {
-        doTestSingleJsModule(KotlinWithLibraryConfigurator.FileState.DO_NOT_COPY);
-    }
-
-    public void testJsLibraryWithoutPaths_jarExists() {
-        doTestSingleJsModule(KotlinWithLibraryConfigurator.FileState.EXISTS);
-    }
-
-    public void testJsLibraryWithoutPaths_copyJar() {
-        doTestSingleJsModule(KotlinWithLibraryConfigurator.FileState.COPY);
-    }
-
-    public void testJsLibraryWithoutPaths_doNotCopyJar() {
-        doTestSingleJsModule(KotlinWithLibraryConfigurator.FileState.DO_NOT_COPY);
+    public void testJsLibraryWithoutPaths_js() {
+        doTestSingleJsModule();
     }
 
     public void testJsLibraryWrongKind() {
@@ -156,7 +124,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     public void testProjectWithFacetWithRuntime11WithLanguageLevel10() {
         assertEquals(LanguageVersion.KOTLIN_1_0, PlatformKt.getLanguageVersionSettings(getModule()).getLanguageVersion());
         assertEquals(
-                VersionView.Companion.getRELEASED_VERSION(),
+                LanguageVersion.LATEST_STABLE,
                 PlatformKt.getLanguageVersionSettings(myProject, null).getLanguageVersion()
         );
     }
@@ -306,7 +274,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     private void checkAddStdlibModule() {
-        doTestSingleJvmModule(KotlinWithLibraryConfigurator.FileState.COPY);
+        doTestSingleJvmModule();
 
         Module module = getModule();
         Sdk moduleSdk = ModuleRootManager.getInstance(getModule()).getSdk();

@@ -19,8 +19,6 @@ class JavaRuntimeLibraryDescription(project: Project?) : CustomLibraryDescriptor
     project,
     KotlinJavaModuleConfigurator.NAME,
     LIBRARY_NAME,
-    DIALOG_TITLE,
-    LIBRARY_CAPTION,
     KOTLIN_JAVA_RUNTIME_KIND,
     SUITABLE_LIBRARY_KINDS
 ) {
@@ -44,9 +42,6 @@ class JavaRuntimeLibraryDescription(project: Project?) : CustomLibraryDescriptor
         val DIALOG_TITLE
             @Nls
             get() = KotlinJvmBundle.message("create.kotlin.java.runtime.library")
-        val LIBRARY_CAPTION
-            @Nls
-            get() = KotlinJvmBundle.message("kotlin.java.runtime.library")
         val SUITABLE_LIBRARY_KINDS: Set<LibraryKind> = setOf(KOTLIN_JAVA_RUNTIME_KIND)
     }
 }

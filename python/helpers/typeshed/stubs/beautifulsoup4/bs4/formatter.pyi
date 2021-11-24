@@ -12,12 +12,14 @@ class Formatter(EntitySubstitution):
     entity_substitution: _EntitySubstitution
     void_element_close_prefix: str
     cdata_containing_tags: list[str]
+    empty_attributes_are_booleans: bool
     def __init__(
         self,
         language: str | None = ...,
         entity_substitution: _EntitySubstitution | None = ...,
         void_element_close_prefix: str = ...,
         cdata_containing_tags: list[str] | None = ...,
+        empty_attributes_are_booleans: bool = ...,
     ) -> None: ...
     def substitute(self, ns: str) -> str: ...
     def attribute_value(self, value: str) -> str: ...

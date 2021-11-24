@@ -4,47 +4,12 @@ package com.intellij.execution.wsl
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.wsl.WSLDistribution.*
-import com.intellij.openapi.util.NullableLazyValue
-import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import junit.framework.TestCase.assertEquals
-import org.junit.AfterClass
-import org.junit.Assume
-import org.junit.BeforeClass
 import org.junit.Test
 
-class WSLDistributionConsoleFoldingTest : BareTestFixtureTestCase() {
-   private val folding = WslDistributionConsoleFolding()
+class WSLDistributionConsoleFoldingTest : WslTestBase() {
+  private val folding = WslDistributionConsoleFolding()
 
-  private val wsl: WSLDistribution
-    get() {
-      val value = WSL?.value
-      Assume.assumeTrue("No WSL distributions available", value != null)
-      return value!!
-    }
-
-  companion object {
-    private var WSL: NullableLazyValue<WSLDistribution?>? = NullableLazyValue.createValue {
-      val distributions = WslDistributionManager.getInstance().installedDistributions
-      if (distributions.isEmpty()) return@createValue null
-      val distribution = distributions[0]
-      if (distribution is WSLDistributionLegacy || !IoTestUtil.reanimateWslDistribution(distribution.id)) return@createValue null
-      distribution
-    }
-
-    @BeforeClass
-    @JvmStatic
-    fun checkEnvironment() {
-      IoTestUtil.assumeWindows()
-      IoTestUtil.assumeWslPresence()
-    }
-
-    @AfterClass
-    @JvmStatic
-    fun afterClass() {
-      WSL = null
-    }
-  }
 
   @Test
   fun `should fold`() {
@@ -58,7 +23,6 @@ class WSLDistributionConsoleFoldingTest : BareTestFixtureTestCase() {
 
     assertShouldFold(options = defaultOptions)
     assertShouldFold(commandLine = GeneralCommandLine("foo", "bar", "buz"), options = defaultOptions)
-    assertShouldFold(options = WSLCommandLineOptions().setExecuteCommandInDefaultShell(!defaultOptions.isExecuteCommandInDefaultShell))
     assertShouldFold(options = WSLCommandLineOptions().setExecuteCommandInShell(!defaultOptions.isExecuteCommandInShell))
     assertShouldFold(options = WSLCommandLineOptions().setExecuteCommandInInteractiveShell(!defaultOptions.isExecuteCommandInInteractiveShell))
     assertShouldFold(options = WSLCommandLineOptions().setExecuteCommandInLoginShell(!defaultOptions.isExecuteCommandInLoginShell))
@@ -86,14 +50,11 @@ class WSLDistributionConsoleFoldingTest : BareTestFixtureTestCase() {
     assertShouldNotFold("wsl.exe --distribution Ubuntu-18.04") // no --exec
 
     val wslEcho = wsl.patchCommandLine(GeneralCommandLine("echo"), null, WSLCommandLineOptions()).commandLineString
-    val wslEchoDefaultShell = wsl.patchCommandLine(GeneralCommandLine("echo"), null,
-      WSLCommandLineOptions().setExecuteCommandInDefaultShell(true)).commandLineString
 
     assertShouldNotFold(wslEcho.remove(WSL_EXE)) // no wsl.exe
     assertShouldNotFold(wslEcho.remove(DISTRIBUTION_PARAMETER)) // no --distribution
     assertShouldNotFold(DISTRIBUTION_PARAMETER + wslEcho.remove(DISTRIBUTION_PARAMETER)) // --distribution before wsl.exe
     assertShouldNotFold(wslEcho.remove(EXEC_PARAMETER)) // no --exec
-    assertShouldNotFold(wslEchoDefaultShell.remove(SHELL_PARAMETER)) // no $SHELL -c
     assertShouldNotFold(EXEC_PARAMETER + wslEcho.remove(EXEC_PARAMETER)) // --exec before wsl.exe
     assertShouldNotFold("&& " + wslEcho.remove(EXEC_PARAMETER)) // && before wsl.exe
 
@@ -116,7 +77,6 @@ class WSLDistributionConsoleFoldingTest : BareTestFixtureTestCase() {
     fun assertReplacement(commandLine: GeneralCommandLine = GeneralCommandLine("echo"), options: WSLCommandLineOptions) {
       val commandLineString = commandLine.commandLineString
       val expectedLine = if (options.isExecuteCommandInShell &&
-                             !options.isExecuteCommandInDefaultShell &&
                              options.remoteWorkingDirectory.isNullOrEmpty() &&
                              (options.isPassEnvVarsUsingInterop || commandLine.environment.isEmpty()) &&
                              options.initShellCommands.isEmpty()) {
@@ -138,7 +98,6 @@ class WSLDistributionConsoleFoldingTest : BareTestFixtureTestCase() {
 
     assertReplacement(options = defaultOptions)
     assertReplacement(commandLine = GeneralCommandLine("foo", "-bar", "/baz"), options = defaultOptions)
-    assertReplacement(options = WSLCommandLineOptions().setExecuteCommandInDefaultShell(!defaultOptions.isExecuteCommandInDefaultShell))
     assertReplacement(options = WSLCommandLineOptions().setExecuteCommandInShell(!defaultOptions.isExecuteCommandInShell))
     assertReplacement(options = WSLCommandLineOptions().setSudo(!defaultOptions.isSudo))
     assertReplacement(options = WSLCommandLineOptions().setRemoteWorkingDirectory("/foo/bar/buz"))
@@ -146,8 +105,6 @@ class WSLDistributionConsoleFoldingTest : BareTestFixtureTestCase() {
     assertReplacement(commandLine = GeneralCommandLine("echo").withEnvironment("foo", "bar"), options = WSLCommandLineOptions().setPassEnvVarsUsingInterop(true))
     assertReplacement(commandLine = GeneralCommandLine("echo").withEnvironment("foo", "bar"), options = WSLCommandLineOptions())
     assertReplacement(options = WSLCommandLineOptions().addInitCommand("foo bar"))
-
-
   }
 }
 

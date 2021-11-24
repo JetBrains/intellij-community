@@ -47,6 +47,9 @@ public class PythonFacetUtil {
             // we just create new project library
             library = PythonSdkTableListener.addLibrary(sdk);
           }
+          else {
+            PythonSdkTableListener.updateLibrary(sdk);
+          }
           if (!librarySeen) {
             model.addLibraryEntry(library);
             modelChanged = true;

@@ -53,6 +53,11 @@ public class CommonDecompiledTextTestGenerated extends AbstractCommonDecompiledT
         runTest("testData/decompiler/decompiledText/ClassWithClassObject/");
     }
 
+    @TestMetadata("ClassWithDelegatedComponentFunctions")
+    public void testClassWithDelegatedComponentFunctions() throws Exception {
+        runTest("testData/decompiler/decompiledText/ClassWithDelegatedComponentFunctions/");
+    }
+
     @TestMetadata("ClassWithNamedClassObject")
     public void testClassWithNamedClassObject() throws Exception {
         runTest("testData/decompiler/decompiledText/ClassWithNamedClassObject/");

@@ -43,7 +43,8 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
   fun getTargetPath(volumeDescriptor: VolumeDescriptor): TargetPath {
     return TargetPath.Temporary(hint = volumeDescriptor.type.id,
                                 parentDirectory = getTargetPathValue(volumeDescriptor)?.nullize()
-                                                  ?: volumeDescriptor.defaultPath.nullize())
+                                                  ?: volumeDescriptor.defaultPath.nullize(),
+                                prefix = volumeDescriptor.directoryPrefix)
   }
 
   fun setTargetPath(volumeDescriptor: VolumeDescriptor, targetPath: String?) {

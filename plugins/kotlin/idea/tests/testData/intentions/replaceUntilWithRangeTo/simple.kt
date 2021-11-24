@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(a: Int) {
     for (i in 0 until a<caret>) {

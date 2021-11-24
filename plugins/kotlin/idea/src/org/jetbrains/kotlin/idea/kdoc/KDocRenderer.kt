@@ -5,13 +5,20 @@ package org.jetbrains.kotlin.idea.kdoc
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.HighlighterColors
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -30,9 +37,11 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+
 
 object KDocRenderer {
 
@@ -74,32 +83,46 @@ object KDocRenderer {
     }
 
     private fun StringBuilder.appendHyperlink(kDocLink: KDocLink) {
-        DocumentationManagerUtil.createHyperlink(
-            this,
-            kDocLink.getLinkText(),
-            highlightQualifiedName(kDocLink.getLinkText(), getTargetLinkElementAttributes(kDocLink.getTargetElement())),
-            false,
-            true
-        )
+        if (DumbService.isDumb(kDocLink.project)) {
+            append(kDocLink.getLinkText())
+        } else {
+            DocumentationManagerUtil.createHyperlink(
+                this,
+                kDocLink.getLinkText(),
+                highlightQualifiedName(kDocLink.getLinkText(), getTargetLinkElementAttributes(kDocLink.getTargetElement())),
+                false,
+                true
+            )
+        }
     }
 
-    private fun getTargetLinkElementAttributes(element: PsiElement?) =
-        element?.let { textAttributesKeyForKtElement(it) } ?: DefaultLanguageHighlighterColors.IDENTIFIER
+    private fun getTargetLinkElementAttributes(element: PsiElement?): TextAttributes {
+        return element
+            ?.let { textAttributesKeyForKtElement(it) }
+            ?.let { getTargetLinkElementAttributes(it) }
+            ?: TextAttributes().apply {
+                foregroundColor = EditorColorsManager.getInstance().globalScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK)
+            }
+    }
 
-    private fun highlightQualifiedName(qualifiedName: String, lastSegmentAttributes: TextAttributesKey): String {
+    private fun getTargetLinkElementAttributes(key: TextAttributesKey): TextAttributes {
+        return tuneAttributesForLink(EditorColorsManager.getInstance().globalScheme.getAttributes(key))
+    }
+
+    private fun highlightQualifiedName(qualifiedName: String, lastSegmentAttributes: TextAttributes): String {
         val linkComponents = qualifiedName.split(".")
         val qualifiedPath = linkComponents.subList(0, linkComponents.lastIndex)
         val elementName = linkComponents.last()
         return buildString {
             for (pathSegment in qualifiedPath) {
                 val segmentAttributes = when {
-                    pathSegment.first().isLowerCase() -> DefaultLanguageHighlighterColors.IDENTIFIER
+                    pathSegment.isEmpty() || pathSegment.first().isLowerCase() -> DefaultLanguageHighlighterColors.IDENTIFIER
                     else -> KotlinHighlightingColors.CLASS
                 }
-                appendStyledSpan(segmentAttributes, pathSegment)
-                appendStyledSpan(KotlinHighlightingColors.DOT, ".")
+                appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), segmentAttributes, pathSegment)
+                appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), KotlinHighlightingColors.DOT, ".")
             }
-            appendStyledSpan(lastSegmentAttributes, elementName)
+            appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), lastSegmentAttributes, elementName)
         }
     }
 
@@ -139,16 +162,25 @@ object KDocRenderer {
                 it.getSubjectLink()?.let { subjectLink ->
                     append("<p>")
                     this@appendSamplesList.appendHyperlink(subjectLink)
-                    val target = subjectLink.getTargetElement()
                     wrapTag("pre") {
                         wrapTag("code") {
-                            val codeSnippet = when (target) {
-                                null -> "// " + KotlinBundle.message("kdoc.comment.unresolved")
-                                else -> trimCommonIndent(target.extractExampleText()).htmlEscape()
+                            if (DumbService.isDumb(subjectLink.project)) {
+                                append("// " + KotlinBundle.message("kdoc.comment.unresolved"))
+                            } else {
+                                val codeSnippet = when (val target = subjectLink.getTargetElement()) {
+                                    null -> "// " + KotlinBundle.message("kdoc.comment.unresolved")
+                                    else -> trimCommonIndent(target.extractExampleText()).htmlEscape()
+                                }
+                                this@appendSamplesList.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+                                    when (DocumentationSettings.isHighlightingOfCodeBlocksEnabled()) {
+                                        true -> InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING
+                                        false -> InlineCodeHighlightingMode.NO_HIGHLIGHTING
+                                    },
+                                    subjectLink.project,
+                                    KotlinLanguage.INSTANCE,
+                                    codeSnippet
+                                )
                             }
-                            this@appendSamplesList.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-                                subjectLink.project, KotlinLanguage.INSTANCE, codeSnippet
-                            )
                         }
                     }
                 }
@@ -187,7 +219,8 @@ object KDocRenderer {
                 val subjectName = getSubjectName()
                 if (subjectName != null) {
                     append("<p><code>")
-                    val highlightedLinkLabel = highlightQualifiedName(subjectName, KotlinHighlightingColors.CLASS)
+                    val highlightedLinkLabel =
+                        highlightQualifiedName(subjectName, getTargetLinkElementAttributes(KotlinHighlightingColors.CLASS))
                     DocumentationManagerUtil.createHyperlink(this@appendSection, subjectName, highlightedLinkLabel, false, true)
                     append("</code>")
                     val exceptionDescription = markdownToHtml(this)
@@ -213,7 +246,7 @@ object KDocRenderer {
                 if (subjectName != null) {
                     append("<p><code>")
                     when (val link = it.getChildrenOfType<KDocLink>().firstOrNull()) {
-                        null -> appendStyledSpan(titleAttributes, subjectName)
+                        null -> appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), titleAttributes, subjectName)
                         else -> appendHyperlink(link)
                     }
                     append("</code>")
@@ -306,15 +339,20 @@ object KDocRenderer {
                     val startDelimiter = node.child(MarkdownTokenTypes.BACKTICK)?.text
                     if (startDelimiter != null) {
                         val text = node.text.substring(startDelimiter.length).removeSuffix(startDelimiter)
-                        sb.append("<code>")
-                        sb.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(comment.project, KotlinLanguage.INSTANCE, text)
+                        sb.append("<code style='font-size:${DocumentationSettings.getMonospaceFontSizeCorrection(true)}%;'>")
+                        sb.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+                            DocumentationSettings.getInlineCodeHighlightingMode(),
+                            comment.project,
+                            KotlinLanguage.INSTANCE,
+                            text
+                        )
                         sb.append("</code>")
                     }
                 }
                 MarkdownElementTypes.CODE_BLOCK,
                 MarkdownElementTypes.CODE_FENCE -> {
                     sb.trimEnd()
-                    sb.append("<pre><code>")
+                    sb.append("<pre><code style='font-size:${DocumentationSettings.getMonospaceFontSizeCorrection(true)}%;'>")
                     processChildren()
                     sb.append("</code></pre>")
                 }
@@ -329,17 +367,24 @@ object KDocRenderer {
                         ?.dropLastWhile { it.type == MarkdownTokenTypes.RBRACKET }
                     if (linkLabelContent != null) {
                         val label = linkLabelContent.joinToString(separator = "") { it.text }
-                        val resolvedLinkElement = comment.findDescendantOfType<KDocName> { it.text == label }
-                            ?.mainReference
-                            ?.resolve()
                         val linkText = node.child(MarkdownElementTypes.LINK_TEXT)?.toHtml() ?: label
-                        DocumentationManagerUtil.createHyperlink(
-                            sb,
-                            label,
-                            highlightQualifiedName(linkText, getTargetLinkElementAttributes(resolvedLinkElement)),
-                            false,
-                            true
-                        )
+                        if (DumbService.isDumb(comment.project)) {
+                            sb.append(linkText)
+                        } else {
+                            comment.findDescendantOfType<KDocName> { it.text == label }
+                                ?.mainReference
+                                ?.resolve()
+                                ?.let { resolvedLinkElement ->
+                                    DocumentationManagerUtil.createHyperlink(
+                                        sb,
+                                        label,
+                                        highlightQualifiedName(linkText, getTargetLinkElementAttributes(resolvedLinkElement)),
+                                        false,
+                                        true
+                                    )
+                                }
+                                ?: sb.appendStyledSpan(true, KotlinHighlightingColors.RESOLVED_TO_ERROR, label)
+                        }
                     } else {
                         sb.append(node.text)
                     }
@@ -369,6 +414,10 @@ object KDocRenderer {
                 MarkdownTokenTypes.CODE_LINE,
                 MarkdownTokenTypes.CODE_FENCE_CONTENT -> {
                     sb.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+                        when (DocumentationSettings.isHighlightingOfCodeBlocksEnabled()) {
+                            true -> InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING
+                            false -> InlineCodeHighlightingMode.NO_HIGHLIGHTING
+                        },
                         comment.project,
                         guessLanguage(currentCodeFenceLang) ?: KotlinLanguage.INSTANCE,
                         nodeText
@@ -474,14 +523,18 @@ object KDocRenderer {
         }
     }
 
-    private val doSyntaxHighlighting: Boolean get() = EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingEnabled
+    private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributesKey: TextAttributesKey, value: String?): StringBuilder {
+        if (doHighlighting) {
+            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value, DocumentationSettings.getHighlightingSaturation(true))
+        } else {
+            append(value)
+        }
+        return this
+    }
 
-    private fun StringBuilder.appendStyledSpan(
-        attributesKey: TextAttributesKey,
-        value: String?
-    ): StringBuilder {
-        if (doSyntaxHighlighting) {
-            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value)
+    private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributes: TextAttributes, value: String?): StringBuilder {
+        if (doHighlighting) {
+            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes, value, DocumentationSettings.getHighlightingSaturation(true))
         } else {
             append(value)
         }
@@ -489,16 +542,49 @@ object KDocRenderer {
     }
 
     private fun StringBuilder.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+        highlightingMode: InlineCodeHighlightingMode,
         project: Project,
         language: Language,
-        codeSnippet: String?
+        codeSnippet: String
     ): StringBuilder {
-        if (doSyntaxHighlighting) {
-            HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(this, project, language, codeSnippet, false)
+        val codeSnippetBuilder = StringBuilder()
+        if (highlightingMode == InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING) { // highlight code by lexer
+            HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+                codeSnippetBuilder, project, language, codeSnippet, false, DocumentationSettings.getHighlightingSaturation(true)
+            )
         } else {
-            append(codeSnippet)
+            codeSnippetBuilder.append(StringUtil.escapeXmlEntities(codeSnippet))
+        }
+        if (highlightingMode != InlineCodeHighlightingMode.NO_HIGHLIGHTING) {
+            // set code text color as editor default code color instead of doc component text color
+            val codeAttributes = EditorColorsManager.getInstance().globalScheme.getAttributes(HighlighterColors.TEXT).clone()
+            codeAttributes.backgroundColor = null
+            appendStyledSpan(true, codeAttributes, codeSnippetBuilder.toString())
+        } else {
+            append(codeSnippetBuilder.toString())
         }
         return this
+    }
+
+    /**
+     * If highlighted links has the same color as highlighted inline code blocks they will be indistinguishable.
+     * In this case we should change link color to standard hyperlink color which we believe is apriori different.
+     */
+    private fun tuneAttributesForLink(attributes: TextAttributes): TextAttributes {
+        val globalScheme = EditorColorsManager.getInstance().globalScheme
+        if (attributes.foregroundColor == globalScheme.getAttributes(HighlighterColors.TEXT).foregroundColor
+            || attributes.foregroundColor == globalScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).foregroundColor
+        ) {
+            val tuned = attributes.clone()
+            if (ApplicationManager.getApplication().isUnitTestMode) {
+                tuned.foregroundColor = globalScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).foregroundColor
+            }
+            else {
+                tuned.foregroundColor = globalScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK)
+            }
+            return tuned
+        }
+        return attributes
     }
 
     private fun guessLanguage(name: String): Language? {

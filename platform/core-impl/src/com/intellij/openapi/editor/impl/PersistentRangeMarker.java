@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,16 +30,19 @@ import java.util.Objects;
 class PersistentRangeMarker extends RangeMarkerImpl {
   @NotNull
   private LinesCols myLinesCols;
+  private volatile boolean documentLoaded;
 
   PersistentRangeMarker(@NotNull DocumentEx document, int startOffset, int endOffset, boolean register) {
     super(document, startOffset, endOffset, register, false);
     myLinesCols = Objects.requireNonNull(storeLinesAndCols(document, getStartOffset(), getEndOffset()));
+    documentLoaded = true;
   }
 
   // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
   PersistentRangeMarker(@NotNull VirtualFile virtualFile, int startOffset, int endOffset, int startLine, int startCol, int endLine, int endCol, boolean register) {
     super(virtualFile, startOffset, endOffset, register);
     myLinesCols = new LinesCols(startLine, startCol, endLine, endCol);
+    documentLoaded = FileDocumentManager.getInstance().getCachedDocument(virtualFile) != null;
   }
 
   @Nullable
@@ -172,4 +178,34 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     }
   }
 
+  @Override
+  public int getStartOffset() {
+    // load document in case this is a lazy persistent marker and the document wasn't loaded yet, because we need to convert (line;col) to offset first in this case
+    if (!isDocumentLoaded()) {
+      ReadAction.run(()->getDocument());
+    }
+    return super.getStartOffset();
+  }
+
+  @Override
+  public int getEndOffset() {
+    // load document in case this is a lazy persistent marker and the document wasn't loaded yet, because we need to convert (line;col) to offset first in this case
+    if (!isDocumentLoaded()) {
+      ReadAction.run(()->getDocument());
+    }
+    return super.getEndOffset();
+  }
+
+  @Override
+  void reRegister(@NotNull DocumentImpl document, int tabSize) {
+    // have to convert line/col back to offset if the persistent range marker was created with line/col only
+    LinesCols linesCols = myLinesCols;
+    int startOffset = DocumentUtil.calculateOffset(document, linesCols.myStartLine, linesCols.myStartColumn, tabSize);
+    int endOffset = DocumentUtil.calculateOffset(document, linesCols.myEndLine, linesCols.myEndColumn, tabSize);
+    document.registerRangeMarker(this, startOffset, endOffset, isGreedyToLeft(), isGreedyToRight(), 0);
+    documentLoaded = true;
+  }
+  private boolean isDocumentLoaded() {
+    return documentLoaded;
+  }
 }

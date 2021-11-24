@@ -73,6 +73,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       val rootsChangeListener = ProjectRootsChangeListener(project)
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
+          if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
+            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
+            rootsChangeListener.beforeChanged(event)
+          }
           for (change in event.getChanges(FacetEntity::class.java)) {
             LOG.debug { "Fire 'before' events for facet change $change" }
             FacetEntityChangeListener.getInstance(project).processBeforeChange(change)
@@ -86,11 +90,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
                 fireBeforeModuleRemoved(module)
               }
             }
-          }
-
-          if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.beforeChanged(event)
           }
         }
 

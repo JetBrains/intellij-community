@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.io.File
 import java.nio.file.Path
@@ -33,9 +34,11 @@ internal class KotlinUpdatePluginStartupActivity : StartupActivity.DumbAware {
 
         if (KotlinPluginUtil.getPluginVersion() != installedKotlinVersion) {
             // Force refresh jar handlers
-            for (libraryJarDescriptor in LibraryJarDescriptor.values()) {
-                requestFullJarUpdate(libraryJarDescriptor.getPathInPlugin())
-            }
+            KotlinArtifacts.instance.kotlincLibDirectory.listFiles()
+                ?.filter { it.extension == "jar" }
+                ?.forEach {
+                    requestFullJarUpdate(it.toPath())
+                }
 
             propertiesComponent.setValue(INSTALLED_KOTLIN_VERSION, KotlinPluginUtil.getPluginVersion())
         }
@@ -47,7 +50,7 @@ internal class KotlinUpdatePluginStartupActivity : StartupActivity.DumbAware {
         // Build and update JarHandler
         val jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localVirtualFile) ?: return
         VfsUtilCore.visitChildrenRecursively(jarFile, object : VirtualFileVisitor<Any?>() {})
-        ((jarFile as NewVirtualFile)).markDirtyRecursively()
+        (jarFile as NewVirtualFile).markDirtyRecursively()
     }
 
     companion object {

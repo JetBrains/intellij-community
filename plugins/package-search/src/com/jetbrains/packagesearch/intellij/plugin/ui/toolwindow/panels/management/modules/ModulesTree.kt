@@ -12,17 +12,12 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModuleSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
@@ -30,26 +25,26 @@ import javax.swing.tree.TreeSelectionModel
 
 internal class ModulesTree(
     private val targetModuleSetter: TargetModuleSetter
-) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider, Displayable<TreeModel> {
+) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider {
 
     private var latestTargetModules: TargetModules? = null
 
-    private val onTreeItemSelected = TreeSelectionListener {
-        val node = lastSelectedPathComponent as DefaultMutableTreeNode?
-        if (node == null) {
-            setTargetModules(TargetModules.None, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
-            return@TreeSelectionListener
-        }
-
-        val targetModules = checkNotNull(node.userObject as? TargetModules) {
-            "Node '${node.path}' has invalid data: ${node.userObject}"
-        }
-        PackageSearchEventsLogger.logTargetModuleSelected(targetModules)
-
-        setTargetModules(targetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
-    }
-
     init {
+        addTreeSelectionListener {
+            val node = lastSelectedPathComponent as DefaultMutableTreeNode?
+            if (node == null) {
+                setTargetModules(TargetModules.None, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
+                return@addTreeSelectionListener
+            }
+
+            val targetModules = checkNotNull(node.userObject as? TargetModules) {
+                "Node '${node.path}' has invalid data: ${node.userObject}"
+            }
+            PackageSearchEventsLogger.logTargetModuleSelected(targetModules)
+
+            setTargetModules(targetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
+        }
+
         setCellRenderer(ModulesTreeItemRenderer())
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
@@ -72,21 +67,12 @@ internal class ModulesTree(
         TreeUtil.installActions(this)
     }
 
-    internal data class ViewModel(
-        val treeModel: TreeModel,
-        val pendingSelectionPath: TreePath,
-        val traceInfo: TraceInfo
-    )
-
-    override suspend fun display(viewModel: TreeModel) = withContext(Dispatchers.AppUI) {
+    fun display(treeModel: TreeModel) {
         setPaintBusy(true)
         val wasEmpty = model.root == null || model.getChildCount(model.root) == 0
         // Swapping model resets the selection — but, we set the right selection just afterwards
-        removeTreeSelectionListener(onTreeItemSelected)
-        val selectionPath = selectionModel.selectionPath
-        model = viewModel
-        selectionModel.selectionPath = selectionPath
-        addTreeSelectionListener(onTreeItemSelected)
+        model = treeModel
+        selectionModel.selectionPath = TreePath((treeModel.root as DefaultMutableTreeNode).path)
         if (wasEmpty) TreeUtil.expandAll(this@ModulesTree)
 
         updateUI()

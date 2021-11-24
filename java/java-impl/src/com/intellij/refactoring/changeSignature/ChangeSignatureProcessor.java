@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -132,12 +132,24 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
       if (!processor.setupDefaultValues(myChangeInfo, refUsages, myProject)) return false;
     }
+    final UsageInfo[] usagesIn = refUsages.get();
+    Set<UsageInfo> usagesSet = ContainerUtil.set(usagesIn);
+
+    if (myChangeInfo instanceof JavaChangeInfoImpl &&
+         ((JavaChangeInfo)myChangeInfo).isVisibilityChanged() && 
+         ContainerUtil.exists(usagesSet, OverriderUsageInfo.class::isInstance)) {
+       String visibility = ((JavaChangeInfo)myChangeInfo).getNewVisibility();
+       String oldVisibility = VisibilityUtil.getVisibilityModifier(((JavaChangeInfo)myChangeInfo).getMethod().getModifierList());
+       if (oldVisibility.equals(VisibilityUtil.getHighestVisibility(visibility, oldVisibility)) &&
+           (!ApplicationManager.getApplication().isUnitTestMode() && 
+            Messages.showYesNoDialog(myProject, JavaRefactoringBundle.message("dialog.message.overriding.methods.with.weaken.visibility", visibility), RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getQuestionIcon()) == Messages.YES)) {
+         ((JavaChangeInfoImpl)myChangeInfo).propagateVisibility = true;
+       }
+     }
     MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<>();
     collectConflictsFromExtensions(refUsages, conflictDescriptions, myChangeInfo);
-
-    final UsageInfo[] usagesIn = refUsages.get();
+    
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
-    Set<UsageInfo> usagesSet = ContainerUtil.set(usagesIn);
     RenameUtil.removeConflictUsages(usagesSet);
     if (!conflictDescriptions.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

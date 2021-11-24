@@ -17,7 +17,6 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
-import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -118,9 +117,6 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   @Override
   public void patch(@NotNull JavaParameters javaParameters, @Nullable RunnerSettings settings, @NotNull RunProfile runProfile, boolean beforeExecution) {
     JavaProgramPatcher.runCustomPatchers(javaParameters, DefaultRunExecutor.getRunExecutorInstance(), runProfile);
-    if (runProfile instanceof JavaRunConfigurationBase) {
-      JavaParametersUtil.applyModifications(javaParameters, ((JavaRunConfigurationBase)runProfile).getClasspathModifications());
-    }
   }
 
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {

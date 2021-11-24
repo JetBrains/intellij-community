@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.execution.ui.TagButton;
@@ -173,11 +173,15 @@ public class ComponentValidator {
    * Convenient wrapper for mostly used scenario.
    */
   public ComponentValidator andRegisterOnDocumentListener(@NotNull JTextComponent textComponent) {
-    textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
+    DocumentAdapter listener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         getInstance(textComponent).ifPresent(ComponentValidator::revalidate); // Don't use 'this' to avoid cyclic references.
       }
+    };
+    textComponent.getDocument().addDocumentListener(listener);
+    Disposer.register(parentDisposable, () -> {
+      textComponent.getDocument().removeDocumentListener(listener);
     });
     return this;
   }
@@ -228,7 +232,7 @@ public class ComponentValidator {
     if (disableValidation) return;
 
     boolean resetInfo = info == null && validationInfo != null;
-    boolean hasNewInfo = info != null && !info.equals(validationInfo) && StringUtil.isNotEmpty(info.message);
+    boolean hasNewInfo = info != null && !info.equals(validationInfo);
 
     if (resetInfo) {
       reset();
@@ -248,18 +252,21 @@ public class ComponentValidator {
           component.repaint();
         }
 
-        popupBuilder = createPopupBuilder(validationInfo, editorPane -> {
-          tipComponent = editorPane;
-          editorPane.addHyperlinkListener(hyperlinkListener);
-          editorPane.addMouseListener(new TipComponentMouseListener());
-          popupSize = editorPane.getPreferredSize();
-        }).setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
+        if (!StringUtil.isEmptyOrSpaces(info.message)) {
+          // create popup if there is something to show to user
+          popupBuilder = createPopupBuilder(validationInfo, editorPane -> {
+            tipComponent = editorPane;
+            editorPane.addHyperlinkListener(hyperlinkListener);
+            editorPane.addMouseListener(new TipComponentMouseListener());
+            popupSize = editorPane.getPreferredSize();
+          }).setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
 
-        getFocusable(component).ifPresent(fc -> {
-          if (fc.hasFocus()) {
-            showPopup();
-          }
-        });
+          getFocusable(component).ifPresent(fc -> {
+            if (fc.hasFocus()) {
+              showPopup();
+            }
+          });
+        }
       }
     }
   }

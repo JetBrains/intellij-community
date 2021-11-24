@@ -25,6 +25,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Provides implementations for the following interfaces:
+ *
+ * <ul>
+ *   <li>{@link GlobalInspectionContextExtension} to perform activities before and after running inspections (see {@link com.intellij.codeInspection.GlobalInspectionContext});</li>
+ *   <li>{@link RefManagerExtension} to manage the reference graph (see {@link RefManager});</li>
+ *   <li>{@link HTMLComposerExtension} to output HTML (see {@link HTMLComposer});</li>
+ * </ul>
+ */
 public abstract class InspectionExtensionsFactory {
 
   public static final ExtensionPointName<InspectionExtensionsFactory> EP_NAME = ExtensionPointName.create("com.intellij.codeInspection.InspectionExtension");

@@ -87,7 +87,7 @@ class KtScratchFile(project: Project, file: VirtualFile) : ScratchFile(project, 
             })
             .inSmartMode(project)
             .expireWith(KotlinPluginDisposable.getInstance(project))
-            .expireWhen { Disposer.isDisposed(project) }
+            .expireWhen { project.isDisposed() }
             .executeSynchronously()
     }
 }

@@ -2,13 +2,20 @@
 package com.intellij.vcs.log.ui.details.commit
 
 import com.intellij.ide.IdeTooltipManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.ui.ClickListener
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ColorIcon
@@ -17,60 +24,83 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.*
+import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.util.VcsLogUiUtil
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
+import kotlin.properties.Delegates.observable
 
-open class CommitDetailsPanel(private val project: Project, navigate: (CommitId) -> Unit) : JPanel() {
+class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit = {}) : JPanel() {
   companion object {
     const val SIDE_BORDER = 14
     const val INTERNAL_BORDER = 10
     const val EXTERNAL_BORDER = 14
   }
 
+  private val statusesActionGroup = DefaultActionGroup()
+
   data class RootColor(val root: VirtualFile, val color: Color)
 
   private val hashAndAuthorPanel = HashAndAuthorPanel()
+  private val signaturePanel = SignaturePanel()
+  private val statusesToolbar = ActionManager.getInstance().createActionToolbar("CommitDetailsPanel", statusesActionGroup, false).apply {
+    targetComponent = this@CommitDetailsPanel
+    (this as ActionToolbarImpl).setForceShowFirstComponent(true)
+    component.apply {
+      isOpaque = false
+      border = JBUI.Borders.empty()
+      isVisible = false
+    }
+  }
   private val messagePanel = CommitMessagePanel(navigate)
-  private val branchesPanel = ReferencesPanel()
-  private val tagsPanel = ReferencesPanel()
+  private val branchesPanel = ReferencesPanel(Registry.intValue("vcs.log.max.branches.shown"))
+  private val tagsPanel = ReferencesPanel(Registry.intValue("vcs.log.max.tags.shown"))
   private val rootPanel = RootColorPanel(hashAndAuthorPanel)
   private val containingBranchesPanel = ContainingBranchesPanel()
 
   init {
-    layout = VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false)
+    layout = MigLayout(LC().gridGap("0", "0").insets("0").fill())
     isOpaque = false
 
-    val metadataPanel = BorderLayoutPanel().apply {
+    val mainPanel = JPanel(null).apply {
+      layout = VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false)
       isOpaque = false
-      border = JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER)
-      addToLeft(rootPanel)
-      addToCenter(hashAndAuthorPanel)
+
+      val metadataPanel = BorderLayoutPanel().apply {
+        isOpaque = false
+        border = JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, 0)
+        addToLeft(rootPanel)
+        addToCenter(hashAndAuthorPanel)
+        addToBottom(signaturePanel)
+      }
+
+      add(messagePanel)
+      add(metadataPanel)
+      add(branchesPanel)
+      add(tagsPanel)
+      add(containingBranchesPanel)
     }
 
-    add(messagePanel)
-    add(metadataPanel)
-    add(branchesPanel)
-    add(tagsPanel)
-    add(containingBranchesPanel)
+    add(mainPanel, CC().grow().push())
+    //show at most 4 icons
+    val maxHeight = JBUIScale.scale(22 * 4)
+    add(statusesToolbar.component, CC().hideMode(3).alignY("top").maxHeight("$maxHeight"))
+
+    updateStatusToolbar(false)
   }
 
-  final override fun add(comp: Component?): Component = super.add(comp)
-
-  open fun setCommit(commit: CommitId, presentation: CommitPresentation) {
+  fun setCommit(presentation: CommitPresentation) {
     messagePanel.updateMessage(presentation)
     hashAndAuthorPanel.updateHashAndAuthor(presentation)
-  }
-
-  fun setCommit(commit: VcsCommitMetadata) {
-    val presentation = buildPresentation(project, commit, mutableSetOf())
-    setCommit(CommitId(commit.id, commit.root), presentation)
   }
 
   fun setRefs(references: List<VcsRef>?) {
@@ -78,11 +108,11 @@ open class CommitDetailsPanel(private val project: Project, navigate: (CommitId)
     branchesPanel.setReferences(references.filter { it.type.isBranch })
     tagsPanel.setReferences(references.filter { !it.type.isBranch })
     if (tagsPanel.isVisible) {
-      branchesPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER)
-      tagsPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER)
+      branchesPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, 0)
+      tagsPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, 0)
     }
     else if (branchesPanel.isVisible) {
-      branchesPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER)
+      branchesPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, 0)
     }
     update()
   }
@@ -93,6 +123,41 @@ open class CommitDetailsPanel(private val project: Project, navigate: (CommitId)
 
   fun setBranches(branches: List<String>?) {
     containingBranchesPanel.setBranches(branches)
+  }
+
+  fun setStatuses(statuses: List<VcsCommitExternalStatusPresentation>) {
+    signaturePanel.signature = statuses.filterIsInstance(VcsCommitExternalStatusPresentation.Signature::class.java).firstOrNull()
+
+    val nonSignaturesStatuses = statuses.filter { it !is VcsCommitExternalStatusPresentation.Signature }
+
+    statusesActionGroup.removeAll()
+    statusesActionGroup.addAll(nonSignaturesStatuses.map(::statusToAction))
+
+    updateStatusToolbar(nonSignaturesStatuses.isNotEmpty())
+  }
+
+  private fun statusToAction(status: VcsCommitExternalStatusPresentation) =
+    object : DumbAwareAction(status.text, null, status.icon) {
+      override fun update(e: AnActionEvent) {
+        e.presentation.apply {
+          isVisible = true
+          isEnabled = status is VcsCommitExternalStatusPresentation.Clickable && status.clickEnabled(e.inputEvent)
+          disabledIcon = status.icon
+        }
+      }
+
+      override fun actionPerformed(e: AnActionEvent) {
+        if (status is VcsCommitExternalStatusPresentation.Clickable) {
+          if (status.clickEnabled(e.inputEvent))
+            status.onClick(e.inputEvent)
+        }
+      }
+    }
+
+  private fun updateStatusToolbar(hasStatuses: Boolean) {
+    border = if (hasStatuses) JBUI.Borders.empty() else JBUI.Borders.emptyRight(SIDE_BORDER)
+    statusesToolbar.updateActionsImmediately()
+    statusesToolbar.component.isVisible = hasStatuses
   }
 
   fun update() {
@@ -123,8 +188,7 @@ private class CommitMessagePanel(private val navigate: (CommitId) -> Unit) : Htm
   }
 
   init {
-    border = JBUI.Borders.empty(CommitDetailsPanel.EXTERNAL_BORDER, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.INTERNAL_BORDER,
-                                CommitDetailsPanel.SIDE_BORDER)
+    border = JBUI.Borders.empty(CommitDetailsPanel.EXTERNAL_BORDER, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.INTERNAL_BORDER, 0)
   }
 
   fun updateMessage(message: CommitPresentation?) {
@@ -147,7 +211,7 @@ private class ContainingBranchesPanel : HtmlPanel() {
   private var expanded = false
 
   init {
-    border = JBUI.Borders.empty(0, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.EXTERNAL_BORDER, CommitDetailsPanel.SIDE_BORDER)
+    border = JBUI.Borders.empty(0, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.EXTERNAL_BORDER, 0)
     isVisible = false
   }
 
@@ -240,7 +304,7 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
 
   fun setRoot(rootColor: CommitDetailsPanel.RootColor?) {
     if (rootColor != null) {
-      icon = JBUI.scale(ColorIcon(ROOT_ICON_SIZE, rootColor.color))
+      icon = JBUIScale.scaleIcon(ColorIcon(ROOT_ICON_SIZE, rootColor.color))
       tooltipText = rootColor.root.path
     }
     else {
@@ -263,6 +327,36 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
       val metrics = getFontMetrics(parent.bodyFont)
       icon.paintIcon(this, g, 0, metrics.maxAscent - h + (h - icon.iconHeight - 1) / 2)
     }
+  }
+}
+
+private class SignaturePanel : BorderLayoutPanel() {
+  val label = JLabel().apply {
+    foreground = JBColor.GRAY
+  }.also {
+    object : ClickListener() {
+      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+        return (signature as? VcsCommitExternalStatusPresentation.Clickable)?.onClick(event) ?: false
+      }
+    }.installOn(it)
+  }
+
+  var signature: VcsCommitExternalStatusPresentation.Signature? by observable(null) { _, _, newValue ->
+    isVisible = newValue != null
+    label.apply {
+      icon = newValue?.icon
+      text = newValue?.text
+      toolTipText = newValue?.description?.toString()
+      cursor =
+        if (newValue is VcsCommitExternalStatusPresentation.Clickable) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        else Cursor.getDefaultCursor()
+    }
+  }
+
+  init {
+    isVisible = false
+    isOpaque = false
+    addToLeft(label)
   }
 }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomAction
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBDimension
@@ -23,7 +24,8 @@ import javax.swing.*
 
 class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   companion object {
-     val ARROW_DATA = Key<Icon?>("ARROW_DATA")
+    private val LOG = Logger.getInstance(RunToolbarMainSlotActive::class.java)
+    val ARROW_DATA = Key<Icon?>("ARROW_DATA")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -37,7 +39,7 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   override fun update(e: AnActionEvent) {
     RunToolbarProcessStartedAction.updatePresentation(e)
 
-    if (!RunToolbarProcess.experimentalUpdating()) {
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
         e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
@@ -52,6 +54,7 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
     }
 
     e.presentation.putClientProperty(ARROW_DATA, e.arrowIcon())
+    traceLog(LOG, e)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): SegmentedCustomPanel {

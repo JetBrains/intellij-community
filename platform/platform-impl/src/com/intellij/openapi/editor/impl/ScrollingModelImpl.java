@@ -62,6 +62,9 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   public ScrollingModelImpl(@NotNull ScrollingModel.Supplier supplier) {
     mySupplier = supplier;
+  }
+
+  void initListeners() {
     mySupplier.getScrollPane().getViewport().addChangeListener(myViewportChangeListener);
     mySupplier.getEditor().getDocument().addDocumentListener(myDocumentListener);
   }

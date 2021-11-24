@@ -130,11 +130,13 @@ fun <T> addMetricsIfDiffers(set: MutableSet<in MetricEvent>,
   })
 }
 
+@JvmOverloads
 fun <T> addBoolIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                          valueFunction: (T) -> Boolean, eventId: VarargEventId, data: MutableList<EventPair<*>>? = null) {
   addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, eventId, EventFields.Enabled, data)
 }
 
+@JvmOverloads
 fun <T, V> addIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                         valueFunction: (T) -> V, eventId: VarargEventId, field: EventField<V>, data: MutableList<EventPair<*>>? = null) {
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) {

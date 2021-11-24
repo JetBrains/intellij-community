@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class A {
     fun String.foo(n: Int): Boolean {
         return length - n/2 > 1

@@ -24,7 +24,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     companion object {
 
-        private const val VERSION = 5
+        private const val VERSION = 8
         private val GROUP = EventLogGroup(FUSGroupIds.GROUP_ID, VERSION)
 
         // FIELDS
@@ -37,7 +37,6 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val repositoryUsesCustomUrlField = EventFields.Boolean(FUSGroupIds.REPOSITORY_USES_CUSTOM_URL)
         private val packageIsInstalledField = EventFields.Boolean(FUSGroupIds.PACKAGE_IS_INSTALLED)
         private val targetModulesField = EventFields.Enum<FUSGroupIds.TargetModulesType>(FUSGroupIds.TARGET_MODULES)
-        private val targetModulesCountField = EventFields.Int(FUSGroupIds.TARGET_MODULES_COUNT)
         private val targetModulesMixedBuildSystemsField = EventFields.Boolean(FUSGroupIds.TARGET_MODULES_MIXED_BUILD_SYSTEMS)
 
         internal val preferencesGradleScopeCountField = EventFields.Int(FUSGroupIds.PREFERENCES_GRADLE_SCOPES_COUNT)
@@ -79,13 +78,12 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             eventField3 = repositoryUsesCustomUrlField
         )
         private val preferencesChangedEvent = GROUP.registerVarargEvent(FUSGroupIds.PREFERENCES_CHANGED)
-        private val preferencesResetEvent = GROUP.registerEvent(FUSGroupIds.PREFERENCES_RESET)
+        private val preferencesRestoreDefaultsEvent = GROUP.registerEvent(FUSGroupIds.PREFERENCES_RESTORE_DEFAULTS)
         private val packageSelectedEvent = GROUP.registerEvent(eventId = FUSGroupIds.PACKAGE_SELECTED, packageIsInstalledField)
         private val targetModulesSelectedEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.TARGET_MODULES_SELECTED,
             eventField1 = targetModulesField,
-            eventField2 = targetModulesCountField,
-            eventField3 = targetModulesMixedBuildSystemsField
+            eventField2 = targetModulesMixedBuildSystemsField
         )
         private val detailsLinkClickEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.DETAILS_LINK_CLICK,
@@ -97,7 +95,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             eventField2 = detailsVisibleField
         )
         private val searchRequestEvent = GROUP.registerEvent(
-            eventId = FUSGroupIds.SEARCH_QUERY_CHANGED,
+            eventId = FUSGroupIds.SEARCH_REQUEST,
             eventField1 = searchQueryLengthField
         )
         private val searchQueryClearEvent = GROUP.registerEvent(FUSGroupIds.SEARCH_QUERY_CLEAR)
@@ -166,12 +164,12 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             preferencesChangedEvent.log(*preferences)
         }
 
-        fun logPreferencesReset() = ifLoggingEnabled {
-            preferencesResetEvent.log()
+        fun logPreferencesRestoreDefaults() = ifLoggingEnabled {
+            preferencesRestoreDefaultsEvent.log()
         }
 
         fun logTargetModuleSelected(targetModules: TargetModules) = ifLoggingEnabled {
-            targetModulesSelectedEvent.log(FUSGroupIds.TargetModulesType.from(targetModules), targetModules.size, targetModules.isMixedBuildSystems)
+            targetModulesSelectedEvent.log(FUSGroupIds.TargetModulesType.from(targetModules), targetModules.isMixedBuildSystems)
         }
 
         fun logPackageSelected(isInstalled: Boolean) = ifLoggingEnabled {

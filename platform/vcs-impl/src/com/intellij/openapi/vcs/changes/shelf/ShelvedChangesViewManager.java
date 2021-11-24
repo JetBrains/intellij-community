@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffPlaces;
@@ -735,7 +736,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
 
       if (isEditorPreview) {
-        myEditorChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
+        myEditorChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree, true);
         Disposer.register(this, myEditorChangeProcessor);
         myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor, hasSplitterPreview);
       }
@@ -744,7 +745,7 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       if (hasSplitterPreview) {
-        mySplitterChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
+        mySplitterChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree, false);
         Disposer.register(this, mySplitterChangeProcessor);
         mySplitterDiffPreview = installSplitterPreview(mySplitterChangeProcessor);
       }
@@ -755,7 +756,14 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @NotNull
     private EditorTabPreview installEditorPreview(@NotNull MyShelvedPreviewProcessor changeProcessor, boolean hasSplitterPreview) {
-      EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
+      return new SimpleTreeEditorDiffPreview(changeProcessor, myTree, myTreeScrollPane,
+                                             isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview) {
+        @Override
+        public void returnFocusToTree() {
+          ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
+          if (toolWindow != null) toolWindow.activate(null);
+        }
+
         @Override
         public void updateAvailability(@NotNull AnActionEvent event) {
           DiffShelvedChangesActionProvider.updateAvailability(event);
@@ -770,11 +778,6 @@ public class ShelvedChangesViewManager implements Disposable {
         }
 
         @Override
-        protected boolean hasContent() {
-          return changeProcessor.getCurrentChange() != null;
-        }
-
-        @Override
         protected boolean skipPreviewUpdate() {
           if (super.skipPreviewUpdate()) return true;
           if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
@@ -783,16 +786,6 @@ public class ShelvedChangesViewManager implements Disposable {
           return false;
         }
       };
-      editorPreview.setEscapeHandler(() -> {
-        editorPreview.closePreview();
-
-        ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
-        if (toolWindow != null) toolWindow.activate(null);
-      });
-      editorPreview.installListeners(myTree, isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview);
-      editorPreview.installNextDiffActionOn(myTreeScrollPane);
-
-      return editorPreview;
     }
 
     @NotNull
@@ -873,12 +866,14 @@ public class ShelvedChangesViewManager implements Disposable {
 
   private static class MyShelvedPreviewProcessor extends ChangeViewDiffRequestProcessor implements DiffPreviewUpdateProcessor {
     @NotNull private final ShelfTree myTree;
+    private final boolean myIsInEditor;
 
     @NotNull private final PatchesPreloader myPreloader;
 
-    MyShelvedPreviewProcessor(@NotNull Project project, @NotNull ShelfTree tree) {
+    MyShelvedPreviewProcessor(@NotNull Project project, @NotNull ShelfTree tree, boolean isInEditor) {
       super(project, DiffPlaces.SHELVE_VIEW);
       myTree = tree;
+      myIsInEditor = isInEditor;
       myPreloader = new PatchesPreloader(project);
       putContextUserData(PatchesPreloader.SHELF_PRELOADER, myPreloader);
     }
@@ -888,6 +883,11 @@ public class ShelvedChangesViewManager implements Disposable {
     public void clear() {
       setCurrentChange(null);
       dropCaches();
+    }
+
+    @Override
+    protected boolean shouldAddToolbarBottomBorder(@NotNull FrameDiffTool.ToolbarComponents toolbarComponents) {
+      return !myIsInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents);
     }
 
     @Override

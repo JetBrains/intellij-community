@@ -35,8 +35,6 @@ public final class DocumentUtil {
    * @param executeInBulk  {@code true} to force given document to be in bulk mode when given task is executed;
    *                       {@code false} to force given document to be <b>not</b> in bulk mode when given task is executed
    * @param task           task to execute
-   *
-   * @see Document#setInBulkUpdate(boolean)
    */
   public static void executeInBulk(@NotNull Document document, final boolean executeInBulk, @NotNull Runnable task) {
     if (executeInBulk == document.isInBulkUpdate()) {
@@ -172,5 +170,25 @@ public final class DocumentUtil {
       result--;
     }
     return document.getCharsSequence().subSequence(lineOffset, lineOffset + Math.max(result, 0));
+  }
+
+  public static int calculateOffset(@NotNull Document document, int line, int column, int tabSize) {
+    int offset;
+    if (0 <= line && line < document.getLineCount()) {
+      final int lineStart = document.getLineStartOffset(line);
+      final int lineEnd = document.getLineEndOffset(line);
+      final CharSequence docText = document.getCharsSequence();
+
+      offset = lineStart;
+      int col = 0;
+      while (offset < lineEnd && col < column) {
+        col += docText.charAt(offset) == '\t' ? tabSize : 1;
+        offset++;
+      }
+    }
+    else {
+      offset = document.getTextLength();
+    }
+    return offset;
   }
 }

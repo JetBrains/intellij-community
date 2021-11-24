@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(it: String?) {
     val x = it?.let { it1 -> bar(it1) } ?: 13

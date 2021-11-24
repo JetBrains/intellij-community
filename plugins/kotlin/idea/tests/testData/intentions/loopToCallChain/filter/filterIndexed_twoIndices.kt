@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filterIndexed{}.filterIndexedTo(){}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filterIndexed{}.filterIndexedTo(){}'"
 fun foo(list: List<String>, target: MutableCollection<String>) {

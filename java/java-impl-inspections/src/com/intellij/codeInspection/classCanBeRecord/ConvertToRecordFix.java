@@ -113,7 +113,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     );
     private final PsiClass myClass;
     private final boolean mySuggestAccessorsRenaming;
-    private final MultiMap<PsiField, FieldAccessorCandidate> myFieldAccessors = new MultiMap<>();
+    private final MultiMap<PsiField, FieldAccessorCandidate> myFieldAccessors = new MultiMap<>(new LinkedHashMap<>());
     private final List<PsiMethod> myOrdinaryMethods = new SmartList<>();
     private final List<RecordConstructorCandidate> myConstructors = new SmartList<>();
 
@@ -137,7 +137,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     Map<PsiField, @Nullable FieldAccessorCandidate> getFieldAccessors() {
       if (myFieldAccessorsCache != null) return myFieldAccessorsCache;
 
-      Map<PsiField, FieldAccessorCandidate> result = new HashMap<>();
+      Map<PsiField, FieldAccessorCandidate> result = new LinkedHashMap<>();
       for (var entry : myFieldAccessors.entrySet()) {
         PsiField newKey = entry.getKey();
         Collection<FieldAccessorCandidate> oldValue = entry.getValue();

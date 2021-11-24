@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyLiteralExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +70,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, ignoreConstantInTheMiddle);
+    return new Visitor(holder, ignoreConstantInTheMiddle, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
@@ -83,8 +84,10 @@ public class PyChainedComparisonsInspection extends PyInspection {
     boolean isConstantInTheMiddle;
     boolean ignoreConstantInTheMiddle;
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreConstantInTheMiddle) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            boolean ignoreConstantInTheMiddle,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
       this.ignoreConstantInTheMiddle = ignoreConstantInTheMiddle;
     }
 

@@ -15,7 +15,7 @@ import filecmp
 import os
 import re
 
-import toml
+import tomli
 
 consistent_files = [
     {"stdlib/@python2/builtins.pyi", "stdlib/@python2/__builtin__.pyi"},
@@ -165,13 +165,12 @@ def _strip_dep_version(dependency):
 def check_metadata():
     for distribution in os.listdir("stubs"):
         with open(os.path.join("stubs", distribution, "METADATA.toml")) as f:
-            data = toml.loads(f.read())
+            data = tomli.loads(f.read())
         assert "version" in data, f"Missing version for {distribution}"
         version = data["version"]
         msg = f"Unsupported Python version {version}"
-        assert version.count(".") == 1, msg
-        major, minor = version.split(".")
-        assert major.isdigit() and minor.isdigit(), msg
+        assert isinstance(version, str), msg
+        assert re.fullmatch(r"\d+(\.\d+)+|\d+(\.\d+)*\.\*", version), msg
         for key in data:
             assert key in metadata_keys, f"Unexpected key {key} for {distribution}"
         assert isinstance(data.get("python2", False), bool), f"Invalid python2 value for {distribution}"

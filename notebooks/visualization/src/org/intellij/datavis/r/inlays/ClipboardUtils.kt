@@ -22,10 +22,9 @@ import javax.swing.JTable
 object ClipboardUtils {
 
   const val LINE_BREAK = "\r"
-
   private const val CELL_BREAK = "\t"
 
-  private fun copyAllToString(table: JTable, cellBreak: String = CELL_BREAK): String {
+  private fun copyAllToString(table: JTable, cellBreak: String = CELL_BREAK, limit: Int = Int.MAX_VALUE): String {
     if (table.rowCount == 0 || table.columnCount == 0) {
       // The code should be compatible with 193 and 201 so, so we cannot use NotificationGroup.createIdWithTitle yet
       // NotificationGroup.createIdWithTitle("Notebook Table", VisualizationBundle.message("inlay.output.table.notification.group.name"))
@@ -38,6 +37,10 @@ object ClipboardUtils {
 
     val builder = StringBuilder()
     for (i in 0 until table.rowCount) {
+      if (i >= limit) {
+        builder.append("\n").append(VisualizationBundle.message("clipboard.utils.copy.load.limit", limit))
+        break
+      }
       for (j in 0 until table.columnCount) {
         table.getValueAt(i, j)?.let { builder.append(escape(it, cellBreak)) }
 
@@ -53,8 +56,8 @@ object ClipboardUtils {
     return builder.toString()
   }
 
-  fun copyAllToClipboard(table: JTable, cellBreak: String = CELL_BREAK) {
-    val sel = StringSelection(copyAllToString(table, cellBreak))
+  fun copyAllToClipboard(table: JTable, cellBreak: String = CELL_BREAK, limit: Int = Int.MAX_VALUE) {
+    val sel = StringSelection(copyAllToString(table, cellBreak, limit))
     Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, sel)
   }
 

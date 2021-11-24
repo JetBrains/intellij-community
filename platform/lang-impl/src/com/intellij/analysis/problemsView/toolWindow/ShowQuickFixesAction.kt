@@ -89,12 +89,13 @@ internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
         override fun chooseActionAndInvoke(cachedAction: IntentionActionWithTextCaching, file: PsiFile, project: Project, editor: Editor?) {
           editor?.contentComponent?.requestFocus()
           // hack until doWhenFocusSettlesDown will work as expected
+          val modality = editor?.contentComponent?.let { ModalityState.stateForComponent(it) } ?: ModalityState.current()
           getApplication().invokeLater(
             {
               IdeFocusManager.getInstance(project).doWhenFocusSettlesDown {
                 super.chooseActionAndInvoke(cachedAction, file, project, editor)
               }
-            }, ModalityState.NON_MODAL, project.disposed)
+            }, modality, project.disposed)
         }
       }
     ))

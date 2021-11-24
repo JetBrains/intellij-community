@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -7,10 +7,10 @@ import com.intellij.codeInsight.daemon.problems.*;
 import com.intellij.codeInsight.hints.*;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.BlockInlayPriority;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.codeInsight.hints.InlayHintsProviderKt.CODE_VISION_GROUP;
+import static com.intellij.codeInsight.hints.InlayHintsUtilsKt.addCodeVisionElement;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings> {
@@ -75,9 +75,9 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
           PsiElement identifier = namedElement.getNameIdentifier();
           if (identifier == null) return;
           int offset = ProjectProblemUtils.getMemberOffset(psiMember);
-          InlayPresentation presentation =
-            ProjectProblemUtils.getPresentation(project, editor, document, factory, offset, psiMember, memberProblems);
-          sink.addBlockElement(offset, true, true, BlockInlayPriority.PROBLEMS, presentation);
+          InlayPresentation presentation = ProjectProblemUtils.getPresentation(project, editor, factory, psiMember, memberProblems);
+
+          addCodeVisionElement(sink, editor, offset, BlockInlayPriority.PROBLEMS, presentation);
           highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember, identifier));
         });
 
@@ -145,14 +145,12 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
     return JavaBundle.message("project.problems.title");
   }
 
-  @NotNull
   @Override
-  public String getGroupId() {
-    return CODE_VISION_GROUP;
+  public @NotNull InlayGroup getGroup() {
+    return InlayGroup.CODE_VISION_GROUP;
   }
 
-  private static final String RELATED_PROBLEMS_ID = "RelatedProblems";
-  private static final SettingsKey<NoSettings> KEY = new SettingsKey<>(RELATED_PROBLEMS_ID);
+  private static final SettingsKey<NoSettings> KEY = new SettingsKey<>("RelatedProblems");
 
   @NotNull
   @Override
@@ -201,8 +199,9 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
     return true;
   }
 
-  static void openSettings(@NotNull Project project) {
-    InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE,
-                                                         model -> model.getId().equals(RELATED_PROBLEMS_ID));
+  static @NotNull List<AnAction> getPopupActions() {
+    return InlayHintsUtils.INSTANCE.getDefaultInlayHintsProviderPopupActions(
+      KEY, JavaBundle.messagePointer("title.related.problems.inlay.hints")
+    );
   }
 }

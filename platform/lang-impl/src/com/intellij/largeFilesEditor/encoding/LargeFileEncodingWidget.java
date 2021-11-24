@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   public LargeFileEncodingWidget(@NotNull final Project project) {
     super(project);
     myComponent = new TextPanel.WithIconAndArrows();
-    myComponent.setBorder(WidgetBorder.WIDE);
+    myComponent.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
   }
 
   @Override

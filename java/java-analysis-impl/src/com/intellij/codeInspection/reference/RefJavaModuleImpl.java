@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.icons.AllIcons;
@@ -88,9 +88,8 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
     return myRequiredModules != null ? myRequiredModules : Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(boolean expanded) {
+  public @NotNull Icon getIcon(boolean expanded) {
     return AllIcons.Nodes.JavaModule;
   }
 

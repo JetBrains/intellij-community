@@ -384,7 +384,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
         }
 
         @Override
-        public VirtualFile getFile() {
+        public @NotNull VirtualFile getFile() {
           return file;
         }
       };
@@ -495,7 +495,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     public void navigateTo(@NotNull Navigatable navigatable) {}
 
     @Override
-    public VirtualFile getFile() {
+    public @NotNull VirtualFile getFile() {
       return myFile;
     }
   }

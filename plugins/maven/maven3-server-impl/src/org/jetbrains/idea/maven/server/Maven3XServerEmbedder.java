@@ -120,7 +120,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private final Properties mySystemProperties;
 
-  private volatile MavenServerProgressIndicator myCurrentIndicator;
+  private volatile MavenServerProgressIndicatorWrapper myCurrentIndicator;
 
   private MavenWorkspaceMap myWorkspaceMap;
 
@@ -150,9 +150,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
 
     MavenServerSettings serverSettings = settings.getSettings();
-    File mavenHome = serverSettings.getMavenHome();
+    String mavenHome = serverSettings.getMavenHomePath();
     if (mavenHome != null) {
-      System.setProperty("maven.home", mavenHome.getPath());
+      System.setProperty("maven.home", mavenHome);
     }
 
     myConsoleWrapper = new Maven3ServerConsoleLogger();
@@ -276,8 +276,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                         Properties systemProperties,
                                         Properties userProperties) throws RemoteException {
     SettingsBuildingRequest settingsRequest = new DefaultSettingsBuildingRequest();
-    settingsRequest.setGlobalSettingsFile(settings.getGlobalSettingsFile());
-    settingsRequest.setUserSettingsFile(settings.getUserSettingsFile());
+    if (settings.getGlobalSettingsPath() != null) {
+      settingsRequest.setGlobalSettingsFile(new File(settings.getGlobalSettingsPath()));
+    }
+    if (settings.getUserSettingsPath() != null) {
+      settingsRequest.setUserSettingsFile(new File(settings.getUserSettingsPath()));
+    }
     settingsRequest.setSystemProperties(systemProperties);
     settingsRequest.setUserProperties(userProperties);
 
@@ -291,8 +295,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     result.setOffline(settings.isOffline());
 
-    if (settings.getLocalRepository() != null) {
-      result.setLocalRepository(settings.getLocalRepository().getPath());
+    if (settings.getLocalRepositoryPath() != null) {
+      result.setLocalRepository(settings.getLocalRepositoryPath());
     }
 
     if (result.getLocalRepository() == null) {
@@ -600,12 +604,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public void customize(@Nullable MavenWorkspaceMap workspaceMap,
-                        boolean failOnUnresolvedDependency,
-                        @NotNull MavenServerConsole console,
-                        @NotNull MavenServerProgressIndicator indicator,
-                        boolean alwaysUpdateSnapshots,
-                        @Nullable Properties userProperties, MavenToken token) throws RemoteException {
+  public @NotNull
+  MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
+                                                                    boolean failOnUnresolvedDependency,
+                                                                    boolean alwaysUpdateSnapshots,
+                                                                    @Nullable Properties userProperties, MavenToken token)
+    throws RemoteException {
     MavenServerUtil.checkToken(token);
 
     try {
@@ -626,9 +630,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
 
-      setConsoleAndIndicator(console, new MavenServerProgressIndicatorWrapper(indicator));
+
+      myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
+      myConsoleWrapper.setWrappee(myCurrentIndicator);
+
+      try {
+        UnicastRemoteObject.exportObject(myCurrentIndicator, 0);
+      }
+      catch (RemoteException e) {
+        throw new RuntimeException(e);
+      }
 
       myUserProperties = userProperties;
+      return myCurrentIndicator;
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -678,11 +692,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
       return modelInterpolator;
     }
-  }
-
-  private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
-    myConsoleWrapper.setWrappee(console);
-    myCurrentIndicator = indicator;
   }
 
   @NotNull
@@ -815,7 +824,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         Model model = result.getProject().getModel();
         cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
       }
-      ((DefaultRepositorySystemSession)session).setWorkspaceReader(new Maven3WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
+      ((DefaultRepositorySystemSession)session).setWorkspaceReader(
+        new Maven3WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
     }
   }
 
@@ -1276,10 +1286,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         }
       });
       return mavenArtifacts[0];
-    } catch (Exception e){
+    }
+    catch (Exception e) {
       throw new RuntimeException(ExceptionUtilRt.getThrowableText(e, "com.intellij"));
     }
-
   }
 
   @NotNull
@@ -1564,7 +1574,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   public void reset(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      setConsoleAndIndicator(null, null);
+      if (myCurrentIndicator != null) {
+        UnicastRemoteObject.unexportObject(myCurrentIndicator, false);
+      }
+      myCurrentIndicator = null;
+      myConsoleWrapper.setWrappee(null);
 
       final ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
       if (artifactFactory instanceof CustomMaven3ArtifactFactory) {

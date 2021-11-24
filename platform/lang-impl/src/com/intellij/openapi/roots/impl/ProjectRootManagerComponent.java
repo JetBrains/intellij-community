@@ -14,7 +14,10 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleEx;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.RootsChangeIndexingInfo;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -36,10 +39,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.EntityIndexingService;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.messages.MessageBusConnection;
@@ -65,8 +65,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
                                              ? ConcurrencyUtil.newSameThreadExecutorService()
                                              : AppExecutorUtil.createBoundedApplicationPoolExecutor("Project Root Manager", 1);
   private @NotNull Future<?> myCollectWatchRootsFuture = CompletableFuture.completedFuture(null); // accessed in EDT only
-
-  private final RootChangesLogger myRootsChangedLogger = new RootChangesLogger(LOG);
 
   private boolean myPointerChangesDetected;
   private int myInsideWriteAction;
@@ -204,7 +202,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
     isFiringEvent = true;
     try {
-      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, fileTypes));
+      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, fileTypes, indexingInfos));
     }
     finally {
       isFiringEvent = false;
@@ -297,33 +295,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private void synchronizeRoots(@NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
     if (!myStartupActivityPerformed) return;
-
-    if (!indexingInfos.isEmpty()) {
-      logRootChanges(false);
       EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
-      return;
-    }
-
-    logRootChanges(true);
-
-    DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
-    if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-      new UnindexedFilesUpdater(myProject, "Project roots have changed").queue(myProject);
-    }
-  }
-
-  private void logRootChanges(boolean isFullReindex) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (LOG.isDebugEnabled()) {
-        String message = isFullReindex ?
-                         "Project roots of " + myProject.getName() + " have changed" :
-                         "Project roots of " + myProject.getName() + " will be partially reindexed";
-        LOG.debug(message, new Throwable());
-      }
-    }
-    else {
-      myRootsChangedLogger.info(myProject, isFullReindex);
-    }
   }
 
   @Override

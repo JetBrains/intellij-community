@@ -157,7 +157,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class=\'content\'>\n     For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code><span style=\"color:#000000;\">String</span><span style=\"\">.</span><span style=\"color:#000000;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">byte</span><span style=\"\">[],&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;String)</span></code></a>.\n   </div><table class=\'sections\'></table>"
+      "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class=\'content\'>\n     For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code><span style=\"color:#0000ff;\">String</span><span style=\"\">.</span><span style=\"color:#0000ff;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">byte</span><span style=\"\">[],&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;String)</span></code></a>.\n   </div><table class=\'sections\'></table>"
 
     assert doc == expected
   }
@@ -173,7 +173,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class=\'content\'> Visit the \"<code><span style=\"\"><span style=\"\">/login</span></span></code>\" URL. </div><table class=\'sections\'></table>"
+      "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class=\'content\'> Visit the \"<code style=\'font-size:100%;\'><span style=\"\"><span style=\"\">/login</span></span></code>\" URL. </div><table class=\'sections\'></table>"
 
     assert doc == expected
   }
@@ -270,7 +270,7 @@ class Bar {
       }
 
       // Here we check that the covering module (SDK in this case) is rendered in decorated info
-      assert component.decoratedText.contains('<div class="bottom"><icon src="AllIcons.Nodes.Class"/>&nbsp;<a href="psi_element://java.lang.String"><code><span style="color:#000000;">java.lang.String</span></code></a><br/><icon src="AllIcons.Nodes.PpLibFolder"/>&nbsp;&lt; java 1.7 &gt;</div>')
+      assert component.decoratedText.contains('<div class="bottom"><icon src="AllIcons.Nodes.PpLibFolder"/>&nbsp;&lt; java 1.7 &gt;</div>')
     }
 
 

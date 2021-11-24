@@ -5,9 +5,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.ui.OptionAction
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Weighted
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -44,6 +46,12 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
     }
 
   val isSimpleButton: Boolean get() = options.isNullOrEmpty()
+
+  var addSeparator = true
+  var selectFirstItem = true
+  var popupBackgroundColor: Color? = null
+  var showPopupYOffset = 6
+  var popupHandler: ((JBPopup) -> Unit)? = null
 
   init {
     this.options = options

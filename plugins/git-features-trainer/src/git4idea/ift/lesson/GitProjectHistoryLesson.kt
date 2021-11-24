@@ -2,6 +2,7 @@
 package git4idea.ift.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
@@ -12,10 +13,10 @@ import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 import com.intellij.vcs.log.ui.frame.MainFrame
-import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import git4idea.ift.GitLessonsBundle
@@ -25,8 +26,13 @@ import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
+import org.assertj.swing.fixture.JPanelFixture
+import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
+import java.util.regex.Pattern
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
   override val existedFile = "git/sphinx_cat.yml"
@@ -35,7 +41,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
   private var showGitBranchesBackup: Boolean? = null
 
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(40)
 
   override val lessonContent: LessonContext.() -> Unit = {
     task("ActivateVersionControlToolWindow") {
@@ -44,6 +50,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
       }
+      test { actions(it) }
     }
 
     resetGitLogWindow()
@@ -56,11 +63,9 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      highlightLatestCommitsFromBranch(branchName)
-    }
-
-    task {
       text(GitLessonsBundle.message("git.project.history.commits.tree.explanation"))
+      highlightLatestCommitsFromBranch(branchName)
+      showWarningIfGitWindowClosed()
       proceedLink()
     }
 
@@ -85,7 +90,13 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       triggerByUiComponentAndHighlight(false, false) { ui: BranchFilterPopupComponent ->
         ui.currentText?.contains("HEAD") == true
       }
-      showWarningIfGitWindowClosed()
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
+      test {
+        ideFrame {
+          val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == "HEAD_NODE" }
+          fixture.doubleClickPath("HEAD_NODE")
+        }
+      }
     }
 
     task {
@@ -100,7 +111,13 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       triggerByListItemAndHighlight { item ->
         item.toString().contains(meFilterText)
       }
-      showWarningIfGitWindowClosed()
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
+      test {
+        ideFrame {
+          val panel: UserFilterPopupComponent = findComponentWithTimeout(defaultTimeout)
+          JPanelFixture(robot, panel).click()
+        }
+      }
     }
 
     task {
@@ -109,6 +126,11 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
         ui.currentText?.contains(meFilterText) == true
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
+      test {
+        ideFrame {
+          jList(meFilterText).clickItem(meFilterText)
+        }
+      }
     }
 
     task {
@@ -123,6 +145,11 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
         model.rowCount > 0 && model.getCommitMetadata(0).fullMessage.contains(textToFind)
       }
       showWarningIfGitWindowClosed()
+      test {
+        Thread.sleep(500)
+        type(textToFind)
+        invokeActionViaShortcut("ENTER")
+      }
     }
 
     task {
@@ -136,12 +163,19 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
         vcsLogUi.filterUi.textFilterComponent.text == ""
       }
       showWarningIfGitWindowClosed()
+      test {
+        ideFrame {
+          val table: VcsLogGraphTable = findComponentWithTimeout(defaultTimeout)
+          JTableFixture(robot, table).cell(Pattern.compile(""".*$textToFind.*""")).click()
+        }
+      }
     }
 
     task {
       text(GitLessonsBundle.message("git.project.history.commit.details.explanation"))
       proceedLink()
-      triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: VcsLogCommitDetailsListPanel -> true }
+      triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: CommitDetailsListPanel -> true }
+      showWarningIfGitWindowClosed()
     }
 
     task {
@@ -154,19 +188,31 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       }
       triggerByUiComponentAndHighlight(false, false) { _: SimpleDiffPanel -> true }
       showWarningIfGitWindowClosed()
+      test {
+        ideFrame {
+          val treeNodeText = existedFile
+          val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString().contains(treeNodeText) }
+          val row = invokeAndWaitIfNeeded {
+            val tree = fixture.target()
+            (0 until tree.rowCount).find { fixture.valueAt(it).toString().contains(treeNodeText) }
+          } ?: error("Failed to find row with text '$treeNodeText'")
+          fixture.doubleClickRow(row)
+        }
+      }
     }
 
     if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) {
       task("EditorEscape") {
         text(GitLessonsBundle.message("git.project.history.close.diff", action(it)))
         stateCheck { previous.ui?.isShowing != true }
+        test { invokeActionViaShortcut("ESCAPE") }
       }
     }
 
     text(GitLessonsBundle.message("git.project.history.invitation.to.commit.lesson"))
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     if (showGitBranchesBackup != null) {
       val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: error("Failed to get MainVcsLogUiProperties")
       logUiProperties[SHOW_GIT_BRANCHES_LOG_PROPERTY] = showGitBranchesBackup!!

@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.PsiTestUtil;
@@ -10,6 +11,7 @@ import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.types.PyNamedTupleType;
@@ -60,6 +62,13 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  private void doTabTest() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    myFixture.completeBasic();
+    myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR);
+    myFixture.checkResultByFile(getTestName(true) + ".after.py");
   }
 
   public void doNegativeTest() {
@@ -543,6 +552,107 @@ public class Py3CompletionTest extends PyTestCase {
     assertNotNull(variants);
     assertTrue(variants.length > 0);
     assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("join")));
+  }
+
+  // PY-48012
+  public void testInstanceAttributesSuggestedForKeywordPatterns() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testClassAttributesSuggestedForKeywordPatterns() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testInheritedAttributesSuggestedForKeywordPatterns() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testPropertiesSuggestedForKeywordPatterns() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testExistingKeywordPattern() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testEqualSignRenderedInKeywordPatternVariant() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    TestLookupElementPresentation presentation = new TestLookupElementPresentation();
+    LookupElement attrVariant = ContainerUtil.find(variants, v -> v.getLookupString().equals("attr="));
+    assertNotNull(attrVariant);
+    attrVariant.renderElement(presentation);
+    assertTrue(presentation.getItemText().endsWith("="));
+  }
+
+  // PY-48012
+  public void testTabCompletionOverridesEqualSignInKeywordPattern() {
+    doTabTest();
+  }
+
+  // PY-48012
+  public void testInnerClassesNotSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // PY-48012
+  public void testMethodsNotSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // PY-48012
+  public void testSpecialAttributesNotSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // PY-48012
+  public void testClassPrivateAttributesNotSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // EA-404000
+  public void testUnresolvedClassPatternLeadsToNothingSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // PY-48012
+  public void testAttributesOfDataclassSuggestedForKeywordPatterns() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, "count=", "name=");
+  }
+
+  // PY-48012
+  public void testAttributesOfNamedTupleSuggestedForKeywordPatterns() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, "count=", "name=");
+  }
+
+  // PY-48012
+  public void testSpacesAroundEqualSignForKeywordPatternsIfEnabled() {
+    getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    doTest();
+  }
+
+  // PY-48012
+  public void testTabCompletionOverridesSpacesAroundEqualSignInKeywordPatternIfEnabled() {
+    getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    doTabTest();
+  }
+
+  private @NotNull PyCodeStyleSettings getPythonCodeStyleSettings() {
+    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 
   @Override

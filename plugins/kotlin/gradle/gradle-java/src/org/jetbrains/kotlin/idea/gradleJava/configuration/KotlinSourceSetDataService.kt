@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.platform.js.JsPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -127,7 +128,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             }
         }
 
-        private fun IdePlatformKind<*>.toSimplePlatforms(
+        private fun IdePlatformKind.toSimplePlatforms(
             moduleData: ModuleData,
             isHmppModule: Boolean,
             projectPlatforms: List<KotlinPlatform>
@@ -183,7 +184,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 
             val platform = TargetPlatform(platformKinds)
 
-            val compilerArguments = kotlinSourceSet.compilerArguments
+            val compilerArguments = kotlinSourceSet.lazyCompilerArguments?.value
             // Used ID is the same as used in org/jetbrains/kotlin/idea/configuration/KotlinGradleSourceSetDataService.kt:280
             // because this DataService was separated from KotlinGradleSourceSetDataService for MPP projects only
             val id = if (compilerArguments?.multiPlatform == true) GradleConstants.SYSTEM_ID.id else null
@@ -194,12 +195,12 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 platform = platform,
                 modelsProvider = modelsProvider,
                 hmppEnabled = kotlinGradleProjectData.isHmpp,
-                pureKotlinSourceFolders = kotlinGradleProjectData.pureKotlinSourceFolders.toList(),
+                pureKotlinSourceFolders = if (platform.isJvm()) kotlinGradleProjectData.pureKotlinSourceFolders.toList() else emptyList(),
                 dependsOnList = kotlinSourceSet.dependsOn,
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
 
-            val defaultCompilerArguments = kotlinSourceSet.defaultCompilerArguments
+            val defaultCompilerArguments = kotlinSourceSet.lazyDefaultCompilerArguments?.value
             if (compilerArguments != null) {
                 applyCompilerArgumentsToFacet(
                     compilerArguments,
@@ -209,7 +210,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 )
             }
 
-            adjustClasspath(kotlinFacet, kotlinSourceSet.dependencyClasspath)
+            adjustClasspath(kotlinFacet, kotlinSourceSet.lazyDependencyClasspath.value)
 
             kotlinFacet.noVersionAutoAdvance()
 
@@ -228,14 +229,12 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 }
 
                 if (kotlinSourceSet.isTestModule) {
-                    testOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
+                    testOutputPath = (kotlinSourceSet.lazyCompilerArguments?.value as? K2JSCompilerArguments)?.outputFile
                     productionOutputPath = null
                 } else {
-                    productionOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
+                    productionOutputPath = (kotlinSourceSet.lazyCompilerArguments?.value as? K2JSCompilerArguments)?.outputFile
                     testOutputPath = null
                 }
-
-                this.pureKotlinSourceFolders = kotlinGradleProjectData.pureKotlinSourceFolders.toList()
             }
 
             return kotlinFacet

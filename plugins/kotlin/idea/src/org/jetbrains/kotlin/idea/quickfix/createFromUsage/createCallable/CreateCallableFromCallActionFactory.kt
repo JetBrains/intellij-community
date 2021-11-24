@@ -110,7 +110,8 @@ sealed class CreateCallableFromCallActionFactory<E : KtExpression>(
                 val classifierType = receiver.descriptor.classValueType
                 if (classifierType != null) return TypeInfo(classifierType, Variance.IN_VARIANCE)
 
-                val javaClassifier = receiver.descriptor as? JavaClassDescriptor ?: return null
+                val javaClassifier = receiver.descriptor as? JavaClassDescriptor
+                    ?: return TypeInfo.StaticContextRequired(TypeInfo(receiver.descriptor.defaultType, Variance.IN_VARIANCE))
                 val javaClass = DescriptorToSourceUtilsIde.getAnyDeclaration(project, javaClassifier) as? PsiClass
                 if (javaClass == null || !javaClass.canRefactor()) return null
                 TypeInfo.StaticContextRequired(TypeInfo(javaClassifier.defaultType, Variance.IN_VARIANCE))

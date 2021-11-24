@@ -2,25 +2,29 @@
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
+import com.intellij.util.lang.ImmutableZipEntry
+import com.intellij.util.lang.ImmutableZipFile
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.ResourcesGenerator
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Consumer
+import java.util.function.BiConsumer
+import java.util.function.UnaryOperator
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 @CompileStatic
-class KotlinPluginBuilder {
+final class KotlinPluginBuilder {
   /**
    * Module which contains META-INF/plugin.xml
    */
@@ -29,7 +33,8 @@ class KotlinPluginBuilder {
   private final String communityHome
   private final String home
   private final ProductProperties properties
-  public static List<String> MODULES = [
+
+  public static List<String> MODULES = List.of(
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
@@ -95,8 +100,9 @@ class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
     "kotlin.project-model",
-  ]
-  private static List<String> LIBRARIES = [
+    )
+
+  private static List<String> LIBRARIES = List.of(
     "kotlinc.android-extensions-compiler-plugin",
     "kotlinc.allopen-compiler-plugin",
     "kotlinc.noarg-compiler-plugin",
@@ -107,7 +113,7 @@ class KotlinPluginBuilder {
     "kotlin-script-runtime",
     "kotlinc.kotlin-scripting-compiler",
     "kotlinc.kotlin-gradle-statistics",
-  ]
+    )
 
   KotlinPluginBuilder(String communityHome, String home, ProductProperties properties) {
     this.communityHome = communityHome
@@ -126,7 +132,7 @@ class KotlinPluginBuilder {
         case KotlinPluginKind.AC_KMM:
           directoryName = "AppCodeKMMPlugin"
           mainJarName = "appcode-kmm-plugin.jar"
-          break;
+          break
         default:
           directoryName = "Kotlin"
           mainJarName = "kotlin-plugin.jar"
@@ -174,84 +180,89 @@ class KotlinPluginBuilder {
 
         withBin("../mobile-ide/common-native/scripts", "scripts")
 
-        def kotlinServicesModule = "kotlin.gradle.gradle-tooling"
-        withModuleOutputPatches(kotlinServicesModule, new ResourcesGenerator() {
+        withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
           @Override
-          File generateResources(BuildContext context) {
-            def mobileServicesModule = "kotlin-ultimate.mobile-native"
-            def servicesFilePath = "META-INF/services/org.jetbrains.plugins.gradle.tooling.ModelBuilderService"
+          void accept(ModuleOutputPatcher patcher, BuildContext context) {
+            String kotlinServicesModule = "kotlin.gradle.gradle-tooling"
 
-            def kotlinServices = context.findFileInModuleSources(kotlinServicesModule, servicesFilePath)
+            String mobileServicesModule = "kotlin-ultimate.mobile-native"
+            String servicesFilePath = "META-INF/services/org.jetbrains.plugins.gradle.tooling.ModelBuilderService"
+
+            Path kotlinServices = context.findFileInModuleSources(kotlinServicesModule, servicesFilePath)
             if (kotlinServices == null) {
               throw new IllegalStateException("Could not find the ModelBuilderServices file in $kotlinServicesModule")
             }
 
-            def mobileServices = context.findFileInModuleSources(mobileServicesModule, servicesFilePath)
+            Path mobileServices = context.findFileInModuleSources(mobileServicesModule, servicesFilePath)
             if (mobileServices == null) {
               throw new IllegalStateException("Could not find the ModelBuilderServices file in $mobileServicesModule")
             }
-            def tmpDir = context.paths.tempDir.resolve("kmm-ModelBuilderServices-patch")
-            def patchFile = tmpDir.resolve("META-INF/services/org.jetbrains.plugins.gradle.tooling.ModelBuilderService")
-            def content = Files.readString(kotlinServices) + "\n" + Files.readString(mobileServices)
-            Files.createDirectories(patchFile.parent)
-            patchFile.write(content)
-            return tmpDir.toFile();
+
+            String content = Files.readString(kotlinServices) + "\n" + Files.readString(mobileServices)
+            patcher.patchModuleOutput(kotlinServicesModule,
+                                      "META-INF/services/org.jetbrains.plugins.gradle.tooling.ModelBuilderService",
+                                      content)
           }
         })
       }
 
       String jpsPluginJar = "jps/kotlin-jps-plugin.jar"
       withModule("kotlin.jps-plugin", jpsPluginJar)
-      withProjectLibraryUnpackedIntoJar("kotlinc.compiler-components-for-jps", jpsPluginJar)
 
       String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
       withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
 
-      withModuleOutputPatches(MAIN_KOTLIN_PLUGIN_MODULE, new ResourcesGenerator() {
+      withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
         @Override
-        File generateResources(BuildContext context) {
+        void accept(ModuleOutputPatcher patcher, BuildContext context) {
           JpsLibrary library = context.project.libraryCollection.findLibrary(kotlincKotlinCompiler)
           List<File> jars = library.getFiles(JpsOrderRootType.COMPILED)
           if (jars.size() != 1) {
             throw new IllegalStateException("$kotlincKotlinCompiler is expected to have only one jar")
           }
-          def extractedDir = context.paths.tempDir.resolve("$kotlincKotlinCompiler-extracted")
-          new Decompressor.Zip(jars[0]).extract(extractedDir)
-          def compilerExtensions = context.paths.tempDir.resolve("$kotlincKotlinCompiler-compiler-extensions")
-          def prefix = "META-INF/extensions"
-          compilerExtensions.resolve(prefix).toFile().mkdirs()
-          for (File file : extractedDir.resolve(prefix).toFile().listFiles()) {
-            Files.copy(file.toPath(), compilerExtensions.resolve(prefix).resolve(file.name))
+
+          String prefixWithEndingSlash = "META-INF/extensions/"
+          ImmutableZipFile.load(jars[0].toPath()).withCloseable { zip ->
+            for (ImmutableZipEntry entry : zip.entries) {
+              if (entry.name.startsWith(prefixWithEndingSlash)) {
+                ByteBuffer buffer = entry.getByteBuffer(zip)
+                try {
+                  byte[] bytes = new byte[buffer.remaining()]
+                  buffer.get(bytes)
+                  patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, entry.name, bytes)
+                }
+                finally {
+                  entry.releaseBuffer(buffer)
+                }
+              }
+            }
           }
-          return compilerExtensions.toFile()
         }
       })
 
       withModule("kotlin.jps-common", "kotlin-jps-common.jar")
       withModule("kotlin.common", "kotlin-common.jar")
 
-      withProjectLibrary("kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlin-stdlib-jdk8", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinc.kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinc.kotlin-stdlib", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("javaslang")
       withProjectLibrary("kotlinx-collections-immutable-jvm")
       withProjectLibrary("javax-inject")
       withProjectLibrary("kotlinx-coroutines-jdk8")
       withProjectLibrary("completion-ranking-kotlin")
 
-      withGeneratedResources(new ResourcesGenerator() {
+      withGeneratedResources(new BiConsumer<Path, BuildContext>() {
         @Override
-        File generateResources(BuildContext context) {
-          def distLibName = "kotlinc.kotlin-dist"
+        void accept(Path targetDir, BuildContext context) {
+          String distLibName = "kotlinc.kotlin-dist"
           JpsLibrary library = context.project.libraryCollection.findLibrary(distLibName)
           List<File> jars = library.getFiles(JpsOrderRootType.COMPILED)
           if (jars.size() != 1) {
             throw new IllegalStateException("$distLibName is expected to have only one jar")
           }
-          def extractedDist = context.paths.tempDir.resolve("kotlinc-dist")
-          new Decompressor.Zip(jars[0]).extract(extractedDist)
-          return extractedDist.toFile()
+          new Decompressor.Zip(jars[0]).extract(targetDir.resolve("kotlinc"))
         }
-      }, "kotlinc")
+      })
 
       withCustomVersion(new PluginLayout.VersionEvaluator() {
         @Override
@@ -267,22 +278,38 @@ class KotlinPluginBuilder {
             if (kotlinVersion == null) {
               throw new IllegalStateException("Can't determine Kotlin compiler version")
             }
-            return "${major}-${kotlinVersion}-${kind}${minor}"
+            String version = "${major}-${kotlinVersion}-${kind}${minor}"
+            context.messages.info("version: $version")
+            return version
           } else {
+            // 221-1.5.10-release-IJ916
+            Matcher kotlinPluginIJBuildNumber = Pattern.compile("^(\\d+)-([.\\d]+)-(\\w+)-([A-Z]+)(\\d+)\$").matcher(buildNumber)
+
+            if (kotlinPluginIJBuildNumber.matches()) {
+              String major = kotlinPluginIJBuildNumber.group(1)
+              String kotlinVersion = kotlinPluginIJBuildNumber.group(2)
+              String type = kotlinPluginIJBuildNumber.group(3)
+              String buildKind = kotlinPluginIJBuildNumber.group(4)
+              String minor = kotlinPluginIJBuildNumber.group(5)
+
+              String version = "${major}-${kotlinVersion}-${type}-${kind}${minor}"
+              context.messages.info("Kotlin plugin IJ version: $version")
+              return version
+            }
+
             // Build number isn't recognized as IJ build number then it means build
             // number must be plain Kotlin plugin version which we can use directly
+            context.messages.info("buildNumber version: $buildNumber")
             return buildNumber
           }
         }
       })
 
-      withPluginXmlPatcher(new Consumer<Path>() {
+      withPluginXmlPatcher(new UnaryOperator<String>() {
         @Override
-        void accept(Path path) {
+        String apply(String text) {
           String sinceBuild = System.getProperty("kotlin.plugin.since")
           String untilBuild = System.getProperty("kotlin.plugin.until")
-
-          String text = Files.readString(path)
 
           if (sinceBuild != null && untilBuild != null) {
             // In kt-branches we have own since and until versions
@@ -291,7 +318,6 @@ class KotlinPluginBuilder {
 
           switch (kind) {
             case KotlinPluginKind.IJ:
-            case KotlinPluginKind.MI:
               text = replace(
                 text,
                 "<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->",
@@ -307,17 +333,20 @@ class KotlinPluginBuilder {
               break
             case KotlinPluginKind.AC_KMM:
               text = replace(text, "<id>([^<]+)</id>", "<id>com.intellij.appcode.kmm</id>")
-              text = replace(text, "<idea-version[^/>]+/>", "")
               text = replace(text, "<name>([^<]+)</name>", "")
               text = replace(text, "(?s)<description>.*</description>", "")
               text = replace(text, "(?s)<change-notes>.*</change-notes>", "")
-              text = replace(text, "</idea-plugin>", "<xi:include href=\"/META-INF/plugin.production.xml\" />\n</idea-plugin>")
+              text = replace(text, "</idea-plugin>", """\
+                                                      <xi:include href="/META-INF/plugin.production.xml" />
+                                                      <!-- Marketplace gets confused by identifiers from included xmls -->
+                                                      <id>com.intellij.appcode.kmm</id>
+                                                    </idea-plugin>""".stripIndent())
               break
             default:
               throw new IllegalStateException("Unknown kind = $kind")
           }
 
-          Files.writeString(path, text)
+          return text
         }
       })
 

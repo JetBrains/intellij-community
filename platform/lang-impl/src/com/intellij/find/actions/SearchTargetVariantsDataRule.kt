@@ -3,9 +3,8 @@ package com.intellij.find.actions
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
-import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageView
@@ -14,42 +13,37 @@ import com.intellij.util.SmartList
 /**
  * @see com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.doChooseAmbiguousTarget
  */
-class SearchTargetVariantsDataRule : GetDataRule {
+internal fun targetVariants(dc: DataContext): List<TargetVariant> {
+  val allTargets = SmartList<TargetVariant>()
 
-  override fun getData(dataProvider: DataProvider): Any? {
-    val allTargets = SmartList<TargetVariant>()
+  dc.getData(FindUsagesAction.SEARCH_TARGETS)?.mapTo(allTargets, ::SearchTargetVariant)
 
-    FindUsagesAction.SEARCH_TARGETS.getData(dataProvider)?.mapTo(allTargets, ::SearchTargetVariant)
-
-    val usageTargets: Array<out UsageTarget>? = UsageView.USAGE_TARGETS_KEY.getData(dataProvider)
-    if (usageTargets == null) {
-      val editor = CommonDataKeys.EDITOR.getData(dataProvider)
-      if (editor != null) {
-        val offset = editor.caretModel.offset
-        try {
-          val reference = TargetElementUtil.findReference(editor, offset)
-          if (reference != null) {
-            TargetElementUtil.getInstance().getTargetCandidates(reference).mapTo(allTargets, ::PsiTargetVariant)
-          }
-        }
-        catch (ignore: IndexNotReadyException) {
+  val usageTargets: Array<out UsageTarget>? = dc.getData(UsageView.USAGE_TARGETS_KEY)
+  if (usageTargets == null) {
+    val editor = dc.getData(CommonDataKeys.EDITOR)
+    if (editor != null) {
+      val offset = editor.caretModel.offset
+      try {
+        val reference = TargetElementUtil.findReference(editor, offset)
+        if (reference != null) {
+          TargetElementUtil.getInstance().getTargetCandidates(reference).mapTo(allTargets, ::PsiTargetVariant)
         }
       }
-    }
-    else if (usageTargets.isNotEmpty()) {
-      val target: UsageTarget = usageTargets[0]
-      if (target is PsiElement2UsageTargetAdapter) {
-        target.element?.let {
-          allTargets += PsiTargetVariant(it)
-        }
+      catch (ignore: IndexNotReadyException) {
       }
-      else {
-        allTargets += CustomTargetVariant(target)
-      }
-    }
-
-    return allTargets.takeUnless {
-      it.isEmpty()
     }
   }
+  else if (usageTargets.isNotEmpty()) {
+    val target: UsageTarget = usageTargets[0]
+    if (target is PsiElement2UsageTargetAdapter) {
+      target.element?.let {
+        allTargets += PsiTargetVariant(it)
+      }
+    }
+    else {
+      allTargets += CustomTargetVariant(target)
+    }
+  }
+
+  return allTargets
 }

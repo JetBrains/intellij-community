@@ -15,6 +15,7 @@ public interface Url {
   /**
    * System-independent path
    */
+  @Contract(pure = true)
   @NotNull String getPath();
 
   @Contract(pure = true)
@@ -24,10 +25,13 @@ public interface Url {
 
   @NotNull String toExternalForm();
 
+  @Contract(pure = true)
   @Nullable String getScheme();
 
+  @Contract(pure = true)
   @Nullable String getAuthority();
 
+  @Contract(pure = true)
   @Nullable String getParameters();
 
   boolean equalsIgnoreParameters(@Nullable Url url);

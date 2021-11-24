@@ -86,9 +86,7 @@ final class WinExeInstallerBuilder {
       buildContext.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
     }
 
-    ant.copy(todir: nsiConfDir.toString()) {
-      fileset(dir: "$communityHome/build/conf/nsis")
-    }
+    BuildHelper.getInstance(buildContext).copyDir(buildContext.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
 
     generateInstallationConfigFileForSilentMode()
 
@@ -153,11 +151,11 @@ final class WinExeInstallerBuilder {
       }
     }
 
-    def installerPath = "${buildContext.paths.artifacts}/${outFileName}.exe"
-    if (!new File(installerPath).exists()) {
+    String installerPath = "${buildContext.paths.artifacts}/${outFileName}.exe"
+    if (Files.notExists(Path.of(installerPath))) {
       buildContext.messages.error("Windows installer wasn't created.")
     }
-    buildContext.executeStep("Signing $installerPath", BuildOptions.WIN_SIGN_STEP) {
+    buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", installerPath), BuildOptions.WIN_SIGN_STEP) {
       buildContext.signFile(installerPath)
     }
     buildContext.notifyArtifactBuilt(installerPath)

@@ -16,6 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Utility to find current variable value/where this value is read
+ */
 public final class DefUseUtil {
   private static final Logger LOG = Logger.getInstance(DefUseUtil.class);
 
@@ -252,6 +255,14 @@ public final class DefUseUtil {
     return unusedDefs;
   }
 
+  /**
+   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
+   * @param def        variable which value is to be defined
+   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
+   *                   
+   * @return variable {@code def} initializers which should be used when inlining {@code ref}
+   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
+   */
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getDefs(body, def, ref, false);
   }
@@ -266,11 +277,11 @@ public final class DefUseUtil {
    */
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
      if (def instanceof PsiLocalVariable && ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).resolve() == def) {
-      final PsiElement defContainer = PsiTreeUtil.getParentOfType(def, PsiClass.class, PsiLambdaExpression.class);
-      PsiElement refContainer = PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class);
+      final PsiElement defContainer = LambdaUtil.getContainingClassOrLambda(def);
+      PsiElement refContainer = LambdaUtil.getContainingClassOrLambda(ref);
       while (defContainer != refContainer && refContainer != null) {
         ref = refContainer;
-        refContainer = PsiTreeUtil.getParentOfType(refContainer.getParent(), PsiClass.class, PsiLambdaExpression.class);
+        refContainer = LambdaUtil.getContainingClassOrLambda(refContainer.getParent());
       }
     }
 
@@ -333,6 +344,9 @@ public final class DefUseUtil {
     return getRefs(body, def, ref, false);
   }
 
+  /**
+   * Returns variable {@code def} references which read assigned value {@code ref}
+   */
   public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {

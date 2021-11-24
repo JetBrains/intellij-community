@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchReques
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
@@ -183,6 +184,8 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         }
     }
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val project = element.project
@@ -190,7 +193,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         val classesToProcess = project.runSynchronouslyWithProgress(
             JavaBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"),
             true
-        ) { findClassesToProcess(element).toList() } ?: return
+        ) { runReadAction { findClassesToProcess(element).toList() } } ?: return
         if (classesToProcess.isEmpty()) return
 
         classesToProcess.singleOrNull()?.let { return implementInClass(element, listOf(it)) }

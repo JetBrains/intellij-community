@@ -28,6 +28,7 @@ public class WizardContext extends UserDataHolderBase {
   @Nullable
   private final Project myProject;
   private final Disposable myDisposable;
+  private Session mySessionId = null;
   private Path myProjectFileDirectory;
   private String myProjectName;
   private String myCompilerOutputDirectory;
@@ -87,6 +88,9 @@ public class WizardContext extends UserDataHolderBase {
     myDisposable = parentDisposable;
     if (myProject != null){
       myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
+    }
+    if (isNewWizard()) {
+      mySessionId = Session.createRandomId();
     }
   }
 
@@ -203,5 +207,9 @@ public class WizardContext extends UserDataHolderBase {
 
   public StorageScheme getProjectStorageFormat() {
     return myProjectStorageFormat;
+  }
+
+  public Session getSessionId() {
+    return mySessionId;
   }
 }

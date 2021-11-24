@@ -1,5 +1,5 @@
 // INTENTION_TEXT: "Add import for 'ppp.Foo.Bar'"
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Check for instance is always 'true'
 package ppp
 

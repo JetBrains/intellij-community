@@ -44,7 +44,7 @@ import java.util.*;
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance(GotoFileItemProvider.class);
 
-  private static final int EXACT_MATCH_DEGREE = 5000;
+  public static final int EXACT_MATCH_DEGREE = 5000;
   private static final int DIRECTORY_MATCH_DEGREE = 0;
 
   private final Project myProject;
@@ -201,7 +201,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return matching;
   }
 
-  private static boolean isSubpath(@NotNull String path, String subpath) {
+  private boolean isSubpath(@NotNull String path, String subpath) {
+    subpath = ChooseByNamePopup.getTransformedPattern(subpath, myModel).stripTrailing();
     path = FileUtilRt.toSystemIndependentName(path);
     subpath = FileUtilRt.toSystemIndependentName(subpath);
     return path.endsWith(subpath);

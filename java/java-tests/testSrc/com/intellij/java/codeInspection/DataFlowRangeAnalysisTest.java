@@ -83,4 +83,6 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testArrayAccessWithCastInCountedLoop() { doTest(); }
   public void testFloatingPointRanges() { doTest(); }
   public void testFloatingPointCasts() { doTest(); }
+  public void testFloatingPointMaxLoop() { doTest(); }
+  public void testStringIndexOfRelation() { doTest(); }
 }

@@ -2,23 +2,42 @@
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.Bookmark
+import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.providers.LineBookmarkProvider
 import com.intellij.ide.bookmark.ui.BookmarksView
+import com.intellij.ide.bookmark.ui.BookmarksViewState
 import com.intellij.ide.bookmark.ui.tree.GroupNode
+import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ide.util.treeView.NodeDescriptor
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
+import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.util.OpenSourceUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
+import javax.swing.JComponent
 import javax.swing.JTree
 
 
 internal val AnActionEvent.bookmarksManager
   get() = project?.let { BookmarksManager.getInstance(it) }
+
+internal val AnActionEvent.bookmarksViewState
+  get() = project?.let { BookmarksViewState.getInstance(it) }
+
+internal val AnActionEvent.bookmarksToolWindow
+  get() = project?.let { ToolWindowManager.getInstance(it).getToolWindow(ToolWindowId.BOOKMARKS) }
 
 internal val AnActionEvent.bookmarksViewFromToolWindow
   get() = dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.bookmarksView
@@ -29,7 +48,7 @@ internal val AnActionEvent.bookmarksViewFromComponent
 internal val AnActionEvent.bookmarksView
   get() = bookmarksViewFromComponent ?: bookmarksViewFromToolWindow
 
-private val ToolWindow.bookmarksView
+internal val ToolWindow.bookmarksView
   get() = contentManagerIfCreated?.selectedContent?.component as? BookmarksView
 
 private val Component.bookmarksView: BookmarksView?
@@ -48,7 +67,49 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     }
     val manager = BookmarksManager.getInstance(project) ?: return null
     val window = getData(PlatformDataKeys.TOOL_WINDOW)
-    if (window?.id != ToolWindowId.PROJECT_VIEW) return null
-    val tree = getData(PlatformDataKeys.CONTEXT_COMPONENT) as? JTree ?: return null
-    return manager.createBookmark(TreeUtil.getLastUserObject(TreeUtil.getSelectedPathIfOne(tree)))
+    if (window?.id == ToolWindowId.BOOKMARKS) return null
+    val component = getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val allowed = UIUtil.getClientProperty(component, BookmarksManager.ALLOWED) ?: (window?.id == ToolWindowId.PROJECT_VIEW)
+    return when {
+      !allowed -> null
+      component is JTree -> {
+        val path = TreeUtil.getSelectedPathIfOne(component)
+        manager.createBookmark(path)
+        ?: when (val node = TreeUtil.getLastUserObject(path)) {
+          is AbstractTreeNode<*> -> manager.createBookmark(node.value)
+          is NodeDescriptor<*> -> manager.createBookmark(node.element)
+          else -> manager.createBookmark(node)
+        }
+      }
+      else -> manager.createBookmark(getData(CommonDataKeys.PSI_ELEMENT))
+              ?: manager.createBookmark(getData(CommonDataKeys.VIRTUAL_FILE))
+    }
   }
+
+
+internal val Bookmark.bookmarksManager
+  get() = BookmarksManager.getInstance(provider.project)
+
+internal val Bookmark.firstGroupWithDescription
+  get() = bookmarksManager?.getGroups(this)?.firstOrNull { it.getDescription(this).isNullOrBlank().not() }
+
+
+/**
+ * Creates and registers an action that navigates to a bookmark by a digit or a letter, if speed search is not active.
+ */
+internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: BookmarkType) = createBookmarkTypeAction(type)
+  .registerCustomShortcutSet(CustomShortcutSet.fromString(type.mnemonic.toString()), this, parent)
+
+/**
+ * Creates an action that navigates to a bookmark by its type, if speed search is not active.
+ */
+private fun createBookmarkTypeAction(type: BookmarkType) = GotoBookmarkTypeAction(type) {
+  null == it.bookmarksViewFromComponent?.run { SpeedSearchSupply.getSupply(tree) }
+}
+
+/**
+ * Creates an action that navigates to a selected bookmark by the EditSource shortcut.
+ */
+internal fun JComponent.registerEditSourceAction(parent: Disposable) = LightEditActionFactory
+  .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY)) }
+  .registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, parent)

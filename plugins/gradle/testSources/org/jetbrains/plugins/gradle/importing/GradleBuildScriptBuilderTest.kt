@@ -3,8 +3,11 @@ package org.jetbrains.plugins.gradle.importing
 
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.junit.Test
 
 class GradleBuildScriptBuilderTest {
@@ -86,10 +89,8 @@ class GradleBuildScriptBuilderTest {
 
   @Test
   fun `test build script deduplication`() {
-    val versions = mutableMapOf<String, String>()
+    val junit5 = getJunit5Version()
     assertThat(buildscript(GradleVersion.current()) {
-      versions["junit5"] = junit5Version
-      versions["junit4"] = junit4Version
       withJUnit()
       withJUnit()
       withGroovyPlugin()
@@ -106,8 +107,8 @@ class GradleBuildScriptBuilderTest {
       }
       
       dependencies {
-          testImplementation 'org.junit.jupiter:junit-jupiter-api:${versions["junit5"]}'
-          testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:${versions["junit5"]}'
+          testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
+          testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
           implementation 'org.codehaus.groovy:groovy-all:3.0.5'
       }
       
@@ -119,10 +120,9 @@ class GradleBuildScriptBuilderTest {
 
   @Test
   fun `test compile-implementation dependency scope`() {
-    val versions = mutableMapOf<String, String>()
-    val configureScript: org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.() -> Unit = {
-      versions["junit5"] = junit5Version
-      versions["junit4"] = junit4Version
+    val junit4 = getJunit4Version()
+    val junit5 = getJunit5Version()
+    val configureScript: TestGradleBuildScriptBuilder.() -> Unit = {
       withJUnit()
       addImplementationDependency("my-dep")
       addRuntimeOnlyDependency(code("my-runtime-dep"))
@@ -136,8 +136,8 @@ class GradleBuildScriptBuilderTest {
         }
         
         dependencies {
-            testImplementation 'org.junit.jupiter:junit-jupiter-api:${versions["junit5"]}'
-            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:${versions["junit5"]}'
+            testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
+            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
             implementation 'my-dep'
             runtimeOnly my-runtime-dep
         }
@@ -155,7 +155,7 @@ class GradleBuildScriptBuilderTest {
         }
         
         dependencies {
-            testCompile 'junit:junit:${versions["junit4"]}'
+            testCompile 'junit:junit:$junit4'
             compile 'my-dep'
             runtime my-runtime-dep
         }
@@ -169,7 +169,7 @@ class GradleBuildScriptBuilderTest {
         }
         
         dependencies {
-            testImplementation 'junit:junit:${versions["junit4"]}'
+            testImplementation 'junit:junit:$junit4'
             implementation 'my-dep'
             runtimeOnly my-runtime-dep
         }
@@ -218,10 +218,9 @@ class GradleBuildScriptBuilderTest {
 
   @Test
   fun `test child build script build`() {
-    val versions = mutableMapOf<String, String>()
+    val junit4 = getJunit4Version()
+    val junit5 = getJunit5Version()
     assertThat(buildscript(GradleVersion.current()) {
-      versions["junit5"] = junit5Version
-      versions["junit4"] = junit4Version
       withJUnit4()
       allprojects {
         withJavaPlugin()
@@ -238,8 +237,8 @@ class GradleBuildScriptBuilderTest {
             }
         
             dependencies {
-                testImplementation 'org.junit.jupiter:junit-jupiter-api:${versions["junit5"]}'
-                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:${versions["junit5"]}'
+                testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
+                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
             }
         
             test {
@@ -254,8 +253,49 @@ class GradleBuildScriptBuilderTest {
         }
         
         dependencies {
-            testImplementation 'junit:junit:${versions["junit4"]}'
+            testImplementation 'junit:junit:$junit4'
         }
       """.trimIndent())
+  }
+
+  @Test
+  fun `test kotlin-groovy dsl generation`() {
+    val junit5 = getJunit5Version()
+    assertThat(
+      GroovyDslGradleBuildScriptBuilder.create(GradleVersion.current())
+        .withJUnit5()
+        .generate()
+    ).isEqualTo("""
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
+            testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
+            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
+        }
+        
+        test {
+            useJUnitPlatform()
+        }
+    """.trimIndent())
+    assertThat(
+      KotlinDslGradleBuildScriptBuilder(GradleVersion.current())
+        .withJUnit5()
+        .generate()
+    ).isEqualTo("""
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
+            testImplementation("org.junit.jupiter:junit-jupiter-api:$junit5")
+            testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junit5")
+        }
+        
+        tasks.getByName<Test>("test") {
+            useJUnitPlatform()
+        }
+    """.trimIndent())
   }
 }

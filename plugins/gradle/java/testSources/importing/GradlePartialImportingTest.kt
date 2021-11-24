@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -14,7 +14,7 @@ import org.assertj.core.api.Condition
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.model.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.Test
+import java.util.function.Consumer
 import java.util.function.Predicate
 
 class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
@@ -232,18 +233,18 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       if (currentGradleBaseVersion != GradleVersion.version("4.10.3")) {
         assertSyncViewTreeEquals { treeTestPresentation ->
           assertThat(treeTestPresentation).satisfiesAnyOf(
-            {
+            Consumer {
               assertThat(it).isEqualTo("-\n" +
                                        " -failed\n" +
                                        "  Build cancelled")
 
             },
-            {
+            Consumer {
               assertThat(it).isEqualTo("-\n" +
                                        " cancelled")
 
             },
-            {
+            Consumer {
               assertThat(it).startsWith("-\n" +
                                         " -failed\n" +
                                         "  Build cancelled\n" +

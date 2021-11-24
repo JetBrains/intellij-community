@@ -1,0 +1,58 @@
+apply plugin: 'kotlin-multiplatform'
+apply plugin: 'maven-publish'
+
+group 'org.jetbrains.qa'
+
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+        mavenCentral()
+        mavenLocal()
+    }
+
+    dependencies {
+    }
+}
+
+repositories {
+    maven { url "https://plugins.gradle.org/m2/" }
+    mavenCentral()
+    mavenLocal()
+}
+
+kotlin {
+    iosX64("dummyiOS") {}
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                api kotlin('stdlib-common', kotlin_version)
+                api kotlin('stdlib', kotlin_version)
+
+            }
+        }
+        commonTest {
+            dependencies {
+                api kotlin('test-common', kotlin_version)
+                api kotlin('test-annotations-common', kotlin_version)
+                api kotlin('test', kotlin_version)
+            }
+        }
+
+        jsJvm18Test {
+            dependsOn commonTest
+
+        }
+
+        dummyiOSMain {
+            dependencies {
+            }
+        }
+        dummyiOSTest {
+            dependsOn jsJvm18Test
+            dependencies {
+            }
+        }
+    }
+}
+

@@ -5,7 +5,6 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -17,17 +16,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.stream.Stream;
-
 public final class SlowOperations {
   private static final Logger LOG = Logger.getInstance(SlowOperations.class);
 
   public static final String ACTION_UPDATE = "action.update";
   public static final String ACTION_PERFORM = "action.perform";
-  public static final String MODAL_ACTION_PERFORM = "modal.action.perform";
   public static final String RENDERING = "rendering";
   public static final String GENERIC = "generic";
   public static final String FAST_TRACK = "  fast track  ";
+  public static final String RESET = "  reset  ";
 
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
@@ -43,7 +40,7 @@ public final class SlowOperations {
    * <p/>
    * In cases when it's impossible to do so, the computation can be wrapped in a {@link #allowSlowOperations} section explicitly.
    * Sections are named and can be enabled/disabled via Registry keys, e.g. {@link #ACTION_UPDATE}, {@link #RENDERING}, etc.
-   * These sections are a temporary solution, they are tracked and solved in the future.
+   * These sections are a temporary solution, they are tracked and solved in future.
    * <p/>
    * Action Subsystem<br><br>
    * <l>
@@ -89,20 +86,14 @@ public final class SlowOperations {
     if (ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
       return;
     }
-
-    final Stream<@NotNull String> currentActivities;
-    if (ModalityState.current() != ModalityState.NON_MODAL) {
-       currentActivities = ourStack.stream().filter(activity -> !ACTION_PERFORM.equals(activity));
+    for (String activity : ourStack) {
+      if (RESET.equals(activity)) {
+        break;
+      }
+      if (!Registry.is("ide.slow.operations.assertion." + activity, true)) {
+        return;
+      }
     }
-    else {
-      currentActivities = ourStack.stream();
-    }
-
-    final boolean containsSafeActivity = currentActivities
-      .map("ide.slow.operations.assertion."::concat)
-      .anyMatch(activity -> !Registry.is(activity, true));
-
-    if(containsSafeActivity) return;
 
     Throwable throwable = new Throwable();
     if (ThrowableInterner.intern(throwable) != throwable) {
@@ -115,6 +106,9 @@ public final class SlowOperations {
   public static boolean isInsideActivity(@NotNull String activityName) {
     EDT.assertIsEdt();
     for (String activity : ourStack) {
+      if (RESET.equals(activity)) {
+        break;
+      }
       if (activityName == activity) {
         return true;
       }

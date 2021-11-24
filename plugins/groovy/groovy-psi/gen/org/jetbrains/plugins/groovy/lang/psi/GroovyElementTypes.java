@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPackageDefinitionE
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterListElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPermitsClauseElementType;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrRecordDefinitionElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrThrowsClauseElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTraitElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType;
@@ -138,6 +139,7 @@ public interface GroovyElementTypes {
   GroovyElementType PRIMITIVE_TYPE_ELEMENT = new GroovyElementType("PRIMITIVE_TYPE_ELEMENT");
   GroovyElementType PROPERTY_EXPRESSION = new GroovyElementType("PROPERTY_EXPRESSION");
   GroovyElementType RANGE_EXPRESSION = new GroovyElementType("RANGE_EXPRESSION");
+  GrRecordDefinitionElementType RECORD_TYPE_DEFINITION = new GrRecordDefinitionElementType("RECORD_TYPE_DEFINITION");
   GroovyElementType REFERENCE_EXPRESSION = new GroovyElementType("REFERENCE_EXPRESSION");
   GroovyElementType REGEX = new GroovyElementType("REGEX");
   GroovyElementType REGEX_FIND_EXPRESSION = new GroovyElementType("REGEX_FIND_EXPRESSION");
@@ -223,6 +225,7 @@ public interface GroovyElementTypes {
   IElementType KW_PRIVATE = new GroovyElementType("private");
   IElementType KW_PROTECTED = new GroovyElementType("protected");
   IElementType KW_PUBLIC = new GroovyElementType("public");
+  IElementType KW_RECORD = new GroovyElementType("record");
   IElementType KW_RETURN = new GroovyElementType("return");
   IElementType KW_SEALED = new GroovyElementType("sealed");
   IElementType KW_SHORT = new GroovyElementType("short");
@@ -307,7 +310,9 @@ public interface GroovyElementTypes {
   IElementType T_POW_ASSIGN = new GroovyElementType("**=");
   IElementType T_Q = new GroovyElementType("?");
   IElementType T_RANGE = new GroovyElementType("..");
-  IElementType T_RANGE_EX = new GroovyElementType("..<");
+  IElementType T_RANGE_BOTH_OPEN = new GroovyElementType("<..<");
+  IElementType T_RANGE_LEFT_OPEN = new GroovyElementType("<..");
+  IElementType T_RANGE_RIGHT_OPEN = new GroovyElementType("..<");
   IElementType T_RBRACE = new GroovyElementType("}");
   IElementType T_RBRACK = new GroovyElementType("]");
   IElementType T_REGEX_FIND = new GroovyElementType("=~");

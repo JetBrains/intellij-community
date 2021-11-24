@@ -235,4 +235,47 @@ public class TextRange implements Segment, Serializable {
   public static boolean isProperRange(int startOffset, int endOffset) {
     return startOffset <= endOffset && startOffset >= 0;
   }
+
+  // methods below intended to work with the alternative TextRange representation as a long value (which logically consists of two int parts for startOffset and endOffset)
+  public long toScalarRange() {
+    return toScalarRange(getStartOffset(), getEndOffset());
+  }
+
+  public static long toScalarRange(int start, int end) {
+    return ((long)start << 32) | end;
+  }
+
+  public static long union(long range1, long range2) {
+    if (range1 == range2) return range1;
+    int start = Math.min(startOffset(range1), startOffset(range2));
+    int end = Math.max(endOffset(range1), endOffset(range2));
+    return toScalarRange(start, end);
+  }
+
+  public static int endOffset(long range) {
+    return (int)range & Integer.MAX_VALUE;
+  }
+
+  public static int startOffset(long range) {
+    return (int)(range >>> 32);
+  }
+
+  public static boolean contains(long outerRange, long innerRange) {
+    return containsRange(outerRange, startOffset(innerRange), endOffset(innerRange));
+  }
+
+  public static boolean containsRange(long outerRange, int innerRangeStartOffset, int innerRangeEndOffset) {
+    return startOffset(outerRange) <= innerRangeStartOffset && innerRangeEndOffset <= endOffset(outerRange);
+  }
+  public boolean intersects(long range) {
+    return intersects(startOffset(range), endOffset(range));
+  }
+
+  @NotNull
+  public static TextRange create(long range) {
+    return create(startOffset(range), endOffset(range));
+  }
+  public boolean equalsToRange(long range) {
+    return getStartOffset() == startOffset(range) && getEndOffset() == endOffset(range);
+  }
 }

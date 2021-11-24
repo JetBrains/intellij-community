@@ -307,6 +307,11 @@ public class JBUI {
     }
 
     @NotNull
+    public static Border empty(@NotNull Insets insets) {
+      return empty(insets.top, insets.left, insets.bottom, insets.right);
+    }
+
+    @NotNull
     public static Border customLine(Color color, int top, int left, int bottom, int right) {
       return new CustomLineBorder(color, insets(top, left, bottom, right));
     }
@@ -608,6 +613,10 @@ public class JBUI {
         return getInt("EditorTabs.underlineHeight", DefaultTabs.underlineHeight());
       }
 
+      public static int underlineArc() {
+        return getInt("EditorTabs.underlineArc", 0);
+      }
+
       @NotNull
       public static Color inactiveUnderlineColor() {
         return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
@@ -634,6 +643,15 @@ public class JBUI {
       @NotNull
       public static Color hoverBackground() {
         return JBColor.namedColor("EditorTabs.hoverBackground", DefaultTabs.hoverBackground());
+      }
+
+      @NotNull
+      public static Color hoverBackground(boolean selected, boolean active) {
+        String key = selected
+                     ? active ? "EditorTabs.hoverSelectedBackground" : "EditorTabs.hoverSelectedInactiveBackground"
+                     : active ? "EditorTabs.hoverBackground" : "EditorTabs.hoverInactiveBackground";
+
+        return JBColor.namedColor(key, Gray.TRANSPARENT);
       }
 
       @NotNull
@@ -669,16 +687,55 @@ public class JBUI {
     }
 
     public static final class StatusBar {
-      @NotNull
+      public static final Color BACKGROUND = JBColor.namedColor("StatusBar.background", JBColor.PanelBackground);
+      public static final Color BORDER_COLOR = JBColor.namedColor("StatusBar.borderColor", Gray.x91);
+      /**
+       * @deprecated Use {@link Widget#HOVER_BACKGROUND} instead.
+       */
+      @Deprecated
       public static Color hoverBackground() {
-        return JBColor.namedColor("StatusBar.hoverBackground", ActionButton.hoverBackground());
+        return Widget.HOVER_BACKGROUND;
+      }
+
+      public interface Widget {
+        Color FOREGROUND = JBColor.namedColor("StatusBar.Widget.foreground", UIUtil.getLabelForeground());
+        Color HOVER_FOREGROUND = JBColor.namedColor("StatusBar.Widget.hoverForeground", UIUtil.getLabelForeground());
+        Color HOVER_BACKGROUND = JBColor.namedColor("StatusBar.Widget.hoverBackground", ActionButton.hoverBackground());
+        Color PRESSED_FOREGROUND = JBColor.namedColor("StatusBar.Widget.pressedForeground", UIUtil.getLabelForeground());
+        Color PRESSED_BACKGROUND = JBColor.namedColor("StatusBar.Widget.pressedBackground", ActionButton.pressedBackground());
+
+        static Border iconBorder() {
+          return new JBEmptyBorder(insets("StatusBar.Widget.widgetInsets", insets(0, 4)));
+        }
+
+        static Border border() {
+          return new JBEmptyBorder(insets("StatusBar.Widget.widgetInsets", insets(0, 6)));
+        }
+      }
+
+      public interface Breadcrumbs {
+        Color FOREGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.foreground", StatusBar.Widget.FOREGROUND);
+        Color HOVER_FOREGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.hoverForeground", UIUtil.getLabelForeground());
+        Color HOVER_BACKGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.hoverBackground", ActionButton.hoverBackground());
+        Color SELECTION_FOREGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.selectionForeground", List.Selection.foreground(true));
+        Color SELECTION_BACKGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.selectionBackground", List.Selection.background(true));
+        Color SELECTION_INACTIVE_FOREGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.selectionInactiveForeground", List.Selection.foreground(false));
+        Color SELECTION_INACTIVE_BACKGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.selectionInactiveBackground", List.Selection.background(false));
+
+        Color FLOATING_BACKGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.floatingBackground", List.BACKGROUND);
+        Color FLOATING_FOREGROUND = JBColor.namedColor("StatusBar.Breadcrumbs.floatingForeground", UIUtil.getLabelForeground());
+        JBValue CHEVRON_INSET = new JBValue.UIInteger("StatusBar.Breadcrumbs.chevronInset", 0);
+
+        static Insets floatingBorderInsets() {
+          return insets("StatusBar.Breadcrumbs.floatingToolbarInsets", emptyInsets());
+        }
       }
     }
 
     public static final class ToolWindow {
       @NotNull
       public static Color background() {
-        return JBColor.namedColor("ToolWindow.background", JBColor.background());
+        return JBColor.namedColor("ToolWindow.background");
       }
 
       @NotNull
@@ -724,8 +781,16 @@ public class JBUI {
       }
 
       @NotNull
-      public static int headerTabPadding() {
-        return getInt("ToolWindow.HeaderTab.padding", JBUIScale.scale(6));
+      public static Insets headerTabInsets() {
+        return insets("ToolWindow.HeaderTab.insets", insets(0, 12, 0, 12));
+      }
+
+      public static int headerTabUnderlineArc() {
+        return getInt("ToolWindow.HeaderTab.underlineArc", 4);
+      }
+
+      public static JBInsets headerTabLeftRightInsets() {
+        return insets("ToolWindow.HeaderTab.leftRightInsets", insets(0, 8, 0, 8));
       }
 
       /**
@@ -771,8 +836,21 @@ public class JBUI {
         return JBColor.namedColor("ToolWindow.Header.background", JBColor.namedColor("ToolWindow.header.active.background", 0xE2E6EC));
       }
 
-      public static int headerPadding() {
-        return getInt("ToolWindow.Header.padding", JBUIScale.scale(6));
+      @NotNull
+      public static Insets headerInsets() {
+        return insets("ToolWindow.Header.insets", insets(4, 8, 4, 8));
+      }
+
+      public static int headerHeight() {
+        return getInt("ToolWindow.Header.height", 42);
+      }
+
+      public static JBInsets headerLabelLeftRightInsets() {
+        return insets("ToolWindow.Header.labelLeftRightInsets", insets(0, 12, 0, 16));
+      }
+
+      public static JBInsets headerToolbarLeftRightInsets() {
+        return insets("ToolWindow.Header.toolbarLeftRightInsets", insets(0, 12, 0, 8));
       }
 
       /**
@@ -1357,6 +1435,18 @@ public class JBUI {
   public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
     return value instanceof Integer ? (Integer)value : defaultValue;
+  }
+
+  public static float getFloat(@NonNls @NotNull String propertyName, float defaultValue) {
+    Object value = UIManager.get(propertyName);
+    if (value instanceof Float) return (Float)value;
+    if (value instanceof Double) return ((Double)value).floatValue();
+    if (value instanceof String) {
+      try {
+        return Float.parseFloat((String)value);
+      } catch (NumberFormatException ignore) {}
+    }
+    return defaultValue;
   }
 
   @NotNull

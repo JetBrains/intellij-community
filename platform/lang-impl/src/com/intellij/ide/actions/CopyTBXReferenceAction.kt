@@ -2,13 +2,9 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.actions.CopyReferenceUtil.*
-import com.intellij.navigation.JBProtocolNavigateCommand.Companion.NAVIGATE_COMMAND
-import com.intellij.navigation.NavigatorWithinProject
-import com.intellij.navigation.PROJECT_NAME_KEY
-import com.intellij.navigation.REFERENCE_TARGET
-import com.intellij.navigation.SELECTION
+import com.intellij.navigation.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.JBProtocolCommand.PROTOCOL
+import com.intellij.openapi.application.JBProtocolCommand.SCHEME
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -20,7 +16,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.PlatformUtils.*
 import com.intellij.util.io.encodeUrlQueryParameter
-import org.jetbrains.annotations.NonNls
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 
@@ -35,7 +30,7 @@ object CopyTBXReferenceAction {
                                PYCHARM_PREFIX to "pycharm",
                                PYCHARM_CE_PREFIX to "pycharm",
                                PYCHARM_EDU_PREFIX to "pycharm",
-                               PYCHARM_DS_PREFIX to "pycharm",
+                               DATASPELL_PREFIX to "pycharm",
                                PHP_PREFIX to "php-storm",
                                RUBY_PREFIX to "rubymine",
                                WEB_PREFIX to "web-storm",
@@ -88,9 +83,9 @@ object CopyTBXReferenceAction {
     }
 
     val selectionParameters = getSelectionParameters(editor) ?: ""
-    val projectParameter = "$PROJECT_NAME_KEY=${project.name}" // NON-NLS
+    val projectParameter = "${PROJECT_NAME_KEY}=${project.name}"
 
-    return "${PROTOCOL}$tool/$NAVIGATE_COMMAND/$REFERENCE_TARGET?$projectParameter$refsParameters$selectionParameters" // NON-NLS
+    return "${SCHEME}://${tool}/${NAVIGATE_COMMAND}/${REFERENCE_TARGET}?${projectParameter}${refsParameters}${selectionParameters}"
   }
 
   private fun getSelectionParameters(editor: Editor?): String? {
@@ -109,7 +104,6 @@ object CopyTBXReferenceAction {
     }
   }
 
-  @NonNls
   private fun getSelectionParameters(editor: Editor, caret: Caret, index: String): String? =
     getSelectionRange(editor, caret)?.let {
       @Suppress("HardCodedStringLiteral")
@@ -121,8 +115,8 @@ object CopyTBXReferenceAction {
       return null
     }
 
-    val selectionStart = editor.visualToLogicalPosition(caret.selectionStartPosition)
-    val selectionEnd = editor.visualToLogicalPosition(caret.selectionEndPosition)
+    val selectionStart = editor.offsetToLogicalPosition(editor.selectionModel.selectionStart)
+    val selectionEnd = editor.offsetToLogicalPosition(editor.selectionModel.selectionEnd)
 
     return String.format("%d:%d-%d:%d",
                          selectionStart.line + 1,

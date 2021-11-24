@@ -12,7 +12,7 @@ import javax.swing.JPanel
 
 class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameterTypeHintsInlayProvider.Settings> {
 
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector? {
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector {
     return GroovyParameterTypeHintsCollector(editor, settings)
   }
 
@@ -34,10 +34,14 @@ class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameter
   override val key: SettingsKey<Settings>
     get() = ourKey
 
-  override val groupId: String
-    get() = TYPES_GROUP
+  override val group: InlayGroup
+    get() = InlayGroup.TYPES_GROUP
 
-  override val previewText: String?
+  override fun getProperty(key: String): String {
+    return GroovyBundle.message(key)
+  }
+
+  override val previewText: String
     get() = "def foo(a) {}\n" +
             "foo(1)\n\n\n" +
             "def bar(a, b) {\n" +

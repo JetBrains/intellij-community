@@ -17,10 +17,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -154,6 +156,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   @ApiStatus.Internal
   @Override
   public void shutdown(boolean wait) {
+    MavenLog.LOG.debug("[connector] shutdown "  + this + " " + (mySupport == null));
     super.shutdown(true);
     cleanUp();
     MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
@@ -176,6 +179,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     }
     cleanUp();
     myManager.cleanUp(this);
+    MavenLog.LOG.debug("[connector] perform error " + this);
     throw new RuntimeException("Cannot reconnect.", last);
   }
 
@@ -220,7 +224,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     public void run() {
       ProgressIndicator indicator = new EmptyProgressIndicator();
       String dirForLogs = myMultimoduleDirectories.iterator().next();
-      MavenLog.LOG.info("Connecting maven connector in " + dirForLogs);
+      MavenLog.LOG.debug("Connecting maven connector in " + dirForLogs);
       try {
         if (myDebugPort != null) {
           //noinspection UseOfSystemOutOrSystemErr
@@ -229,16 +233,17 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(myProject);
         mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
         mySupport.onTerminate(e -> {
+          MavenLog.LOG.debug("[connector] terminate " + MavenServerConnectorImpl.this);
           shutdown(false);
         });
         MavenServer server = mySupport.acquire(this, "", indicator);
         startPullingDownloadListener(server);
         startPullingLogger(server);
         myServerPromise.setResult(server);
-        MavenLog.LOG.info("Connector in " + dirForLogs + " has been connected");
+        MavenLog.LOG.debug("[connector] in " + dirForLogs + " has been connected " + MavenServerConnectorImpl.this);
       }
       catch (Throwable e) {
-        MavenLog.LOG.warn("Cannot connect connector in " + dirForLogs, e);
+        MavenLog.LOG.warn("[connector] cannot connect in " + dirForLogs, e);
         myServerPromise.setError(e);
       }
     }

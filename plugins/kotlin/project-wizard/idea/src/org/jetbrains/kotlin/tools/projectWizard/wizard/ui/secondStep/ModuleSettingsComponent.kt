@@ -115,12 +115,18 @@ private class ModuleTemplateComponent(
     uiEditorUsagesStats: UiEditorUsageStats,
     onTemplateChanged: () -> Unit
 ) : TitledComponent(context) {
+
+    init {
+        if (module.template == null) {
+            module.template = templates.firstOrNull()
+        }
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     private val dropDown = DropDownComponent(
         context,
         initialValues = templates,
-        initiallySelectedValue = module.template ?: NoneTemplate,
-        filter = { template: Template -> read { template.isApplicableTo(this, module) } },
+        initiallySelectedValue = module.template,
         labelText = null,
     ) { value, isByUser ->
         if (isByUser) {
@@ -165,14 +171,14 @@ private class ModuleTemplateComponent(
 private object NoneTemplate : Template() {
     override val title = KotlinNewProjectWizardUIBundle.message("module.settings.template.none")
     override val description: String = ""
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean = true
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean = true
 
     override val id: String = "none"
 }
 
 fun Reader.availableTemplatesFor(module: Module) =
     TemplatesPlugin.templates.propertyValue.values.filter { template ->
-        template.isSupportedByModuleType(module, KotlinPlugin.projectKind.settingValue)
+        template.isSupportedByModuleType(module, KotlinPlugin.projectKind.settingValue, this)
     }
 
 

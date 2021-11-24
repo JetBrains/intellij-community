@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -35,7 +36,7 @@ abstract class LibraryIndexableFilesIteratorBase(val library: Library) : Library
   }
 
   fun getRoots() = runReadAction {
-    if (Disposer.isDisposed(library)) {
+    if ((library as LibraryEx).isDisposed) {
       listOf<VirtualFile>()
     }
     else {

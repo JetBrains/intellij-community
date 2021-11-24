@@ -1,6 +1,3 @@
-dateutil.parser.InvalidDateError
-dateutil.parser.InvalidDatetimeError
-dateutil.parser.InvalidTimeError
 dateutil.parser._tzparser.__init__
 dateutil.parser.parserinfo.convertyear
 dateutil.rrule.weekday.__init__

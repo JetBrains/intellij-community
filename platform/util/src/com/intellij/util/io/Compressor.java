@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -56,10 +57,23 @@ public abstract class Compressor implements Closeable {
     @Override
     protected void writeFileEntry(String name, InputStream source, long length, long timestamp) throws IOException {
       TarArchiveEntry e = new TarArchiveEntry(name);
+      if (length < 0) {
+        if (source instanceof ByteArrayInputStream || source instanceof UnsyncByteArrayInputStream) {
+          length = source.available();
+        }
+        else {
+          BufferExposingByteArrayOutputStream temp = new BufferExposingByteArrayOutputStream();
+          StreamUtil.copy(source, temp);
+          length = temp.size();
+          source = new ByteArrayInputStream(temp.getInternalBuffer(), 0, temp.size());
+        }
+      }
       e.setSize(length);
       e.setModTime(timestamp);
       myStream.putArchiveEntry(e);
-      StreamUtil.copy(source, myStream);
+      if (length > 0) {
+        StreamUtil.copy(source, myStream);
+      }
       myStream.closeArchiveEntry();
     }
 
@@ -112,7 +126,9 @@ public abstract class Compressor implements Closeable {
       }
       e.setTime(timestamp);
       myStream.putNextEntry(e);
-      StreamUtil.copy(source, myStream);
+      if (length != 0) {
+        StreamUtil.copy(source, myStream);
+      }
       myStream.closeEntry();
     }
 
@@ -139,7 +155,7 @@ public abstract class Compressor implements Closeable {
 
   /**
    * Allows filtering entries being added to the archive.
-   * Please note that the second parameter of a filter ({@code Path}) <b>might be {@code null}</b> when the filter is applied
+   * Please note that the second parameter of a filter ({@code Path}) <b>might be {@code null}</b> when it is applied
    * to an entry not present on a disk - e.g. via {@link #addFile(String, byte[])}.
    */
   public Compressor filter(@Nullable BiPredicate<? super String, ? super @Nullable Path> filter) {

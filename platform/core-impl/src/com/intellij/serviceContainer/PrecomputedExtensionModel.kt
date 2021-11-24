@@ -66,7 +66,7 @@ inline fun executeRegisterTaskForOldContent(mainPluginDescriptor: IdeaPluginDesc
                                             crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
   for (dep in mainPluginDescriptor.pluginDependencies) {
     val subDescriptor = dep.subDescriptor
-    if (subDescriptor?.classLoader == null) {
+    if (subDescriptor?.pluginClassLoader == null) {
       continue
     }
 
@@ -74,7 +74,7 @@ inline fun executeRegisterTaskForOldContent(mainPluginDescriptor: IdeaPluginDesc
 
     for (subDep in subDescriptor.pluginDependencies) {
       val d = subDep.subDescriptor
-      if (d?.classLoader != null) {
+      if (d?.pluginClassLoader != null) {
         task(d)
         assert(d.pluginDependencies.isEmpty() || d.pluginDependencies.all { it.subDescriptor == null })
       }

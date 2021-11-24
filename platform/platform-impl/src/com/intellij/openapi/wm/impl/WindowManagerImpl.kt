@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.deserializeInto
@@ -22,6 +24,7 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSuppor
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.sun.jna.platform.WindowUtils
 import org.jdom.Element
@@ -308,8 +311,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       allocateNewFrame(project, frame)
     }
     else {
-      frame.setProject(project)
       projectToFrame.put(project, frame)
+      frame.setProject(project)
     }
     return frame
   }
@@ -337,8 +340,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       }
     }
 
-    frameHelper.setProject(project)
     projectToFrame.put(project, frameHelper)
+    frameHelper.setProject(project)
     val uiFrame = frameHelper.frame!!
     if (frameInfo != null) {
       uiFrame.extendedState = frameInfo.extendedState
@@ -439,7 +442,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       defaultFrameInfoHelper.copyFrom(info)
     }
     state.getChild(DesktopLayout.TAG)?.let {
-      layout.readExternal(it)
+      layout.readExternal(it, ExperimentalUI.isNewUI())
     }
   }
 

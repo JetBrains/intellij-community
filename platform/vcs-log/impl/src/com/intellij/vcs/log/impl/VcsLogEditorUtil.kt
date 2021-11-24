@@ -8,10 +8,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
 
 internal fun getLogIds(editor: FileEditor): Set<String> =
-  VcsLogContentUtil.getLogUis(editor.component).mapTo(mutableSetOf(), VcsLogUiEx::getId)
+  VcsLogPanel.getLogUis(editor.component).mapTo(mutableSetOf(), VcsLogUiEx::getId)
 
 internal fun findSelectedLogIds(project: Project): Set<String> {
   return FileEditorManager.getInstance(project).selectedEditors.flatMapTo(mutableSetOf(), ::getLogIds)
@@ -22,7 +23,7 @@ internal fun getExistingLogIds(project: Project): Set<String> {
 }
 
 internal fun <T : VcsLogUiEx> findVcsLogUi(editors: Array<FileEditor>, clazz: Class<T>): T? {
-  return editors.asSequence().mapNotNull { VcsLogContentUtil.getLogUi(it.component) }.filterIsInstance(clazz).firstOrNull()
+  return editors.asSequence().flatMap { VcsLogPanel.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
 }
 
 internal fun updateTabName(project: Project, ui: VcsLogUiEx) {
@@ -51,7 +52,7 @@ internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean
 }
 
 internal fun FileEditor.disposeLogUis(): List<String> {
-  val logUis = VcsLogContentUtil.getLogUis(component)
+  val logUis = VcsLogPanel.getLogUis(component)
   val disposedIds = logUis.map { it.id }
   if (logUis.isNotEmpty()) {
     component.removeAll()

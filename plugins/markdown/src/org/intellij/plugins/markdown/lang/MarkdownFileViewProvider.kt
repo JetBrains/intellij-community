@@ -5,7 +5,9 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes.MARKDOWN_TEMPLATE_DATA
@@ -44,12 +46,4 @@ class MarkdownFileViewProvider(manager: PsiManager, virtualFile: VirtualFile, ev
 
   override fun cloneInner(fileCopy: VirtualFile): MultiplePsiFilesPerDocumentFileViewProvider =
     MarkdownFileViewProvider(manager, fileCopy, false)
-}
-
-class MarkdownFileViewProviderFactory : FileViewProviderFactory {
-  override fun createFileViewProvider(file: VirtualFile,
-                                      language: Language,
-                                      manager: PsiManager,
-                                      eventSystemEnabled: Boolean): FileViewProvider =
-    MarkdownFileViewProvider(manager, file, eventSystemEnabled)
 }

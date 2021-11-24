@@ -217,6 +217,11 @@
       }
     },
 
+    "NotificationsToolwindow": {
+      "newNotification.background": "#450073",
+      "newNotification.hoverBackground": "#450073"
+    },
+
     "OptionButton" : {
       "default.separatorColor": "#000000",
       "separatorColor": "#FFFFFF"
@@ -300,13 +305,14 @@
       "background": "#3333FF",
       "borderColor": "#3333FF"
     },
-    "BookmarkIcon": {
-      "background": "#E0861F"
-    },
-    "BookmarkMnemonicIcon": {
-      "foreground": "#FFFFFF",
-      "background": "#000000",
-      "borderColor": "#E0861F"
+
+    "Bookmark": {
+      "iconBackground": "#E0861F",
+      "Mnemonic": {
+        "iconForeground": "#FFFFFF",
+        "iconBackground": "#000000",
+        "iconBorderColor": "#E0861F"
+      }
     },
 
     "ScrollBar": {

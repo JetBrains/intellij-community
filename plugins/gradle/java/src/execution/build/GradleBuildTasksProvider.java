@@ -6,6 +6,9 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.task.ProjectModelBuildTask;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScript;
+
+import java.util.function.BiConsumer;
 
 /**
  * @author Vladislav.Soroka
@@ -17,5 +20,6 @@ public interface GradleBuildTasksProvider {
 
   void addBuildTasks(@NotNull ProjectModelBuildTask buildTask,
                      @NotNull Consumer<ExternalTaskPojo> cleanTasksConsumer,
-                     @NotNull Consumer<ExternalTaskPojo> buildTasksConsumer);
+                     @NotNull Consumer<ExternalTaskPojo> buildTasksConsumer,
+                     @NotNull BiConsumer<String, VersionSpecificInitScript> initScriptConsumer);
 }

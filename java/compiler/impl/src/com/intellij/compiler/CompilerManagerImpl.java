@@ -46,7 +46,8 @@ import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -365,18 +366,8 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
-  public @NotNull CompileScope createModuleCompileScope(final @NotNull Module module, final boolean includeDependentModules) {
-    return createModulesCompileScope(new Module[] {module}, includeDependentModules);
-  }
-
-  @Override
-  public @NotNull CompileScope createModulesCompileScope(final Module @NotNull [] modules, final boolean includeDependentModules) {
-    return createModulesCompileScope(modules, includeDependentModules, false);
-  }
-
-  @Override
-  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies) {
-    return new ModuleCompileScope(myProject, modules, includeDependentModules, includeRuntimeDependencies);
+  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests) {
+    return new ModuleCompileScope(myProject, Arrays.asList(modules), Collections.emptyList(), includeDependentModules, includeRuntimeDependencies, includeTests);
   }
 
   @Override

@@ -122,7 +122,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
       .thenAsync(ignored ->
-                   Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")
+                   Experiments.getInstance().isFeatureEnabled("python.use.targets.api")
                    ? createSessionUsingTargetsApi(state, environment)
                    : createSessionLegacy(state, environment));
   }
@@ -577,6 +577,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           final LanguageLevel langLevel = flavor.getLanguageLevel(sdk);
           // PY-28457 Disable Cython extensions in Python 3.4 and Python 3.5 because of crash in generated C code
           if (langLevel == LanguageLevel.PYTHON34 || langLevel == LanguageLevel.PYTHON35) {
+            environmentController.putFixedValue(PYDEVD_USE_CYTHON, "NO");
+          }
+          // Disabled until the 'TypeError: an integer is required' error is fixed. See PY-50572.
+          if (langLevel == LanguageLevel.PYTHON310) {
             environmentController.putFixedValue(PYDEVD_USE_CYTHON, "NO");
           }
         }

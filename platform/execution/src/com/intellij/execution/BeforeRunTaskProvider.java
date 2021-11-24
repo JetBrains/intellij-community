@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -16,6 +16,12 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+
+/**
+ * This class is responsible for auxiliary tasks (like build process or project-specific scripts execution)
+ * that might be called just before run configuration start.
+ * Exact list of tasks should be specified for every run configuration (or template) by user in dedicated UI.
+ */
 
 public abstract class BeforeRunTaskProvider<T extends BeforeRunTask<?>> {
   public static final ProjectExtensionPointName<BeforeRunTaskProvider<BeforeRunTask<?>>> EP_NAME =
@@ -50,13 +56,13 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask<?>> {
   }
 
   /**
-   * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration
+   * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration.
    */
   public abstract @Nullable T createTask(@NotNull RunConfiguration runConfiguration);
 
   /**
    * @return {@code true} if task configuration is changed
-   * @deprecated do not call directly, use {@link #configureTask(DataContext, RunConfiguration, BeforeRunTask)} instead
+   * @deprecated do not call directly, use {@link #configureTask(DataContext, RunConfiguration, BeforeRunTask)} instead.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
@@ -65,7 +71,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask<?>> {
   }
 
   /**
-   * @return {@code true} a promise returning true, if the task was changed
+   * @return {@code true} a promise returning true, if the task was changed.
    */
   public Promise<Boolean> configureTask(@NotNull DataContext context, @NotNull RunConfiguration configuration, @NotNull T task) {
     return Promises.resolvedPromise(configureTask(configuration, task));
@@ -78,7 +84,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask<?>> {
   public abstract boolean executeTask(@NotNull DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment environment, @NotNull T task);
 
   /**
-   * @return {@code true} if at most one task may be configured
+   * @return {@code true} if at most one task may be configured.
    */
   public boolean isSingleton() {
     // by default false because user can configure chain (java compile, generate something, java compile again)

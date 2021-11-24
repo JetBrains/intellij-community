@@ -22,13 +22,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.testIntegration.createTest.CreateTestUtils.computeSuitableTestRootUrls;
@@ -150,15 +148,6 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
   protected CreateTestDialog createTestDialog(Project project, Module srcModule, PsiClass srcClass, PsiPackage srcPackage) {
     return new CreateTestDialog(project, getText(), srcClass, srcPackage, srcModule);
-  }
-
-  /**
-   * @deprecated use {@link #computeTestRoots(Module)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected static void checkForTestRoots(Module srcModule, Set<? super VirtualFile> testFolders) {
-    testFolders.addAll(computeTestRoots(srcModule));
   }
 
   @Nullable

@@ -61,7 +61,12 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Override
   @Nullable
   public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
-    // N/A here we work with java classes
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+      final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(this, file);
+      if (info != null) {
+        return getCoverageInformationString(info, manager.isSubCoverageActive());
+      }
+    }
     return null;
   }
 
@@ -121,7 +126,8 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       };
       final long startNs = System.nanoTime();
 
-      new JavaCoverageClassesAnnotator(suite, project, annotator).visitSuite();
+      final int totalRoots = new JavaCoverageClassesEnumerator.RootsCounter(suite, project).getRoots();
+      new JavaCoverageClassesAnnotator(suite, project, annotator, totalRoots).visitSuite();
       dataManager.triggerPresentationUpdate();
 
       final long endNs = System.nanoTime();
@@ -243,6 +249,11 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Nullable
   public @Nls String getClassCoverageInformationString(String classFQName, CoverageDataManager coverageDataManager) {
     final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
+    return getClassCoverageInformationString(info, coverageDataManager);
+  }
+
+  @Nullable
+  public static @Nls String getClassCoverageInformationString(PackageAnnotator.ClassCoverageInfo info, CoverageDataManager coverageDataManager) {
     if (info == null) return null;
     if (info.totalMethodCount == 0 || info.totalLineCount == 0) return null;
     if (coverageDataManager.isSubCoverageActive()){
@@ -253,11 +264,14 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  public PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(String classFQName) {
+  public PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(@Nullable String classFQName) {
+    if (classFQName == null) return null;
     return myClassCoverageInfos.get(classFQName);
   }
 
-  public PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(PsiNamedElement value) {
+  @Nullable
+  public PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(@Nullable PsiNamedElement value) {
+    if (value == null) return null;
     PackageAnnotator.SummaryCoverageInfo cachedInfo = myExtensionCoverageInfos.get(value);
     if (cachedInfo != null) {
       return cachedInfo;

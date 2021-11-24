@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseMethodSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKNoType
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
@@ -96,8 +96,7 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveApp
             fun JKSymbol.isNeedThisReceiver(): Boolean {
                 val parameters = defaults.map { it.second }
                 val declarations = element.declarations
-                val propertyNameByGetMethodName =
-                    SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(Name.identifier(this.name))?.asString()
+                val propertyNameByGetMethodName = propertyNameByGetMethodName(Name.identifier(this.name))?.asString()
                 return parameters.any { it.name.value == this.name || it.name.value == propertyNameByGetMethodName }
                         && declarations.any { it == this.target }
             }

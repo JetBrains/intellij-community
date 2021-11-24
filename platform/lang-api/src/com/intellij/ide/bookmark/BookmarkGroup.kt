@@ -19,7 +19,7 @@ interface BookmarkGroup {
   fun setDescription(bookmark: Bookmark, description: @NlsSafe String)
 
   fun canAdd(bookmark: Bookmark): Boolean
-  fun add(bookmark: Bookmark, type: BookmarkType, description: @NlsSafe String): Boolean
+  fun add(bookmark: Bookmark, type: BookmarkType, description: @NlsSafe String? = null): Boolean
 
   fun canRemove(bookmark: Bookmark): Boolean
   fun remove(bookmark: Bookmark): Boolean

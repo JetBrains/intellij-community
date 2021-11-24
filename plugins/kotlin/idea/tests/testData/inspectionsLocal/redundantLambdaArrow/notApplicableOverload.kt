@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun bar(f: () -> Unit) {}
 fun bar(f: (Int) -> Unit) {}

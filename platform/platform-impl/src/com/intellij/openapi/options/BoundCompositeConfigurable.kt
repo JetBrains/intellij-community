@@ -38,7 +38,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   override fun disposeUIResources() {
     super.disposeUIResources()
     if (lazyConfigurables.isInitialized()) {
-      for (configurable in plainConfigurables) {
+      for (configurable in configurables) {
         configurable.disposeUIResources()
       }
     }

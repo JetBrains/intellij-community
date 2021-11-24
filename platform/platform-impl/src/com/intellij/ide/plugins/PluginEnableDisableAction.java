@@ -12,7 +12,7 @@ public enum PluginEnableDisableAction {
   ENABLE_GLOBALLY(PluginEnabledState.ENABLED, true) {
     @Override
     protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
-      return PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.enable.for.all.projects" : "plugins.configurable.enable";
+      return DynamicPluginEnabler.isPerProjectEnabled() ? "plugins.configurable.enable.for.all.projects" : "plugins.configurable.enable";
     }
 
     @Override
@@ -28,7 +28,7 @@ public enum PluginEnableDisableAction {
 
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
-      return PluginEnabler.isPerProjectEnabled() && !state.isEnabled();
+      return DynamicPluginEnabler.isPerProjectEnabled() && !state.isEnabled();
     }
   },
   ENABLE_FOR_PROJECT_DISABLE_GLOBALLY(PluginEnabledState.ENABLED_FOR_PROJECT, false) {
@@ -39,13 +39,13 @@ public enum PluginEnableDisableAction {
 
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
-      return PluginEnabler.isPerProjectEnabled() && state == PluginEnabledState.ENABLED;
+      return DynamicPluginEnabler.isPerProjectEnabled() && state == PluginEnabledState.ENABLED;
     }
   },
   DISABLE_GLOBALLY(PluginEnabledState.DISABLED, false) {
     @Override
     protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
-      return PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.disable.for.all.projects" : "plugins.configurable.disable";
+      return DynamicPluginEnabler.isPerProjectEnabled() ? "plugins.configurable.disable.for.all.projects" : "plugins.configurable.disable";
     }
 
     @Override
@@ -61,7 +61,7 @@ public enum PluginEnableDisableAction {
 
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
-      return PluginEnabler.isPerProjectEnabled() && state.isEnabled();
+      return DynamicPluginEnabler.isPerProjectEnabled() && state.isEnabled();
     }
   },
   DISABLE_FOR_PROJECT_ENABLE_GLOBALLY(PluginEnabledState.DISABLED_FOR_PROJECT, true) {

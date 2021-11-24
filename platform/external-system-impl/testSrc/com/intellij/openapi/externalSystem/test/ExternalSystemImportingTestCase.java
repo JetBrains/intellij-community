@@ -89,7 +89,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertModulesContains(myProject, expectedNames);
   }
 
-  protected void assertModules(@NotNull Project project, String... expectedNames) {
+  public static void assertModules(@NotNull Project project, String... expectedNames) {
     Module[] actual = ModuleManager.getInstance(project).getModules();
     List<String> actualNames = new ArrayList<>();
 

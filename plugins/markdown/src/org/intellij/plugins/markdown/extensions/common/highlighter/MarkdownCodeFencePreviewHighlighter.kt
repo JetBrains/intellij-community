@@ -4,12 +4,14 @@ package org.intellij.plugins.markdown.extensions.common.highlighter
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ColorUtil
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
@@ -36,9 +38,16 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   }
 
   private val values = ConcurrentHashMap<String, CachedHTMLResult>()
+  private val currentFile: ThreadLocal<VirtualFile?> = ThreadLocal()
 
   override fun isApplicable(language: String): Boolean {
     return LanguageGuesser.guessLanguageForInjection(language) != null
+  }
+  fun generateHtmlForFile(language: String, raw: String, node: ASTNode, file: VirtualFile): String {
+    currentFile.set(file)
+    val result = generateHtml(language, raw, node)
+    currentFile.set(null)
+    return result
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
@@ -88,6 +97,10 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
       val right = left + line.length + 1
       lines.add(buildString {
         append("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='${left + baseOffset}..${right + baseOffset}'>")
+        if (lines.isNotEmpty()) {
+          // skip first line processing since there is always run marker for whole block
+          append(processCodeLine(line))
+        }
         appendWithReplacements(line, targets, this)
         append("</span>")
       })
@@ -138,4 +151,8 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
     }
     builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine))
   }
+
+  private fun processCodeLine(rawCodeLine: String): String = currentFile.get()?.let { file ->
+    CommandRunnerExtension.getRunnerByFile(file)?.processCodeLine(rawCodeLine, true)
+  } ?: ""
 }

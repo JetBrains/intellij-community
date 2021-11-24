@@ -22,7 +22,7 @@ class GroupCreateDialog(project: Project?, parent: Component?, val manager: Book
 
     title = if (addBookmark) message("dialog.bookmark.add.title") else message("dialog.group.create.title")
     setOKButtonText(if (addBookmark) message("dialog.bookmark.add.button") else message("dialog.group.create.button"))
-    return showAndGetGroup(manager.groups.isEmpty()) {
+    return showAndGetGroup(false) {
       manager.addGroup(component.text.trim(), it)
     }
   }

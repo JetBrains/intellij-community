@@ -81,7 +81,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
           .columns(COLUMNS_MEDIUM)
       }
-      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings"), topGroupGap = true) {
+      customOptions()
+      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
         if (context.isCreatingNewProject) {
           row(UIBundle.message("label.project.wizard.new.project.module.name")) {
             textField()
@@ -125,9 +126,11 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
               })
             }
         }.bottomGap(BottomGap.SMALL)
-      }
+      }.topGap(TopGap.MEDIUM)
     }
   }
+
+  open fun Panel.customOptions() {}
 
   private fun ValidationInfoBuilder.validateModuleName(): ValidationInfo? {
     if (moduleName.isEmpty()) return error(JavaUiBundle.message("module.name.location.dialog.message.enter.module.name"))

@@ -73,7 +73,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     editor.scrollPane.viewport.addChangeListener {
       viewportQueue.queue(object : Update("Viewport change") {
         override fun run() {
-          if (Disposer.isDisposed(editor.disposable)) return
+          if (editor.isDisposed) return
           for ((inlay, controller) in inlays) {
             controller.onViewportChange()
 
@@ -221,7 +221,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
         else false
       }
       for ((factory, controllers) in seenControllersByFactory) {
-        val actualController = if (!Disposer.isDisposed(editor.disposable)) {
+        val actualController = if (!editor.isDisposed) {
           factory.compute(editor, controllers, notebookCellLines.intervals.listIterator(interval.ordinal))
         }
         else {

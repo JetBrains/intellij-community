@@ -35,7 +35,7 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
   companion object {
 
     @JvmStatic
-    @ApiStatus.ScheduledForRemoval(inVersion = "22.1")
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
     @Deprecated("Should not be used in new code; only when rolled back to old behaviour, " +
                 "see DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders(). " +
                 "Should be removed once new code proves stable")
@@ -53,10 +53,8 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
 
   override fun getDebugName(): String =
     if (printRootsInDebugName) {
-      "Module '" + module.name + "' (" +
-      if (roots.isEmpty()) "empty"
-      else roots.joinToString(", ") { it.name } +
-           ")"
+      val rootsDebugStr = if (roots.isEmpty()) "empty" else roots.map { it.name }.sorted().joinToString(", ")
+      "Module '" + module.name + "' ($rootsDebugStr)"
     }
     else {
       "Module '${module.name}'"

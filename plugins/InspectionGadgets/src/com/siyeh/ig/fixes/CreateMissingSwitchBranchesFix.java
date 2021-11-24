@@ -13,12 +13,10 @@ import java.util.function.Function;
 public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
   @NotNull
   protected final Set<String> myNames;
-  private final boolean myIsPatternMatching;
 
-  public CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull Set<String> names, boolean isPatternMatching) {
+  public CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull Set<String> names) {
     super(block);
     myNames = names;
-    myIsPatternMatching = isPatternMatching;
   }
 
   @Override
@@ -39,13 +37,13 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     if (switchExpression == null) return;
     final PsiClassType switchType = (PsiClassType)switchExpression.getType();
     if (switchType == null) return;
-    final PsiClass enumClass = switchType.resolve();
-    if (enumClass == null) return;
+    final PsiClass psiClass = switchType.resolve();
+    if (psiClass == null) return;
     List<PsiSwitchLabelStatementBase> addedLabels = CreateSwitchBranchesUtil
-      .createMissingBranches(switchBlock, getAllNames(enumClass), myNames, getCaseExtractor(), myIsPatternMatching);
+      .createMissingBranches(switchBlock, getAllNames(psiClass), myNames, getCaseExtractor());
     CreateSwitchBranchesUtil.createTemplate(switchBlock, addedLabels);
   }
 
-  abstract protected @NotNull List<String> getAllNames(PsiClass aClass);
+  abstract protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass);
   abstract protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor();
 }

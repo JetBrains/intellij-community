@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -175,6 +175,20 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     DirectoriesWithCompletionPopupPanel contentPanel = new DirectoriesWithCompletionPopupPanel(variants);
 
     JTextField nameField = contentPanel.getTextField();
+    nameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void textChanged(@NotNull DocumentEvent event) {
+        final String text = nameField.getText();
+        validator.checkInput(text);
+        String errorText = validator.getErrorText(text);
+        if (errorText != null) {
+          contentPanel.setError(errorText);
+        }
+        else if (contentPanel.hasError()) {
+          contentPanel.setError(null);
+        }
+      }
+    });
     nameField.setText(initialText);
     JBPopup popup = NewItemPopupUtil.createNewItemPopup(title, contentPanel, nameField);
 
@@ -197,9 +211,8 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       }
       else {
         for (Pair<String, JpsModuleSourceRootType<?>> dir : toCreate) {
-          String errorText = validator.getErrorText(dir.first);
-          if (errorText != null) {
-            String errorMessage = validator.getErrorText(errorText);
+          String errorMessage = validator.getErrorText(dir.first);
+          if (errorMessage != null) {
             contentPanel.setError(errorMessage);
             break;
           }
@@ -353,7 +366,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     private boolean locked = false;
 
     protected DirectoriesWithCompletionPopupPanel(@NotNull List<CompletionItem> items) {
-      super(items, SimpleListCellRenderer.create("", item -> item.displayText));
+      super(items, SimpleListCellRenderer.create("", item -> item.displayText), true);
       setupRenderers();
 
       // allow multi selection with Shift+Up/Down

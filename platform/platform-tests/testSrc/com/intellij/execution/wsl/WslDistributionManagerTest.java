@@ -1,19 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.fixtures.TestFixtureRule;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class WslDistributionManagerTest extends BareTestFixtureTestCase {
+public final class WslDistributionManagerTest {
+  @Rule
+  public final TestFixtureRule myTestFixtureRule = new TestFixtureRule();
 
   @Test
   public void caseInsensitiveDistributionName() {
@@ -32,7 +35,12 @@ public class WslDistributionManagerTest extends BareTestFixtureTestCase {
         public @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions() {
           return ContainerUtil.map(loadInstalledDistributionMsIds(), s -> new WslDistributionAndVersion(s, 2));
         }
-      }, getTestRootDisposable());
+
+        @Override
+        protected boolean isAvailable() {
+          return true;
+        }
+      }, myTestFixtureRule.getFixture().getTestRootDisposable());
     WslDistributionManager distributionManager = WslDistributionManager.getInstance();
     WSLDistribution lowerCaseUbuntu = distributionManager.getOrCreateDistributionByMsId(lowerCaseUbuntuName);
     assertEquals(lowerCaseUbuntuName, lowerCaseUbuntu.getMsId());

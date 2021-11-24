@@ -16,7 +16,7 @@ internal class GroupInputValidator(val manager: BookmarksManager, val groups: Co
   constructor(manager: BookmarksManager) : this(manager, emptySet())
 
   override fun getErrorText(name: String?) = when {
-    name.isNullOrBlank() -> message("dialog.name.empty.error")
+    name.isNullOrBlank() -> ""
     manager.getGroup(name.trim()).let { it == null || groups.contains(it) } -> null
     else -> message("dialog.name.exists.error")
   }

@@ -1,15 +1,23 @@
 package org.jetbrains.plugins.notebooks.editor
 
+import com.intellij.openapi.editor.Editor
 
-private class NotebookIntervalPointerImpl(var interval: NotebookCellLines.Interval?): NotebookIntervalPointer {
+class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
+  override fun create(editor: Editor): NotebookIntervalPointerFactory =
+    NotebookIntervalPointerFactoryImpl(NotebookCellLines.get(editor))
+}
+
+
+private class NotebookIntervalPointerImpl(var interval: NotebookCellLines.Interval?) : NotebookIntervalPointer {
   override fun get(): NotebookCellLines.Interval? = interval
 
   override fun toString(): String = "NotebookIntervalPointerImpl($interval)"
 }
 
 
-internal class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: NotebookCellLines): NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
+class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: NotebookCellLines) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
   private val pointers = ArrayList<NotebookIntervalPointerImpl>()
+  private var mySavedChanges: Iterable<NotebookIntervalPointerFactory.Change>? = null
 
   init {
     pointers.addAll(notebookCellLines.intervals.asSequence().map { NotebookIntervalPointerImpl(it) })
@@ -21,6 +29,21 @@ internal class NotebookIntervalPointerFactoryImpl(private val notebookCellLines:
       require(it.interval == interval)
     }
 
+  override fun <T> modifyingPointers(changes: Iterable<NotebookIntervalPointerFactory.Change>, modifyDocumentAction: () -> T): T {
+    try {
+      require(mySavedChanges == null) { "NotebookIntervalPointerFactory hints already added somewhere" }
+      mySavedChanges = changes
+      return modifyDocumentAction().also {
+        if (mySavedChanges != null) {
+          applyChanges()
+        }
+      }
+    }
+    finally {
+      mySavedChanges = null
+    }
+  }
+
   override fun segmentChanged(oldIntervals: List<NotebookCellLines.Interval>, newIntervals: List<NotebookCellLines.Interval>) {
     val isOneIntervalResized = oldIntervals.size == 1 && newIntervals.size == 1 && oldIntervals.first().type == newIntervals.first().type
 
@@ -28,7 +51,7 @@ internal class NotebookIntervalPointerFactoryImpl(private val notebookCellLines:
       pointers[newIntervals.first().ordinal].interval = newIntervals.first()
     }
     else {
-      pointers.removeAll(oldIntervals.map {
+      pointers.removeAll(oldIntervals.mapTo(hashSetOf()) {
         pointers[it.ordinal].also { pointer ->
           pointer.interval = null
         }
@@ -45,13 +68,42 @@ internal class NotebookIntervalPointerFactoryImpl(private val notebookCellLines:
       ?: pointers.size
 
     updatePointersFrom(invalidPointersStart)
+
+    applyChanges()
+  }
+
+  private fun applyChanges() {
+    mySavedChanges?.forEach { hint ->
+      when (hint) {
+        is NotebookIntervalPointerFactory.Invalidate -> {
+          invalidate((hint.ptr as NotebookIntervalPointerImpl))
+        }
+        is NotebookIntervalPointerFactory.Reuse -> {
+          val oldPtr = hint.ptr as NotebookIntervalPointerImpl
+          pointers.getOrNull(hint.ordinalAfterChange)?.let { newPtr ->
+            if (oldPtr !== newPtr) {
+              invalidate(oldPtr)
+              oldPtr.interval = newPtr.interval
+              newPtr.interval = null
+              pointers[hint.ordinalAfterChange] = oldPtr
+            }
+          }
+        }
+      }
+    }
+    mySavedChanges = null
+  }
+
+  private fun invalidate(ptr: NotebookIntervalPointerImpl) {
+    ptr.interval?.let { interval ->
+      pointers[interval.ordinal] = NotebookIntervalPointerImpl(interval)
+      ptr.interval = null
+    }
   }
 
   private fun updatePointersFrom(pos: Int) {
-    val iterator = notebookCellLines.intervals.listIterator(pos)
-
-    for(i in pos until pointers.size) {
-      pointers[i].interval = iterator.next()
+    for (i in pos until pointers.size) {
+      pointers[i].interval = notebookCellLines.intervals[i]
     }
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
@@ -29,7 +30,7 @@ class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
       val codeAnalyzer = DaemonCodeAnalyzerImpl.getInstance(project) ?: return
       val psiManager = PsiManager.getInstance(project)
       editorManager.openFiles
-        .filter { it.fileType == MarkdownFileType.INSTANCE }
+        .filter { FileTypeRegistry.getInstance().isFileOfType(it, MarkdownFileType.INSTANCE) }
         .mapNotNull(psiManager::findFile)
         .forEach(codeAnalyzer::restart)
     }

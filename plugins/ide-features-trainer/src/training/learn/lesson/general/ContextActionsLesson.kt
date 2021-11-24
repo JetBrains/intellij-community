@@ -7,6 +7,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import java.util.concurrent.CompletableFuture
 
 abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.message("context.actions.lesson.name")) {
@@ -43,7 +44,7 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
       showIntentionsTaskId = taskId
       text(LessonsBundle.message("context.actions.invoke.intentions.for.warning", LessonUtil.actionName(it), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(warningQuickFix)
+        item.isToStringContains(warningQuickFix)
       }
       restoreIfModifiedOrMovedIncorrectly(warningPossibleArea)
       test {
@@ -78,7 +79,7 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
       showIntentionsTaskId = taskId
       text(LessonsBundle.message("context.actions.invoke.general.intentions", LessonUtil.actionName(it), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(intentionText)
+        item.isToStringContains(intentionText)
       }
       restoreIfModifiedOrMovedIncorrectly(intentionPossibleArea)
       test { actions(it) }
@@ -117,4 +118,11 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
       focusOwner is EditorComponentImpl
     }
   }
+
+  override val suitableTips = listOf("ContextActions")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("context.actions.help.intention.actions"),
+         LessonUtil.getHelpLink("intention-actions.html")),
+  )
 }

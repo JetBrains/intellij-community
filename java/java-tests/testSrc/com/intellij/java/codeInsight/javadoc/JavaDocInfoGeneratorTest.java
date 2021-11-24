@@ -70,6 +70,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInheritedDocInThrows1() { doTestMethod(); }
   public void testEscapeValues() { doTestClass(); }
   public void testClassTypeParameter() { doTestClass(); }
+  public void testClassTypeParameter1() { doTestClass(); }
   public void testUnicodeEscapes() { doTestClass(); }
   public void testEnumValueOf() { doTestMethod(); }
   public void testMethodFormatting() { doTestMethod(); }

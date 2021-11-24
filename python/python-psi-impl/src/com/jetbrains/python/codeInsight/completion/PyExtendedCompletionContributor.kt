@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiDocumentManager
@@ -20,7 +21,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder
  *
  * To provide variants for extended completion override [doFillCompletionVariants]
  */
-abstract class PyExtendedCompletionContributor : CompletionContributor() {
+abstract class PyExtendedCompletionContributor : CompletionContributor(), DumbAware {
 
   protected val importingInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
     addImportForLookupElement(context, item, context.tailOffset - 1)

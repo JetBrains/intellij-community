@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class Chain
 
 fun complicate(chain: Chain) {

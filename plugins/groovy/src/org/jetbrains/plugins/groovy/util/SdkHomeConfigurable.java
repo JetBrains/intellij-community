@@ -49,8 +49,8 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
     myPathField
       .addBrowseFolderListener(GroovyBundle.message("select.framework.0.home.title", myFrameworkName), "", myProject, new FileChooserDescriptor(false, true, false, false, false, false) {
         @Override
-        public boolean isFileSelectable(VirtualFile file) {
-          return isSdkHome(file);
+        public boolean isFileSelectable(@Nullable VirtualFile file) {
+          return file != null && isSdkHome(file);
         }
       });
     return myPanel;

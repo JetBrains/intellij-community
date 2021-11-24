@@ -23,9 +23,10 @@ class KotlinModuleBuilder(
     @NonNls private val builderName: String,
     @Nls private val builderPresentableName: String,
     @Nls private val builderDescription: String,
-    val icon: Icon
+    val icon: Icon,
+    private val wizardContext: WizardContext
+
 ) : JavaModuleBuilder() {
-    private var wizardContext: WizardContext? = null
 
     override fun getBuilderId() = "kotlin.module.builder"
     override fun getName() = builderName
@@ -33,9 +34,9 @@ class KotlinModuleBuilder(
     override fun getDescription() = builderDescription
     override fun getNodeIcon() = icon
     override fun getGroupName() = KotlinTemplatesFactory.KOTLIN_GROUP_NAME
+    override fun getWeight() = KOTLIN_WEIGHT
 
     override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<out ModuleWizardStep>? {
-        this.wizardContext = wizardContext
         return ModuleWizardStep.EMPTY_ARRAY
     }
 

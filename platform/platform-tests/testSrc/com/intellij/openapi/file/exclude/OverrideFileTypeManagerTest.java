@@ -1,36 +1,65 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude;
 
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.ex.FakeFileType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
   public void testMarkAsPlainText() {
     OverrideFileTypeManager manager = OverrideFileTypeManager.getInstance();
-    VirtualFile file = myFixture.getTempDirFixture().createFile("test.xml");
-    FileType originalType = file.getFileType();
+    VirtualFile xml = myFixture.getTempDirFixture().createFile("test.xml");
+    FileType originalType = xml.getFileType();
     assertEquals(StdFileTypes.XML, originalType);
-    manager.addFile(file, PlainTextFileType.INSTANCE);
+    manager.addFile(xml, PlainTextFileType.INSTANCE);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
-    assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
-    assertTrue(FileTypeManager.getInstance().isFileOfType(file, PlainTextFileType.INSTANCE));
-    assertFalse(FileTypeManager.getInstance().isFileOfType(file, StdFileTypes.XML));
-    manager.removeFile(file);
+    assertEquals(PlainTextFileType.INSTANCE, xml.getFileType());
+    assertTrue(FileTypeManager.getInstance().isFileOfType(xml, PlainTextFileType.INSTANCE));
+    assertFalse(FileTypeManager.getInstance().isFileOfType(xml, StdFileTypes.XML));
+    manager.removeFile(xml);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
-    FileType revertedType = file.getFileType();
+    FileType revertedType = xml.getFileType();
     assertEquals(originalType, revertedType);
 
-    manager.addFile(file, ModuleFileType.INSTANCE);
+    manager.addFile(xml, ArchiveFileType.INSTANCE);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
-    assertEquals(ModuleFileType.INSTANCE, file.getFileType());
-    manager.removeFile(file);
+    assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
+    manager.removeFile(xml);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
-    assertEquals(originalType, file.getFileType());
+    assertEquals(originalType, xml.getFileType());
+  }
+
+  public void testMustNotBeAbleToOverrideNotOverridableFileType() throws IOException {
+    OverrideFileTypeManager manager = OverrideFileTypeManager.getInstance();
+    VirtualFile dir = myFixture.getTempDirFixture().findOrCreateDir("dir");
+    assertThrows(IllegalArgumentException.class, ()->manager.addFile(dir, PlainTextFileType.INSTANCE));
+    VirtualFile iml = myFixture.getTempDirFixture().createFile("x.iml", "");
+    assertTrue(iml.getFileType().toString(), iml.getFileType() instanceof InternalFileType);
+    assertThrows(IllegalArgumentException.class, ()->manager.addFile(iml, PlainTextFileType.INSTANCE));
+    VirtualFile text = myFixture.getTempDirFixture().createFile("x.txt", "");
+    assertTrue(text.getFileType().toString(), text.getFileType() instanceof PlainTextFileType);
+    assertThrows(IllegalArgumentException.class, ()->manager.addFile(text, ProjectFileType.INSTANCE));
+
+    VirtualFile unknown = myFixture.getTempDirFixture().createFile("x.skjdhfjksdfkjsdhf");
+    assertEquals(UnknownFileType.INSTANCE, unknown.getFileType());
+    assertThrows(IllegalArgumentException.class, ()->manager.addFile(unknown, PlainTextFileType.INSTANCE));
+    assertThrows(IllegalArgumentException.class, ()->manager.addFile(text, UnknownFileType.INSTANCE));
+
+    FileType fakeType = new FakeFileType() {
+      @Override public boolean isMyFileType(@NotNull VirtualFile file) { return false; }
+      @Override public @NotNull String getName() { return "name"; }
+      @Override public @Nls @NotNull String getDisplayName() { return getName(); }
+      @Override public @NotNull @NlsContexts.Label String getDescription() { return getName(); }
+    };
+    assertThrows(IllegalArgumentException.class, ()->manager.addFile(text, fakeType));
   }
 }

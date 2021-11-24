@@ -12,109 +12,116 @@ import com.intellij.ide.impl.getProjectOriginUrl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.JBProtocolCommand
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.util.StatusBarProgress
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
+import com.intellij.util.containers.ComparatorUtil.max
+import com.intellij.util.text.nullize
 import java.io.File
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.regex.Pattern
 
 const val NAVIGATE_COMMAND = "navigate"
+const val REFERENCE_TARGET = "reference"
 const val PROJECT_NAME_KEY = "project"
 const val ORIGIN_URL_KEY = "origin"
-const val REFERENCE_TARGET = "reference"
-
 const val SELECTION = "selection"
 
-fun openProjectWithAction(parameters: Map<String, String>, action: (Project) -> Unit) {
-  val projectName = parameters[PROJECT_NAME_KEY]
-  val originUrl = parameters[ORIGIN_URL_KEY]
-  if (projectName.isNullOrEmpty() && originUrl.isNullOrEmpty()) {
-    return
+fun openProject(parameters: Map<String, String>): CompletableFuture<Project?> {
+  val projectName = parameters[PROJECT_NAME_KEY]?.nullize(nullizeSpaces = true)
+  val originUrl = parameters[ORIGIN_URL_KEY]?.nullize(nullizeSpaces = true)
+  if (projectName == null && originUrl == null) {
+    return CompletableFuture.failedFuture(IllegalArgumentException(IdeBundle.message("jb.protocol.navigate.missing.parameters")))
   }
 
-  val check = { name: String, path: Path? ->
-    !projectName.isNullOrEmpty() && name == projectName || areOriginsEqual(originUrl, getProjectOriginUrl(path))
+  val openProject = ProjectUtil.getOpenProjects().find {
+    projectName != null && it.name == projectName ||
+    originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(it.guessProjectDir()?.toNioPath()))
+  }
+  if (openProject != null) {
+    return CompletableFuture.completedFuture(openProject)
   }
 
-  ProjectUtil.getOpenProjects().find { project -> check.invoke(project.name, project.guessProjectDir()?.toNioPath()) }?.let {
-    action(it)
-    return
+  val recentProjectAction = RecentProjectListActionProvider.getInstance().getActions().asSequence()
+    .filterIsInstance(ReopenProjectAction::class.java)
+    .find {
+      projectName != null && it.projectName == projectName ||
+      originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(Path.of(it.projectPath)))
+    }
+  if (recentProjectAction == null) {
+    return CompletableFuture.completedFuture(null)
   }
 
-  val actions = RecentProjectListActionProvider.getInstance().getActions()
-  val recentProjectAction = actions.asSequence()
-                              .filterIsInstance(ReopenProjectAction::class.java)
-                              .find { check.invoke(it.projectName, Path.of(it.projectPath)) }
-                            ?: return
-
-  RecentProjectsManagerBase.instanceEx.openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask())
+  val result = CompletableFuture<Project?>()
+  RecentProjectsManagerBase.instanceEx
+    .openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask())
     .thenAccept { project ->
-      if (project != null) {
-        ApplicationManager.getApplication().invokeLater({
-          StartupManager.getInstance(project).runAfterOpened {
-            DumbService.getInstance(project).runWhenSmart {
-              action(project)
+      when (project) {
+        null -> result.complete(null)
+        else -> {
+          ApplicationManager.getApplication().invokeLater({
+            if (project.isDisposed) result.complete(null)
+            else {
+              StartupManager.getInstance(project).runAfterOpened {
+                result.complete(project)
+              }
             }
-          }
-        }, ModalityState.NON_MODAL, project.disposed)
+          }, ModalityState.NON_MODAL)
+        }
       }
     }
+  return result
 }
 
 data class LocationInFile(val line: Int, val column: Int)
 typealias LocationToOffsetConverter = (LocationInFile, Editor) -> Int
 
-class NavigatorWithinProject(val project: Project, val parameters: Map<String, String>, val locationToOffset: LocationToOffsetConverter) {
+class NavigatorWithinProject(val project: Project, val parameters: Map<String, String>, locationToOffset_: LocationToOffsetConverter) {
   companion object {
     private const val FILE_PROTOCOL = "file://"
-
     private const val PATH_GROUP = "path"
     private const val LINE_GROUP = "line"
     private const val COLUMN_GROUP = "column"
     private const val REVISION = "revision"
-    private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]*)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
+    private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]+)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
 
     fun parseNavigationPath(pathText: String): Triple<String?, String?, String?> {
       val matcher = PATH_WITH_LOCATION.matcher(pathText)
-      if (!matcher.matches()) {
-        return Triple(null, null, null)
-      }
-      val path: String? = matcher.group(PATH_GROUP)
-      val line: String? = matcher.group(LINE_GROUP)
-      val column: String? = matcher.group(COLUMN_GROUP)
-
-      return Triple(path, line, column)
+      return if (!matcher.matches()) Triple(null, null, null)
+             else Triple(matcher.group(PATH_GROUP), matcher.group(LINE_GROUP), matcher.group(COLUMN_GROUP))
     }
 
     private fun parseLocationInFile(range: String): LocationInFile? {
       val position = range.split(':')
-      if (position.size != 2) return null
-      try {
-        return LocationInFile(position[0].toInt(), position[1].toInt())
+      return if (position.size != 2) null else try {
+        LocationInFile(position[0].toInt(), position[1].toInt())
       }
       catch (e: Exception) {
-        return null
+        null
       }
     }
+  }
+
+  val locationToOffset: LocationToOffsetConverter = { locationInFile, editor ->
+    max(locationToOffset_(locationInFile, editor), 0)
   }
 
   enum class NavigationKeyPrefix(val prefix: String) {
@@ -142,17 +149,22 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
     // multiple references are encoded and decoded properly
     val fqn = parameters[JBProtocolCommand.FRAGMENT_PARAM_NAME]?.let { "$reference#$it" } ?: reference
     runNavigateTask(reference) {
-
       val dataContext = SimpleDataContext.getProjectContext(project)
-      SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext))
-        .search(fqn, ProgressManager.getInstance().progressIndicator ?: StatusBarProgress())
-        .filterIsInstance<PsiElement>()
-        .forEach {
-          ApplicationManager.getApplication().invokeLater {
-            PsiNavigateUtil.navigate(it)
-            makeSelectionsVisible()
+      val searcher = invokeAndWaitIfNeeded { SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)) }
+      Disposer.register(project, searcher)
+
+      try {
+        searcher.search(fqn, EmptyProgressIndicator())
+          .filterIsInstance<PsiElement>()
+          .forEach {
+            invokeLater {
+              PsiNavigateUtil.navigate(it)
+              makeSelectionsVisible()
+            }
           }
-        }
+      } finally {
+        Disposer.dispose(searcher)
+      }
     }
   }
 
@@ -164,13 +176,17 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
     val locationInFile = LocationInFile(line?.toInt() ?: 0, column?.toInt() ?: 0)
 
     path = FileUtil.expandUserHome(path)
-    if (!FileUtil.isAbsolute(path)) {
-      path = File(project.basePath, path).absolutePath
-    }
 
     runNavigateTask(pathText) {
-      val virtualFile = findFile(path, parameters[REVISION])
-      if (virtualFile == null) return@runNavigateTask
+      val virtualFile: VirtualFile
+      if (FileUtil.isAbsolute(path))
+        virtualFile = findFile(path, parameters[REVISION]) ?: return@runNavigateTask
+      else
+        virtualFile = (sequenceOf(project.guessProjectDir()?.path, project.basePath) +
+                       ProjectRootManager.getInstance(project).contentRoots.map { it.path })
+                        .filterNotNull()
+                        .mapNotNull { projectPath -> findFile(File(projectPath, path).absolutePath, parameters[REVISION]) }
+                        .firstOrNull() ?: return@runNavigateTask
 
       ApplicationManager.getApplication().invokeLater {
         FileEditorManager.getInstance(project).openFile(virtualFile, true)

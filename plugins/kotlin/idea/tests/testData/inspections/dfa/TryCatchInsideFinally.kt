@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(cn: Cn?): String? {
     var query: Q? = null
     var result: String? = null

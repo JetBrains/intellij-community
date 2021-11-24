@@ -87,7 +87,12 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   @Override
   @NlsSafe
   public String toString() {
-    return myExternalName;
+    return myExternalName
+           + (myFallbackAttributeKey == null && myDefaultAttributes == null ? "" : " (")
+           + (myFallbackAttributeKey == null ? "" : "fallbackKey: " + myFallbackAttributeKey)
+           + (myDefaultAttributes == null ? "" : "; defaultAttributes: " + myDefaultAttributes)
+           + (myFallbackAttributeKey == null && myDefaultAttributes == null ? "" : ")")
+      ;
   }
 
   @NotNull

@@ -269,7 +269,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         module: Module,
         element: PsiElement,
         library: ExternalLibraryDescriptor,
-        libraryJarDescriptors: List<LibraryJarDescriptor>
+        libraryJarDescriptor: LibraryJarDescriptor,
+        scope: DependencyScope
     ) {
         val scope = OrderEntryFix.suggestScopeByLocation(module, element)
         addKotlinLibraryToModule(module, scope, library)

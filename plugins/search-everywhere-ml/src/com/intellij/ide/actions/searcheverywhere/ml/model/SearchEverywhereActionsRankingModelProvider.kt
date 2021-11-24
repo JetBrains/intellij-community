@@ -6,18 +6,35 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.ResourcesModelMetadataReader
 import com.intellij.searchEverywhere.model.PredictionModel
+import com.intellij.searchEverywhere.model.actions.exp.PredictionModel as ExperimentalPredictionModel
 
 
 internal class SearchEverywhereActionsRankingModelProvider : SearchEverywhereMLRankingModelProvider() {
-  private val resourceDirectory = "features"
+  private val standardResourceDirectory = "features"
+  private val experimentalResourceDirectory = "actions_features_exp"
 
   override val supportedContributor = ActionSearchEverywhereContributor::class.java
 
-  override val model: DecisionFunction
-    get() {
-      val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, resourceDirectory))
-      return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
-        override fun predict(features: DoubleArray?): Double = PredictionModel.makePredict(features)
-      }
+  override fun getBundledModel(): DecisionFunction {
+    return if (shouldProvideExperimentalModel()) {
+      getExperimentalModel()
     }
+    else {
+      getStandardModel()
+    }
+  }
+
+  private fun getStandardModel(): SearchEverywhereMLRankingDecisionFunction {
+    val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, standardResourceDirectory))
+    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
+      override fun predict(features: DoubleArray?): Double = PredictionModel.makePredict(features)
+    }
+  }
+
+  private fun getExperimentalModel(): SearchEverywhereMLRankingDecisionFunction {
+    val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, experimentalResourceDirectory))
+    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
+      override fun predict(features: DoubleArray?): Double = ExperimentalPredictionModel.makePredict(features)
+    }
+  }
 }

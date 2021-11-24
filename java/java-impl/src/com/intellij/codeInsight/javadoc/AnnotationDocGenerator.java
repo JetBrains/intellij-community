@@ -5,11 +5,13 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.Language;
+import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,12 +77,13 @@ public final class AnnotationDocGenerator {
 
   private static void appendStyledSpan(
     boolean doSyntaxHighlighting,
+    boolean isForRenderedDoc,
     @NotNull StringBuilder buffer,
     @NotNull TextAttributesKey attributesKey,
     @Nullable String value
   ) {
     if (doSyntaxHighlighting) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value);
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc));
     }
     else {
       buffer.append(value);
@@ -89,16 +92,18 @@ public final class AnnotationDocGenerator {
 
   private static void appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
     boolean doSyntaxHighlighting,
+    boolean isForRenderedDoc,
     @NotNull StringBuilder buffer,
     @NotNull Project project,
     @NotNull Language language,
     @Nullable String codeSnippet
   ) {
     if (doSyntaxHighlighting) {
-      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet);
+      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+        buffer, project, language, codeSnippet, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc));
     }
-    else {
-      buffer.append(codeSnippet);
+    else if (codeSnippet != null) {
+      buffer.append(StringUtil.escapeXmlEntities(codeSnippet));
     }
   }
 
@@ -128,23 +133,21 @@ public final class AnnotationDocGenerator {
       buffer.append("@");
     }
     else {
-      appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, "@");
+      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, "@");
     }
     String name = forceShortNames ? myNameReference.getReferenceName() : myNameReference.getText();
     if (type != null && generateLink) {
       StringBuilder styledNameBuilder = new StringBuilder();
-      appendStyledSpan(doSyntaxHighlighting, styledNameBuilder, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
+      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, styledNameBuilder, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
       String styledName = styledNameBuilder.toString();
-      JavaDocInfoGeneratorFactory.create(
-        myContext.getProject(),
-        null,
-        JavaDocHighlightingManagerImpl.getInstance(),
-        isForRenderedDoc,
-        doSyntaxHighlighting
-      ).generateLink(buffer, myTargetClass, styledName, format == AnnotationFormat.JavaDocComplete);
+      JavaDocInfoGeneratorFactory.getBuilder(myContext.getProject())
+        .setIsGenerationForRenderedDoc(isForRenderedDoc)
+        .setDoHighlightSignatures(doSyntaxHighlighting)
+        .create()
+        .generateLink(buffer, myTargetClass, styledName, format == AnnotationFormat.JavaDocComplete);
     }
-    else if (!red && name != null) {
-      appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
+    else if (name != null) {
+      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
     }
     if (red) buffer.append("</font>");
 
@@ -161,14 +164,14 @@ public final class AnnotationDocGenerator {
   ) {
     final PsiNameValuePair[] attributes = myAnnotation.getParameterList().getAttributes();
     if (attributes.length > 0) {
-      appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.PARENTHESES, "(");
+      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.PARENTHESES, "(");
       boolean first = true;
       for (PsiNameValuePair pair : attributes) {
-        if (!first) appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.COMMA, ",&nbsp;");
+        if (!first) appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.COMMA, ",&nbsp;");
         first = false;
         generateAnnotationAttribute(buffer, generateLink, pair, isForRenderedDoc, doSyntaxHighlighting);
       }
-      appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.PARENTHESES, ")");
+      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.PARENTHESES, ")");
     }
   }
 
@@ -181,22 +184,22 @@ public final class AnnotationDocGenerator {
   ) {
     final String name = pair.getName();
     if (name != null) {
-      appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES, name);
-      appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.OPERATION_SIGN, " = ");
+      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES, name);
+      appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.OPERATION_SIGN, " = ");
     }
     final PsiAnnotationMemberValue value = pair.getValue();
     if (value != null) {
       if (value instanceof PsiArrayInitializerMemberValue) {
-        appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.BRACES, "{");
+        appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.BRACES, "{");
         boolean firstMember = true;
         for (PsiAnnotationMemberValue memberValue : ((PsiArrayInitializerMemberValue)value).getInitializers()) {
           if (!firstMember) {
-            appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.COMMA, ",");
+            appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.COMMA, ",");
           }
           firstMember = false;
           appendLinkOrText(buffer, memberValue, generateLink, isForRenderedDoc, doSyntaxHighlighting);
         }
-        appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.BRACES, "}");
+        appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.BRACES, "}");
       }
       else {
         appendLinkOrText(buffer, value, generateLink, isForRenderedDoc, doSyntaxHighlighting);
@@ -233,13 +236,16 @@ public final class AnnotationDocGenerator {
           else {
             if (aClass != null) text = aClass.getQualifiedName() + '#' + field.getName();
           }
-          JavaDocInfoGeneratorFactory.create(
-              field.getProject(), null, JavaDocHighlightingManagerImpl.getInstance(), isForRenderedDoc, doSyntaxHighlighting)
+          JavaDocInfoGeneratorFactory.getBuilder(field.getProject())
+            .setIsGenerationForRenderedDoc(isForRenderedDoc)
+            .setDoHighlightSignatures(doSyntaxHighlighting)
+            .create()
             .generateLink(buffer, text, aClass != null ? aClass.getName() + '.' + field.getName() : null, memberValue, false);
         }
         else {
           appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
             doSyntaxHighlighting,
+            isForRenderedDoc,
             buffer,
             memberValue.getProject(),
             memberValue.getLanguage(),
@@ -251,6 +257,7 @@ public final class AnnotationDocGenerator {
 
     appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
       doSyntaxHighlighting,
+      isForRenderedDoc,
       buffer,
       memberValue.getProject(),
       memberValue.getLanguage(),

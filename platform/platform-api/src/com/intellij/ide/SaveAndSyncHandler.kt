@@ -8,9 +8,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 abstract class SaveAndSyncHandler {
   companion object {
@@ -21,8 +19,6 @@ abstract class SaveAndSyncHandler {
   }
 
   protected val externalChangesModificationTracker = SimpleModificationTracker()
-
-  protected val myDispatcher = EventDispatcher.create(Listener::class.java)
 
   /**
    * If project is specified - only project settings will be saved.
@@ -75,17 +71,4 @@ abstract class SaveAndSyncHandler {
    */
   @ApiStatus.Experimental
   fun getExternalChangesTracker(): ModificationTracker = externalChangesModificationTracker
-
-  fun addListener(listener: Listener) {
-    myDispatcher.addListener(listener)
-  }
-
-  fun removeListener(listener: Listener) {
-    myDispatcher.removeListener(listener)
-  }
-
-  interface Listener: EventListener {
-    fun beforeRefresh()
-    fun beforeSave(task: SaveTask, forceExecuteImmediately: Boolean)
-  }
 }

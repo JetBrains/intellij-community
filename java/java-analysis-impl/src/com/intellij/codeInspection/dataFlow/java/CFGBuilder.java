@@ -648,6 +648,21 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to perform relation operation on stack operands
+   * <p>
+   * Stack before: ... operand1 operand2
+   * <p>
+   * Stack after: ... result
+   *
+   * @param relationType relation to use
+   * @return this builder
+   */
+  public CFGBuilder relation(@NotNull RelationType relationType) {
+    myAnalyzer.addInstruction(new BooleanBinaryInstruction(relationType, false, null));
+    return this;
+  }
+
+  /**
    * Generate instructions to assign top stack value to the specified variable
    * <p>
    * Stack before: ... value

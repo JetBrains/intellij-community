@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -14,7 +15,6 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePaths
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
-import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -52,7 +52,6 @@ object IndexContentDiagnosticDumper {
 
   fun getIndexContentDiagnosticForProject(project: Project, indicator: ProgressIndicator): IndexContentDiagnostic {
     val providers = (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndexableFilesProviders(project)
-    val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
     indicator.text = IndexingBundle.message("index.content.diagnostic.dumping")
     indicator.isIndeterminate = false
@@ -67,7 +66,7 @@ object IndexContentDiagnosticDumper {
         provider.iterateFiles(project, { fileOrDir ->
           builder.addFile(fileOrDir, provider.debugName)
           true
-        }, indexableFilesDeduplicateFilter)
+        }, VirtualFileFilter.ALL)
         indicator.fraction = processed.incrementAndGet().toDouble() / providers.size
       }
     })

@@ -47,12 +47,13 @@ CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 # Locate a JRE installation directory command -v will be used to run the IDE.
 # Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr, $JDK_HOME, $JAVA_HOME, "java" in $PATH.
 # ---------------------------------------------------------------------
+JRE=""
+
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
   JRE="$__product_uc___JDK"
 fi
 
-BITS=""
 if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk" ]; then
   USER_JRE=$(cat "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk")
   if [ -x "$USER_JRE/bin/java" ]; then
@@ -87,52 +88,49 @@ fi
 # ---------------------------------------------------------------------
 # Collect JVM options and IDE properties.
 # ---------------------------------------------------------------------
+IDE_PROPERTIES_PROPERTY=""
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$__product_uc___PROPERTIES"
 fi
 
-BITS="64"
 VM_OPTIONS_FILE=""
 USER_VM_OPTIONS_FILE=""
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; then
   # 1. $<IDE_NAME>_VM_OPTIONS
   VM_OPTIONS_FILE="$__product_uc___VM_OPTIONS"
-elif [ -r "${IDE_HOME}.vmoptions" ]; then
-  # 2. <IDE_HOME>.vmoptions || <IDE_HOME>/bin/<bin_name>.vmoptions + <IDE_HOME>.vmoptions (Toolbox)
-  VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
-  if ! egrep -q -e "^-ea$" "${IDE_HOME}.vmoptions" && [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
-    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
-    USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
-  fi
-elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions" ]; then
-  # 3. <config_directory>/<bin_name>.vmoptions
-  VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions"
 else
-  # 4. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions [+ <config_directory>/user.vmoptions]
-  if [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
-    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
+  # 2. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions ...
+  if [ -r "${IDE_BIN_HOME}/__vm_options__64.vmoptions" ]; then
+    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__64.vmoptions"
   else
     test "${OS_TYPE}" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
-    if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions" ]; then
-      VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
+    if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions" ]; then
+      VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions"
     fi
   fi
-  if [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions" ]; then
-    if [ -n "$VM_OPTIONS_FILE" ]; then
-      VM_OPTIONS="${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions"
-    else
-      USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions"
-    fi
+  # ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>/<bin_name>.vmoptions]
+  if [ -r "${IDE_HOME}.vmoptions" ]; then
+    USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
+  elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions" ]; then
+    USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions"
   fi
 fi
 
 VM_OPTIONS=""
-if [ -n "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | egrep -v -e "^#.*")
+USER_GC=""
+if [ -n "$USER_VM_OPTIONS_FILE" ]; then
+  grep -E -q -e "-XX:\+.*GC" "$USER_VM_OPTIONS_FILE" && USER_GC="yes"
+fi
+if [ -n "$VM_OPTIONS_FILE" ] || [ -n "$USER_VM_OPTIONS_FILE" ]; then
+  if [ -z "$USER_GC" ] || [ -z "$VM_OPTIONS_FILE" ]; then
+    VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | grep -E -v -e "^#.*")
+  else
+    VM_OPTIONS=$({ grep -E -v -e "-XX:\+Use.*GC" "$VM_OPTIONS_FILE"; cat "$USER_VM_OPTIONS_FILE"; } 2> /dev/null | grep -E -v -e "^#.*")
+  fi
 else
-  message "Cannot find VM options file"
+  message "Cannot find a VM options file"
 fi
 
 __class_path__

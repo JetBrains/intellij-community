@@ -64,6 +64,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.xml.stream.XMLStreamException;
@@ -279,7 +280,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   @Nullable
-  protected AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  @VisibleForTesting
+  public AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);
@@ -829,7 +831,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
     if (inspectionProfile != null) {
-      reportMessage(1, "Loaded profile '" + inspectionProfile.getName() + "' from file '" + profilePath + "'");
+      reportMessage(1, "Loaded the '" + inspectionProfile.getName() + "' profile from the file '" + profilePath + "'");
     }
     return inspectionProfile;
   }
@@ -839,14 +841,14 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {
-      reportMessage(1, "Loaded shared project profile '" + profileName + "'");
+      reportMessage(1, "Loaded the '" + profileName +"' shared project profile");
     }
     else {
       //check if ide profile is used for project
       for (InspectionProfileImpl profile : profileManager.getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
           inspectionProfile = profile;
-          reportMessage(1, "Loaded local profile '" + profileName + "'");
+          reportMessage(1, "Loaded the '" + profileName + "' local profile");
           break;
         }
       }

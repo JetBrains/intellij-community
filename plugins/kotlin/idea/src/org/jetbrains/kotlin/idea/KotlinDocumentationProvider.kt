@@ -8,7 +8,7 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup.*
-import com.intellij.lang.documentation.DocumentationProviderEx
+import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
@@ -65,7 +64,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.constant
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.function.Consumer
 
 class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNamePolicy {
@@ -168,62 +166,6 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
         return if (element == null) null else getText(element, originalElement, true)
     }
 
-    override fun getLocationInfo(element: PsiElement?): HtmlChunk? {
-        if (element !is KtExpression) return null
-
-        val baseInfo = DocumentationProviderEx.getDefaultLocationInfo(element)
-
-        val resolutionFacade = element.getResolutionFacade()
-        val context = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
-        val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] ?: return baseInfo
-
-        if (!DescriptorUtils.isLocal(descriptor)) {
-            val containingDeclaration = descriptor.containingDeclaration
-            if (containingDeclaration == null) return baseInfo
-
-            val fqNameSection = containingDeclaration.fqNameSafe
-                .takeUnless { it.isRoot }
-                ?.let {
-                    @Nls val link = StringBuilder().apply {
-                        DocumentationManagerUtil.createHyperlink(
-                            this, it.asString(), highlight(it.asString()) { asClassName }, false, false
-                        )
-                    }
-                    HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
-                        HtmlChunk.nbsp(),
-                        HtmlChunk.raw(link.toString()),
-                        HtmlChunk.br()
-                    )
-                }
-                ?: HtmlChunk.empty()
-
-            val fileNameSection = descriptor
-                .safeAs<DeclarationDescriptorWithSource>()
-                ?.source
-                ?.containingFile
-                ?.name
-                ?.takeIf { containingDeclaration is PackageFragmentDescriptor }
-                ?.let {
-                    HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
-                        HtmlChunk.nbsp(),
-                        HtmlChunk.text(it),
-                        HtmlChunk.br()
-                    )
-                }
-                ?: HtmlChunk.empty()
-
-            return HtmlChunk.fragment(
-                fqNameSection,
-                fileNameSection,
-                baseInfo ?: HtmlChunk.empty()
-            )
-        }
-
-        return baseInfo
-    }
-
     @Nls
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
         return getText(element, originalElement, false)
@@ -285,10 +227,18 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
         private data class TextAttributesAdapter(val attributes: TextAttributes) :
             KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
 
-        private fun createHighlightingManager(project: Project?) =
-            object : KotlinIdeDescriptorRendererHighlightingManager<TextAttributesAdapter> {
+        private fun createHighlightingManager(project: Project?): KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes> {
+            if (!DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
+                return KotlinIdeDescriptorRendererHighlightingManager.NO_HIGHLIGHTING
+            }
+            return object : KotlinIdeDescriptorRendererHighlightingManager<TextAttributesAdapter> {
                 override fun StringBuilder.appendHighlighted(value: String, attributes: TextAttributesAdapter) {
-                    HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes.attributes, value)
+                    HtmlSyntaxInfoUtil.appendStyledSpan(
+                        this,
+                        attributes.attributes,
+                        value,
+                        DocumentationSettings.getHighlightingSaturation(false)
+                    )
                 }
 
                 override fun StringBuilder.appendCodeSnippetHighlightedByLexer(codeSnippet: String) {
@@ -296,7 +246,8 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                         this,
                         project!!,
                         KotlinLanguage.INSTANCE,
-                        codeSnippet
+                        codeSnippet,
+                        DocumentationSettings.getHighlightingSaturation(false)
                     )
                 }
 
@@ -334,6 +285,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                 override val asFunCall get() = resolveKey(KotlinHighlightingColors.FUNCTION_CALL)
             }
                 .eraseTypeParameter()
+        }
 
         private fun StringBuilder.appendHighlighted(
             value: String,
@@ -348,16 +300,6 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
         private fun StringBuilder.appendCodeSnippetHighlightedByLexer(project: Project, codeSnippet: String) {
             with(createHighlightingManager(project)) {
                 appendCodeSnippetHighlightedByLexer(codeSnippet)
-            }
-        }
-
-        private fun highlight(
-            value: String,
-            attributesBuilder: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes>.()
-            -> KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
-        ): String {
-            return with(createHighlightingManager(project = null)) {
-                buildString { appendHighlighted(value, attributesBuilder()) }
             }
         }
 

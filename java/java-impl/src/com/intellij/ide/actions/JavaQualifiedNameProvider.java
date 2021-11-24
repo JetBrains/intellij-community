@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -334,8 +335,14 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   private static void shortenReference(PsiElement element) throws IncorrectOperationException {
-    while (element.getParent() instanceof PsiJavaCodeReferenceElement) {
-      element = element.getParent();
+    PsiDocMethodOrFieldRef javadocRef = PsiTreeUtil.getParentOfType(element, PsiDocMethodOrFieldRef.class);
+    if (javadocRef != null) {
+      element = javadocRef;
+    }
+    else {
+      while (element.getParent() instanceof PsiJavaCodeReferenceElement) {
+        element = element.getParent();
+      }
     }
     JavaCodeStyleManager codeStyleManagerEx = JavaCodeStyleManager.getInstance(element.getProject());
     codeStyleManagerEx.shortenClassReferences(element, JavaCodeStyleManager.INCOMPLETE_CODE);

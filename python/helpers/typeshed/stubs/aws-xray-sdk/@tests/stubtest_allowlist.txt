@@ -1,0 +1,4 @@
+aws_xray_sdk.core.async_recorder.subsegment_decorator
+aws_xray_sdk.core.models.subsegment.subsegment_decorator
+aws_xray_sdk.core.sampling.connector.ServiceConnector.fetch_sampling_rules
+aws_xray_sdk.core.sampling.sampler.ServiceConnector.fetch_sampling_rules

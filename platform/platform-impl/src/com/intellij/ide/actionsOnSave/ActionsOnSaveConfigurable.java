@@ -45,8 +45,9 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
     }
   }
 
+  public static final String CONFIGURABLE_ID = "actions.on.save";
+
   private static final Logger LOG = Logger.getInstance(ActionsOnSaveConfigurable.class);
-  private static final String CONFIGURABLE_ID = "actions.on.save";
 
   private final @NotNull Project myProject;
   private final @NotNull Disposable myDisposable;

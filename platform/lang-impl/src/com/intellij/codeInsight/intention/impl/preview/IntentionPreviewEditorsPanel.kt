@@ -4,14 +4,16 @@ package com.intellij.codeInsight.intention.impl.preview
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import java.awt.Dimension
+import javax.swing.BoxLayout
 import javax.swing.JPanel
 
-internal class IntentionPreviewEditorsPanel(val editors: List<EditorEx>) : JPanel(VerticalFlowLayout(0, 0)) {
+internal class IntentionPreviewEditorsPanel(val editors: List<EditorEx>) : JPanel() {
   init {
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
     editors.forEachIndexed { index, editor ->
       add(editor.component)
       if (index < editors.size - 1) {

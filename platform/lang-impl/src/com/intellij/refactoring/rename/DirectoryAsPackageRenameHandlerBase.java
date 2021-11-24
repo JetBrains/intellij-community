@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -87,8 +89,10 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
         if (moduleDirectories.length > 1) {
           options.add(RefactoringBundle.message("rename.source.root.button.text"));
         }
-        int ret = Messages.showDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
-                                      ArrayUtil.toStringArray(options), 0, Messages.getWarningIcon());
+        options.add(CommonBundle.getCancelButtonText());
+
+        int ret = Messages.showDialog(project, message.toString(), RefactoringBundle.message("dialog.title.rename.package.directories"),
+                                      ArrayUtil.toStringArray(options), 0, Messages.getQuestionIcon());
         if (ret == 0) {
           if (directories.length > projectDirectories.length) {
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, projectDirectories);
@@ -157,11 +161,11 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
 
   @NotNull
   private static @Nls String presentableUrl(@Nullable PsiDirectory currentVDirectory, PsiDirectory directory) {
+    String presentableUrl = SymbolPresentationUtil.getFilePathPresentation(directory);
     if (directory.equals(currentVDirectory)) {
-      return directory.getVirtualFile().getPresentableUrl() +
-             " (" + RefactoringBundle.message("multiple.directories.correspond.to.package.current.marker") + ")";
+      return presentableUrl + " (" + RefactoringBundle.message("multiple.directories.correspond.to.package.current.marker") + ")";
     }
-    return directory.getVirtualFile().getPresentableUrl();
+    return presentableUrl;
   }
 
   private static void appendRoots(StringBuffer message, List<PsiDirectory> source, Function<PsiDirectory, String> directoryPresentation) {

@@ -923,7 +923,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "public class Main {\n" +
       "\n" +
       "    /**\n" +
-      "     * {@link #authenticationCompleted(android.app.Activity,\n" +
+      "     * {@link\n" +
+      "     * #authenticationCompleted(android.app.Activity,\n" +
       "     * int, int, android.content.Intent)}\n" +
       "     *\n" +
       "     * @param args\n" +

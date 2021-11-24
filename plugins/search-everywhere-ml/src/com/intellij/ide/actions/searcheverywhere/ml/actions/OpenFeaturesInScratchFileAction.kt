@@ -5,10 +5,10 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereTabWithMl
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.json.JsonFileType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -55,12 +55,17 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
     val features = searchEverywhereUI.foundElementsInfo.map { info ->
       val id = searchSession.itemIdProvider.getId(info.element)
-      val mlWeight = (info.element as? GotoActionModel.MatchedValue)?.let { mlSessionService.getMlWeight(info.contributor, it) }
+
+      val mlWeight = if (isTabWithMl(searchEverywhereUI.selectedTabID)) {
+        mlSessionService.getMlWeight(info.contributor, info.element, info.priority)
+      } else {
+        null
+      }
 
       ElementFeatures(
         info.element.toString(),
         mlWeight,
-        searchSession.getCurrentSearchState()!!.getElementFeatures(id, info.element, info.contributor, info.priority).features
+        searchSession.getCurrentSearchState()!!.getElementFeatures(id, info.element, info.contributor, info.priority).features.toSortedMap()
       )
     }
 
@@ -69,6 +74,10 @@ class OpenFeaturesInScratchFileAction : AnAction() {
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo,
       FOUND_ELEMENTS_KEY to features
     )
+  }
+
+  private fun isTabWithMl(tabId: String): Boolean {
+    return SearchEverywhereTabWithMl.findById(tabId) != null
   }
 
   private fun createScratchFileContext(json: String) = ScratchFileCreationHelper.Context().apply {

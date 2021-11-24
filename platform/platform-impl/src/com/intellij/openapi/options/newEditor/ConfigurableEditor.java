@@ -27,6 +27,7 @@ import com.intellij.ui.RelativeFont;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -98,7 +99,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
     Disposer.register(this, myCardPanel);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
+    MessageBusConnection messageBus = ApplicationManager.getApplication().getMessageBus().connect(this);
+    messageBus.subscribe(AnActionListener.TOPIC, this);
+    messageBus.subscribe(ExternalUpdateRequest.TOPIC, conf -> updateCurrent(conf, false));
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
       myConfigurable = configurable;
@@ -265,7 +268,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         HtmlChunk.text(exception.getTitle()).wrapWith("strong"),
         HtmlChunk.text(":"),
         HtmlChunk.br(),
-        HtmlChunk.text(exception.getMessage())
+        exception.isHtmlMessage() ? HtmlChunk.raw(exception.getMessage()) : HtmlChunk.text(exception.getMessage())
       ).wrapWith("html").toString());
       myErrorLabel.setVisible(true);
     }

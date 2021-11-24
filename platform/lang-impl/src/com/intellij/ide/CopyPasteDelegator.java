@@ -17,7 +17,6 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,16 +38,8 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     myEditable = new MyEditable();
   }
 
-  /** @deprecated no replacement needed,
-   * {@code LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext)} is used instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected PsiElement @NotNull [] getSelectedElements() {
-    return PsiElement.EMPTY_ARRAY;
-  }
-
   protected PsiElement @NotNull [] getSelectedElements(@NotNull DataContext dataContext) {
-    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), getSelectedElements());
+    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
   }
 
   private static PsiElement @NotNull [] validate(PsiElement @Nullable [] selectedElements) {

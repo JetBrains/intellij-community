@@ -24,6 +24,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 
 /**
@@ -83,8 +85,8 @@ public final class MavenNavigationUtil {
 
   @Nullable
   public static VirtualFile getArtifactFile(Project project, MavenId id) {
-    final File file = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getLocalRepository(), id);
-    return file.exists() ? LocalFileSystem.getInstance().findFileByIoFile(file) : null;
+    Path path = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getLocalRepository(), id);
+    return Files.exists(path) ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
   }
 
   @Nullable

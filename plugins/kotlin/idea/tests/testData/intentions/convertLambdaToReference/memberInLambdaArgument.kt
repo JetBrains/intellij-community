@@ -1,5 +1,5 @@
 // IS_APPLICABLE: true
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class Owner(val z: Int) {
     fun foo(y: Int) = y + z

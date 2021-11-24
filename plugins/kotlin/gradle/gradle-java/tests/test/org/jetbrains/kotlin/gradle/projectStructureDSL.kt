@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
@@ -168,18 +169,30 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         checkReport("Additional arguments", arguments, actualArguments)
     }
 
-    fun noLibraryDependency(libraryNameRegexString: String, scope: DependencyScope) {
-        val libraryNameRegex = Regex.fromLiteral(libraryNameRegexString)
+    @Deprecated(
+        "This assertion might be unsafe. " +
+                "Please use 'noLibraryDependency(Regex)' or " +
+                "calls to 'assertExhaustiveDependencyList' instead!",
+        ReplaceWith("noLibraryDependency(Regex.fromLiteral(libraryNameLiteral))")
+    )
+    fun noLibraryDependency(libraryNameLiteral: String, scope: DependencyScope) {
+        noLibraryDependency(Regex.fromLiteral(libraryNameLiteral))
+    }
 
+    fun noLibraryDependency(libraryNameRegex: Regex) {
         val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
-            .filter { it.libraryName?.matches(libraryNameRegex) == true && it.scope == scope }
+            .filter { it.libraryName?.matches(libraryNameRegex) == true }
 
         if (libraryEntries.isNotEmpty()) {
             report(
-                "Expected no dependencies for $libraryNameRegexString, but found:\n" +
+                "Expected no dependencies for $libraryNameRegex, but found:\n" +
                         libraryEntries.joinToString(prefix = "[", postfix = "]", separator = ",") { it.presentableName }
             )
         }
+    }
+
+    fun noLibraryDependency(@Language("regex") libraryNameRegex: String) {
+        noLibraryDependency(Regex(libraryNameRegex))
     }
 
     fun libraryDependency(libraryName: String, scope: DependencyScope, isOptional: Boolean = false) {

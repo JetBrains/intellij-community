@@ -1,0 +1,13 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package training.util
+
+import com.intellij.ui.layout.*
+import kotlinx.serialization.json.JsonObjectBuilder
+
+abstract class OnboardingFeedbackData(val reportTitle: String, // It is ZenDesk title, so should not be translated
+                                      val lessonEndInfo: LessonEndInfo,
+                                      ) {
+  abstract val addAdditionalSystemData: JsonObjectBuilder.() -> Unit
+
+  abstract val addRowsForUserAgreement: LayoutBuilder.() -> Unit
+}

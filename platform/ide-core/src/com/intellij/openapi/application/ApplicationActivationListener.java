@@ -26,15 +26,6 @@ public interface ApplicationActivationListener {
   }
 
   /**
-   * @deprecated Use {@link #delayedApplicationDeactivated(Window)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
-    delayedApplicationDeactivated((Window)ideFrame);
-  }
-
-  /**
    * This is more precise notification than {code applicationDeactivated} callback.
    * It is intended for focus subsystem and purposes where we do not want
    * to be bothered by false application deactivation events.

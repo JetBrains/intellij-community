@@ -11,6 +11,7 @@ import com.intellij.xdebugger.XDebuggerBundle
 import training.dsl.LessonContext
 import training.dsl.TaskTestContext
 import training.dsl.highlightButtonById
+import training.dsl.restoreChangedSettingsInformer
 import training.learn.lesson.general.run.CommonDebugLesson
 import training.ui.LearningUiManager
 import javax.swing.JEditorPane
@@ -104,6 +105,13 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
   private fun inHotSwapDialog(): Boolean {
     return Thread.currentThread().stackTrace.any { traceElement ->
       traceElement.className.contains("HotSwapUIImpl")
+    }
+  }
+
+  override fun LessonContext.restoreHotSwapStateInformer() {
+    if (!isHotSwapDisabled()) return
+    restoreChangedSettingsInformer {
+      DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE = DebuggerSettings.RUN_HOTSWAP_NEVER
     }
   }
 

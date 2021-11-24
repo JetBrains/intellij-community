@@ -2,6 +2,7 @@
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -22,7 +23,6 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,6 @@ import static java.util.stream.Collectors.groupingBy;
 /**
  * @author Vladislav.Soroka
  */
-@SuppressWarnings("deprecation")
 public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   private static final Logger LOG = Logger.getInstance(ProjectTaskManager.class);
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
@@ -111,22 +110,13 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   @Override
-  public ProjectTask createModulesBuildTask(Module module,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return createModulesBuildTask(ContainerUtil.ar(module), isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
-  }
-
-  @Override
-  public ProjectTask createModulesBuildTask(Module[] modules,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return modules.length == 1
-           ? new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)
-           : new ProjectTaskList(map(Arrays.asList(modules), module ->
-             new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)));
+  public ProjectTask createModulesBuildTask(Module[] modules, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests) {
+    if (modules.length == 1) {
+      return new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests);
+    }
+    return new ProjectTaskList(
+      map(Arrays.asList(modules), module -> new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests))
+    );
   }
 
   @Override
@@ -135,6 +125,25 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
            ? new ProjectModelBuildTaskImpl<>(buildableElements[0], isIncrementalBuild)
            : new ProjectTaskList(map(Arrays.asList(buildableElements),
                                      buildableElement -> new ProjectModelBuildTaskImpl<>(buildableElement, isIncrementalBuild)));
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @Nullable ExecutionEnvironment createProjectTaskExecutionEnvironment(@NotNull ProjectTask projectTask) {
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask);
+    if (toRun.isEmpty()) return null;
+    Map<ProjectTaskRunner, List<ProjectTask>> tasksMap = new LinkedHashMap<>();
+    for (Pair<ProjectTaskRunner, Collection<? extends ProjectTask>> pair : toRun) {
+      tasksMap.computeIfAbsent(pair.first, runner -> new ArrayList<>()).addAll(pair.second);
+    }
+    if (tasksMap.size() != 1) {
+      LOG.debug("Can not create single execution environment for tasks of different runners: '" + tasksMap + "'");
+      return null;
+    }
+    Map.Entry<ProjectTaskRunner, List<ProjectTask>> entry = tasksMap.entrySet().iterator().next();
+    ProjectTask[] tasks = entry.getValue().toArray(EMPTY_TASKS_ARRAY);
+    ProjectTaskRunner taskRunner = entry.getKey();
+    return taskRunner.createExecutionEnvironment(myProject, tasks);
   }
 
   @Override
@@ -146,31 +155,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   public Promise<Result> run(@NotNull ProjectTaskContext context, @NotNull ProjectTask projectTask) {
     Tracer.Span buildSpan = Tracer.start("build");
     AsyncPromise<Result> promiseResult = new AsyncPromise<>();
-    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
-
-    Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
-      Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
-        groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
-          .filter(runner -> {
-            try {
-              return runner.canRun(myProject, aTask);
-            }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (Throwable e) {
-              LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
-            }
-            return false;
-          })
-          .findFirst()
-          .orElse(myDummyTaskRunner))
-      );
-      for (Map.Entry<ProjectTaskRunner, ? extends List<? extends ProjectTask>> entry : toBuild.entrySet()) {
-        toRun.add(Pair.create(entry.getKey(), entry.getValue()));
-      }
-    };
-    visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask);
 
     buildSpan.complete();
     context.putUserData(ProjectTaskScope.KEY, new ProjectTaskScope() {
@@ -241,6 +226,34 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
       buildSpan.complete();
     });
     return promiseResult;
+  }
+
+  private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask) {
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
+    Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
+      Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
+        groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
+          .filter(runner -> {
+            try {
+              return runner.canRun(myProject, aTask);
+            }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (Throwable e) {
+              LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
+            }
+            return false;
+          })
+          .findFirst()
+          .orElse(myDummyTaskRunner))
+      );
+      for (Map.Entry<ProjectTaskRunner, ? extends List<? extends ProjectTask>> entry : toBuild.entrySet()) {
+        toRun.add(Pair.create(entry.getKey(), entry.getValue()));
+      }
+    };
+    visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
+    return toRun;
   }
 
   @ApiStatus.Experimental

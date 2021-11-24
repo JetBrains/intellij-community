@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment;
@@ -39,7 +39,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
   private ParameterHintsPresentationManager() {
   }
 
-  public List<Inlay> getParameterHintsInRange(@NotNull Editor editor, int startOffset, int endOffset) {
+  public List<Inlay<?>> getParameterHintsInRange(@NotNull Editor editor, int startOffset, int endOffset) {
     //noinspection unchecked
     return (List)editor.getInlayModel().getInlineElementsInRange(startOffset, endOffset, MyRenderer.class);
   }
@@ -152,6 +152,11 @@ public final class ParameterHintsPresentationManager implements Disposable {
     private MyRenderer(Editor editor, String text, HintWidthAdjustment widthAdjustment, boolean animated) {
       super(text);
       updateState(editor, text, widthAdjustment, animated);
+    }
+
+    @Override
+    public String toString() {
+      return "[" + this.getText() + "]";
     }
 
     public void update(Editor editor, String newText, HintWidthAdjustment widthAdjustment, boolean animated) {

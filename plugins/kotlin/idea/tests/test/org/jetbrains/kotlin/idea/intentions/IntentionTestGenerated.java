@@ -2061,6 +2061,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backticks.kt")
+        public void testBackticks() throws Exception {
+            runTest("testData/intentions/addThrowsAnnotation/backticks.kt");
+        }
+
+        @TestMetadata("backticksWithThrows.kt")
+        public void testBackticksWithThrows() throws Exception {
+            runTest("testData/intentions/addThrowsAnnotation/backticksWithThrows.kt");
+        }
+
+        @TestMetadata("backticksWithThrowsExceptionClasses.kt")
+        public void testBackticksWithThrowsExceptionClasses() throws Exception {
+            runTest("testData/intentions/addThrowsAnnotation/backticksWithThrowsExceptionClasses.kt");
+        }
+
         @TestMetadata("fqName.kt")
         public void testFqName() throws Exception {
             runTest("testData/intentions/addThrowsAnnotation/fqName.kt");
@@ -4867,6 +4882,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testWithComments2() throws Exception {
             runTest("testData/intentions/convertConcatenationToBuildString/withComments2.kt");
         }
+
+        @TestMetadata("withComments3.kt")
+        public void testWithComments3() throws Exception {
+            runTest("testData/intentions/convertConcatenationToBuildString/withComments3.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -5670,6 +5690,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("backtickEscaped2.kt")
         public void testBacktickEscaped2() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/backtickEscaped2.kt");
+        }
+
+        @TestMetadata("backtickWithBuck.kt")
+        public void testBacktickWithBuck() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/backtickWithBuck.kt");
         }
 
         @TestMetadata("classReference.kt")
@@ -7701,6 +7726,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testRaw() throws Exception {
             runTest("testData/intentions/convertStringTemplateToBuildString/raw.kt");
         }
+
+        @TestMetadata("slashBuck.kt")
+        public void testSlashBuck() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/slashBuck.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -8595,6 +8625,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertToScope/convertToRun/callExpression2.kt");
             }
 
+            @TestMetadata("insideLambdaExpression.kt")
+            public void testInsideLambdaExpression() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToRun/insideLambdaExpression.kt");
+            }
+
             @TestMetadata("itReceiver.kt")
             public void testItReceiver() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToRun/itReceiver.kt");
@@ -8801,6 +8836,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("package.kt")
             public void testPackage() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToWith/package.kt");
+            }
+
+            @TestMetadata("parameterExpression.kt")
+            public void testParameterExpression() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToWith/parameterExpression.kt");
             }
 
             @TestMetadata("singleCall.kt")
@@ -9369,6 +9409,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("genericClass.kt")
             public void testGenericClass() throws Exception {
                 runTest("testData/intentions/declarations/convertMemberToExtension/genericClass.kt");
+            }
+
+            @TestMetadata("genericClassWithInVariance.kt")
+            public void testGenericClassWithInVariance() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/genericClassWithInVariance.kt");
+            }
+
+            @TestMetadata("genericClassWithOutVariance.kt")
+            public void testGenericClassWithOutVariance() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/genericClassWithOutVariance.kt");
+            }
+
+            @TestMetadata("genericClassWithVarianceAndReified.kt")
+            public void testGenericClassWithVarianceAndReified() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/genericClassWithVarianceAndReified.kt");
             }
 
             @TestMetadata("genericFun.kt")
@@ -10681,6 +10736,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/introduceBackingProperty/simpleVal.kt");
         }
 
+        @TestMetadata("simpleValBuck.kt")
+        public void testSimpleValBuck() throws Exception {
+            runTest("testData/intentions/introduceBackingProperty/simpleValBuck.kt");
+        }
+
         @TestMetadata("simpleValWithType.kt")
         public void testSimpleValWithType() throws Exception {
             runTest("testData/intentions/introduceBackingProperty/simpleValWithType.kt");
@@ -10689,6 +10749,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("simpleVar.kt")
         public void testSimpleVar() throws Exception {
             runTest("testData/intentions/introduceBackingProperty/simpleVar.kt");
+        }
+
+        @TestMetadata("simpleVarBuck.kt")
+        public void testSimpleVarBuck() throws Exception {
+            runTest("testData/intentions/introduceBackingProperty/simpleVarBuck.kt");
         }
 
         @TestMetadata("valWithAccessor.kt")
@@ -15264,6 +15329,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("suspendFunction.kt")
         public void testSuspendFunction() throws Exception {
             runTest("testData/intentions/removeExplicitType/suspendFunction.kt");
+        }
+
+        @TestMetadata("varWithNull.kt")
+        public void testVarWithNull() throws Exception {
+            runTest("testData/intentions/removeExplicitType/varWithNull.kt");
         }
     }
 

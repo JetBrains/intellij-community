@@ -93,7 +93,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     Map<PsiFile, List<ExternalAnnotator<?,?>>> allAnnotators = new HashMap<>();
     int externalAnnotatorsInRoots = 0;
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    Function<InspectionProfileImpl, InspectionProfileWrapper> custom = myFile.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(myFile);
     InspectionProfile profile;
     if (custom != null) {
       profile = custom.apply(currentProfile).getInspectionProfile();

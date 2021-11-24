@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -19,7 +18,6 @@ import java.util.function.Predicate;
  * @author: db
  */
 final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
-
   public final Set<ParamAnnotation> myParameterAnnotations;
   public final TypeRepr.AbstractType[] myArgumentTypes;
   public final Set<TypeRepr.AbstractType> myExceptions;
@@ -122,16 +120,16 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
       final int size = DataInputOutputUtil.readINT(in);
       myArgumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[size]);
 
-      myExceptions = RW.read(externalizer, new THashSet<>(0), in);
+      myExceptions = RW.read(externalizer, new HashSet<>(0), in);
 
       final DataExternalizer<TypeRepr.ClassType> clsTypeExternalizer = TypeRepr.classTypeExternalizer(context);
       myParameterAnnotations = RW.read(new DataExternalizer<ParamAnnotation>() {
         @Override
-        public void save(@NotNull DataOutput out, ParamAnnotation value) throws IOException {
+        public void save(@NotNull DataOutput out, ParamAnnotation value) {
           value.save(out);
         }
         @Override
-        public ParamAnnotation read(@NotNull DataInput in) throws IOException {
+        public ParamAnnotation read(@NotNull DataInput in) {
           return new ParamAnnotation(clsTypeExternalizer, in);
         }
       }, new HashSet<>(), in);
@@ -152,12 +150,12 @@ final class MethodRepr extends ProtoMember implements ProtoMethodEntity {
   public static DataExternalizer<MethodRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<MethodRepr>() {
       @Override
-      public void save(@NotNull final DataOutput out, final MethodRepr value) throws IOException {
+      public void save(@NotNull final DataOutput out, final MethodRepr value) {
         value.save(out);
       }
 
       @Override
-      public MethodRepr read(@NotNull DataInput in) throws IOException {
+      public MethodRepr read(@NotNull DataInput in) {
         return new MethodRepr(context, in);
       }
     };

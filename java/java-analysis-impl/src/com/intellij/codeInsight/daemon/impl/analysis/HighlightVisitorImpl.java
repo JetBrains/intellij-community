@@ -397,13 +397,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) {
       functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
-        final String notFunctionalMessage = LambdaHighlightingUtil.checkInterfaceFunctional(functionalInterfaceType);
-        if (notFunctionalMessage != null) {
-          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-                         .descriptionAndTooltip(notFunctionalMessage).create());
-        }
-        else {
-          checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+        myHolder.add(HighlightClassUtil.checkExtendsSealedClass(expression, functionalInterfaceType));
+        if (!myHolder.hasErrorResults()) {
+          final String notFunctionalMessage = LambdaHighlightingUtil.checkInterfaceFunctional(functionalInterfaceType);
+          if (notFunctionalMessage != null) {
+            myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                           .descriptionAndTooltip(notFunctionalMessage).create());
+          }
+          else {
+            checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+          }
         }
       }
       else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
@@ -1128,12 +1131,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
     if (aClass != null && !myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkInstantiationOfAbstractClass(aClass, expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression, aClass));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
+    if (!myHolder.hasErrorResults()) registerConstructorCall(expression);
     try {
       if (!myHolder.hasErrorResults()) HighlightMethodUtil.checkNewExpression(expression, type, myHolder, myJavaSdkVersion);
     }
     catch (IndexNotReadyException ignored) { }
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
-    if (!myHolder.hasErrorResults()) registerConstructorCall(expression);
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
 
@@ -1524,7 +1527,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (method instanceof PsiJvmMember && !result.isAccessible()) {
       String accessProblem = HighlightUtil.accessProblemDescription(expression, method, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
-      HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)method, expression, info, result.getCurrentFileResolveScope());
+      HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)method, expression, info, result.getCurrentFileResolveScope(), null);
       myHolder.add(info);
     }
     else {
@@ -1556,6 +1559,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (functionalInterfaceType != null) {
+      if (!myHolder.hasErrorResults()) {
+        myHolder.add(HighlightClassUtil.checkExtendsSealedClass(expression, functionalInterfaceType));
+      }
       if (!myHolder.hasErrorResults()) {
         boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
         if (!isFunctional) {

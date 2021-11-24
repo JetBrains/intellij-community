@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
@@ -37,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class ChangeParameterClassFix extends ExtendsListFix {
+public class ChangeParameterClassFix extends ExtendsListFix implements LowPriorityAction {
   public ChangeParameterClassFix(@NotNull PsiClass aClassToExtend, @NotNull PsiClassType parameterClass) {
     super(aClassToExtend, parameterClass, true);
   }

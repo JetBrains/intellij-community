@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -118,31 +118,29 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
             bytes = Files.readAllBytes(Path.of(resourceName))
           }
           is UITheme -> {
-            val stream = requestor.providerClassLoader.getResourceAsStream(resourceName.removePrefix("/"))
-            if (stream == null) {
+            bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), requestor.providerClassLoader)
+            if (bytes == null) {
               LOG.error("Cannot find $resourceName in ${requestor.providerClassLoader}")
               return
             }
-            bytes = stream.use { it.readAllBytes()  }
           }
           else -> {
-            val stream = (if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader)
-              .getResourceAsStream(resourceName.removePrefix("/"))
-            if (stream == null) {
+            bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"),
+                                                    (if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader))
+            if (bytes == null) {
               LOG.error("Cannot read scheme from $resourceName")
               return
             }
-            bytes = stream.use { it.readAllBytes()  }
           }
         }
       }
       else {
-        val stream = pluginDescriptor.pluginClassLoader.getResourceAsStream(resourceName.removePrefix("/"))
-        if (stream == null) {
-          LOG.error("Cannot found scheme $resourceName in ${pluginDescriptor.pluginClassLoader}")
+        val classLoader = pluginDescriptor.classLoader
+        bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
+        if (bytes == null) {
+          LOG.error("Cannot found scheme $resourceName in $classLoader")
           return
         }
-        bytes = stream.use { it.readAllBytes()  }
       }
 
       lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->

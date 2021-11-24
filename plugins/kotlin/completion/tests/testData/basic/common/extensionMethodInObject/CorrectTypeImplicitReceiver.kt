@@ -21,13 +21,13 @@ fun B.usage() {
     foo<caret>
 }
 
-// EXIST: { lookupString: "fooForAny", itemText: "fooForAny" }
+// EXIST: { lookupString: "fooForAny", itemText: "fooForAny", icon: "nodes/function.svg"}
 
-// EXIST: { lookupString: "fooForT", itemText: "fooForT" }
-// EXIST: { lookupString: "fooForB", itemText: "fooForB" }
+// EXIST: { lookupString: "fooForT", itemText: "fooForT", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "fooForB", itemText: "fooForB", icon: "nodes/function.svg"}
 
-// EXIST: { lookupString: "fooForTGeneric", itemText: "fooForTGeneric" }
-// EXIST: { lookupString: "fooForBGeneric", itemText: "fooForBGeneric" }
+// EXIST: { lookupString: "fooForTGeneric", itemText: "fooForTGeneric", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "fooForBGeneric", itemText: "fooForBGeneric", icon: "nodes/function.svg"}
 
 // ABSENT: fooNoReceiver
 

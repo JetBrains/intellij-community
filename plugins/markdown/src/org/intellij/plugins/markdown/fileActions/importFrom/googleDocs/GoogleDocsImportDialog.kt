@@ -7,8 +7,10 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.layout.*
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.fileActions.utils.GoogleDocsImportUtils
-import org.intellij.plugins.markdown.google.authorization.GoogleAuthorizationManager
+import org.intellij.plugins.markdown.fileActions.utils.GoogleDocsImportUtils.extractDocsId
+import org.intellij.plugins.markdown.fileActions.utils.GoogleDocsImportUtils.importGoogleDoc
+import org.intellij.plugins.markdown.fileActions.utils.GoogleDocsImportUtils.isLinkToDocumentCorrect
+import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils.chooseAccount
 import javax.swing.JComponent
 
 class GoogleDocsImportDialog(private val project: Project) : DialogWrapper(project, true) {
@@ -36,12 +38,12 @@ class GoogleDocsImportDialog(private val project: Project) : DialogWrapper(proje
 
   override fun doOKAction() {
     val docsLink = docsLinkField.text
-    val docsId = GoogleDocsImportUtils.extractDocsId(docsLink)
+    val docsId = extractDocsId(docsLink)
 
     close(OK_EXIT_CODE)
 
-    val credential = GoogleAuthorizationManager(project).getCredentials() ?: return
-    GoogleDocsImportTask(project, credential, docsId).queue()
+    val credentials = chooseAccount(project) ?: return
+    importGoogleDoc(project, credentials, docsId)
   }
 
   private fun ValidationInfoBuilder.validateDocsLink(field: EditorTextField): ValidationInfo? {
@@ -49,7 +51,7 @@ class GoogleDocsImportDialog(private val project: Project) : DialogWrapper(proje
 
     return when {
       field.isNull || docsLink.isEmpty() -> error(MarkdownBundle.message("markdown.google.docs.import.empty.link.error"))
-      !GoogleDocsImportUtils.isLinkToDocumentCorrect(docsLink) -> error(MarkdownBundle.message("markdown.google.docs.import.invalid.url"))
+      !isLinkToDocumentCorrect(docsLink) -> error(MarkdownBundle.message("markdown.google.docs.import.invalid.url"))
       else -> null
     }
   }

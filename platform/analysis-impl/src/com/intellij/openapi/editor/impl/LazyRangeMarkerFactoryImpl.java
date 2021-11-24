@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
@@ -28,38 +29,14 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final VirtualFile file, final int line, final int column, final boolean persistent) {
     return ReadAction.compute(() -> {
-      final Document document = file.getFileType().isBinary() ? null : FileDocumentManager.getInstance().getDocument(file);
+      Document document = file.getFileType().isBinary() ? null : FileDocumentManager.getInstance().getCachedDocument(file);
       if (document != null) {
-        int myTabSize = CodeStyle.getFacade(myProject, document, file.getFileType()).getTabSize();
-        final int offset = calculateOffset(document, line, column, myTabSize);
+        int offset = DocumentUtil.calculateOffset(document, line, column,
+                                                  CodeStyle.getFacade(myProject, document, file.getFileType()).getTabSize());
         return DocumentImpl.createRangeMarkerForVirtualFile(file, offset, offset, line, column, line, column, persistent);
       }
 
-      return DocumentImpl.createRangeMarkerForVirtualFile(file, 0, 0, line, column, line, column, persistent);
+      return DocumentImpl.createRangeMarkerForVirtualFile(file, 0, 0, line, column, line, column, true); // must be persistent to be able to restore from line/col
     });
-  }
-
-
-  private static int calculateOffset(@NotNull Document document,
-                                     final int line,
-                                     final int column,
-                                     int tabSize) {
-    int offset;
-    if (0 <= line && line < document.getLineCount()) {
-      final int lineStart = document.getLineStartOffset(line);
-      final int lineEnd = document.getLineEndOffset(line);
-      final CharSequence docText = document.getCharsSequence();
-
-      offset = lineStart;
-      int col = 0;
-      while (offset < lineEnd && col < column) {
-        col += docText.charAt(offset) == '\t' ? tabSize : 1;
-        offset++;
-      }
-    }
-    else {
-      offset = document.getTextLength();
-    }
-    return offset;
   }
 }

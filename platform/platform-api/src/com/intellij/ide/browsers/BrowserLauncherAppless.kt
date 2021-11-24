@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import java.awt.Desktop
+import java.awt.GraphicsEnvironment
 import java.io.File
 import java.io.IOException
 import java.net.URI
@@ -222,7 +223,10 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 }
 
 private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
-  !Patches.SUN_BUG_ID_6486393 && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
+  !Patches.SUN_BUG_ID_6486393
+  && Desktop.isDesktopSupported()
+  && !GraphicsEnvironment.isHeadless() // Desktop.getDesktop() is unavailable in a headless environment
+  && Desktop.getDesktop().isSupported(action)
 
 private val generalSettings: GeneralSettings
   get() = (if (ApplicationManager.getApplication() != null) GeneralSettings.getInstance() else null) ?: GeneralSettings()

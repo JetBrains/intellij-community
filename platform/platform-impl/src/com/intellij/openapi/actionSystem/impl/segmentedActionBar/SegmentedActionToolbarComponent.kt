@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
@@ -18,7 +15,6 @@ import java.awt.*
 import javax.swing.JComponent
 import javax.swing.border.Border
 
-
 open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
     internal const val CONTROL_BAR_PROPERTY = "CONTROL_BAR_PROPERTY"
@@ -31,7 +27,14 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
     private val LOG = Logger.getInstance(SegmentedActionToolbarComponent::class.java)
 
-    internal val painter = SegmentedBarPainter()
+    internal val segmentedButtonLook = object : ActionButtonLook() {
+      override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
+      }
+
+      override fun paintBackground(g: Graphics, component: JComponent, state: Int) {
+        SegmentedBarPainter.paintActionButtonBackground(g, component, state)
+      }
+    }
 
     fun isCustomBar(component: Component): Boolean {
       if (component !is JComponent) return false
@@ -52,15 +55,6 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   private var isActive = false
   private var visibleActions: MutableList<out AnAction>? = null
 
-  private val segmentedButtonLook = object : ActionButtonLook() {
-    override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
-    }
-
-    override fun paintBackground(g: Graphics, component: JComponent, state: Int) {
-      SegmentedBarPainter.paintActionButtonBackground(g, component, state)
-    }
-  }
-
   override fun getInsets(): Insets {
     return JBUI.emptyInsets()
   }
@@ -69,9 +63,6 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
   }
 
-  override fun isInsideNavBar(): Boolean {
-    return true
-  }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     if (!isActive) {
@@ -85,6 +76,10 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
         component.remove(it)
         component = it
       }
+    }
+    else if (component is ActionButton) {
+      val actionButton = component as ActionButton
+      updateActionButtonLook(actionButton)
     }
 
     component.border = JBUI.Borders.empty()
@@ -103,10 +98,14 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     }
 
     val createToolbarButton = super.createToolbarButton(action, segmentedButtonLook, place, presentation, minimumSize)
-    createToolbarButton.border = JBUI.Borders.empty(0, 3)
-    createToolbarButton.setLook(segmentedButtonLook)
+    updateActionButtonLook(createToolbarButton)
 
     return createToolbarButton
+  }
+
+  private fun updateActionButtonLook(actionButton: ActionButton) {
+    actionButton.border = JBUI.Borders.empty(0, 3)
+    actionButton.setLook(segmentedButtonLook)
   }
 
   override fun fillToolBar(actions: MutableList<out AnAction>, layoutSecondaries: Boolean) {
@@ -150,12 +149,13 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   private fun paintActiveBorder(g: Graphics) {
-    if(isActive || paintBorderForSingleItem) {
+    if((isActive || paintBorderForSingleItem) && visibleActions != null) {
       SegmentedBarPainter.paintActionBarBorder(this, g)
     }
   }
 
   override fun paintBorder(g: Graphics) {
+    super.paintBorder(g)
     paintActiveBorder(g)
   }
 
@@ -181,7 +181,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   protected open fun logNeeded() = false
 
   protected fun forceUpdate() {
-    if(logNeeded()) LOG.info("RunToolbar MAIN SLOT forceUpdate allActions: $visibleActions")
+    if(logNeeded()) LOG.info("RunToolbar MAIN SLOT forceUpdate")
     visibleActions?.let {
       update(true, it)
 
@@ -195,10 +195,16 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     update(forced, newVisibleActions)
   }
 
+  private var lastIds: List<String> = emptyList()
+
   private fun update(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
 
-    if(logNeeded()) LOG.info("RunToolbar MAIN SLOT filtered actions: ${filtered.map{it.templateText ?: it.javaClass}}")
+    val ides = newVisibleActions.map { ActionManager.getInstance().getId(it) }.toList()
+    val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
+
+    if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    lastIds = filteredIds
     isActive = filtered.size > 1
     super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
   }

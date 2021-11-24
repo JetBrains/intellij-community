@@ -392,8 +392,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  @Nullable
-  public ClassLoader getPluginClassLoader() {
+  public @Nullable ClassLoader getPluginClassLoader() {
     return null;
   }
 

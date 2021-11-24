@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.intentions.callExpression
-import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -32,7 +31,6 @@ class SimplifyCallChainFix(
     override fun getFamilyName() = name
 
     fun apply(qualifiedExpression: KtQualifiedExpression) {
-        val commentSaver = CommentSaver(qualifiedExpression)
         val factory = KtPsiFactory(qualifiedExpression)
         val firstExpression = qualifiedExpression.receiverExpression
 
@@ -79,9 +77,6 @@ class SimplifyCallChainFix(
         val file = qualifiedExpression.containingKtFile
         var result = qualifiedExpression.replaced(newQualifiedOrCallExpression)
 
-        if (!firstCallHasArguments && !secondCallHasArguments) {
-            commentSaver.restore(result)
-        }
         if (lambdaExpression != null || additionalArgument != null) {
             val callExpression = when (result) {
                 is KtQualifiedExpression -> result.callExpression

@@ -1,6 +1,6 @@
 from logging import Logger
 from threading import Condition, Event, Lock
-from typing import Any, Callable, Mapping, Tuple, TypeVar
+from typing import Any, Callable, Mapping, TypeVar
 
 from paramiko.buffered_pipe import BufferedPipe
 from paramiko.file import BufferedFile
@@ -58,7 +58,7 @@ class Channel(ClosingContextManager):
         auth_protocol: str | None = ...,
         auth_cookie: str | None = ...,
         single_connection: bool = ...,
-        handler: Callable[[Channel, Tuple[str, int]], None] | None = ...,
+        handler: Callable[[Channel, tuple[str, int]], None] | None = ...,
     ) -> bytes: ...
     def request_forward_agent(self, handler: Callable[[Channel], None]) -> bool: ...
     def get_transport(self) -> Transport: ...

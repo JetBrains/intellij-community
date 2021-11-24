@@ -23,7 +23,7 @@ internal class PythonTextExtractor : TextExtractor() {
 
     if (root is PsiCommentImpl) {
       val siblings = getNotSoDistantSimilarSiblings(root) { it is PsiCommentImpl }
-      return TextContent.joinWithWhitespace(siblings.mapNotNull { TextContent.builder().build(it, TextContent.TextDomain.COMMENTS) })
+      return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { TextContent.builder().build(it, TextContent.TextDomain.COMMENTS) })
     }
 
     return null

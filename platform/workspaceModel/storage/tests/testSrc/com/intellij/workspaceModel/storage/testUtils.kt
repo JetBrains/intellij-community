@@ -127,7 +127,7 @@ object SerializationRoundTripChecker {
       val expectedValue = local.getValues(key)
       local.removeKey(key)
 
-      assertOrderedEquals(expectedValue, value) { a, b -> a == b }
+      assertOrderedEquals(expectedValue.sortedBy { it.toString() }, value.sortedBy { it.toString() }) { a, b -> a == b }
     }
     if (!local.isEmpty()) {
       Assert.fail("No mappings found for the following keys: " + local.keys)

@@ -81,7 +81,7 @@ class DebuggerClassNameProvider(
             getOuterClassNamesForElement(element, emptySet())
         }.toMutableSet()
 
-        for (lambda in position.readAction(::getLambdasAtLineIfAny)) {
+        for (lambda in runReadAction { getLambdasAtLineIfAny(position) }) {
             result += getOrComputeClassNames(lambda) { element ->
                 getOuterClassNamesForElement(element, emptySet())
             }
@@ -117,8 +117,8 @@ class DebuggerClassNameProvider(
                         getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
                     else ->
                         // Guaranteed to be non-local class or object
-                        element.readAction { _ ->
-                            if (element is KtClass && runReadAction { element.isInterface() }) {
+                        runReadAction {
+                            if (element is KtClass && element.isInterface()) {
                                 val name = ClassNameCalculator.getClassNameCompat(element)
 
                                 if (name != null)
@@ -201,23 +201,34 @@ class DebuggerClassNameProvider(
 
                 getOuterClassNamesForElement(initializerOwner, alreadyVisited)
             }
-            is KtFunctionLiteral -> {
-                val names = runReadAction {
-                    val name = ClassNameCalculator.getClassNameCompat(element)
-                    if (name != null) Cached(name) else EMPTY
-                }
-
-                if (!names.isEmpty() && !alwaysReturnLambdaParentClass) {
-                    if (!InlineUtil.isInlinedArgument(element, element.analyze(), true)) {
-                        return names
-                    }
-                }
-
-                names + getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
-            }
-            else -> getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
+            is KtCallableReferenceExpression ->
+                getNamesForLambda(element, alreadyVisited)
+            is KtFunctionLiteral ->
+                getNamesForLambda(element, alreadyVisited)
+            else ->
+                getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
         }
     }
+
+    private fun getNamesForLambda(element: KtElement, alreadyVisited: Set<PsiElement>): ComputedClassNames {
+        val names = element.getNamesInReadAction()
+        if (!names.isEmpty() && !alwaysReturnLambdaParentClass) {
+            if (element !is KtFunctionLiteral || !element.isInlinedArgument()) {
+                return names
+            }
+        }
+
+        return names + getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
+    }
+
+    private fun KtFunction.isInlinedArgument() =
+        InlineUtil.isInlinedArgument(this, analyze(), true)
+
+    private fun KtElement.getNamesInReadAction() =
+        runReadAction {
+            val name = ClassNameCalculator.getClassNameCompat(this)
+            if (name != null) Cached(name) else EMPTY
+        }
 
     private val KtDeclaration.isInlineInReadAction: Boolean
         get() = runReadAction { hasModifier(KtTokens.INLINE_KEYWORD) }

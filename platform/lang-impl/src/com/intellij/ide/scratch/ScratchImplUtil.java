@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -29,7 +29,8 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,7 +159,7 @@ final class ScratchImplUtil {
 
   static @NotNull String getNextAvailableName(@NotNull VirtualFile dir, @NotNull String fileNameAndExt) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    TIntHashSet existing = new TIntHashSet();
+    IntSet existing = new IntOpenHashSet();
     String fileName = getNameWithoutExtension(fileNameAndExt, dir.isCaseSensitive(), fileTypeManager);
     int fileNameLen = fileName.length();
     String fileExt = fileNameAndExt.length() > fileNameLen + 1 ? fileNameAndExt.substring(fileNameLen + 1) : "";
@@ -252,8 +253,9 @@ final class ScratchImplUtil {
         return o.language != null ? o.language.getID() : o.fileType.getName();
       }
     }
-      .withComparator(comparator)
       .forValues(items)
+      .withComparator(comparator)
+      .withExtraSpeedSearchNamer(o -> o.fileExtension)
       .withSelection(null);
   }
 

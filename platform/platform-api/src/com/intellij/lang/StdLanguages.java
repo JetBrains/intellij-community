@@ -27,14 +27,6 @@ public final class StdLanguages {
   @Deprecated public static final Language XML = StdFileTypes.XML.getLanguage();
 
   /**
-   * The definition for the HTML language.
-   *
-   * @deprecated use {@linkplain com.intellij.lang.html.HTMLLanguage#INSTANCE} instead.
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final Language HTML = StdFileTypes.HTML.getLanguage();
-
-  /**
    * The definition for the Text language
    *
    * @deprecated use {@linkplain com.intellij.openapi.fileTypes.PlainTextLanguage#INSTANCE} instead.

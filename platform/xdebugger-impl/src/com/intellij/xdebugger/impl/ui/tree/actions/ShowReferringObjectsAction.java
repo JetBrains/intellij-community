@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XReferrersProvider;
@@ -14,6 +15,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Presentation presentation = e.getPresentation();
+    presentation.setVisible(presentation.isEnabled());
+  }
+
   @Override
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     return node.getValueContainer().getReferrersProvider() != null;

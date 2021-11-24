@@ -16,7 +16,7 @@
 package com.intellij.java.codeInsight.editorActions;
 
 import com.intellij.codeInsight.editorActions.AbstractMoveElementLeftRightTest;
-import com.intellij.testFramework.TestFileType;
+import com.intellij.ide.highlighter.JavaFileType;
 
 public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
   public void testMoveLiteralMethodParameter() throws Exception {
@@ -134,6 +134,6 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
 
   @Override
   protected void configureEditor(String contents) {
-    init(contents, TestFileType.JAVA);
+    init(contents, JavaFileType.INSTANCE);
   }
 }

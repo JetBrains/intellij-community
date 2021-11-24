@@ -5,7 +5,6 @@ import com.intellij.ide.CliResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +12,11 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 /**
- * This extension point allows running custom [command-line] application based on IntelliJ platform.
+ * <p>This extension point allows running a custom [command-line] application based on the IntelliJ platform.</p>
+ *
+ * <p>A command may come directly (there were no other instances of the application running, so the command starts a new one),
+ * or externally (the application has detected a running instance and passed a command to it). In the former case, the platform
+ * invokes {@link #premain} and {@link #main} methods, in the latter - {@link #processExternalCommandLineAsync}.</p>
  */
 public interface ApplicationStarter {
   ExtensionPointName<ApplicationStarter> EP_NAME = new ExtensionPointName<>("com.intellij.appStarter");
@@ -24,16 +27,16 @@ public interface ApplicationStarter {
 
   /**
    * Command-line switch to start with this runner.
-   * For example return {@code "inspect"} if you'd like to start an app with {@code "idea.exe inspect ..."} command).
+   * For example, return {@code "inspect"} if you'd like to start an app with {@code "idea.exe inspect ..."} command.
    *
    * @return command-line selector.
    */
-  @NonNls String getCommandName();
+  String getCommandName();
 
   /**
    * Called before application initialization.
    *
-   * @param args program arguments (including the selector)
+   * @param args program arguments (including the command)
    */
   default void premain(@NotNull List<String> args) {
     premain(ArrayUtilRt.toStringArray(args));
@@ -67,13 +70,12 @@ public interface ApplicationStarter {
   }
 
   /**
-   * Return {@link #ANY_MODALITY} if the command of this launcher can be processed when there is a modal dialog open.
-   * Such a starter may not directly change the PSI/VFS/project model of the opened projects or open new projects.
-   * Such a starter may not perform activities that should be performed inside write-safe contexts (see {@link TransactionGuard}).
+   * Return {@link #ANY_MODALITY} if handling the command requires EDT and can be executed even when there is a modal dialog open.
+   * Such a starter may not directly change the PSI/VFS/project model of the opened projects, open new projects,
+   * or perform activities that mandate write-safe contexts (see {@link TransactionGuard}).
    * <p>
-   * Return {@link #NOT_IN_EDT} if the command of this launcher can be processed on pooled thread.
-   * <p>
-   * Note, that platform may ignore this flag and process command as {@link #NON_MODAL}.
+   * Return {@link #NOT_IN_EDT} if handling the command can be performed on a background thread (please note that the platform
+   * may ignore the flag and process a command as {@link #NON_MODAL}).
    */
   @MagicConstant(intValues = {NON_MODAL, ANY_MODALITY, NOT_IN_EDT})
   default int getRequiredModality() {
@@ -87,12 +89,11 @@ public interface ApplicationStarter {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated Use {@link #premain(List)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void premain(@SuppressWarnings("unused") String @NotNull [] args) { }
 
   /** @deprecated Use {@link #main(List)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void main(String @NotNull [] args) { }
-
   //</editor-fold>
 }

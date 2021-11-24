@@ -41,6 +41,9 @@ import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.AS
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
+import com.intellij.util.Alarm
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import java.util.*
 
 private val LOG = logger<IgnoredToExcludedSynchronizer>()
@@ -57,22 +60,25 @@ private val excludeAction = object : MarkExcludeRootAction() {
  */
 @Service
 class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(project, project) {
+  private val queue = MergingUpdateQueue("IgnoredToExcludedSynchronizer", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
   init {
     project.messageBus.connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) = updateNotificationState()
     })
     project.messageBus.connect(this).subscribe(AdditionalLibraryRootsListener.TOPIC,
-                                               (AdditionalLibraryRootsListener { _, _, _, _ -> updateNotificationState() }))
+      (AdditionalLibraryRootsListener { _, _, _, _ -> updateNotificationState() }))
   }
 
+  /**
+   * In case if the project roots changed (e.g. by build tools) then the directories shown in notification can be outdated.
+   * Filter directories which excluded or containing source roots and expire notification if needed.
+   */
   private fun updateNotificationState() {
     if (synchronizationTurnOff()) return
+    if (isFilesEmpty()) return
 
-    // in case if the project roots changed (e.g. by build tools) then the directories shown in notification can be outdated.
-    // filter directories which excluded or containing source roots and expire notification if needed.
-
-    ChangeListManager.getInstance(project).invokeAfterUpdate(false) {
+    queue.queue(Update.create("update") {
       val fileIndex = ProjectFileIndex.getInstance(project)
       val sourceRoots = getProjectSourceRoots(project)
 
@@ -87,7 +93,7 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
       if (removeFiles(filesToRemove)) {
         EditorNotifications.getInstance(project).updateAllNotifications()
       }
-    }
+    })
   }
 
   fun isNotEmpty() = !isFilesEmpty()

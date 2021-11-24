@@ -16,7 +16,7 @@ class MavenActionsUsagesCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.maven.actions", 2)
+    private val GROUP = EventLogGroup("build.maven.actions", 3)
     private val EXECUTOR_FIELD = EventFields.StringValidatedByCustomRule("executor", "run_config_executor")
     private val CONTEXT_MENU = EventFields.Boolean("context_menu")
 
@@ -49,6 +49,12 @@ class MavenActionsUsagesCollector : CounterUsagesCollector() {
 
     @JvmField
     val START_WSL_MAVEN_SERVER = GROUP.registerEvent("StartWslMavenServer")
+
+    @JvmField
+    val CREATE_MAVEN_PROJECT = GROUP.registerEvent("CreateMavenProjectOrModule")
+
+    @JvmField
+    val CREATE_MAVEN_PROJECT_FROM_ARCHETYPE = GROUP.registerEvent("CreateMavenProjectOrModuleFromArchetype")
 
     @JvmStatic
     fun trigger(project: Project?,

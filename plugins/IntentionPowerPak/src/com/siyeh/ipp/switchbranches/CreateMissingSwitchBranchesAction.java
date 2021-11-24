@@ -48,7 +48,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     List<String> missingValueNames = ContainerUtil.map(missingValues, v -> v.myName);
     List<PsiSwitchLabelStatementBase> addedLabels =
       CreateSwitchBranchesUtil.createMissingBranches(block, allValueNames, missingValueNames,
-                                                     label -> extractConstantNames(allValues, label), false);
+                                                     label -> extractConstantNames(allValues, label));
     CreateSwitchBranchesUtil.createTemplate(block, addedLabels);
   }
 

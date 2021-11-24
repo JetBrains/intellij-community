@@ -264,8 +264,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
                              boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    for (MarkupModelListener listener : myListeners) {
-      listener.attributesChanged(segmentHighlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
+    if (segmentHighlighter.isValid()) {
+      for (MarkupModelListener listener : myListeners) {
+        listener.attributesChanged(segmentHighlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
+      }
     }
   }
 

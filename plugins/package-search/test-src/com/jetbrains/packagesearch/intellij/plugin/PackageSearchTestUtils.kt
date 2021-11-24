@@ -4,7 +4,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 
 internal object PackageSearchTestUtils {
 
-    fun loadPackageVersionsFromResource(resourcePath: String): List<PackageVersion> =
+    fun loadPackageVersionsFromResource(resourcePath: String): List<PackageVersion.Named> =
         javaClass.classLoader.getResourceAsStream(resourcePath)!!
             .bufferedReader()
             .useLines { lines ->

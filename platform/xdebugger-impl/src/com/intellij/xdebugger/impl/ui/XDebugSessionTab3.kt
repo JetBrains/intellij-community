@@ -9,11 +9,19 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.customization.*
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
+import com.intellij.openapi.keymap.impl.ui.Group
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.ui.OnePixelSplitter
@@ -25,6 +33,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.frame.*
 import java.awt.Dimension
+import java.util.function.Supplier
 import javax.swing.Icon
 
 class XDebugSessionTab3(
@@ -35,7 +44,8 @@ class XDebugSessionTab3(
 
   companion object {
     private const val viewProportionKey = "debugger.layout.watches.defaultThreadsProportion"
-    private const val debuggerContentId = "DebuggerView"
+    //is used by plugins
+    const val debuggerContentId = "DebuggerView"
   }
 
   private val splitter = OnePixelSplitter(viewProportionKey, 0.35f).apply {
@@ -47,6 +57,7 @@ class XDebugSessionTab3(
   }
 
   private var mySingleContentSupplier: SingleContentSupplier? = null
+  private var toolbarGroup: DefaultActionGroup? = null
 
   override fun getWatchesContentId() = debuggerContentId
   override fun getFramesContentId() = debuggerContentId
@@ -100,17 +111,59 @@ class XDebugSessionTab3(
 
     myUi.addContent(content, 0, PlaceInGrid.center, false)
 
-    ui.defaults.initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
+    ui.defaults
+      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
+      .initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION, LayoutAttractionPolicy.FocusOnce())
+
+    addDebugToolwindowActions(session.project)
+
+    CustomActionsListener.subscribe(this, object : CustomActionsListener {
+      override fun schemaChanged() {
+        updateToolbars()
+      }
+    })
   }
 
   override fun initToolbars(session: XDebugSessionImpl) {
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(false)
 
     val toolbar = DefaultActionGroup()
-    toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
+
+    mySingleContentSupplier = object: RunTabSupplier(toolbar) {
+      override fun getMainToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
+      override fun getContentToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
+    }
+
+    toolbarGroup = toolbar
+    updateToolbars()
+  }
+
+  fun updateToolbars() {
+    val toolbar = toolbarGroup ?: return
+    val session = mySession
+    toolbar.removeAll()
+
+    fun Array<AnAction>.removeDuplicatesExceptSeparators(collection: Collection<AnAction>): List<AnAction> {
+      val actions = toMutableList()
+      val visited = collection.toMutableSet()
+      val iterator = actions.iterator()
+      while (iterator.hasNext()) {
+        val action = iterator.next()
+        if (action !is Separator && !visited.add(action)) {
+          iterator.remove()
+        }
+      }
+      return actions
+    }
+
+    val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
+    val headerActionsWithoutDuplicates = headerGroup.getChildren(null).removeDuplicatesExceptSeparators(emptyList())
+    toolbar.addAll(headerActionsWithoutDuplicates)
 
     val more = MoreActionGroup()
-    more.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP))
+    val moreGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP)
+    val moreActionsWithoutDuplicates = moreGroup.getChildren(null).removeDuplicatesExceptSeparators(headerActionsWithoutDuplicates)
+    more.addAll(moreActionsWithoutDuplicates)
     more.addSeparator()
 
     fun addWithConstraints(actions: List<AnAction>, constraints: Constraints) {
@@ -125,9 +178,11 @@ class XDebugSessionTab3(
     }
 
     // reversed because it was like this in the original tab
-    addWithConstraints(session.restartActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
-    addWithConstraints(session.extraActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
-    addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    if (session != null) {
+      addWithConstraints(session.restartActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
+      addWithConstraints(session.extraActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+      addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    }
 
     more.addSeparator()
 
@@ -138,17 +193,14 @@ class XDebugSessionTab3(
       addAll(*myUi.options.settingsActionsList)
     }
 
-    registerAdditionalActions(more, toolbar, gear)
+    if (session != null) {
+      registerAdditionalActions(more, toolbar, gear)
+    }
     // Constrains are required as a workaround that puts these actions into the end anyway
     more.add(gear, Constraints(Anchor.BEFORE, ""))
     toolbar.add(more, Constraints(Anchor.BEFORE, ""))
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
-
-    mySingleContentSupplier = object: RunTabSupplier(toolbar) {
-      override fun getMainToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
-      override fun getContentToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
-    }
   }
 
   override fun initFocusingVariablesFromFramesView() {
@@ -199,5 +251,46 @@ class XDebugSessionTab3(
       initFocusingVariablesFromFramesView()
     }
     UIUtil.removeScrollBorder(splitter)
+  }
+}
+
+private fun addDebugToolwindowActions(project: Project) {
+  val window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG)
+  fun showAddActionDialog(): List<Any>? = ActionGroupPanel.showDialog(
+    XDebuggerBundle.message("debugger.add.action.dialog.title"),
+    XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP
+  ) {
+    filterButtonText = Supplier { XDebuggerBundle.message("debugger.add.action.dialog.filter.name") }
+    enableFilterAction = true
+  }
+
+  if (window != null && window is ToolWindowEx) {
+    window.setAdditionalGearActions(DefaultActionGroup(
+      object : DumbAwareAction({ IdeBundle.message("action.customizations.customize.action") }) {
+        override fun actionPerformed(e: AnActionEvent) {
+          val result = CustomizeActionGroupPanel.showDialog(
+              XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP,
+              listOf(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP),
+              XDebuggerBundle.message("debugger.customize.toolbar.actions.dialog.title")
+            ) {
+            addActionHandler = ::showAddActionDialog
+          }
+          if (result != null) {
+            CustomizationUtil.updateActionGroup(result, XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
+          }
+        }
+      },
+      object : DumbAwareAction({ IdeBundle.message("group.customizations.add.action.group") }) {
+        override fun actionPerformed(e: AnActionEvent) {
+          showAddActionDialog()
+            ?.filter { it is String || it is Group }
+            ?.let {
+              val actions = CustomizationUtil.getGroupActions(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP,
+                                                              CustomActionsSchema.getInstance())
+              CustomizationUtil.updateActionGroup(actions + it, XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
+            }
+        }
+      }
+    ))
   }
 }

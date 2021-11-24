@@ -22,6 +22,10 @@ interface DocumentationTarget {
   @RequiresBackgroundThread
   fun createPointer(): Pointer<out DocumentationTarget>
 
+  /**
+   * Returned presentation is used to render the tab name and icon in the tool window,
+   * and to render location info under the documentation in the popup.
+   */
   val presentation: TargetPresentation
     @RequiresReadLock
     @RequiresBackgroundThread
@@ -37,13 +41,13 @@ interface DocumentationTarget {
   /**
    * If the documentation can be computed in the current read action, then the implementation is expected to do so,
    * and return [DocumentationResult.documentation] or [DocumentationResult.externalDocumentation].
-   * For example, the implementation may compute the documentation from a comment `PsiElement`.
+   * For example, the implementation may compute the documentation from a `PsiElement` which represents a comment.
    *
    * Otherwise, the function is supposed to obtain the necessary data inside the current read action,
    * capture this data into a computable instance, which will be executed later outside the read action,
-   * and return it via [DocumentationResult.asyncDocumentation].
+   * and return this computable instance via [DocumentationResult.asyncDocumentation].
    * For example, the implementation may compute a URL by underlying `PsiElement`,
-   * and a return a computable which will download the data outside the current read action.
+   * and then return a computable which will download the data outside the current read action.
    */
   @RequiresReadLock
   @RequiresBackgroundThread

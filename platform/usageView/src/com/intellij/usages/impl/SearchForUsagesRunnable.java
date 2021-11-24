@@ -4,6 +4,7 @@ package com.intellij.usages.impl;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -348,6 +349,7 @@ final class SearchForUsagesRunnable implements Runnable {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
     AtomicBoolean findUsagesStartedShown = new AtomicBoolean();
+    UsageViewStatisticsCollector.logSearchStarted(myProject);
     searchUsages(findUsagesStartedShown);
     endSearchForUsages(findUsagesStartedShown);
 
@@ -402,9 +404,9 @@ final class SearchForUsagesRunnable implements Runnable {
           myTooManyUsages.set(true);
 
           PsiElement element = getPsiElement(mySearchFor);
-          var elementClass = element != null ? element.getClass() : null;
-          var scopeText = myPresentation.getScopeText();
-          var language = element != null ? element.getLanguage() : null;
+          Class<? extends PsiElement> elementClass = element == null ? null : element.getClass();
+          String scopeText = myPresentation.getScopeText();
+          Language language = element == null ? null : element.getLanguage();
 
           UsageViewManagerImpl.showTooManyUsagesWarningLater(
             myProject, tooManyUsagesStatus, originalIndicator, usageView,

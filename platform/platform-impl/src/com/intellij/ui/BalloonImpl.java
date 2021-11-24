@@ -94,6 +94,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   private Point myTargetPoint;
   private final boolean myHideOnFrameResize;
   private final boolean myHideOnLinkClick;
+  private boolean myZeroPositionInLayer = true;
 
   private final Color myBorderColor;
   private final Insets myBorderInsets;
@@ -781,7 +782,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     myComp.setBorder(new EmptyBorder(getShadowBorderInsets()));
 
     myLayeredPane.add(myComp);
-    myLayeredPane.setLayer(myComp, getLayer(), 0); // the second balloon must be over the first one
+    if (myZeroPositionInLayer) {
+      myLayeredPane.setLayer(myComp, getLayer(), 0); // the second balloon must be over the first one
+    }
     myPosition.updateBounds(this);
 
     PopupLocationTracker.register(this);
@@ -987,7 +990,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         if (mySmartFadeout) {
           setAnimationEnabled(true);
         }
-        hide();
+        hide(Registry.is("ide.notification.action.center", false));
       }, fadeoutDelay, null);
     }
   }
@@ -1125,6 +1128,10 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   public void setHideListener(@NotNull Runnable listener) {
     myHideListener = listener;
     myHideOnMouse = true;
+  }
+
+  public void setZeroPositionInLayer(boolean zeroPositionInLayer) {
+    myZeroPositionInLayer = zeroPositionInLayer;
   }
 
   public void setShowPointer(final boolean show) {

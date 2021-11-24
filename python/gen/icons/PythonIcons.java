@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -11,43 +11,43 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class PythonIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonIcons.class.getClassLoader(), cacheKey, flags);
   }
 
   public static final class Cython {
-    /** 16x16 */ public static final @NotNull Icon CythonFile = load("icons/com/jetbrains/cython/cythonFile.svg", -63286873138942452L, 0);
+    /** 16x16 */ public static final @NotNull Icon CythonFile = load("icons/com/jetbrains/cython/cythonFile.svg", -1156088508, 0);
   }
 
   public static final class Pyqt {
-    /** 16x16 */ public static final @NotNull Icon UiForm = load("icons/com/jetbrains/pyqt/uiForm.svg", -7822228888109454928L, 0);
+    /** 16x16 */ public static final @NotNull Icon UiForm = load("icons/com/jetbrains/pyqt/uiForm.svg", 324141667, 0);
   }
 
   public static final class Python {
-    /** 16x16 */ public static final @NotNull Icon Anaconda = load("icons/com/jetbrains/python/anaconda.svg", 8943178071091496124L, 0);
-    /** 16x16 */ public static final @NotNull Icon CommandQueue = load("icons/com/jetbrains/python/commandQueue.svg", 7404191449404154063L, 2);
-    /** 16x16 */ public static final @NotNull Icon Condaenv = load("icons/com/jetbrains/python/condaenv.svg", 5490797336848440601L, 0);
-    /** 13x13 */ public static final @NotNull Icon DataView = load("icons/com/jetbrains/python/DataView.svg", 4852798720151080547L, 2);
+    /** 16x16 */ public static final @NotNull Icon Anaconda = load("icons/com/jetbrains/python/anaconda.svg", -1839921628, 0);
+    /** 16x16 */ public static final @NotNull Icon CommandQueue = load("icons/com/jetbrains/python/commandQueue.svg", -1915664805, 2);
+    /** 16x16 */ public static final @NotNull Icon Condaenv = load("icons/com/jetbrains/python/condaenv.svg", 861695924, 0);
+    /** 13x13 */ public static final @NotNull Icon DataView = load("icons/com/jetbrains/python/DataView.svg", 1359853114, 2);
 
     public static final class Debug {
-      /** 16x16 */ public static final @NotNull Icon SpecialVar = load("icons/com/jetbrains/python/debug/specialVar.svg", -4571731142158546612L, 0);
-      /** 16x16 */ public static final @NotNull Icon StepIntoMyCode = load("icons/com/jetbrains/python/debug/StepIntoMyCode.svg", 3415296893210255296L, 2);
+      /** 16x16 */ public static final @NotNull Icon SpecialVar = load("icons/com/jetbrains/python/debug/specialVar.svg", 1674824511, 0);
+      /** 16x16 */ public static final @NotNull Icon StepIntoMyCode = load("icons/com/jetbrains/python/debug/StepIntoMyCode.svg", 741579692, 2);
     }
 
-    /** 16x16 */ public static final @NotNull Icon Dotnet = load("icons/com/jetbrains/python/dotnet.svg", -119552936208143190L, 0);
-    /** 16x16 */ public static final @NotNull Icon Function = load("icons/com/jetbrains/python/function.svg", -8647225230679120905L, 0);
-    /** 16x16 */ public static final @NotNull Icon Jython = load("icons/com/jetbrains/python/jython.svg", -2768601746601292758L, 0);
-    /** 16x16 */ public static final @NotNull Icon Pypy = load("icons/com/jetbrains/python/pypy.svg", -7583460427419056662L, 0);
-    /** 16x16 */ public static final @NotNull Icon Python = load("icons/com/jetbrains/python/python.svg", 2013563801968945595L, 0);
-    /** 16x16 */ public static final @NotNull Icon PythonClosed = load("icons/com/jetbrains/python/pythonClosed.svg", -687692780913640037L, 0);
-    /** 16x16 */ public static final @NotNull Icon PythonConsole = load("icons/com/jetbrains/python/pythonConsole.svg", 542958402152103084L, 0);
-    /** 13x13 */ public static final @NotNull Icon PythonConsoleToolWindow = load("icons/com/jetbrains/python/pythonConsoleToolWindow.svg", 6376726922904477063L, 2);
-    /** 13x13 */ public static final @NotNull Icon PythonPackages = load("icons/com/jetbrains/python/pythonPackages.svg", -8608323057616680672L, 2);
-    /** 16x16 */ public static final @NotNull Icon PythonTests = load("icons/com/jetbrains/python/pythonTests.svg", -5899470091143645401L, 0);
-    /** 16x16 */ public static final @NotNull Icon RemoteInterpreter = load("icons/com/jetbrains/python/RemoteInterpreter.svg", 357033666544229011L, 0);
-    /** 16x16 */ public static final @NotNull Icon Ssh = load("icons/com/jetbrains/python/ssh.svg", 4998831890575362096L, 0);
-    /** 16x16 */ public static final @NotNull Icon TemplateRoot = load("icons/com/jetbrains/python/templateRoot.svg", -4841950379144332564L, 0);
-    /** 16x16 */ public static final @NotNull Icon Vagrant = load("icons/com/jetbrains/python/vagrant.svg", -2116261756304251372L, 0);
-    /** 16x16 */ public static final @NotNull Icon Virtualenv = load("icons/com/jetbrains/python/virtualenv.svg", 3050140645622806640L, 0);
+    /** 16x16 */ public static final @NotNull Icon Dotnet = load("icons/com/jetbrains/python/dotnet.svg", 722679948, 0);
+    /** 16x16 */ public static final @NotNull Icon Function = load("icons/com/jetbrains/python/function.svg", 110870692, 0);
+    /** 16x16 */ public static final @NotNull Icon Jython = load("icons/com/jetbrains/python/jython.svg", 880261780, 0);
+    /** 16x16 */ public static final @NotNull Icon Pypy = load("icons/com/jetbrains/python/pypy.svg", 115514957, 0);
+    /** 16x16 */ public static final @NotNull Icon Python = load("icons/com/jetbrains/python/python.svg", -1025668048, 0);
+    /** 16x16 */ public static final @NotNull Icon PythonClosed = load("icons/com/jetbrains/python/pythonClosed.svg", 1160630474, 0);
+    /** 16x16 */ public static final @NotNull Icon PythonConsole = load("icons/com/jetbrains/python/pythonConsole.svg", 673082074, 0);
+    /** 13x13 */ public static final @NotNull Icon PythonConsoleToolWindow = load("icons/com/jetbrains/python/pythonConsoleToolWindow.svg", 1207475759, 2);
+    /** 13x13 */ public static final @NotNull Icon PythonPackages = load("icons/com/jetbrains/python/pythonPackages.svg", -1200574182, 2);
+    /** 16x16 */ public static final @NotNull Icon PythonTests = load("icons/com/jetbrains/python/pythonTests.svg", 1073435907, 0);
+    /** 16x16 */ public static final @NotNull Icon RemoteInterpreter = load("icons/com/jetbrains/python/RemoteInterpreter.svg", -116688720, 0);
+    /** 16x16 */ public static final @NotNull Icon Ssh = load("icons/com/jetbrains/python/ssh.svg", 240880844, 0);
+    /** 16x16 */ public static final @NotNull Icon TemplateRoot = load("icons/com/jetbrains/python/templateRoot.svg", 1175931366, 0);
+    /** 16x16 */ public static final @NotNull Icon Vagrant = load("icons/com/jetbrains/python/vagrant.svg", -2005138807, 0);
+    /** 16x16 */ public static final @NotNull Icon Virtualenv = load("icons/com/jetbrains/python/virtualenv.svg", -2070182477, 0);
   }
 }

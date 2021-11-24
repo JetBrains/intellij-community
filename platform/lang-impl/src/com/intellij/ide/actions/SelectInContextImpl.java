@@ -9,6 +9,8 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SmartSelectInContext;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -136,14 +138,38 @@ public final class SelectInContextImpl extends FileSelectInContext {
       };
     }
     else {
-      StructureViewBuilder builder = editor.getStructureViewBuilder();
-      StructureView structureView = builder != null ? builder.createStructureView(editor, project) : null;
-      Object selectorInFile = structureView != null ? structureView.getTreeModel().getCurrentEditorElement() : null;
-      if (structureView != null) Disposer.dispose(structureView);
+      Object selectorInFile = getElementFromStructureView(project, editor);
       if (selectorInFile == null) return new SmartSelectInContext(psiFile, psiFile);
       if (selectorInFile instanceof PsiElement) return new SmartSelectInContext(psiFile, (PsiElement)selectorInFile);
       return new SelectInContextImpl(psiFile, selectorInFile);
     }
+  }
+
+  @Nullable
+  private static Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor) {
+    StructureViewBuilder builder = editor.getStructureViewBuilder();
+    if (builder == null) return null;
+    return getElementFromStructureView(project, editor, builder);
+  }
+
+  @Nullable
+  private static Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor, @NotNull StructureViewBuilder builder) {
+    if (builder instanceof TreeBasedStructureViewBuilder) {
+      return getElementFromStructureTreeView(editor, (TreeBasedStructureViewBuilder)builder);
+    }
+    StructureView structureView = builder.createStructureView(editor, project);
+    Object selectorInFile = structureView.getTreeModel().getCurrentEditorElement();
+    Disposer.dispose(structureView);
+    return selectorInFile;
+  }
+
+  @Nullable
+  private static Object getElementFromStructureTreeView(@NotNull FileEditor fileEditor, TreeBasedStructureViewBuilder builder) {
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    StructureViewModel model = builder.createStructureViewModel(editor);
+    Object selectorInFile = model.getCurrentEditorElement();
+    Disposer.dispose(model);
+    return selectorInFile;
   }
 
   @Nullable

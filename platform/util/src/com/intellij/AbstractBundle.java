@@ -4,8 +4,10 @@ package com.intellij;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -193,16 +195,28 @@ public class AbstractBundle {
         return null;
       }
 
-      InputStream stream = loader.getResourceAsStream(resourceName);
-      if (stream == null) {
-        return null;
+      if (loader instanceof UrlClassLoader) {
+        // checkParents - https://youtrack.jetbrains.com/issue/IDEA-282831
+        byte[] data = ((UrlClassLoader)loader).getResourceAsBytes(resourceName, true);
+        if (data == null) {
+          return null;
+        }
+        else {
+          return new PropertyResourceBundle(new InputStreamReader(new ByteArrayInputStream(data), StandardCharsets.UTF_8));
+        }
       }
+      else {
+        InputStream stream = loader.getResourceAsStream(resourceName);
+        if (stream == null) {
+          return null;
+        }
 
-      try {
-        return new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
-      }
-      finally {
-        stream.close();
+        try {
+          return new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
+        }
+        finally {
+          stream.close();
+        }
       }
     }
   }

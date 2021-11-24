@@ -8,7 +8,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.json.JsonBundle
-import com.intellij.json.json5.Json5FileType
+import com.intellij.json.JsonFileType
 import com.intellij.json.psi.JsonFile
 import com.intellij.jsonpath.JsonPathFileType
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_EXPRESSION_KEY
@@ -209,7 +209,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
   }
 
   protected fun initJsonEditor(fileName: String, isViewer: Boolean, kind: EditorKind): Editor {
-    val sourceVirtualFile = LightVirtualFile(fileName, Json5FileType.INSTANCE, "")
+    val sourceVirtualFile = LightVirtualFile(fileName, JsonFileType.INSTANCE, "") // require strict JSON with quotes
     val sourceFile = PsiManager.getInstance(project).findFile(sourceVirtualFile)!!
     val document = PsiDocumentManager.getInstance(project).getDocument(sourceFile)!!
 

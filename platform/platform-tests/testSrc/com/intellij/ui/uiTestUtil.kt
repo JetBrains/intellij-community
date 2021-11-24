@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.components.ActionLink
@@ -51,7 +52,7 @@ open class RequireHeadlessMode : ExternalResource() {
       // on TC headless is not enabled
     }
     else {
-      System.setProperty("java.awt.headless", "true")
+      UITestUtil.setHeadlessProperty(true)
       if (!GraphicsEnvironment.isHeadless()) {
         throw RuntimeException("must be headless")
       }

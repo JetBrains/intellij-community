@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.javac.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
@@ -10,7 +10,7 @@ import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import java.util.Collection;
 
-public class JavaBackwardReferenceRegistrar implements JavacFileReferencesRegistrar {
+public final class JavaBackwardReferenceRegistrar implements JavacFileReferencesRegistrar {
   private volatile JavaBackwardReferenceIndexWriter myWriter;
 
   @Override
@@ -26,7 +26,7 @@ public class JavaBackwardReferenceRegistrar implements JavacFileReferencesRegist
   @SuppressWarnings("unchecked")
   @Override
   public void registerFile(CompileContext context, String filePath,
-                           TObjectIntHashMap<? extends JavacRef> refs,
+                           Iterable<Object2IntMap.Entry<? extends JavacRef>> refs,
                            Collection<? extends JavacDef> defs,
                            Collection<? extends JavacTypeCast> casts,
                            Collection<? extends JavacRef> implicitToString) {

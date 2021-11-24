@@ -15,8 +15,10 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenDistributionsInfo : DistributionsInfo {
+  override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.label")
+
   override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.name")
-  override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.hint")
+  override val settingsHint: String? = null
 
   override val comboBoxActionName: String = MavenConfigurableBundle.message("maven.run.configuration.specify.distribution.action.name")
 

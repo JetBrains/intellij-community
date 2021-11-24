@@ -8,7 +8,6 @@ import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAcce
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -38,15 +37,17 @@ class RecordBuilder {
 
   void addRecordHeader(@Nullable PsiMethod canonicalCtor, @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
     myRecordText.append("(");
-    if (canonicalCtor != null) {
-      StringJoiner recordComponentsJoiner = new StringJoiner(",");
-      for (PsiParameter parameter : canonicalCtor.getParameterList().getParameters()) {
-        String parameterName = parameter.getName();
-        String annotationsText = generateAnnotationsText(parameterName, fieldAccessors);
-        recordComponentsJoiner.add(annotationsText + parameter.getType().getCanonicalText() + " " + parameterName);
-      }
-      myRecordText.append(recordComponentsJoiner);
+    StringJoiner recordComponentsJoiner = new StringJoiner(",");
+    if (canonicalCtor == null) {
+      fieldAccessors.forEach(
+        (field, fieldAccessor) -> recordComponentsJoiner.add(generateComponentText(field, field.getType(), fieldAccessor)));
     }
+    else {
+      Arrays.stream(canonicalCtor.getParameterList().getParameters())
+        .map(parameter -> generateComponentText(parameter, parameter.getType(), fieldAccessors))
+        .forEach(recordComponentsJoiner::add);
+    }
+    myRecordText.append(recordComponentsJoiner);
     myRecordText.append(")");
   }
 
@@ -84,24 +85,28 @@ class RecordBuilder {
     PsiJavaFile psiFile = (PsiJavaFile)PsiFileFactory.getInstance(myOriginClass.getProject())
       .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, myRecordText.toString(), false, false);
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_16);
-    PsiClass psiRecord = psiFile.getClasses()[0];
-    CodeStyleManager.getInstance(myOriginClass.getProject()).reformat(psiRecord);
-    return psiRecord;
+    return psiFile.getClasses()[0];
   }
 
   @NotNull
-  private static String generateAnnotationsText(@NotNull String parameterName,
-                                                @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
+  private static String generateComponentText(@NotNull PsiParameter parameter, @NotNull PsiType componentType,
+                                              @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
     PsiField field = null;
     FieldAccessorCandidate fieldAccessorCandidate = null;
     for (var entry : fieldAccessors.entrySet()) {
-      if (entry.getKey().getName().equals(parameterName)) {
+      if (entry.getKey().getName().equals(parameter.getName())) {
         field = entry.getKey();
         fieldAccessorCandidate = entry.getValue();
         break;
       }
     }
     assert field != null;
+    return generateComponentText(field, componentType, fieldAccessorCandidate);
+  }
+
+  @NotNull
+  private static String generateComponentText(@NotNull PsiField field, @NotNull PsiType componentType,
+                                              @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
     PsiAnnotation[] fieldAnnotations = field.getAnnotations();
     String fieldAnnotationsText = Arrays.stream(fieldAnnotations).map(PsiAnnotation::getText).collect(Collectors.joining(" "));
     String annotationsText = fieldAnnotationsText == "" ? fieldAnnotationsText : fieldAnnotationsText + " ";
@@ -112,7 +117,7 @@ class RecordBuilder {
         .map(PsiAnnotation::getText).collect(Collectors.joining(" "));
       annotationsText = accessorAnnotationsText == "" ? annotationsText : annotationsText + accessorAnnotationsText + " ";
     }
-    return annotationsText;
+    return annotationsText + componentType.getCanonicalText() + " " + field.getName();
   }
 
   private void processOverrideAnnotation(@NotNull PsiModifierList accessorModifiers) {

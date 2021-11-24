@@ -91,17 +91,18 @@ mNUM_BIN = 0 (b | B) [0-1] ("_"* [0-1])*
 mNUM_HEX= 0(x | X) {mHEX_DIGIT} ("_"* {mHEX_DIGIT})*
 mNUM_OCT = 0[0-7] ("_"* [0-7])*
 mNUM_DEC = {mDIGIT} ("_"* {mDIGIT})*
+mNUM_FLOAT_DEC = "." {mNUM_DEC}
 
 mNUM_INT_PART = {mNUM_BIN} | {mNUM_HEX} | {mNUM_OCT} | {mNUM_DEC}
 mNUM_INT = {mNUM_INT_PART} {mINT_SUFFIX}?
 mNUM_LONG = {mNUM_INT_PART} {mLONG_SUFFIX}
 mNUM_BIG_INT = {mNUM_INT_PART} {mBIG_SUFFIX}
-mNUM_FLOAT = {mNUM_DEC} ("." {mNUM_DEC})? {mEXPONENT}? {mFLOAT_SUFFIX}
-mNUM_DOUBLE = {mNUM_DEC} ("." {mNUM_DEC})? {mEXPONENT}? {mDOUBLE_SUFFIX}
-mNUM_BIG_DECIMAL = {mNUM_DEC} (
-  ({mEXPONENT} {mBIG_SUFFIX}?) |
-  ("." {mNUM_DEC} {mEXPONENT}? {mBIG_SUFFIX}?) |
-  {mBIG_SUFFIX}
+mNUM_FLOAT = ({mNUM_DEC} {mNUM_FLOAT_DEC}? | {mNUM_FLOAT_DEC}) {mEXPONENT}? {mFLOAT_SUFFIX}
+mNUM_DOUBLE = ({mNUM_DEC} {mNUM_FLOAT_DEC}? | {mNUM_FLOAT_DEC}) {mEXPONENT}? {mDOUBLE_SUFFIX}
+mNUM_BIG_DECIMAL = (
+  ({mNUM_DEC} {mNUM_FLOAT_DEC}? {mEXPONENT} {mBIG_SUFFIX}?) |
+  ({mNUM_DEC}? {mNUM_FLOAT_DEC} {mEXPONENT}? {mBIG_SUFFIX}?) |
+  ({mNUM_DEC} {mBIG_SUFFIX})
 )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,6 +141,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "interface"     { return storeToken(KW_INTERFACE); }
   "enum"          { return storeToken(KW_ENUM); }
   "trait"         { return storeToken(KW_TRAIT); }
+  "record"        { return storeToken(KW_RECORD); }
   "extends"       { return storeToken(KW_EXTENDS); }
   "super"         { return storeToken(KW_SUPER); }
   "void"          { return storeToken(KW_VOID); }
@@ -472,7 +474,9 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 "&&"                                      { return storeToken(T_LAND); }
 ";"                                       { return storeToken(T_SEMI); }
 ".."                                      { return storeToken(T_RANGE); }
-"..<"                                     { return storeToken(T_RANGE_EX); }
+"..<"                                     { return storeToken(T_RANGE_RIGHT_OPEN); }
+"<.."                                     { return storeToken(T_RANGE_LEFT_OPEN); }
+"<..<"                                    { return storeToken(T_RANGE_BOTH_OPEN); }
 "..."                                     { return storeToken(T_ELLIPSIS); }
 "*."                                      { return storeToken(T_SPREAD_DOT); }
 "?."                                      { return storeToken(T_SAFE_DOT); }

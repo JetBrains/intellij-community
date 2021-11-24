@@ -121,7 +121,9 @@ public interface GroovyTokenTypes {
   IElementType mSEMI = T_SEMI;
   IElementType mDOLLAR = T_DOLLAR;
   IElementType mRANGE_INCLUSIVE = T_RANGE;
-  IElementType mRANGE_EXCLUSIVE = T_RANGE_EX;
+  IElementType mRANGE_EXCLUSIVE_LEFT = T_RANGE_LEFT_OPEN;
+  IElementType mRANGE_EXCLUSIVE_RIGHT = T_RANGE_RIGHT_OPEN;
+  IElementType mRANGE_EXCLUSIVE_BOTH = T_RANGE_BOTH_OPEN;
   IElementType mTRIPLE_DOT = T_ELLIPSIS;
   IElementType mSPREAD_DOT = T_SPREAD_DOT;
   IElementType mOPTIONAL_DOT = T_SAFE_DOT;
@@ -179,6 +181,7 @@ public interface GroovyTokenTypes {
   IElementType kPROTECTED = KW_PROTECTED;
   IElementType kPUBLIC = KW_PUBLIC;
   IElementType kRETURN = KW_RETURN;
+  IElementType kRECORD = KW_RECORD;
   IElementType kSEALED = KW_SEALED;
   IElementType kSHORT = KW_SHORT;
   IElementType kSTATIC = KW_STATIC;

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -224,7 +225,7 @@ public final class NewMappings implements Disposable {
       if (frame != null && !Disposer.isDisposed(frame)) {
         frame.updateView();
       }
-    });
+    }, myProject.getDisposed());
   }
 
   @NotNull
@@ -247,6 +248,10 @@ public final class NewMappings implements Disposable {
 
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
+
+    if (!TrustedProjects.isTrusted(myProject)) {
+      return new Mappings(Collections.emptyList(), pointerDisposable);
+    }
 
     try {
       // direct mappings have priority over <Project> mappings

@@ -2,14 +2,13 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 
 class AnalyzeDependenciesAction : AbstractAnalyzeDependenciesAction() {
   override fun getSystemId(e: AnActionEvent): ProjectSystemId? = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID)
 
-  override fun getProjectId(e: AnActionEvent): ExternalSystemProjectId? = null
+  override fun getExternalProjectPath(e: AnActionEvent): String? = null
 
-  override fun getDependency(e: AnActionEvent): DependenciesContributor.Dependency? = null
+  override fun getDependency(e: AnActionEvent): DependencyContributor.Dependency? = null
 }

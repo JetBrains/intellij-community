@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.project.Project;
@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
@@ -41,10 +42,12 @@ public final class VcsDiffUtil {
   @Nls
   @NotNull
   public static String getRevisionTitle(@NotNull @NlsSafe String revision, @Nullable FilePath file, @Nullable FilePath baseFile) {
-    return revision +
-           (file == null || VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
-            ? ""
-            : " (" + getRelativeFileName(baseFile, file) + ")");
+    boolean needFileName = file != null && !VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(baseFile, file);
+    if (!needFileName) return revision;
+
+    String fileName = getRelativeFileName(baseFile, file);
+
+    return revision.isEmpty() ? fileName : String.format("%s (%s)", revision, fileName); //NON-NLS
   }
 
   public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
@@ -52,7 +55,9 @@ public final class VcsDiffUtil {
     ContentRevision beforeRevision = change.getBeforeRevision();
     FilePath aFile = afterRevision == null ? null : afterRevision.getFile();
     FilePath bFile = beforeRevision == null ? null : beforeRevision.getFile();
-    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevision, aFile, null));
+    String afterRevisionName = getShortHash(afterRevision);
+    if (StringUtil.isEmpty(afterRevisionName)) afterRevisionName = VcsBundle.message("diff.title.local");
+    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevisionName, aFile, null));
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
   }
 
@@ -113,7 +118,7 @@ public final class VcsDiffUtil {
     String dialogTitle = VcsBundle.message("history.dialog.title.difference.between.versions.in",
                                            revNumTitle1, revNumTitle2, VcsUtil.getFilePath(file));
 
-    CompareWithLocalDialog.showDialog(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
+    CompareWithLocalDialog.showChanges(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
       return provider.compareWithWorkingDir(file, targetRevNumber);
     });
   }

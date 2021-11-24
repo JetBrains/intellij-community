@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 
 final class JavaPluginLayout {
   static PluginLayout javaPlugin(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure addition = {}) {
@@ -77,7 +78,7 @@ final class JavaPluginLayout {
       }
 
       withArtifact("debugger-agent", "rt")
-      withProjectLibrary("Eclipse")
+      layout.includedProjectLibraries.add(new ProjectLibraryData("Eclipse", "ecj", ProjectLibraryData.PackMode.STANDALONE_MERGED))
       withProjectLibrary("jgoodies-common")
       withProjectLibrary("jps-javac-extension")
       withProjectLibrary("jb-jdi")

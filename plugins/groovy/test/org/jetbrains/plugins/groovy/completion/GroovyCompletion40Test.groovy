@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
 class GroovyCompletion40Test extends GroovyCompletionTestBase {
 
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_4_0
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_4_0_REAL_JDK
 
   @Override
   protected void tearDown() {

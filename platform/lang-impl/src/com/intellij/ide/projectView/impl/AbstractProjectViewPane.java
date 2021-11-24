@@ -85,6 +85,13 @@ import java.util.function.Predicate;
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SLOW_DATA_PROVIDERS;
 
+/**
+ * Allows to add additional panes to the Project view.
+ * For example, Packages view or Scope view.
+ *
+ * @see AbstractProjectViewPSIPane
+ * @see ProjectViewPane
+ */
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
   public static final ProjectExtensionPointName<AbstractProjectViewPane> EP
@@ -422,7 +429,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public abstract SelectInTarget createSelectInTarget();
 
   public final TreePath getSelectedPath() {
-    return myTree == null ? null : TreeUtil.getSelectedPathIfOne(myTree);
+    return TreeUtil.getSelectedPathIfOne(myTree);
   }
 
   public final NodeDescriptor getSelectedDescriptor() {

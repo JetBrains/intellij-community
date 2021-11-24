@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.TrustedProjectSettings;
+import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -35,7 +35,6 @@ import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,8 +49,12 @@ import java.util.List;
 
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
+/**
+ * Defines the new project wizard, which is used in small IDEs where we don't need to work with modules directly
+ */
 public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware, ActionsWithPanelProvider {
-  static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME = new ExtensionPointName<>("com.intellij.directoryProjectGenerator");
+  public static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME =
+    new ExtensionPointName<>("com.intellij.directoryProjectGenerator");
 
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
   private static final Key<Boolean> CREATED_KEY = new Key<>("abstract.new.project.step.created");
@@ -84,7 +87,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return;
     }
 
-    ProjectTemplate[] templates = new ArchivedTemplatesFactory().createTemplates(CUSTOM_GROUP, null);
+    ProjectTemplate[] templates = new ArchivedTemplatesFactory().createTemplates(CUSTOM_GROUP);
     List<DirectoryProjectGenerator<?>> projectGenerators;
     if (templates.length == 0) {
       projectGenerators = Collections.emptyList();
@@ -145,11 +148,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
       ProjectSettingsStepBase<T> step;
       if (generator instanceof CustomStepProjectGenerator) {
-        //noinspection unchecked,CastConflictsWithInstanceof
+        //noinspection unchecked
         step = (ProjectSettingsStepBase<T>)((CustomStepProjectGenerator<T>)generator).createStep(generator, callback);
       }
       else {
-        //noinspection unchecked
         step = createProjectSpecificSettingsStep(generator, callback);
       }
 
@@ -178,7 +180,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       Project projectToClose = frame != null ? frame.getProject() : null;
       DirectoryProjectGenerator<T> generator = settings.getProjectGenerator();
       T actualSettings = projectGeneratorPeer.getSettings();
-      Project project = doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
+      doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
     }
   }
 
@@ -197,7 +199,8 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return null;
     }
 
-    VirtualFile baseDir = WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(location.toString())));
+    VirtualFile baseDir = WriteAction.compute(
+      () -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(location.toString())));
     if (baseDir == null) {
       LOG.error("Couldn't find '" + location + "' in VFS");
       return null;
@@ -223,21 +226,15 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
     OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false)
       .withBeforeOpenCallback((project) -> {
-        // set project trusted state directly to avoid notification
-        var service = project.getService(TrustedProjectSettings.class);
-        if (service != null) {
-          service.setTrustedState(ThreeState.YES);
-        }
-
         project.putUserData(CREATED_KEY, true);
         return true;
       });
+    TrustedPaths.getInstance().setProjectPathTrusted(location, true);
     Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
     if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
     logProjectGeneratedEvent(generator, project);
-
     return project;
   }
 

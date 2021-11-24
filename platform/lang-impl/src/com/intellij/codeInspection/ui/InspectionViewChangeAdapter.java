@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.reference.RefElement;
@@ -10,7 +10,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
+final class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   private final InspectionResultsView myView;
   private final Alarm myAlarm;
   private final Set<VirtualFile> myUnPresentEditedFiles = Collections.synchronizedSet(ContainerUtil.createWeakSet());
@@ -89,7 +88,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     PsiFile file = event.getFile();
     if (file != null) {
       VirtualFile vFile = file.getVirtualFile();
-      if (!myUnPresentEditedFiles.contains(vFile)) {
+      if (vFile != null && !myUnPresentEditedFiles.contains(vFile)) {
         synchronized (myFilesToProcess) {
           myFilesToProcess.add(vFile);
         }
@@ -134,10 +133,10 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
 
       Set<VirtualFile> filesToCheck;
       synchronized (myFilesToProcess) {
-        filesToCheck = new THashSet<>(myFilesToProcess);
+        filesToCheck = new HashSet<>(myFilesToProcess);
         myFilesToProcess.clear();
       }
-      Set<VirtualFile> unPresentFiles = new THashSet<>(filesToCheck);
+      Set<VirtualFile> unPresentFiles = new HashSet<>(filesToCheck);
       if (!filesToCheck.isEmpty()) {
         Processor<InspectionTreeNode> fileCheckProcessor = (node) -> {
           if (myView.isDisposed()) {

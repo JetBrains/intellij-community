@@ -247,7 +247,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
   }
 
   @Override
-  public HierarchableConfigurable addChild(Configurable configurable) {
+  public ConfigurableWrapper addChild(Configurable configurable) {
     return new CompositeWrapper(myEp, configurable);
   }
 
@@ -350,7 +350,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     }
 
     @Override
-    public HierarchableConfigurable addChild(Configurable configurable) {
+    public ConfigurableWrapper addChild(Configurable configurable) {
       if (myComparator != null) {
         int index = Arrays.binarySearch(myKids, configurable, myComparator);
         LOG.assertTrue(index < 0, "similar configurable is already exist");

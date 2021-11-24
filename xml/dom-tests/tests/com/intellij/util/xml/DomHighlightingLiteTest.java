@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -23,9 +23,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 
-/**
- * @author peter
- */
 public class DomHighlightingLiteTest extends DomTestCase {
   private DomElementAnnotationsManagerImpl myAnnotationsManager;
   private MockDomFileElement myElement;
@@ -40,7 +37,6 @@ public class DomHighlightingLiteTest extends DomTestCase {
 
       @Override
       protected InspectionProfile getInspectionProfile(final DomFileElement fileElement) {
-
         return myInspectionProfile;
       }
     };
@@ -48,8 +44,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     final XmlFile file = createXmlFile("<a/>");
     final MockDomElement rootElement = new MockDomElement() {
       @Override
-      @Nullable
-      public XmlElement getXmlElement() {
+      public @Nullable XmlElement getXmlElement() {
         return getXmlTag();
       }
 
@@ -58,23 +53,20 @@ public class DomHighlightingLiteTest extends DomTestCase {
         return file.getRootTag();
       }
 
-      @NotNull
       @Override
-      public Type getDomElementType() {
+      public @NotNull Type getDomElementType() {
         return DomElement.class;
       }
     };
 
     myElement = new MockDomFileElement() {
       @Override
-      @Nullable
-      public XmlElement getXmlElement() {
+      public @Nullable XmlElement getXmlElement() {
         return file;
       }
 
       @Override
-      @NotNull
-      public XmlFile getFile() {
+      public @NotNull XmlFile getFile() {
         return file;
       }
 
@@ -84,14 +76,12 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
 
       @Override
-      @NotNull
-      public DomElement getRootElement() {
+      public @NotNull DomElement getRootElement() {
         return rootElement;
       }
 
-      @NotNull
       @Override
-      public Class<DomElement> getRootElementClass() {
+      public @NotNull Class<DomElement> getRootElementClass() {
         return DomElement.class;
       }
 
@@ -201,13 +191,13 @@ public class DomHighlightingLiteTest extends DomTestCase {
     myElement.setFileDescription(new MyNonHighlightingDomFileDescription());
     assertEquals(DomHighlightStatus.NONE, myAnnotationsManager.getHighlightStatus(myElement));
 
-    myAnnotationsManager.appendProblems(myElement, createHolder(), MockDomInspection.class);
+    myAnnotationsManager.appendProblems(myElement, createHolder(), MockDomInspection.getInspection());
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
   }
   public void testHighlightStatus_MockAnnotatingDomInspection() {
     myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
 
-    myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.class);
+    myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.getInspection());
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
   }
 
@@ -216,8 +206,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
       @Override
-      public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager,
-                                           final boolean isOnTheFly) {
+      public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         myAnnotationsManager.appendProblems(myElement, createHolder(), this.getClass());
         return ProblemDescriptor.EMPTY_ARRAY;
       }
@@ -229,7 +218,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     registerInspectionKey(inspection);
     myInspectionProfile.setInspectionTools(Collections.singletonList(new LocalInspectionToolWrapper(inspection)));
 
-    myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.class);
+    myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.getInspection());
     assertEquals(DomHighlightStatus.ANNOTATORS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
 
     myAnnotationsManager.appendProblems(myElement, createHolder(), inspection.getClass());
@@ -243,11 +232,9 @@ public class DomHighlightingLiteTest extends DomTestCase {
 
   public void testHighlightStatus_OtherInspections2() {
     myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
-    final MyDomElementsInspection inspection = new MyDomElementsInspection() {
-
+    MyDomElementsInspection inspection = new MyDomElementsInspection() {
       @Override
-      public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager,
-                                           final boolean isOnTheFly) {
+      public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         myAnnotationsManager.appendProblems(myElement, createHolder(), this.getClass());
         return ProblemDescriptor.EMPTY_ARRAY;
       }
@@ -261,7 +248,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     myInspectionProfile.setInspectionTools(Collections.singletonList(toolWrapper));
     myInspectionProfile.setEnabled(toolWrapper, false);
 
-    myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.class);
+    myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.getInspection());
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
   }
 
@@ -277,20 +264,17 @@ public class DomHighlightingLiteTest extends DomTestCase {
     }
 
     @Override
-    @NotNull
-    public String getGroupDisplayName() {
+    public @NotNull String getGroupDisplayName() {
       throw new UnsupportedOperationException("Method getGroupDisplayName is not yet implemented in " + getClass().getName());
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       throw new UnsupportedOperationException("Method getDisplayName is not yet implemented in " + getClass().getName());
     }
 
     @Override
-    @NotNull
-    public String getShortName() {
+    public @NotNull String getShortName() {
       return "xxx";
     }
   }
@@ -301,14 +285,12 @@ public class DomHighlightingLiteTest extends DomTestCase {
     }
 
     @Override
-    @NotNull
-    public String getGroupDisplayName() {
+    public @NotNull String getGroupDisplayName() {
       throw new UnsupportedOperationException("Method getGroupDisplayName is not yet implemented in " + getClass().getName());
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       throw new UnsupportedOperationException("Method getDisplayName is not yet implemented in " + getClass().getName());
     }
 
@@ -318,8 +300,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     }
 
     @Override
-    @NotNull
-    public String getShortName() {
+    public @NotNull String getShortName() {
       return "xxx";
     }
   }

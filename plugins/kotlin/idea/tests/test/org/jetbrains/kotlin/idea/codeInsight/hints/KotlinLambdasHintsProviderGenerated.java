@@ -58,6 +58,16 @@ public class KotlinLambdasHintsProviderGenerated extends AbstractKotlinLambdasHi
         runTest("testData/codeInsight/hints/lambda/ImplicitThis.kt");
     }
 
+    @TestMetadata("ImplicitThisAndIt.kt")
+    public void testImplicitThisAndIt() throws Exception {
+        runTest("testData/codeInsight/hints/lambda/ImplicitThisAndIt.kt");
+    }
+
+    @TestMetadata("ImplicitThisAndNamedSingleParameter.kt")
+    public void testImplicitThisAndNamedSingleParameter() throws Exception {
+        runTest("testData/codeInsight/hints/lambda/ImplicitThisAndNamedSingleParameter.kt");
+    }
+
     @TestMetadata("Label.kt")
     public void testLabel() throws Exception {
         runTest("testData/codeInsight/hints/lambda/Label.kt");

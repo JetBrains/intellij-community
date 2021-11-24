@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
@@ -29,9 +30,9 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,8 @@ import java.awt.event.WindowEvent;
 
 public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   public static final ExtensionPointName<WelcomeFrameProvider> EP = new ExtensionPointName<>("com.intellij.welcomeFrameProvider");
-  @NonNls static final String DIMENSION_KEY = "WELCOME_SCREEN";
+         static final String DIMENSION_KEY = "WELCOME_SCREEN";
+
   private static IdeFrame ourInstance;
   private static Disposable ourTouchbar;
 
@@ -74,18 +76,14 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       }
     });
 
-    myBalloonLayout = new BalloonLayoutImpl(rootPane, new Insets(8, 8, 8, 8));
+    myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
 
     myScreen = screen;
     setupCloseAction(this);
     MnemonicHelper.init(this);
     myScreen.setupFrame(this);
-    Disposer.register(ApplicationManager.getApplication(), new Disposable() {
-      @Override
-      public void dispose() {
-        WelcomeFrame.this.dispose();
-      }
-    });
+
+    Disposer.register(ApplicationManager.getApplication(), () -> this.dispose());
   }
 
   public static IdeFrame getInstance() {
@@ -113,7 +111,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     frame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(WindowEvent e) {
-        if (ProjectUtil.getOpenProjects().length == 0) {
+        if (ProjectUtilCore.getOpenProjects().length == 0) {
           ApplicationManager.getApplication().exit();
         }
         else {
@@ -146,10 +144,6 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
   }
 
   public static void showNow() {
-    if (ourInstance != null) {
-      return;
-    }
-
     Runnable show = prepareToShow();
     if (show != null) {
       show.run();
@@ -204,6 +198,10 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
   }
 
   public static void showIfNoProjectOpened() {
+    showIfNoProjectOpened(null);
+  }
+
+  public static void showIfNoProjectOpened(@Nullable AppLifecycleListener lifecyclePublisher) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -212,33 +210,35 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       windowManager.disposeRootFrame();
       if (windowManager.getProjectFrameHelpers().isEmpty()) {
-        showNow();
+        Runnable show = prepareToShow();
+        if (show != null) {
+          show.run();
+          if (lifecyclePublisher != null) {
+            lifecyclePublisher.welcomeScreenDisplayed();
+          }
+        }
       }
     }, ModalityState.NON_MODAL);
   }
 
-  @Nullable
   @Override
-  public StatusBar getStatusBar() {
+  public @Nullable StatusBar getStatusBar() {
     Container pane = getContentPane();
     return pane instanceof JComponent ? UIUtil.findComponentOfType((JComponent)pane, IdeStatusBarImpl.class) : null;
   }
 
-  @Nullable
   @Override
-  public BalloonLayout getBalloonLayout() {
+  public @Nullable BalloonLayout getBalloonLayout() {
     return myBalloonLayout;
   }
 
-  @NotNull
   @Override
-  public Rectangle suggestChildFrameBounds() {
+  public @NotNull Rectangle suggestChildFrameBounds() {
     return getBounds();
   }
 
-  @NotNull
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return ProjectManager.getInstance().getDefaultProject();
   }
 

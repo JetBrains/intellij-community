@@ -5,19 +5,19 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-import java.util.StringJoiner;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MergeDuplicateAttributesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  public MergeDuplicateAttributesFix(PsiElement element) {
+  public MergeDuplicateAttributesFix(PsiNameValuePair element) {
     super(element);
   }
 
@@ -27,42 +27,46 @@ public class MergeDuplicateAttributesFix extends LocalQuickFixAndIntentionAction
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiNameValuePair pair = (PsiNameValuePair)startElement;
-    final PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)pair.getParent();
-    final PsiNameValuePair[] attributes = parameterList.getAttributes();
-    final StringJoiner joiner = new StringJoiner(", ");
-    final String name = pair.getName();
-    final boolean[] isFirstValue = {true};
-    StreamEx.of(attributes).filterBy(PsiNameValuePair::getName, name).map(attribute -> attribute.getValue()).filter(Objects::nonNull)
-      .forEach(value -> {
-        CommentTracker ct = new CommentTracker();
-        if (value instanceof PsiArrayInitializerMemberValue) {
-          if (((PsiArrayInitializerMemberValue)value).getInitializers().length == 0 && !isFirstValue[0]) {
-            new CommentTracker().deleteAndRestoreComments(value.getParent());
-            return;
-          }
-          else {
-            final PsiElement lBrace = value.getFirstChild();
-            final PsiElement lastChild = value.getLastChild();
-            PsiElement maybeTrailingComma = PsiTreeUtil.skipWhitespacesAndCommentsBackward(lastChild);
-            if (PsiUtil.isJavaToken(maybeTrailingComma, JavaTokenType.COMMA)) {
-              maybeTrailingComma = maybeTrailingComma.getPrevSibling();
-            }
-            if (maybeTrailingComma == null) return;
-            joiner.add(ct.rangeText(lBrace.getNextSibling(), maybeTrailingComma));
-          }
+    PsiNameValuePair pair = (PsiNameValuePair)startElement;
+    PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)pair.getParent();
+    PsiNameValuePair[] attributes = parameterList.getAttributes();
+    List<String> strings = new ArrayList<>();
+    String name = pair.getName();
+    if (name == null) return;
+    for (PsiNameValuePair attribute : attributes) {
+      String attributeName = attribute.getName();
+      if (!name.equals(attributeName) && (attributeName != null || !PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name))) continue;
+      PsiAnnotationMemberValue value = attribute.getValue();
+      if (value == null) continue;
+      CommentTracker ct = new CommentTracker();
+      if (value instanceof PsiArrayInitializerMemberValue) {
+        if (((PsiArrayInitializerMemberValue)value).getInitializers().length != 0) {
+          PsiElement lBrace = value.getFirstChild();
+          PsiElement rBrace = value.getLastChild();
+          PsiElement maybeTrailingComma = PsiTreeUtil.skipWhitespacesAndCommentsBackward(rBrace);
+          // if there is a trailing comma in the array initializer, this allows you to copy comments between the last initializer and
+          // the trailing comma to the merged value
+          PsiElement to = (PsiUtil.isJavaToken(maybeTrailingComma, JavaTokenType.COMMA) ? maybeTrailingComma : rBrace).getPrevSibling();
+          strings.add(ct.rangeText(lBrace.getNextSibling(), to));
         }
-        else {
-          joiner.add(value.getText());
-        }
-        if (!isFirstValue[0]) {
-          ct.deleteAndRestoreComments(value.getParent());
-        }
-        isFirstValue[0] = false;
-      });
-    final PsiAnnotation dummyAnnotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@A({" + joiner + "})", null);
-    final PsiAnnotationMemberValue mergedValue = dummyAnnotation.getParameterList().getAttributes()[0].getValue();
-    final PsiAnnotation annotation = (PsiAnnotation)parameterList.getParent();
+      }
+      else {
+        strings.add(value.getText());
+      }
+      if (strings.size() != 1) {
+        // the check above allows you to get from
+        // @SuppressWarnings(value = "foo", value = "bar")
+        // to
+        // @SuppressWarnings(value = {"foo", "bar"}),
+        // but not to
+        // @SuppressWarnings({"foo", "bar"})
+        ct.deleteAndRestoreComments(value.getParent());
+      }
+    }
+    PsiAnnotation dummyAnnotation =
+      JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@A({" + Strings.join(strings, ", ") + "})", null);
+    PsiAnnotationMemberValue mergedValue = dummyAnnotation.getParameterList().getAttributes()[0].getValue();
+    PsiAnnotation annotation = (PsiAnnotation)parameterList.getParent();
     annotation.setDeclaredAttributeValue(pair.getName(), mergedValue);
   }
 

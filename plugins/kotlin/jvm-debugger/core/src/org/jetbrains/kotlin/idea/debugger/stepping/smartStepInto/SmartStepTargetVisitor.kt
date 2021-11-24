@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParentCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
@@ -56,6 +57,66 @@ class SmartStepTargetVisitor(
             super.visitNamedFunction(function)
         }
     }
+
+    override fun visitCallableReferenceExpression(expression: KtCallableReferenceExpression) {
+        recordCallableReference(expression)
+        super.visitCallableReferenceExpression(expression)
+    }
+
+    private fun recordCallableReference(expression: KtCallableReferenceExpression) {
+        val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
+        val resolvedCall = expression.callableReference.getResolvedCall(bindingContext) ?: return
+        when (val descriptor = resolvedCall.resultingDescriptor) {
+            is FunctionDescriptor -> recordFunctionReference(expression, descriptor)
+            is PropertyDescriptor -> recordGetter(expression, descriptor, bindingContext)
+        }
+    }
+
+    private fun recordFunctionReference(expression: KtCallableReferenceExpression, descriptor: FunctionDescriptor) {
+        val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, descriptor)
+        if (descriptor.isFromJava && declaration is PsiMethod) {
+            append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+        } else if (declaration is KtNamedFunction) {
+            val label = KotlinMethodSmartStepTarget.calcLabel(descriptor)
+            append(KotlinMethodReferenceSmartStepTarget(descriptor, declaration, label, expression, lines))
+        }
+    }
+
+    private fun recordGetter(expression: KtExpression, descriptor: PropertyDescriptor, bindingContext: BindingContext) {
+        val getterDescriptor = descriptor.getter
+        if (getterDescriptor == null || getterDescriptor.isDefault) return
+
+        val ktDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, getterDescriptor) as? KtDeclaration ?: return
+
+        val delegatedResolvedCall = bindingContext[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, getterDescriptor]
+        if (delegatedResolvedCall != null) {
+            val delegatedPropertyGetterDescriptor = delegatedResolvedCall.resultingDescriptor
+            val delegateDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
+                element.project, delegatedPropertyGetterDescriptor
+            ) as? KtDeclarationWithBody ?: return
+            val label = "${descriptor.name}." + KotlinMethodSmartStepTarget.calcLabel(delegatedPropertyGetterDescriptor)
+            appendPropertyFilter(delegatedPropertyGetterDescriptor, delegateDeclaration, label, expression, lines)
+        } else {
+            if (ktDeclaration is KtPropertyAccessor && ktDeclaration.hasBody()) {
+                val label = KotlinMethodSmartStepTarget.calcLabel(getterDescriptor)
+                appendPropertyFilter(getterDescriptor, ktDeclaration, label, expression, lines)
+            }
+        }
+    }
+
+    private fun appendPropertyFilter(
+        descriptor: CallableMemberDescriptor,
+        declaration: KtDeclarationWithBody,
+        label: String,
+        expression: KtExpression,
+        lines: Range<Int>
+    ) =
+        when (expression) {
+            is KtCallableReferenceExpression ->
+                append(KotlinMethodReferenceSmartStepTarget(descriptor, declaration, label, expression, lines))
+            else ->
+                append(KotlinMethodSmartStepTarget(descriptor, declaration, label, expression, lines))
+        }
 
     private fun recordFunction(function: KtFunction): Boolean {
         val functionParameterInfo = function.getFunctionParameterInfo() ?: return false
@@ -135,36 +196,15 @@ class SmartStepTargetVisitor(
     }
 
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-        recordGetter(expression)
-        super.visitSimpleNameExpression(expression)
-    }
-
-    private fun recordGetter(expression: KtSimpleNameExpression) {
-        val bindingContext = expression.analyze()
+        val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
         val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
         val propertyDescriptor = resolvedCall.resultingDescriptor as? PropertyDescriptor ?: return
-
-        val getterDescriptor = propertyDescriptor.getter
-        if (getterDescriptor == null || getterDescriptor.isDefault) return
-
-        val ktDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, getterDescriptor) as? KtDeclaration ?: return
-
-        val delegatedResolvedCall = bindingContext[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, getterDescriptor]
-        if (delegatedResolvedCall != null) {
-            val delegatedPropertyGetterDescriptor = delegatedResolvedCall.resultingDescriptor
-            val label = "${propertyDescriptor.name}." + KotlinMethodSmartStepTarget.calcLabel(delegatedPropertyGetterDescriptor)
-            append(KotlinMethodSmartStepTarget(delegatedPropertyGetterDescriptor, ktDeclaration, label, expression, lines))
-        } else {
-            if (ktDeclaration is KtPropertyAccessor && ktDeclaration.hasBody()) {
-                val label = KotlinMethodSmartStepTarget.calcLabel(getterDescriptor)
-                append(KotlinMethodSmartStepTarget(getterDescriptor, ktDeclaration, label, expression, lines))
-            }
-        }
+        recordGetter(expression, propertyDescriptor, bindingContext)
+        super.visitSimpleNameExpression(expression)
     }
 
     private fun recordFunctionCall(expression: KtExpression) {
         val resolvedCall = expression.resolveToCall() ?: return
-
         val descriptor = resolvedCall.resultingDescriptor
         if (descriptor !is FunctionDescriptor || isIntrinsic(descriptor)) return
 

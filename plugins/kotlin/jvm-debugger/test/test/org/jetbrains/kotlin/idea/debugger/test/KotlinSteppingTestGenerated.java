@@ -231,6 +231,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/stepInto/inlineClass.kt");
         }
 
+        @TestMetadata("inlineFunctionLambdaOneLine.kt")
+        public void testInlineFunctionLambdaOneLine() throws Exception {
+            runTest("testData/stepping/stepInto/inlineFunctionLambdaOneLine.kt");
+        }
+
         @TestMetadata("inlineOnly.kt")
         public void testInlineOnly() throws Exception {
             runTest("testData/stepping/stepInto/inlineOnly.kt");
@@ -430,6 +435,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("inlineFunInPropertyGetter.kt")
         public void testInlineFunInPropertyGetter() throws Exception {
             runTest("testData/stepping/stepOver/inlineFunInPropertyGetter.kt");
+        }
+
+        @TestMetadata("inlineFunctionLambdaOneLine.kt")
+        public void testInlineFunctionLambdaOneLine() throws Exception {
+            runTest("testData/stepping/stepOver/inlineFunctionLambdaOneLine.kt");
         }
 
         @TestMetadata("inlineFunctionSameLines.kt")
@@ -1071,6 +1081,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/anonymousFunAsParamDefaultValue.kt");
         }
 
+        @TestMetadata("breakpointOnWhen.kt")
+        public void testBreakpointOnWhen() throws Exception {
+            runTest("testData/stepping/custom/breakpointOnWhen.kt");
+        }
+
         @TestMetadata("constantConditions.kt")
         public void testConstantConditions() throws Exception {
             runTest("testData/stepping/custom/constantConditions.kt");
@@ -1231,6 +1246,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/simpleConditionalBreakpoint.kt");
         }
 
+        @TestMetadata("smartStepIntoClassMethodReference.kt")
+        public void testSmartStepIntoClassMethodReference() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoClassMethodReference.kt");
+        }
+
         @TestMetadata("smartStepIntoComponentFunction.kt")
         public void testSmartStepIntoComponentFunction() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoComponentFunction.kt");
@@ -1286,9 +1306,19 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoLambdasOnOneLine.kt");
         }
 
+        @TestMetadata("smartStepIntoMethodReference.kt")
+        public void testSmartStepIntoMethodReference() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoMethodReference.kt");
+        }
+
         @TestMetadata("smartStepIntoNullSafeFunctionCalls.kt")
         public void testSmartStepIntoNullSafeFunctionCalls() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
+        }
+
+        @TestMetadata("smartStepIntoPropertyGetterReference.kt")
+        public void testSmartStepIntoPropertyGetterReference() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoPropertyGetterReference.kt");
         }
 
         @TestMetadata("smartStepIntoSamLambdaFromJavaFunInterface.kt")

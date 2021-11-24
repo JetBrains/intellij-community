@@ -7,7 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.*
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.BaseStep
@@ -168,6 +168,11 @@ class TextCompletionPopup<C : JTextComponent>(
       list.isFocusable = false
       list.font = textComponent.font
 
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_COPY))
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_CUT))
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_DELETE))
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_PASTE))
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_SELECT_ALL))
       list.addKeyboardAction(getKeyStrokes(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
         fireVariantChosen(list.selectedValue as? TextCompletionInfo)
         hidePopup()

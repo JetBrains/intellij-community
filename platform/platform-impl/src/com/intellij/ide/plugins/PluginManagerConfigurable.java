@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
@@ -63,12 +64,13 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Alexander Lobas
@@ -806,39 +808,17 @@ public final class PluginManagerConfigurable
           PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
           downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
-          Map<@NlsSafe String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
-          ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-          int downloadedEnabled = 0;
-          boolean hideImplDetails = PluginManager.getInstance().hideImplementationDetails();
-          String otherCategoryTitle = IdeBundle.message("plugins.configurable.other.bundled");
+          Map<Boolean, List<IdeaPluginDescriptorImpl>> visiblePlugins = getVisiblePlugins()
+            .collect(Collectors.partitioningBy(IdeaPluginDescriptorImpl::isBundled));
 
-          for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-            if (!appInfo.isEssentialPlugin(descriptor.getPluginId())) {
-              if (descriptor.isBundled()) {
-                if (hideImplDetails && descriptor.isImplementationDetail()) {
-                  continue;
-                }
-                String category = StringUtil.defaultIfEmpty(descriptor.getCategory(), otherCategoryTitle);
-                List<IdeaPluginDescriptor> groupDescriptors = bundledGroups.get(category);
-                if (groupDescriptors == null) {
-                  bundledGroups.put(category, groupDescriptors = new ArrayList<>());
-                }
-                groupDescriptors.add(descriptor);
-              }
-              else {
-                downloaded.descriptors.add(descriptor);
-                if (descriptor.isEnabled()) {
-                  downloadedEnabled++;
-                }
-              }
-            }
-          }
+          List<IdeaPluginDescriptorImpl> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
+          downloaded.descriptors.addAll(nonBundledPlugins);
 
           if (!downloaded.descriptors.isEmpty()) {
             myUpdateAll.setListener(new LinkListener<>() {
               @Override
               public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
-                myUpdateAll.setEnabled(false);
+                aSource.setEnabled(false);
 
                 for (UIPluginGroup group : getInstalledGroups()) {
                   for (ListPluginComponent plugin : group.plugins) {
@@ -848,51 +828,34 @@ public final class PluginManagerConfigurable
               }
             }, null);
             downloaded.addRightAction(myUpdateAll);
-
             downloaded.addRightAction(myUpdateCounter);
-
             downloaded.sortByName();
-            downloaded.titleWithCount(downloadedEnabled);
+
+            long enabledNonBundledCount = nonBundledPlugins.stream()
+              .map(IdeaPluginDescriptorImpl::getPluginId)
+              .filter(descriptor -> !PluginManagerCore.isDisabled(descriptor))
+              .count();
+            downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
             myInstalledPanel.addGroup(downloaded);
             myPluginModel.addEnabledGroup(downloaded);
           }
 
           myPluginModel.setDownloadedGroup(myInstalledPanel, downloaded, installing);
 
-          List<PluginsGroup> groups = new ArrayList<>();
-
-          for (Entry<@NlsSafe String, List<IdeaPluginDescriptor>> entry : bundledGroups.entrySet()) {
-            PluginsGroup group = new PluginsGroup(entry.getKey(), PluginsGroupType.INSTALLED) {
-              @Override
-              public void titleWithCount(int enabled) {
-                rightAction.setText(enabled == 0 ? IdeBundle.message("plugins.configurable.enable.all")
-                                                 : IdeBundle.message("plugins.configurable.disable.all"));
-              }
-            };
-            group.descriptors.addAll(entry.getValue());
-            group.sortByName();
-            group.rightAction = new LinkLabel<>(
-              "",
-              null,
-              (__, ___) -> myPluginModel.setEnabledState(group.descriptors,
-                                                         PluginEnableDisableAction
-                                                           .globally(group.rightAction.getText().startsWith("Enable")))
-            );
-            group.titleWithEnabled(myPluginModel);
-            groups.add(group);
-          }
-
-          ContainerUtil.sort(groups, (o1, o2) -> StringUtil.compare(o1.title, o2.title, true));
-          PluginsGroup otherGroup = ContainerUtil.find(groups, group -> group.title.equals(otherCategoryTitle));
-          if (otherGroup != null) {
-            groups.remove(otherGroup);
-            groups.add(otherGroup);
-          }
-
-          for (PluginsGroup group : groups) {
-            myInstalledPanel.addGroup(group);
-            myPluginModel.addEnabledGroup(group);
-          }
+          String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
+          visiblePlugins.get(Boolean.TRUE)
+            .stream()
+            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getCategory(), defaultCategory)))
+            .entrySet()
+            .stream()
+            .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
+            .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
+                                defaultCategory.equals(o2.title) ? -1 :
+                                o1.compareTo(o2))
+            .forEachOrdered(group -> {
+              myInstalledPanel.addGroup(group);
+              myPluginModel.addEnabledGroup(group);
+            });
 
           myPluginUpdatesService.calculateUpdates(updates -> {
             if (ContainerUtil.isEmpty(updates)) {
@@ -1171,6 +1134,47 @@ public final class PluginManagerConfigurable
     });
   }
 
+  private final class ComparablePluginsGroup extends PluginsGroup
+    implements Comparable<ComparablePluginsGroup> {
+
+    private boolean myIsEnable = false;
+
+    private ComparablePluginsGroup(@NotNull @NlsSafe String category,
+                                   @NotNull List<? extends IdeaPluginDescriptor> descriptors) {
+      super(category, PluginsGroupType.INSTALLED);
+
+      this.descriptors.addAll(descriptors);
+      sortByName();
+
+      rightAction = new LinkLabel<>("",
+                                    null,
+                                    (__, ___) -> setEnabledState());
+
+      titleWithEnabled(myPluginModel);
+    }
+
+    @Override
+    public int compareTo(@NotNull ComparablePluginsGroup other) {
+      return StringUtil.compare(title, other.title, true);
+    }
+
+    @Override
+    public void titleWithCount(int enabled) {
+      myIsEnable = enabled == 0;
+      String key = myIsEnable ? "plugins.configurable.enable.all" : "plugins.configurable.disable.all";
+      rightAction.setText(IdeBundle.message(key));
+    }
+
+    private void setEnabledState() {
+      if (myIsEnable) {
+        myPluginModel.enable(descriptors);
+      }
+      else {
+        myPluginModel.disable(descriptors);
+      }
+    }
+  }
+
   private static boolean containsQuery(IdeaPluginDescriptor descriptor, String searchQuery) {
     if (StringUtil.containsIgnoreCase(descriptor.getName(), searchQuery)) return true;
 
@@ -1332,6 +1336,18 @@ public final class PluginManagerConfigurable
     return IdeBundle.message("ide.restart.required.message",
                              action,
                              ApplicationNamesInfo.getInstance().getFullProductName());
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Stream<IdeaPluginDescriptorImpl> getVisiblePlugins() {
+    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+    boolean showImplementationDetails = RegistryManager.getInstance().is("plugins.show.implementation.details");
+
+    return PluginManagerCore.getPluginSet()
+      .allPlugins
+      .stream()
+      .filter(descriptor -> !applicationInfo.isEssentialPlugin(descriptor.getPluginId()))
+      .filter(descriptor -> showImplementationDetails || !descriptor.isImplementationDetail());
   }
 
   /**
@@ -1542,8 +1558,12 @@ public final class PluginManagerConfigurable
       }
 
       if (!descriptors.isEmpty()) {
-        myPluginModel.setEnabledState(descriptors,
-                                      PluginEnableDisableAction.globally(myEnable));
+        if (myEnable) {
+          myPluginModel.enable(descriptors);
+        }
+        else {
+          myPluginModel.disable(descriptors);
+        }
       }
     }
   }

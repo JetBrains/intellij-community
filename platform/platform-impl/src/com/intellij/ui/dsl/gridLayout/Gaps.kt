@@ -11,10 +11,10 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
   }
 
   init {
-    checkNonNegative(::top)
-    checkNonNegative(::left)
-    checkNonNegative(::bottom)
-    checkNonNegative(::right)
+    checkNonNegative("top", top)
+    checkNonNegative("left", left)
+    checkNonNegative("bottom", bottom)
+    checkNonNegative("right", right)
   }
 
   constructor(size: Int) : this(size, size, size, size)

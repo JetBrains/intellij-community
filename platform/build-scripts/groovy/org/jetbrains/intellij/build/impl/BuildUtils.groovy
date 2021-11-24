@@ -1,23 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.util.XmlDomReader
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
-import org.apache.tools.ant.util.SplitClassLoader
-import org.jdom.JDOMException
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.jps.model.library.JpsOrderRootType
 
+import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 @CompileStatic
@@ -75,7 +72,26 @@ final class BuildUtils {
     return text
   }
 
-  static void copyAndPatchFile(@NotNull Path sourcePath, @NotNull Path targetPath, Map<String, String> replacements, String marker = "__", String lineSeparator = "") {
+  static void replaceAll(Path file, String marker, String ...replacements) {
+    String text = Files.readString(file)
+    for (int i = 0; i < replacements.length; i += 2) {
+      text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
+    }
+    Files.writeString(file, text)
+  }
+
+  static String replaceAll(String text, String marker, String ...replacements) {
+    for (int i = 0; i < replacements.length; i += 2) {
+      text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
+    }
+    return text
+  }
+
+  static void copyAndPatchFile(@NotNull Path sourcePath,
+                               @NotNull Path targetPath,
+                               Map<String, String> replacements,
+                               String marker = "__",
+                               String lineSeparator = "") {
     Files.createDirectories(targetPath.parent)
     String content = replaceAll(Files.readString(sourcePath), replacements, marker)
     if (!lineSeparator.isEmpty()) {
@@ -105,60 +121,18 @@ final class BuildUtils {
     return System.out
   }
 
-  static void defineFtpTask(BuildContext context) {
-    List<File> commonsNetJars = context.project.libraryCollection.findLibrary("commons-net").getFiles(JpsOrderRootType.COMPILED) +
-      [context.paths.communityHomeDir.resolve("lib/ant/lib/ant-commons-net.jar").toFile()]
-    defineFtpTask(context.ant, commonsNetJars)
-  }
-
-  /**
-   * Defines ftp task using libraries from IntelliJ IDEA project sources.
-   */
-  @CompileDynamic
-  static void defineFtpTask(AntBuilder ant, List<File> commonsNetJars) {
-    def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER"
-    if (ant.project.hasReference(ftpTaskLoaderRef)) return
-
-    /*
-      We need this to ensure that FTP task class isn't loaded by the main Ant classloader, otherwise Ant will try to load FTPClient class
-      by the main Ant classloader as well and fail because 'commons-net-*.jar' isn't included to Ant classpath.
-      Probably we could call FTPClient directly to avoid this hack.
-     */
-    org.apache.tools.ant.types.Path ftpPath = new org.apache.tools.ant.types.Path(ant.project)
-    commonsNetJars.each {
-      ftpPath.createPathElement().setLocation(it)
-    }
-    ant.project.addReference(ftpTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), ftpPath, ant.project,
-                                                                    ["FTP", "FTPTaskConfig"] as String[]))
-    ant.taskdef(name: "ftp", classname: "org.apache.tools.ant.taskdefs.optional.net.FTP", loaderRef: ftpTaskLoaderRef)
-  }
-
-  /**
-   * Defines sshexec task using libraries from IntelliJ IDEA project sources.
-   */
-  @CompileDynamic
-  static void defineSshTask(BuildContext context) {
-    List<File> jschJars = context.project.libraryCollection.findLibrary("JSch").getFiles(JpsOrderRootType.COMPILED) +
-                                [context.paths.communityHomeDir.resolve("lib/ant/lib/ant-jsch.jar").toFile()]
-    def ant = context.ant
-    def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER"
-    if (ant.project.hasReference(sshTaskLoaderRef)) return
-
-    org.apache.tools.ant.types.Path pathSsh = new org.apache.tools.ant.types.Path(ant.project)
-    jschJars.each {
-      pathSsh.createPathElement().setLocation(it)
-    }
-    ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
-                                                                    ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
-    ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)
-  }
-
   static List<String> propertiesToJvmArgs(Map<String, Object> properties) {
     List<String> result = new ArrayList<String>(properties.size())
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
-      result.add("-D" + entry.key + "=" + entry.value)
+      addVmProperty(result, entry.key, entry.value.toString())
     }
     return result
+  }
+
+  static void addVmProperty(@NotNull List<String> args, @NotNull String key, @Nullable String value) {
+    if (value != null) {
+      args.add("-D" + key + "=" + value)
+    }
   }
 
   static void convertLineSeparators(@NotNull Path file, @NotNull String newLineSeparator) {
@@ -169,29 +143,22 @@ final class BuildUtils {
     }
   }
 
-  static List<File> getPluginJars(String pluginPath) {
-    File libFile = new File(pluginPath, "lib")
-    if (!libFile.exists()) {
-      throw new FileNotFoundException("$libFile")
-    }
-    def list = libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }
-    if (libFile == null) {
-      throw new IllegalStateException("Cannot list $libFile")
-    }
-    return list.collect { jarName ->
-      new File(libFile, jarName)
-    }
+  static List<Path> getPluginJars(Path pluginPath) {
+    return Files.newDirectoryStream(pluginPath.resolve("lib"), "*.jar").withCloseable { it.toList() }
   }
 
   @Nullable
-  static String readPluginId(File pluginJar) {
-    if (!pluginJar.isFile() || !FileUtil.extensionEquals(pluginJar.name, "jar")) return null
-    String pluginXmlText = ArchiveUtils.loadEntry(pluginJar.toPath(), "META-INF/plugin.xml")
-    if (pluginXmlText == null) return null
-    try {
-      return JDOMUtil.load(pluginXmlText).getChildTextTrim("id")
+  static String readPluginId(Path pluginJar) {
+    if (!pluginJar.toString().endsWith(".jar") || !Files.isRegularFile(pluginJar)) {
+      return null
     }
-    catch (JDOMException ignored) {
+
+    try {
+      FileSystems.newFileSystem(pluginJar, null).withCloseable {
+        return XmlDomReader.readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
+      }
+    }
+    catch (NoSuchFileException ignore) {
       return null
     }
   }

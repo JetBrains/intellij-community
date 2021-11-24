@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.isDirectory
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -18,6 +19,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.*
 import java.math.BigInteger
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
 import java.util.*
@@ -80,7 +82,7 @@ internal class MavenWrapperSupport {
     }
     val home = unpackZipFile(zipFile, indicator).canonicalFile
     MavenWrapperMapping.getInstance().myState.mapping[urlString] = home.absolutePath
-    return LocalMavenDistribution(home, urlString)
+    return LocalMavenDistribution(home.toPath(), urlString)
   }
 
   private fun unpackZipFile(zipFile: File, indicator: ProgressIndicator?): File {
@@ -202,9 +204,9 @@ internal class MavenWrapperSupport {
       val mapping = MavenWrapperMapping.getInstance()
       val cachedHome = mapping.myState.mapping.get(urlString)
       if (cachedHome != null) {
-        val file = File(cachedHome)
-        if (file.isDirectory) {
-          return LocalMavenDistribution(file, urlString)
+        val path = Path.of(cachedHome)
+        if (path.isDirectory()) {
+          return LocalMavenDistribution(path, urlString)
         }
         else {
           mapping.myState.mapping.remove(urlString)

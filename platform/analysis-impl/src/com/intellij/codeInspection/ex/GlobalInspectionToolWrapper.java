@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalInspectionTool, InspectionEP> {
   private static final Logger LOG = Logger.getInstance(GlobalInspectionToolWrapper.class);
 
-  public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool globalInspectionTool) {
-    super(globalInspectionTool, null);
+  public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool tool) {
+    super(tool, InspectionEP.GLOBAL_INSPECTION.getByKey(tool.getShortName(), GlobalInspectionToolWrapper.class, InspectionEP::getShortName));
   }
 
   public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool tool, @NotNull InspectionEP ep) {
@@ -22,7 +22,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   }
 
   public GlobalInspectionToolWrapper(@NotNull InspectionEP ep) {
-    super(null, ep);
+    super(ep);
   }
 
   private GlobalInspectionToolWrapper(@NotNull GlobalInspectionToolWrapper other) {

@@ -73,9 +73,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   public void scheduleForUpdate(@NotNull VirtualFile file) {
-    if (VfsEventsMerger.LOG != null) {
-      VfsEventsMerger.LOG.info("File " + file + " is scheduled for update");
-    }
     int fileId = FileBasedIndex.getFileId(file);
     if (!(file instanceof DeletedVirtualFileStub)) {
       Set<Project> projects = myFileBasedIndex.getContainingProjects(file);
@@ -85,6 +82,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       }
     }
 
+    VfsEventsMerger.tryLog("ADD_TO_UPDATE", file);
     myFilesToUpdate.put(fileId, file);
   }
 
@@ -92,6 +90,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     int fileId = FileBasedIndex.getFileId(file);
     VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
     if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
+      VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", file);
       myFilesToUpdate.remove(fileId);
     }
   }
@@ -162,7 +161,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (CLEAR_NON_INDEXABLE_FILE_DATA) {
       List<ID<?, ?>> extensions = getIndexedContentDependentExtensions(fileId);
       if (!extensions.isEmpty()) {
-        myFileBasedIndex.removeDataFromIndicesForFile(fileId, file);
+        myFileBasedIndex.removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
       }
       IndexingFlag.cleanProcessingFlag(file);
     }

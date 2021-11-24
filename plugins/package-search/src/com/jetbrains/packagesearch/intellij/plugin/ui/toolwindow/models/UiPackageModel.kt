@@ -1,21 +1,22 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import kotlinx.coroutines.CoroutineScope
 
 internal sealed class UiPackageModel<T : PackageModel> {
 
     abstract val packageModel: T
     abstract val declaredScopes: List<PackageScope>
+    abstract val userDefinedScopes: List<PackageScope>
     abstract val defaultScope: PackageScope
-    abstract val selectedVersion: PackageVersion
+    abstract val defaultVersion: NormalizedPackageVersion<*>
+    abstract val selectedVersion: NormalizedPackageVersion<*>
     abstract val selectedScope: PackageScope
     abstract val mixedBuildSystemTargets: Boolean
     abstract val packageOperations: PackageOperations
-    abstract val sortedVersions: List<PackageVersion>
+    abstract val sortedVersions: List<NormalizedPackageVersion<*>>
 
     val identifier
         get() = packageModel.identifier
@@ -23,23 +24,27 @@ internal sealed class UiPackageModel<T : PackageModel> {
     data class Installed(
         override val packageModel: PackageModel.Installed,
         override val declaredScopes: List<PackageScope>,
+        override val userDefinedScopes: List<PackageScope>,
+        override val defaultVersion: NormalizedPackageVersion<*>,
         override val defaultScope: PackageScope,
-        override val selectedVersion: PackageVersion,
+        override val selectedVersion: NormalizedPackageVersion<*>,
         override val selectedScope: PackageScope,
         override val mixedBuildSystemTargets: Boolean,
         override val packageOperations: PackageOperations,
-        override val sortedVersions: List<PackageVersion>
+        override val sortedVersions: List<NormalizedPackageVersion<*>>
     ) : UiPackageModel<PackageModel.Installed>()
 
     data class SearchResult(
         override val packageModel: PackageModel.SearchResult,
         override val declaredScopes: List<PackageScope>,
+        override val userDefinedScopes: List<PackageScope>,
+        override val defaultVersion: NormalizedPackageVersion<*>,
         override val defaultScope: PackageScope,
-        override val selectedVersion: PackageVersion,
+        override val selectedVersion: NormalizedPackageVersion<*>,
         override val selectedScope: PackageScope,
         override val mixedBuildSystemTargets: Boolean,
         override val packageOperations: PackageOperations,
-        override val sortedVersions: List<PackageVersion>
+        override val sortedVersions: List<NormalizedPackageVersion<*>>
     ) : UiPackageModel<PackageModel.SearchResult>()
 }
 
@@ -51,15 +56,22 @@ internal fun PackageModel.Installed.toUiPackageModel(
 ): UiPackageModel.Installed {
     val declaredScopes = declaredScopes(targetModules)
     val defaultScope = targetModules.defaultScope(project)
+
+    val sortedVersions = (getAvailableVersions(onlyStable) + latestInstalledVersion)
+        .distinct()
+        .sortedDescending()
+
     return UiPackageModel.Installed(
         packageModel = this,
         declaredScopes = declaredScopes,
+        userDefinedScopes = userDefinedScopes(project),
+        defaultVersion = sortedVersions.first(),
         defaultScope = defaultScope,
-        selectedVersion = getLatestInstalledVersion(),
+        selectedVersion = latestInstalledVersion,
         selectedScope = declaredScopes.firstOrNull() ?: defaultScope,
         mixedBuildSystemTargets = targetModules.isMixedBuildSystems,
-        packageOperations = computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
-        sortedVersions = PackageVersionUtils.sortWithHeuristicsDescending(getAvailableVersions(onlyStable))
+        packageOperations = project.lifecycleScope.computeActionsAsync(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
+        sortedVersions = sortedVersions
     )
 }
 
@@ -72,34 +84,30 @@ private fun PackageModel.Installed.declaredScopes(targetModules: TargetModules):
         .distinct()
         .sorted()
 
+private fun PackageModel.Installed.userDefinedScopes(project: Project) =
+    usageInfo.asSequence()
+        .map { it.projectModule }
+        .distinct()
+        .flatMap { it.moduleType.userDefinedScopes(project) }
+        .map { PackageScope.from(it) }
+        .toList()
+
 internal fun PackageModel.SearchResult.toUiPackageModel(
     targetModules: TargetModules,
     project: Project,
     searchResultUiState: SearchResultUiState?,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-    onlyStable: Boolean,
-) = this.toUiPackageModel(
+    onlyStable: Boolean
+) = toUiPackageModel(
     declaredScopes = targetModules.declaredScopes(project),
     defaultScope = targetModules.defaultScope(project),
     mixedBuildSystems = targetModules.isMixedBuildSystems,
     searchResultUiState = searchResultUiState,
     onlyStable = onlyStable,
     targetModules = targetModules,
-    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
+    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+    coroutineScope = project.lifecycleScope
 )
-
-private fun TargetModules.declaredScopes(project: Project): List<PackageScope> =
-    modules.flatMap { it.projectModule.moduleType.userDefinedScopes(project) }
-        .map { rawScope -> PackageScope.from(rawScope) }
-        .distinct()
-        .sorted()
-
-private fun TargetModules.defaultScope(project: Project): PackageScope =
-    if (!isMixedBuildSystems) {
-        PackageScope.from(modules.first().projectModule.moduleType.defaultScope(project))
-    } else {
-        PackageScope.Missing
-    }
 
 internal fun PackageModel.SearchResult.toUiPackageModel(
     declaredScopes: List<PackageScope>,
@@ -109,106 +117,28 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
     onlyStable: Boolean,
     targetModules: TargetModules,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-): UiPackageModel.SearchResult =
-    UiPackageModel.SearchResult(
+    coroutineScope: CoroutineScope
+): UiPackageModel.SearchResult {
+    val sortedVersions = getAvailableVersions(onlyStable).sortedDescending()
+    val selectedVersion = searchResultUiState?.selectedVersion ?: sortedVersions.first()
+    val selectedScope = searchResultUiState?.selectedScope ?: defaultScope
+    return UiPackageModel.SearchResult(
         packageModel = this,
         declaredScopes = declaredScopes,
+        userDefinedScopes = emptyList(),
+        defaultVersion = sortedVersions.first(),
         defaultScope = defaultScope,
-        selectedVersion = searchResultUiState?.selectedVersion
-            ?: PackageVersionUtils.highestVersionByName(getAvailableVersions(onlyStable)),
-        selectedScope = searchResultUiState?.selectedScope
-            ?: defaultScope,
+        selectedVersion = selectedVersion,
+        selectedScope = selectedScope,
         mixedBuildSystemTargets = mixedBuildSystems,
-        packageOperations = computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
-        sortedVersions = PackageVersionUtils.sortWithHeuristicsDescending(getAvailableVersions(onlyStable))
-    )
-
-private inline fun <reified T : PackageModel> computeActionsFor(
-    packageModel: T,
-    targetModules: TargetModules,
-    knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-    onlyStable: Boolean
-): PackageOperations {
-    val operationFactory = PackageSearchOperationFactory()
-
-    val availableVersions = packageModel.getAvailableVersions(onlyStable)
-
-    val upgradeToVersion = if (packageModel is PackageModel.Installed) {
-        val currentVersion = packageModel.getLatestInstalledVersion()
-        PackageVersionUtils.upgradeCandidateVersionOrNull(currentVersion, availableVersions)
-    } else {
-        null
-    }
-    val highestAvailableVersion = if (availableVersions.isNotEmpty()) {
-        PackageVersionUtils.highestSensibleVersionByNameOrNull(availableVersions)
-    } else {
-        null
-    }
-
-    val primaryOperationType = decidePrimaryOperationTypeFor(packageModel, upgradeToVersion)
-
-    val primaryOperations = mutableListOf<PackageSearchOperation<*>>()
-    val removeOperations = mutableListOf<PackageSearchOperation<*>>()
-    targetModules.modules.forEach { moduleModel ->
-        removeOperations += operationFactory.computeRemoveActionsFor(packageModel, moduleModel)
-
-        val project = moduleModel.projectModule.nativeModule.project
-        primaryOperations += when (primaryOperationType) {
-            PackageOperationType.INSTALL -> operationFactory.computeInstallActionsFor(
-                packageModel = packageModel,
-                moduleModel = moduleModel,
-                defaultScope = targetModules.defaultScope(project),
-                knownRepositories = knownRepositoriesInTargetModules,
-                onlyStable = onlyStable
-            )
-            PackageOperationType.UPGRADE -> operationFactory.computeUpgradeActionsFor(
-                packageModel = packageModel,
-                moduleModel = moduleModel,
-                knownRepositories = knownRepositoriesInTargetModules,
-                onlyStable = onlyStable
-            )
-            PackageOperationType.SET -> operationFactory.computeUpgradeActionsFor(
-                packageModel = packageModel,
-                moduleModel = moduleModel,
-                knownRepositories = knownRepositoriesInTargetModules,
-                onlyStable = onlyStable
-            )
-            else -> emptyList()
-        }
-    }
-
-    val repoToInstall = when (primaryOperationType) {
-        PackageOperationType.INSTALL -> highestAvailableVersion?.let {
-            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it)
-        }
-        PackageOperationType.UPGRADE -> upgradeToVersion?.let {
-            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it)
-        }
-        else -> null
-    }
-
-    return PackageOperations(
-        targetModules = targetModules,
-        primaryOperations = primaryOperations,
-        removeOperations = removeOperations,
-        targetVersion = highestAvailableVersion,
-        primaryOperationType = primaryOperationType,
-        repoToAddWhenInstalling = repoToInstall
+        packageOperations = coroutineScope.computeActionsAsync(
+            packageModel = this,
+            targetModules = targetModules,
+            knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+            onlyStable = onlyStable,
+            selectedScope = selectedScope,
+            selectedVersion = selectedVersion
+        ),
+        sortedVersions = sortedVersions
     )
 }
-
-private fun <T : PackageModel> decidePrimaryOperationTypeFor(
-    packageModel: T,
-    targetVersion: PackageVersion.Named?
-): PackageOperationType? =
-    when (packageModel) {
-        is PackageModel.SearchResult -> PackageOperationType.INSTALL
-        is PackageModel.Installed -> {
-            when {
-                targetVersion == null -> null
-                packageModel.usageInfo.any { it.version is PackageVersion.Missing } -> PackageOperationType.SET
-                else -> PackageOperationType.UPGRADE
-            }
-        }
-        else -> error("Unsupported package model type: ${packageModel::class.simpleName}")
-    }

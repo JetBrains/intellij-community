@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 import java.lang.Math.abs
 
 fun x() {

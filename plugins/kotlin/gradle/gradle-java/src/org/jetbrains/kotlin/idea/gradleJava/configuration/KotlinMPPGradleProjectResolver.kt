@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SmartList
@@ -24,7 +25,6 @@ import org.gradle.tooling.model.UnsupportedMethodException
 import org.gradle.tooling.model.idea.IdeaContentRoot
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.ExternalSystemNativeMainRunTask
@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.createKotlinMppPopulateModuleDependenciesContext
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.getCompilations
@@ -45,6 +44,9 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDepe
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedSerializedArgsInfo
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
@@ -67,9 +69,13 @@ import java.util.stream.Collectors
 
 @Order(ExternalSystemConstants.UNORDERED + 1)
 open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
+    private val cacheManager = KotlinMPPCompilerArgumentsCacheMergeManager
+
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
         return super.createModule(gradleModule, projectDataNode)?.also {
+            cacheManager.mergeCache(gradleModule, resolverCtx)
             initializeModuleData(gradleModule, it, projectDataNode, resolverCtx)
+            populateSourceSetInfos(gradleModule, it, resolverCtx)
         }
     }
 
@@ -96,7 +102,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             val buildScriptClasspathData = buildClasspathData(gradleModule, resolverCtx)
             ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData)
         }
-
         super.populateModuleExtraModels(gradleModule, ideModule)
     }
 
@@ -109,7 +114,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 nativeDebugAdvertised = true
                 suggestNativeDebug(resolverCtx.projectPath)
             }
-            if(mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
+            if (mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
                 suggestKotlinJsInspectionPackPlugin(resolverCtx.projectPath)
             }
             if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde() &&
@@ -119,7 +124,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())
             }
         }
-
         populateContentRoots(gradleModule, ideModule, resolverCtx)
     }
 
@@ -283,40 +287,18 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             }
         }
 
-        fun initializeModuleData(
+        private fun populateSourceSetInfos(
             gradleModule: IdeaModule,
             mainModuleNode: DataNode<ModuleData>,
-            projectDataNode: DataNode<ProjectData>,
             resolverCtx: ProjectResolverContext
         ) {
-            if (mainModuleNode.isMppDataInitialized) return
-
             val mainModuleData = mainModuleNode.data
             val mainModuleConfigPath = mainModuleData.linkedExternalProjectPath
             val mainModuleFileDirectoryPath = mainModuleData.moduleFileDirectoryPath
 
-            val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
-            val mppModel = resolverCtx.getMppModel(gradleModule)
-            if (mppModel == null || externalProject == null) return
-            mainModuleNode.isMppDataInitialized = true
-
-            val jdkName = gradleModule.jdkNameIfAny
-
-            // save artifacts locations.
-            val userData = projectDataNode.getUserData(MPP_CONFIGURATION_ARTIFACTS) ?: HashMap<String, MutableList<String>>().apply {
-                projectDataNode.putUserData(MPP_CONFIGURATION_ARTIFACTS, this)
-            }
-
-            mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
-                val path = toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
-                val currentModules = userData[path] ?: ArrayList<String>().apply { userData[path] = this }
-                // Test modules should not be added. Otherwise we could get dependnecy of java.mail on jvmTest
-                val allSourceSets = target.compilations.filter { !it.isTestModule }.flatMap { it.declaredSourceSets }.toSet()
-                val availableViaDependsOn = allSourceSets.flatMap { it.allDependsOnSourceSets }.mapNotNull { mppModel.sourceSetsByName[it] }
-                allSourceSets.union(availableViaDependsOn).forEach { sourceSet ->
-                    currentModules.add(getKotlinModuleId(gradleModule, sourceSet, resolverCtx))
-                }
-            }
+            val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) ?: return
+            val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
+            val projectDataNode = ExternalSystemApiUtil.findParent(mainModuleNode, ProjectKeys.PROJECT) ?: return
 
             val moduleGroup: Array<String>? = if (!resolverCtx.isUseQualifiedModuleNames) {
                 val gradlePath = gradleModule.gradleProject.path
@@ -376,7 +358,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                         }
 
                         it.ideModuleGroup = moduleGroup
-                        it.sdkName = jdkName
+                        it.sdkName = gradleModule.jdkNameIfAny
+
                     }
 
                     val kotlinSourceSet = createSourceSetInfo(
@@ -387,9 +370,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     kotlinSourceSet.externalSystemRunTasks =
                         compilation.declaredSourceSets.firstNotNullResult { sourceSetToRunTasks[it] } ?: emptyList()
 
-                    if (compilation.platform == KotlinPlatform.JVM || compilation.platform == KotlinPlatform.ANDROID) {
+                    /*if (compilation.platform == KotlinPlatform.JVM || compilation.platform == KotlinPlatform.ANDROID) {
                         compilationData.targetCompatibility = (kotlinSourceSet.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget
-                    } else if (compilation.platform == KotlinPlatform.NATIVE) {
+                    } else */if (compilation.platform == KotlinPlatform.NATIVE) {
                         // Kotlin/Native target has been added to KotlinNativeCompilation only in 1.3.60,
                         // so 'nativeExtensions' may be null in 1.3.5x or earlier versions
                         compilation.nativeExtensions?.konanTarget?.let { konanTarget ->
@@ -455,7 +438,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     }
 
                     it.ideModuleGroup = moduleGroup
-                    it.sdkName = jdkName
 
                     sourceSetToCompilationData[sourceSet.name]?.let { compilationDataRecords ->
                         it.targetCompatibility = compilationDataRecords
@@ -479,6 +461,38 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     }
                 if (existingSourceSetDataNode == null) {
                     sourceSetMap[moduleId] = Pair(sourceSetDataNode, createExternalSourceSet(sourceSet, sourceSetData, mppModel))
+                }
+            }
+        }
+
+        private fun initializeModuleData(
+            gradleModule: IdeaModule,
+            mainModuleNode: DataNode<ModuleData>,
+            projectDataNode: DataNode<ProjectData>,
+            resolverCtx: ProjectResolverContext
+        ) {
+            if (mainModuleNode.isMppDataInitialized) return
+
+            val mainModuleData = mainModuleNode.data
+
+            val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
+            val mppModel = resolverCtx.getMppModel(gradleModule)
+            if (mppModel == null || externalProject == null) return
+            mainModuleNode.isMppDataInitialized = true
+
+            // save artifacts locations.
+            val userData = projectDataNode.getUserData(MPP_CONFIGURATION_ARTIFACTS) ?: HashMap<String, MutableList<String>>().apply {
+                projectDataNode.putUserData(MPP_CONFIGURATION_ARTIFACTS, this)
+            }
+
+            mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
+                val path = toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
+                val currentModules = userData[path] ?: ArrayList<String>().apply { userData[path] = this }
+                // Test modules should not be added. Otherwise we could get dependnecy of java.mail on jvmTest
+                val allSourceSets = target.compilations.filter { !it.isTestModule }.flatMap { it.declaredSourceSets }.toSet()
+                val availableViaDependsOn = allSourceSets.flatMap { it.allDependsOnSourceSets }.mapNotNull { mppModel.sourceSetsByName[it] }
+                allSourceSets.union(availableViaDependsOn).forEach { sourceSet ->
+                    currentModules.add(getKotlinModuleId(gradleModule, sourceSet, resolverCtx))
                 }
             }
 
@@ -510,7 +524,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                         .map {
                             ExternalSystemTestRunTask(
                                 it.taskName,
-                                getKotlinModuleId(gradleModule, compilation, resolverCtx),
+                                gradleModule.gradleProject.path,
                                 target.name
                             )
                         }
@@ -799,26 +813,27 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, additionalVisibleSourceSetName)
                 }.toSet()
                 //TODO(auskov): target flours are lost here
-                info.compilerArguments = createCompilerArguments(
-                    emptyList(), sourceSet.actualPlatforms.singleOrNull() ?: KotlinPlatform.COMMON
-                ).also {
-                    it.multiPlatform = true
-                    it.languageVersion = languageSettings.languageVersion
-                    it.apiVersion = languageSettings.apiVersion
-                    it.progressiveMode = languageSettings.isProgressiveMode
-                    it.internalArguments = languageSettings.enabledLanguageFeatures.mapNotNull {
-                        val feature = LanguageFeature.fromString(it) ?: return@mapNotNull null
-                        val arg = "-XXLanguage:+$it"
-                        ManualLanguageFeatureSetting(feature, LanguageFeature.State.ENABLED, arg)
+                info.lazyCompilerArguments = lazy {
+                    createCompilerArguments(emptyList(), sourceSet.actualPlatforms.singleOrNull() ?: KotlinPlatform.COMMON).also {
+                        it.multiPlatform = true
+                        it.languageVersion = languageSettings.languageVersion
+                        it.apiVersion = languageSettings.apiVersion
+                        it.progressiveMode = languageSettings.isProgressiveMode
+                        it.internalArguments = languageSettings.enabledLanguageFeatures.mapNotNull {
+                            val feature = LanguageFeature.fromString(it) ?: return@mapNotNull null
+                            val arg = "-XXLanguage:+$it"
+                            ManualLanguageFeatureSetting(feature, LanguageFeature.State.ENABLED, arg)
+                        }
+                        it.optIn = languageSettings.optInAnnotationsInUse.toTypedArray()
+                        it.pluginOptions = languageSettings.compilerPluginArguments
+                        it.pluginClasspaths = languageSettings.compilerPluginClasspath.map(File::getPath).toTypedArray()
+                        it.freeArgs = languageSettings.freeCompilerArgs.toMutableList()
                     }
-                    it.optIn = languageSettings.optInAnnotationsInUse.toTypedArray()
-                    it.pluginOptions = languageSettings.compilerPluginArguments
-                    it.pluginClasspaths = languageSettings.compilerPluginClasspath.map(File::getPath).toTypedArray()
-                    it.freeArgs = languageSettings.freeCompilerArgs.toMutableList()
                 }
             }
         }
 
+        @Suppress("DEPRECATION_ERROR")
         // TODO: Unite with other createSourceSetInfo
         // This method is used in Android side of import and it's signature could not be changed
         fun createSourceSetInfo(
@@ -834,6 +849,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     resolverCtx
                 )
             }
+
+            val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
+
             return KotlinSourceSetInfo(compilation).also { sourceSetInfo ->
                 sourceSetInfo.moduleId = getKotlinModuleId(gradleModule, compilation, resolverCtx)
                 sourceSetInfo.gradleModuleId = getModuleId(resolverCtx, gradleModule)
@@ -847,13 +865,31 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
                 }.toSet()
 
-                sourceSetInfo.compilerArguments =
-                    createCompilerArguments(compilation.arguments.currentArguments.toList(), compilation.platform).also {
-                        it.multiPlatform = true
+                when (val cachedArgsInfo = compilation.cachedArgsInfo) {
+                    is CachedExtractedArgsInfo -> {
+                        val restoredArgs = lazy { CachedArgumentsRestoring.restoreExtractedArgs(cachedArgsInfo, cacheHolder) }
+                        sourceSetInfo.lazyCompilerArguments = lazy { restoredArgs.value.currentCompilerArguments }
+                        sourceSetInfo.lazyDefaultCompilerArguments = lazy { restoredArgs.value.defaultCompilerArguments }
+                        sourceSetInfo.lazyDependencyClasspath =
+                            lazy { restoredArgs.value.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) } }
                     }
-                sourceSetInfo.dependencyClasspath = compilation.dependencyClasspath.toList()
-                sourceSetInfo.defaultCompilerArguments =
-                    createCompilerArguments(compilation.arguments.defaultArguments.toList(), compilation.platform)
+                    is CachedSerializedArgsInfo -> {
+                        val restoredArgs =
+                            lazy { CachedArgumentsRestoring.restoreSerializedArgsInfo(cachedArgsInfo, cacheHolder) }
+                        sourceSetInfo.lazyCompilerArguments = lazy {
+                            createCompilerArguments(restoredArgs.value.currentCompilerArguments.toList(), compilation.platform).also {
+                                it.multiPlatform = true
+                            }
+                        }
+                        sourceSetInfo.lazyDefaultCompilerArguments = lazy {
+                            createCompilerArguments(restoredArgs.value.defaultCompilerArguments.toList(), compilation.platform)
+                        }
+
+                        sourceSetInfo.lazyDependencyClasspath = lazy {
+                            restoredArgs.value.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) }
+                        }
+                    }
+                }
                 sourceSetInfo.addSourceSets(compilation.allSourceSets, compilation.fullName(), gradleModule, resolverCtx)
             }
         }

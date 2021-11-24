@@ -5,7 +5,6 @@ import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.BootstrapClassLoaderUtil;
 import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.lang.PathClassLoader;
@@ -36,7 +35,7 @@ public final class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
-  public static final int UNKNOWN_COMMAND = 9;
+  // reserved (doesn't seem to ever be used): public static final int OUT_OF_MEMORY = 9;
   // reserved (permanently if launchers will perform the check): public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
@@ -54,7 +53,7 @@ public final class Main {
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup");
+    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme", "remoteDevShowHelp");
   private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
@@ -69,12 +68,6 @@ public final class Main {
     startupTimings.put("startup begin", System.nanoTime());
 
     if (args.length == 1 && "%f".equals(args[0])) {
-      //noinspection SSBasedInspection
-      args = new String[0];
-    }
-
-    if (args.length == 1 && args[0].startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(args[0]);
       //noinspection SSBasedInspection
       args = new String[0];
     }
@@ -104,13 +97,9 @@ public final class Main {
     }
 
     startupTimings.put("classloader init", System.nanoTime());
-    PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
+    PathClassLoader newClassLoader = BootstrapClassLoaderUtil
+      .initClassLoader(args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0])));
     Thread.currentThread().setContextClassLoader(newClassLoader);
-    if (args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
-      // AWT can only use builtin and system class loaders to load classes, so set the system loader to something that can find projector libs
-      Class<ClassLoader> aClass = ClassLoader.class;
-      MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);
-    }
 
     startupTimings.put("MainRunner search", System.nanoTime());
     Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, true);
@@ -184,7 +173,7 @@ public final class Main {
     isLightEdit = false;
   }
 
-  public static boolean isHeadless(String @NotNull [] args) {
+  private static boolean isHeadless(String[] args) {
     if (Boolean.getBoolean(AWT_HEADLESS)) {
       return true;
     }

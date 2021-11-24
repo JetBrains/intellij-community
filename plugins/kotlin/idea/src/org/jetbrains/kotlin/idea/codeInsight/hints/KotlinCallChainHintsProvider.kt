@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayInfo
-import com.intellij.codeInsight.hints.METHOD_CHAINS_GROUP
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.chain.AbstractCallChainHintsProvider
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isError
 
 /**
  * Kotlin's analog for Java's [com.intellij.codeInsight.hints.MethodChainsInlayProvider]
@@ -26,8 +27,8 @@ import org.jetbrains.kotlin.types.KotlinType
  */
 class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
 
-    override val groupId: String
-        get() = METHOD_CHAINS_GROUP
+    override val group: InlayGroup
+        get() = InlayGroup.METHOD_CHAINS_GROUP
 
     override val previewText: String
         get() = """
@@ -67,7 +68,7 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
     }
 
     override fun PsiElement.getType(context: BindingContext): KotlinType? {
-        return context.getType(this as? KtExpression ?: return null)
+        return context.getType(this as? KtExpression ?: return null)?.takeUnless { it.isError }
     }
 
     override val dotQualifiedClass: Class<KtQualifiedExpression>

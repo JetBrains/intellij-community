@@ -48,7 +48,8 @@ fun restoreStdlibCanonicalPath(qName: QualifiedName): QualifiedName? {
     val head = components[0]
 
     return when (head) {
-      "_abcoll", "_collections", "_collections_abc" -> replace0("collections", components)
+      "_abcoll", "_collections" -> replace0("collections", components)
+      "_collections_abc" -> replace0("collections.abc", components)
 
       "posix", "nt" -> replace0("os", components)
       "_functools" -> replace0("functools", components)

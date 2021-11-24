@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionBundle
@@ -22,7 +22,7 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
 
     e.presentation.isEnabled = !e.isProcessTerminating()
 
-    if (!RunToolbarProcess.experimentalUpdating()) {
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
         e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
@@ -33,7 +33,9 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
 
   override fun actionPerformed(event: AnActionEvent) {
     event.environment()?.let {
-      event.addWaitingForAProcess(it.executor.id)
+      it.runnerAndConfigurationSettings?.let { settings ->
+        event.runToolbarData()?.startWaitingForAProcess(it.project, settings, it.executor.id)
+      }
       super.actionPerformed(event)
     }
 

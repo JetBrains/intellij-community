@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 public final class CreateEnumMissingSwitchBranchesFix extends CreateMissingSwitchBranchesFix {
   public CreateEnumMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull Set<String> names) {
-    super(block, names, false);
+    super(block, names);
   }
 
   @Override
@@ -33,7 +33,7 @@ public final class CreateEnumMissingSwitchBranchesFix extends CreateMissingSwitc
   }
 
   @Override
-  protected @NotNull List<String> getAllNames(PsiClass aClass) {
+  protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass) {
     return StreamEx.of(aClass.getAllFields()).select(PsiEnumConstant.class).map(PsiField::getName).toList();
   }
 

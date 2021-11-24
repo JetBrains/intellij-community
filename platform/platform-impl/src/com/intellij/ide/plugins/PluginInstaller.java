@@ -283,10 +283,8 @@ public final class PluginInstaller {
                                                             InstallationSourceEnum.FROM_DISK,
                                                             installedPlugin != null ? installedPlugin.getVersion() : null);
 
-      if (Registry.is("custom-repository.certificate.signature.check")) {
-        if (!PluginSignatureChecker.verify(pluginDescriptor, file, true)) {
-          return false;
-        }
+      if (!PluginSignatureChecker.verifyIfRequired(pluginDescriptor, file, false, true)) {
+        return false;
       }
 
       Task.WithResult<Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor>, RuntimeException> task =
@@ -409,8 +407,7 @@ public final class PluginInstaller {
 
       PluginId pluginId = dependency.getPluginId();
       if (installedDependencies.contains(pluginId) ||
-          model.isEnabled(pluginId) ||
-          model.isDisabled(pluginId) ||
+          model.isLoaded(pluginId) ||
           PluginManagerCore.isModuleDependency(pluginId)) {
         continue;
       }

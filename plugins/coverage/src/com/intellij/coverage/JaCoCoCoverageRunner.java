@@ -16,7 +16,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -88,7 +87,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                         @NotNull Project project,
                                         CoverageSuite suite) throws IOException {
     ExecFileLoader loader = new ExecFileLoader();
-    final CoverageBuilder coverageBuilder = getCoverageBuilder(sessionDataFile, mainModule, project, loader, (JavaCoverageSuite)suite);
+    final CoverageBuilder coverageBuilder = new CoverageBuilder();
+    loadReportToCoverageBuilder(coverageBuilder, sessionDataFile, mainModule, project, loader, (JavaCoverageSuite)suite);
 
     for (IClassCoverage classCoverage : coverageBuilder.getClasses()) {
       String className = classCoverage.getName();
@@ -135,49 +135,46 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
   }
 
-  private static CoverageBuilder getCoverageBuilder(@NotNull File sessionDataFile,
-                                                    @Nullable Module mainModule,
-                                                    @NotNull Project project,
-                                                    ExecFileLoader loader,
-                                                    JavaCoverageSuite suite) throws IOException {
+  private static void loadReportToCoverageBuilder(@NotNull CoverageBuilder coverageBuilder,
+                                                  @NotNull File sessionDataFile,
+                                                  @Nullable Module mainModule,
+                                                  @NotNull Project project,
+                                                  ExecFileLoader loader,
+                                                  JavaCoverageSuite suite) throws IOException {
     loader.load(sessionDataFile);
 
-    final CoverageBuilder coverageBuilder = new CoverageBuilder();
     final Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), coverageBuilder);
 
     final Module[] modules = getModules(mainModule, project);
+    final CoverageDataManager manager = CoverageDataManager.getInstance(project);
     for (Module module : modules) {
-      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-      if (compilerModuleExtension != null) {
-        final String[] roots = compilerModuleExtension.getOutputRootUrls(true);
-        for (String root : roots) {
-          try {
-            Path rootPath = Paths.get(new File(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(root))).toURI());
-            Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
-              @Override
-              public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-                String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
-                vmClassName = StringUtil.trimEnd(vmClassName, ".class");
-                if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
-                    !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
-                  return FileVisitResult.CONTINUE;
-                }
-                File file = path.toFile();
-                try {
-                  analyzer.analyzeAll(file);
-                }
-                catch (Exception e) {
-                  LOG.info(e);
-                }
+      final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(manager, module, true);
+      for (VirtualFile root : roots) {
+        try {
+          Path rootPath = Paths.get(new File(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(root.getUrl()))).toURI());
+          Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+              String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
+              vmClassName = StringUtil.trimEnd(vmClassName, ".class");
+              if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
+                  !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
                 return FileVisitResult.CONTINUE;
               }
-            });
-          }
-          catch (NoSuchFileException ignore) {}
+              File file = path.toFile();
+              try {
+                analyzer.analyzeAll(file);
+              }
+              catch (Exception e) {
+                LOG.info(e);
+              }
+              return FileVisitResult.CONTINUE;
+            }
+          });
         }
+        catch (NoSuchFileException ignore) {}
       }
     }
-    return coverageBuilder;
   }
 
   private static Module[] getModules(@Nullable Module mainModule,
@@ -267,16 +264,19 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
     File targetDirectory = new File(settings.OUTPUT_DIRECTORY);
-    File coverageFile = new File(suite.getSuites()[0].getCoverageDataFileName());
     RunConfigurationBase runConfiguration = suite.getRunConfiguration();
     Module module = runConfiguration instanceof ModuleBasedConfiguration
                     ? ((ModuleBasedConfiguration<?, ?>)runConfiguration).getConfigurationModule().getModule()
                     : null;
 
     ExecFileLoader loader = new ExecFileLoader();
-    CoverageBuilder coverageBuilder = getCoverageBuilder(coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0]);
+    CoverageBuilder coverageBuilder = new CoverageBuilder();
+    for (CoverageSuite aSuite : suite.getSuites()) {
+      File coverageFile = new File(aSuite.getCoverageDataFileName());
+      loadReportToCoverageBuilder(coverageBuilder, coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0]);
+    }
 
-    final IBundleCoverage bundleCoverage = coverageBuilder.getBundle(coverageFile.getName());
+    final IBundleCoverage bundleCoverage = coverageBuilder.getBundle(suite.getPresentableName());
 
     final IReportVisitor visitor = new HTMLFormatter().createVisitor(new FileMultiReportOutput(targetDirectory));
 

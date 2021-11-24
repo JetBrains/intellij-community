@@ -1,42 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.*
-import javax.swing.text.JTextComponent
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JToggleButton
 import kotlin.math.min
 
 /**
- * Throws exception instead of logging warning. Useful while forms building to avoid layout mistakes
+ * [JPanel] descendants that should use default vertical gaps around similar to other standard components like labels, text fields etc
  */
-private const val FAIL_ON_WARN = false
-
 private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
-  AbstractButton::class,
-  JComboBox::class,
-  JLabel::class,
-  JSpinner::class,
-  JTextComponent::class,
-  SeparatorComponent::class,
   TextFieldWithBrowseButton::class,
   TitledSeparator::class
 )
 
 @ApiStatus.Internal
 internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: DialogPanelConfig, val panel: DialogPanel, val grid: Grid) {
-
-  private companion object {
-    private val LOG = Logger.getInstance(PanelBuilder::class.java)
-  }
 
   fun build() {
     if (rows.isEmpty()) {
@@ -57,19 +45,20 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
       val rowGaps = allRowsGaps[i]
       rowsGridBuilder.setRowGaps(VerticalGaps(top = rowGaps.top))
+      val subRowVerticalAlign = if (row.resizableRow) VerticalAlign.FILL else VerticalAlign.CENTER
 
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
           val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount,
             horizontalAlign = HorizontalAlign.FILL,
-            verticalAlign = VerticalAlign.FILL,
+            verticalAlign = subRowVerticalAlign,
             gaps = Gaps(left = row.getIndent()))
           val cells = row.cells
 
           buildLabelRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
 
           subGridBuilder.resizableRow()
-          buildRow(cells, row.label != null, 0, cells.size, panel, subGridBuilder)
+          buildRow(cells, row.firstCellLabel, 0, cells.size, panel, subGridBuilder)
           subGridBuilder.row()
 
           buildCommentRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
@@ -88,7 +77,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           if (row.cells.size > 1) {
             val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount - 1,
               horizontalAlign = HorizontalAlign.FILL,
-              verticalAlign = VerticalAlign.FILL)
+              verticalAlign = subRowVerticalAlign)
               .resizableRow()
             val cells = row.cells.subList(1, row.cells.size)
             buildRow(cells, false, 0, cells.size, panel, subGridBuilder)
@@ -105,7 +94,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         RowLayout.PARENT_GRID -> {
           buildLabelRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
 
-          buildRow(row.cells, row.label != null, row.getIndent(), maxColumnsCount, panel, rowsGridBuilder)
+          buildRow(row.cells, row.firstCellLabel, row.getIndent(), maxColumnsCount, panel, rowsGridBuilder)
           if (row.resizableRow) {
             rowsGridBuilder.resizableRow()
           }
@@ -141,7 +130,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         if (cell is CellImpl<*>) {
           cell.label?.let {
             if (cell.labelPosition == LabelPosition.LEFT) {
-              val labelCell = CellImpl(dialogPanelConfig, it, row)
+              val labelCell = CellImpl(dialogPanelConfig, it, row, visualPaddings = null)
                 .gap(RightGap.SMALL)
               row.cells.add(i, labelCell)
               i++
@@ -151,7 +140,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
               labelCell(it, cell)
             }
             else {
-              warn("Unsupported labeled component: ${cell.component.javaClass.simpleName}")
+              warn("Unsupported labeled component: ${cell.component.javaClass.name}")
             }
           }
         }
@@ -195,13 +184,6 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       val lastCell = cellIndex == cells.size - 1
       val width = if (lastCell) maxColumnsCount - cellIndex else 1
       val leftGap = if (cellIndex == 0) firstCellIndent else 0
-      val label = (cell as? CellImpl<*>)?.component as? JLabel
-      if (label != null && cell.rightGap == RightGap.SMALL && cellIndex < cells.size - 1 &&
-          isAllowedLabel(cells[cellIndex + 1]) && (cells[cellIndex + 1] as? CellImpl<*>)?.label == null &&
-          cell.verticalAlign == VerticalAlign.CENTER && cell.horizontalAlign == HorizontalAlign.LEFT) {
-        warn("Panel.row(label) or Cell.label should be used for labeled components, label = ${label.text}")
-      }
-
       buildCell(cell, firstCellLabel && cellIndex == 0, leftGap, lastCell, width, panel, builder)
     }
   }
@@ -212,12 +194,10 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
     when (cell) {
       is CellImpl<*> -> {
-        val insets = cell.component.origin.insets
-        val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component)
         builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           resizableColumn = cell.resizableColumn,
-          gaps = gaps, visualPaddings = visualPaddings)
+          gaps = gaps, visualPaddings = cell.visualPaddings)
       }
       is PanelImpl -> {
         // todo visualPaddings
@@ -237,6 +217,16 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           dialogPanelConfig.spacing = prevSpacingConfiguration
         }
       }
+      is PlaceholderImpl -> {
+        val gaps = Gaps(left = leftGap, right = rightGap)
+        val constraints = builder.constraints(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+                                              gaps = gaps)
+        cell.init(panel, constraints)
+        if (cell.resizableColumn) {
+          builder.resizableColumns += constraints.x
+        }
+        builder.skip(width)
+      }
       null -> {
         builder.skip(1)
       }
@@ -246,20 +236,22 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   private fun getComponentGaps(left: Int, right: Int, component: JComponent): Gaps {
     val top = getDefaultVerticalGap(component)
     var bottom = top
-    if (component is JLabel && component.getClientProperty(DSL_LABEL_NO_BOTTOM_GAP_PROPERTY) == true) {
+    if (component is JLabel && component.getClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP) == true) {
       bottom = 0
     }
     return Gaps(top = top, left = left, bottom = bottom, right = right)
   }
 
   /**
-   * Returns default top and bottom gap for [component]
+   * Returns default top and bottom gap for [component]. All non [JPanel] components or
+   * [DEFAULT_VERTICAL_GAP_COMPONENTS] have default vertical gap, zero otherwise
    */
   private fun getDefaultVerticalGap(component: JComponent): Int {
-    return if (DEFAULT_VERTICAL_GAP_COMPONENTS.any { clazz ->
-        clazz.isInstance(component)
-      }) dialogPanelConfig.spacing.verticalComponentGap
-    else 0
+    val noDefaultVerticalGap = component is JPanel
+                               && component.getClientProperty(ToolbarDecorator.DECORATOR_KEY) == null
+                               && !DEFAULT_VERTICAL_GAP_COMPONENTS.any { clazz -> clazz.isInstance(component) }
+
+    return if (noDefaultVerticalGap) 0 else dialogPanelConfig.spacing.verticalComponentGap
   }
 
   private fun getMaxColumnsCount(): Int {
@@ -425,15 +417,6 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     }
 
     return if (top > 0 || bottom > 0) VerticalGaps(top = top, bottom = bottom) else VerticalGaps.EMPTY
-  }
-
-  private fun warn(message: String) {
-    if (FAIL_ON_WARN) {
-      throw UiDslException(message)
-    }
-    else {
-      LOG.warn(message)
-    }
   }
 }
 

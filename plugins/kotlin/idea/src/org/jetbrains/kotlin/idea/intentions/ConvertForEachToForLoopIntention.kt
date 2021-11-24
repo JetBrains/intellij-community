@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -117,14 +118,14 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
             val parameter1 = parameters[0].text
             val parameter2 = parameters[1].text
             if (isImplicitReceiver) {
-                factory.createExpressionByPattern("for(($0, $1) in withIndex()){ $2 }", parameter1, parameter2, body)
+                factory.createExpressionByPattern("for(($0, $1) in withIndex()){ $2 }", parameter1, parameter2, body.allChildren)
             } else {
                 val loopRangeWithIndex = factory.createExpressionByPattern("$0.withIndex()", loopRange)
-                factory.createExpressionByPattern("for(($0, $1) in $2){ $3 }", parameter1, parameter2, loopRangeWithIndex, body)
+                factory.createExpressionByPattern("for(($0, $1) in $2){ $3 }", parameter1, parameter2, loopRangeWithIndex, body.allChildren)
             }
         } else {
             val parameter = parameters.singleOrNull() ?: "it"
-            factory.createExpressionByPattern("for($0 in $1){ $2 }", parameter, loopRange, body)
+            factory.createExpressionByPattern("for($0 in $1){ $2 }", parameter, loopRange, body.allChildren)
         }
     }
 }

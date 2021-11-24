@@ -3,20 +3,14 @@ package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.wizard.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.div
+import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
@@ -25,7 +19,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemT
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ConsoleApplicationProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
-import java.nio.file.Path
 import java.util.*
 
 class KotlinNewProjectWizard : LanguageNewProjectWizard {
@@ -45,13 +38,13 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             version: String? = "1.0-SNAPSHOT"
         ) {
             val builder = presetBuilder ?: NewProjectWizardModuleBuilder()
-            val modules = builder.apply {
+            builder.apply {
                 wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
 
                 wizard.jdk = sdk
                 wizard.context.writeSettings {
                     StructurePlugin.name.reference.setValue(projectName)
-                    StructurePlugin.projectPath.reference.setValue(projectPath / projectName)
+                    StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
 
                     projectGroupId?.let { StructurePlugin.groupId.reference.setValue(it) }
                     artifactId?.let { StructurePlugin.artifactId.reference.setValue(it) }
@@ -62,9 +55,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                     applyProjectTemplate(ConsoleApplicationProjectTemplate)
                 }
             }.commit(project, null, null)
-
-            val module = modules?.get(0) ?: return
-            openSourceFileInEditor(module, ConsoleApplicationProjectTemplate.fileToOpenInEditor)
         }
 
         private fun suggestGroupId(): String {
@@ -72,25 +62,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             if (!username.matches("[\\w\\s]+".toRegex())) return DEFAULT_GROUP_ID
             val usernameAsGroupId = username.trim().lowercase(Locale.getDefault()).split("\\s+".toRegex()).joinToString(separator = ".")
             return "me.$usernameAsGroupId"
-        }
-
-        private fun openSourceFileInEditor(module: Module, path: Path) {
-            val newProject = module.project
-            StartupManager.getInstance(newProject).runAfterOpened {
-                val sourceRoots = module.rootManager.getSourceRoots(false)
-                var fileToOpen: VirtualFile? = null
-
-                for (root in sourceRoots) {
-                    fileToOpen = root.findFileByRelativePath(path.systemIndependentPath)
-                    if (fileToOpen != null) break
-                }
-
-                if (fileToOpen != null) {
-                    ApplicationManager.getApplication().invokeLater {
-                        FileEditorManager.getInstance(newProject).openFile(fileToOpen, true)
-                    }
-                }
-            }
         }
     }
 
@@ -106,8 +77,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
         override fun setupUI(builder: Panel) {
             with(builder) {
-                row {
-                    commentHtml(KotlinBundle.message("project.wizard.new.project.kotlin.comment")) {
+                row(EMPTY_LABEL) {
+                    comment(KotlinBundle.message("project.wizard.new.project.kotlin.comment")) {
                         context.requestSwitchTo(NewProjectWizardModuleBuilder.MODULE_BUILDER_ID)
                     }
                 }.bottomGap(BottomGap.SMALL)
@@ -126,5 +97,9 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
         override val buildSystemProperty by ::stepProperty
         override val buildSystem by ::step
+
+        init {
+            data.putUserData(NewProjectWizardBuildSystemData.KEY, this)
+        }
     }
 }

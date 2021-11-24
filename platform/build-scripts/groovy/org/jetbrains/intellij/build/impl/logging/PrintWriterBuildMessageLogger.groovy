@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.logging
 
 import groovy.transform.CompileStatic
@@ -6,23 +6,25 @@ import groovy.transform.CompileStatic
 import java.util.function.Consumer
 
 @CompileStatic
-class PrintWriterBuildMessageLogger extends BuildMessageLoggerBase {
-  private PrintWriter output
+final class PrintWriterBuildMessageLogger extends BuildMessageLoggerBase {
+  private BufferedWriter output
   private final Consumer<PrintWriterBuildMessageLogger> disposer
 
-  PrintWriterBuildMessageLogger(PrintWriter output, String parallelTaskId, Consumer<PrintWriterBuildMessageLogger> disposer) {
+  PrintWriterBuildMessageLogger(BufferedWriter output, String parallelTaskId, Consumer<PrintWriterBuildMessageLogger> disposer) {
     super(parallelTaskId)
     this.disposer = disposer
     this.output = output
   }
 
-  synchronized void setOutput(PrintWriter output) {
+  synchronized void setOutput(BufferedWriter output) {
     this.output = output
   }
 
   @Override
   protected synchronized void printLine(String line) {
-    output.println(line)
+    output.write(line)
+    output.write('\n' as char)
+    output.flush()
   }
 
   @Override

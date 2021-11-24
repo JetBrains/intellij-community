@@ -32,7 +32,9 @@ public final class ClassPath {
 
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
 
+  // record loaded class name and source path
   static final boolean recordLoadingInfo = Boolean.getBoolean("idea.record.classpath.info");
+  // record class and resource loading time
   static final boolean recordLoadingTime = recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats");
 
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
@@ -115,7 +117,7 @@ public final class ClassPath {
     ResourceFile create(Path file) throws IOException;
   }
 
-  public synchronized void reset(@NotNull List<? extends Path> paths) {
+  public synchronized void reset(@NotNull List<Path> paths) {
     lastLoaderProcessed.set(0);
     allUrlsWereProcessed = false;
     loaders.clear();
@@ -143,16 +145,19 @@ public final class ClassPath {
   }
 
   /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
-  @ApiStatus.Internal
-  synchronized void addFiles(@NotNull List<? extends Path> files) {
+  synchronized void addFiles(@NotNull List<Path> files) {
     for (int i = files.size() - 1; i >= 0; i--) {
       this.files.add(files.get(i));
     }
     allUrlsWereProcessed = false;
   }
 
-  // think twice before use
-  public synchronized void appendFiles(@NotNull List<? extends Path> newList) {
+  // use only after approval
+  public synchronized void appendFiles(@NotNull List<Path> newList) {
+    if (newList.isEmpty()) {
+      return;
+    }
+
     Set<Path> existing = new HashSet<>(files);
     for (int i = newList.size() - 1; i >= 0; i--) {
       Path file = newList.get(i);

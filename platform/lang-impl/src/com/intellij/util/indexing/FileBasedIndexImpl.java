@@ -625,7 +625,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           PingProgress.interactWithEdtProgress();
           int fileId = getFileId(file);
           try {
-            removeDataFromIndicesForFile(fileId, file);
+            removeDataFromIndicesForFile(fileId, file, "shutdown");
           }
           catch (Throwable throwable) {
             LOG.error(throwable);
@@ -675,7 +675,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  public void removeDataFromIndicesForFile(int fileId, @NotNull VirtualFile file) {
+  public void removeDataFromIndicesForFile(int fileId, @NotNull VirtualFile file, @NotNull String cause) {
+    VfsEventsMerger.tryLog("REMOVE", file, () -> {
+      return "cause=" + cause;
+    });
+
     VirtualFile originalFile = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile() : file;
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
@@ -1312,11 +1316,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         content = new CachedFileContent(file);
       }
 
-      boolean isIndexesDeleted;
       if (!isValid || isTooLarge(file)) {
-        isIndexesDeleted = true;
         ProgressManager.checkCanceled();
-        removeDataFromIndicesForFile(fileId, file);
+        removeDataFromIndicesForFile(fileId, file, "invalid_or_large_file");
         setIndexedStatus = true;
         indexingStatistics = new FileIndexingStatistics(file.getFileType(),
                                                         Collections.emptySet(),
@@ -1325,7 +1327,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                         Collections.emptyMap());
       }
       else {
-        isIndexesDeleted = false;
         var pair = doIndexFileContent(project, content);
         setIndexedStatus = pair.first;
         indexingStatistics = pair.second;
@@ -1334,13 +1335,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (setIndexedStatus) {
         IndexingFlag.setFileIndexed(file);
       }
-      if (VfsEventsMerger.LOG != null) {
-        VfsEventsMerger.LOG.info("File " + file +
-                                 " indexes have been updated for indexes " + indexingStatistics.getPerIndexerUpdateTimes().keySet() +
-                                 " and deleted for " + indexingStatistics.getPerIndexerDeleteTimes().keySet() +
-                                 ". Indexes was wiped = " + isIndexesDeleted +
-                                 "; is file valid = " + isValid);
-      }
+      VfsEventsMerger.tryLog("INDEX_UPDATED", file,
+                             () -> " updated_indexes=" + indexingStatistics.getPerIndexerUpdateTimes().keySet() +
+                                   " deleted_indexes=" + indexingStatistics.getPerIndexerDeleteTimes().keySet() +
+                                   " valid=" + isValid);
       getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       return indexingStatistics;
     }
@@ -1519,7 +1517,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       myIndexableFilesFilterHolder.addFileId(inputId, () -> getContainingProjects(file));
     }
 
-    if (currentFC instanceof FileContentImpl && FileBasedIndex.ourSnapshotMappingsEnabled) {
+    if (currentFC instanceof FileContentImpl &&
+        FileBasedIndex.ourSnapshotMappingsEnabled &&
+        (((FileBasedIndexExtension<?, ?>)index.getExtension()).hasSnapshotMapping() ||
+        ((FileBasedIndexExtension<?, ?>)index.getExtension()).canBeShared())) {
       // Optimization: initialize indexed file hash eagerly. The hash is calculated by raw content bytes.
       // If we pass the currentFC to an indexer that calls "FileContentImpl.getContentAsText",
       // the raw bytes will be converted to text and assigned to null.
@@ -1613,7 +1614,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  private static void markFileIndexed(@Nullable VirtualFile file,
+  public static void markFileIndexed(@Nullable VirtualFile file,
                                       @Nullable FileContent fc) {
     // TODO restore original assertion
     if (fc != null && (ourIndexedFile.get() != null || ourFileToBeIndexed.get() != null)) {
@@ -1622,7 +1623,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ourIndexedFile.set(file);
   }
 
-  private static void unmarkBeingIndexed() {
+  public static void unmarkBeingIndexed() {
     ourIndexedFile.remove();
   }
 
@@ -1893,12 +1894,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     for (VirtualFile file : changedFilesCollector.getAllFilesToUpdate()) {
       final int fileId = getFileId(file);
       if (!file.isValid()) {
-        removeDataFromIndicesForFile(fileId, file);
+        removeDataFromIndicesForFile(fileId, file, "invalid_file");
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       }
       else if (!belongsToIndexableFiles(file)) {
         if (ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA) {
-          removeDataFromIndicesForFile(fileId, file);
+          removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
         }
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       }

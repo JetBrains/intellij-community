@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PROBLEM: none
 
 annotation class Annotation(val value: String)

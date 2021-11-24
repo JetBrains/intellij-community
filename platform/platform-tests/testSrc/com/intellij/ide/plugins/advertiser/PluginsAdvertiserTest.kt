@@ -30,7 +30,7 @@ class PluginsAdvertiserTest {
     fun loadExtensions() {
       val path = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginAdvertiser/extensions.json"
       File(path).inputStream().use {
-        MarketplaceRequests.Instance.deserializeExtensionsForIdes(it)
+        MarketplaceRequests.getInstance().deserializeExtensionsForIdes(it)
       }
     }
 
@@ -39,7 +39,7 @@ class PluginsAdvertiserTest {
     fun loadJetBrainsPlugins() {
       val path = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginAdvertiser/jetBrainsPlugins.json"
       File(path).inputStream().use {
-        MarketplaceRequests.Instance.deserializeJetBrainsPluginsIds(it)
+        MarketplaceRequests.getInstance().deserializeJetBrainsPluginsIds(it)
       }
     }
   }

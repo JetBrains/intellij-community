@@ -117,7 +117,12 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
       super.doDispose();
     }
     finally {
-      getStubIndex().dispose();
+      try {
+        getStubIndex().dispose();
+      }
+      finally {
+        mySerializationManager.performShutdown();
+      }
     }
   }
 

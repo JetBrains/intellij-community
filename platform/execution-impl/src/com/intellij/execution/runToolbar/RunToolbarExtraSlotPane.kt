@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
@@ -37,7 +39,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     }
 
     override fun slotRemoved(index: Int) {
-      if(index >= 0 && index < components.size) {
+      if (index >= 0 && index < components.size) {
         removeSingleComponent(components[index])
       }
       else {
@@ -88,9 +90,11 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     }
   }.apply {
     border = JBUI.Borders.empty(3, 0, 0, 3)
+    background = JBColor.namedColor("Panel.background", Gray.xCD)
+
     add(slotPane)
 
-    val bottomPane = object : JPanel(MigLayout("fillx, ins 0, novisualpadding, gap 0, hidemode 3, wrap 3", "[][]push[]")){
+    val bottomPane = object : JPanel(MigLayout("fillx, ins 0, novisualpadding, gap 0, hidemode 2, wrap 3", "[][]push[]")) {
       override fun getPreferredSize(): Dimension {
         val preferredSize = super.getPreferredSize()
         baseWidth()?.let {
@@ -126,6 +130,8 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
             ShowSettingsUtil.getInstance().showSettingsDialog(project, RunToolbarSettingsConfigurable::class.java)
           }
         })
+
+        isVisible = RunToolbarProcess.isSettingsAvailable
       })
 
       add(newSlotDetails, "skip")
@@ -137,20 +143,23 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   private fun rebuild() {
     build()
-    if(manager.slotsCount() > 0 && added) {
-      pack()
-    }
+    pack()
   }
 
   private fun build() {
     val count = manager.slotsCount()
     slotPane.removeAll()
     components.clear()
-    repeat(count) { addNewSlot()}
+    repeat(count) { addNewSlot() }
   }
 
   private fun addSingleSlot() {
     addNewSlot()
+    pack()
+  }
+
+  private fun removeSingleComponent(component: SlotComponent) {
+    removeComponent(component)
     pack()
   }
 
@@ -183,11 +192,6 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     }
   }
 
-  private fun removeSingleComponent(component: SlotComponent) {
-    removeComponent(component)
-    pack()
-  }
-
   private fun removeComponent(component: SlotComponent) {
     slotPane.remove(component.view)
     components.remove(component)
@@ -201,7 +205,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   private fun createComponent(): SlotComponent {
     val group = DefaultActionGroup()
-    val bar = FixWidthSegmentedActionToolbarComponent(ActionPlaces.RUN_TOOLBAR, group)
+    val bar = FixWidthSegmentedActionToolbarComponent(ActionPlaces.MAIN_TOOLBAR, group)
 
     val component = SlotComponent(bar, JLabel(AllIcons.Toolbar.RemoveSlot).apply {
       val d = preferredSize

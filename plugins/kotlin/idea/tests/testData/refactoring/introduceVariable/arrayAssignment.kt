@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class Foo(var bar: IntArray)
 
 fun test() {

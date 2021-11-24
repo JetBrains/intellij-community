@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -28,7 +28,9 @@ import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.*
+import kotlin.io.path.bufferedReader
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 import kotlin.streams.asSequence
 
 class IndexDiagnosticDumper : Disposable {
@@ -50,7 +52,7 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     private val indexingDiagnosticsLimitOfFiles: Int
       get() =
-        SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
+        SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 300)
 
     @JvmStatic
     val shouldDumpPathsOfIndexedFiles: Boolean
@@ -104,6 +106,7 @@ class IndexDiagnosticDumper : Disposable {
       if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
         return
       }
+      projectIndexingHistory.indexingFinished()
       NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
     }
     finally {
@@ -145,8 +148,9 @@ class IndexDiagnosticDumper : Disposable {
       val existingDiagnostics = parseExistingDiagnostics(indexDiagnosticDirectory)
       val survivedDiagnostics = deleteOutdatedDiagnostics(existingDiagnostics)
       val sharedIndexEvents = SharedIndexDiagnostic.readEvents(projectIndexingHistory.project)
+      val changedFilesPushedEvents = ChangedFilesPushedDiagnostic.readEvents(projectIndexingHistory.project)
       indexDiagnosticDirectory.resolve("report.html").write(
-        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents)
+        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents, changedFilesPushedEvents)
       )
     }
     catch (e: Exception) {

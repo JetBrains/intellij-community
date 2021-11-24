@@ -2,24 +2,36 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.ui.ListEditForm
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.project.Project
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
-import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.addSelectionChangedListener
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsAsync
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.NotifyingOperationExecutor
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelForEach
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
-import java.awt.BorderLayout
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 
 /**
@@ -39,16 +51,36 @@ import javax.swing.JPanel
  */
 abstract class PackageUpdateInspection : LocalInspectionTool() {
 
+    @JvmField
     var onlyStable: Boolean = true
 
-    override fun createOptionsPanel() = object : JPanel() {
-        init {
-            layout = BorderLayout()
-            val checkBox = PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"))
-            checkBox.isSelected = onlyStable
-            checkBox.addSelectionChangedListener { onlyStable = it }
-            add(checkBox, BorderLayout.NORTH)
+    var excludeList: MutableList<String> = mutableListOf()
+
+    companion object {
+
+        private fun isMavenNotation(notation: String) = notation.split(":").size == 2
+
+        private fun isExcluded(packageIdentifier: PackageIdentifier, exclusionRule: String): Boolean {
+            val (groupId, artifactId) = packageIdentifier.rawValue.split(":")
+            val (exclusionGroupId, exclusionArtifactId) = exclusionRule.split(":")
+
+            return when {
+                exclusionGroupId == "*" -> artifactId == exclusionArtifactId
+                groupId == exclusionGroupId -> exclusionArtifactId == "*" || artifactId == exclusionArtifactId
+                else -> false
+            }
         }
+    }
+
+    override fun createOptionsPanel(): JPanel {
+        val panel = MultipleCheckboxOptionsPanel(this)
+
+        val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"), excludeList)
+
+        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), "onlyStable")
+        panel.addGrowing(injectionListTable.contentPanel)
+
+        return panel
     }
 
     protected abstract fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement?
@@ -77,30 +109,70 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
 
         val availableUpdates = service.packageUpgradesStateFlow.value
             .getPackagesToUpgrade(onlyStable)
-            .upgradesByModule[fileModule] ?: return null
+            .upgradesByModule[fileModule]
+            ?.filter { isNotExcluded(it.packageModel.identifier) }
+            ?: return null
 
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
-        for (packageUpdateInfo in availableUpdates) {
-            val currentVersion = packageUpdateInfo.usageInfo.version
-            val scope = packageUpdateInfo.usageInfo.scope
-            val unifiedDependency = packageUpdateInfo.packageModel.toUnifiedDependency(currentVersion, scope)
-            val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: continue
-            if (versionElement.containingFile != file) continue
+        runBlocking {
+            availableUpdates.parallelForEach { packageUpdateInfo ->
+                val currentVersion = packageUpdateInfo.usageInfo.version
+                val scope = packageUpdateInfo.usageInfo.scope
+                val unifiedDependency = packageUpdateInfo.packageModel.toUnifiedDependency(currentVersion, scope)
+                val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: return@parallelForEach
+                if (versionElement.containingFile != file) return@parallelForEach
 
-            val targetModules = TargetModules.One(moduleModel)
-            val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
-            val uiPackageModel = packageUpdateInfo.packageModel.toUiPackageModel(
-                targetModules,
-                project,
-                allKnownRepositories.filterOnlyThoseUsedIn(targetModules),
-                onlyStable
-            )
+                val targetModules = TargetModules.One(moduleModel)
+                val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
 
-            problemsHolder.registerProblem(
-                versionElement,
-                PackageSearchBundle.message("packagesearch.inspection.upgrade.description", packageUpdateInfo.targetVersion),
-                PackageSearchDependencyUpgradeQuickFix(versionElement, uiPackageModel)
-            )
+                val packageOperations = project.lifecycleScope.computeActionsAsync(
+                    packageModel = packageUpdateInfo.packageModel,
+                    targetModules = targetModules,
+                    knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules),
+                    onlyStable = onlyStable
+                )
+
+                val identifier = packageUpdateInfo.packageModel.identifier
+                if (!packageOperations.canUpgradePackage) {
+                    logWarn { "Expecting to have upgrade actions for package ${identifier.rawValue} to $targetModules" }
+                    return@parallelForEach
+                }
+
+                val operations = packageOperations.primaryOperations.await()
+
+                problemsHolder.registerProblem(
+                    versionElement,
+                    PackageSearchBundle.message(
+                        "packagesearch.inspection.upgrade.description",
+                        identifier.rawValue,
+                        packageUpdateInfo.targetVersion.originalVersion.displayName
+                    ),
+                    LocalQuickFixOnPsiElement(
+                        element = versionElement,
+                        familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.family"),
+                        text = PackageSearchBundle.message(
+                            "packagesearch.quickfix.upgrade.action",
+                            identifier.rawValue,
+                            packageUpdateInfo.targetVersion.originalVersion
+                        ),
+                        isHighPriority = true
+                    ) {
+                        NotifyingOperationExecutor(this).executeOperations(operations)
+                    },
+                    LocalQuickFixOnPsiElement(
+                        element = versionElement,
+                        familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.exclude.family"),
+                        text = PackageSearchBundle.message(
+                            "packagesearch.quickfix.upgrade.exclude.action",
+                            identifier.rawValue
+                        ),
+                        isHighPriority = false
+                    ) {
+                        excludeList.add(identifier.rawValue)
+                        ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
+                    }
+                )
+            }
         }
 
         return problemsHolder.resultsArray
@@ -116,5 +188,26 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
         return provider.hasSupportFor(file.project, file)
     }
 
+    private fun isNotExcluded(packageIdentifier: PackageIdentifier) =
+        excludeList.filter { isMavenNotation(it) }.none { isExcluded(packageIdentifier, it) }
+
     override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
+}
+
+internal fun LocalQuickFixOnPsiElement(
+    element: PsiElement,
+    @Nls familyName: String,
+    @Nls text: String,
+    isHighPriority: Boolean,
+    action: Project.() -> Unit
+): LocalQuickFix = if (isHighPriority) object : LocalQuickFixOnPsiElement(element), HighPriorityAction {
+    override fun getFamilyName() = familyName
+    override fun getText() = text
+    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
+        project.action()
+} else object : LocalQuickFixOnPsiElement(element), LowPriorityAction {
+    override fun getFamilyName() = familyName
+    override fun getText() = text
+    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
+        project.action()
 }

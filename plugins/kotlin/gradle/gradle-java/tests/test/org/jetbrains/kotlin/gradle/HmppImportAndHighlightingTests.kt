@@ -8,13 +8,14 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.codeMetaInfo.clearTextFromDiagnosticMarkup
+import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.util.compareTo
 import org.jetbrains.kotlin.util.parseKotlinVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -33,7 +34,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.4.31")
+    @PluginTargetVersions(pluginVersion = "1.5.0+")
     fun testMultiModulesHmpp() {
         val macosX64 = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
         val linuxX64 = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64)
@@ -46,6 +47,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
         configureAndImportProject()
 
         checkProjectStructure(true, false, false) {
+            allModules { assertExhaustiveModuleDependencyList() }
             module("multimod-hmpp") { targetPlatform(jvm) }
             module("multimod-hmpp.api-jvm") { targetPlatform(jvm) }
             module("multimod-hmpp.api-jvm.main") { targetPlatform(jvm) }
@@ -70,6 +72,8 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.top-mpp.kt27816Main", DependencyScope.COMPILE)
+                if (HostManager.hostIsMac)
+                    moduleDependency("multimod-hmpp.top-mpp.dummyiOSMain", DependencyScope.COMPILE)
             }
             module("multimod-hmpp.bottom-mpp.iosSimLibTest") {
                 targetPlatform(iosX64)
@@ -81,10 +85,11 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.top-mpp.kt27816Main", DependencyScope.TEST)
+                if (HostManager.hostIsMac)
+                    moduleDependency("multimod-hmpp.top-mpp.dummyiOSMain", DependencyScope.TEST)
             }
             module("multimod-hmpp.bottom-mpp.jvm16Main") {
                 targetPlatform(jvm)
-                moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
@@ -98,12 +103,10 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Test", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.TEST)
-                moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST)
             }
 
             module("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main") {
                 targetPlatform(jvm)
-                moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.COMPILE)
             }
@@ -113,7 +116,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("multimod-hmpp.bottom-mpp.commonTest", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.TEST)
-                moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST)
+                moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST, isOptional = true)
             }
             module("multimod-hmpp.bottom-mpp.jvmWithJavaMain") {
                 targetPlatform(jvm)
@@ -122,13 +125,15 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaiOSMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.top-mpp.jvm18Main", DependencyScope.COMPILE)
+                // `allowMultiple` flags for the next three moduleDependency should be removed
+                // after https://youtrack.jetbrains.com/issue/KTIJ-15745 fixed
                 moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE, allowMultiple = true)
-                moduleDependency("multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.COMPILE)
-                moduleDependency("multimod-hmpp.top-mpp.kt27816Main", DependencyScope.COMPILE)
-                moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
+                moduleDependency("multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.COMPILE, allowMultiple = true)
+                moduleDependency("multimod-hmpp.top-mpp.kt27816Main", DependencyScope.COMPILE, allowMultiple = true)
             }
             module("multimod-hmpp.bottom-mpp.jvmWithJavaTest") {
                 targetPlatform(jvm)
+                moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.bottom-mpp.commonTest", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.TEST)
@@ -138,10 +143,11 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaiOSMain", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaiOSTest", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.top-mpp.jvm18Main", DependencyScope.TEST)
+                // `allowMultiple` flags for the next three moduleDependency should be removed
+                // after https://youtrack.jetbrains.com/issue/KTIJ-15745 fixed
                 moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST, allowMultiple = true)
-                moduleDependency("multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.TEST)
-                moduleDependency("multimod-hmpp.top-mpp.kt27816Main", DependencyScope.TEST)
-                moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.TEST)
+                moduleDependency("multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.TEST, allowMultiple = true)
+                moduleDependency("multimod-hmpp.top-mpp.kt27816Main", DependencyScope.TEST, allowMultiple = true)
             }
             module("multimod-hmpp.bottom-mpp.jvmWithJavaiOSMain") {
                 targetPlatform(jvm, allNative)
@@ -228,10 +234,22 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("multimod-hmpp.mpp-additional.commonMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.mpp-additional.jsLinuxMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.top-mpp.jsMain", DependencyScope.COMPILE)
-                moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE, allowMultiple = true)
-                moduleDependency("multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.COMPILE)
-                moduleDependency("multimod-hmpp.top-mpp.jsLinuxMain", DependencyScope.COMPILE)
-                moduleDependency("multimod-hmpp.top-mpp.kt27816Main", DependencyScope.COMPILE)
+                moduleDependency(
+                    "multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE,
+                    allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                )
+                moduleDependency(
+                    "multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.COMPILE,
+                    allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                )
+                moduleDependency(
+                    "multimod-hmpp.top-mpp.jsLinuxMain", DependencyScope.COMPILE,
+                    allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                )
+                moduleDependency(
+                    "multimod-hmpp.top-mpp.kt27816Main", DependencyScope.COMPILE,
+                    allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                )
             }
             module("multimod-hmpp.mpp-additional.jsTest") {
                 targetPlatform(js)
@@ -241,10 +259,22 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("multimod-hmpp.mpp-additional.jsMain", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.mpp-additional.jsMain", DependencyScope.RUNTIME)
                 moduleDependency("multimod-hmpp.top-mpp.jsMain", DependencyScope.TEST)
-                moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST, allowMultiple = true)
-                moduleDependency("multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.TEST)
-                moduleDependency("multimod-hmpp.top-mpp.jsLinuxMain", DependencyScope.TEST)
-                moduleDependency("multimod-hmpp.top-mpp.kt27816Main", DependencyScope.TEST)
+                moduleDependency(
+                    "multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST,
+                    allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                )
+                moduleDependency(
+                    "multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.TEST,
+                    allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                )
+                moduleDependency(
+                    "multimod-hmpp.top-mpp.jsLinuxMain", DependencyScope.TEST,
+                    allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                )
+                moduleDependency(
+                    "multimod-hmpp.top-mpp.kt27816Main", DependencyScope.TEST,
+                    allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                )
             }
             module("multimod-hmpp.mpp-additional.jvmMacosMain") {
                 targetPlatform(jvm, allNative)
@@ -254,7 +284,6 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 targetPlatform(jvm)
                 moduleDependency("multimod-hmpp.mpp-additional.commonMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.mpp-additional.jvmMacosMain", DependencyScope.COMPILE)
-                moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE)
             }
             module("multimod-hmpp.mpp-additional.jvmTest") {
                 targetPlatform(jvm)
@@ -263,7 +292,6 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("multimod-hmpp.mpp-additional.jvmMacosMain", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.mpp-additional.jvmMain", DependencyScope.TEST)
                 moduleDependency("multimod-hmpp.mpp-additional.jvmMain", DependencyScope.RUNTIME)
-                moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST)
             }
             module("multimod-hmpp.mpp-additional.linuxMain") {
                 targetPlatform(linuxX64)
@@ -323,6 +351,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
             module("multimod-hmpp.plain-jvm.test") {
                 targetPlatform(jvm)
                 moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
+                moduleDependency("multimod-hmpp.plain-jvm.main", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.COMPILE)
                 moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.COMPILE)

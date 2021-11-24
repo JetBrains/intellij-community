@@ -33,6 +33,22 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
         }
     """.trimIndent()
 
+    fun `test error type`() = doTest("""
+        // NO_HINTS
+        interface Baz {
+            fun foo(): Foo = Foo()
+        }
+
+        class Outer : Baz {
+            class Nested {
+                val x = this@Outer.foo()
+                    .bar()
+                    .foo()
+                    .bar()
+            }
+        }
+    """.trimIndent())
+
     fun `test simple`() = doTest("""
         fun main() {
             Foo().bar()<# [temp:///src/foo.kt:311]Bar #>

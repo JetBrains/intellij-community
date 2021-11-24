@@ -6,15 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 
-internal fun Module.hashCodeOrZero() =
-    runCatching { moduleFilePath.hashCode() + 31 * name.hashCode() }
-        .getOrDefault(0)
-
-internal fun Module.isTheSameAs(other: Module) =
-    runCatching { moduleFilePath == other.moduleFilePath && name == other.name }
-        .getOrDefault(false)
-
-typealias NavigatableDependency = (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?
 
 data class ProjectModule(
     @NlsSafe val name: String,
@@ -55,6 +46,8 @@ data class ProjectModule(
         if (buildFile.path != other.buildFile.path) return false
         if (buildSystemType != other.buildSystemType) return false
         if (moduleType != other.moduleType) return false
+        // if (navigatableDependency != other.navigatableDependency) return false // Intentionally excluded
+        if (availableScopes != other.availableScopes) return false
 
         return true
     }
@@ -66,6 +59,18 @@ data class ProjectModule(
         result = 31 * result + buildFile.path.hashCode()
         result = 31 * result + buildSystemType.hashCode()
         result = 31 * result + moduleType.hashCode()
+        // result = 31 * result + navigatableDependency.hashCode() // Intentionally excluded
+        result = 31 * result + availableScopes.hashCode()
         return result
     }
 }
+
+internal fun Module.isTheSameAs(other: Module) =
+    runCatching { moduleFilePath == other.moduleFilePath && name == other.name }
+        .getOrDefault(false)
+
+private fun Module.hashCodeOrZero() =
+    runCatching { moduleFilePath.hashCode() + 31 * name.hashCode() }
+        .getOrDefault(0)
+
+typealias NavigatableDependency = (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?

@@ -136,17 +136,28 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
       if (model == null) return;
       String replacement = createReplacement(model.getCondition());
       if (replacement == null) return;
-      PsiExpression toReplace = model.getThenExpression();
+      PsiStatement elseBranch = model.getElseBranch();
+      final PsiElement result;
+      if (elseBranch instanceof PsiDeclarationStatement) {
+        result = replace(ifStatement, elseBranch, model.getElseExpression(), replacement);
+        elseBranch.delete();
+      }
+      else {
+        result = replace(ifStatement, model.getThenBranch(), model.getThenExpression(), replacement);
+        if (!PsiTreeUtil.isAncestor(ifStatement, elseBranch, true)) {
+          new CommentTracker().deleteAndRestoreComments(elseBranch);
+        }
+      }
+      SimplifiableIfStatementInspection.tryJoinDeclaration(result);
+    }
+
+    private static @NotNull PsiElement replace(@NotNull PsiIfStatement ifStatement,
+                                               @NotNull PsiStatement branch, @NotNull PsiExpression toReplace,
+                                               @NotNull String replacement) {
       PsiReplacementUtil.replaceExpression(toReplace, replacement, new CommentTracker());
       CommentTracker tracker = new CommentTracker();
-      PsiStatement thenBranch = model.getThenBranch();
-      tracker.text(thenBranch);
-      PsiStatement elseBranch = model.getElseBranch();
-      if (!PsiTreeUtil.isAncestor(ifStatement, elseBranch, true)) {
-        new CommentTracker().deleteAndRestoreComments(elseBranch);
-      }
-      PsiElement result = PsiReplacementUtil.replaceStatement(ifStatement, thenBranch.getText(), tracker);
-      SimplifiableIfStatementInspection.tryJoinDeclaration(result);
+      tracker.text(branch);
+      return PsiReplacementUtil.replaceStatement(ifStatement, branch.getText(), tracker);
     }
 
     @Nullable

@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -14,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
@@ -198,16 +196,12 @@ public final class XFramesView extends XDebugView {
 
     myToolbar = createToolbar();
     myThreadsPanel = new Wrapper();
-    if (myThreadComboBox instanceof XDebuggerEmbeddedComboBox) {
-      myToolbar.setOpaque(false);
-      ((XDebuggerEmbeddedComboBox<XExecutionStack>)myThreadComboBox).setExtension(myToolbar);
-    } else {
-      myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
-    }
+    myToolbar.setOpaque(false);
+    ((XDebuggerEmbeddedComboBox<XExecutionStack>)myThreadComboBox).setExtension(myToolbar);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
     myMainPanel.setFocusCycleRoot(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusPolicy());
-    if (Registry.is("debugger.new.tool.window.layout", false) && myMainPanel.getLayout() instanceof BorderLayout) {
+    if (myMainPanel.getLayout() instanceof BorderLayout) {
       String prev = getShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE);
       String next = getShortcutText(IdeActions.ACTION_NEXT_OCCURENCE);
       String propKey = "XFramesView.AdPanel.SwitchFrames.enabled";
@@ -318,11 +312,6 @@ public final class XFramesView extends XDebugView {
   private ActionToolbarImpl createToolbar() {
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
-    if (!Registry.is("debugger.new.tool.window.layout", false)) {
-      CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-      framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesList));
-      framesGroup.add(actionsManager.createNextOccurenceAction(myFramesList));
-    }
     framesGroup.addAll(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP));
 
     final ActionToolbarImpl toolbar =

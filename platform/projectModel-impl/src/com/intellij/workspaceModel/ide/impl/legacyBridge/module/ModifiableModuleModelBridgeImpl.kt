@@ -48,8 +48,6 @@ internal class ModifiableModuleModelBridgeImpl(
     return currentModulesSet.toTypedArray()
   }
 
-  override fun newModule(filePath: String, moduleTypeId: String): Module = newModule(filePath, moduleTypeId, null)
-
   override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,
@@ -67,7 +65,7 @@ internal class ModifiableModuleModelBridgeImpl(
     return module
   }
 
-  override fun newModule(filePath: String, moduleTypeId: String, options: MutableMap<String, String>?): Module {
+  override fun newModule(filePath: String, moduleTypeId: String): Module {
     // TODO Handle filePath, add correct iml source with a path
 
     // TODO Must be in sync with module loading. It is not now

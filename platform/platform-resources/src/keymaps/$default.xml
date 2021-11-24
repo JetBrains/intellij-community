@@ -136,6 +136,9 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control F3"/>
   </action>
+  <action id="FindPrevWordAtCaret">
+    <keyboard-shortcut first-keystroke="control shift F3"/>
+  </action>
   <action id="SelectNextOccurrence">
     <keyboard-shortcut first-keystroke="alt J"/>
   </action>
@@ -358,6 +361,9 @@
   </action>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="shift F11"/>
+  </action>
+  <action id="ShowTypeBookmarks">
+    <keyboard-shortcut first-keystroke="control shift F11"/>
   </action>
   <action id="HighlightUsagesInFile">
     <keyboard-shortcut first-keystroke="control shift F7"/> 
@@ -1052,7 +1058,6 @@
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
-    <keyboard-shortcut first-keystroke="control E"/>
   </action>
   <action id="AddToFavoritesPopup">
     <keyboard-shortcut first-keystroke="alt shift F"/>

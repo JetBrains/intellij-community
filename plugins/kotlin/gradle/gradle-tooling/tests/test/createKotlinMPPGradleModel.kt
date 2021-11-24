@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
+import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.*
 import org.jetbrains.kotlin.idea.projectModel.*
 
 internal fun createKotlinMPPGradleModel(
@@ -17,7 +19,8 @@ internal fun createKotlinMPPGradleModel(
         sourceSetsByName = sourceSets.associateBy { it.name },
         targets = targets.toList(),
         extraFeatures = extraFeatures,
-        kotlinNativeHome = kotlinNativeHome
+        kotlinNativeHome = kotlinNativeHome,
+        partialCacheAware = CompilerArgumentsCacheAwareImpl()
     )
 }
 
@@ -60,6 +63,7 @@ internal fun createKotlinSourceSet(
     actualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
 )
 
+@Suppress("DEPRECATION_ERROR")
 internal fun createKotlinCompilation(
     name: String = "main",
     defaultSourceSets: Set<KotlinSourceSet> = emptySet(),
@@ -68,6 +72,7 @@ internal fun createKotlinCompilation(
     output: KotlinCompilationOutput = createKotlinCompilationOutput(),
     arguments: KotlinCompilationArguments = createKotlinCompilationArguments(),
     dependencyClasspath: Iterable<String> = emptyList(),
+    cachedArgsInfo: CachedArgsInfo<*> = createCachedArgsInfo(),
     kotlinTaskProperties: KotlinTaskProperties = createKotlinTaskProperties(),
     nativeExtensions: KotlinNativeCompilationExtensions? = null
 
@@ -80,6 +85,7 @@ internal fun createKotlinCompilation(
         output = output,
         arguments = arguments,
         dependencyClasspath = dependencyClasspath.toList().toTypedArray(),
+        cachedArgsInfo = cachedArgsInfo,
         kotlinTaskProperties = kotlinTaskProperties,
         nativeExtensions = nativeExtensions
     )
@@ -93,12 +99,30 @@ internal fun createKotlinCompilationOutput(): KotlinCompilationOutputImpl {
     )
 }
 
+@Suppress("DEPRECATION_ERROR")
 internal fun createKotlinCompilationArguments(): KotlinCompilationArgumentsImpl {
     return KotlinCompilationArgumentsImpl(
         defaultArguments = emptyArray(),
         currentArguments = emptyArray()
     )
 }
+
+internal fun createCachedArgsBucket(): CachedCompilerArgumentsBucket = CachedCompilerArgumentsBucket(
+    compilerArgumentsClassName = KotlinCachedRegularCompilerArgument(0),
+    singleArguments = emptyMap(),
+    classpathParts = KotlinCachedMultipleCompilerArgument(emptyList()),
+    multipleArguments = emptyMap(),
+    flagArguments = emptyMap(),
+    internalArguments = emptyList(),
+    freeArgs = emptyList()
+)
+
+internal fun createCachedArgsInfo(): CachedArgsInfo<*> = CachedExtractedArgsInfo(
+    cacheOriginIdentifier = RandomUtils.nextLong(),
+    currentCompilerArguments = createCachedArgsBucket(),
+    defaultCompilerArguments = createCachedArgsBucket(),
+    dependencyClasspath = emptyList()
+)
 
 internal fun createKotlinTaskProperties(): KotlinTaskPropertiesImpl {
     return KotlinTaskPropertiesImpl(
@@ -107,9 +131,9 @@ internal fun createKotlinTaskProperties(): KotlinTaskPropertiesImpl {
 }
 
 internal fun createKotlinTarget(
-  name: String,
-  platform: KotlinPlatform = KotlinPlatform.COMMON,
-  compilations: Iterable<KotlinCompilation> = emptyList()
+    name: String,
+    platform: KotlinPlatform = KotlinPlatform.COMMON,
+    compilations: Iterable<KotlinCompilation> = emptyList()
 ): KotlinTargetImpl {
     return KotlinTargetImpl(
         name = name,

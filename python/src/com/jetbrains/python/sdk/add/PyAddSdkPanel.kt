@@ -89,8 +89,10 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
       return ValidationInfo(message, field)
     }
 
+    /** Should be protected. Please, don't use outside the class. KT-48508 */
     @JvmStatic
-    protected fun validateSdkComboBox(field: PySdkPathChoosingComboBox, view: PyAddSdkView): ValidationInfo? {
+    @PublishedApi
+    internal fun validateSdkComboBox(field: PySdkPathChoosingComboBox, view: PyAddSdkView): ValidationInfo? {
       return validateSdkComboBox(field, getDefaultButtonName(view))
     }
 
@@ -130,7 +132,7 @@ fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox, sdkObtainer: ()
  */
 fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
                          sdkObtainer: () -> List<Sdk>,
-                         onAdded: () -> Unit) {
+                         onAdded: (List<Sdk>) -> Unit) {
   ApplicationManager.getApplication().executeOnPooledThread {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
     executor.execute { sdkComboBox.setBusy(true) }
@@ -143,7 +145,7 @@ fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
         sdkComboBox.setBusy(false)
         sdkComboBox.removeAllItems()
         sdks.forEach(sdkComboBox::addSdkItem)
-        onAdded()
+        onAdded(sdks)
       }
     }
   }

@@ -86,7 +86,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
                            paths.configFolder,
                            paths.systemFolder,
                            paths.outputRootFolder, // classpath index making a lot of noise
-                           paths.ultimateRootFolder.resolve("platform/cwm-tests/general/data"), // classpath index making a lot of noise in stderr
+                           paths.sourcesRootFolder.resolve("platform/cwm-tests/general/data"), // classpath index making a lot of noise in stderr
                            paths.communityRootFolder.resolve("build/download")) // quiche lib
 
     // docker can create these under root, so we create them ourselves
@@ -101,9 +101,9 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     // jars
     dockerCmd.addReadonly(paths.communityBinFolder)
     dockerCmd.addReadonly(paths.communityRootFolder.resolve("lib"))
-    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve("lib"))
-    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve("plugins"))
-    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve("contrib"))
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("lib"))
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("plugins"))
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("contrib"))
 
     // a lot of jars in classpaths, /plugins, /xml, so we'll just mount the whole root
     dockerCmd.addReadonly(paths.communityRootFolder)
@@ -115,7 +115,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     dockerCmd.addReadonly(paths.mavenRepositoryFolder)
     
     // quiche
-    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve(".idea"))
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve(".idea"))
 
     // user-provided volumes
     paths.dockerVolumesToWritable.forEach { (volume, isWriteable) -> dockerCmd.addVolume(volume, isWriteable) }

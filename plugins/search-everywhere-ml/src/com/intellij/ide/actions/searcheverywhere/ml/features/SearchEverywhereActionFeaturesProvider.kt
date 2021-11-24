@@ -34,10 +34,6 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
   }
 
-  override fun isElementSupported(element: Any): Boolean {
-    return element is GotoActionModel.MatchedValue && element.value is GotoActionModel.ActionWrapper
-  }
-
   override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, matchedValue: GotoActionModel.MatchedValue): Map<String, Any> {
     val actionWrapper = matchedValue.value as? GotoActionModel.ActionWrapper
     data[IS_ACTION_DATA_KEY] = actionWrapper != null

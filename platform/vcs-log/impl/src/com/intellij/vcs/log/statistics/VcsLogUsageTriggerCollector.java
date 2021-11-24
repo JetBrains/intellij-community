@@ -1,67 +1,85 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
-public final class VcsLogUsageTriggerCollector {
+public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.trigger", 4);
+  private static final StringEventField CONTEXT = EventFields.String("context", List.of("history", "log"));
+  private static final ClassEventField CLASS = EventFields.Class("class");
+  public static final BooleanEventField PARENT_COMMIT = EventFields.Boolean("parent_commit");
+  private static final VarargEventId ACTION_CALLED = GROUP.registerVarargEvent("action.called",
+                                                                               CONTEXT,
+                                                                               EventFields.InputEventByAnAction,
+                                                                               CLASS,
+                                                                               PARENT_COMMIT);
+  private static final StringEventField FILTER_NAME =
+    EventFields.String("filter_name", ContainerUtil.map(VcsLogFilterCollection.STANDARD_KEYS, key -> key.getName()));
+  private static final VarargEventId FILTER_SET = GROUP.registerVarargEvent("filter.set",
+                                                                            CONTEXT,
+                                                                            FILTER_NAME);
+  private static final EventId1<String> TABLE_CLICKED =
+    GROUP.registerEvent("table.clicked", EventFields.String("target", List.of("node", "arrow", "root.column")));
+  private static final EventId2<String, Boolean> HISTORY_SHOWN =
+    GROUP.registerEvent("history.shown",
+                        EventFields.String("kind", List.of("multiple", "folder", "file")),
+                        EventFields.Boolean("has_revision"));
+  private static final EventId COLUMN_RESET = GROUP.registerEvent("column.reset");
+  private static final EventId TAB_NAVIGATED = GROUP.registerEvent("tab.navigated");
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
 
   public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action) {
     triggerUsage(e, action, null);
   }
 
-  public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action, @Nullable Consumer<FeatureUsageData> configurator) {
-    triggerUsage(VcsLogEvent.ACTION_CALLED, data -> {
-      addContext(data, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null);
-      data.addInputEvent(e);
-      data.addData("class", action.getClass().getName());
-      if (configurator != null) configurator.accept(data);
-    }, e.getProject());
-  }
-
-  public static void triggerUsage(@NotNull VcsLogEvent event, boolean isFromHistory, @Nullable Consumer<FeatureUsageData> configurator) {
-    triggerUsage(event, data -> {
-      addContext(data, isFromHistory);
-      if (configurator != null) configurator.accept(data);
-    }, null);
-  }
-
-  public static void triggerUsage(@NotNull VcsLogEvent event,
-                                  @Nullable Consumer<FeatureUsageData> configurator,
-                                  @Nullable Project project) {
-    FeatureUsageData data = new FeatureUsageData();
+  public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action, @Nullable Consumer<List<EventPair<?>>> configurator) {
+    List<EventPair<?>> data = new ArrayList<>();
+    data.add(getContext(e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null));
+    data.add(EventFields.InputEventByAnAction.with(e));
+    data.add(CLASS.with(action.getClass()));
     if (configurator != null) configurator.accept(data);
-    FUCounterUsageLogger.getInstance().logEvent(project, "vcs.log.trigger", event.getId(), data);
+    ACTION_CALLED.log(e.getProject(), data);
   }
 
-  private static void addContext(@NotNull FeatureUsageData data, boolean isFromHistory) {
-    data.addData("context", isFromHistory ? "history" : "log");
+  public static void triggerFilterSet(@NotNull String name) {
+    FILTER_SET.log(getContext(false), FILTER_NAME.with(name));
+  }
+
+  private static EventPair<String> getContext(boolean isFromHistory) {
+    return CONTEXT.with(isFromHistory ? "history" : "log");
+  }
+
+  public static void triggerFileHistoryUsage(Project project, String kind, boolean hasRevision) {
+    HISTORY_SHOWN.log(project, kind, hasRevision);
   }
 
   public static void triggerClick(@NonNls @NotNull String target) {
-    triggerUsage(VcsLogEvent.TABLE_CLICKED, data -> data.addData("target", target), null);
+    TABLE_CLICKED.log(target);
   }
 
-  public enum VcsLogEvent {
-    ACTION_CALLED,
-    FILTER_SET,
-    TABLE_CLICKED,
-    COLUMN_RESET,
-    HISTORY_SHOWN,
-    TAB_NAVIGATED;
+  public static void triggerColumnReset(Project project) {
+    COLUMN_RESET.log(project);
+  }
 
-    @NotNull
-    String getId() {
-      return name().toLowerCase(Locale.ENGLISH).replace('_', '.');
-    }
+  public static void triggerTabNavigated(Project project) {
+    TAB_NAVIGATED.log(project);
   }
 }

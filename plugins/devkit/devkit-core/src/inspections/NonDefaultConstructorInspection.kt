@@ -15,8 +15,6 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.xml.DomManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -30,7 +28,6 @@ import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.convertOpt
 import java.util.*
-import kotlin.collections.HashSet
 
 private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 
@@ -75,14 +72,22 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
       area = getArea(extensionPoint)
       isService = extensionPoint?.beanClass?.stringValue == serviceBeanFqn
       if (isService) {
-        val extension = ContainerUtil.getOnlyItem(locateExtensionsByPsiClass(javaPsi))?.pointer?.element
-        val extensionTag = DomManager.getDomManager(manager.project).getDomElement(extension) as? Extension
+        for (candidate in locateExtensionsByPsiClass(javaPsi)) {
+          val extensionTag = candidate.pointer.element ?: continue
+          val clientName = extensionTag.getAttribute("client")?.value ?: continue
 
-        serviceClientKind = when (extensionTag?.xmlTag?.getAttribute("client")?.value?.toLowerCase(Locale.US)) {
-          "all" -> ServiceDescriptor.ClientKind.ALL
-          "guest" -> ServiceDescriptor.ClientKind.GUEST
-          "local" -> ServiceDescriptor.ClientKind.LOCAL
-          else -> null
+          val kind = when (clientName.lowercase(Locale.US)) {
+            "all" -> ServiceDescriptor.ClientKind.ALL
+            "guest" -> ServiceDescriptor.ClientKind.GUEST
+            "local" -> ServiceDescriptor.ClientKind.LOCAL
+            else -> null
+          }
+          if (serviceClientKind == null) {
+            serviceClientKind = kind
+          }
+          else if (serviceClientKind != kind) {
+            serviceClientKind = ServiceDescriptor.ClientKind.ALL
+          }
         }
       }
     }

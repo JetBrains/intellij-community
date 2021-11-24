@@ -151,6 +151,7 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control F12"/>
   </action>
+  <action id="FindPrevWordAtCaret"/>
   <action id="Forward">
     <keyboard-shortcut first-keystroke="alt RIGHT"/>
     <mouse-shortcut keystroke="button5"/>
@@ -337,6 +338,7 @@
     <keyboard-shortcut first-keystroke="control alt T"/>
   </action>
   <action id="Synchronize"/>
+  <action id="ShowTypeBookmarks"/>
   <action id="ToggleBookmark">
     <keyboard-shortcut first-keystroke="shift control F11"/>
   </action>

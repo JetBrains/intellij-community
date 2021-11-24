@@ -1754,6 +1754,13 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
              myRole2 == ChildRole.ANNOTATION_VALUE) {
       createSpaceInCode(true);
     }
+    else if (myRole1 == ChildRole.LPARENTH && myChild2.getElementType() == JavaElementType.NAME_VALUE_PAIR && myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_ANNOTATION) {
+      int spacesCount = mySettings.SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE ? 1 : 0;
+      myResult = Spacing.createDependentLFSpacing(spacesCount, spacesCount, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else if (myChild1.getElementType() == JavaElementType.NAME_VALUE_PAIR && myRole2 == ChildRole.RPARENTH && myJavaSettings.RPAREN_ON_NEW_LINE_IN_ANNOTATION) {
+      myResult = Spacing.createDependentLFSpacing(0, 0, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
     }

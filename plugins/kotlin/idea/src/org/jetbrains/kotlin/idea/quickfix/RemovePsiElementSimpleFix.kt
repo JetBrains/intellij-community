@@ -59,17 +59,21 @@ open class RemovePsiElementSimpleFix(element: PsiElement, @Nls private val text:
             if (element is KtDestructuringDeclarationEntry) return null
             val expression = element.getNonStrictParentOfType<KtProperty>() ?: return null
             if (!RemoveExplicitTypeIntention.redundantTypeSpecification(expression.typeReference, expression.initializer)) return null
-            return object : RemovePsiElementSimpleFix(expression, KotlinBundle.message("remove.variable.0", expression.name.toString())) {
-                override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-                    val initializer = expression.initializer
-                    if (initializer != null && initializer !is KtConstantExpression) {
-                        val commentSaver = CommentSaver(expression)
-                        val replaced = expression.replace(initializer)
-                        commentSaver.restore(replaced)
-                    } else {
-                        expression.delete()
-                    }
-                }
+            return RemoveVariableFix(expression)
+        }
+    }
+
+    private class RemoveVariableFix(expression: KtProperty) :
+        RemovePsiElementSimpleFix(expression, KotlinBundle.message("remove.variable.0", expression.name.toString())) {
+        override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+            val expr = element as? KtProperty ?: return
+            val initializer = expr.initializer
+            if (initializer != null && initializer !is KtConstantExpression) {
+                val commentSaver = CommentSaver(expr)
+                val replaced = expr.replace(initializer)
+                commentSaver.restore(replaced)
+            } else {
+                expr.delete()
             }
         }
     }

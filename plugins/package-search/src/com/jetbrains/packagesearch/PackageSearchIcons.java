@@ -10,11 +10,11 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class PackageSearchIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PackageSearchIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Artifact = load("icons/artifact.svg", 3672511844568877953L, 2);
-  /** 13x13 */ public static final @NotNull Icon ArtifactSmall = load("icons/artifactSmall.svg", -1825013553400867350L, 2);
-  /** 16x16 */ public static final @NotNull Icon Checkmark = load("icons/checkmark.svg", 3195991529612880146L, 2);
-  /** 16x16 */ public static final @NotNull Icon Package = load("icons/package.svg", -8036164534226080593L, 0);
+  /** 16x16 */ public static final @NotNull Icon Artifact = load("icons/artifact.svg", 1950163026, 2);
+  /** 13x13 */ public static final @NotNull Icon ArtifactSmall = load("icons/artifactSmall.svg", 283407247, 2);
+  /** 16x16 */ public static final @NotNull Icon Checkmark = load("icons/checkmark.svg", 340610411, 2);
+  /** 16x16 */ public static final @NotNull Icon Package = load("icons/package.svg", 1383777902, 0);
 }

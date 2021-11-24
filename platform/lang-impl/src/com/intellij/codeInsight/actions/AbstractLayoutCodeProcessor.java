@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -46,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
+import java.util.function.Consumer;
 
 public abstract class AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance(AbstractLayoutCodeProcessor.class);
@@ -202,6 +204,10 @@ public abstract class AbstractLayoutCodeProcessor {
   @NotNull
   protected abstract FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException;
 
+  protected static @NotNull FutureTask<Boolean> emptyTask() {
+    return new FutureTask<>(EmptyRunnable.INSTANCE, true);
+  }
+
   protected boolean needsReadActionToPrepareTask() {
     return true;
   }
@@ -277,23 +283,39 @@ public abstract class AbstractLayoutCodeProcessor {
       );
       return;
     }
-
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, getProgressTitle(), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText(myProgressText);
+    
+    Consumer<@NotNull ProgressIndicator> runnable = (indicator) -> {
+      indicator.setText(myProgressText);
         try {
           new ProcessingTask(indicator).performFileProcessing(file);
         }
-        catch(IndexNotReadyException e) {
+        catch (IndexNotReadyException e) {
           LOG.warn(e);
           return;
         }
         if (myPostRunnable != null) {
           ApplicationManager.getApplication().invokeLater(myPostRunnable);
         }
-      }
-    });
+    };
+
+    
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      ProgressManager.getInstance().run(new Task.Modal(myProject, getProgressTitle(), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          runnable.accept(indicator);
+        }
+      });
+    }
+    else {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, getProgressTitle(), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          runnable.accept(indicator);
+        }
+      });
+    }
   }
 
   private void runProcessFiles() {

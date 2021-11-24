@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +19,10 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Alexander Lobas
  */
-public final class NotificationBalloonShadowBorderProvider implements BalloonImpl.ShadowBorderProvider {
-  private static final Insets INSETS = new JBInsets(4, 6, 8, 6);
-  private final Color myFillColor;
-  private final Color myBorderColor;
+public class NotificationBalloonShadowBorderProvider implements BalloonImpl.ShadowBorderProvider {
+  private static final JBInsets INSETS = new JBInsets(4, 6, 8, 6);
+  protected final Color myFillColor;
+  protected final Color myBorderColor;
 
   public NotificationBalloonShadowBorderProvider(@NotNull Color fillColor, @NotNull Color borderColor) {
     myFillColor = fillColor;
@@ -31,7 +32,7 @@ public final class NotificationBalloonShadowBorderProvider implements BalloonImp
   @NotNull
   @Override
   public Insets getInsets() {
-    return INSETS;
+    return JBUI.insets("Notification.borderInsets", INSETS);
   }
 
   @Override
@@ -108,22 +109,22 @@ public final class NotificationBalloonShadowBorderProvider implements BalloonImp
     int x, y, length;
 
     if (position == Balloon.Position.above) {
-      length = INSETS.bottom;
+      length = getInsets().bottom;
       x = pointTarget.x;
       y = bounds.y + bounds.height + length;
     }
     else if (position == Balloon.Position.below) {
-      length = INSETS.top;
+      length = getInsets().top;
       x = pointTarget.x;
       y = bounds.y - length;
     }
     else if (position == Balloon.Position.atRight) {
-      length = INSETS.left;
+      length = getInsets().left;
       x = bounds.x - length;
       y = pointTarget.y;
     }
     else {
-      length = INSETS.right;
+      length = getInsets().right;
       x = bounds.x + bounds.width + length;
       y = pointTarget.y;
     }

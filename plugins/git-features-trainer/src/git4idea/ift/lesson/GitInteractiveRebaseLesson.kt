@@ -4,6 +4,7 @@ package git4idea.ift.lesson
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -16,6 +17,7 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
@@ -26,10 +28,15 @@ import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.rebase.interactive.dialog.GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY
+import org.assertj.swing.core.MouseButton
+import org.assertj.swing.data.TableCell
+import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.InputEvent
@@ -44,7 +51,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
 
   private var backupRebaseDialogLocation: Point? = null
 
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 30)
 
   override val lessonContent: LessonContext.() -> Unit = {
     task("ActivateVersionControlToolWindow") {
@@ -53,6 +60,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
       }
+      test { actions(it) }
     }
 
     resetGitLogWindow()
@@ -61,10 +69,13 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.introduction"))
       highlightLatestCommitsFromBranch(branchName, sequenceLength = 5, highlightInside = false, usePulsation = true)
       proceedLink()
+      showWarningIfGitWindowClosed()
     }
 
+    var commitHashToHighlight: Hash? = null
+    lateinit var clickCommitTaskId: TaskContext.TaskId
     task {
-      var commitHashToHighlight: Hash? = null
+      clickCommitTaskId = taskId
       before {
         LearningUiHighlightingManager.clearHighlights()
         val vcsData = VcsProjectLog.getInstance(project).dataManager
@@ -85,14 +96,28 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       triggerByUiComponentAndHighlight { ui: ActionMenuItem ->
         ui.text == interactiveRebaseMenuItemText
       }
-      showWarningIfGitWindowClosed()
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
+      test {
+        ideFrame {
+          val table: VcsLogGraphTable = findComponentWithTimeout(defaultTimeout)
+          val row = invokeAndWaitIfNeeded {
+            (0 until table.rowCount).find { table.model.getCommitMetadata(it).id == commitHashToHighlight }
+          } ?: error("Failed to find commit with hash: $commitHashToHighlight")
+          JTableFixture(robot, table).click(TableCell.row(row).column(1), MouseButton.RIGHT_BUTTON)
+        }
+      }
     }
 
     task("Git.Interactive.Rebase") {
       text(GitLessonsBundle.message("git.interactive.rebase.choose.interactive.rebase",
                                     strong(interactiveRebaseMenuItemText)))
       trigger(it)
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(clickCommitTaskId, delayMillis = defaultRestoreDelay)
+      test {
+        ideFrame {
+          jMenuItem { item: ActionMenuItem -> item.text == interactiveRebaseMenuItemText }.click()
+        }
+      }
     }
 
     task {
@@ -115,6 +140,12 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         else false
       }
       restoreByUi(openRebaseDialogTaskId)
+      test(waitEditorToBeReady = false) {
+        ideFrame {
+          val table = findComponentWithTimeout(defaultTimeout) { ui: JBTable -> isInsideRebaseDialog(ui) }
+          JTableFixture(robot(), table).click(TableCell.row(4).column(1), MouseButton.LEFT_BUTTON)
+        }
+      }
     }
 
     task {
@@ -130,6 +161,9 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         isInsideRebaseDialog(ui) && ui.model.getValueAt(1, 1).toString() == movingCommitText
       }
       restoreByUi(openRebaseDialogTaskId)
+      test(waitEditorToBeReady = false) {
+        repeat(3) { invokeActionViaShortcut("ALT UP") }
+      }
     }
 
     task {
@@ -138,6 +172,9 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
                                     strong(GitBundle.message("rebase.entry.action.name.fixup"))))
       triggerByUiComponentAndHighlight { ui: BasicOptionButtonUI.ArrowButton -> isInsideRebaseDialog(ui) }
       trigger("git4idea.rebase.interactive.dialog.FixupAction")
+      test(waitEditorToBeReady = false) {
+        invokeActionViaShortcut("ALT F")
+      }
     }
 
     task {
@@ -145,6 +182,14 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       highlightSubsequentCommitsInRebaseDialog(startRowIncl = 2, endRowExcl = 5)
       triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
         isInsideRebaseDialog(ui) && ui.similarCommitsSelected()
+      }
+      test(waitEditorToBeReady = false) {
+        ideFrame {
+          val table = findComponentWithTimeout(defaultTimeout) { ui: JBTable -> isInsideRebaseDialog(ui) }
+          JTableFixture(robot(), table).click(TableCell.row(2).column(1), MouseButton.LEFT_BUTTON)
+        }
+        invokeActionViaShortcut("SHIFT DOWN")
+        invokeActionViaShortcut("SHIFT DOWN")
       }
     }
 
@@ -158,6 +203,9 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         val table = previous.ui as? JBTable ?: return@restoreState false
         !table.similarCommitsSelected()
       }
+      test(waitEditorToBeReady = false) {
+        invokeActionViaShortcut("ALT S")
+      }
     }
 
     task {
@@ -168,6 +216,9 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       val applyRewordShortcut = CommonShortcuts.CTRL_ENTER.shortcuts.first() as KeyboardShortcut
       text(GitLessonsBundle.message("git.interactive.rebase.apply.reword", LessonUtil.rawKeyStroke(applyRewordShortcut.firstKeyStroke)))
       stateCheck { previous.ui?.isShowing != true }
+      test(waitEditorToBeReady = false) {
+        invokeActionViaShortcut("CTRL ENTER")
+      }
     }
 
     task {
@@ -179,12 +230,15 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       triggerOnNotification {
         it.displayId == GitNotificationIdsHolder.REBASE_SUCCESSFUL
       }
+      test(waitEditorToBeReady = false) {
+        ideFrame { button(startRebasingButtonText).click() }
+      }
     }
 
     text(GitLessonsBundle.message("git.interactive.rebase.congratulations"))
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY, backupRebaseDialogLocation)
     backupRebaseDialogLocation = null
   }
@@ -235,4 +289,9 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     val index = getCommitIndex(hash, roots.single())
     return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index)
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.interactive.rebase.help.link"),
+         LessonUtil.getHelpLink("edit-project-history.html#interactive-rebase")),
+  )
 }

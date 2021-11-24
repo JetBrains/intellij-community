@@ -18,7 +18,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.yaml.YAMLLanguage
-import org.jetbrains.yaml.psi.YAMLFile
 import java.util.*
 
 
@@ -26,14 +25,12 @@ private val INJECTION_RANGE_BEFORE_ENTER = Key.create<RangeMarker>("NEXT_ELEMENT
 private val INDENT_BEFORE_PROCESSING = Key.create<String>("INDENT_BEFORE_PROCESSING")
 
 fun preserveIndentStateBeforeProcessing(file: PsiFile, dataContext: DataContext) {
+  if (file.virtualFile !is VirtualFileWindow) return
   val hostEditor = CommonDataKeys.HOST_EDITOR.getData(dataContext) as? EditorEx ?: return
-  val virtualFile = hostEditor.virtualFile
-  val hostFile = hostEditor.project?.let { PsiManager.getInstance(it).findFile(virtualFile) } ?: return
+  val hostFile = PsiManager.getInstance(hostEditor.project ?: return).findFile(hostEditor.virtualFile ?: return) ?: return
   if (!hostFile.viewProvider.hasLanguage(YAMLLanguage.INSTANCE)) return
 
-  if (file.virtualFile !is VirtualFileWindow) return
   val injectionHost = InjectedLanguageManager.getInstance(file.project).getInjectionHost(file) ?: return
-
   val lineIndent = InjectionMeta.INJECTION_INDENT[injectionHost]
   INDENT_BEFORE_PROCESSING[file] = lineIndent
   INJECTION_RANGE_BEFORE_ENTER[file] = hostEditor.document.createRangeMarker(injectionHost.textRange)

@@ -12,7 +12,7 @@ class BaseLayoutSpec {
    * Register an additional module to be included into the plugin distribution. Module-level libraries from
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
-  void withModule(String moduleName) {
+  final void withModule(String moduleName) {
     layout.withModule(moduleName)
   }
 
@@ -41,7 +41,7 @@ class BaseLayoutSpec {
    * @relativeOutputPath path relative to 'lib' plugin directory
    */
   void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
-    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, ProjectLibraryData.PackMode.MERGED))
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, ProjectLibraryData.PackMode.STANDALONE_MERGED))
   }
 
   void withProjectLibrary(String libraryName, ProjectLibraryData.PackMode packMode) {

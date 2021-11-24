@@ -309,7 +309,7 @@ final class InProcessGroovyc implements GroovycFlavor {
       }
     };
     UrlClassLoader groovyAllLoader = UrlClassLoader.build()
-      .files(toPaths(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))))
+      .files(toPaths(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(false), Collections.singletonList(groovyJar))))
       .useCache(ourLoaderCachePool, url -> true)
       .parent(getPlatformLoaderParentIfOnJdk9()).get();
 

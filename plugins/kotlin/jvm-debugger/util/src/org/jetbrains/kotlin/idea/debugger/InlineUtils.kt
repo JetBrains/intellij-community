@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.debugger
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.LocalVariable
-import com.sun.jdi.Location
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION
 
@@ -208,11 +208,11 @@ class InlineStackFrameVariableHolder private constructor(
             val startOffsets = mutableMapOf<Long, MutableList<LocalVariable>>()
             val replacements = mutableMapOf<LocalVariable, LocalVariable>()
             for (variable in allVariables) {
-                val startOffset = variable.getFieldValue("scopeStart") as Location
+                val startOffset = variable.getBorders()?.start ?: continue
                 startOffsets.computeIfAbsent(startOffset.codeIndex()) { mutableListOf() } += variable
             }
             for (variable in allVariables) {
-                val endOffset = variable.getFieldValue("scopeEnd") as Location
+                val endOffset = variable.getBorders()?.endInclusive ?: continue
                 val otherVariables = startOffsets[endOffset.codeIndex() + 1] ?: continue
                 for (other in otherVariables) {
                     if (variable.name() == other.name() && variable.type() == other.type()) {
@@ -230,13 +230,6 @@ class InlineStackFrameVariableHolder private constructor(
 
             return fromSortedVisibleVariables(sortedVariables)
         }
-
-        private fun LocalVariable.getFieldValue(name: String): Any? =
-            Class.forName("com.jetbrains.jdi.LocalVariableImpl")
-                .declaredFields
-                .single { it.name == name }
-                .also { it.isAccessible = true }
-                .get(this)
     }
 }
 

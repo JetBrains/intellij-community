@@ -3,11 +3,11 @@ package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,7 +20,6 @@ import java.util.List;
  * disabled, so it's recommended to use 'before' and 'after' anchors relative to all other known extensions. The order of the checkboxes
  * on the 'Actions on Save' page should reflect the real order of the performed actions.
  */
-@ApiStatus.Experimental
 public abstract class ActionOnSaveInfoProvider {
 
   public static final ExtensionPointName<ActionOnSaveInfoProvider> EP_NAME =
@@ -46,4 +45,12 @@ public abstract class ActionOnSaveInfoProvider {
    * @see ActionOnSaveContext
    */
   protected abstract @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context);
+
+  /**
+   * Strings that help to find 'Actions on Save' page when using 'Find Action' or 'Search Everywhere' or when using a search field in
+   * Settings (Preferences). Typically, implementations return a singleton list with {@link ActionOnSaveInfo#getActionOnSaveName()}.
+   */
+  public Collection<String> getSearchableOptions() {
+    return Collections.emptyList();
+  }
 }

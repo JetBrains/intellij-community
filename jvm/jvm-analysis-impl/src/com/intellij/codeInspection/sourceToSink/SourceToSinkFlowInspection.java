@@ -47,6 +47,11 @@ public class SourceToSinkFlowInspection extends AbstractBaseJavaLocalInspectionT
     };
   }
 
+  @Override
+  public @NotNull String getID() {
+    return "tainting";
+  }
+
   private static @Nullable String getName(@NotNull UResolvable uExpression) {
     PsiNamedElement namedElement = ObjectUtils.tryCast(uExpression.resolve(), PsiNamedElement.class);
     return namedElement == null ? null : namedElement.getName();

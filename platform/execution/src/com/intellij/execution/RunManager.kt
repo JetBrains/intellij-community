@@ -118,6 +118,8 @@ abstract class RunManager {
    */
   abstract fun shouldSetRunConfigurationFromContext(): Boolean
 
+  abstract fun isRunWidgetActive(): Boolean
+
   /**
    * Creates a configuration of the specified type with the specified name. Note that you need to call
    * [.addConfiguration] if you want the configuration to be persisted in the project.

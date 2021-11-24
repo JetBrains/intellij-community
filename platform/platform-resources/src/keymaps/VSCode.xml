@@ -470,6 +470,7 @@
     <keyboard-shortcut first-keystroke="f2" />
   </action>
   <action id="ShowBookmarks" />
+  <action id="ShowTypeBookmarks"/>
   <action id="ShowContent" />
   <action id="ShowIntentionActions">
     <keyboard-shortcut first-keystroke="ctrl period" />

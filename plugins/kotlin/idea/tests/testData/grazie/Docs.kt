@@ -22,7 +22,7 @@ class ExampleClassWithNoTypos<T>(val name: String) {
 }
 
 /**
- * It is <warning descr="BEEN_PART_AGREEMENT">friend</warning>
+ * It is <warning descr="EN_A_VS_AN">an</warning> friend of human
  *
  * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
  *

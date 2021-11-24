@@ -96,13 +96,13 @@ importlib.abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined 
 importlib.abc.MetaPathFinder.find_spec  # Not defined on the actual class, but expected to exist.
 importlib.abc.PathEntryFinder.find_spec  # Not defined on the actual class, but expected to exist.
 importlib.machinery.ExtensionFileLoader.get_filename  # Wrapped with _check_name decorator which changes runtime signature
+inspect.Parameter.empty  # set as private marker _empty
 inspect.Parameter.KEYWORD_ONLY
 inspect.Parameter.POSITIONAL_ONLY
 inspect.Parameter.POSITIONAL_OR_KEYWORD
 inspect.Parameter.VAR_KEYWORD
 inspect.Parameter.VAR_POSITIONAL
-inspect.Parameter.replace
-inspect.Signature.replace
+inspect.Signature.empty  # set as private marker _empty
 io.BufferedRandom.truncate
 io.BufferedReader.seek
 io.BufferedReader.truncate
@@ -142,9 +142,6 @@ multiprocessing.managers.SyncManager.Event
 multiprocessing.managers.SyncManager.Lock
 multiprocessing.managers.SyncManager.Namespace
 multiprocessing.managers.SyncManager.RLock
-multiprocessing.pool.ApplyResult.__init__
-multiprocessing.pool.IMapIterator.__init__
-multiprocessing.pool.MapResult.__init__
 multiprocessing.queues.JoinableQueue.__init__
 multiprocessing.queues.Queue.__init__
 multiprocessing.queues.Queue.put_nowait
@@ -193,6 +190,8 @@ threading.Condition.release  # Condition functions are exported in __init__
 threading.Lock  # A factory function that returns 'most efficient lock'. Marking it as a function will make it harder for users to mark the Lock type.
 tkinter.Misc.grid_propagate  # The noarg placeholder is a set value list
 tkinter.Misc.pack_propagate  # The noarg placeholder is a set value list
+tkinter.Misc.grid_columnconfigure  # an empty dict literal is actually a valid default for a TypedDict(total=False) parameter
+tkinter.Misc.grid_rowconfigure  # an empty dict literal is actually a valid default for a TypedDict(total=False) parameter
 tkinter.Tk.eval  # from __getattr__
 tkinter.Tk.report_callback_exception  # A bit of a lie, since it's actually a method, but typing it as an attribute allows it to be assigned to
 tkinter.Wm.wm_iconphoto  # Default value of argument can't be used without runtime error

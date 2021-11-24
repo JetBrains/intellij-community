@@ -15,10 +15,9 @@ import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
 import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.jetbrains.annotations.NotNull
 
 class EditorConfigParserDefinition : ParserDefinition {
-  override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter();
+  override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter()
   override fun createParser(project: Project): PsiParser = EditorConfigParser()
 
   override fun getCommentTokens() = COMMENTS
@@ -26,7 +25,7 @@ class EditorConfigParserDefinition : ParserDefinition {
   override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
   override fun getFileNodeType() = FILE
 
-  override fun createFile(viewProvider: @NotNull FileViewProvider): @NotNull PsiFile = EditorConfigPsiFile(viewProvider)
+  override fun createFile(viewProvider: FileViewProvider): PsiFile = EditorConfigPsiFile(viewProvider)
   override fun createElement(node: ASTNode): PsiElement = EditorConfigElementTypes.Factory.createElement(node)
 
   private companion object {

@@ -57,6 +57,32 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
     versionProperty.dependsOn(parentProperty, ::suggestVersionByParent)
   }
 
+  protected open fun setupAdvancedSettingsUI(panel: Panel) {
+    with(panel) {
+      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
+        textField()
+          .bindText(groupIdProperty)
+          .columns(COLUMNS_MEDIUM)
+          .validationOnApply { validateGroupId() }
+          .validationOnInput { validateGroupId() }
+      }.bottomGap(BottomGap.SMALL)
+      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
+        textField()
+          .bindText(artifactIdProperty)
+          .columns(COLUMNS_MEDIUM)
+          .validationOnApply { validateArtifactId() }
+          .validationOnInput { validateArtifactId() }
+      }.bottomGap(BottomGap.SMALL)
+      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
+        textField()
+          .bindText(versionProperty)
+          .columns(COLUMNS_MEDIUM)
+          .validationOnApply { validateVersion() }
+          .validationOnInput { validateVersion() }
+      }.bottomGap(BottomGap.SMALL)
+    }
+  }
+
   override fun setupUI(builder: Panel) {
     with(builder) {
       if (parents.isNotEmpty()) {
@@ -70,29 +96,9 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
             .columns(COLUMNS_MEDIUM)
         }.topGap(TopGap.SMALL)
       }
-      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title"), topGroupGap = true) {
-        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
-          textField()
-            .bindText(groupIdProperty)
-            .columns(COLUMNS_MEDIUM)
-            .validationOnApply { validateGroupId() }
-            .validationOnInput { validateGroupId() }
-        }.bottomGap(BottomGap.SMALL)
-        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
-          textField()
-            .bindText(artifactIdProperty)
-            .columns(COLUMNS_MEDIUM)
-            .validationOnApply { validateArtifactId() }
-            .validationOnInput { validateArtifactId() }
-        }.bottomGap(BottomGap.SMALL)
-        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
-          textField()
-            .bindText(versionProperty)
-            .columns(COLUMNS_MEDIUM)
-            .validationOnApply { validateVersion() }
-            .validationOnInput { validateVersion() }
-        }.bottomGap(BottomGap.SMALL)
-      }
+      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.advanced.settings.title")) {
+        setupAdvancedSettingsUI(this)
+      }.topGap(TopGap.MEDIUM)
     }
   }
 

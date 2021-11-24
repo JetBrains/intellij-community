@@ -27,6 +27,15 @@ public interface CodeStyleSettingsService {
     return null;
   }
 
+  @Nullable
+  static LanguageCodeStyleProvider getLanguageCodeStyleProviderUsingBaseLanguage(@NotNull Language language) {
+    for (Language currLang = language; currLang != null;  currLang = currLang.getBaseLanguage()) {
+      LanguageCodeStyleProvider curr = getLanguageCodeStyleProvider(currLang);
+      if (curr != null) return curr;
+    }
+    return null;
+  }
+
   void addListener(@NotNull CodeStyleSettingsServiceListener listener, @Nullable Disposable disposable);
 
   @NotNull

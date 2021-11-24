@@ -8,10 +8,7 @@ import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ModuleBasedConfiguration
-import com.intellij.execution.junit.JUnitConfiguration
-import com.intellij.execution.junit.JUnitConfigurationProducer
-import com.intellij.execution.junit.JUnitConfigurationType
-import com.intellij.execution.junit.PatternConfigurationProducer
+import com.intellij.execution.junit.*
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer
 import com.intellij.openapi.project.DumbService
@@ -86,6 +83,11 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
             return false
         }
 
+        val nodeIds = UniqueIdConfigurationProducer.getNodeIds(context)
+        if (nodeIds != null && nodeIds.isNotEmpty()) {
+            return false
+        }
+        
         val testEntity = JunitKotlinTestFrameworkProvider.getJavaTestEntity(element, checkMethod = true) ?: return false
 
         val testMethod = testEntity.testMethod

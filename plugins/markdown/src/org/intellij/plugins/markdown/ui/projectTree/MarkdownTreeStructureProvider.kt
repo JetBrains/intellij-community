@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
@@ -14,55 +15,52 @@ class MarkdownTreeStructureProvider(private val project: Project) : TreeStructur
     children: MutableCollection<AbstractTreeNode<*>>,
     settings: ViewSettings?
   ): MutableCollection<AbstractTreeNode<*>> {
-    if (children.all { it.value !is MarkdownFile }) {
+    if (children.find { it.value is MarkdownFile } == null) {
       return children
     }
-
     val result = mutableListOf<AbstractTreeNode<*>>()
-    val copyFiles = mutableListOf<AbstractTreeNode<*>>()
-
+    val childrenToRemove = mutableListOf<AbstractTreeNode<*>>()
     for (child in children) {
-      val childValue = child.value
-
-      if (childValue is MarkdownFile && parent.value !is MarkdownFileNode) {
-        val mdChildren = findMarkdownFileNodeChildren(childValue as PsiFile, children)
-
-        if (mdChildren.size <= 1) {
+      val childValue = (child.value as? MarkdownFile)
+      val childVirtualFile = childValue?.virtualFile
+      if (childVirtualFile != null && parent.value !is MarkdownFileNode) {
+        val markdownChildren = findMarkdownFileNodeChildren(childVirtualFile, children)
+        if (markdownChildren.size <= 1) {
           result.add(child)
           continue
         }
-        val viewNode = createMarkdownViewNode(mdChildren, settings)
-
-        result.add(viewNode)
-        copyFiles.addAll(mdChildren)
+        result.add(createMarkdownViewNode(childVirtualFile, markdownChildren, settings))
+        childrenToRemove.addAll(markdownChildren)
       } else {
         result.add(child)
       }
     }
-
-    result.removeAll(copyFiles)
-
+    result.removeAll(childrenToRemove)
     return result
   }
 
   private fun findMarkdownFileNodeChildren(
-    childValue: PsiFile,
+    markdownFile: VirtualFile,
     children: MutableCollection<AbstractTreeNode<*>>
   ): MutableCollection<AbstractTreeNode<*>> {
-    val mdFileName = childValue.virtualFile.nameWithoutExtension
-    return children.filter { node ->
+    val fileName = markdownFile.nameWithoutExtension
+    return children.asSequence().filter { node ->
       val file = (node.value as? PsiFile)?.virtualFile
-      file?.let { it.extension?.lowercase() in docExtensions && it.nameWithoutExtension == mdFileName } == true
+      file?.let { it.extension?.lowercase() in extensionsToFold && it.nameWithoutExtension == fileName } == true
     }.toMutableList()
   }
 
-  private fun createMarkdownViewNode(mdChildren: MutableCollection<AbstractTreeNode<*>>, settings: ViewSettings?): MarkdownViewNode {
-    val mdNodeChildren = mdChildren.map { it.value as PsiFile }
-    val markdownNode = MarkdownFileNode(mdNodeChildren)
-    return MarkdownViewNode(project, markdownNode, settings, mdChildren)
+  private fun createMarkdownViewNode(
+    markdownFile: VirtualFile,
+    children: MutableCollection<AbstractTreeNode<*>>,
+    settings: ViewSettings?
+  ): MarkdownViewNode {
+    val nodeChildren = children.mapNotNull { it.value as? PsiFile }
+    val markdownNode = MarkdownFileNode(markdownFile.nameWithoutExtension, nodeChildren)
+    return MarkdownViewNode(project, markdownNode, settings, children)
   }
 
   companion object {
-    private val docExtensions = listOf("pdf", "docx", "html", "md")
+    private val extensionsToFold = listOf("pdf", "docx", "html", "md")
   }
 }

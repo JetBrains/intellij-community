@@ -8,8 +8,13 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.ide.macro.MacroManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.diagnostic.Logger
 
 class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
+  companion object {
+    private val LOG = Logger.getInstance(RunToolbarProcessMainAction::class.java)
+  }
+
   init {
     templatePresentation.putClientProperty(ActionButtonWithText.SHORTCUT_SHOULD_SHOWN, true)
   }
@@ -20,7 +25,7 @@ class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor
         getSelectedConfiguration(e)?.let {
           val slotManager = RunToolbarSlotManager.getInstance(project)
           val mainSlotData = slotManager.mainSlotData
-          mainSlotData.waitingForProcess.add(executor.id)
+          mainSlotData.startWaitingForAProcess(project, it, executor.id)
 
           mainSlotData.environment?.let { environment ->
             MacroManager.getInstance().cacheMacrosPreview(e.getDataContext())
@@ -31,6 +36,11 @@ class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor
         }
       }
     }
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    traceLog(LOG, e)
   }
 
   override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? {

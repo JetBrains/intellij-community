@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
@@ -11,6 +12,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -165,7 +167,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
 
   private static void exec(GeneralCommandLine command, @Nls @Nullable String prompt) throws IOException, ExecutionException {
     command.setRedirectErrorStream(true);
-    ProcessOutput result = prompt != null ? ExecUtil.sudoAndGetOutput(command, prompt) : ExecUtil.execAndGetOutput(command);
+    ProcessOutput result = prompt != null ? execAndGetOutputWithWizardSupport(ExecUtil.sudoCommand(command, prompt)): execAndGetOutputWithWizardSupport(command);
     int exitCode = result.getExitCode();
     if (exitCode != 0) {
       String message = "Command '" + (prompt != null ? "sudo " : "") + command.getCommandLineString() + "' returned " + exitCode;
@@ -173,6 +175,16 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
       if (!StringUtil.isEmptyOrSpaces(output)) message += "\nOutput: " + output.trim();
       throw new RuntimeException(message);
     }
+  }
+
+  private static ProcessOutput execAndGetOutputWithWizardSupport(GeneralCommandLine cmd) throws ExecutionException {
+    return new CapturingProcessHandler(cmd) {
+      @Override
+      public boolean hasPty() {
+        if (ApplicationManager.getApplication() == null) return false;
+        return super.hasPty();
+      }
+    }.runProcess();
   }
 
   public static class CreateDesktopEntryDialog extends DialogWrapper {

@@ -90,9 +90,10 @@ class MoveConflictChecker(
     private val elementsToMove: Collection<KtElement>,
     private val moveTarget: KotlinMoveTarget,
     contextElement: KtElement,
-    private val doNotGoIn: Collection<KtElement> = emptyList(),
+    doNotGoIn: Collection<KtElement> = emptySet(),
     allElementsToMove: Collection<PsiElement>? = null
 ) {
+    private val doNotGoIn: Set<KtElement> by lazy { doNotGoIn.toSet() }
     private val resolutionFacade = contextElement.getResolutionFacade()
 
     private val fakeFile = KtPsiFactory(project).createFile("")
@@ -408,10 +409,11 @@ class MoveConflictChecker(
             val targetContainer = moveTarget.getContainerDescriptor() ?: continue
 
             val referencingDescriptor = when (container) {
-                is KtDeclaration -> container.unsafeResolveToDescriptor()
+                is KtDeclaration -> container.resolveToDescriptorIfAny()
                 is PsiMember -> container.getJavaMemberDescriptor()
                 else -> null
             } ?: continue
+
             val actualVisibility = if (referencingDescriptor.isJavaDescriptor) referencedDescriptor.visibilityAsViewedFromJava() else null
             val originalDescriptorToCheck = referencedDescriptor.wrap(newVisibility = actualVisibility) ?: referencedDescriptor
             val newDescriptorToCheck = referencedDescriptor.asPredicted(targetContainer, actualVisibility) ?: continue
@@ -478,31 +480,30 @@ class MoveConflictChecker(
 
         for (declaration in elementsToMove - doNotGoIn) {
             declaration.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
-                refExpr.references
-                    .forEach { ref ->
-                        val target = ref.resolve() ?: return@forEach
-                        if (isToBeMoved(target)) return@forEach
+                refExpr.references.forEach { ref ->
+                    val target = ref.resolve() ?: return@forEach
+                    if (isToBeMoved(target)) return@forEach
 
-                        val targetDescriptor = when {
-                            target is KtDeclaration -> target.unsafeResolveToDescriptor()
-                            target is PsiMember && target.hasJavaResolutionFacade() -> target.getJavaMemberDescriptor()
-                            else -> null
-                        } as? DeclarationDescriptorWithVisibility ?: return@forEach
+                    val targetDescriptor = when {
+                        target is KtDeclaration -> target.resolveToDescriptorIfAny()
+                        target is PsiMember && target.hasJavaResolutionFacade() -> target.getJavaMemberDescriptor()
+                        else -> null
+                    } as? DeclarationDescriptorWithVisibility ?: return@forEach
 
-                        var isVisible = targetDescriptor.isVisibleFrom(ref)
-                        if (isVisible && targetDescriptor is ConstructorDescriptor) {
-                            isVisible = targetDescriptor.containingDeclaration.isVisibleFrom(ref)
-                        }
-
-                        if (!isVisible) {
-                            val message = KotlinBundle.message(
-                                "text.0.uses.1.which.will.be.inaccessible.after.move",
-                                render(declaration),
-                                render(target)
-                            )
-                            conflicts.putValue(refExpr, message.capitalize())
-                        }
+                    var isVisible = targetDescriptor.isVisibleFrom(ref)
+                    if (isVisible && targetDescriptor is ConstructorDescriptor) {
+                        isVisible = targetDescriptor.containingDeclaration.isVisibleFrom(ref)
                     }
+
+                    if (!isVisible) {
+                        val message = KotlinBundle.message(
+                            "text.0.uses.1.which.will.be.inaccessible.after.move",
+                            render(declaration),
+                            render(target)
+                        )
+                        conflicts.putValue(refExpr, message.capitalize())
+                    }
+                }
             }
         }
     }
@@ -750,7 +751,7 @@ class MoveConflictChecker(
             }
 
             // Ok, class joins at least one member of the hierarchy. But probably it leaves the package where other members still exist.
-            // It doesn't mean we should prevent such move but it might be good for the user to be aware of the situation.
+            // It doesn't mean we should prevent such move, but it might be good for the user to be aware of the situation.
 
             val moduleToMoveFrom = classToMove.module ?: return null
             val packageToMoveFrom = classToMoveDesc.findPsiPackage(moduleToMoveFrom) ?: return null

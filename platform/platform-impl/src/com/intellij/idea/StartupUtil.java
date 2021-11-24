@@ -34,6 +34,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
@@ -114,7 +115,7 @@ public final class StartupUtil {
     LoadingState.errorHandler = (message, throwable) -> Logger.getInstance(LoadingState.class).error(message, throwable);
 
     Activity activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration");
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless());
 
     ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
 
@@ -296,6 +297,7 @@ public final class StartupUtil {
       forkJoinPool.awaitQuiescence(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
     }
     while (!future.isDone());
+    log.info("notify that start-up thread is free");
     AWTAutoShutdown.getInstance().notifyThreadFree(busyThread);
   }
 
@@ -404,12 +406,11 @@ public final class StartupUtil {
     EventQueue.invokeAndWait(() -> ConfigImportHelper.importConfigsTo(agreementShown.join(), newConfigDir, args, log));
     appStarter.importFinished(newConfigDir);
 
-    if (!ConfigImportHelper.isConfigImported()) {
-      // an exception handler is already set and the event queue and icons are initialized by `ConfigImportHelper`
-      EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
-    }
     activity.end();
-    PluginManagerCore.scheduleDescriptorLoading();
+
+    if (!PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()) {
+      PluginManagerCore.scheduleDescriptorLoading();
+    }
   }
 
   private static CompletableFuture<?> scheduleInitUi(Thread busyThread) {
@@ -437,7 +438,8 @@ public final class StartupUtil {
 
         Activity activity = null;
         // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-        if (!Main.isHeadless()) {
+        boolean withUI = !Main.isHeadless();
+        if (withUI) {
           // IdeaLaF uses AllIcons - icon manager must be activated
           activity = StartUpMeasurer.startActivity("icon manager activation");
           try {
@@ -470,15 +472,18 @@ public final class StartupUtil {
         // to compute system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
         // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
         activity = activity.endAndStart("system font data initialization");
-        JBUIScale.getSystemFontData(() -> {
-          Activity subActivity = StartUpMeasurer.startActivity("base LaF defaults getting");
-          UIDefaults result = baseLaF.getDefaults();
-          subActivity.end();
-          return result;
-        });
 
-        activity = activity.endAndStart("scale initialization");
-        JBUIScale.scale(1f);
+        if (withUI) {
+          JBUIScale.getSystemFontData(() -> {
+            Activity subActivity = StartUpMeasurer.startActivity("base LaF defaults getting");
+            UIDefaults result = baseLaF.getDefaults();
+            subActivity.end();
+            return result;
+          });
+
+          activity = activity.endAndStart("scale initialization");
+          JBUIScale.scale(1f);
+        }
 
         activity = activity.endAndStart("LaF initialization");
         try {
@@ -545,7 +550,7 @@ public final class StartupUtil {
     // caches available font family names (for the default locale), to speed up editor reopening (`ComplementaryFontsRegistry` initialization)
     GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
 
-    // pre-load cursors used by drag-n-drop AWT subsystem
+    // preload cursors used by drag-n-drop AWT subsystem
     activity = activity.endAndStart("DnD setup");
     DragSource.getDefaultDragSource();
     activity.end();
@@ -894,14 +899,14 @@ public final class StartupUtil {
     return path;
   }
 
-  private static void runStartupWizard(AppStarter appStarter) {
+  public static void runStartupWizard() {
     String stepsDialogName = ApplicationInfoImpl.getShadowInstance().getWelcomeWizardDialog();
     if (stepsDialogName == null) return;
 
     try {
       Class<?> dialogClass = Class.forName(stepsDialogName);
       Constructor<?> ctor = dialogClass.getConstructor(AppStarter.class);
-      ((CommonCustomizeIDEWizardDialog)ctor.newInstance(appStarter)).showIfNeeded();
+      ((CommonCustomizeIDEWizardDialog)ctor.newInstance((AppStarter)null)).showIfNeeded();
     }
     catch (Throwable e) {
       Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
@@ -909,6 +914,7 @@ public final class StartupUtil {
     }
 
     PluginManagerCore.invalidatePlugins();
+    PluginManagerCore.scheduleDescriptorLoading();
   }
 
   // must be called from EDT

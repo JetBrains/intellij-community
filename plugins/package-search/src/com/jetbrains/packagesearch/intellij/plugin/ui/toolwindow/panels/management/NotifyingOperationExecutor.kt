@@ -13,6 +13,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logError
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.Nls
 
 internal class NotifyingOperationExecutor(
@@ -22,7 +23,7 @@ internal class NotifyingOperationExecutor(
 
     private val innerExecutor = PackageManagementOperationExecutor(
         coroutineScope = coroutineScope,
-        onOperationsSuccessful = { project.packageSearchProjectService.notifyOperationExecuted() },
+        onOperationsSuccessful = project.packageSearchProjectService::notifyOperationExecuted,
         onOperationsFail = { failureType, failures ->
             onOperationsFail(project, failureType, failures)
         }
@@ -30,9 +31,11 @@ internal class NotifyingOperationExecutor(
 
     private val operationFailureRenderer = OperationFailureRenderer()
 
-    override fun executeOperations(operations: List<PackageSearchOperation<*>>) {
+    override fun executeOperations(operations: List<PackageSearchOperation<*>>) =
         innerExecutor.executeOperations(operations)
-    }
+
+    override fun executeOperations(operations: Deferred<List<PackageSearchOperation<*>>>) =
+        innerExecutor.executeOperations(operations)
 
     private fun onOperationsFail(
         project: Project,

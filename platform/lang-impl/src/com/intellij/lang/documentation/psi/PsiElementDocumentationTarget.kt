@@ -3,10 +3,7 @@ package com.intellij.lang.documentation.psi
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.navigation.targetPresentation
-import com.intellij.lang.documentation.DocumentationProvider
-import com.intellij.lang.documentation.DocumentationResult
-import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.ExternalDocumentationProvider
+import com.intellij.lang.documentation.*
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.progress.ProgressManager
@@ -15,16 +12,26 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
-internal class PsiElementDocumentationTarget private constructor(
+@VisibleForTesting
+class PsiElementDocumentationTarget private constructor(
   val targetElement: PsiElement,
   private val sourceElement: PsiElement?,
   private val pointer: PsiElementDocumentationTargetPointer,
 ) : DocumentationTarget {
 
-  constructor(
+  internal constructor(
+    project: Project,
+    targetElement: PsiElement,
+  ) : this(
+    project, targetElement, sourceElement = null, anchor = null
+  )
+
+  internal constructor(
     project: Project,
     targetElement: PsiElement,
     sourceElement: PsiElement?,
@@ -56,7 +63,7 @@ internal class PsiElementDocumentationTarget private constructor(
     if (urls == null || urls.isEmpty()) {
       return localDoc
     }
-    return fetchExternal(pointer.project, targetElement, provider, urls, pointer.anchor, localDoc)
+    return pointer.fetchExternal(targetElement, provider, urls, localDoc)
   }
 
   @RequiresReadLock
@@ -66,11 +73,11 @@ internal class PsiElementDocumentationTarget private constructor(
     if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
-        return DocumentationResult.documentation(if (doc == null) fileDoc else doc + fileDoc, pointer.anchor)
+        return DocumentationResult.documentation(if (doc == null) fileDoc else doc + fileDoc, pointer.anchor, pointer.imageResolver)
       }
     }
     if (doc != null) {
-      return DocumentationResult.documentation(doc, pointer.anchor)
+      return DocumentationResult.documentation(doc, pointer.anchor, pointer.imageResolver)
     }
     return null
   }
@@ -92,24 +99,30 @@ internal class PsiElementDocumentationTarget private constructor(
       }
       return PsiElementDocumentationTarget(target, source, this)
     }
+
+    fun fetchExternal(
+      targetElement: PsiElement,
+      provider: ExternalDocumentationProvider,
+      urls: List<String>,
+      localDoc: DocumentationResult?,
+    ): DocumentationResult = DocumentationResult.asyncDocumentation(Supplier {
+      LOG.debug("External documentation URLs: $urls")
+      for (url in urls) {
+        ProgressManager.checkCanceled()
+        val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
+                  ?: continue
+        LOG.debug("Fetched documentation from $url")
+        return@Supplier DocumentationResult.externalDocumentation(doc, anchor, url, imageResolver)
+      }
+      localDoc
+    })
+
+    val imageResolver: DocumentationImageResolver = DocumentationImageResolver { url ->
+      SlowOperations.allowSlowOperations("old API fallback").use {
+        dereference()?.targetElement?.let { targetElement ->
+          DocumentationManager.getElementImage(targetElement, url)
+        }
+      }
+    }
   }
 }
-
-private fun fetchExternal(
-  project: Project,
-  targetElement: PsiElement,
-  provider: ExternalDocumentationProvider,
-  urls: List<String>,
-  anchor: String?,
-  localDoc: DocumentationResult?,
-): DocumentationResult = DocumentationResult.asyncDocumentation(Supplier {
-  LOG.debug("External documentation URLs: $urls")
-  for (url in urls) {
-    ProgressManager.checkCanceled()
-    val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
-              ?: continue
-    LOG.debug("Fetched documentation from $url")
-    return@Supplier DocumentationResult.externalDocumentation(doc, anchor, url)
-  }
-  localDoc
-})

@@ -11,6 +11,12 @@
         <plugin id="com.intellij.modules.lang"/>
     </dependencies>
 
+    <content>
+        <module name="intellij.toml.json"/>
+    </content>
+
+    <resource-bundle>messages.TomlBundle</resource-bundle>
+
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="TOML"
                   language="TOML"
@@ -47,14 +53,16 @@
         <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
 
         <localInspection language="TOML"
-                         groupName="TOML"
-                         displayName="Unresolved reference"
+                         groupKey="inspection.group.toml"
+                         key="inspection.toml.unresolved.reference.display.name"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
 
         <intentionAction>
             <className>org.toml.ide.intentions.TomlExpandInlineTableIntention</className>
-            <category>TOML</category>
+            <categoryKey>intention.category.toml</categoryKey>
         </intentionAction>
+
+        <registryKey key="org.toml.json.schema" defaultValue="false" description="JSON schemas support for TOML"/>
     </extensions>
 </idea-plugin>

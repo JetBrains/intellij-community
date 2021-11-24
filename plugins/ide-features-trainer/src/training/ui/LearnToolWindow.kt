@@ -2,7 +2,6 @@
 package training.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
@@ -13,13 +12,14 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBScrollPane
-import org.fest.swing.timing.Timeout
+import org.assertj.swing.timing.Timeout
 import training.actions.ChooseProgrammingLanguageForLearningAction
 import training.lang.LangManager
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
 import training.ui.views.LearnPanel
 import training.ui.views.ModulesPanel
+import training.util.getActionById
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.concurrent.TimeUnit
@@ -77,7 +77,7 @@ class LearnToolWindow internal constructor(val project: Project, private val who
                              LearnBundle.message("completed.lessons.got.it"),
                              parentDisposable)
     if (gotIt.canShow()) {
-      val needToFindButton = restartAction() ?: return
+      val needToFindButton = restartAction()
       ApplicationManager.getApplication().executeOnPooledThread {
         val button = LearningUiUtil.findShowingComponentWithTimeout(
           project, ActionButton::class.java, Timeout.timeout(500, TimeUnit.MILLISECONDS)
@@ -89,7 +89,7 @@ class LearnToolWindow internal constructor(val project: Project, private val who
     }
   }
 
-  private fun restartAction() = ActionManager.getInstance().getAction("RestartLessonAction")
+  private fun restartAction() = getActionById("RestartLessonAction")
 
   internal fun setModulesPanel() {
     setChooseLanguageButton()

@@ -91,6 +91,11 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     return new BareTestFixtureImpl();
   }
 
+  @Override
+  public @NotNull SdkTestFixture createSdkFixture() {
+    return new SdkTestFixtureImpl();
+  }
+
   public static final class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {
     public MyEmptyModuleFixtureBuilderImpl(@NotNull TestFixtureBuilder<? extends IdeaProjectTestFixture> testFixtureBuilder) {
       super(testFixtureBuilder);

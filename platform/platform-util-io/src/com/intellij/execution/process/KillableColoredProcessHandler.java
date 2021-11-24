@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.util.io.BaseOutputReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +23,10 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   /**
-   * Starts a process with a {@link WinRunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   * @deprecated please use {@link KillableColoredProcessHandler#KillableColoredProcessHandler(GeneralCommandLine commandLine)}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     super(KillableProcessHandler.mediate(commandLine, withMediator, false));
     setShouldKillProcessSoftly(true);

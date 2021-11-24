@@ -1,4 +1,4 @@
-// "Mark 's2' as safe" "true"
+// "Mark 's2' as requiring validation" "true"
 package org.checkerframework.checker.tainting.qual;
 
 class Simple {
@@ -11,11 +11,11 @@ class Simple {
     }
 
     @Untainted String foo() {
-        return "foo";
+      return "foo";
     }
 
     @Untainted String other() {
-        return "other";
+      return "other";
     }
 
     void sink(@Untainted String s1) {}

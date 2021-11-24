@@ -3,8 +3,11 @@
 
 package com.jetbrains.python.run
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetedCommandLine
@@ -14,13 +17,16 @@ import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remote.RemoteSdkPropertiesPaths
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PythonHelpersLocator
+import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PythonSdkType
+import kotlin.jvm.Throws
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
@@ -32,7 +38,7 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   charset?.let { commandLineBuilder.setCharset(it) }
   val interpreterPath = getInterpreterPath(sdk)
   if (!interpreterPath.isNullOrEmpty()) {
-    commandLineBuilder.setExePath(FileUtil.toSystemDependentName(interpreterPath))
+    commandLineBuilder.setExePath(targetEnvironment.targetPlatform.platform.toSystemDependentName(interpreterPath))
   }
   commandLineBuilder.addParameters(interpreterParameters)
   when (this) {
@@ -61,7 +67,7 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
  * Returns the path to Python interpreter executable. The path is the path on
  * the target environment.
  */
-private fun getInterpreterPath(sdk: Sdk?): String? {
+fun getInterpreterPath(sdk: Sdk?): String? {
   if (sdk == null) return null
   // `RemoteSdkPropertiesPaths` suits both `PyRemoteSdkAdditionalDataBase` and `PyTargetAwareAdditionalData`
   return sdk.sdkAdditionalData?.let { (it as? RemoteSdkPropertiesPaths)?.interpreterPath } ?: sdk.homePath
@@ -173,4 +179,19 @@ fun PythonExecution.extendEnvs(additionalEnvs: Map<String, TargetEnvironmentFunc
       addEnvironmentVariable(key, value)
     }
   }
+}
+
+/**
+ * Execute this command in a given environment, throwing an `ExecutionException` in case of a timeout or a non-zero exit code.
+ */
+@Throws(ExecutionException::class)
+fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndicator): ProcessOutput {
+  val process = env.createProcess(this, indicator)
+  val capturingHandler = CapturingProcessHandler(process, charset, getCommandPresentation(env))
+  val output = capturingHandler.runProcess()
+  if (output.isTimeout || output.exitCode != 0) {
+    val fullCommand = collectCommandsSynchronously()
+    throw PyExecutionException("", fullCommand[0], fullCommand.drop(1), output)
+  }
+  return output
 }

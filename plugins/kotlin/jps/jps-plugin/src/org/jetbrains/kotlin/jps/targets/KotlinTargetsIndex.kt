@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.jps.targets
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.kotlin.jps.build.KotlinBuilder
 import org.jetbrains.kotlin.jps.build.KotlinChunk
 import org.jetbrains.kotlin.jps.build.KotlinCompileContext
@@ -12,7 +13,9 @@ import org.jetbrains.kotlin.jps.build.ModuleBuildTarget
 import org.jetbrains.kotlin.jps.model.platform
 import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.idePlatformKind
-import org.jetbrains.kotlin.platform.impl.*
+import org.jetbrains.kotlin.platform.impl.isCommon
+import org.jetbrains.kotlin.platform.impl.isJavaScript
+import org.jetbrains.kotlin.platform.impl.isJvm
 import kotlin.system.measureTimeMillis
 
 class KotlinTargetsIndex(
@@ -48,7 +51,7 @@ internal class KotlinTargetsIndexBuilder internal constructor(
                 }
             }
 
-            calculateChunkDependencies()
+            KotlinChunk.calculateChunkDependencies(chunks, byJpsModuleBuildTarget)
         }
 
         KotlinBuilder.LOG.info("KotlinTargetsIndex created in $time ms")
@@ -58,70 +61,6 @@ internal class KotlinTargetsIndexBuilder internal constructor(
             chunks,
             chunks.associateBy { it.representativeTarget.jpsModuleBuildTarget }
         )
-    }
-
-    private fun calculateChunkDependencies() {
-        chunks.forEach { chunk ->
-            val dependencies = mutableSetOf<KotlinModuleBuildTarget.Dependency>()
-
-            chunk.targets.forEach {
-                dependencies.addAll(calculateTargetDependencies(it))
-            }
-
-            chunk.dependencies = dependencies.toList()
-            chunk.dependencies.forEach { dependency ->
-                dependency.target.chunk._dependent!!.add(dependency)
-            }
-        }
-
-        chunks.forEach {
-            it.dependent = it._dependent!!.toList()
-            it._dependent = null
-        }
-    }
-
-    private fun calculateTargetDependencies(srcTarget: KotlinModuleBuildTarget<*>): List<KotlinModuleBuildTarget.Dependency> {
-        val dependencies = mutableListOf<KotlinModuleBuildTarget.Dependency>()
-        val classpathKind = JpsJavaClasspathKind.compile(srcTarget.isTests)
-
-        // TODO(1.2.80): Ask for JPS API
-        // Unfortunately JPS has no API for accessing "exported" flag while enumerating module dependencies,
-        // but has API for getting all and exported only dependent modules.
-        // So, lets first get set of all dependent targets, then remove exported only.
-        val dependentTargets = mutableSetOf<KotlinModuleBuildTarget<*>>()
-
-        JpsJavaExtensionService.dependencies(srcTarget.module)
-            .includedIn(classpathKind)
-            .processModules { destModule ->
-                val destKotlinTarget = byJpsModuleBuildTarget[ModuleBuildTarget(destModule, srcTarget.isTests)]
-                if (destKotlinTarget != null) {
-                    dependentTargets.add(destKotlinTarget)
-                }
-            }
-
-        JpsJavaExtensionService.dependencies(srcTarget.module)
-            .includedIn(classpathKind)
-            .exportedOnly()
-            .processModules { module ->
-                val destKotlinTarget = byJpsModuleBuildTarget[ModuleBuildTarget(module, srcTarget.isTests)]
-                if (destKotlinTarget != null) {
-                    dependentTargets.remove(destKotlinTarget)
-                    dependencies.add(KotlinModuleBuildTarget.Dependency(srcTarget, destKotlinTarget, true))
-                }
-            }
-
-        dependentTargets.forEach { destTarget ->
-            dependencies.add(KotlinModuleBuildTarget.Dependency(srcTarget, destTarget, false))
-        }
-
-        if (srcTarget.isTests) {
-            val srcProductionTarget = byJpsModuleBuildTarget[ModuleBuildTarget(srcTarget.module, false)]
-            if (srcProductionTarget != null) {
-                dependencies.add(KotlinModuleBuildTarget.Dependency(srcTarget, srcProductionTarget, true))
-            }
-        }
-
-        return dependencies
     }
 
     private fun ensureLoaded(target: ModuleBuildTarget): KotlinModuleBuildTarget<*> {

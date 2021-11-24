@@ -23,6 +23,7 @@ import static com.jetbrains.python.PythonHelpersLocator.getHelpersRoot;
 
 public enum PythonHelper implements HelperPackage {
   GENERATOR3("generator3/__main__.py"),
+  REMOTE_SYNC("remote_sync.py"),
 
   // Packaging tools
   PACKAGING_TOOL("packaging_tool.py"),

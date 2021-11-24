@@ -21,9 +21,9 @@ abstract class BuildPaths {
     temp = FileUtilRt.toSystemIndependentName(tempDir.toString())
 
     distAllDir = buildOutputDir.resolve("dist.all")
-    distAll = FileUtilRt.toSystemIndependentName(distAllDir.toString())
 
     this.logDir = logDir
+    this.buildOutputDir = buildOutputDir
   }
 
   /**
@@ -42,6 +42,7 @@ abstract class BuildPaths {
    * Path to a directory where build script will store temporary and resulting files
    */
   String buildOutputRoot
+  Path buildOutputDir
 
   /**
    * All log and debug files should be written to this directory. It will be automatically published to TeamCity artifacts
@@ -56,8 +57,11 @@ abstract class BuildPaths {
   /**
    * Path to a directory containing distribution files ('bin', 'lib', 'plugins' directories) common for all operating systems
    */
-  String distAll
   Path distAllDir
+
+  String getDistAll() {
+    return distAllDir.toString().replace('\\', '/')
+  }
 
   /**
    * Path to a directory where temporary files required for a particular build step can be stored

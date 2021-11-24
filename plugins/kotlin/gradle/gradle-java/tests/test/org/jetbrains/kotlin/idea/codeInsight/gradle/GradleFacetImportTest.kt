@@ -396,7 +396,6 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
         )
     }
 
-    @Test
     @TargetVersions("4.9")
     fun testCommonImportByPlatformPlugin() {
         configureByFiles()

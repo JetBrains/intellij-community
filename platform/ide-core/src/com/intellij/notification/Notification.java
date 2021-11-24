@@ -4,16 +4,19 @@ package com.intellij.notification;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +78,12 @@ public class Notification {
   private final AtomicReference<WeakReference<Balloon>> myBalloonRef = new AtomicReference<>();
   private final long myTimestamp = System.currentTimeMillis();
 
+  private boolean mySuggestionType;
+  private boolean myImportantSuggestion;
+  private String myDoNotAskId;
+  private @Nls String myDoNotAskDisplayName;
+  private String myRemindLaterHandlerId;
+
   /** See {@link #Notification(String, String, String, NotificationType)} */
   public Notification(@NotNull String groupId, @NotNull @NotificationContent String content, @NotNull NotificationType type) {
     this(groupId, "", content, type);
@@ -95,6 +104,22 @@ public class Notification {
     myContent = content;
   }
 
+  public boolean isSuggestionType() {
+    return mySuggestionType;
+  }
+
+  public void setSuggestionType(boolean suggestionType) {
+    mySuggestionType = suggestionType;
+  }
+
+  public boolean isImportantSuggestion() {
+    return myImportantSuggestion;
+  }
+
+  public void setImportantSuggestion(boolean importantSuggestion) {
+    myImportantSuggestion = importantSuggestion;
+  }
+
   /**
    * Returns the time (in milliseconds since Jan 1, 1970) when the notification was created.
    */
@@ -110,7 +135,7 @@ public class Notification {
   }
 
   public @NotNull Notification setDisplayId(@NotNull String displayId) {
-    this.myDisplayId = displayId;
+    myDisplayId = displayId;
     return this;
   }
 
@@ -125,6 +150,47 @@ public class Notification {
 
   public @NotNull String getGroupId() {
     return myGroupId;
+  }
+
+  public void configureDoNotAskOption(@NotNull String id, @NotNull @Nls String displayName) {
+    myDoNotAskId = id;
+    myDoNotAskDisplayName = displayName;
+  }
+
+  public boolean canShowFor(@Nullable Project project) {
+    if (mySuggestionType) {
+      if (myDoNotAskId == null) {
+        @NlsSafe String title = NotificationGroup.getGroupTitle(myGroupId);
+        if (title == null) {
+          title = myGroupId;
+        }
+        myDoNotAskDisplayName = title;
+        myDoNotAskId = myGroupId;
+      }
+      String id = "Notification.DoNotAsk-" + myDoNotAskId;
+      boolean doNotAsk = PropertiesComponent.getInstance().getBoolean(id, false);
+      if (doNotAsk) {
+        return false;
+      }
+      if (project != null) {
+        return !PropertiesComponent.getInstance(project).getBoolean(id, false);
+      }
+    }
+    return true;
+  }
+
+  public void setDoNotAsFor(@Nullable Project project) {
+    PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
+    manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
+    manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
+  }
+
+  public @Nullable String getRemindLaterHandlerId() {
+    return myRemindLaterHandlerId;
+  }
+
+  public void setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
+    myRemindLaterHandlerId = remindLaterHandlerId;
   }
 
   public boolean hasTitle() {
@@ -206,7 +272,7 @@ public class Notification {
   }
 
   /**
-   * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
+   * @param dropDownText when actions don't fit into the balloon width, they are collapsed and this text is displayed instead
    */
   public @NotNull Notification setDropDownText(@NotNull @LinkLabel String dropDownText) {
     myDropDownText = dropDownText;

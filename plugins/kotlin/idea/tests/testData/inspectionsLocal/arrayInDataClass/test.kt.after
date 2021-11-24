@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 data class A(val a: IntArray) {
     override fun equals(other: Any?): Boolean {

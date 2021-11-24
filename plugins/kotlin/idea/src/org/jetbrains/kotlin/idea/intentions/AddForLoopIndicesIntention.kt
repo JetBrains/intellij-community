@@ -22,11 +22,6 @@ class AddForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,
     KotlinBundle.lazyMessage("add.indices.to.for.loop"),
 ), LowPriorityAction {
-    private val WITH_INDEX_NAME = "withIndex"
-    private val WITH_INDEX_FQ_NAMES: Set<String> by lazy {
-        sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$WITH_INDEX_NAME" }.toSet()
-    }
-
     override fun applicabilityRange(element: KtForExpression): TextRange? {
         if (element.loopParameter == null) return null
         if (element.loopParameter?.destructuringDeclaration != null) return null
@@ -96,4 +91,11 @@ class AddForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
             "$0.$WITH_INDEX_NAME()", originalExpression,
             reformat = reformat
         )
+
+    companion object {
+        private val WITH_INDEX_NAME = "withIndex"
+        private val WITH_INDEX_FQ_NAMES: Set<String> by lazy {
+            sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$WITH_INDEX_NAME" }.toSet()
+        }
+    }
 }

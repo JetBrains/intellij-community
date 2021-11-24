@@ -183,7 +183,7 @@ public final class SemServiceImpl extends SemService {
       return map.get(key.getUniqueId());
     }
 
-    void putSemElements(SemKey<?> key, List<SemElement> elements) {
+    void putSemElements(@NotNull SemKey<?> key, @NotNull List<SemElement> elements) {
       map.put(key.getUniqueId(), elements);
     }
   }

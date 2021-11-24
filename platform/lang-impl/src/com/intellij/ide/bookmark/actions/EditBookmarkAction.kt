@@ -9,27 +9,28 @@ import com.intellij.openapi.ui.Messages
 
 internal class EditBookmarkAction : DumbAwareAction(BookmarkBundle.messagePointer("bookmark.edit.action.text")) {
 
-  override fun update(event: AnActionEvent) {
-    val manager = event.bookmarksManager
-    val component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT)
-    val bookmark = component?.let { event.contextBookmark }
-    val description = bookmark?.let { manager?.defaultGroup?.getDescription(it) }
-    event.presentation.isEnabledAndVisible = description != null
+  override fun update(event: AnActionEvent) = with(event.presentation) {
+    isEnabledAndVisible = process(event, false) != null
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val manager = event.bookmarksManager ?: return
-    val component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return
-    val bookmark = event.contextBookmark ?: return
-    val group = manager.defaultGroup ?: return
-    val description = group.getDescription(bookmark) ?: return
-    Messages.showInputDialog(component,
+    process(event, true)
+  }
+
+  private fun process(event: AnActionEvent, perform: Boolean): String? {
+    val manager = event.bookmarksManager ?: return null
+    val component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return null
+    val bookmark = event.contextBookmark ?: return null
+    val group = manager.getGroups(bookmark).firstOrNull() ?: return null
+    val description = group.getDescription(bookmark) ?: return null
+    return if (!perform) description
+    else Messages.showInputDialog(component,
       BookmarkBundle.message("action.bookmark.edit.description.dialog.message"),
       BookmarkBundle.message("action.bookmark.edit.description.dialog.title"),
       null,
       description,
       null
-    )?.let { group.setDescription(bookmark, it) }
+    )?.also { group.setDescription(bookmark, it) }
   }
 
   init {

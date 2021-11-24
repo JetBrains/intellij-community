@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -553,7 +554,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH, context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 
-
   void checkForReachableRefs(@NotNull final GlobalInspectionContext context) {
     CodeScanner codeScanner = new CodeScanner();
 
@@ -570,9 +570,20 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     });
 
-
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
-      entry.accept(codeScanner);
+      try {
+        if (Objects.requireNonNull(context.getUserData(PHASE_KEY)) == 1) {
+          codeScanner.needToLog = true;
+        }
+        entry.accept(codeScanner);
+      }
+      catch (StackOverflowPreventedException e) {
+        LOG.warn(e.getMessage());
+      }
+      finally {
+        codeScanner.clearLogs();
+        codeScanner.needToLog = false;
+      }
     }
 
     while (codeScanner.newlyInstantiatedClassesCount() != 0) {
@@ -590,6 +601,24 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private final Set<RefClass> myInstantiatedClasses = new HashSet<>();
     private int myInstantiatedClassesCount;
     private final Set<RefMethod> myProcessedMethods = new HashSet<>();
+    private final Set<RefFunctionalExpression> myProcessedFunctionalExpressions = new HashSet<>();
+
+    // todo to be deleted
+    private boolean needToLog = false;
+    private final List<List<RefElement>> paths = new ArrayList<>();
+    private int temporaryDepth = 0;
+    private static int MAX_DEPTH = 400;
+
+    private void clearLogs() {
+      temporaryDepth = 0;
+      paths.clear();
+    }
+
+    static String log(@NotNull RefElement element) {
+      RefEntity owner = element.getOwner();
+      return String.format("%s %s (owner: %s %s)", element.getClass().getSimpleName(), element.getName(),
+                           owner.getClass().getSimpleName(), owner.getName());
+    }
 
     @Override
     public void visitMethod(@NotNull RefMethod method) {
@@ -619,10 +648,22 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             addDelayedMethod(method, methodOwnerClass);
           }
 
-          for (RefMethod refSub : method.getDerivedMethods()) {
-            visitMethod(refSub);
+          for (RefOverridable reference : method.getDerivedReferences()) {
+            if (reference instanceof RefMethod) {
+              visitMethod(((RefMethod)reference));
+            }
+            else if (reference instanceof RefFunctionalExpression) {
+              visitFunctionalExpression(((RefFunctionalExpression)reference));
+            }
           }
         }
+      }
+    }
+
+    @Override
+    public void visitFunctionalExpression(@NotNull RefFunctionalExpression functionalExpression) {
+      if (myProcessedFunctionalExpressions.add(functionalExpression)) {
+        makeContentReachable((RefJavaElementImpl)functionalExpression);
       }
     }
 
@@ -663,14 +704,43 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     private void makeContentReachable(RefJavaElementImpl refElement) {
       refElement.setReachable(true);
-      for (RefElement refCallee : refElement.getOutReferences()) {
-        refCallee.accept(this);
-      }
+      makeReachable(refElement);
     }
 
     private void makeClassInitializersReachable(@Nullable RefClass refClass) {
-      if (refClass != null) {
-        for (RefElement refCallee : refClass.getOutReferences()) {
+      makeReachable(refClass);
+    }
+
+    private void makeReachable(@Nullable RefElement refElement) {
+      if (refElement == null) return;
+      if (needToLog) {
+        if (temporaryDepth == 0) {
+          paths.add(new ArrayList<>());
+        }
+        List<RefElement> lastPath = paths.get(paths.size() - 1);
+        if (lastPath.contains(refElement)) {
+          return;
+        }
+        else {
+          lastPath.add(refElement);
+        }
+        if (lastPath.size() > MAX_DEPTH) {
+          throw new StackOverflowPreventedException("Stack frames limit is exceeded");
+        }
+
+        int counter = 0;
+        for (RefElement refCallee : refElement.getOutReferences()) {
+          if (++counter > 1 && !(refCallee instanceof RefParameter)) {
+            ArrayList<RefElement> copy = new ArrayList<>(lastPath.subList(0, temporaryDepth + 1));
+            paths.add(copy);
+          }
+          temporaryDepth++;
+          refCallee.accept(this);
+          temporaryDepth--;
+        }
+      }
+      else {
+        for (RefElement refCallee : refElement.getOutReferences()) {
           refCallee.accept(this);
         }
       }

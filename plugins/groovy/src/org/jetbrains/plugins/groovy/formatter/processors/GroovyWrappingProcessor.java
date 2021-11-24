@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Wrap;
@@ -63,7 +63,9 @@ public class GroovyWrappingProcessor {
     GroovyTokenTypes.mMOD, GroovyTokenTypes.mPLUS, GroovyTokenTypes.mSTAR, GroovyTokenTypes.mSTAR_STAR, GroovyTokenTypes.mNOT_EQUAL,
     GroovyTokenTypes.mCOMPARE_TO, GroovyTokenTypes.mLAND, KW_INSTANCEOF, T_NOT_INSTANCEOF,
     GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
-    GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH, GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE,
+    GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH,
+    GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE_LEFT,
+    GroovyTokenTypes.mRANGE_EXCLUSIVE_RIGHT, GroovyTokenTypes.mRANGE_EXCLUSIVE_BOTH,
 
     GroovyTokenTypes.mBNOT, GroovyTokenTypes.mLNOT, GroovyTokenTypes.mMINUS, GroovyTokenTypes.mDEC, GroovyTokenTypes.mPLUS,
     GroovyTokenTypes.mINC,

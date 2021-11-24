@@ -45,7 +45,7 @@ public class LanguageLevelComboTest extends LightPlatformTestCase {
   }
 
   public void testDefaultLanguageLevelForBrokenSdk() {
-    assertThat(myCombo.getSelectedItem()).isEqualTo("default");
+    assertTrue(myCombo.isDefault());
     assertThat(myCombo.getSelectedLevel()).isNull();
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions
 
+import com.intellij.application.options.RegistryManager
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.settings.DebuggerSettings
@@ -10,12 +11,16 @@ import com.intellij.execution.runToolbar.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import java.util.*
 
 class RunToolbarHotSwapAction : AnAction(), RTBarAction {
+  companion object {
+    private val LOG = Logger.getInstance(RunToolbarHotSwapAction::class.java)
+  }
+
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_FLEXIBLE
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -50,16 +55,18 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
     e.presentation.isVisible =
       session != null
       && HotSwapUIImpl.canHotSwap(session)
-      && Registry.`is`("ide.new.navbar.hotswap", false)
+      && RegistryManager.getInstance().`is`("ide.widget.toolbar.hotswap")
 
     if(e.presentation.isVisible) {
       e.presentation.isEnabled = !e.isProcessTerminating()
     }
 
-    if (!RunToolbarProcess.experimentalUpdating()) {
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
         e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
+
+    //LOG.info(getLog(e))
   }
 }

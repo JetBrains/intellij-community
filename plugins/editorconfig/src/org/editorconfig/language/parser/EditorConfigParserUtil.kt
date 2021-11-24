@@ -4,6 +4,7 @@ package org.editorconfig.language.parser
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
+import org.editorconfig.language.psi.EditorConfigElementTypes
 
 @Suppress("UNUSED_PARAMETER")
 object EditorConfigParserUtil : GeneratedParserUtilBase() {
@@ -16,6 +17,25 @@ object EditorConfigParserUtil : GeneratedParserUtilBase() {
     )
     return true
   }
+
+  @JvmStatic
+  fun rawOptionValue(builder: PsiBuilder, level: Int): Boolean {
+    if (!recursion_guard_(builder, level, "specialOptionValue")) return false
+    val marker = enter_section_(builder)
+    while (!followedByNewLineOrEndOfFile(builder, level)) {
+      builder.advanceLexer()
+    }
+    exit_section_(builder, marker, EditorConfigElementTypes.RAW_OPTION_VALUE, true)
+    return true
+  }
+
+  @JvmStatic
+  fun isOptionWithRawValueKeyAhead(builder: PsiBuilder, level: Int) =
+    nextTokenIs(builder, EditorConfigElementTypes.IDENTIFIER) && builder.tokenText in specialKeys
+
+  private val specialKeys = listOf("file_header_template",
+                                   "ij_formatter_off_tag",
+                                   "ij_formatter_on_tag")
 
   /**
    * Tests whether a new line has just been skipped

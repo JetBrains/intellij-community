@@ -58,13 +58,13 @@ class ClassLoaderConfigurator(
 
   fun configureDependenciesIfNeeded(mainToModule: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>) {
     for ((mainDependent, modules) in mainToModule) {
-      val mainDependentClassLoader = mainDependent.classLoader as PluginClassLoader
+      val mainDependentClassLoader = mainDependent.pluginClassLoader as PluginClassLoader
       mainToClassPath.put(mainDependent.pluginId, MainInfo(classPath = mainDependentClassLoader.classPath,
                                                            files = mainDependentClassLoader.files,
                                                            libDirectories = mainDependentClassLoader.libDirectories))
       if (mainDependent.packagePrefix == null) {
         for (module in modules) {
-          module.classLoader = mainDependentClassLoader
+          module.pluginClassLoader = mainDependentClassLoader
         }
       }
       else {
@@ -85,11 +85,9 @@ class ClassLoaderConfigurator(
     checkPackagePrefixUniqueness(module)
 
     val isMain = module.moduleName == null
-    var dependencies = pluginSet.moduleToDirectDependencies.get(module) ?: EMPTY_DESCRIPTOR_ARRAY
-    if (dependencies.size > 1) {
-      dependencies = dependencies.clone()
-      sortDependenciesInPlace(dependencies)
-    }
+    val dependencies = pluginSet.moduleGraph.getDependencies(module).toTypedArray()
+    sortDependenciesInPlace(dependencies)
+
     if (isMain) {
       if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
         setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
@@ -126,7 +124,7 @@ class ClassLoaderConfigurator(
       else {
         createPluginClassLoader(module, mainInfo = mainInfo, dependencies = dependencies)
       }
-      module.classLoader = mainDependentClassLoader
+      module.pluginClassLoader = mainDependentClassLoader
       configureDependenciesInOldFormat(module, mainDependentClassLoader)
     }
     else {
@@ -137,13 +135,13 @@ class ClassLoaderConfigurator(
       assert(module.pluginDependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.pluginDependencies}" }
       for (dependency in dependencies) {
         // if the module depends on an unavailable plugin, it will not be loaded
-        if (dependency.classLoader == null) {
+        if (dependency.pluginClassLoader == null) {
           return
         }
       }
 
       if (module.useCoreClassLoader) {
-        module.classLoader = coreLoader
+        module.pluginClassLoader = coreLoader
         return
       }
 
@@ -157,7 +155,7 @@ class ClassLoaderConfigurator(
         }
       }
       else {
-        module.classLoader = PluginClassLoader(
+        module.pluginClassLoader = PluginClassLoader(
           mainInfo.files,
           mainInfo.classPath,
           dependencies,
@@ -178,7 +176,7 @@ class ClassLoaderConfigurator(
         continue
       }
       // classLoader must be set - otherwise sub descriptor considered as inactive
-      subDescriptor.classLoader = mainDependentClassLoader
+      subDescriptor.pluginClassLoader = mainDependentClassLoader
       configureDependenciesInOldFormat(subDescriptor, mainDependentClassLoader)
     }
   }
@@ -190,7 +188,7 @@ class ClassLoaderConfigurator(
       return
     }
 
-    module.classLoader = PluginClassLoader(
+    module.pluginClassLoader = PluginClassLoader(
       Collections.emptyList(),
       coreUrlClassLoader.classPath,
       deps,
@@ -228,7 +226,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun setPluginClassLoaderForModuleAndOldSubDescriptors(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader) {
-    rootDescriptor.classLoader = classLoader
+    rootDescriptor.pluginClassLoader = classLoader
     for (dependency in rootDescriptor.pluginDependencies) {
       val subDescriptor = dependency.subDescriptor
       if (subDescriptor != null && pluginSet.isPluginEnabled(dependency.pluginId)) {
@@ -428,6 +426,8 @@ private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: Ide
 }
 
 fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
+  if (dependencies.size <= 1) return
+
   fun getWeight(module: IdeaPluginDescriptorImpl) = if (module.moduleName == null) 1 else 0
 
   // java sort is stable, so, it is safe to not use topological comparator here

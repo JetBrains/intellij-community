@@ -11,8 +11,8 @@ class Simple {
   }
 
     @Untainted String foo() {
-        return "safe";
-    }
+    return "safe";
+  }
 
   void sink(@Untainted String s) {}
 }

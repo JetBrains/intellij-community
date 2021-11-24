@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="jediterm-typeahead" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-typeahead:2.59" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-typeahead:2.64" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-typeahead/2.59/jediterm-typeahead-2.59.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-typeahead/2.64/jediterm-typeahead-2.64.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-typeahead/2.59/jediterm-typeahead-2.59-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-typeahead/2.64/jediterm-typeahead-2.64-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

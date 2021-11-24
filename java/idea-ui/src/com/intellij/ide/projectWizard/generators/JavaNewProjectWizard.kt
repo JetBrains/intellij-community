@@ -20,5 +20,9 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
 
     override val buildSystemProperty by ::stepProperty
     override val buildSystem by ::step
+
+    init {
+      data.putUserData(NewProjectWizardBuildSystemData.KEY, this)
+    }
   }
 }

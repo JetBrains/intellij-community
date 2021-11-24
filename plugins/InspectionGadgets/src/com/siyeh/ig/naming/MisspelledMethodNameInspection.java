@@ -97,7 +97,7 @@ public class MisspelledMethodNameInspection extends BaseInspection {
             }
             if (methodClass == aClass) {
               PsiIdentifier identifier = method.getNameIdentifier();
-              if (identifier != null) {
+              if (identifier != null && identifier.isPhysical()) {
                 errorNames.put(identifier, existingName);
               }
             }

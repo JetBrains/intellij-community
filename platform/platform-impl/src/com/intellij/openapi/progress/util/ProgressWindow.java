@@ -385,6 +385,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
+  public @NotNull KeyStroke[] getCancelShortcuts() {
+    return new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)};
+  }
+
   @Override
   public String toString() {
     return getTitle() + " " + System.identityHashCode(this) + ": running=" + isRunning() + "; canceled=" + isCanceled();

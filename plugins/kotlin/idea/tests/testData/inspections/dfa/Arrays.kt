@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun arrayCast(x: Array<Int>) {
     @Suppress("UNCHECKED_CAST")
     val y = x as Array<Any>
@@ -7,7 +7,7 @@ fun arrayCast(x: Array<Int>) {
 
 fun arrayRead(x : Array<Int>) {
     if (x[0] > 10)
-        if (<warning descr="Condition is always false">x[0] < 0</warning>) {
+        if (<warning descr="Condition 'x[0] < 0' is always false">x[0] < 0</warning>) {
 
     }
 }
@@ -15,19 +15,19 @@ fun arrayWrite(x: IntArray) {
     x[0] += 1
     if (x[0] == 1) {}
     x[0] = 1
-    if (<warning descr="Condition is always true">x[0] == 1</warning>) {}
+    if (<warning descr="Condition 'x[0] == 1' is always true">x[0] == 1</warning>) {}
 }
 fun indexBounds(x : Array<Int>, y : Int) {
     if (x[y] > 10) {
-        if (<warning descr="Condition is always true">y >= 0</warning>) {}
-        if (<warning descr="Condition is always false">y == x.size</warning>) {}
-        if (<warning descr="Condition is always false">y > x.size</warning>) {}
+        if (<warning descr="Condition 'y >= 0' is always true">y >= 0</warning>) {}
+        if (<warning descr="Condition 'y == x.size' is always false">y == x.size</warning>) {}
+        if (<warning descr="Condition 'y > x.size' is always false">y > x.size</warning>) {}
     }
 }
 fun indexBoundsNullable(x : Array<Int>, y : Int?) {
     if (y != null && x[y] > 10) {
-        if (<warning descr="Condition is always false">y >= x.size</warning>) {}
-        if (<warning descr="Condition is always false">y < 0</warning>) {}
+        if (<warning descr="Condition 'y >= x.size' is always false">y >= x.size</warning>) {}
+        if (<warning descr="Condition 'y < 0' is always false">y < 0</warning>) {}
     }
 }
 fun aioobe(x : Array<Int>, y : Int) {

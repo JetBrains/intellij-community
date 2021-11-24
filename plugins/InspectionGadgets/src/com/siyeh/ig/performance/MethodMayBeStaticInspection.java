@@ -16,6 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -65,6 +66,15 @@ public class MethodMayBeStaticInspection extends BaseInspection {
         if (element != null) {
           new MakeMethodStaticProcessor(project, element, new Settings(m_replaceQualifier, null, null)).run();
         }
+      }
+
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+        final PsiMethod element = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiMethod.class);
+        if (element != null) {
+          element.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+        }
+        return IntentionPreviewInfo.DIFF;
       }
 
       @Override

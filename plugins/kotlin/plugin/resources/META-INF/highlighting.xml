@@ -29,6 +29,8 @@
 
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinRainbowVisitor"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingSuspender"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingSuspendNotificationProvider"/>
 
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinBeforeResolveHighlightingPass$Registrar"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.DebugInfoHighlightingPass$Registrar"/>

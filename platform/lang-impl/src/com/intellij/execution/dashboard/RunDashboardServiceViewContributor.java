@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
@@ -28,7 +28,9 @@ import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -40,7 +42,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,15 +51,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.execution.dashboard.RunDashboardCustomizer.NODE_LINKS;
-import static com.intellij.execution.dashboard.RunDashboardManagerImpl.findActionToolbar;
-import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
-import static com.intellij.openapi.actionSystem.ActionPlaces.RUN_DASHBOARD_POPUP;
-
-public class RunDashboardServiceViewContributor
+public final class RunDashboardServiceViewContributor
   implements ServiceViewGroupingContributor<RunDashboardServiceViewContributor.RunConfigurationContributor, GroupingNode> {
 
   @NonNls private static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
+
+  private static final Key<DefaultActionGroup> MORE_ACTION_GROUP_KEY = Key.create("ServicesMoreActionGroup");
 
   private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
     new SimpleServiceViewDescriptor("Run Dashboard", AllIcons.Actions.Execute) {
@@ -138,12 +138,12 @@ public class RunDashboardServiceViewContributor
     actionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
 
     List<AnAction> leftToolbarActions = null;
-    RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
+    RunnerLayoutUiImpl ui = RunDashboardManagerImpl.getRunnerLayoutUi(descriptor);
     if (ui != null) {
       leftToolbarActions = ui.getActions();
     }
     else {
-      ActionToolbar toolbar = findActionToolbar(descriptor);
+      ActionToolbar toolbar = RunDashboardManagerImpl.findActionToolbar(descriptor);
       if (toolbar != null) {
         leftToolbarActions = toolbar.getActions();
       }
@@ -155,9 +155,7 @@ public class RunDashboardServiceViewContributor
       }
       for (AnAction action : leftToolbarActions) {
         if (action instanceof MoreActionGroup) {
-          DefaultActionGroup moreGroup = new MoreActionGroup(false);
-          moreGroup.addAll(((MoreActionGroup)action).getChildren(null));
-          actionGroup.add(moreGroup);
+          actionGroup.add(getServicesMoreActionGroup((MoreActionGroup)action, descriptor));
         }
         else if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
           actionGroup.add(action);
@@ -167,12 +165,28 @@ public class RunDashboardServiceViewContributor
     return actionGroup;
   }
 
+  private static DefaultActionGroup getServicesMoreActionGroup(MoreActionGroup contentGroup, RunContentDescriptor descriptor) {
+    if (descriptor == null) return contentGroup;
+
+    Content content = descriptor.getAttachedContent();
+    if (content == null) return contentGroup;
+
+    DefaultActionGroup moreGroup = content.getUserData(MORE_ACTION_GROUP_KEY);
+    if (moreGroup == null) {
+      moreGroup = new MoreActionGroup(false);
+      content.putUserData(MORE_ACTION_GROUP_KEY, moreGroup);
+    }
+    moreGroup.removeAll();
+    moreGroup.addAll(contentGroup.getChildren(null));
+    return moreGroup;
+  }
+
   private static ActionGroup getPopupActions() {
     DefaultActionGroup actions = new DefaultActionGroup();
     ActionManager actionManager = ActionManager.getInstance();
     actions.add(actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
     actions.addSeparator();
-    actions.add(actionManager.getAction(RUN_DASHBOARD_POPUP));
+    actions.add(actionManager.getAction(ActionPlaces.RUN_DASHBOARD_POPUP));
     return actions;
   }
 
@@ -309,19 +323,21 @@ public class RunDashboardServiceViewContributor
     @Nullable
     @Override
     public VirtualFile getVirtualFile() {
-      for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-        PsiElement psiElement = customizer.getPsiElement(myNode);
-        if (psiElement != null) {
-          return PsiUtilCore.getVirtualFile(psiElement);
+      return ReadAction.compute(() -> {
+        for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
+          PsiElement psiElement = customizer.getPsiElement(myNode);
+          if (psiElement != null) {
+            return PsiUtilCore.getVirtualFile(psiElement);
+          }
         }
-      }
-      return null;
+        return null;
+      });
     }
 
     @Nullable
     @Override
     public Object getPresentationTag(Object fragment) {
-      Map<Object, Object> links = myNode.getUserData(NODE_LINKS);
+      Map<Object, Object> links = myNode.getUserData(RunDashboardCustomizer.NODE_LINKS);
       return links == null ? null : links.get(fragment);
     }
 
@@ -370,7 +386,7 @@ public class RunDashboardServiceViewContributor
       try {
         node.getConfigurationSettings().setFolderName(myNode.getConfigurationSettings().getFolderName());
 
-        TObjectIntHashMap<RunnerAndConfigurationSettings> indices = new TObjectIntHashMap<>();
+        Object2IntMap<RunnerAndConfigurationSettings> indices = new Object2IntOpenHashMap<>();
         int i = 0;
         for (RunnerAndConfigurationSettings each : runManager.getAllSettings()) {
           if (each.equals(node.getConfigurationSettings())) continue;
@@ -389,7 +405,7 @@ public class RunDashboardServiceViewContributor
             indices.put(each, i++);
           }
         }
-        runManager.setOrder(Comparator.comparingInt(indices::get));
+        runManager.setOrder(Comparator.comparingInt(indices::getInt));
       }
       finally {
         runManager.fireEndUpdate();

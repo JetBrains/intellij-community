@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(list: List<Pair<String, Int>>) {
     list.forEach { (s, _) -> println(s) }<caret>
 }

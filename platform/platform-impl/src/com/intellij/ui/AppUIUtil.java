@@ -70,13 +70,13 @@ public final class AppUIUtil {
       ScaleContext scaleContext = ScaleContext.create(window);
 
       if (SystemInfoRt.isUnix) {
-        @SuppressWarnings("deprecation") Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, appInfo.getBigIconUrl());
+        Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, null);
         if (image != null) {
           images.add(image);
         }
       }
 
-      @SuppressWarnings("deprecation") Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, appInfo.getIconUrl());
+      Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, null);
       if (element != null) {
         images.add(element);
       }
@@ -107,7 +107,7 @@ public final class AppUIUtil {
 
   public static boolean isWindowIconAlreadyExternallySet() {
     if (SystemInfoRt.isMac) {
-      return ourMacDocIconSet || (!PlatformUtils.isCodeWithMeGuest() && !PluginManagerCore.isRunningFromSources());
+      return ourMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources());
     }
 
     // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well

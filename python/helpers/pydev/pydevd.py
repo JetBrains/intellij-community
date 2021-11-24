@@ -1841,7 +1841,7 @@ class DispatchReader(ReaderThread):
 
     @overrides(ReaderThread._on_run)
     def _on_run(self):
-        dummy_thread = threading.currentThread()
+        dummy_thread = threading.current_thread()
         dummy_thread.is_pydev_daemon_thread = False
         return ReaderThread._on_run(self)
 

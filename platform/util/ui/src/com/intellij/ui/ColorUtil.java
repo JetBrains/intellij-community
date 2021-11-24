@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.diagnostic.Checks;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.MathUtil;
 import com.intellij.util.NotNullProducer;
@@ -53,19 +54,58 @@ public final class ColorUtil {
   }
 
   @NotNull
-  public static Color hackBrightness(@NotNull Color color, int howMuch, float hackValue) {
-    return hackBrightness(color.getRed(), color.getGreen(), color.getBlue(), howMuch, hackValue);
+  public static Color tuneHue(@NotNull Color color, int howMuch, float hackValue) {
+    return tuneHSBComponent(color, 0, howMuch, hackValue);
   }
 
   @NotNull
-  public static Color hackBrightness(int r, int g, int b, int howMuch, float hackValue) {
-    final float[] hsb = Color.RGBtoHSB(r, g, b, null);
-    float brightness = hsb[2];
-    for (int i = 0; i < howMuch; i++) {
-      brightness = MathUtil.clamp(brightness * hackValue, 0, 1);
-      if (brightness == 0 || brightness == 1) break;
+  public static Color tuneSaturation(@NotNull Color color, int howMuch, float hackValue) {
+    return tuneHSBComponent(color, 1, howMuch, hackValue);
+  }
+
+  /**
+   * All grey tones (including black) have 0 saturation so its saturation won't change.
+   * That is why we handle such tones in a special why. Suppose we want to decrease saturation, then:
+   * <ul>
+   *   <li>For black tones we will increase brightness, making it more grey-ish.</li>
+   *   <li>For white tones we will decrease brightness, making it more grey-ish.</li>
+   *   <li>For remaining grey tones we will do nothing.</li>
+   * </ul>
+   */
+  @NotNull
+  public static Color tuneSaturationEspeciallyGrey(@NotNull Color color, int howMuch, float hackValue) {
+    if (color.getRed() == color.getBlue() && color.getBlue() == color.getGreen()) {
+      return color.getGreen() <= 64 ? shiftHSBComponent(color, 2, howMuch * (1 - hackValue) / 1.5f) :
+             color.getGreen() >= 192 ? shiftHSBComponent(color, 2, howMuch * (hackValue - 1) / 1.5f) :
+             color;
     }
-    return Color.getHSBColor(hsb[0], hsb[1], brightness);
+    return tuneHSBComponent(color, 1, howMuch, hackValue);
+  }
+
+  @NotNull
+  public static Color hackBrightness(@NotNull Color color, int howMuch, float hackValue) {
+    return tuneHSBComponent(color, 2, howMuch, hackValue);
+  }
+
+  @NotNull
+  private static Color tuneHSBComponent(@NotNull Color color, int componentIndex, int howMuch, float factor) {
+    Checks.checkIndex(componentIndex, 3);
+    float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    float component = hsb[componentIndex];
+    for (int i = 0; i < howMuch; i++) {
+      component = MathUtil.clamp(factor * component, 0, 1);
+      if (component == 0 || component == 1) break;
+    }
+    hsb[componentIndex] = component;
+    return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
+  }
+
+  @NotNull
+  private static Color shiftHSBComponent(@NotNull Color color, int componentIndex, float shift) {
+    Checks.checkIndex(componentIndex, 3);
+    float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    hsb[componentIndex] = MathUtil.clamp(hsb[componentIndex] + shift, 0, 1);
+    return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
   }
 
   @NotNull
@@ -123,10 +163,10 @@ public final class ColorUtil {
 
   @NotNull
   public static Color withPreAlpha(@NotNull Color c, double a) {
-    float [] rgba = new float[4];
+    float[] rgba = new float[4];
 
     rgba = withAlpha(c, a).getRGBComponents(rgba);
-    return new Color(rgba[0]*rgba[3], rgba[1]*rgba[3], rgba[2]*rgba[3], 1.0f);
+    return new Color(rgba[0] * rgba[3], rgba[1] * rgba[3], rgba[2] * rgba[3], 1.0f);
   }
 
   @NotNull
@@ -148,7 +188,7 @@ public final class ColorUtil {
     final String B = Integer.toHexString(c.getBlue());
 
     final String rgbHex = (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
-    if (!withAlpha){
+    if (!withAlpha) {
       return rgbHex;
     }
 
@@ -158,7 +198,7 @@ public final class ColorUtil {
 
   @NotNull
   public static @NlsSafe String toHtmlColor(@NotNull final Color c) {
-    return "#"+toHex(c);
+    return "#" + toHex(c);
   }
 
   /**
@@ -197,6 +237,7 @@ public final class ColorUtil {
   /**
    * Contrast ratios can range from 1 to 21 (commonly written 1:1 to 21:1).
    * Text foreground and background colors shall have contrast ration of at least 4.5:1, large-scale text - of at least 3:1.
+   *
    * @see <a href="https://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef">W3C contrast ratio definition<a/>
    */
   public static double getContrast(@NotNull Color c1, @NotNull Color c2) {

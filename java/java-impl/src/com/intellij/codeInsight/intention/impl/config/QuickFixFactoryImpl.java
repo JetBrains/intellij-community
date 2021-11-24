@@ -41,6 +41,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -620,6 +621,18 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new ReplacePrimitiveWithBoxedTypeAction(element, typeName, boxedTypeName);
   }
 
+  @Nullable
+  @Override
+  public IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiType operandType, @NotNull PsiTypeElement checkTypeElement) {
+    PsiPrimitiveType primitiveType = ObjectUtils.tryCast(checkTypeElement.getType(), PsiPrimitiveType.class);
+    if (primitiveType == null) return null;
+    PsiClassType boxedType = primitiveType.getBoxedType(checkTypeElement);
+    if (boxedType == null || !TypeConversionUtil.areTypesConvertible(operandType, boxedType)) return null;
+    if (primitiveType.getBoxedTypeName() == null) return null;
+    return createReplacePrimitiveWithBoxedTypeAction(checkTypeElement, primitiveType.getPresentableText(),
+                                                     primitiveType.getBoxedTypeName());
+  }
+
   @NotNull
   @Override
   public IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter) {
@@ -1109,5 +1122,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     final PsiType returnType = resolved.getReturnType();
     if (!(returnType instanceof PsiArrayType)) return null;
     return new MergeDuplicateAttributesFix(pair);
+  }
+
+  @Override
+  public @NotNull IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
+                                                              @NotNull PsiCaseLabelElement labelElement) {
+    return new MoveSwitchBranchUpFix(moveBeforeLabel, labelElement);
   }
 }

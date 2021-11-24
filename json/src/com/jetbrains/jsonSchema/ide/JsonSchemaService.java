@@ -41,8 +41,8 @@ public interface JsonSchemaService {
   @NotNull
   Collection<VirtualFile> getSchemaFilesForFile(@NotNull VirtualFile file);
 
-  void registerRemoteUpdateCallback(Runnable callback);
-  void unregisterRemoteUpdateCallback(Runnable callback);
+  void registerRemoteUpdateCallback(@NotNull Runnable callback);
+  void unregisterRemoteUpdateCallback(@NotNull Runnable callback);
   void registerResetAction(Runnable action);
   void unregisterResetAction(Runnable action);
 

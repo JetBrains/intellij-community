@@ -22,9 +22,16 @@ class GroupState {
 
 class BookmarkState {
   var provider: String? = null
-  var description: String = ""
+  var description: String? = null
   var type: BookmarkType = BookmarkType.DEFAULT
 
   @get:XMap
   val attributes = mutableMapOf<String, String>()
+
+  override fun toString() = StringBuilder("BookmarkState").apply {
+    append(": provider=").append(provider)
+    append(", description=").append(description)
+    append(", type=").append(type)
+    attributes.forEach { append(", ").append(it.key).append("=").append(it.value) }
+  }.toString()
 }

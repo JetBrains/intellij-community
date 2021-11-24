@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 data class Event(val timestamp: Int, val otherVar: Int = 1, val otherVar2: String = "")
 
 val listA = listOf(Event(1), Event(2), Event(3))

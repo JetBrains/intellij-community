@@ -1,5 +1,5 @@
 // "Make block type suspend" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // DISABLE-ERRORS
 
 import kotlin.coroutines.experimental.suspendCoroutine

@@ -119,7 +119,9 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
             val parent = ifExpression.parent
             if (parent.node.elementType == KtNodeTypes.ELSE) {
                 (parent.parent as? KtIfExpression)?.elseKeyword?.delete()
+                parent.delete()
             }
+
             ifExpression.delete()
         }
     }

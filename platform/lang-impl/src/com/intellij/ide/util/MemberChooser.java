@@ -821,14 +821,6 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected class ShowContainersAction extends ToggleAction {
-    /**
-     * @deprecated use {@linkplain #ShowContainersAction(Supplier, Icon)} instead
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    public ShowContainersAction(@NlsActions.ActionText String text, final Icon icon) {
-      this(() -> text, icon);
-    }
 
     public ShowContainersAction(@NotNull Supplier<@NlsActions.ActionText String> text, final Icon icon) {
       super(text, icon);

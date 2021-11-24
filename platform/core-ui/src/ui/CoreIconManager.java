@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.AbstractBundle;
@@ -56,7 +56,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   }
 
   @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags) {
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int flags) {
     assert !path.isEmpty() && path.charAt(0) != '/';
     return new IconWithToolTipImpl(path, createRasterizedImageDataLoader(path, classLoader, cacheKey, flags));
   }
@@ -64,7 +64,10 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   // reflective path is not supported
   // result is not cached
   @SuppressWarnings("DuplicatedCode")
-  private static @NotNull ImageDataLoader createRasterizedImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int imageFlags) {
+  private static @NotNull ImageDataLoader createRasterizedImageDataLoader(@NotNull String path,
+                                                                          @NotNull ClassLoader classLoader,
+                                                                          int cacheKey,
+                                                                          int imageFlags) {
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
     Pair<String, ClassLoader> patchedPath = IconLoader.patchPath(path, classLoader);
     String effectivePath = path;

@@ -13,8 +13,6 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SideBorder;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +29,6 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     super(project, isInEditor ? DiffPlaces.DEFAULT : DiffPlaces.VCS_LOG_VIEW);
     myIsInEditor = isInEditor;
     myBrowser = browser;
-    if (!isInEditor) {
-      myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-    }
     Disposer.register(disposable, this);
 
     myBrowser.addListener(() -> updatePreviewLater(), this);
@@ -42,7 +37,7 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @Override
   protected boolean shouldAddToolbarBottomBorder(@NotNull FrameDiffTool.ToolbarComponents toolbarComponents) {
-    return false;
+    return !myIsInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents);
   }
 
   @NotNull

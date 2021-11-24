@@ -133,21 +133,6 @@ public abstract class EditorFactory {
   public abstract @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project);
 
   /**
-   * If а collaborative development session is off,
-   * then returns the result of {@link EditorFactory#editors(Document, Project)}.
-   * <p>
-   * If а collaborative development session is on,
-   * then returns such editors from {@link EditorFactory#editors(Document, Project)},
-   * which belong only to the guest or host, who's action/activity is currently processing.
-   * </p>
-   */
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  public @NotNull Stream<Editor> editorsForCurrentClient(@NotNull Document document, @Nullable Project project) {
-    return editors(document, project);
-  }
-
-  /**
    * Returns the stream of all editors for the specified document.
    */
   public final @NotNull Stream<Editor> editors(@NotNull Document document) {

@@ -28,6 +28,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @NonNls static final String PARAMETER = "parameter";
   @NonNls static final String JAVA_MODULE = "java.module";
   @NonNls public static final String PACKAGE = "package";
+  static final String FUNCTIONAL_EXPRESSION = "functional.expression";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
 
 
@@ -47,13 +48,11 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
    *
    * @param param the parameter for which the reference graph node is requested.
    * @param index the index of the parameter in its parameter list.
-   * @param refMethod
+   * @param refElement the owner of the parameter, i.e. a {@link RefMethod} or {@link RefFunctionalExpression}
    * @return the node for the element, or null if the element is not valid or does not have
    * a corresponding reference graph node type (is not a field, method, class or file).
    */
-  public abstract RefParameter getParameterReference(UParameter param,
-                                                     int index,
-                                                     RefMethod refMethod);
+  public abstract RefParameter getParameterReference(UParameter param, int index, RefElement refElement);
 
   public abstract RefPackage getDefaultPackage();
 

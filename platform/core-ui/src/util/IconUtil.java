@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
@@ -30,6 +31,7 @@ import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
@@ -167,6 +169,7 @@ public class IconUtil {
       icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
     }
     if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
+        Registry.is("ide.locked.icon.enabled", false) &&
         (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
       icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
     }
@@ -670,6 +673,21 @@ public class IconUtil {
       scale /= usrScale;
     }
     return scale(icon, ancestor, scale);
+  }
+
+  public static Icon scaleByIconWidth(@Nullable Icon icon, @Nullable Component ancestor, @NotNull Icon defaultIcon) {
+    return scaleByIcon(icon, ancestor, defaultIcon, Icon::getIconWidth);
+  }
+
+  public static Icon scaleByIconHeight(@Nullable Icon icon, @Nullable Component ancestor, @NotNull Icon defaultIcon) {
+    return scaleByIcon(icon, ancestor, defaultIcon, Icon::getIconHeight);
+  }
+
+  private static Icon scaleByIcon(@Nullable Icon icon, Component ancestor, @NotNull Icon defaultIcon, @NotNull ToIntFunction<Icon> size) {
+    if (icon == null || icon == defaultIcon) return defaultIcon;
+    int actual = size.applyAsInt(icon);
+    int expected = size.applyAsInt(defaultIcon);
+    return expected == actual ? icon : scale(icon, ancestor, (float)expected / actual);
   }
 
   /**

@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -441,6 +442,17 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   public void finishBatchFilesProcessingMode() {
     int after = myBatchFilesProcessingModeCount.decrementAndGet();
     LOG.assertTrue(after >= 0);
+  }
+
+  @Override
+  public <T> T runInBatchFilesMode(@NotNull Computable<T> runnable) {
+    startBatchFilesProcessingMode();
+    try {
+      return runnable.compute();
+    }
+    finally {
+      finishBatchFilesProcessingMode();
+    }
   }
 
   @Override

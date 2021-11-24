@@ -132,15 +132,9 @@ def determine_files_to_test(*, typeshed_location: str, paths: Sequence[str]) -> 
     files = []
     for f in sorted(filenames):
         rel = _get_relative(f)
-        if rel in skipped:
+        if rel in skipped or "@python2" in f:
             continue
-        versions = ts.get_python_major_versions(rel)
-        if 3 in versions:
-            files.append(f)
-        elif versions:
-            print("Skipping Python 2-only path: {}".format(f))
-        else:
-            print("Unrecognized path: {}".format(f))
+        files.append(f)
     return files
 
 

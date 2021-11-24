@@ -9,7 +9,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionResultsViewComparator;
 import com.intellij.codeInspection.ui.InspectionTree;
@@ -46,17 +45,17 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   private static final Logger LOG = Logger.getInstance(QuickFixAction.class);
 
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
-  protected final InspectionToolWrapper myToolWrapper;
+  protected final InspectionToolWrapper<?,?> myToolWrapper;
 
   protected static InspectionResultsView getInvoker(@NotNull AnActionEvent e) {
     return e.getData(InspectionResultsView.DATA_KEY);
   }
 
-  protected QuickFixAction(@NlsActions.ActionText String text, @NotNull InspectionToolWrapper toolWrapper) {
+  protected QuickFixAction(@NlsActions.ActionText String text, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     this(text, AllIcons.Actions.IntentionBulb, null, toolWrapper);
   }
 
-  protected QuickFixAction(@NlsActions.ActionText String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper toolWrapper) {
+  protected QuickFixAction(@NlsActions.ActionText String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     super(text, null, icon);
     myToolWrapper = toolWrapper;
     if (keyStroke != null) {
@@ -75,7 +74,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     e.getPresentation().setEnabledAndVisible(false);
 
     final InspectionTree tree = view.getTree();
-    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(true);
+    final InspectionToolWrapper<?,?> toolWrapper = tree.getSelectedToolWrapper(true);
     if (!view.isSingleToolInSelection() || toolWrapper != myToolWrapper) {
       return;
     }
@@ -109,14 +108,16 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
       }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
         return;
       }
-      if (isProblemDescriptorsAcceptable() && descriptors.get().size() > 0) {
+      if (isProblemDescriptorsAcceptable() && !descriptors.get().isEmpty()) {
         doApplyFix(view.getProject(), descriptors.get(), readOnlyFiles, tree.getContext());
-      } else {
+      }
+      else {
         doApplyFix(getSelectedElements(view), view);
       }
 
       view.getTree().removeSelectedProblems();
-    } finally {
+    }
+    finally {
       view.setApplyingFix(false);
     }
   }
@@ -134,20 +135,10 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
                           @NotNull GlobalInspectionContextImpl context) {
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
 
-    final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
-    final boolean initial = refManager.isInProcess();
+    final Set<PsiElement> resolvedElements = new HashSet<>();
+    performFixesInBatch(project, descriptors, context, resolvedElements);
 
-    refManager.inspectionReadActionFinished();
-
-    try {
-      final Set<PsiElement> resolvedElements = new HashSet<>();
-      performFixesInBatch(project, descriptors, context, resolvedElements);
-
-      refreshViews(project, resolvedElements, myToolWrapper);
-    }
-    finally { //to make offline view lazy
-      if (initial) refManager.inspectionReadActionStarted();
-    }
+    refreshViews(project, resolvedElements, myToolWrapper);
   }
 
   protected boolean startInWriteAction() {
@@ -179,33 +170,22 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   private void doApplyFix(final RefEntity @NotNull [] refElements, @NotNull InspectionResultsView view) {
-    final RefManagerImpl refManager = (RefManagerImpl)view.getGlobalInspectionContext().getRefManager();
-
-    final boolean initial = refManager.isInProcess();
-
-    refManager.inspectionReadActionFinished();
-
-    try {
-      final boolean[] refreshNeeded = {false};
-      if (refElements.length > 0) {
-        final Project project = refElements[0].getRefManager().getProject();
-        CommandProcessor.getInstance().executeCommand(project, () -> {
-          CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            refreshNeeded[0] = applyFix(refElements);
-          });
-        }, getTemplatePresentation().getText(), null);
-      }
-      if (refreshNeeded[0]) {
-        refreshViews(view.getProject(), refElements, myToolWrapper);
-      }
+    final boolean[] refreshNeeded = {false};
+    if (refElements.length > 0) {
+      final Project project = refElements[0].getRefManager().getProject();
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          refreshNeeded[0] = applyFix(refElements);
+        });
+      }, getTemplatePresentation().getText(), null);
     }
-    finally {  //to make offline view lazy
-      if (initial) refManager.inspectionReadActionStarted();
+    if (refreshNeeded[0]) {
+      refreshViews(view.getProject(), refElements, myToolWrapper);
     }
   }
 
-  public static void removeElements(RefEntity @NotNull [] refElements, @NotNull Project project, @NotNull InspectionToolWrapper toolWrapper) {
+  public static void removeElements(RefEntity @NotNull [] refElements, @NotNull Project project, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     refreshViews(project, refElements, toolWrapper);
     final ArrayList<RefElement> deletedRefs = new ArrayList<>(1);
     for (RefEntity refElement : refElements) {
@@ -232,7 +212,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     return selection;
   }
 
-  private static void refreshViews(@NotNull Project project, @NotNull Set<? extends PsiElement> resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
+  private static void refreshViews(@NotNull Project project, @NotNull Set<? extends PsiElement> resolvedElements, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
     for (GlobalInspectionContextImpl context : runningContexts) {
@@ -243,7 +223,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     }
   }
 
-  protected static void refreshViews(@NotNull Project project, RefEntity @NotNull [] resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
+  protected static void refreshViews(@NotNull Project project, RefEntity @NotNull [] resolvedElements, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     final Set<PsiElement> ignoredElements = new HashSet<>();
     for (RefEntity element : resolvedElements) {
       final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getPsiElement() : null;
@@ -262,7 +242,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     if (!readOnlyFiles.isEmpty()) {
       final Project project = refElements[0].getRefManager().getProject();
       final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles);
-      if (operationStatus.hasReadonlyFiles()) return false;
+      return !operationStatus.hasReadonlyFiles();
     }
     return true;
   }

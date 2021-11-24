@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -44,13 +44,13 @@ final class OpenFilesActivity implements StartupActivity {
       if (!manager.hasOpenFiles() && !ProjectUtil.isNotificationSilentMode(project)) {
         project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true);
         if (AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
-          RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart", () -> findAndOpenReadme(project, manager));
+          RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart", () -> findAndOpenReadme(project));
         }
       }
     }, project.getDisposed());
   }
 
-  private static void findAndOpenReadme(@NotNull Project project, @NotNull FileEditorManagerImpl manager) {
+  private static void findAndOpenReadme(Project project) {
     VirtualFile dir = ProjectUtil.guessProjectDir(project);
     if (dir != null) {
       VirtualFile readme = dir.findChild("README.md");

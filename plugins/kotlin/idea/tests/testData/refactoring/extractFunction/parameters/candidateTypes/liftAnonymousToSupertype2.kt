@@ -1,6 +1,6 @@
 // PARAM_DESCRIPTOR: val x: <no name provided> defined in test
 // PARAM_TYPES: A
-// WITH_RUNTIME
+// WITH_STDLIB
 
 open class A {
 

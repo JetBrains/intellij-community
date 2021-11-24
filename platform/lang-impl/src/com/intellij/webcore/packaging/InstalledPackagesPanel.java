@@ -175,7 +175,12 @@ public class InstalledPackagesPanel extends JPanel {
                                         myPackagesTable.clearSelection();
                                         doUpdatePackages(myPackageManagementService);
                                       }
-                                    });
+                                    }, createNotificationPanel());
+  }
+
+  @NotNull
+  protected PackagesNotificationPanel createNotificationPanel() {
+    return new PackagesNotificationPanel();
   }
 
   private void upgradeAction() {

@@ -7,6 +7,9 @@
     <extensionPoint name="vcsLogCustomColumn"
                     interface="com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn"
                     dynamic="true"/>
+    <extensionPoint name="vcsLogCommitStatusProvider"
+                    interface="com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -31,12 +34,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexProjectStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexApplicationStatisticsCollector"/>
 
-    <statistics.counterUsagesCollector groupId="vcs.log.trigger" version="3"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogTriggerEventIdValidator"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogFilterNameValidator"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogHighlighterIdValidator"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogColumnNameValidator"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogSortKindValidator"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter$Factory"/>
@@ -55,23 +53,23 @@
     <getDataRule key="Vcs.Log.UiEx" implementationClass="com.intellij.vcs.log.ui.VcsLogUiExDataRule"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowDiff"/>
+      implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowDiff"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowStandaloneDiff"/>
+      implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowStandaloneDiff"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.ShowStandaloneDiffFromLogActionProvider"/>
+      implementation="com.intellij.vcs.log.ui.actions.ShowStandaloneDiffFromLogActionProvider"/>
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffAfterWithLocalFromFileHistoryActionProvider"/>
+      implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffAfterWithLocalFromFileHistoryActionProvider"/>
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.ShowDiffAfterWithLocalFromLogActionProvider"/>
+      implementation="com.intellij.vcs.log.ui.actions.ShowDiffAfterWithLocalFromLogActionProvider"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Dialog"/>
+      implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Dialog"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Clipboard"/>
+      implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Clipboard"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Dialog"/>
+      implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Dialog"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Clipboard"/>
+      implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Clipboard"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider implementation="com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider"/>
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>

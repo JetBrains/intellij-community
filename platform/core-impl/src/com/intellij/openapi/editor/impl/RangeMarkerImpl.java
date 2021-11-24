@@ -45,12 +45,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     this(virtualFile, estimateDocumentLength(virtualFile), start, end, register, false, false);
   }
 
-  private static int estimateDocumentLength(@NotNull VirtualFile virtualFile) {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-    return document == null ? Integer.MAX_VALUE : document.getTextLength();
-  }
-
-  private RangeMarkerImpl(@NotNull Object documentOrFile, int documentTextLength, int start,
+  private RangeMarkerImpl(@NotNull Object documentOrFile, int documentTextLength,
+                          int start,
                           int end,
                           boolean register,
                           boolean greedyToLeft,
@@ -70,6 +66,11 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (register) {
       registerInTree(start, end, greedyToLeft, greedyToRight, 0);
     }
+  }
+
+  private static int estimateDocumentLength(@NotNull VirtualFile virtualFile) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    return document == null ? Integer.MAX_VALUE : document.getTextLength();
   }
 
   protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
@@ -420,5 +421,17 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   public RangeMarker findRangeMarkerBefore() {
     return myNode.getTree().findRangeMarkerBefore(this);
+  }
+
+  // re-register myself in the document tree (e.g. after document load)
+  void reRegister(@NotNull DocumentImpl document, int tabSize) {
+    int startOffset = getStartOffset();
+    int endOffset = getEndOffset();
+    if (startOffset <= endOffset && endOffset <= document.getTextLength()) {
+      document.registerRangeMarker(this, startOffset, endOffset, isGreedyToLeft(), isGreedyToRight(), 0);
+    }
+    else {
+      invalidate("document was gc-ed and re-created with invalid offsets: ("+startOffset+","+endOffset+"): "+document.getTextLength());
+    }
   }
 }

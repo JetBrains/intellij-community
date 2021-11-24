@@ -23,7 +23,7 @@ final class ModalityInvokatorImpl implements ModalityInvokator {
 
   @Override
   public @NotNull ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
-    return LaterInvocator.invokeLater(runnable, state, expired);
+    return LaterInvocator.invokeLater(state, expired, runnable);
   }
 
   @Override

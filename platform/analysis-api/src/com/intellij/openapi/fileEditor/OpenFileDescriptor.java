@@ -154,12 +154,12 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
 
   @Override
   public boolean canNavigate() {
-    return FileNavigator.getInstance().canNavigate(myFile);
+    return FileNavigator.getInstance().canNavigate(this);
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return canNavigate();
+    return FileNavigator.getInstance().canNavigateToSource(this);
   }
 
   @NotNull

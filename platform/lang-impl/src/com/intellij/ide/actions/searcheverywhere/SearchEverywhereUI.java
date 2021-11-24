@@ -113,6 +113,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final SEListSelectionTracker mySelectionTracker;
   private final SearchFieldTypingListener mySearchTypingListener;
   private final HintHelper myHintHelper;
+  private final SearchEverywhereMlService myMlService;
 
   public SearchEverywhereUI(@Nullable Project project,
                             Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
@@ -130,8 +131,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
     myBufferedListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener, Runnable::run);
     mySearcher = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-                 ? new MixedResultsSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders)
-                 : new GroupedResultsSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders);
+                 ? new MixedResultsSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run),
+                                            equalityProviders)
+                 : new GroupedResultsSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run),
+                                              equalityProviders);
 
     Runnable scopeChangedCallback = () -> {
       updateSearchFieldAdvertisement();
@@ -166,9 +169,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     mySearchField.addKeyListener(mySearchTypingListener);
     myHintHelper = new HintHelper(mySearchField);
 
-    SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-    if (mlService != null) {
-      mlService.onSessionStarted(myProject);
+    myMlService = SearchEverywhereMlService.getInstance();
+    if (myMlService != null) {
+      myMlService.onSessionStarted(myProject);
     }
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, myProject));
   }
@@ -275,9 +278,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     stopSearching();
     myListModel.clear();
 
-    SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-    if (mlService != null) {
-      mlService.onDialogClose();
+    if (myMlService != null) {
+      myMlService.onDialogClose();
     }
   }
 
@@ -297,12 +299,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> elements = indicesStream.mapToObj(i -> {
-        SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
-        Object item = myListModel.getElementAt(i);
-        //noinspection ConstantConditions
-        Object psi = contributor.getDataForItem(item, CommonDataKeys.PSI_ELEMENT.getName());
-        return (PsiElement)psi;
-      })
+          SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
+          Object item = myListModel.getElementAt(i);
+          //noinspection ConstantConditions
+          Object psi = contributor.getDataForItem(item, CommonDataKeys.PSI_ELEMENT.getName());
+          return (PsiElement)psi;
+        })
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
       return PsiUtilCore.toPsiElementArray(elements);
@@ -310,11 +312,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     //item-specific data section--------------
     return indicesStream.mapToObj(i -> {
-      SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
-      Object item = myListModel.getElementAt(i);
-      //noinspection ConstantConditions
-      return contributor.getDataForItem(item, dataId);
-    })
+        SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
+        Object item = myListModel.getElementAt(i);
+        //noinspection ConstantConditions
+        return contributor.getDataForItem(item, dataId);
+      })
       .filter(Objects::nonNull)
       .findFirst()
       .orElse(null);
@@ -473,17 +475,20 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     String tabId = myHeader.getSelectedTab().getID();
 
-    SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-    if (mlService != null) {
-      mlService.onSearchRestart(
+    if (myMlService != null) {
+      myMlService.onSearchRestart(
         myProject, tabId, reason,
-        mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, mySearchField.getText().length(),
+        mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, namePattern,
         () -> myListModel.getFoundElementsInfo()
       );
     }
 
     myListModel.expireResults();
     contributors.forEach(contributor -> myListModel.setHasMore(contributor, false));
+
+    List<SearchEverywhereFoundElementInfo> completionElements = AutoCompletionProvider.getCompletionElements(contributors, mySearchField);
+    myListModel.addElements(completionElements);
+
     String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
     if (rawPattern.startsWith(commandPrefix)) {
       String typedCommand = rawPattern.split(" ")[0].substring(commandPrefix.length());
@@ -811,9 +816,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
-    SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-    if (mlService != null) {
-      mlService.onItemSelected(myProject, indexes, selectedItems, closePopup, () -> myListModel.getFoundElementsInfo());
+    if (myMlService != null) {
+      myMlService.onItemSelected(myProject, indexes, selectedItems, closePopup, () -> myListModel.getFoundElementsInfo());
     }
 
     if (closePopup) {
@@ -864,9 +868,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void sendStatisticsAndClose() {
     if (isShowing()) {
-      SearchEverywhereMlService service = SearchEverywhereMlService.getInstance();
-      if (service != null) {
-        service.onSearchFinished(
+      if (myMlService != null) {
+        myMlService.onSearchFinished(
           myProject, () -> myListModel.getFoundElementsInfo()
         );
       }
@@ -1116,6 +1119,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
       boolean wasEmpty = myListModel.getSize() == 0;
 
+      if (myMlService != null) {
+        myMlService.notifySearchResultsUpdated();
+      }
+
       mySelectionTracker.lock();
       myListModel.addElements(list);
       mySelectionTracker.unlock();
@@ -1173,7 +1180,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (pattern.isEmpty()) return;
       emptyStatus.appendLine(getNotFoundText());
 
-      boolean showFindInFilesAction = myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
+      boolean showFindInFilesAction =
+        myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
       boolean showResetScope = myHeader.canResetScope();
       boolean showResetFilter = myHeader.getSelectedTab().canClearFilter();
       boolean anyActionAllowed = showFindInFilesAction || showResetScope || showResetFilter;
@@ -1187,7 +1195,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (showResetScope) {
         ActionListener resetScopeListener = e -> myHeader.resetScope();
         emptyStatus.appendText(IdeBundle.message("searcheverywhere.try.to.reset.scope"));
-        emptyStatus.appendText(" "+StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
+        emptyStatus.appendText(" " + StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
                                SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, resetScopeListener);
         firstPartAdded.set(true);
         actionsPrinted.incrementAndGet();
@@ -1288,7 +1296,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     @Override
     public void fetchElements(@NotNull String pattern,
                               @NotNull ProgressIndicator progressIndicator,
-                              @NotNull Processor<? super Object> consumer) {}
+                              @NotNull Processor<? super Object> consumer) { }
 
     @Override
     public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
