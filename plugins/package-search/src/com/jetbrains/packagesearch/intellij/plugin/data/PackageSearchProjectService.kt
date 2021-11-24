@@ -5,12 +5,15 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.util.io.exists
+import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
 import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
+import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
@@ -27,6 +30,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelUpdatedKeys
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
+import com.jetbrains.packagesearch.intellij.plugin.util.showBackgroundLoadingBar
 import com.jetbrains.packagesearch.intellij.plugin.util.throttle
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
@@ -102,7 +106,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         )
         .mapLatestTimedWithLoading("projectModulesSharedFlow", projectModulesLoadingFlow) { modules ->
             val moduleTransformations = project.moduleTransformers.map { transformer ->
-                async { readAction { transformer.transformModules(project, modules) } }
+                async { readAction { runCatching { transformer.transformModules(project, modules) } }.getOrThrow() }
             }
 
             val coroutinesModulesTransformations = project.coroutineModuleTransformers
@@ -142,7 +146,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .filter { it.isNotEmpty() }
         .let { merge(it, operationExecutedChannel.consumeAsFlow()) }
         .batchAtIntervals(Duration.seconds(1))
-        .map { it.flatMap { it } }
+        .map { it.flatMap { it }.distinct() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#projectModulesChangesFlow",
             message = "Error while checking Modules changes",
@@ -223,6 +227,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             fallbackValue = emptyList(),
             retryChannel = retryFromErrorChannel
         )
+        .flowOn(installedDependenciesExecutor)
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
     val packageUpgradesStateFlow = installedPackagesStateFlow
@@ -250,21 +255,21 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
         coroutineContext.job.invokeOnCompletion { installedDependenciesExecutor.close() }
 
-//        var controller: BackgroundLoadingBarController? = null
-//
-//        if (System.getProperty("idea.pkgs.disableLoading") != "true") {
-//            isLoadingFlow.onEach { isLoading ->
-//                if (isLoading) {
-//                    controller = showBackgroundLoadingBar(
-//                        project,
-//                        PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
-//                        PackageSearchBundle.message("packagesearch.ui.loading")
-//                    )
-//                } else {
-//                    controller?.clear()
-//                }
-//            }.launchIn(this)
-//        }
+        var controller: BackgroundLoadingBarController? = null
+
+        if (PluginEnvironment.isNonModalLoadingEnabled) {
+            isLoadingFlow
+                .throttle(Duration.seconds(1), true)
+                .onEach { controller?.clear() }
+                .filter { it }
+                .onEach {
+                    controller = showBackgroundLoadingBar(
+                        project,
+                        PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
+                        PackageSearchBundle.message("packagesearch.ui.loading")
+                    )
+                }.launchIn(this)
+        }
     }
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
