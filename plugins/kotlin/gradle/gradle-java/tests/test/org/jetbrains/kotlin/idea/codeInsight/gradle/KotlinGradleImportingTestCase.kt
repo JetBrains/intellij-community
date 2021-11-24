@@ -60,8 +60,8 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     protected open val defaultProperties: Map<String, String> = mapOf("kotlin_plugin_version" to LATEST_STABLE_GRADLE_PLUGIN_VERSION)
 
-    protected open fun configureByFiles(properties: Map<String, String>? = null, subPath: String? = null): List<VirtualFile> {
-        val rootDir = testDataDirectory().let { if (subPath != null) it.resolve(subPath) else it }
+    protected open fun configureByFiles(properties: Map<String, String>? = null): List<VirtualFile> {
+        val rootDir = testDataDirectory()
         assert(rootDir.exists()) { "Directory ${rootDir.path} doesn't exist" }
 
         return rootDir.walk().mapNotNull {

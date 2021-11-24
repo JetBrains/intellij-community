@@ -33,6 +33,7 @@ class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
     private lateinit var codeInsightTestFixture: CodeInsightTestFixture
 
     override fun testDataDirName() = "fixes"
+    override fun testDataDirectory(): File = super.testDataDirectory().resolve("before")
 
     override fun setUpFixtures() {
         myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
@@ -88,7 +89,7 @@ class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
     fun testCreateActualForGranularSourceSetTarget() = doMultiFileQuickFixTest()
 
     private fun doMultiFileQuickFixTest(ignoreChangesInBuildScriptFiles: Boolean = true) {
-        configureByFiles(subPath = "before")
+        configureByFiles()
         val projectPath = myProjectRoot.toNioPath()
 
         val (mainFilePath, mainFileText) = Files.walk(projectPath).asSequence()
@@ -112,7 +113,8 @@ class GradleQuickFixTest : MultiplePluginVersionGradleImportingTestCase() {
             val action = actionHint.findAndCheck(actions) { "Test file: ${projectPath.relativize(mainFilePath).pathString}" }
             if (action != null) {
                 action.invoke(myProject, null, ktFile)
-                val expected = LocalFileSystem.getInstance().findFileByIoFile(testDataDirectory().resolve("after"))?.apply {
+                val afterDirectory = testDataDirectory().parentFile.resolve("after")
+                val expected = LocalFileSystem.getInstance().findFileByIoFile(afterDirectory)?.apply {
                     UsefulTestCase.refreshRecursively(this)
                 } ?: error("Expected directory is not found")
 
