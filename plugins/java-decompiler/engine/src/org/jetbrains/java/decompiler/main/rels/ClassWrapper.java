@@ -97,30 +97,15 @@ public class ClassWrapper {
           }
         }
         else {
-          boolean thisVar = !mt.hasModifier(CodeConstants.ACC_STATIC);
-
-          int paramCount = 0;
-          if (thisVar) {
-            varProc.getThisVars().put(new VarVersionPair(0, 0), classStruct.qualifiedName);
-            paramCount = 1;
-          }
-          paramCount += md.params.length;
-
           int varIndex = 0;
-          for (int i = 0; i < paramCount; i++) {
+          if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
+            varProc.getThisVars().put(new VarVersionPair(0, 0), classStruct.qualifiedName);
+            varProc.setVarName(new VarVersionPair(0, 0), vc.getFreeName(0));
+            varIndex = 1;
+          }
+          for (int i = 0; i < md.params.length; i++) {
             varProc.setVarName(new VarVersionPair(varIndex, 0), vc.getFreeName(varIndex));
-
-            if (thisVar) {
-              if (i == 0) {
-                varIndex++;
-              }
-              else {
-                varIndex += md.params[i - 1].stackSize;
-              }
-            }
-            else {
-              varIndex += md.params[i].stackSize;
-            }
+            varIndex += md.params[i].stackSize;
           }
         }
       }
@@ -143,30 +128,7 @@ public class ClassWrapper {
 
         applyParameterNames(mt, md, varProc);  // if parameter names are present and should be used
 
-        // if debug information present and should be used
-        if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
-          StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
-          if (attr != null) {
-            // only param names here
-            varProc.setDebugVarNames(attr.getMapParamNames());
-
-            // the rest is here
-            methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
-              List<Exprent> lst = exprent.getAllExprents(true);
-              lst.add(exprent);
-              lst.stream()
-                .filter(e -> e.type == Exprent.EXPRENT_VAR)
-                .forEach(e -> {
-                  VarExprent varExprent = (VarExprent)e;
-                  String name = varExprent.getDebugName(mt);
-                  if (name != null) {
-                    varProc.setVarName(varExprent.getVarVersionPair(), name);
-                  }
-                });
-              return 0;
-            });
-          }
-        }
+        applyDebugInfo(mt, varProc, methodWrapper);  // if debug information is present and should be used
       }
 
       DecompilerContext.getLogger().endMethod();
@@ -191,6 +153,32 @@ public class ClassWrapper {
           }
           index += md.params[i].stackSize;
         }
+      }
+    }
+  }
+
+  private static void applyDebugInfo(StructMethod mt, VarProcessor varProc, MethodWrapper methodWrapper) {
+    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
+      StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
+      if (attr != null) {
+        // only param names here
+        varProc.setDebugVarNames(attr.getMapParamNames());
+
+        // the rest is here
+        methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
+          List<Exprent> lst = exprent.getAllExprents(true);
+          lst.add(exprent);
+          lst.stream()
+            .filter(e -> e.type == Exprent.EXPRENT_VAR)
+            .forEach(e -> {
+              VarExprent varExprent = (VarExprent)e;
+              String name = varExprent.getDebugName(mt);
+              if (name != null) {
+                varProc.setVarName(varExprent.getVarVersionPair(), name);
+              }
+            });
+          return 0;
+        });
       }
     }
   }

@@ -587,7 +587,7 @@ public class ClassWriter {
     }
 
     if (!isEnum) {
-      buffer.append(";").appendLineSeparator();
+      buffer.append(';').appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
   }
@@ -1005,23 +1005,20 @@ public class ClassWriter {
       return false;
     }
 
-    ClassWrapper wrapper = node.getWrapper();
-	  StructClass cl = wrapper.getClassStruct();
+    StructClass cl = node.getWrapper().getClassStruct();
 
 	  int classAccessFlags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
     boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 
     // default constructor requires same accessibility flags. Exception: enum constructor which is always private
-  	if(!isEnum && ((classAccessFlags & ACCESSIBILITY_FLAGS) != (methodAccessFlags & ACCESSIBILITY_FLAGS))) {
+    if (!isEnum && ((classAccessFlags & ACCESSIBILITY_FLAGS) != (methodAccessFlags & ACCESSIBILITY_FLAGS))) {
   	  return false;
   	}
 
     int count = 0;
     for (StructMethod mt : cl.getMethods()) {
-      if (CodeConstants.INIT_NAME.equals(mt.getName())) {
-        if (++count > 1) {
-          return false;
-        }
+      if (CodeConstants.INIT_NAME.equals(mt.getName()) && ++count > 1) {
+        return false;
       }
     }
 

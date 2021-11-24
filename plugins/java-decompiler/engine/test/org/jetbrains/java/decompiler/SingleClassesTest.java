@@ -143,7 +143,6 @@ public class SingleClassesTest {
   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
-
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
 
   private void doTest(String testFile, String... companionFiles) {
