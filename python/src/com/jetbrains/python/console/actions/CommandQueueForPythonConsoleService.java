@@ -51,7 +51,7 @@ public final class CommandQueueForPythonConsoleService {
     return null;
   }
 
-  public synchronized boolean isEmpty(@NotNull ConsoleCommunication consoleComm) {
+  public boolean isEmpty(@NotNull ConsoleCommunication consoleComm) {
     return getQueue(consoleComm).isEmpty();
   }
 
