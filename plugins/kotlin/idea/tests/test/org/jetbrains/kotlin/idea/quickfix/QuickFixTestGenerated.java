@@ -10651,6 +10651,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/removeAtFromAnnotationArgument/arrayParam.kt");
         }
 
+        @TestMetadata("brokenCode.kt")
+        public void testBrokenCode() throws Exception {
+            runTest("testData/quickfix/removeAtFromAnnotationArgument/brokenCode.kt");
+        }
+
         @TestMetadata("namedParam.kt")
         public void testNamedParam() throws Exception {
             runTest("testData/quickfix/removeAtFromAnnotationArgument/namedParam.kt");
