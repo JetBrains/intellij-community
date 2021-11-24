@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 import static com.intellij.codeInsight.completion.CompletionPhase.*;
@@ -116,41 +118,50 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod){
+  public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod) {
     if (PowerSaveMode.isEnabled()) return;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
       int offset = editor.getCaretModel().getOffset();
+      PsiModificationTracker psiModificationTracker = PsiModificationTracker.SERVICE.getInstance(myProject);
+      AtomicLong modificationCount = new AtomicLong(-1);
       ReadAction.nonBlocking(() -> {
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-        PsiFile file = documentManager.getPsiFile(editor.getDocument());
-        if (file == null) return;
-
-        if (!documentManager.isUncommited(editor.getDocument())) {
-          file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+          long currentModificationCount = psiModificationTracker.getModificationCount();
+          if (modificationCount.get() == -1) {
+            modificationCount.set(currentModificationCount);
+          }
+          else if (modificationCount.get() != currentModificationCount) {
+            return;
+          }
+          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+          PsiFile file = documentManager.getPsiFile(editor.getDocument());
           if (file == null) return;
-        }
 
-        Runnable request = () -> {
-          if (!myProject.isDisposed() && !editor.isDisposed() &&
-              UIUtil.isShowing(editor.getContentComponent())) {
-            int lbraceOffset = offset - 1;
-            try {
-              PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-              if (file1 != null) {
-                ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
-                                                true, null);
+          if (!documentManager.isUncommited(editor.getDocument())) {
+            file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+            if (file == null) return;
+          }
+
+          Runnable request = () -> {
+            if (!myProject.isDisposed() && !editor.isDisposed() &&
+                UIUtil.isShowing(editor.getContentComponent())) {
+              int lbraceOffset = offset - 1;
+              try {
+                PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+                if (file1 != null) {
+                  ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
+                                                  true, null);
+                }
+              }
+              catch (IndexNotReadyException ignored) { //anything can happen on alarm
               }
             }
-            catch (IndexNotReadyException ignored) { //anything can happen on alarm
-            }
-          }
-        };
+          };
 
-        addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
-      }).expireWith(myAlarm)
+          addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
+        }).expireWith(myAlarm)
         .expireWhen(() -> editor.isDisposed() || editor.getCaretModel().getOffset() != offset)
         .submit(AppExecutorUtil.getAppExecutorService());
     }
