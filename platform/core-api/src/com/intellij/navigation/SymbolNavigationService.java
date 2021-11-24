@@ -37,7 +37,7 @@ public interface SymbolNavigationService {
   /**
    * This method exists for compatibility. Use with care.
    *
-   * @return a targets instance which delegates its implementation to older PSI-based APIs
+   * @return a target instance which delegates its implementation to older PSI-based APIs
    */
   @Contract("_ -> new")
   @NotNull NavigationTarget psiElementNavigationTarget(@NotNull PsiElement element);
