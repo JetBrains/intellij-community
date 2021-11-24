@@ -17,6 +17,10 @@ class SettingsSyncAuthService {
     return JBAccountInfoService.getInstance()?.userData != null
   }
 
+  fun getUserData(): JBAccountInfoService.JBAData? {
+    return JBAccountInfoService.getInstance()?.userData
+  }
+
   fun login() {
     if (!isLoggedIn()) {
       JBAccountInfoService.getInstance()?.invokeJBALogin(

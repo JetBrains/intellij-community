@@ -1,13 +1,15 @@
 package com.intellij.settingsSync
 
-import com.intellij.idea.cloudConfig.CloudConfigClientUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.util.io.delete
 import com.intellij.util.io.inputStream
 import com.jetbrains.cloudconfig.CloudConfigFileClientV2
+import com.jetbrains.cloudconfig.Configuration
 import com.jetbrains.cloudconfig.ETagStorage
 import com.jetbrains.cloudconfig.HeaderStorage
+import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
 import java.io.InputStream
 import java.util.*
@@ -16,16 +18,23 @@ import kotlin.concurrent.withLock
 
 private const val END_POINT = "https://stgn.cloudconfig.jetbrains.com/cloudconfig" // todo choose between production and staging via a system property
 
+private const val TIMEOUT = 10000
+
 internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val client get() = _client.value
   private val _client = lazy {
-    val conf = CloudConfigClientUtil.createConfiguration()
+    val conf = createConfiguration()
     CloudConfigFileClientV2(END_POINT, conf, DUMMY_ETAG_STORAGE, clientVersionContext)
   }
 
   private val currentVersionOfFiles = mutableMapOf<String, String>() // todo persist this information
   private val clientVersionContext = VersionContext()
+
+  private fun createConfiguration(): Configuration? {
+    val userId: String = SettingsSyncAuthService.getInstance().getUserData()?.id ?: return null
+    return Configuration().connectTimeout(TIMEOUT).readTimeout(TIMEOUT).auth(JbaTokenAuthProvider(userId))
+  }
 
   private fun receiveSnapshotFile(): InputStream {
     // todo remove this explicit request after client.read will be fixed to accept null version
