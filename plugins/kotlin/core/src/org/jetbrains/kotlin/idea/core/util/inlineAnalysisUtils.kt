@@ -26,7 +26,6 @@ fun analyzeInlinedFunctions(
     val context = analyzeElementWithInline(
         resolutionFacadeForFile,
         file,
-        1,
         analyzedElements,
         !analyzeOnlyReifiedInlineFunctions, bindingContext
     )
@@ -47,7 +46,6 @@ fun analyzeInlinedFunctions(
 private fun analyzeElementWithInline(
     resolutionFacade: ResolutionFacade,
     element: KtElement,
-    deep: Int,
     analyzedElements: MutableSet<KtElement>,
     analyzeInlineFunctions: Boolean,
     fullResolveContext: BindingContext? = null
@@ -124,7 +122,7 @@ private fun analyzeElementWithInline(
 
     analyzedElements.add(element)
 
-    if (declarationsWithBody.isNotEmpty() && deep < 10) {
+    if (declarationsWithBody.isNotEmpty()) {
         for (inlineFunction in declarationsWithBody) {
             val body = inlineFunction.bodyExpression
             if (body != null) {
@@ -132,7 +130,6 @@ private fun analyzeElementWithInline(
                     analyzeElementWithInline(
                         resolutionFacade,
                         inlineFunction,
-                        deep + 1,
                         analyzedElements,
                         analyzeInlineFunctions
                     )
