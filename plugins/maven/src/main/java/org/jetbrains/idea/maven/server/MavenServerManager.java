@@ -189,7 +189,7 @@ public final class MavenServerManager implements Disposable {
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
     MavenServerConnector connector;
-    if (TrustedProjects.isTrusted(project)) {
+    if (TrustedProjects.isTrusted(project) || project.isDefault()) {
       MavenLog.LOG.info("Creating new maven connector for " + project + " in " + multimoduleDirectory);
       connector =
         new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
