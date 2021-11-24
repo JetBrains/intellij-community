@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -14,7 +14,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructMethodParametersAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
@@ -46,7 +48,7 @@ public class ClassWrapper {
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-      VarProcessor varProc = new VarProcessor(mt, md);
+      VarProcessor varProc = new VarProcessor(classStruct, mt, md);
       DecompilerContext.startMethod(varProc);
 
       VarNamesCollector vc = varProc.getVarNamesCollector();
@@ -139,6 +141,8 @@ public class ClassWrapper {
         classStruct.getFields().forEach(f -> namesCollector.addName(f.getName()));
         varProc.refreshVarNames(namesCollector);
 
+        applyParameterNames(mt, md, varProc);  // if parameter names are present and should be used
+
         // if debug information present and should be used
         if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
           StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
@@ -169,6 +173,26 @@ public class ClassWrapper {
     }
 
     DecompilerContext.getLogger().endClass();
+  }
+
+  private static void applyParameterNames(StructMethod mt, MethodDescriptor md, VarProcessor varProc) {
+    if (DecompilerContext.getOption(IFernflowerPreferences.USE_METHOD_PARAMETERS)) {
+      StructMethodParametersAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
+      if (attr != null) {
+        List<StructMethodParametersAttribute.Entry> entries = attr.getEntries();
+        int index = varProc.getFirstParameterVarIndex();
+        for (int i = varProc.getFirstParameterPosition(); i < entries.size(); i++) {
+          StructMethodParametersAttribute.Entry entry = entries.get(i);
+          if (entry.myName != null) {
+            varProc.setVarName(new VarVersionPair(index, 0), entry.myName);
+          }
+          if ((entry.myAccessFlags & CodeConstants.ACC_FINAL) != 0) {
+            varProc.setParameterFinal(new VarVersionPair(index, 0));
+          }
+          index += md.params[i].stackSize;
+        }
+      }
+    }
   }
 
   @SuppressWarnings("deprecation")
