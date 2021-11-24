@@ -38,6 +38,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.StyleSheetUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -250,7 +251,7 @@ public final class StartupUtil {
           EventQueue.invokeLater(() -> {
             // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater
             // (to allow other queued events to be executed)
-            StartupUiUtil.configureHtmlKitStylesheet();
+            StyleSheetUtil.configureHtmlKitStylesheet();
             //noinspection ResultOfMethodCallIgnored
             WeakFocusStackManager.getInstance();
           });

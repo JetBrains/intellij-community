@@ -42,10 +42,7 @@ import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.JBHtmlEditorKit;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.*;
-import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
@@ -548,7 +544,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     String linkColorHex = ColorUtil.toHex(linkColor);
     if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
       String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER;
-      ourCachedStyleSheet = StartupUiUtil.createStyleSheet(
+      ourCachedStyleSheet = StyleSheetUtil.createStyleSheet(
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
         "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +

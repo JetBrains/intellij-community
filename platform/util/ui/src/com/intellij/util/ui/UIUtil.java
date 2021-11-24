@@ -2055,8 +2055,12 @@ public final class UIUtil {
     return StartupUiUtil.getLabelFont();
   }
 
+  /**
+   * @deprecated use {@link StyleSheetUtil#loadStyleSheet}
+   */
+  @Deprecated
   public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    return StartupUiUtil.loadStyleSheet(url);
+    return StyleSheetUtil.loadStyleSheet(url);
   }
 
   public static @NotNull HTMLEditorKit getHTMLEditorKit() {

@@ -30,7 +30,6 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.Element;
 import javax.swing.text.View;
-import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
@@ -560,7 +558,7 @@ public final class TipUIUtil {
 
       String fileName = StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css";
       URL resource = TipUIUtil.class.getClassLoader().getResource("tips/css/" + fileName);
-      kit.getStyleSheet().addStyleSheet(StartupUiUtil.loadStyleSheet(resource));
+      kit.getStyleSheet().addStyleSheet(StyleSheetUtil.loadStyleSheet(resource));
       setEditorKit(kit);
     }
 
