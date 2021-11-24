@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
@@ -20,7 +21,6 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.text.Element
 import javax.swing.text.View
-import javax.swing.text.ViewFactory
 import javax.swing.text.html.HTML
 
 internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(BorderLayout(),
@@ -78,11 +78,7 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
           return super.create(elem)
         }
       }
-      editor.editorKit = object : JBHtmlEditorKit() {
-        override fun getViewFactory(): ViewFactory {
-          return factory
-        }
-      }
+      editor.editorKit = HTMLEditorKitBuilder().withViewFactory(factory).build()
       editor.text = htmlInfo.content().toString()
       editor.size = Dimension(IntentionPreviewPopupUpdateProcessor.MIN_WIDTH, Integer.MAX_VALUE)
       val panel = JPanel(BorderLayout())

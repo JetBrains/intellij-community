@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.*;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
@@ -531,8 +532,9 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
   }
 
   private static EditorKit createEditorKit(@NotNull Editor editor) {
-    JBHtmlEditorKit editorKit = new JBHtmlEditorKit(MyViewFactory.INSTANCE, true);
-    editorKit.setFontResolver(EditorCssFontResolver.getInstance(editor));
+    HTMLEditorKit editorKit =
+      new HTMLEditorKitBuilder().withViewFactory(MyViewFactory.INSTANCE).withFontResolver(EditorCssFontResolver.getInstance(editor))
+        .build();
     editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor));
     return editorKit;
   }

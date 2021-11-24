@@ -8,8 +8,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -44,7 +44,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.text.Element;
 import javax.swing.text.View;
-import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.ParagraphView;
@@ -428,7 +427,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   public static JEditorPane createDescriptionComponent(@Nullable Consumer<? super View> imageViewHandler) {
-    HTMLEditorKit kit = new JBHtmlEditorKit(new JBHtmlEditorKit.JBHtmlFactory() {
+    HTMLEditorKit kit = new HTMLEditorKitBuilder().withViewFactory(new JBHtmlEditorKit.JBHtmlFactory() {
       @Override
       public View create(Element e) {
         View view = super.create(e);
@@ -448,7 +447,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         }
         return view;
       }
-    }, true);
+    }).build();
 
     StyleSheet sheet = kit.getStyleSheet();
     sheet.addRule("ul { margin-left-ltr: 30; margin-right-rtl: 30; }");
@@ -524,7 +523,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
                 stopLoading();
                 showPluginImpl(component.getPluginDescriptor(), component.myUpdateDescriptor);
                 PluginManagerUsageCollector.pluginCardOpened(component.getPluginDescriptor(), component.getGroup());
-
               }
             }, ModalityState.stateForComponent(component));
           });
@@ -632,7 +630,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     else {
       if (StringUtil.isEmptyOrSpaces(organization)) {
         myAuthor.show(vendor, null);
-      } else {
+      }
+      else {
         myAuthor.show(organization, () -> mySearchListener.linkSelected(
           null,
           SearchWords.ORGANIZATION.getValue() +
@@ -650,7 +649,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myHomePage.show(IdeBundle.message(
                         "plugins.configurable.plugin.homepage.link"),
                       () -> {
-                        String url = ((ApplicationInfoEx) ApplicationInfo.getInstance()).getPluginManagerUrl() + MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString());
+                        String url = ((ApplicationInfoEx)ApplicationInfo.getInstance()).getPluginManagerUrl() +
+                                     MARKETPLACE_LINK +
+                                     URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString());
                         BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
                       });
     }

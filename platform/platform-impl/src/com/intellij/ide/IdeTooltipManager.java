@@ -288,7 +288,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
           return true;
         }
       }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
-    } else if (myCurrentTooltip == tooltip) {
+    }
+    else if (myCurrentTooltip == tooltip) {
       return;//Don't re-show the same custom tooltip on every mouse movement
     }
 
@@ -318,8 +319,9 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
    */
   @ApiStatus.Experimental
   public void updateShownTooltip(@Nullable Component tooltipOwner) {
-     if (!hasCurrent() || myCurrentComponent == null || myCurrentComponent != tooltipOwner)
-       return;
+    if (!hasCurrent() || myCurrentComponent == null || myCurrentComponent != tooltipOwner) {
+      return;
+    }
 
     try {
       MouseEvent reposition;
@@ -552,7 +554,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     return hideCurrent(me, tooltipToShow, null, null, isAnimationEnabled(myBalloon));
   }
 
-  private boolean hideCurrent(@Nullable MouseEvent me, @Nullable IdeTooltip tooltipToShow, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
+  private boolean hideCurrent(@Nullable MouseEvent me,
+                              @Nullable IdeTooltip tooltipToShow,
+                              @Nullable AnAction action,
+                              @Nullable AnActionEvent event,
+                              final boolean animationEnabled) {
     if (myHelpTooltipManager != null && myHideHelpTooltip) {
       hideCurrentNow(false);
       return true;
@@ -737,7 +743,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       }
     } : new JEditorPane();
 
-    HTMLEditorKit kit = new JBHtmlEditorKit(new JBHtmlEditorKit.JBHtmlFactory() {
+    HTMLEditorKit kit = new HTMLEditorKitBuilder().withViewFactory(new JBHtmlEditorKit.JBHtmlFactory() {
       @Override
       public View create(Element elem) {
         AttributeSet attrs = elem.getAttributes();
@@ -760,7 +766,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
         }
         return super.create(elem);
       }
-    }, true);
+    }).build();
     String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
     if (editorFontName != null) {
       String style = "font-family:\"" + StringUtil.escapeQuotes(editorFontName) + "\";font-size:95%;";

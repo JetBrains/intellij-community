@@ -445,7 +445,7 @@ private class AlertDialog(project: Project?,
     component.isOpaque = false
     component.border = null
 
-    val kit = UIUtil.getHTMLEditorKitWithWordWrap()
+    val kit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
     kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")
     component.editorKit = kit
     component.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)

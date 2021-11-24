@@ -9,6 +9,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -35,7 +36,7 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
 
   init {
     contentType = UIUtil.HTML_MIME
-    editorKit = UIUtil.getHTMLEditorKit()
+    editorKit = HTMLEditorKitBuilder().build()
 
     foreground = when (type) {
       DslLabelType.COMMENT -> JBUI.CurrentTheme.ContextHelp.FOREGROUND

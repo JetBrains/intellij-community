@@ -46,10 +46,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
@@ -683,7 +680,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
     component.isOpaque = false
     component.border = null
 
-    val kit = UIUtil.getHTMLEditorKitWithWordWrap()
+    val kit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
     NotificationsUtil.setLinkForeground(kit.styleSheet)
     component.editorKit = kit
 
@@ -702,7 +699,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
     }
 
     myLafUpdater = Runnable {
-      val newKit = UIUtil.getHTMLEditorKitWithWordWrap()
+      val newKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
       NotificationsUtil.setLinkForeground(newKit.styleSheet)
       component.editorKit = newKit
       component.text = text

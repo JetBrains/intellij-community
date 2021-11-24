@@ -39,41 +39,30 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     StyleSheetUtil.configureHtmlKitStylesheet();
   }
 
-  private static final ViewFactory ourViewFactory = new JBHtmlFactory();
-  private static final StyleSheet ourNoGapsBetweenParagraphsStyle = StyleSheetUtil.createStyleSheet("p { margin-top: 0; }");
+  private final @NotNull ViewFactory myViewFactory;
+  private final @NotNull StyleSheet myStyle;
 
-  private final ViewFactory myViewFactory;
-  private final StyleSheet myStyle;
-  private final HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
+  private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
 
-  private FontResolver myFontResolver;
+  private @Nullable CSSFontResolver myFontResolver;
 
+  /**
+   * @deprecated use {@link HTMLEditorKitBuilder}
+   */
+  @Deprecated
   public JBHtmlEditorKit() {
     this(true);
   }
 
-  public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
-    this(noGapsBetweenParagraphs, false);
-  }
-
-  public JBHtmlEditorKit(boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
-    this(ourViewFactory, noGapsBetweenParagraphs, disableLinkedCss);
-  }
-
-  public JBHtmlEditorKit(@NotNull ViewFactory viewFactory, boolean noGapsBetweenParagraphs) {
-    this(viewFactory, noGapsBetweenParagraphs, false);
-  }
-
   /**
-   * @param viewFactory             view factory for this kit, generally should be static
-   * @param noGapsBetweenParagraphs removes gaps before &lt;p&gt; tags
-   * @param disableLinkedCss        disables loading of linked CSS (from URL referenced in &lt;link&gt; HTML tags). JEditorPane does this loading
-   *                                synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
+   * Used by yann and gitee
+   * @deprecated use {@link HTMLEditorKitBuilder}
    */
-  public JBHtmlEditorKit(@NotNull ViewFactory viewFactory, boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
-    this(viewFactory, StyleSheetUtil.createJBDefaultStyleSheet(), disableLinkedCss);
-    if (noGapsBetweenParagraphs) myStyle.addStyleSheet(ourNoGapsBetweenParagraphsStyle);
+  @Deprecated
+  public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
+    this(UIUtil.DEFAULT_HTML_VIEW_FACTORY, StyleSheetUtil.createJBDefaultStyleSheet(), false);
+    if (noGapsBetweenParagraphs) getStyleSheet().addStyleSheet(UIUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE);
   }
 
   /**
@@ -82,9 +71,9 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
    * @param disableLinkedCss disables loading of linked CSS (from URL referenced in &lt;link&gt; HTML tags). JEditorPane does this loading
    *                         synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
    */
-  public JBHtmlEditorKit(@NotNull ViewFactory viewFactory,
-                         @NotNull StyleSheet defaultStyle,
-                         boolean disableLinkedCss) {
+  JBHtmlEditorKit(@NotNull ViewFactory viewFactory,
+                  @NotNull StyleSheet defaultStyle,
+                  boolean disableLinkedCss) {
     myViewFactory = viewFactory;
     myDisableLinkedCss = disableLinkedCss;
     myStyle = defaultStyle;
@@ -93,7 +82,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   /**
    * This allows to impact resolution of fonts from CSS attributes of text
    */
-  public void setFontResolver(@Nullable FontResolver fontResolver) {
+  public void setFontResolver(@Nullable CSSFontResolver fontResolver) {
     myFontResolver = fontResolver;
   }
 
@@ -507,16 +496,6 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         delegate.handleEndOfLineString(eol);
       }
     }
-  }
-
-  /**
-   * @see #setFontResolver(FontResolver)
-   */
-  public interface FontResolver {
-    /**
-     * Resolves a font for a piece of text, given its CSS attributes. {@code defaultFont} is the result of default resolution algorithm.
-     */
-    @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet);
   }
 
   private static class LinkUnderlineListener implements HyperlinkListener {

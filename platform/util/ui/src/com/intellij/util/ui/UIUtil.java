@@ -98,6 +98,10 @@ public final class UIUtil {
   @ApiStatus.Internal
   public static final String NO_BORDER_UNDER_WINDOW_TITLE_KEY = "";
 
+  static final ViewFactory DEFAULT_HTML_VIEW_FACTORY = new JBHtmlEditorKit.JBHtmlFactory();
+  //TODO: lazy
+  static final StyleSheet NO_GAPS_BETWEEN_PARAGRAPHS_STYLE = StyleSheetUtil.createStyleSheet("p { margin-top: 0; }");
+
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(UIUtil.class);
@@ -2063,16 +2067,22 @@ public final class UIUtil {
     return StyleSheetUtil.loadStyleSheet(url);
   }
 
+  /**
+   * @deprecated use {@link HTMLEditorKitBuilder}
+   */
+  @Deprecated
   public static @NotNull HTMLEditorKit getHTMLEditorKit() {
-    return getHTMLEditorKit(true);
+    return HTMLEditorKitBuilder.simple();
   }
 
+  /**
+   * @deprecated use {@link HTMLEditorKitBuilder}
+   */
+  @Deprecated
   public static @NotNull HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
-    return new JBHtmlEditorKit(noGapsBetweenParagraphs);
-  }
-
-  public static @NotNull HTMLEditorKit getHTMLEditorKitWithWordWrap() {
-    return new JBHtmlEditorKit(JBWordWrapHtmlEditorKit.ourFactory, true);
+    HTMLEditorKitBuilder builder = new HTMLEditorKitBuilder();
+    if(!noGapsBetweenParagraphs) builder.withGapsBetweenParagraphs();
+    return builder.build();
   }
 
   /**
@@ -2081,7 +2091,7 @@ public final class UIUtil {
   @Deprecated
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
 
-    private final static ViewFactory ourFactory = new JBHtmlEditorKit.JBHtmlFactory() {
+    final static ViewFactory ourFactory = new JBHtmlEditorKit.JBHtmlFactory() {
       @Override
       public View create(Element e) {
         View view = super.create(e);
@@ -3443,7 +3453,7 @@ public final class UIUtil {
     editorPane.setOpaque(false);
     editorPane.setBorder(null);
     editorPane.setContentType("text/html");
-    editorPane.setEditorKit(getHTMLEditorKit());
+    editorPane.setEditorKit(HTMLEditorKitBuilder.simple());
   }
 
   /**

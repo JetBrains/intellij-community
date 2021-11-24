@@ -4,9 +4,7 @@ package com.intellij.collaboration.ui.codereview
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BrowserHyperlinkListener
-import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBHtmlEditorKit
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.Graphics
 import java.awt.Shape
@@ -28,7 +26,7 @@ open class BaseHtmlEditorPane(viewFactory: ViewFactory) : JEditorPane() {
   constructor(iconsClass: Class<*>): this(HtmlEditorViewFactory(iconsClass))
 
   init {
-    editorKit = JBHtmlEditorKit(viewFactory, true)
+    editorKit = HTMLEditorKitBuilder().withViewFactory(viewFactory).build()
 
     isEditable = false
     isOpaque = false

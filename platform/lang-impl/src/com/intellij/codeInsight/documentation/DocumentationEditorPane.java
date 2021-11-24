@@ -14,10 +14,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBHtmlEditorKit;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
@@ -28,6 +25,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -76,7 +74,8 @@ public abstract class DocumentationEditorPane extends JEditorPane {
       UIUtil.doNotScrollToCaret(this);
     }
     setBackground(BACKGROUND_COLOR);
-    JBHtmlEditorKit editorKit = new JBHtmlEditorKit(new DocumentationHtmlFactory(this), true);
+    HTMLEditorKit editorKit = new HTMLEditorKitBuilder().withViewFactory(new DocumentationHtmlFactory(this))
+      .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
     prepareCSS(editorKit);
 
     setEditorKit(editorKit);
@@ -267,9 +266,7 @@ public abstract class DocumentationEditorPane extends JEditorPane {
     return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 96 : 100;
   }
 
-  private static void prepareCSS(@NotNull JBHtmlEditorKit editorKit) {
-    editorKit.setFontResolver(EditorCssFontResolver.getGlobalInstance());
-
+  private static void prepareCSS(@NotNull HTMLEditorKit editorKit) {
     int leftPadding = 8;
     int definitionTopPadding = 4;
     String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED);
