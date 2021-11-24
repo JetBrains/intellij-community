@@ -1,58 +1,56 @@
-// !DIAGNOSTICS: -UNUSED_PARAMETER,-UNUSED_VARIABLE,-EXPERIMENTAL_API_USAGE
-// SKIP_TXT
+@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
 
-// FILE: test.kt
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 
 object Instance
 
-val defaultWarn = <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json {}<!>
-val receiverWarn = <!JSON_FORMAT_REDUNDANT!>Json {encodeDefaults = true}<!>.encodeToString(Instance)
+val defaultWarn = <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json {}</warning>
+val receiverWarn = <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json {encodeDefaults = true}</warning>.encodeToString(Instance)
 val noWarnFormat = Json {encodeDefaults = true}
 val receiverNoWarn = noWarnFormat.encodeToString(Instance)
 val defaultNoWarn = Json.encodeToString(Instance)
 
 class SomeContainerClass {
-    val memberDefaultWarn = <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json {}<!>
-    val memberReceiverWarn = <!JSON_FORMAT_REDUNDANT!>Json {encodeDefaults = true}<!>.encodeToString(Instance)
+    val memberDefaultWarn = <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json {}</warning>
+    val memberReceiverWarn = <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json {encodeDefaults = true}</warning>.encodeToString(Instance)
     val memberNoWarnFormat = Json {encodeDefaults = true}
     val memberReceiverNoWarn = noWarnFormat.encodeToString(Instance)
     val memberDefaultNoWarn = Json.encodeToString(Instance)
 
     fun testDefaultWarnings() {
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json {}<!>
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json() {}<!>
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json {}<!>.encodeToString(Any())
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json {}<!>.encodeToString(Instance)
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json { /*some comment*/ }<!>.encodeToString(Instance)
-        val localDefaultFormat = <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json {}<!>
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json(Json.Default) {}<!>
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json(Json) {}<!>
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json(Json.Default, {})<!>
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json(builderAction = {})<!>
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json(builderAction = fun JsonBuilder.() {})<!>
-        <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json(builderAction = fun JsonBuilder.() = Unit)<!>
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json {}</warning>
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json() {}</warning>
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json {}</warning>.encodeToString(Any())
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json {}</warning>.encodeToString(Instance)
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json { /*some comment*/ }</warning>.encodeToString(Instance)
+        val localDefaultFormat = <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json {}</warning>
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json(Json.Default) {}</warning>
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json(Json) {}</warning>
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json(Json.Default, {})</warning>
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json(builderAction = {})</warning>
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json(builderAction = fun JsonBuilder.() {})</warning>
+        <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json(builderAction = fun JsonBuilder.() = Unit)</warning>
 
         "{}".let {
-            <!JSON_FORMAT_REDUNDANT_DEFAULT!>Json {}<!>.decodeFromString<Any>(it)
+            <warning descr="[JSON_FORMAT_REDUNDANT_DEFAULT] Redundant creation of Json default format. Creating instances for each usage can be slow.">Json {}</warning>.decodeFromString<Any>(it)
         }
     }
 
     fun testReceiverWarnings() {
-        <!JSON_FORMAT_REDUNDANT!>Json {encodeDefaults = true}<!>.encodeToString(Instance)
-        val encoded = <!JSON_FORMAT_REDUNDANT!>Json {encodeDefaults = true}<!>.encodeToString(Instance)
-        <!JSON_FORMAT_REDUNDANT!>Json {encodeDefaults = true}<!>.decodeFromString<Any>("{}")
-        <!JSON_FORMAT_REDUNDANT!>Json {encodeDefaults = true}<!>.hashCode()
-        <!JSON_FORMAT_REDUNDANT!>Json {encodeDefaults = true}<!>.toString()
+        <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json {encodeDefaults = true}</warning>.encodeToString(Instance)
+        val encoded = <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json {encodeDefaults = true}</warning>.encodeToString(Instance)
+        <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json {encodeDefaults = true}</warning>.decodeFromString<Any>("{}")
+        <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json {encodeDefaults = true}</warning>.hashCode()
+        <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json {encodeDefaults = true}</warning>.toString()
 
-        <!JSON_FORMAT_REDUNDANT!>Json(noWarnFormat) {encodeDefaults = true}<!>.encodeToString(Instance)
-        <!JSON_FORMAT_REDUNDANT!>Json(builderAction = {encodeDefaults = true})<!>.encodeToString(Instance)
-        <!JSON_FORMAT_REDUNDANT!>Json(noWarnFormat, {encodeDefaults = true})<!>.encodeToString(Instance)
-        <!JSON_FORMAT_REDUNDANT!>Json(builderAction = fun JsonBuilder.() {encodeDefaults = true})<!>.encodeToString(Instance)
+        <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json(noWarnFormat) {encodeDefaults = true}</warning>.encodeToString(Instance)
+        <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json(builderAction = {encodeDefaults = true})</warning>.encodeToString(Instance)
+        <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json(noWarnFormat, {encodeDefaults = true})</warning>.encodeToString(Instance)
+        <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json(builderAction = fun JsonBuilder.() {encodeDefaults = true})</warning>.encodeToString(Instance)
 
         "{}".let {
-            <!JSON_FORMAT_REDUNDANT!>Json {encodeDefaults = true}<!>.decodeFromString<Any>(it)
+            <warning descr="[JSON_FORMAT_REDUNDANT] Redundant creation of Json format. Creating instances for each usage can be slow.">Json {encodeDefaults = true}</warning>.decodeFromString<Any>(it)
         }
     }
 

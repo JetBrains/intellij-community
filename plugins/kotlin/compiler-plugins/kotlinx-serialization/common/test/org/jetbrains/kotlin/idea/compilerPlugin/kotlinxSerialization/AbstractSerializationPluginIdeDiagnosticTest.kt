@@ -2,45 +2,22 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.testFramework.runAll
-import org.jetbrains.kotlin.ObsoleteTestInfrastructure
+import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightVisitorTest
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.addRoot
-import java.io.File
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 
-@OptIn(ObsoleteTestInfrastructure::class)
 abstract class AbstractSerializationPluginIdeDiagnosticTest : AbstractKotlinHighlightVisitorTest() {
-    private val serializationLibraries: Map<String, File> = mapOf(
-        "serializationCore" to getSerializationCoreLibraryJar()!!,
-        "serializationJson" to getSerializationJsonLibraryJar()!!
-    )
-
-    override fun setUp() {
-        addSerializationLibraries()
-        super.setUp()
-    }
-
-    override fun tearDown() {
-        runAll(
-            { removeSerializationLibraries(module) },
-            { super.tearDown() }
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        return KotlinJdkAndLibraryProjectDescriptor(
+            libraryFiles = listOf(
+                KotlinArtifacts.instance.kotlinStdlib,
+                getSerializationCoreLibraryJar()!!,
+                getSerializationJsonLibraryJar()!!
+            ),
+            librarySourceFiles = listOf(
+                KotlinArtifacts.instance.kotlinStdlibSources
+            )
         )
-    }
-
-    private fun addSerializationLibraries() {
-        for ((libraryName, libraryJar) in serializationLibraries) {
-            ConfigLibraryUtil.addLibrary(module, libraryName) {
-                addRoot(libraryJar, OrderRootType.CLASSES)
-            }
-        }
-    }
-
-    private fun removeSerializationLibraries(module: Module) {
-        for ((libraryName, _) in serializationLibraries) {
-            ConfigLibraryUtil.removeLibrary(module, libraryName)
-        }
     }
 }
