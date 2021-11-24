@@ -11,6 +11,7 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
@@ -19,7 +20,7 @@ import org.junit.runner.RunWith
  * @see KtSearchEverywhereEqualityProvider
  */
 @RunWith(JUnit3RunnerWithInners::class)
-open class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixtureTestCase() {
+abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixtureTestCase() {
     @RunWith(JUnit3RunnerWithInners::class)
     class KtFileAndKtClass : KtSearchEverywhereEqualityProviderTest() {
         fun `test KtFile and KtClass should be deduplicated`() {
@@ -64,12 +65,16 @@ open class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixtureT
     @RunWith(JUnit3RunnerWithInners::class)
     class NativePsiAndUlc : KtSearchEverywhereEqualityProviderTest() {
         fun `test ulc should be skipped`() {
-            doTest({ it.ktClass to it.ulc }, expectedToRemove = { it.ulc })
+            doTest({ it.ktClass to it.ktClass.ulc }, expectedToRemove = { it.ktClass.ulc })
+        }
+
+        fun `test ktClassUlc and ktFile should be deduplicated`() {
+            doTest({ it.ktFile to it.ktClass.ulc }, expectedToRemove = { it.ktFile })
         }
     }
 
-    protected val PsiFile.ulc
-        get() = LightClassGenerationSupport.getInstance(project).createUltraLightClass(ktClass)!!
+    protected val KtClassOrObject.ulc
+        get() = LightClassGenerationSupport.getInstance(project).createUltraLightClass(this)!!
 
     protected val PsiFile.ktFile
         get() = findElementAt(myFixture.caretOffset)?.parentOfType<KtFile>()!!
