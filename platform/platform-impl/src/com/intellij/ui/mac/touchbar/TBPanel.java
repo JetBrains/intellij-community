@@ -14,8 +14,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 
-class TouchBar implements NSTLibrary.ItemCreator {
-  static final Logger LOG = Logger.getInstance(TouchBar.class);
+class TBPanel implements NSTLibrary.ItemCreator {
+  static final Logger LOG = Logger.getInstance(TBPanel.class);
   static final boolean ourCollectStats = Boolean.getBoolean("touchbar.collect.stats");
 
   final @Nullable TouchBarStats myStats;
@@ -27,9 +27,9 @@ class TouchBar implements NSTLibrary.ItemCreator {
   String[] myVisibleIds;
   private ID myNativePeer;        // java wrapper holds native object
 
-  static final TouchBar EMPTY = new TouchBar();
+  static final TBPanel EMPTY = new TBPanel();
 
-  private TouchBar() {
+  private TBPanel() {
     myName = "EMPTY_STUB_TOUCHBAR";
     myItems = new ItemsContainer(myName);
     myCustomEsc = null;
@@ -38,13 +38,13 @@ class TouchBar implements NSTLibrary.ItemCreator {
     myStats = null;
   }
 
-  TouchBar(@NotNull String touchbarName) {
+  TBPanel(@NotNull String touchbarName) {
     this(touchbarName, null, false);
   }
 
-  TouchBar(@NotNull String touchbarName,
-           @Nullable CrossEscInfo crossEscInfo,
-           boolean closeOnItemEvent) {
+  TBPanel(@NotNull String touchbarName,
+          @Nullable CrossEscInfo crossEscInfo,
+          boolean closeOnItemEvent) {
     if (closeOnItemEvent) {
       myItemListener = (src, eventCode) -> {
         // NOTE: called from AppKit thread

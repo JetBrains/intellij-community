@@ -21,13 +21,13 @@ import org.jetbrains.concurrency.CancellablePromise;
 import javax.swing.Timer;
 import java.util.*;
 
-class ActionGroupTouchBar extends TouchBar {
+class TBPanelActionGroup extends TBPanel {
   private static final boolean DISABLE_ASYNC_UPDATE = Boolean.getBoolean("touchbar.actions.disable.async.update");
   private static final boolean USE_CACHED_PRESENTATIONS = Boolean.getBoolean("touchbar.actions.use.cached.presentations");
   private static final int DELAY_FOR_CACHED_PRESENTATIONS_MS = Integer.getInteger("touchbar.actions.delay.for.cached.presentations", 750);
   private static final long DELAY_FOR_CACHED_PRESENTATIONS_NS = DELAY_FOR_CACHED_PRESENTATIONS_MS*1000000L;
 
-  private static final Logger LOG = Logger.getInstance(ActionGroupTouchBar.class);
+  private static final Logger LOG = Logger.getInstance(TBPanelActionGroup.class);
   private static final boolean IS_AUTOCLOSE_DISABLED = Boolean.getBoolean("touchbar.autoclose.disable");
 
   private final @NotNull ActionGroup myActionGroup;
@@ -43,9 +43,9 @@ class ActionGroupTouchBar extends TouchBar {
   private final @NotNull Map<AnAction, TBItemAnActionButton> myActionButtonPool = new HashMap<>();
   private final @NotNull Map<Integer, TBItemGroup> myGroupPool = new HashMap<>();
 
-  ActionGroupTouchBar(@NotNull String touchbarName,
-                      @NotNull ActionGroup actionGroup,
-                      @Nullable Customizer customizations) {
+  TBPanelActionGroup(@NotNull String touchbarName,
+                     @NotNull ActionGroup actionGroup,
+                     @Nullable Customizer customizations) {
     super(touchbarName, customizations != null ? customizations.getCrossEscInfo() : null, false);
     myActionGroup = actionGroup;
 
