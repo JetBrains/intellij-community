@@ -16,10 +16,13 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.*
+import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
+import com.intellij.util.Function
+import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
@@ -269,6 +272,12 @@ interface Row {
                                 fileChosen: ((chosenFile: VirtualFile) -> String)? = null): Cell<TextFieldWithBrowseButton>
 
   /**
+   * Creates expandable text field with [columns] set to [COLUMNS_SHORT]
+   */
+  fun expandableTextField(parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
+                          joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER): Cell<ExpandableTextField>
+
+  /**
    * Creates integer text field with [columns] set to [COLUMNS_TINY]
    *
    * @param range allowed values range inclusive
@@ -297,7 +306,7 @@ interface Row {
 
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 
-  fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
+  fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases

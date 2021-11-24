@@ -48,7 +48,7 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
         .bindIntText(model::intTextField)
     }
     row("comboBox:") {
-      comboBox(Color.values())
+      comboBox(Color.values().toList())
         .bindItem(model::comboBoxColor)
     }
     row("slider:") {

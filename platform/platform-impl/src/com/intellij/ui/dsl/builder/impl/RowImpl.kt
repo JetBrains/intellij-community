@@ -19,6 +19,7 @@ import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
+import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
@@ -31,6 +32,7 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import com.intellij.ui.popup.PopupState
+import com.intellij.util.Function
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.util.*
 import javax.swing.*
 
 @ApiStatus.Internal
@@ -314,6 +317,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  override fun expandableTextField(parser: Function<in String, out MutableList<String>>,
+                                   joiner: Function<in MutableList<String>, String>): Cell<ExpandableTextField> {
+    val result = cell(ExpandableTextField(parser, joiner))
+    result.columns(COLUMNS_SHORT)
+    return result
+  }
+
   override fun intTextField(range: IntRange?, keyboardStep: Int?): CellImpl<JBTextField> {
     val result = cell(JBTextField())
       .validationOnInput {
@@ -376,8 +386,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component)
   }
 
-  override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
-    val component = ComboBox(items)
+  override fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+    val component = ComboBox(DefaultComboBoxModel(Vector(items)))
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
   }
