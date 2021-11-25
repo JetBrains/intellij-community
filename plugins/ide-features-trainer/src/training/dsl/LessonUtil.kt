@@ -69,6 +69,7 @@ object LessonUtil {
     val helpIdeName: String = ide ?: when (val name = ApplicationNamesInfo.getInstance().productName) {
       "GoLand" -> "go"
       "RubyMine" -> "ruby"
+      "AppCode" -> "objc"
       else -> name.lowercase(Locale.ENGLISH)
     }
     return "https://www.jetbrains.com/help/$helpIdeName/$topic"
