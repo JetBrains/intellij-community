@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.struct.MalformedClassFormatException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -130,6 +131,12 @@ public class SingleClassesTest {
   @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
   @Test public void testPackageInfo() { doTest("pkg/package-info"); }
   @Test public void testIntVarMerge() { doTest("pkg/TestIntVarMerge"); }
+
+  @Test(expected = MalformedClassFormatException.class)
+  public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
+
+  @Test
+  public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
 
   // TODO: fix all below
   //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
