@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
 data class PluginAdvertiserExtensionsData(
   // Either extension or file name. Depends on which of the two properties has more priority for advertising plugins for this specific file.
   val extensionOrFileName: String,
-  val plugins: Set<PluginData>,
+  val plugins: Set<PluginData> = emptySet(),
 )
 
 @State(
@@ -221,7 +221,8 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
         return pluginsForExactFileName
       }
       if (knownExtensions[fileName].isNotEmpty()) {
-        // there is a plugin that can support the exact file name but we don't know a compatible version, return null to force request to update cache
+        // there is a plugin that can support the exact file name, but we don't know a compatible version,
+        // return null to force request to update cache
         return null
       }
 
@@ -232,7 +233,15 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       }
 
       if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
-        return fullExtension?.let { cache.getIfPresent(it) } ?: PluginAdvertiserExtensionsData(fileName, emptySet())
+        return fullExtension?.let { cache.getIfPresent(it) }
+               ?: if (fullExtension?.let { knownExtensions[it] }?.isNotEmpty() == true) {
+                 // there is a plugin that can support the file type, but we don't know a compatible version,
+                 // return null to force request to update cache
+                 null
+               }
+               else {
+                 PluginAdvertiserExtensionsData(fileName)
+               }
       }
       return null
     }
