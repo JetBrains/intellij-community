@@ -271,6 +271,8 @@ private fun Module.findContentRootsByExternalProject(): Collection<ExternalSyste
 }
 
 private fun Module.chooseSourceRootPathHeuristically(contentEntries: List<Path>): Path {
+    // The module name is expected to be in the format "myProjectName.outerModuleName.jvmMain", so we can remove the prefix and try to find
+    // a suitable source root by name.
     val moduleName = name.takeLastWhile { it != '.' }
     val sourceRootPath = contentEntries.find { it.name == moduleName }
         ?: contentEntries.firstOrNull()
