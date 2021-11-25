@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.NonHeadlessRule
 import com.intellij.ui.scale.TestScaleHelper
+import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.collectPageSource
 import org.jsoup.Jsoup
@@ -68,6 +69,8 @@ class MarkdownContentEscapingTest {
     }
     assertTrue(got.children().isNotEmpty())
     assertEquals(expected.html(), got.child(0).html())
+    Thread.sleep(500) // wait until com.intellij.ui.jcef.JBCefOsrHandler.onPaint is called which call invokeLater()
+    UIUtil.pump()
   }
 
   private fun parseContentBody(html: String): Element {
