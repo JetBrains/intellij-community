@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 
 import com.intellij.CommonBundle
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -112,6 +113,13 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val file = descriptor.psiElement as? KtFile ?: return
             KotlinChangePackageRefactoring(file).run(packageFqName)
+        }
+
+        override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+            val file = previewDescriptor.psiElement as? KtFile ?: return IntentionPreviewInfo.EMPTY
+            val packageDirective = file.packageDirective ?: return IntentionPreviewInfo.EMPTY
+            packageDirective.fqName = packageFqName
+            return IntentionPreviewInfo.DIFF
         }
     }
 }
