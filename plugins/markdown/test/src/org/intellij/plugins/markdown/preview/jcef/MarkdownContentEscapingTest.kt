@@ -87,7 +87,7 @@ class MarkdownContentEscapingTest(enableOsr: Boolean) {
     @get:Parameterized.Parameters(name = "enableOsr = {0}")
     val modes = listOf(true, false)
 
-    private val testPath = FileUtil.join(MarkdownTestingUtil.TEST_DATA_PATH!!, "preview", "jcef", "escaping")
+    private val testPath = FileUtil.join(MarkdownTestingUtil.TEST_DATA_PATH, "preview", "jcef", "escaping")
 
     @ClassRule
     @JvmField
