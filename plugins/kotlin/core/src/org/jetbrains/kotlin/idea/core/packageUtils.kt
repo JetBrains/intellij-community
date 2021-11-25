@@ -132,7 +132,10 @@ private class PureKotlinSourceFoldersHolder {
     }
 }
 
-private fun Module.getNonGeneratedKotlinSourceFolders(): Sequence<SourceFolder> = ModuleRootManager.getInstance(this)
+/**
+ * @return a sequence of registered [SourceFolder] that may not exist in FS
+ */
+private fun Module.findNonGeneratedKotlinSourceFolders(): Sequence<SourceFolder> = ModuleRootManager.getInstance(this)
     .contentEntries
     .asSequence()
     .flatMap { it.getSourceFolders(kotlinSourceRootTypes).asSequence() }
@@ -140,20 +143,20 @@ private fun Module.getNonGeneratedKotlinSourceFolders(): Sequence<SourceFolder> 
         it.jpsElement.getProperties(kotlinSourceRootTypes)?.isForGeneratedSources != true
     }
 
-private fun Module.getNonGeneratedKotlinSourceRootsFiles(
+private fun Module.findExistingNonGeneratedKotlinSourceRootFiles(
     pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder
-): List<VirtualFile> = getNonGeneratedKotlinSourceFolders().toFiles(project, pureKotlinSourceFoldersHolder)
+): List<VirtualFile> = findNonGeneratedKotlinSourceFolders().toExistingFiles(project, pureKotlinSourceFoldersHolder)
 
-private fun Sequence<SourceFolder>.toFiles(
+private fun Sequence<SourceFolder>.toExistingFiles(
     project: Project,
     pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder,
 ): List<VirtualFile> = mapNotNull { sourceFolder ->
     sourceFolder.file?.takeIf { pureKotlinSourceFoldersHolder.hasPurePrefixInVirtualFile(project, it) }
 }.toList()
 
-private fun Module.getOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder): List<VirtualFile> {
-    val nonGeneratedSourceFolders = getNonGeneratedKotlinSourceFolders().toList()
-    nonGeneratedSourceFolders.asSequence().toFiles(project, pureKotlinSourceFoldersHolder).ifNotEmpty { return this }
+private fun Module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder): List<VirtualFile> {
+    val nonGeneratedSourceFolders = findNonGeneratedKotlinSourceFolders().toList()
+    nonGeneratedSourceFolders.asSequence().toExistingFiles(project, pureKotlinSourceFoldersHolder).ifNotEmpty { return this }
     return listOfNotNull(createSourceRootDirectory(nonGeneratedSourceFolders))
 }
 
@@ -230,7 +233,7 @@ fun findOrCreateDirectoryForPackage(module: Module, packageName: String): PsiDir
     var restOfName = packageName
 
     if (packageName.isNotEmpty()) {
-        val sourcePaths = module.getNonGeneratedKotlinSourceRootsFiles(pureKotlinSourceFoldersHolder)
+        val sourcePaths = module.findExistingNonGeneratedKotlinSourceRootFiles(pureKotlinSourceFoldersHolder)
         if (sourcePaths.isNotEmpty()) {
             val allowedScope = sourcePaths.map { GlobalSearchScopesCore.DirectoryScope(project, it, true) }.reduce(GlobalSearchScope::union)
             val rootPackage = findLongestExistingPackage(module, packageName, pureKotlinSourceFoldersHolder, allowedScope)
@@ -262,7 +265,7 @@ fun findOrCreateDirectoryForPackage(module: Module, packageName: String): PsiDir
     }
 
     val existingDirectory = existingDirectoryByPackage ?: run {
-        val sourceRoots = module.getOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder)
+        val sourceRoots = module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder)
         if (sourceRoots.isEmpty()) {
             return null
         }
