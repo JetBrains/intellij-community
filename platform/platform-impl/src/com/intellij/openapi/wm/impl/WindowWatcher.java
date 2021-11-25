@@ -35,7 +35,7 @@ import java.util.Set;
 public final class WindowWatcher implements PropertyChangeListener {
   private static final Logger LOG = Logger.getInstance(WindowWatcher.class);
   private final Object myLock = new Object();
-  private final Map<Window, WindowInfo> windowToInfo = CollectionFactory.createWeakMap();
+  private final Map<@NotNull Window, WindowInfo> windowToInfo = CollectionFactory.createWeakMap();
   /**
    * Currently focused window (window which has focused component). Can be {@code null} if there is no focused
    * window at all.
@@ -119,7 +119,7 @@ public final class WindowWatcher implements PropertyChangeListener {
       LOG.debug("enter: dispatchClosed(" + window + ")");
     }
     synchronized (myLock) {
-      WindowInfo info = windowToInfo.get(window);
+      WindowInfo info = window == null ? null : windowToInfo.get(window);
       if (info != null) {
         final FocusWatcher focusWatcher = info.myFocusWatcherRef.get();
         if (focusWatcher != null) {
@@ -275,7 +275,7 @@ public final class WindowWatcher implements PropertyChangeListener {
     }
   }
 
-  public void doNotSuggestAsParent(final Window window) {
+  public void doNotSuggestAsParent(@NotNull Window window) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: doNotSuggestAsParent(" + window + ")");
     }

@@ -1,5 +1,5 @@
 // "Optimize imports" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ACTION: Introduce import alias
 package ppp
 

@@ -93,10 +93,10 @@ data class Constraints(
 ) {
 
   init {
-    checkNonNegative(::x)
-    checkNonNegative(::y)
-    checkPositive(::width)
-    checkPositive(::height)
+    checkNonNegative("x", x)
+    checkNonNegative("y", y)
+    checkPositive("width", width)
+    checkPositive("height", height)
   }
 }
 

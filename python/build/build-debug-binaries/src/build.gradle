@@ -4,7 +4,7 @@ import java.nio.file.Paths
 import java.util.regex.Pattern
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.30"
+  id "com.jetbrains.python.envs" version "0.0.31"
 }
 
 ext {
@@ -16,11 +16,11 @@ boolean isMac = Os.isFamily(Os.FAMILY_MAC)
 
 envs {
   String python27version = "2.7.18"
-  String python35version = isWindows ? "3.5.4" : "3.5.7"
   String python36version = "3.6.8"
   String python37version = "3.7.9"
   String python38version = "3.8.10"
   String python39version = "3.9.5"
+  String python310version = "3.10.0"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir
@@ -32,9 +32,6 @@ envs {
 
   python "python27_64", python27version, "64"
   virtualenv "py27_64", "python27_64", ["cython"]
-
-  python "python35_64", python35version, "64"
-  virtualenv "py35_64", "python35_64", ["cython"]
 
   python "python36_64", python36version, "64"
   virtualenv "py36_64", "python36_64", ["cython"]
@@ -48,12 +45,12 @@ envs {
   python "python39_64", python39version, "64"
   virtualenv "py39_64", "python39_64", ["cython"]
 
+  python "python310_64", python310version, "64"
+  virtualenv "py310_64", "python310_64", ["cython"]
+
   if (isWindows) {
     python "python27_32", python27version, "32"
     virtualenv "py27_32", "python27_32", ["cython"]
-
-    python "python35_32", python35version, "32"
-    virtualenv "py35_32", "python35_32", ["cython"]
 
     python "python36_32", python36version, "32"
     virtualenv "py36_32", "python36_32", ["cython"]
@@ -66,6 +63,9 @@ envs {
 
     python "python39_32", python39version, "32"
     virtualenv "py39_32", "python39_32", ["cython"]
+
+    python "python310_32", python310version, "32"
+    virtualenv "py310_32", "python310_32", ["cython"]
   }
 }
 
@@ -123,7 +123,7 @@ task checkCFilesAreUpToDate() {
       ["_pydevd_bundle", "pydevd_cython"],
       ["_pydevd_frame_eval", "pydevd_frame_evaluator_common"],
       ["_pydevd_frame_eval", "pydevd_frame_evaluator"],
-      ["_pydevd_frame_eval", "pydevd_frame_evaluator_py39"]
+      ["_pydevd_frame_eval", "pydevd_frame_evaluator_py39_and_above"]
     ]
 
     for (mapping in mappings) {

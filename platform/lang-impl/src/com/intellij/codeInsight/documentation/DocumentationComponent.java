@@ -159,7 +159,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane = new DocumentationHintEditorPane(
       manager.getProject(),
       DocumentationScrollPane.keyboardActions(myScrollPane),
-      this::getElement
+      this::getElementImage
     );
     myScrollPane.setViewportView(myEditorPane);
     myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener(myEditorPane::applyFontProps));
@@ -721,6 +721,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myManager.myToolWindow == null && Registry.is("documentation.show.toolbar");
   }
 
+  private @Nullable Image getElementImage(@NotNull String imageSpec) {
+    PsiElement element = getElement();
+    return element == null ? null : DocumentationManager.getElementImage(element, imageSpec);
+  }
+
   private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     MyGearActionGroup(AnAction @NotNull ... actions) {
       super(actions);
@@ -919,6 +924,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   protected static class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowPopupAutomaticallyAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.popup.automatically"));
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      var project = e.getProject();
+      e.getPresentation().setEnabledAndVisible(project != null && LookupManager.getInstance(project).getActiveLookup() != null);
+      super.update(e);
     }
 
     @Override

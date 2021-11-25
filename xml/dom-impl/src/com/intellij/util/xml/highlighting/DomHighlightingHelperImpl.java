@@ -35,7 +35,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   private final DomApplicationComponent myDomApplicationComponent = DomApplicationComponent.getInstance();
 
   @Override
-  public void runAnnotators(DomElement element, DomElementAnnotationHolder holder, Class<? extends DomElement> rootClass) {
+  public void runAnnotators(DomElement element, DomElementAnnotationHolder holder, @NotNull Class<? extends DomElement> rootClass) {
     final DomElementsAnnotator annotator = myDomApplicationComponent.getAnnotator(rootClass);
     if (annotator != null) {
       annotator.annotate(element, holder);

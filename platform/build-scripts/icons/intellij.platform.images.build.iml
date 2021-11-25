@@ -22,7 +22,10 @@
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="batik-transcoder" level="project" />
-    <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="PROVIDED" />
+    <orderEntry type="library" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
   </component>
 </module>

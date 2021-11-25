@@ -51,7 +51,7 @@ public abstract class ArchiveHandler {
     }
   }
 
-  private final File myPath;
+  private volatile File myPath;
   private final Object myLock = new Object();
   private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<>(null);
   private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<>(null);
@@ -63,6 +63,13 @@ public abstract class ArchiveHandler {
 
   public @NotNull File getFile() {
     return myPath;
+  }
+
+  protected void setFile(@NotNull File path) {
+    synchronized (myLock) {
+      assert myEntries.get() == null && myChildrenEntries.get() == null && !myCorrupted : "Archive already opened";
+      myPath = path;
+    }
   }
 
   public @Nullable FileAttributes getAttributes(@NotNull String relativePath) {

@@ -51,7 +51,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
 
         val kotlinLibraries = findAllUsedLibraries(project).keySet()
         val badRuntimeLibraries = kotlinLibraries.filter { library ->
-            val runtimeJar = LibraryJarDescriptor.RUNTIME_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
+            val runtimeJar = LibraryJarDescriptor.STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
             val jsLibJar = LibraryJarDescriptor.JS_STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
             badRootFiles.contains(runtimeJar) || badRootFiles.contains(jsLibJar)
         }
@@ -92,7 +92,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
 
                 answer.createActionLabel(actionLabelText) {
                     ApplicationManager.getApplication().invokeLater {
-                        updateLibraries(project, badRuntimeLibraries)
+                        updateLibraries(project, kotlinCompilerVersionShort(), badRuntimeLibraries)
                     }
                 }
             }

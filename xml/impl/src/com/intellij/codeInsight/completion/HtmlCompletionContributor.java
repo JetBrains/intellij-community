@@ -223,6 +223,12 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     return result;
   }
 
+  @ApiStatus.Internal
+  public static boolean canProvideHtmlElementInTextCompletion(@NotNull CompletionParameters parameters) {
+    // Do not provide HTML text completions in multi view files like PHP
+    return ContainerUtil.and(parameters.getOriginalFile().getViewProvider().getAllFiles(), f -> f instanceof HtmlFileImpl);
+  }
+
   private static CompletionSorter withoutLiveTemplatesWeigher(@Nullable CompletionSorter sorter,
                                                               @NotNull CompletionParameters parameters,
                                                               @NotNull PrefixMatcher prefixMatcher) {
@@ -237,8 +243,9 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
-      // Do not provide HTML text completions in multi view files like PHP
-      if (!ContainerUtil.and(parameters.getOriginalFile().getViewProvider().getAllFiles(), f -> f instanceof HtmlFileImpl)) return;
+      if (!canProvideHtmlElementInTextCompletion(parameters)) return;
+      // We cannot modify the file in injections - disable the feature
+      if (parameters.getPosition().getContainingFile().isPhysical()) return;
       PsiFile completionFile = parameters.getPosition().getContainingFile();
       int offset = parameters.getOffset();
       var offsets = new OffsetsInFile(completionFile);

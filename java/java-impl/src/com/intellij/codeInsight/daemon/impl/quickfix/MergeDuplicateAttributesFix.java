@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MergeDuplicateAttributesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  public MergeDuplicateAttributesFix(PsiElement element) {
+  public MergeDuplicateAttributesFix(PsiNameValuePair element) {
     super(element);
   }
 

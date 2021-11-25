@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.PermanentInstallationID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,12 +11,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public final class LicensingFacade {
   public String licensedTo;
   public String licenseeEmail;
-  public Supplier<List<String>> restrictions;
+  public List<String> restrictions;
   public boolean isEvaluation;
   public Date expirationDate;
   public Date perpetualFallbackDate;
@@ -41,7 +42,8 @@ public final class LicensingFacade {
 
   @NotNull
   public List<String> getLicenseRestrictionsMessages() {
-    return restrictions == null ? Collections.emptyList() : Collections.unmodifiableList(restrictions.get());
+    final List<String> result = restrictions;
+    return result != null? result : Collections.emptyList();
   }
 
   public boolean isEvaluationLicense() {
@@ -49,11 +51,13 @@ public final class LicensingFacade {
   }
 
   public boolean isApplicableForProduct(@NotNull Date releaseDate) {
-    return isPerpetualForProduct(releaseDate) || (expirationDate == null || releaseDate.before(expirationDate));
+    final Date expDate = expirationDate;
+    return isPerpetualForProduct(releaseDate) || (expDate == null || releaseDate.before(expDate));
   }
 
   public boolean isPerpetualForProduct(@NotNull Date releaseDate) {
-    return perpetualFallbackDate != null && releaseDate.before(perpetualFallbackDate);
+    final Date result = perpetualFallbackDate;
+    return result != null && releaseDate.before(result);
   }
 
   /**
@@ -72,7 +76,8 @@ public final class LicensingFacade {
    */
   @Nullable
   public Date getExpirationDate(String productCode) {
-    return expirationDates == null ? null : expirationDates.get(productCode);
+    final Map<String, Date> result = expirationDates;
+    return result != null? result.get(productCode) : null;
   }
 
   /**
@@ -99,7 +104,23 @@ public final class LicensingFacade {
    */
   @Nullable
   public String getConfirmationStamp(String productCode) {
-    return confirmationStamps == null? null : confirmationStamps.get(productCode);
+    final Map<String, String> result = confirmationStamps;
+    return result != null? result.get(productCode) : null;
   }
 
+  private static final Gson ourGson = new GsonBuilder().setDateFormat("yyyyMMdd").create();
+
+  public String toJson() {
+    return ourGson.toJson(this);
+  }
+
+  @Nullable
+  public static LicensingFacade fromJson(String json) {
+    try {
+      return ourGson.fromJson(json, LicensingFacade.class);
+    }
+    catch (Throwable e) {
+      return null;
+    }
+  }
 }

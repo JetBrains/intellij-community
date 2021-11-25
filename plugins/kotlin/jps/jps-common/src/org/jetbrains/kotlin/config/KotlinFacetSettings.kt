@@ -48,7 +48,7 @@ sealed class VersionView : DescriptionAware {
     abstract val version: LanguageVersion
 
     object LatestStable : VersionView() {
-        override val version: LanguageVersion = RELEASED_VERSION
+        override val version: LanguageVersion = LanguageVersion.LATEST_STABLE
 
         override val description: String
             get() = "Latest stable (${version.versionString})"
@@ -64,8 +64,6 @@ sealed class VersionView : DescriptionAware {
     }
 
     companion object {
-        val RELEASED_VERSION = LanguageVersion.LATEST_STABLE
-
         fun deserialize(value: String?, isAutoAdvance: Boolean): VersionView {
             if (isAutoAdvance) return LatestStable
             val languageVersion = LanguageVersion.fromVersionString(value)

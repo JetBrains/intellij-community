@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public final class ModuleFileDirMacro extends Macro {
+public final class ModuleFileDirMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

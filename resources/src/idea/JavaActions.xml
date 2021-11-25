@@ -84,7 +84,6 @@
     <group id="Java.BuildMenu">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
         <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
-        <add-to-group group-id="RightToolbarSideGroup" anchor="first"/>
       </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
@@ -117,6 +116,7 @@
         <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
         <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
         <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
+        <action id="DumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.DumpInvalidTipsAction"/>
       </group>
 
       <separator/>
@@ -375,6 +375,12 @@
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
     </group>
 
+    <group id="MigrationMenu" popup="true" searchable="false">
+      <group id="MigrationMenu1" class="com.intellij.refactoring.migration.MigrationGroup" popup="false" searchable="false"/>
+      <separator/>
+      <action id="NewMigration" class="com.intellij.refactoring.actions.MigrateAction"/>
+    </group>
+
     <group id="RefactoringMenu4">
       <separator/>
       <reference ref="RefactoringMenu1"/>
@@ -383,9 +389,9 @@
       <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction"/>
       <separator/>
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
+      <reference ref="MigrationMenu"/>
       <separator/>
       <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
-      <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
       <separator/>
 
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>

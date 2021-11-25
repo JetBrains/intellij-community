@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndex;
+import org.jetbrains.idea.maven.indices.MavenIndexUtils;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
@@ -30,7 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.idea.maven.indices.MavenIndicesManager.IndexUpdatingState.IDLE;
+import static org.jetbrains.idea.maven.indices.MavenIndexUpdateManager.IndexUpdatingState.IDLE;
 
 public class MavenRepositoriesHolder {
   private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
@@ -70,7 +71,7 @@ public class MavenRepositoriesHolder {
     if (notificationManager.isNotificationActive(NOTIFICATION_KEY)) return;
 
     final MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(myProject);
-    for (MavenSearchIndex index : indicesManager.getIndices()) {
+    for (MavenSearchIndex index : indicesManager.getIndex().getIndices()) {
       if (indicesManager.getUpdatingState(index) != IDLE) return;
     }
 
@@ -86,8 +87,8 @@ public class MavenRepositoriesHolder {
       @Override
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
         List<MavenIndex> notIndexed =
-          ContainerUtil.filter(indicesManager.getIndices(), index -> isNotIndexed(index.getRepositoryPathOrUrl()));
-        indicesManager.scheduleUpdate(myProject, notIndexed).onSuccess(aVoid -> {
+          ContainerUtil.filter(indicesManager.getIndex().getIndices(), index -> isNotIndexed(index.getRepositoryPathOrUrl()));
+        indicesManager.scheduleUpdateContent(notIndexed).onSuccess(aVoid -> {
           if (myNotIndexedUrls.isEmpty()) return;
           for (MavenSearchIndex index : notIndexed) {
             if (index.getUpdateTimestamp() != -1 || index.getFailureMessage() != null) {
@@ -135,17 +136,17 @@ public class MavenRepositoriesHolder {
   }
 
   public boolean contains(String url) {
-    final String pathOrUrl = MavenIndex.normalizePathOrUrl(url);
+    final String pathOrUrl = MavenIndexUtils.normalizePathOrUrl(url);
     for (MavenRemoteRepository repository : myRemoteRepositories) {
-      if (MavenIndex.normalizePathOrUrl(repository.getUrl()).equals(pathOrUrl)) return true;
+      if (MavenIndexUtils.normalizePathOrUrl(repository.getUrl()).equals(pathOrUrl)) return true;
     }
     return false;
   }
 
   public boolean isNotIndexed(String url) {
-    final String pathOrUrl = MavenIndex.normalizePathOrUrl(url);
+    final String pathOrUrl = MavenIndexUtils.normalizePathOrUrl(url);
     for (String repository : myNotIndexedUrls) {
-      if (MavenIndex.normalizePathOrUrl(repository).equals(pathOrUrl)) return true;
+      if (MavenIndexUtils.normalizePathOrUrl(repository).equals(pathOrUrl)) return true;
     }
     return false;
   }

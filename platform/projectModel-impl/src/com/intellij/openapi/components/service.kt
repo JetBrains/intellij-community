@@ -16,9 +16,13 @@ inline fun <reified T : Any> serviceOrNull(): T? = ApplicationManager.getApplica
 
 inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getApplication().getServiceIfCreated(T::class.java)
 
+inline fun <reified T : Any> services(includeLocal: Boolean): List<T> = ApplicationManager.getApplication().getServices(T::class.java, includeLocal)
+
 inline fun <reified T : Any> Project.service(): T = getService(T::class.java)
 
 inline fun <reified T : Any> Project.serviceIfCreated(): T? = getServiceIfCreated(T::class.java)
+
+inline fun <reified T : Any> Project.services(includeLocal: Boolean): List<T> = getServices(T::class.java, includeLocal)
 
 val ComponentManager.stateStore: IComponentStore
   get() {

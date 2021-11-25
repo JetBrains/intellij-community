@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PackageReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiPackageReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.*;
@@ -89,18 +90,18 @@ public class ModuleDescriptorPackageConverter extends PsiPackageConverter {
   }
 
   @Nullable
-  private static GlobalSearchScope getScope(IdeaPlugin ideaPlugin, boolean withDependencies) {
+  private static GlobalSearchScope getScope(IdeaPlugin ideaPlugin, boolean useProjectProductionScope) {
     final Module module = ideaPlugin.getModule();
     if (module == null) return null;
 
-    return withDependencies ? module.getModuleWithDependenciesScope() : module.getModuleScope(false);
+    return useProjectProductionScope ? GlobalSearchScopesCore.projectProductionScope(module.getProject()) : module.getModuleScope(false);
   }
 
   /**
    * Resolve {@code idea-plugin@package} attribute using:
    * <ol>
-   *   <li>no plugin ID: module scope</li>
-   *   <li>with plugin ID/name: module+dependencies scope, as main module may not contain any sources itself</li>
+   *   <li>no plugin ID: module production scope</li>
+   *   <li>with plugin ID/name: project production scope, as main module may not contain any sources itself</li>
    * </ol>.
    */
   public static class ForIdeaPlugin extends ModuleDescriptorPackageConverter {

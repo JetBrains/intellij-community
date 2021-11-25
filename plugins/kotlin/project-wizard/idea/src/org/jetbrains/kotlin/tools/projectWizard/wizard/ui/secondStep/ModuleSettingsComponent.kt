@@ -116,11 +116,9 @@ private class ModuleTemplateComponent(
     onTemplateChanged: () -> Unit
 ) : TitledComponent(context) {
 
-    private val templatesFilter: (Template) -> Boolean = { template: Template -> read { template.isApplicableTo(this, module) } }
-
     init {
         if (module.template == null) {
-            module.template = templates.first(templatesFilter)
+            module.template = templates.firstOrNull()
         }
     }
 
@@ -129,7 +127,6 @@ private class ModuleTemplateComponent(
         context,
         initialValues = templates,
         initiallySelectedValue = module.template,
-        filter = templatesFilter,
         labelText = null,
     ) { value, isByUser ->
         if (isByUser) {
@@ -174,14 +171,14 @@ private class ModuleTemplateComponent(
 private object NoneTemplate : Template() {
     override val title = KotlinNewProjectWizardUIBundle.message("module.settings.template.none")
     override val description: String = ""
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean = true
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean = true
 
     override val id: String = "none"
 }
 
 fun Reader.availableTemplatesFor(module: Module) =
     TemplatesPlugin.templates.propertyValue.values.filter { template ->
-        template.isSupportedByModuleType(module, KotlinPlugin.projectKind.settingValue)
+        template.isSupportedByModuleType(module, KotlinPlugin.projectKind.settingValue, this)
     }
 
 

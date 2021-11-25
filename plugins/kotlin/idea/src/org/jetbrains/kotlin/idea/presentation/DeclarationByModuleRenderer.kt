@@ -2,11 +2,18 @@
 
 package org.jetbrains.kotlin.idea.presentation
 
+import com.intellij.ide.util.PsiClassRenderingInfo
 import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiClass
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
 
 class DeclarationByModuleRenderer : KtModuleSpecificListCellRenderer<NavigatablePsiElement>() {
-    override fun getContainerText(element: NavigatablePsiElement?, name: String?) = ""
+    override fun getContainerText(element: NavigatablePsiElement?, name: String?): String? {
+        if (element is PsiClass) {
+            return PsiClassRenderingInfo.getContainerTextStatic(element)
+        }
+        return null
+    }
 
     override fun getElementText(element: NavigatablePsiElement): String =
         SymbolPresentationUtil.getSymbolPresentableText(element)

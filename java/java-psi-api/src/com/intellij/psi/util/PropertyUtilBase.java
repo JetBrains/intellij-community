@@ -74,6 +74,29 @@ public class PropertyUtilBase {
     return map;
   }
 
+  @NotNull
+  public static Pair<Map<String, PsiMethod>, Map<String, PsiMethod>> getAllAccessors(
+    final boolean acceptSetters,
+    final boolean acceptGetters,
+    final boolean acceptStatic,
+    final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels,
+    PsiMethod @NotNull [] methods
+  ) {
+    final Map<String, PsiMethod> getters = new HashMap<>();
+    final Map<String, PsiMethod> setters = new HashMap<>();
+
+    for (PsiMethod method : methods) {
+      if (filterMethods(method, acceptStatic, visibilityLevels)) continue;
+      if (acceptGetters && isSimplePropertyGetter(method)) {
+        getters.put(getPropertyNameByGetter(method), method);
+      }
+      if (acceptSetters && isSimplePropertySetter(method)) {
+        setters.put(getPropertyNameBySetter(method), method);
+      }
+    }
+    return Pair.create(getters, setters);
+  }
+
   private static boolean filterMethods(final PsiMethod method,
                                        final boolean acceptStatic,
                                        final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels) {

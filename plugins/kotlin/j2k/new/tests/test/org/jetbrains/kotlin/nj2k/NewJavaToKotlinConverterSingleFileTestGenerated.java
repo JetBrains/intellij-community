@@ -590,11 +590,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/binaryExpression/lessThanEqual.java");
         }
 
-        @TestMetadata("lhsObjectPlusString.java")
-        public void testLhsObjectPlusString() throws Exception {
-            runTest("testData/newJ2k/binaryExpression/lhsObjectPlusString.java");
-        }
-
         @TestMetadata("minus.java")
         public void testMinus() throws Exception {
             runTest("testData/newJ2k/binaryExpression/minus.java");
@@ -638,6 +633,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("shiftRight.java")
         public void testShiftRight() throws Exception {
             runTest("testData/newJ2k/binaryExpression/shiftRight.java");
+        }
+
+        @TestMetadata("stringConcatenation.java")
+        public void testStringConcatenation() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/stringConcatenation.java");
         }
 
         @TestMetadata("unsignedRightShift.java")

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
 import com.intellij.dvcs.repo.Repository
@@ -340,7 +340,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val expectedContent = LOCAL_CHANGES_OVERWRITTEN_BY.branchLine +
         LOCAL_CHANGES_OVERWRITTEN_BY.initial +
         LOCAL_CHANGES_OVERWRITTEN_BY.masterLine
-    assertContent(expectedContent, actual)
+    assertContentIgnoreLineSeparators(expectedContent, actual)
   }
 
   fun `test agree to smart merge should smart merge`() {
@@ -352,7 +352,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val expectedContent = LOCAL_CHANGES_OVERWRITTEN_BY.branchLine +
         LOCAL_CHANGES_OVERWRITTEN_BY.initial +
         LOCAL_CHANGES_OVERWRITTEN_BY.masterLine
-    assertContent(expectedContent, actual)
+    assertContentIgnoreLineSeparators(expectedContent, actual)
   }
 
   private fun `agree to smart operation`(operation: String, expectedSuccessMessage: String): List<String> {
@@ -1066,8 +1066,10 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertEquals("Content doesn't match", content, cat(path))
   }
 
-  private fun assertContent(expected: String, actual: String) {
-    val expectedContent = StringUtil.convertLineSeparators(expected, LineSeparator.getSystemLineSeparator().separatorString)
-    assertEquals("Content is incorrect", expectedContent.trim(), actual.trim())
+  private fun assertContentIgnoreLineSeparators(expected: String, actual: String) {
+    val systemSeparator = LineSeparator.getSystemLineSeparator().separatorString
+    val actualContent = StringUtil.convertLineSeparators(actual, systemSeparator)
+    val expectedContent = StringUtil.convertLineSeparators(expected, systemSeparator)
+    assertEquals("Content is incorrect", expectedContent.trim(), actualContent.trim())
   }
 }

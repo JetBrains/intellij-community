@@ -55,15 +55,20 @@ class KotlinUFunctionCallExpression(
                 KotlinUIdentifier(calleeExpression.getReferencedNameElement(), this)
             is KtConstructorDelegationReferenceExpression ->
                 KotlinUIdentifier(calleeExpression.firstChild ?: calleeExpression, this)
-            is KtConstructorCalleeExpression ->
-                KotlinUIdentifier(
-                    calleeExpression.constructorReferenceExpression?.getReferencedNameElement() ?: calleeExpression, this
-                )
+            is KtConstructorCalleeExpression -> {
+                val referencedNameElement = calleeExpression.constructorReferenceExpression?.getReferencedNameElement()
+                if (referencedNameElement != null) KotlinUIdentifier(referencedNameElement, this)
+                else generateSequence<PsiElement>(calleeExpression) { it.firstChild?.takeIf { it.nextSibling == null } }
+                    .lastOrNull()
+                    ?.takeIf { it.firstChild == null }
+                    ?.let { KotlinUIdentifier(it, this) }
+            }
             is KtLambdaExpression ->
                 KotlinUIdentifier(calleeExpression.functionLiteral.lBrace, this)
             else -> KotlinUIdentifier(
                 sourcePsi.valueArgumentList?.leftParenthesis
                     ?: sourcePsi.lambdaArguments.singleOrNull()?.getLambdaExpression()?.functionLiteral?.lBrace
+                    ?: sourcePsi.typeArgumentList?.firstChild
                     ?: calleeExpression, this)
         }
     }
@@ -140,7 +145,7 @@ class KotlinUFunctionCallExpression(
 
                 override val resolvedName: String? get() = localCallableDeclaration.name
 
-                override fun resolve(): PsiElement? = localCallableDeclaration
+                override fun resolve(): PsiElement = localCallableDeclaration
 
             }
 

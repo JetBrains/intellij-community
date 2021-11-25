@@ -59,4 +59,5 @@ public interface XDebuggerActions {
   @NonNls String MARK_OBJECT = "Debugger.MarkObject";
 
   @NonNls String FOCUS_ON_BREAKPOINT = "Debugger.FocusOnBreakpoint";
+  @NonNls String FOCUS_ON_FINISH = "Debugger.FocusOnFinish";
 }

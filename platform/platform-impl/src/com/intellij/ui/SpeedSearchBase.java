@@ -25,6 +25,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.Alarm;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -81,6 +82,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private boolean myClearSearchOnNavigateNoMatch;
 
   private Disposable myListenerDisposable;
+  private Alarm myProcessKeyEventAlarm = null;
 
   public SpeedSearchBase(@NotNull Comp component) {
     myComponent = component;
@@ -88,7 +90,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComponent.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentHidden(ComponentEvent event) {
-        manageSearchPopup(null);
+        if (isPopupActive()) {
+          manageSearchPopup(null);
+        }
       }
 
       @Override
@@ -218,7 +222,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   /**
-   * @param element Element to select. Don't forget to convert model index to view index if needed (i.e. table.convertRowIndexToView(modelIndex), etc).
+   * @param element Element to select. Don't forget to convert model index to view index if needed (i.e. table.convertRowIndexToView(modelIndex), etc.).
    * @param selectedText search text
    */
   protected abstract void selectElement(Object element, String selectedText);
@@ -374,7 +378,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public void showPopup(String searchText) {
     manageSearchPopup(createPopup(searchText));
     if (mySearchPopup != null && myComponent.isDisplayable()) {
-      mySearchPopup.refreshSelection();
+      myProcessKeyEventAlarm.cancelAllRequests();
+      myProcessKeyEventAlarm.addRequest(mySearchPopup::refreshSelection, 100L);
     }
   }
 
@@ -467,8 +472,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
 
-  protected class SearchPopup extends JPanel {
+  protected class SearchPopup extends JPanel implements Disposable {
     protected final SearchField mySearchField;
+    private final Alarm myInsertStringAlarm;
     private String myLastPattern = "";
 
     protected SearchPopup(String initialString) {
@@ -476,6 +482,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       mySearchField.setBorder(null);
       mySearchField.setBackground(BACKGROUND_COLOR);
       mySearchField.setForeground(FOREGROUND_COLOR);
+
+      myInsertStringAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
       mySearchField.setDocument(new PlainDocument() {
         @Override
@@ -490,7 +498,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
-          handleInsert(newText);
+          if (myInsertStringAlarm.isDisposed()) return;
+          myInsertStringAlarm.cancelAllRequests();
+          myInsertStringAlarm.addRequest(() -> handleInsert(newText), 100L);
         }
       });
 
@@ -534,12 +544,19 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
             manageSearchPopup(null);
             element = findTargetElement(keyCode, "");
           }
+          updateSelection(element);
+          return;
         }
-        else {
-          UIEventLogger.IncrementalSearchKeyTyped.log(myComponent.getClass());
-          element = findElement(s);
+        UIEventLogger.IncrementalSearchKeyTyped.log(myComponent.getClass());
+        if (mySearchPopup != null) {
+          mySearchPopup.setSize(mySearchPopup.getPreferredSize());
+          mySearchPopup.validate();
         }
-        updateSelection(element);
+
+        if (myProcessKeyEventAlarm == null || myProcessKeyEventAlarm.isDisposed()) return;
+
+        myProcessKeyEventAlarm.cancelAllRequests();
+        myProcessKeyEventAlarm.addRequest(() -> updateSelection(findElement(s)), 300L);
       }
     }
 
@@ -555,12 +572,12 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       else {
         mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
       }
-      if (mySearchPopup != null) {
-        mySearchPopup.setSize(mySearchPopup.getPreferredSize());
-        mySearchPopup.validate();
-      }
 
       fireStateChanged();
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 
@@ -683,6 +700,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (isStickySearch()) {
         UIUtil.putClientProperty(myComponent, SEARCH_TEXT_KEY, StringUtil.nullize(getEnteredPrefix()));
       }
+      Disposer.dispose(mySearchPopup);
     }
     else if (searchPopup != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");
@@ -700,6 +718,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (project != null) {
       myListenerDisposable = Disposer.newDisposable();
       project.getMessageBus().connect(myListenerDisposable).subscribe(ToolWindowManagerListener.TOPIC, myWindowManagerListener);
+      initAlarm(myListenerDisposable);
     }
     JRootPane rootPane = myComponent.getRootPane();
     myPopupLayeredPane = rootPane == null ? null : rootPane.getLayeredPane();
@@ -709,6 +728,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
     moveSearchPopup();
+  }
+
+  private void initAlarm(Disposable disposable) {
+    if (myProcessKeyEventAlarm != null) myProcessKeyEventAlarm.cancelAllRequests();
+    myProcessKeyEventAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable);
   }
 
   private void moveSearchPopup() {

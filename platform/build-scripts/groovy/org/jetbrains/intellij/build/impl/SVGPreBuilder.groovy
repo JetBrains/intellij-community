@@ -1,46 +1,55 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.module.JpsModule
 
-import java.nio.file.Files
+import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.nio.file.Path
-import java.util.function.Consumer
+import java.util.concurrent.ForkJoinTask
 
 @CompileStatic
 final class SVGPreBuilder {
-  static BuildTaskRunnable<Void> createPrebuildSvgIconsTask() {
-    return BuildTaskRunnable.task(BuildOptions.SVGICONS_PREBUILD_STEP, "Prebuild SVG icons", new Consumer<BuildContext>() {
-      @Override
-      void accept(BuildContext buildContext) {
-        Path requestFile = buildContext.paths.tempDir.resolve("svg-prebuild-request.txt")
-
-        StringBuilder requestBuilder = new StringBuilder()
-        // build for all modules - so, icon db will be suitable for any non-bundled plugin
-        for (JpsModule module : buildContext.getProject().getModules()) {
-          requestBuilder.append(buildContext.getModuleOutputPath(module)).append('\n')
+  @Nullable
+  static ForkJoinTask<?> createPrebuildSvgIconsTask(@NotNull BuildContext context) {
+    return BuildHelper.getInstance(context).createSkippableTask(
+      TracerManager.spanBuilder("prebuild SVG icons"),
+      BuildOptions.SVGICONS_PREBUILD_STEP,
+      context,
+      new Runnable() {
+        @Override
+        void run() {
+          runSvgTool(context)
         }
-        Files.createDirectories(requestFile.getParent())
-        Files.writeString(requestFile, requestBuilder)
-
-        JpsModule buildModule = buildContext.findModule("intellij.platform.images.build")
-        List<String> svgToolClasspath = buildContext.getModuleRuntimeClasspath(buildModule, false)
-        runSVGTool(buildContext, svgToolClasspath, requestFile)
       }
-    })
+    )
   }
 
-  private static void runSVGTool(BuildContext buildContext, List<String> svgToolClasspath, Path requestFile) {
-    Path dbFile = buildContext.paths.tempDir.resolve("icons.db")
-    BuildHelper.runJava(buildContext,
-                        "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
-                        [dbFile.toString(), requestFile.toString()] + buildContext.applicationInfo.svgProductIcons,
-                        List.of("-Xmx1024m"),
-                        svgToolClasspath)
-    buildContext.addDistFile(new Pair<Path, String>(dbFile, "bin"))
+  private static void runSvgTool(@NotNull BuildContext context) {
+    List<Path> moduleOutputs = new ArrayList<>()
+    // build for all modules - so, icon db will be suitable for any non-bundled plugin
+    for (JpsModule module : context.getProject().getModules()) {
+      moduleOutputs.add(context.getModuleOutputDir(module))
+    }
+
+    List<Path> classPathFiles = BuildHelper.buildClasspathForModule(context.findRequiredModule("intellij.platform.images.build"), context)
+    // don't use index - avoid saving to output (reproducible builds)
+    ClassLoader classLoader = BuildHelper.createClassLoader(classPathFiles)
+    MethodHandle handle = MethodHandles.lookup().findStatic(classLoader.loadClass("org.jetbrains.intellij.build.images.ImageSvgPreCompiler"),
+                                                            "optimize",
+                                                            MethodType.methodType(List.class,
+                                                                                  Path.class, Path.class, List.class))
+    Path dbDir = context.paths.tempDir.resolve("icons")
+    List<Path> files = (List<Path>)handle.invokeWithArguments(dbDir, context.getProjectOutputDirectory().toPath().resolve("production"),
+                                                              moduleOutputs)
+    for (Path file : files) {
+      context.addDistFile(Map.entry(file, "bin/icons"))
+    }
   }
 }

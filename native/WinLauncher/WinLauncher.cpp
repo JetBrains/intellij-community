@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -420,11 +421,26 @@ std::string BuildClassPath()
   return result;
 }
 
+std::string BuildBootClassPath()
+{
+  std::string classpathLibs = LoadStdString(IDS_BOOTCLASSPATH_LIBS);
+  return CollectLibJars(classpathLibs);
+}
+
 bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
 {
   std::string classPath = BuildClassPath();
   if (classPath.size() == 0) return false;
   vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
+
+  return true;
+}
+
+bool AddBootClassPathOptions(std::vector<std::string>& vmOptionLines)
+{
+  std::string classPath = BuildBootClassPath();
+  if (classPath.size() == 0) return false;
+  vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + classPath);
 
   return true;
 }
@@ -475,7 +491,7 @@ void (JNICALL jniExitHook)(jint code) {
 
 bool LoadVMOptions() {
   char bin_vmoptions[_MAX_PATH], buffer1[_MAX_PATH], buffer2[_MAX_PATH], *vmOptionsFile = NULL;
-  std::vector<std::string> lines;
+  std::vector<std::string> lines, user_lines;
 
   GetModuleFileNameA(NULL, bin_vmoptions, _MAX_PATH);
   strcat_s(bin_vmoptions, ".vmoptions");
@@ -485,44 +501,39 @@ bool LoadVMOptions() {
   if (GetEnvironmentVariableA(buffer1, buffer2, _MAX_PATH) != 0 && LoadVMOptionsFile(buffer2, lines)) {
     vmOptionsFile = buffer2;
   }
-
-  // 2. <IDE_HOME>.vmoptions (Toolbox) [+ <IDE_HOME>\bin\<exe_name>.vmoptions]
-  if (vmOptionsFile == NULL) {
+  else {
+    // 2. <IDE_HOME>\bin\<exe_name>.vmoptions ...
+    if (LoadVMOptionsFile(bin_vmoptions, lines)) {
+      vmOptionsFile = bin_vmoptions;
+    }
+    // ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>\<exe_name>.vmoptions]
     strcpy_s(buffer1, _MAX_PATH, bin_vmoptions);
     char *ideHomeEnd = strrchr(buffer1, '\\') - 4;  // "bin\"
     strcpy_s(ideHomeEnd, _MAX_PATH - (ideHomeEnd - buffer1), ".vmoptions");
-    if (LoadVMOptionsFile(buffer1, lines)) {
+    if (LoadVMOptionsFile(buffer1, user_lines)) {
       vmOptionsFile = buffer1;
-      if (std::find(lines.begin(), lines.end(), std::string("-ea")) == lines.end()) {
-        std::vector<std::string> lines2;
-        if (LoadVMOptionsFile(bin_vmoptions, lines2)) {
-          lines.insert(lines.begin(), lines2.begin(), lines2.end());
-        }
+    }
+    else {
+      LoadStringA(hInst, IDS_VM_OPTIONS_PATH, buffer1, _MAX_PATH);
+      ExpandEnvironmentStringsA(buffer1, buffer2, _MAX_PATH);
+      char *exeParentEnd = strrchr(bin_vmoptions, '\\');
+      strcat_s(buffer2, exeParentEnd);
+      if (LoadVMOptionsFile(buffer2, user_lines)) {
+        vmOptionsFile = buffer2;
       }
     }
   }
 
-  // 3. <config_directory>\<exe_name>.vmoptions
-  if (vmOptionsFile == NULL) {
-    LoadStringA(hInst, IDS_VM_OPTIONS_PATH, buffer1, _MAX_PATH);
-    ExpandEnvironmentStringsA(buffer1, buffer2, _MAX_PATH);
-    char *exeParentEnd = strrchr(bin_vmoptions, '\\');
-    strcat_s(buffer2, exeParentEnd);
-    if (LoadVMOptionsFile(buffer2, lines)) {
-      vmOptionsFile = buffer2;
+  if (!user_lines.empty()) {
+    if (!lines.empty()) {
+      bool (*GC_lookup)(std::string &) = [](std::string &s){
+        return strncmp(s.c_str(), "-XX:+Use", 8) == 0 && strcmp(s.c_str() + s.length() - 2, "GC") == 0;
+      };
+      if (std::find_if(user_lines.begin(), user_lines.end(), GC_lookup) != user_lines.end()) {
+        lines.erase(std::remove_if(lines.begin(), lines.end(), GC_lookup), lines.end());
+      }
     }
-  }
-
-  // 4. <IDE_HOME>\bin\<exe_name>.vmoptions [+ <config_directory>\user.vmoptions]
-  if (vmOptionsFile == NULL) {
-    if (LoadVMOptionsFile(bin_vmoptions, lines)) {
-      vmOptionsFile = bin_vmoptions;
-    }
-    char *p = strrchr(buffer2, '\\');
-    strcpy_s(p, _MAX_PATH - (p - buffer2), "\\user.vmoptions");
-    if (LoadVMOptionsFile(buffer2, lines)) {
-      vmOptionsFile = buffer2;
-    }
+    lines.insert(lines.end(), user_lines.begin(), user_lines.end());
   }
 
   if (vmOptionsFile != NULL) {
@@ -538,7 +549,7 @@ bool LoadVMOptions() {
   }
 
   AddClassPathOptions(lines);
-
+  AddBootClassPathOptions(lines);
   AddPredefinedVMOptions(lines);
 
   vmOptionCount = (int)lines.size() + 1;

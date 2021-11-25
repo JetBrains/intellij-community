@@ -107,7 +107,11 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
       ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
       ContentEntry contentEntry =
         ContainerUtil.find(modifiableModel.getContentEntries(), entry -> entry.getFile() != null && VfsUtilCore.isAncestor(entry.getFile(), directory.getVirtualFile(), false));
-      if (contentEntry == null || !Objects.equals(contentEntry.getFile(), directory.getVirtualFile())) return directory;
+      if (contentEntry == null ||
+          !Objects.equals(contentEntry.getFile(), directory.getVirtualFile()) ||
+          contentEntry.getSourceFolders().length > 0) {
+        return directory;
+      }
       try {
         VirtualFile src = WriteAction.compute(() -> VfsUtil.createDirectoryIfMissing(contentEntry.getFile(), "src"));
         contentEntry.addSourceFolder(src, false);

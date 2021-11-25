@@ -21,7 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 /**
- * @see LightJavaCodeInsightFixtureTestCase4 for JUnit4 variant
+ * @see LightJavaCodeInsightFixtureTestCase4
+ * @see LightJavaCodeInsightFixtureTestCase5
  * @author peter
  */
 @TestDataPath("$CONTENT_ROOT/testData")
@@ -86,6 +87,8 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
       return IdeaTestUtil.getMockJdk17();
     }
   };
+  
+  public static final @NotNull LightProjectDescriptor JAVA_LATEST_WITH_LATEST_JDK = new ProjectDescriptor(LanguageLevel.HIGHEST);
 
   protected JavaCodeInsightTestFixture myFixture;
 

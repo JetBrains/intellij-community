@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -474,7 +475,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   fun moveContent(executor: Executor, descriptor: RunContentDescriptor) {
     val content = descriptor.attachedContent ?: return
     val oldContentManager = content.manager
-    val newContentManager = getContentManagerForRunner(executor, descriptor)
+    val newContentManager = getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
     if (oldContentManager == null || oldContentManager === newContentManager) return
     val listener = content.getUserData(CLOSE_LISTENER_KEY)
     if (listener != null) {
@@ -490,9 +491,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
     newContentManager.addContent(content)
-    if (listener != null) {
-      newContentManager.addContentManagerListener(listener)
-    }
+    // Close listener is added to new content manager by propertyChangeListener in BaseContentCloseListener.
   }
 
   private fun updateToolWindowIcon(contentManagerToUpdate: ContentManager, alive: Boolean) {
@@ -636,6 +635,7 @@ private fun getToolWindowIdForRunner(executor: Executor, descriptor: RunContentD
 private fun createNewContent(descriptor: RunContentDescriptor, executor: Executor): Content {
   val content = ContentFactory.SERVICE.getInstance().createContent(descriptor.component, descriptor.displayName, true)
   content.putUserData(ToolWindow.SHOW_CONTENT_ICON, java.lang.Boolean.TRUE)
+  if (Registry.`is`("start.run.configurations.pinned", false)) content.isPinned = true
   content.icon = descriptor.icon ?: executor.toolWindowIcon
   return content
 }

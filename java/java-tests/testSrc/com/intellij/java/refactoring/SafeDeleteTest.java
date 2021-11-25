@@ -133,6 +133,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testDeleteMethodWithPropertyUsage() {
     doTest("Foo");
   }
+  
+  public void testDeleteClassWithPropertyUsage() {
+    doTest("Foo");
+  }
 
   public void testDeleteMethodWithoutPropertyUsage() {
     ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {

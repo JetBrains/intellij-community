@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 public interface GradleTargetEnvironmentAware {
   /**
    * Modify request before target environment is created
-   * @param request
-   * @param environmentSetup
-   * @param progressIndicator
    */
   void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
                                        @NotNull GradleServerEnvironmentSetup environmentSetup,
@@ -27,9 +24,6 @@ public interface GradleTargetEnvironmentAware {
 
   /**
    * Modify created target environment
-   * @param targetEnvironment
-   * @param environmentSetup
-   * @param progressIndicator
    */
   void handleCreatedTargetEnvironment(@NotNull TargetEnvironment targetEnvironment,
                                       @NotNull GradleServerEnvironmentSetup environmentSetup,

@@ -13,15 +13,15 @@ import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.tower.NewVariableAsFunctionResolvedCallImpl
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
@@ -66,15 +66,24 @@ class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
                 return
             }
 
-            function.equalsToken?.apply {
-                // TODO: This should be done by formatter but there is no rule for this now
-                if (prevSibling.isSpace() && nextSibling.isSpace()) {
-                    prevSibling.delete()
+            function.replaceBlockExpressionWithLambdaBody(function.bodyExpression?.safeAs<KtLambdaExpression>()?.bodyExpression)
+        }
+    }
+
+    companion object {
+        fun KtDeclarationWithBody.replaceBlockExpressionWithLambdaBody(lambdaBody: KtBlockExpression?) {
+            equalsToken?.let { token ->
+                val ktPsiFactory = KtPsiFactory(project)
+                val lambdaBodyRange = lambdaBody?.allChildren
+                val newBlockBody: KtBlockExpression = if (lambdaBodyRange?.isEmpty == false) {
+                    ktPsiFactory.createDeclarationByPattern<KtNamedFunction>("fun foo() {$0}", lambdaBodyRange).bodyBlockExpression!!
+                } else {
+                    ktPsiFactory.createBlock("")
                 }
-                delete()
+
+                bodyExpression?.delete()
+                token.replace(newBlockBody)
             }
         }
-
-        private fun PsiElement.isSpace() = text == " "
     }
 }

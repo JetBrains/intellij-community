@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.util.CompletionUtil
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.stats.completion.LookupState
@@ -120,10 +120,7 @@ class CompletionFileLogger(private val installationUID: String,
 }
 
 private fun calcPluginVersion(): String? {
-  val className = CompletionStartedEvent::class.java.name
-  val id = PluginManagerCore.getPluginByClassName(className)
-  val plugin = PluginManagerCore.getPlugin(id)
-  return plugin?.version
+  return PluginManager.getPluginByClass(CompletionStartedEvent::class.java)?.version
 }
 
 private val LookupState.selectedId: Int

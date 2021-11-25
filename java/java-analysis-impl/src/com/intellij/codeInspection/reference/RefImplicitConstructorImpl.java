@@ -34,16 +34,6 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
     return ((RefClassImpl)getOwnerClass()).isSuspicious();
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    if (isValid()) {
-      RefClass ownerClass = getOwnerClass();
-      return JavaAnalysisBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName());
-    }
-    return super.getName();
-  }
-
   @Override
   public String getExternalName() {
     return getOwnerClass().getExternalName();

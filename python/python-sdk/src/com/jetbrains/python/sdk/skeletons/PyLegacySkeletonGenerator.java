@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -140,7 +141,7 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
         return myWorkingDir;
       }
       final String binaryPath = mySdk.getHomePath();
-      if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
+      if (binaryPath == null) throw new InvalidSdkException(PySdkBundle.message("dialog.message.broken.home.path.for", mySdk.getName()));
       return new File(binaryPath).getParent();
     }
 

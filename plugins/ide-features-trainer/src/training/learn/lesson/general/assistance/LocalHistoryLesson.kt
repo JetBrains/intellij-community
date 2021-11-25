@@ -31,9 +31,9 @@ import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.UIUtil
-import org.fest.swing.core.MouseButton
-import org.fest.swing.data.TableCell
-import org.fest.swing.fixture.JTableFixture
+import org.assertj.swing.core.MouseButton
+import org.assertj.swing.data.TableCell
+import org.assertj.swing.fixture.JTableFixture
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
@@ -47,6 +47,8 @@ import training.learn.lesson.LessonManager
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiHighlightingManager.HighlightingOptions
 import training.ui.LearningUiUtil
+import training.util.LessonEndInfo
+import training.util.isToStringContains
 import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
@@ -159,7 +161,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       text(LessonsBundle.message("local.history.imagine.restore", strong(ActionsBundle.message("action.\$Undo.text"))))
       text(LessonsBundle.message("local.history.invoke.context.menu", strong(localHistoryActionText)))
       triggerByUiComponentAndHighlight { ui: ActionMenu ->
-        ui.text?.contains(localHistoryActionText) == true
+        ui.text.isToStringContains(localHistoryActionText)
       }
       test {
         ideFrame { robot().rightClick(editor.component) }
@@ -176,7 +178,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       restoreByUi()
       test {
         ideFrame {
-          jMenuItem { item: ActionMenu -> item.text?.contains(localHistoryActionText) == true }.click()
+          jMenuItem { item: ActionMenu -> item.text.isToStringContains(localHistoryActionText) }.click()
           jMenuItem { item: ActionMenuItem -> item.text == showHistoryActionText }.click()
         }
       }
@@ -255,10 +257,13 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       before { LearningUiHighlightingManager.clearHighlights() }
       text(LessonsBundle.message("local.history.close.window", action("EditorEscape")))
       stateCheck {
-        previous.ui?.isShowing != true
+        val focusedEditor = focusOwner as? EditorComponentImpl
+        // check that it is editor from main IDE frame
+        focusedEditor != null && UIUtil.getParentOfType(SingleHeightTabs::class.java, focusedEditor) != null
       }
       test {
-        Thread.sleep(500)
+        invokeActionViaShortcut("ESCAPE")
+        // sometimes some small popup appears at mouse position so the first Escape may close just that popup
         invokeActionViaShortcut("ESCAPE")
       }
     }
@@ -268,8 +273,8 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
     text(LessonsBundle.message("local.history.congratulations"))
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
-    if (!lessonPassed) return
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
+    if (!lessonEndInfo.lessonPassed) return
     ApplicationManager.getApplication().executeOnPooledThread {
       val editorComponent = LearningUiUtil.findComponentOrNull(project, EditorComponentImpl::class.java) { editor ->
         UIUtil.getParentOfType(SingleHeightTabs::class.java, editor) != null
@@ -369,4 +374,9 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
   }
 
   override val suitableTips = listOf("local_history")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("local.history.help.link"),
+         LessonUtil.getHelpLink("local-history.html")),
+  )
 }

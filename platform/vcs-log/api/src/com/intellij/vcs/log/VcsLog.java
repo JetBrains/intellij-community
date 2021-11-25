@@ -23,19 +23,25 @@ public interface VcsLog {
   List<CommitId> getSelectedCommits();
 
   /**
-   * Returns metadata of the selected commit which are visible in the table. <br/>
-   * Metadata can be retrieved from index, or loaded from the repository.
-   * Metadata is loaded faster than full details and since it is done while scrolling,
+   * Returns cached metadata of the commits selected in the table.
+   * For commits that are not loaded a placeholder object
+   * (an instance of {@link com.intellij.vcs.log.data.LoadingDetails}) is returned.
+   * <br/>
+   * Metadata are loaded faster than full details and since it is done while scrolling,
    * there is a better chance that details for a commit are loaded when user selects it.
    * This makes this method preferable to {@link #getSelectedDetails()}.
-   * Still, check for LoadingDetails instance has to be done when using details from this list.
+   *
+   * @see com.intellij.vcs.log.data.LoadingDetails
    */
   @NotNull
   List<VcsCommitMetadata> getSelectedShortDetails();
 
   /**
-   * Returns details of the selected commits.
-   * For commits that are not loaded an instance of LoadingDetails is returned.
+   * Returns cached details of the selected commits.
+   * For commits that are not loaded a placeholder object
+   * (an instance of {@link com.intellij.vcs.log.data.LoadingDetails}) is returned.
+   *
+   * @see com.intellij.vcs.log.data.LoadingDetails
    */
   @NotNull
   List<VcsFullCommitDetails> getSelectedDetails();

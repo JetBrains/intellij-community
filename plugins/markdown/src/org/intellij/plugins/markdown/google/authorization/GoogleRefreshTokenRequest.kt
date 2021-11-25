@@ -4,10 +4,16 @@ package org.intellij.plugins.markdown.google.authorization
 import com.intellij.collaboration.auth.services.OAuthServiceWithRefresh
 import com.intellij.util.Url
 import com.intellij.util.Urls.newFromEncoded
-import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils
+import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
+import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils
+
+internal fun getGoogleRefreshRequest(refreshToken: String): GoogleRefreshTokenRequest {
+  val googleAppCred = GoogleAccountsUtils.getGoogleAppCredentials() ?: throw GoogleAppCredentialsException()
+  return GoogleRefreshTokenRequest(googleAppCred, refreshToken)
+}
 
 internal class GoogleRefreshTokenRequest(
-  googleAppCred: GoogleCredentialUtils.GoogleAppCredentials,
+  googleAppCred: GoogleAccountsUtils.GoogleAppCredentials,
   override val refreshToken: String
 ) : OAuthServiceWithRefresh.RefreshTokenRequest {
 

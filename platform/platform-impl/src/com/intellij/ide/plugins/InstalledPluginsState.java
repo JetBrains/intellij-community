@@ -163,10 +163,11 @@ public final class InstalledPluginsState {
   }
 
 
-  public void onPluginUninstall(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
+  public void onPluginUninstall(@NotNull IdeaPluginDescriptor descriptor,
+                                boolean isDynamicallyUnloadable) {
     PluginId id = descriptor.getPluginId();
-    synchronized (myLock) {
-      if (!restartNeeded) {
+    if (isDynamicallyUnloadable) {
+      synchronized (myLock) {
         myUninstalledWithoutRestartPlugins.add(id);
       }
     }

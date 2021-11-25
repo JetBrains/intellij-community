@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.completion.JavaCompletionUtil.JavaLookupElementHighlighter;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil.JavaModuleScope;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -135,6 +136,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
       scope = filterByScope ? psiFile.getResolveScope() : GlobalSearchScope.allScope(project);
     }
 
+    JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(insertedElement);
+
     Processor<PsiClass> classProcessor = new Processor<>() {
       @Override
       public boolean process(PsiClass psiClass) {
@@ -162,7 +165,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
               element.setLookupString(prefix + element.getLookupString());
 
               JavaConstructorCallElement.wrap(element, insertedElement).forEach(
-                e -> consumer.consume(JavaCompletionUtil.highlightIfNeeded(null, e, e.getObject(), insertedElement)));
+                e -> consumer.consume(highlighter.highlightIfNeeded(null, e, e.getObject())));
             }
           }
         }

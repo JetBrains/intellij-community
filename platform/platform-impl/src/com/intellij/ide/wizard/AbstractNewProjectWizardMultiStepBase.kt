@@ -4,6 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -47,7 +48,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
       }
       stepProperty.afterChange {
         for ((key, panel) in stepsPanels) {
-          panel.isVisible = key == step
+          panelBuilder.setVisible(panel, key == step)
         }
       }
       step = steps.keys.first()
@@ -56,5 +57,20 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   override fun setupProject(project: Project) {
     steps[step]?.setupProject(project)
+  }
+
+  fun whenStepSelected(name: String, action: () -> Unit) {
+    if (step == name) {
+      action()
+    }
+    else {
+      val disposable = Disposer.newDisposable(context.disposable, "")
+      stepProperty.afterChange({
+        if (it == name) {
+          Disposer.dispose(disposable)
+          action()
+        }
+      }, disposable)
+    }
   }
 }

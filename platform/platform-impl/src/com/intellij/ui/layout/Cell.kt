@@ -4,6 +4,7 @@ package com.intellij.ui.layout
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UINumericRange
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -11,10 +12,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
@@ -30,6 +30,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.lockOrSkip
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -40,7 +41,6 @@ import java.awt.event.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
-import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
@@ -421,11 +421,15 @@ abstract class Cell : BaseBuilder {
   }
 
   @JvmOverloads
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(prop.toBinding(), columns, range, step)
   }
 
   @JvmOverloads
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(PropertyBinding(getter, setter), columns, range, step)
   }
@@ -434,6 +438,8 @@ abstract class Cell : BaseBuilder {
    * @param step allows changing value by up/down keys on keyboard
    */
   @JvmOverloads
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun intTextField(binding: PropertyBinding<Int>,
                    columns: Int? = null,
                    range: IntRange? = null,
@@ -575,6 +581,8 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): CellBuilder<ActionButton> {
     val actionButton = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
     return actionButton()
@@ -697,6 +705,22 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
   }
 }
 
+fun <P : ObservableClearableProperty<Boolean>> P.bindWithBooleanStorage(propertyName: String): P = apply {
+  transform({ it.toString() }, { it.toBoolean() })
+    .bindWithStorage(propertyName)
+}
+
+fun <P : ObservableClearableProperty<String>> P.bindWithStorage(propertyName: String): P = apply {
+  val properties = PropertiesComponent.getInstance()
+  val value = properties.getValue(propertyName)
+  if (value != null) {
+    set(value)
+  }
+  afterChange {
+    properties.setValue(propertyName, it)
+  }
+}
+
 fun <T, C : ComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
@@ -704,12 +728,23 @@ fun <T, C : ComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = a
       selectedItem = it
     }
   }
-  addItemListener {
-    if (it.stateChange == ItemEvent.SELECTED) {
-      mutex.lockOrSkip {
-        @Suppress("UNCHECKED_CAST")
-        property.set(it.item as T)
-      }
+  whenItemSelected {
+    mutex.lockOrSkip {
+      property.set(it)
+    }
+  }
+}
+
+fun <T, C : DropDownLink<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      selectedItem = property.get()
+    }
+  }
+  whenItemSelected {
+    mutex.lockOrSkip {
+      property.set(it)
     }
   }
 }
@@ -723,7 +758,9 @@ fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T>): C = appl
   }
   addListSelectionListener {
     mutex.lockOrSkip {
-      property.set(selectedValue)
+      if (!it.valueIsAdjusting) {
+        property.set(selectedValue)
+      }
     }
   }
 }
@@ -763,6 +800,25 @@ fun <C : JCheckBox> C.bind(property: ObservableClearableProperty<Boolean>): C = 
   }
 }
 
+fun <C : ThreeStateCheckBox> C.bind(property: ObservableClearableProperty<ThreeStateCheckBox.State>): C = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      state = it
+    }
+  }
+  property.afterReset {
+    mutex.lockOrSkip {
+      state = property.get()
+    }
+  }
+  addItemListener {
+    mutex.lockOrSkip {
+      property.set(state)
+    }
+  }
+}
+
 fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableClearableProperty<String>): C = apply {
   textField.bind(property)
 }
@@ -774,34 +830,20 @@ fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): 
       text = it
     }
   }
-  document.addDocumentListener(
-    object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        mutex.lockOrSkip {
-          property.set(text)
-        }
-      }
-    }
-  )
-}
-fun JTextComponent.bindIntProperty(property: ObservableClearableProperty<Int>) {
-  val mutex = AtomicBoolean()
-  property.afterChange {
+  whenTextModified {
     mutex.lockOrSkip {
-      text = it.toString()
+      property.set(text)
     }
   }
-  document.addDocumentListener(
-    object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        mutex.lockOrSkip {
-          property.set(text.toInt())
-        }
-      }
-    }
-  )
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
+fun <C : JTextComponent> C.bindIntProperty(property: ObservableClearableProperty<Int>): C =
+  bind(property.transform({ it.toString() }, { it.toInt() }))
+
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
   val slider = JSlider()
   UIUtil.setSliderIsFilled(slider, true)
@@ -815,11 +857,15 @@ fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder
   return slider()
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun <T : JSlider> CellBuilder<T>.labelTable(table: Hashtable<Int, JComponent>.() -> Unit): CellBuilder<T> {
   component.labelTable = Hashtable<Int, JComponent>().apply(table)
   return this
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun <T : JSlider> CellBuilder<T>.withValueBinding(modelBinding: PropertyBinding<Int>): CellBuilder<T> {
   return withBinding(JSlider::getValue, JSlider::setValue, modelBinding)
 }

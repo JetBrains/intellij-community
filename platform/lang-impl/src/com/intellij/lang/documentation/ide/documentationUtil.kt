@@ -13,8 +13,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.EDT
+import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JComponent
 
+@Experimental
 fun documentationComponent(
   project: Project,
   targetPointer: Pointer<out DocumentationTarget>,

@@ -15,10 +15,10 @@ class A : Base2(), I {
     o<caret>
 }
 
-// EXIST: { lookupString: "override", itemText: "override" }
-// EXIST: { itemText: "override suspend fun bar() {...}", lookupString: "override", allLookupStrings: "bar, override", tailText: null, typeText: "Base1", attributes: "" }
-// EXIST: { itemText: "override fun equals(other: Any?): Boolean {...}", lookupString: "override", allLookupStrings: "equals, override", tailText: null, typeText: "Any", attributes: "" }
-// EXIST: { itemText: "override fun foo(p: Int) {...}", lookupString: "override", allLookupStrings: "foo, override", tailText: null, typeText: "I", attributes: "bold" }
-// EXIST: { itemText: "override fun hashCode(): Int {...}", lookupString: "override", allLookupStrings: "hashCode, override", tailText: null, typeText: "Any", attributes: "" }
-// EXIST: { itemText: "override val someVal: Int", lookupString: "override", allLookupStrings: "override, someVal", tailText: null, typeText: "I", attributes: "bold" }
-// EXIST: { itemText: "override var someVar: Int", lookupString: "override", allLookupStrings: "override, someVar", tailText: null, typeText: "I", attributes: "bold" }
+// EXIST: { lookupString: "override", itemText: "override"}
+// EXIST: { itemText: "override suspend fun bar() {...}", lookupString: "override", allLookupStrings: "bar, override", tailText: null, typeText: "Base1", attributes: "", icon: "nodes/method.svg" }
+// EXIST: { itemText: "override fun equals(other: Any?): Boolean {...}", lookupString: "override", allLookupStrings: "equals, override", tailText: null, typeText: "Any", attributes: "", icon: "nodes/method.svg" }
+// EXIST: { itemText: "override fun foo(p: Int) {...}", lookupString: "override", allLookupStrings: "foo, override", tailText: null, typeText: "I", attributes: "bold", icon: "nodes/abstractMethod.svg" }
+// EXIST: { itemText: "override fun hashCode(): Int {...}", lookupString: "override", allLookupStrings: "hashCode, override", tailText: null, typeText: "Any", attributes: "", icon: "nodes/method.svg" }
+// EXIST: { itemText: "override val someVal: Int", lookupString: "override", allLookupStrings: "override, someVal", tailText: null, typeText: "I", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg" }
+// EXIST: { itemText: "override var someVar: Int", lookupString: "override", allLookupStrings: "override, someVar", tailText: null, typeText: "I", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_variable.svg" }

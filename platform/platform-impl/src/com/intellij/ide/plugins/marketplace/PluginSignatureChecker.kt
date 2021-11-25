@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.marketplace
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.application.options.RegistryManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.certificates.PluginCertificateStore
@@ -16,7 +17,10 @@ import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.zip.signer.signer.CertificateUtils
-import org.jetbrains.zip.signer.verifier.*
+import org.jetbrains.zip.signer.verifier.InvalidSignatureResult
+import org.jetbrains.zip.signer.verifier.MissingSignatureResult
+import org.jetbrains.zip.signer.verifier.SuccessfulVerificationResult
+import org.jetbrains.zip.signer.verifier.ZipVerifier
 import java.io.File
 import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
@@ -27,6 +31,7 @@ import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
 internal object PluginSignatureChecker {
+
   private val LOG = logger<PluginSignatureChecker>()
 
   private val jetBrainsCertificateRevokedCache = Caffeine
@@ -46,8 +51,22 @@ internal object PluginSignatureChecker {
   }
 
   @JvmStatic
-  fun verify(descriptor: IdeaPluginDescriptor, pluginFile: File, showAcceptDialog: Boolean = true): Boolean {
-    val certificates = PluginCertificateStore.customTrustManager.certificates.orEmpty() + PluginCertificateStore.managedTrustedCertificates
+  fun verifyIfRequired(
+    descriptor: IdeaPluginDescriptor,
+    pluginFile: File,
+    isMarketplace: Boolean = false,
+    showAcceptDialog: Boolean = true,
+  ): Boolean {
+    val signatureCheckKey = if (isMarketplace)
+      "marketplace.certificate.signature.check"
+    else
+      "custom-repository.certificate.signature.check"
+    if (!RegistryManager.getInstance().`is`(signatureCheckKey)) {
+      return true
+    }
+
+    val certificates = PluginCertificateStore.customTrustManager.certificates +
+                       PluginCertificateStore.managedTrustedCertificates
     return if (showAcceptDialog) {
       isSignedInWithAcceptDialog(descriptor, pluginFile, certificates)
     }
@@ -59,7 +78,7 @@ internal object PluginSignatureChecker {
   private fun isSignedInBackground(
     descriptor: IdeaPluginDescriptor,
     pluginFile: File,
-    certificates: List<Certificate> = emptyList()
+    certificates: List<Certificate> = emptyList(),
   ): Boolean {
     val jbCert = jetbrainsCertificate ?: return false
     val isRevoked = runCatching { isJetBrainsCertificateRevoked() }.getOrNull() ?: return false
@@ -74,7 +93,7 @@ internal object PluginSignatureChecker {
   private fun isSignedInWithAcceptDialog(
     descriptor: IdeaPluginDescriptor,
     pluginFile: File,
-    certificates: List<Certificate> = emptyList()
+    certificates: List<Certificate> = emptyList(),
   ): Boolean {
     val jbCert = jetbrainsCertificate
                  ?: return processSignatureCheckerVerdict(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))

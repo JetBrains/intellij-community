@@ -87,6 +87,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private volatile @Nullable ErrorPage myErrorPage;
   protected final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
   private final @NotNull AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
+  private @Nullable CefRequestHandler myHrefProcessingRequestHandler;
 
   private static final LazyInitializer.LazyValue<@NotNull String> ERROR_PAGE_READER = LazyInitializer.create(() -> {
     try {
@@ -141,8 +142,14 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private volatile @Nullable String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
 
+  /**
+   * The browser instance is disposed automatically with {@link JBCefClient}
+   * as the parent {@link com.intellij.openapi.Disposable} (see {@link #getJBCefClient()}).
+   * Nevertheless, it can be disposed manually as well when necessary.
+   */
   protected JBCefBrowserBase(@NotNull JBCefBrowserBuilder builder) {
     myCefClient = ObjectUtils.notNull(builder.myClient, () -> JBCefApp.getInstance().createClient(true));
+    Disposer.register(myCefClient, this);
 
     myIsOffScreenRendering = builder.myIsOffScreenRendering;
     myEnableOpenDevToolsMenuItem = builder.myEnableOpenDevToolsMenuItem;
@@ -372,8 +379,18 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * Adds handler that opens any links clicked by user in external browser
    */
-  public final void openLinksInExternalBrowser() {
-    var handler = new CefRequestHandlerAdapter() {
+  public void setOpenLinksInExternalBrowser(boolean openLinksInExternalBrowser) {
+    if (openLinksInExternalBrowser) {
+      enableExternalBrowserLinks();
+    }
+    else {
+      disableExternalBrowserLinks();
+    }
+  }
+
+  private void enableExternalBrowserLinks() {
+    if (myHrefProcessingRequestHandler != null) return;
+    var hrefProcessingRequestHandler = new CefRequestHandlerAdapter() {
       @Override
       public boolean onBeforeBrowse(CefBrowser browser,
                                     CefFrame frame,
@@ -387,8 +404,17 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         return false;
       }
     };
-    this.myCefClient.addRequestHandler(handler, myCefBrowser);
-    Disposer.register(this, () -> myCefClient.removeRequestHandler(handler, myCefBrowser));
+    this.myCefClient.addRequestHandler(hrefProcessingRequestHandler, myCefBrowser);
+    myHrefProcessingRequestHandler = hrefProcessingRequestHandler;
+  }
+
+  private void disableExternalBrowserLinks() {
+    var hrefProcessingRequestHandler = myHrefProcessingRequestHandler;
+    if (hrefProcessingRequestHandler != null) {
+      myCefClient.removeRequestHandler(hrefProcessingRequestHandler, myCefBrowser);
+      myHrefProcessingRequestHandler = null;
+    }
+
   }
 
   /**
@@ -426,6 +452,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
   }
 
+  /**
+   * The method is thread safe.
+   */
   @Override
   public void dispose() {
     dispose(null);
@@ -438,6 +467,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myLifeSpanHandler != null) getJBCefClient().removeLifeSpanHandler(myLifeSpanHandler, getCefBrowser());
       if (myLoadHandler != null) getJBCefClient().removeLoadHandler(myLoadHandler, getCefBrowser());
       if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
+      if (myHrefProcessingRequestHandler != null) getJBCefClient().removeRequestHandler(myHrefProcessingRequestHandler, getCefBrowser());
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
 
       myCefBrowser.stopLoad();

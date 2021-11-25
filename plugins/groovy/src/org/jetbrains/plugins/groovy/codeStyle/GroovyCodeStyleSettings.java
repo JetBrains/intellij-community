@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -53,6 +53,13 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public boolean SPACE_AROUND_REGEX_OPERATORS = true;
   public boolean SPACE_BEFORE_ASSERT_SEPARATOR = false;
   public boolean SPACE_AFTER_ASSERT_SEPARATOR = true;
+
+  /**
+   * "record R (int param) {}"
+   * or
+   * "record R(int param) {}"
+   */
+  public boolean SPACE_BEFORE_RECORD_PARENTHESES = false;
 
   //imports
   public boolean USE_FQ_CLASS_NAMES = false;

@@ -18,7 +18,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -31,7 +30,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XStackFrame
-import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
@@ -40,6 +38,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedLambdaName
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
@@ -58,7 +57,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor = myDebugProcess.project.getServiceSafe()
@@ -217,24 +215,20 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
         return locations.filter { leastEnclosingBorders.contains(it) }
     }
 
-    private fun List<Pair<Location, Location>>.getLeastEnclosingBorders(location: Location): Pair<Location, Location>? {
-        var result: Pair<Location, Location>? = null
-        for (pair in this) {
-            if (pair.contains(location) &&
-                (result == null || pair.first > result.first)
-            ) {
-                result = pair
+    private fun List<ClosedRange<Location>>.getLeastEnclosingBorders(location: Location): ClosedRange<Location>? {
+        var result: ClosedRange<Location>? = null
+        for (range in this) {
+            if (location in range && (result == null || range.start > result.start)) {
+                result = range
             }
         }
         return result
     }
 
-    private fun Pair<Location, Location>.contains(location: Location) = location in first..second
-
-    private fun Method.getInlineFunctionBorders(sourceFileName: String): List<Pair<Location, Location>> {
+    private fun Method.getInlineFunctionBorders(sourceFileName: String): List<ClosedRange<Location>> {
         return getInlineFunctionLocalVariables()
             .mapNotNull { it.getBorders() }
-            .filter { it.first.safeSourceName() == sourceFileName }
+            .filter { it.start.safeSourceName() == sourceFileName }
             .toList()
     }
 
@@ -387,7 +381,7 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
         }
 
         if (psiFile is ClsFileImpl) {
-            val decompiledPsiFile = psiFile.readAction { it.decompiledPsiFile }
+            val decompiledPsiFile = runReadAction { psiFile.decompiledPsiFile }
             if (decompiledPsiFile is KtClsFile && runReadAction { sourcePosition.line } == -1) {
                 val className = JvmFileClassUtil.getFileClassInternalName(decompiledPsiFile)
                 return myDebugProcess.virtualMachineProxy.classesByName(className)
@@ -465,7 +459,10 @@ internal fun Method.getInlineFunctionNamesAndBorders(): Map<LocalVariable, Close
     return getInlineFunctionLocalVariables()
         .mapNotNull {
             val borders = it.getBorders()
-            if (borders === null) null else it to borders.first..borders.second
+            if (borders == null)
+                null
+            else
+                it to borders
         }
         .toMap()
 }
@@ -486,14 +483,7 @@ fun Location.getClassName(): String? {
     return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.replace('/', '.')
 }
 
-private fun LocalVariable.getBorders(): Pair<Location, Location>? {
-    val variable = this.safeAs<LocalVariableImpl>() ?: return null
-    return Pair(variable.scopeStart, variable.scopeEnd)
-}
 
-inline fun <U, V> U.readAction(crossinline f: (U) -> V): V {
-    return runReadAction { f(this) }
-}
 
 private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<ReferenceType> {
     val vmProxy = virtualMachineProxy

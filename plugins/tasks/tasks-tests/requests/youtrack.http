@@ -13,7 +13,7 @@ Accept: application/json
 Authorization: Bearer {{token}}
 
 ### Single issue
-GET https://yt-ij-integration-tests.myjetbrains.com/youtrack/api/issues/TEST-1?fields={{issue-fields}}
+GET https://yt-ij-integration-tests.myjetbrains.com/youtrack/api/issues/TEST-6?fields={{issue-fields}}
 Accept: application/json
 Authorization: Bearer {{token}}
 
@@ -59,5 +59,21 @@ Authorization: Bearer {{token}}
   ]
 }
 
+### Fetch time tracking records
+GET https://yt-ij-integration-tests.myjetbrains.com/youtrack/api/issues/TEST-6/timeTracking/workItems
+Accept: application/json
+Authorization: Bearer {{token}}
 
+### Post a time tracking record
+POST https://yt-ij-integration-tests.myjetbrains.com/youtrack/api/issues/TEST-6/timeTracking/workItems
+Accept: application/json
+Authorization: Bearer {{token}}
+Content-Type: application/json
 
+{
+  "usesMarkdown": true,
+  "text": "I keep on testing *samples*.",
+  "duration": {
+    "minutes": 10
+  }
+}

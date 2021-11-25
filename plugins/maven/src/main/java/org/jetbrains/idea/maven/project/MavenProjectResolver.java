@@ -31,9 +31,11 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.*;
 
 public class MavenProjectResolver {
+  public static final Key<Collection<MavenArtifact>> UNRESOLVED_ARTIFACTS = new Key<>("Unresolved Artifacts");
 
   private final MavenProjectsTree myTree;
   private final Project myProject;
@@ -79,6 +81,7 @@ public class MavenProjectResolver {
       catch (Throwable t) {
         MavenConfigParseException cause = findParseException(t);
         if (cause != null) {
+
           MavenLog.LOG.warn("Cannot parse maven config", cause);
         }
         else {
@@ -129,7 +132,12 @@ public class MavenProjectResolver {
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(project)
       .resolveProject(generalSettings, embedder, files, explicitProfiles, myTree.getProjectLocator());
 
-    MavenUtil.notifySyncForUnresolved(project, results);
+    Set<MavenArtifact> unresolvedArtifacts = MavenUtil.getUnresolvedArtifacts(results);
+    if (!unresolvedArtifacts.isEmpty()) {
+      MavenUtil.notifySyncForUnresolved(project, unresolvedArtifacts);
+    }
+    context.putUserData(UNRESOLVED_ARTIFACTS, unresolvedArtifacts);
+
     for (MavenProjectReaderResult result : results) {
       MavenProject mavenProjectCandidate = null;
       for (MavenProject mavenProject : mavenProjects) {
@@ -157,47 +165,41 @@ public class MavenProjectResolver {
     }
   }
 
-  public void resolvePlugins(@NotNull Project project,
-                             @NotNull MavenProject mavenProject,
-                             @NotNull NativeMavenProjectHolder nativeMavenProject,
-                             @NotNull MavenEmbeddersManager embeddersManager,
-                             @NotNull MavenConsole console,
-                             @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+  public Map<MavenPlugin, @Nullable Path> resolvePlugins(@NotNull Project project,
+                                                         @NotNull MavenProject mavenProject,
+                                                         @NotNull NativeMavenProjectHolder nativeMavenProject,
+                                                         @NotNull MavenEmbeddersManager embeddersManager,
+                                                         @NotNull MavenConsole console,
+                                                         @NotNull MavenProgressIndicator process,
+                                                         boolean reportUnresolvedToSyncConsole) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(mavenProject, MavenEmbeddersManager.FOR_PLUGINS_RESOLVE);
     embedder.customizeForResolve(console, process);
     embedder.clearCachesFor(mavenProject.getMavenId());
 
-    Set<File> filesToRefresh = new HashSet<>();
-
+    Set<Path> filesToRefresh = new HashSet<>();
+    Map<MavenPlugin, @Nullable Path> unresolvedPlugins = new HashMap<>();
     try {
       process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
 
-      Map<MavenPlugin, File> unresolvedPlugins = new HashMap<>();
+
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
 
-        File file = MavenUtil.getRepositoryParentFile(project, each.getMavenId());
         Collection<MavenArtifact> artifacts = embedder.resolvePlugin(each, mavenProject.getRemoteRepositories(), nativeMavenProject, false);
 
         for (MavenArtifact artifact : artifacts) {
-          File pluginJar = artifact.getFile();
-          File pluginDir = pluginJar.getParentFile();
+          Path pluginJar = artifact.getFile().toPath();
+          Path pluginDir = pluginJar.getParent();
           if (pluginDir != null) {
             filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
           }
         }
         if (artifacts.isEmpty() && myProject != null) {
-          unresolvedPlugins.put(each, file);
+          unresolvedPlugins.put(each, MavenUtil.getRepositoryParentFile(project, each.getMavenId()));
         }
       }
-      if (!unresolvedPlugins.isEmpty()) {
-        Collection<File> files = unresolvedPlugins.values();
-        CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
-        for (MavenPlugin mavenPlugin : unresolvedPlugins.keySet()) {
-          MavenProjectsManager.getInstance(myProject)
-            .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
-            .showBuildIssue(mavenPlugin.getMavenId().getKey(), fix);
-        }
+      if(reportUnresolvedToSyncConsole) {
+        reportUnresolvedPlugins(unresolvedPlugins);
       }
 
       mavenProject.resetCache();
@@ -205,10 +207,23 @@ public class MavenProjectResolver {
     }
     finally {
       if (filesToRefresh.size() > 0) {
-        LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+        LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh);
       }
 
       embeddersManager.release(embedder);
+    }
+    return unresolvedPlugins;
+  }
+
+  private void reportUnresolvedPlugins(Map<MavenPlugin, @Nullable Path> unresolvedPlugins) {
+    if (!unresolvedPlugins.isEmpty()) {
+      Collection<@Nullable Path> files = unresolvedPlugins.values();
+      CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
+      for (MavenPlugin mavenPlugin : unresolvedPlugins.keySet()) {
+        MavenProjectsManager.getInstance(myProject)
+          .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
+          .showBuildIssue(mavenPlugin.getMavenId().getKey(), fix);
+      }
     }
   }
 
@@ -276,7 +291,7 @@ public class MavenProjectResolver {
 
   @NotNull
   private MultiMap<File, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
-    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()));
+    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()).toFile());
   }
 
   public void executeWithEmbedder(@NotNull MavenProject mavenProject,
@@ -299,12 +314,14 @@ public class MavenProjectResolver {
   public static void showNotificationInvalidConfig(@NotNull Project project, @Nullable MavenProject mavenProject, String message) {
     VirtualFile configFile = mavenProject == null ? null : MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
     if (configFile != null) {
-      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, RunnerBundle.message("maven.invalid.config.file.with.link", message), NotificationType.ERROR)
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, RunnerBundle.message("maven.invalid.config.file.with.link", message),
+                       NotificationType.ERROR)
         .setListener((notification, event) -> FileEditorManager.getInstance(project).openFile(configFile, true))
         .notify(project);
     }
     else {
-      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", RunnerBundle.message("maven.invalid.config.file", message), NotificationType.ERROR)
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", RunnerBundle.message("maven.invalid.config.file", message),
+                       NotificationType.ERROR)
         .notify(project);
     }
   }

@@ -16,7 +16,7 @@ import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
 import com.intellij.util.castSafelyTo
 
-class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
+open class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
 
   override fun documentationTarget(editor: Editor, file: PsiFile, lookupElement: LookupElement): DocumentationTarget? {
     val symbolTargets = (lookupElement.`object` as? Pointer<*>)
@@ -24,7 +24,7 @@ class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocu
       ?.castSafelyTo<Symbol>()
       ?.let { symbolDocumentationTargets(file.project, listOf(it)) }
     if (symbolTargets != null && symbolTargets.isNotEmpty()) {
-      return symbolTargets.get(0)
+      return symbolTargets.first()
     }
     val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
                         ?: return null

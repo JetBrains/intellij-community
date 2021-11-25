@@ -2174,4 +2174,22 @@ class A {
   }
 }"""
   }
+
+  void 'test IDEA-280481'() {
+    testHighlighting '''
+def output = \'\'
+for (something5 in something4) {
+  [].eachLine { line ->
+      if (line) {
+          def (line_number) = line
+          output = output + line_number
+      }
+  }
+  output = "${output}" 
+}
+new File('').withWriter('utf-8') {
+    writer -> writer.write(output)
+}
+'''
+  }
 }

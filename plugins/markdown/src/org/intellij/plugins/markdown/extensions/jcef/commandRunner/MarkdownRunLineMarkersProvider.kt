@@ -6,10 +6,10 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
@@ -17,21 +17,17 @@ import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.hasType
 
 class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
 
-  private var commandRunnerExtension: CommandRunnerExtension.Provider? = null
-  init {
-    commandRunnerExtension = MarkdownExtensionsUtil.findBrowserExtensionProvider<CommandRunnerExtension.Provider>()
-  }
-
-  private fun commandRunnerExtensionEnabled(): Boolean {
-    return commandRunnerExtension?.isEnabled ?: false
+  private fun commandRunnerExtensionEnabled(project: Project): Boolean {
+    return MarkdownSettings.getInstance(project).isRunnerEnabled
   }
 
   override fun getInfo(element: PsiElement): Info? {
-    if (!commandRunnerExtensionEnabled() || !element.isValid) {
+    if (!commandRunnerExtensionEnabled(element.project) || !element.isValid) {
       return null
     }
     if (element.hasType(MarkdownTokenTypes.FENCE_LANG)) {
@@ -40,17 +36,17 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
         return processBlock(lang, element)
       }
     }
+    val inCodeSpan = (element.hasType(MarkdownTokenTypes.BACKTICK)
+                      && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
+                      && element.parent.firstChild == element)
     if (!(element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)
-          || (element.hasType(MarkdownTokenTypes.BACKTICK)
-              && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
-              && element.parent.firstChild == element)
-         )) {
+          || inCodeSpan)) {
       return null
     }
 
-    val dir = element.containingFile.virtualFile.parent.path
+    val dir = element.containingFile.virtualFile.parent?.path ?: return null
     val text = getText(element)
-    if (!matches(element.project, dir, true, text)) {
+    if (!matches(element.project, dir, true, text, allowRunConfigurations = inCodeSpan)) {
       return null
     }
 
@@ -74,12 +70,13 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
       val text = getContent(element.parent as MarkdownCodeFenceImpl, false)
         ?.fold(StringBuilder()) { acc, psiElement -> acc.append(psiElement.text) }
         .toString()
-      val dir = element.containingFile.virtualFile.parent.path
-      return Info(AllIcons.RunConfigurations.TestState.Run_run, { runner.title() }, object : AnAction() {
+      val dir = element.containingFile.virtualFile.parent?.path ?: return null
+      val runAction = object : AnAction({ runner.title() }, AllIcons.RunConfigurations.TestState.Run_run) {
         override fun actionPerformed(e: AnActionEvent) {
           runner.run(text, e.project!!, dir, DefaultRunExecutor.getRunExecutorInstance())
         }
-      })
+      }
+      return Info(AllIcons.RunConfigurations.TestState.Run_run, { runner.title() }, runAction)
     }
     return null
   }
@@ -93,4 +90,3 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
     return ""
   }
 }
-// todo: merge same line markers

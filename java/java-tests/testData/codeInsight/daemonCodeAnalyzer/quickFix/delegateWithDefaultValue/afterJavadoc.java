@@ -3,7 +3,7 @@ class Test {
     /**  
    */
   void foo() {
-      foo();
+      foo(0);
   }
 
     /**

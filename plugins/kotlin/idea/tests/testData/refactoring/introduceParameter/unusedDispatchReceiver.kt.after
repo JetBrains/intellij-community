@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // WITH_DEFAULT_VALUE: false
 class A(val n: Int) {
     fun foo(i: Int): Int {

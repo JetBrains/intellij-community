@@ -194,8 +194,10 @@ public class DirDiffPanel implements Disposable, DataProvider {
     final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, myDiffPanel);
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbar toolbar = actionManager.createActionToolbar("DirDiff", actions, true);
+    toolbar.setTargetComponent(myTable);
     registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
+
     if (model.isOperationsEnabled()) {
       final JBLabel label = new JBLabel(DiffBundle.message("use.space.button.or.mouse.click"), SwingConstants.CENTER);
       label.setForeground(UIUtil.getInactiveTextColor());

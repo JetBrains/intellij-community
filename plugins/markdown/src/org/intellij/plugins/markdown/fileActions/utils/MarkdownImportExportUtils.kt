@@ -44,7 +44,7 @@ object MarkdownImportExportUtils {
 
     val previewEditor = MarkdownActionUtil.findMarkdownPreviewEditor(event)
     if (previewEditor == null) {
-      MarkdownNotifier.notifyIfConvertFailed(
+      MarkdownNotifier.showErrorNotification(
         project,
         MarkdownBundle.message("markdown.export.validation.failure.msg", fileType)
       )
@@ -116,7 +116,7 @@ object MarkdownImportExportUtils {
       }
 
       override fun onThrowable(error: Throwable) {
-        MarkdownNotifier.notifyIfConvertFailed(project, "[${vFileToImport.name}] ${error.localizedMessage}")
+        MarkdownNotifier.showErrorNotification(project, "[${vFileToImport.name}] ${error.localizedMessage}")
       }
 
       override fun onSuccess() {
@@ -124,7 +124,7 @@ object MarkdownImportExportUtils {
           OpenFileAction.openFile(createdFilePath, project)
         }
         else {
-          MarkdownNotifier.notifyIfConvertFailed(project, "[${vFileToImport.name}] ${output.stderrLines.joinToString("\n")}")
+          MarkdownNotifier.showErrorNotification(project, "[${vFileToImport.name}] ${output.stderrLines.joinToString("\n")}")
         }
       }
     }.queue()
@@ -166,7 +166,7 @@ object MarkdownImportExportUtils {
   }
 
   fun notifyAndRefreshIfExportSuccess(file: File, project: Project) {
-    MarkdownNotifier.notifyOfSuccessfulExport(
+    MarkdownNotifier.showInfoNotification(
       project,
       MarkdownBundle.message("markdown.export.success.msg", file.name)
     )

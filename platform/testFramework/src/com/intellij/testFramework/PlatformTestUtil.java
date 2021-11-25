@@ -152,7 +152,7 @@ public final class PlatformTestUtil {
    */
   public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
                                         @NotNull Project project,
-                                        @NotNull List<T> newExtensions,
+                                        @NotNull List<? extends T> newExtensions,
                                         @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable, true);
   }
@@ -178,27 +178,28 @@ public final class PlatformTestUtil {
     return print(tree, path,  withSelection, printInfo, null);
   }
 
-  public static @NotNull String print(@NotNull JTree tree, boolean withSelection, @Nullable Predicate<String> nodePrintCondition) {
+  public static @NotNull String print(@NotNull JTree tree, boolean withSelection, @Nullable Predicate<? super String> nodePrintCondition) {
     return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
-  private static String print(JTree tree,
-                              TreePath path,
+  @NotNull
+  private static String print(@NotNull JTree tree,
+                              @NotNull TreePath path,
                               boolean withSelection,
                               @Nullable Queryable.PrintInfo printInfo,
-                              @Nullable Predicate<String> nodePrintCondition) {
+                              @Nullable Predicate<? super String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
     printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return String.join("\n", strings);
   }
 
-  private static void printImpl(JTree tree,
-                                TreePath path,
-                                Collection<String> strings,
+  private static void printImpl(@NotNull JTree tree,
+                                @NotNull TreePath path,
+                                @NotNull Collection<? super String> strings,
                                 int level,
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
-                                @Nullable Predicate<String> nodePrintCondition) {
+                                @Nullable Predicate<? super String> nodePrintCondition) {
     Object pathComponent = path.getLastPathComponent();
     Object userObject = TreeUtil.getUserObject(pathComponent);
     String nodeText = toString(userObject, printInfo);
@@ -435,8 +436,7 @@ public final class PlatformTestUtil {
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
                                    "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
-                                   "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue() +
-                                   "\n invocatorWtQueue=" + LaterInvocator.getLaterInvocatorWtQueue()
+                                   "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue()
           );
         }
       }
@@ -1060,7 +1060,7 @@ public final class PlatformTestUtil {
   public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
     @NotNull RunConfiguration runConfiguration,
     @NotNull String executorId,
-    @Nullable Consumer<RunContentDescriptor> contentDescriptorProcessor)
+    @Nullable Consumer<? super RunContentDescriptor> contentDescriptorProcessor)
     throws InterruptedException {
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     assertNotNull("Unable to find executor: " + executorId, executor);

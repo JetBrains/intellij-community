@@ -1,5 +1,5 @@
 // IS_APPLICABLE: true
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'p1' is never used
 // AFTER-WARNING: Parameter 'p2' is never used
 

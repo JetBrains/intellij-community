@@ -7,12 +7,10 @@ import com.intellij.codeInsight.hints.*;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
-import com.intellij.codeInsight.hints.presentation.SequencePresentation;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.BlockInlayPriority;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -28,16 +26,15 @@ import java.util.List;
 
 import static com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector.CLASS_LOCATION;
 import static com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector.METHOD_LOCATION;
-import static com.intellij.codeInsight.hints.InlayHintsProviderKt.CODE_VISION_GROUP;
+import static com.intellij.codeInsight.hints.InlayHintsUtilsKt.addCodeVisionElement;
 
 public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVisionSettings> {
   private static final String CODE_LENS_ID = "JavaLens";
   private static final SettingsKey<JavaCodeVisionSettings> KEY = new SettingsKey<>(CODE_LENS_ID);
 
-  @NotNull
   @Override
-  public String getGroupId() {
-    return CODE_VISION_GROUP;
+  public @NotNull InlayGroup getGroup() {
+    return InlayGroup.CODE_VISION_GROUP;
   }
 
   interface InlResult {
@@ -58,8 +55,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
       @Override
       public boolean collect(@NotNull PsiElement element, @NotNull Editor editor, @NotNull InlayHintsSink sink) {
         if (!(element instanceof PsiMember) || element instanceof PsiTypeParameter) return true;
-        PsiElement prevSibling = element.getPrevSibling();
-        if (!(prevSibling instanceof PsiWhiteSpace && prevSibling.textContains('\n'))) return true;
+        if (!isFirstInLine(element)) return true;
         PsiMember member = (PsiMember)element;
         if (member.getName() == null) return true;
 
@@ -142,22 +138,25 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
         }
 
         if (!hints.isEmpty()) {
-          PresentationFactory factory = getFactory();
-          Document document = editor.getDocument();
           int offset = getAnchorOffset(element);
-          int line = document.getLineNumber(offset);
-          int startOffset = document.getLineStartOffset(line);
-          int column = offset - startOffset;
-          List<InlayPresentation> presentations = new SmartList<>();
-          presentations.add(factory.textSpacePlaceholder(column, true));
+
           for (InlResult inlResult : hints) {
-            presentations.add(createPresentation(factory, element, editor, inlResult));
-            presentations.add(factory.textSpacePlaceholder(1, true));
+            InlayPresentation presentation = createPresentation(getFactory(), element, editor, inlResult);
+            int priority = inlResult.getCaseId() == JavaCodeVisionConfigurable.USAGES_CASE_ID
+                           ? BlockInlayPriority.CODE_VISION_USAGES
+                           : BlockInlayPriority.CODE_VISION_INHERITORS;
+
+            addCodeVisionElement(sink, editor, offset, priority, presentation);
           }
-          SequencePresentation shiftedPresentation = new SequencePresentation(presentations);
-          sink.addBlockElement(startOffset, true, true, BlockInlayPriority.CODE_VISION, shiftedPresentation);
         }
         return true;
+      }
+
+      private boolean isFirstInLine(PsiElement element) {
+        PsiElement prevSibling = element.getPrevSibling();
+        return ((prevSibling instanceof PsiWhiteSpace &&
+                  (prevSibling.textContains('\n') || prevSibling.getTextRange().getStartOffset() == 0)) ||
+                 element.getTextRange().getStartOffset() == 0);
       }
     };
   }

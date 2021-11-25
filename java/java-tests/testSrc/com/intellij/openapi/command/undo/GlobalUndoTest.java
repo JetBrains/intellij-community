@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -1252,7 +1252,12 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     final Document document1 = FileDocumentManager.getInstance().getDocument(file1);
     final Document document2 = FileDocumentManager.getInstance().getDocument(file2);
 
-    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2);
+    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2) {
+      @Override
+      public @NotNull VirtualFile getFile() {
+        return file1;
+      }
+    };
 
     UndoManager undoManager = UndoManager.getInstance(myProject);
 
@@ -1399,7 +1404,12 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     UndoManager undoManager = UndoManager.getInstance(myProject);
 
-    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2);
+    Mock.MyFileEditor fileEditor = new Mock.MyFileEditor(document1, document2) {
+      @Override
+      public @NotNull VirtualFile getFile() {
+        return file1;
+      }
+    };
 
     assertTrue(undoManager.isUndoAvailable(fileEditor));
 

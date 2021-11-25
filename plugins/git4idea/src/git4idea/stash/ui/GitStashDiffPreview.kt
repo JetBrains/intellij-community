@@ -13,8 +13,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
@@ -23,15 +21,15 @@ import java.beans.PropertyChangeListener
 import java.util.stream.Stream
 import javax.swing.JTree
 
-abstract class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInEditor: Boolean, parentDisposable: Disposable) :
-  ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
+abstract class GitStashDiffPreview(project: Project,
+                                   private val tree: ChangesTree,
+                                   private val isInEditor: Boolean,
+                                   parentDisposable: Disposable)
+  : ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
 
   val toolbarWrapper get() = myToolbarWrapper
 
   init {
-    if (!isInEditor) {
-      myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    }
     tree.addSelectionListener(Runnable {
       updatePreviewLater(false)
     }, this)
@@ -42,6 +40,10 @@ abstract class GitStashDiffPreview(project: Project, private val tree: ChangesTr
     Disposer.register(parentDisposable, this)
 
     updatePreviewLater(false)
+  }
+
+  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
+    return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
   private fun updatePreviewLater(modelUpdateInProgress: Boolean) {
@@ -61,8 +63,6 @@ abstract class GitStashDiffPreview(project: Project, private val tree: ChangesTr
   override fun selectChange(change: Wrapper) {
     VcsLogChangesBrowser.selectObjectWithTag(tree, change.userObject, change.tag)
   }
-
-  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean = false
 
   private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
     return StreamEx.of(treeModelData.nodesStream()).select(ChangesBrowserChangeNode::class.java).map {

@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.completion.OffsetKey
-import com.intellij.codeInsight.completion.OffsetMap
-import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.*
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
@@ -18,7 +15,8 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.handlers.CastReceiverInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
-import org.jetbrains.kotlin.idea.completion.smart.isProbableKeyword
+import org.jetbrains.kotlin.idea.completion.smart.KeywordProbability
+import org.jetbrains.kotlin.idea.completion.smart.keywordProbability
 import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -79,13 +77,9 @@ val NOT_IMPORTED_KEY = Key<Unit>("NOT_IMPORTED_KEY")
 
 fun LookupElement.suppressAutoInsertion() = AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(this)
 
-fun LookupElement.withReceiverCast(): LookupElement {
-    return object : LookupElementDecorator<LookupElement>(this) {
-        override fun handleInsert(context: InsertionContext) {
-            super.handleInsert(context)
-            CastReceiverInsertHandler.postHandleInsert(context, delegate)
-        }
-    }
+fun LookupElement.withReceiverCast(): LookupElement = LookupElementDecorator.withDelegateInsertHandler(this) { context, element ->
+    element.handleInsert(context)
+    CastReceiverInsertHandler.postHandleInsert(context, element)
 }
 
 val KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY = Key<Unit>("KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY")
@@ -233,7 +227,7 @@ fun returnExpressionItems(bindingContext: BindingContext, position: KtElement): 
                 }
 
                 if (returnIsProbableInPosition()) {
-                    blockBodyReturns.forEach { it.isProbableKeyword = true }
+                    blockBodyReturns.forEach { it.keywordProbability = KeywordProbability.HIGH }
                 }
 
                 result.addAll(blockBodyReturns)
@@ -300,6 +294,9 @@ private fun KtDeclarationWithBody.returnType(bindingContext: BindingContext): Ko
     return callable.returnType
 }
 
+internal val PsiElement.isInsideKtTypeReference: Boolean
+    get() = getNonStrictParentOfType<KtTypeReference>() != null
+
 private fun Name?.labelNameToTail(): String = if (this != null) "@" + render() else ""
 
 private fun createKeywordElementWithSpace(
@@ -310,11 +307,7 @@ private fun createKeywordElementWithSpace(
 ): LookupElement {
     val element = createKeywordElement(keyword, tail, lookupObject)
     return if (addSpaceAfter) {
-        object : LookupElementDecorator<LookupElement>(element) {
-            override fun handleInsert(context: InsertionContext) {
-                WithTailInsertHandler.SPACE.handleInsert(context, delegate)
-            }
-        }
+        element.withInsertHandler(WithTailInsertHandler.SPACE.asPostInsertHandler)
     } else {
         element
     }
@@ -392,11 +385,7 @@ private open class BaseTypeLookupElement(type: KotlinType, baseLookupElement: Lo
     override fun equals(other: Any?) = other is BaseTypeLookupElement && fullText == other.fullText
     override fun hashCode() = fullText.hashCode()
 
-    override fun renderElement(presentation: LookupElementPresentation) {
-        delegate.renderElement(presentation)
-    }
-
-    override fun handleInsert(context: InsertionContext) {
+    override fun getDelegateInsertHandler(): InsertHandler<LookupElement> = InsertHandler { context, _ ->
         context.document.replaceString(context.startOffset, context.tailOffset, fullText)
         context.tailOffset = context.startOffset + fullText.length
         shortenReferences(context, context.startOffset, context.tailOffset)
@@ -409,7 +398,7 @@ fun shortenReferences(
     endOffset: Int,
     shortenReferences: ShortenReferences = ShortenReferences.DEFAULT
 ) {
-    PsiDocumentManager.getInstance(context.project).commitAllDocuments()
+    PsiDocumentManager.getInstance(context.project).commitDocument(context.document)
     val file = context.file as KtFile
     val element = file.findElementAt(startOffset)?.parentsWithSelf?.find {
         it.startOffset == startOffset && it.endOffset == endOffset
@@ -476,7 +465,7 @@ fun LookupElement.decorateAsStaticMember(
             val addMemberImport = descriptorIsCallableExtension || importFromSameParentIsPresent()
 
             if (addMemberImport) {
-                psiDocumentManager.commitAllDocuments()
+                psiDocumentManager.commitDocument(context.document)
                 ImportInsertHelper.getInstance(context.project).importDescriptor(file, memberDescriptor)
                 psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
             }

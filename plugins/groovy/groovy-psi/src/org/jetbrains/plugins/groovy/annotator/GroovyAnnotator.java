@@ -478,7 +478,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     if (!needExplicitSuperCall) return;
     final String qName = superClass.getQualifiedName();
 
-    if (typeDefinition.getConstructors().length == 0) {
+    if (!(superClass instanceof GrRecordDefinition) && typeDefinition.getConstructors().length == 0) {
       final TextRange range = GrHighlightUtil.getClassHeaderTextRange(typeDefinition);
       holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName))
         .range(range)
@@ -989,9 +989,6 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     final PsiElement parent = modifierList.getParent();
     if (parent instanceof GrMethod) {
       checkMethodDefinitionModifiers(myHolder, (GrMethod)parent);
-    }
-    else if (parent instanceof GrTypeDefinition) {
-      checkTypeDefinitionModifiers(myHolder, (GrTypeDefinition)parent);
     }
     else if (parent instanceof GrVariableDeclaration) {
       GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
@@ -1607,7 +1604,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         .withFix(new ChangeExtendsImplementsQuickFix(typeDefinition)).create();
     }
     else {
-      checkReferenceList(myHolder, implementsClause, IS_INTERFACE, GroovyBundle.message("no.class.expected.here"), new ChangeExtendsImplementsQuickFix(typeDefinition));
+      checkReferenceList(myHolder, implementsClause, IS_INTERFACE, GroovyBundle.message("no.class.expected.here"),
+                         typeDefinition instanceof GrRecordDefinition ? null : new ChangeExtendsImplementsQuickFix(typeDefinition));
       checkForWildCards(myHolder, implementsClause);
     }
   }
@@ -2045,6 +2043,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("non.static.classes.not.allowed")).range(typeDefinition.getNameIdentifierGroovy()).create();
       }
     }
+    checkTypeDefinitionModifiers(holder, typeDefinition);
 
     checkDuplicateClass(typeDefinition, holder);
 

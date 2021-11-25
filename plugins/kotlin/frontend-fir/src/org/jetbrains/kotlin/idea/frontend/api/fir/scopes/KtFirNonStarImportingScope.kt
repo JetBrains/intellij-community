@@ -59,7 +59,7 @@ internal class KtFirNonStarImportingScope(
     }
 
     override fun getClassifierNames(): Set<Name> = withValidityAssertion {
-        imports.mapNotNullTo((hashSetOf())) { it.relativeClassName?.shortName() }
+        imports.mapNotNullTo(hashSetOf()) { it.relativeClassName?.shortName() }
     }
 
     override val isDefaultImportingScope: Boolean = withValidityAssertion { firScope is FirDefaultSimpleImportingScope }

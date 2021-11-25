@@ -24,6 +24,10 @@ private val LOG: Logger
 
 private val checkCompatibilityFlag = System.getProperty("idea.plugin.check.compatibility", "true") != "false"
 
+fun Iterable<IdeaPluginDescriptor>.toPluginSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
+
+fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull { PluginManagerCore.findPlugin(it) }
+
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                                @JvmField val path: Path,

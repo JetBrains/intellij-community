@@ -1,5 +1,5 @@
 // "Round using roundToLong()" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(f: Float) {
     bar(f<caret>)
 }

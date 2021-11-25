@@ -7,14 +7,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -26,6 +24,7 @@ import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction.FileRevisionProvider;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -47,8 +46,7 @@ public class CompareWithLocalDialog {
                                  @NotNull @NlsContexts.DialogTitle String dialogTitle,
                                  @NotNull LocalContent localContent,
                                  @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader) {
-    if (Registry.is("vcs.show.affected.files.as.tab") &&
-        ModalityState.current() == ModalityState.NON_MODAL) {
+    if (AbstractVcsHelperImpl.showCommittedChangesAsTab()) {
       showAsTab(project, dialogTitle, localContent, changesLoader);
     }
     else {

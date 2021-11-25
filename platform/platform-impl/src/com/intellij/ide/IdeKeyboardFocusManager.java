@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.application.AccessToken;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
@@ -38,7 +37,12 @@ class IdeKeyboardFocusManager extends DefaultKeyboardFocusManager {
 
   @Override
   public boolean dispatchEvent(AWTEvent e) {
-    try (AccessToken ignore = EventQueue.isDispatchThread() ? IdeEventQueue.startActivity(e) : null) {
+    if (EventQueue.isDispatchThread()) {
+      boolean[] result = {false};
+      IdeEventQueue.performActivity(e, () -> result[0] = super.dispatchEvent(e));
+      return result[0];
+    }
+    else {
       return super.dispatchEvent(e);
     }
   }

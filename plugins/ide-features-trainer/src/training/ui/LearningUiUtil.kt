@@ -6,14 +6,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import org.fest.swing.core.GenericTypeMatcher
-import org.fest.swing.core.Robot
-import org.fest.swing.exception.ComponentLookupException
-import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.fixture.ContainerFixture
-import org.fest.swing.timing.Condition
-import org.fest.swing.timing.Pause
-import org.fest.swing.timing.Timeout
+import org.assertj.swing.core.GenericTypeMatcher
+import org.assertj.swing.core.Robot
+import org.assertj.swing.exception.ComponentLookupException
+import org.assertj.swing.exception.WaitTimedOutError
+import org.assertj.swing.timing.Condition
+import org.assertj.swing.timing.Pause
+import org.assertj.swing.timing.Timeout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Rectangle
@@ -160,7 +159,7 @@ object LearningUiUtil {
    *
    * @throws ComponentLookupException if desired component haven't been found under the container (gets from receiver) in specified timeout
    */
-  inline fun <reified ComponentType : Component, ContainerComponentType : Container> ContainerFixture<ContainerComponentType>.findComponentWithTimeout(
+  inline fun <reified ComponentType : Component, ContainerComponentType : Container> IftTestContainerFixture<ContainerComponentType>.findComponentWithTimeout(
     timeout: Timeout = Timeout.timeout(10, TimeUnit.SECONDS),
     crossinline finderFunction: (ComponentType) -> Boolean = { true }): ComponentType {
     try {

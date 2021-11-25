@@ -10,7 +10,7 @@ public class Test {
                 return y.byteValue();
             case String r && x > 0:
                 return ((String) obj).length();
-            case Character c:
+            case Character character:
                 return ((BigDecimal) obj).hashCode();
             case null:
             default:

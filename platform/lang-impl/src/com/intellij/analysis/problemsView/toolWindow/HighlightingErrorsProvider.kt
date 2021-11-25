@@ -2,9 +2,7 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.ProblemsCollector
-import com.intellij.analysis.problemsView.ProblemsListener
-import com.intellij.analysis.problemsView.ProblemsProvider
-import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl
+import com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl
 import com.intellij.lang.annotation.HighlightSeverity.ERROR
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project

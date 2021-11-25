@@ -2,6 +2,7 @@
 package git4idea.log
 
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.CommitId
@@ -21,11 +22,16 @@ internal class NonCancellableGitCommitSignatureLoader(project: Project) : GitCom
   override fun requestData(indicator: ProgressIndicator, commits: List<CommitId>, onChange: (Map<CommitId, GitCommitSignature>) -> Unit) {
     executor.execute {
       for ((root, hashes) in commits.groupBy({ it.root }, { it.hash })) {
-        val signatures = loadCommitSignatures(root, hashes)
+        try {
+          val signatures = loadCommitSignatures(root, hashes)
 
-        val result = signatures.mapKeys { CommitId(it.key, root) }
-        runInEdt {
-          if (!indicator.isCanceled) onChange(result)
+          val result = signatures.mapKeys { CommitId(it.key, root) }
+          runInEdt {
+            if (!indicator.isCanceled) onChange(result)
+          }
+        }
+        catch (e: Exception) {
+          thisLogger().info("Failed to load commit signatures", e)
         }
       }
     }

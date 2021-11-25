@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -169,14 +169,76 @@ public class VarVersionsProcessor {
             VarType secondType = mapExprentMinTypes.get(secondPair);
 
             if (firstType.equals(secondType) ||
-                (firstType.equals(VarType.VARTYPE_NULL) && secondType.type == CodeConstants.TYPE_OBJECT) ||
-                (secondType.equals(VarType.VARTYPE_NULL) && firstType.type == CodeConstants.TYPE_OBJECT)) {
-
+                firstType.equals(VarType.VARTYPE_NULL) && secondType.type == CodeConstants.TYPE_OBJECT ||
+                secondType.equals(VarType.VARTYPE_NULL) && firstType.type == CodeConstants.TYPE_OBJECT ||
+                firstType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER && secondType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
               VarType firstMaxType = mapExprentMaxTypes.get(firstPair);
               VarType secondMaxType = mapExprentMaxTypes.get(secondPair);
               VarType type = firstMaxType == null ? secondMaxType :
                              secondMaxType == null ? firstMaxType :
                              VarType.getCommonMinType(firstMaxType, secondMaxType);
+
+              if (firstType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER && secondType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+                switch (secondType.type) {
+                  case CodeConstants.TYPE_INT:
+                    type = VarType.VARTYPE_INT;
+                    break;
+                  case CodeConstants.TYPE_SHORT:
+                    type = firstType.type == CodeConstants.TYPE_INT ? null : VarType.VARTYPE_SHORT;
+                    break;
+                  case CodeConstants.TYPE_CHAR:
+                    switch (firstType.type) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_CHAR;
+                    }
+                    break;
+                  case CodeConstants.TYPE_SHORTCHAR:
+                    switch (firstType.type) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                      case CodeConstants.TYPE_CHAR:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_SHORTCHAR;
+                    }
+                    break;
+                  case CodeConstants.TYPE_BYTECHAR:
+                    switch (firstType.type) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                      case CodeConstants.TYPE_CHAR:
+                      case CodeConstants.TYPE_SHORTCHAR:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_BYTECHAR;
+                    }
+                    break;
+                  case CodeConstants.TYPE_BYTE:
+                    switch (firstType.type) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                      case CodeConstants.TYPE_CHAR:
+                      case CodeConstants.TYPE_SHORTCHAR:
+                      case CodeConstants.TYPE_BYTECHAR:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_BYTE;
+                    }
+                    break;
+                }
+                if (type == null) {
+                  continue;
+                }
+                firstType = type;
+                mapExprentMinTypes.put(firstPair, type);
+              }
 
               mapExprentMaxTypes.put(firstPair, type);
               mapMergedVersions.put(secondPair, firstPair.version);

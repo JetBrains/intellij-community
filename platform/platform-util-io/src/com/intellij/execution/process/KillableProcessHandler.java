@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -183,19 +185,14 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * See <a href="https://github.com/microsoft/WSL/issues/7301">WSL issue #7301</a> for the details.
    */
   private boolean isWslProcess() {
-    ProcessHandle.Info info = null;
-    try {
-      info = myProcess.info();
-    }
-    catch (UnsupportedOperationException ignored) {
-    }
-    String command = info != null ? info.command().orElse(null) : null;
-    boolean wsl = command != null && PathUtil.getFileName(command).equals("wsl.exe");
+    List<String> command = getProcessService().getCommand(myProcess);
+    String executable = ContainerUtil.getFirstItem(command);
+    boolean wsl = executable != null && PathUtil.getFileName(executable).equals("wsl.exe");
     if (wsl) {
-      LOG.info("Skipping WinP graceful termination for " + command + " due to incorrect work with WSL processes");
+      LOG.info("WinP graceful termination does not work for WSL process: " + command);
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("[graceful termination with WinP] WSL process: " + wsl  + ", executable: " + command + ", info: " + info);
+      LOG.debug("[graceful termination with WinP] WSL process: " + wsl + ", process: " + myProcess.getClass() + ", command: " + command);
     }
     return wsl;
   }
@@ -214,7 +211,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          return getProcessService().sendWinProcessCtrlC(myProcess);
+          return WinProcessTerminator.terminateWinProcessGracefully(this, getProcessService());
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {

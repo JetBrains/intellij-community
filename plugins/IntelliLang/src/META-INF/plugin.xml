@@ -68,6 +68,10 @@
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
 
     <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.references.InjectedReferencesContributor"/>
+    <psi.symbolReferenceProvider implementationClass="org.intellij.plugins.intelliLang.references.LanguageReferenceContributor"
+                                 hostLanguage=""
+                                 hostElementClass="com.intellij.psi.PsiComment"
+                                 targetClass="org.intellij.plugins.intelliLang.references.LanguageSymbol"/>
     <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>
     <localInspection implementationClass="org.intellij.plugins.intelliLang.references.InjectedReferencesInspection"
                      enabledByDefault="true" level="ERROR"

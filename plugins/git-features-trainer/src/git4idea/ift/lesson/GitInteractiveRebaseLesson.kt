@@ -28,14 +28,15 @@ import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.rebase.interactive.dialog.GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY
-import org.fest.swing.core.MouseButton
-import org.fest.swing.data.TableCell
-import org.fest.swing.fixture.JTableFixture
+import org.assertj.swing.core.MouseButton
+import org.assertj.swing.data.TableCell
+import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.InputEvent
@@ -68,10 +69,13 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.introduction"))
       highlightLatestCommitsFromBranch(branchName, sequenceLength = 5, highlightInside = false, usePulsation = true)
       proceedLink()
+      showWarningIfGitWindowClosed()
     }
 
     var commitHashToHighlight: Hash? = null
+    lateinit var clickCommitTaskId: TaskContext.TaskId
     task {
+      clickCommitTaskId = taskId
       before {
         LearningUiHighlightingManager.clearHighlights()
         val vcsData = VcsProjectLog.getInstance(project).dataManager
@@ -92,7 +96,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       triggerByUiComponentAndHighlight { ui: ActionMenuItem ->
         ui.text == interactiveRebaseMenuItemText
       }
-      showWarningIfGitWindowClosed()
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           val table: VcsLogGraphTable = findComponentWithTimeout(defaultTimeout)
@@ -108,7 +112,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.choose.interactive.rebase",
                                     strong(interactiveRebaseMenuItemText)))
       trigger(it)
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(clickCommitTaskId, delayMillis = defaultRestoreDelay)
       test {
         ideFrame {
           jMenuItem { item: ActionMenuItem -> item.text == interactiveRebaseMenuItemText }.click()
@@ -234,7 +238,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     text(GitLessonsBundle.message("git.interactive.rebase.congratulations"))
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY, backupRebaseDialogLocation)
     backupRebaseDialogLocation = null
   }
@@ -285,4 +289,9 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     val index = getCommitIndex(hash, roots.single())
     return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index)
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.interactive.rebase.help.link"),
+         LessonUtil.getHelpLink("edit-project-history.html#interactive-rebase")),
+  )
 }

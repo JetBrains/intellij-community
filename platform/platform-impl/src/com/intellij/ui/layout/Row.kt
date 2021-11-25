@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
@@ -29,13 +30,19 @@ interface BaseBuilder {
 }
 
 interface RowBuilder : BaseBuilder {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun createChildRow(label: JLabel? = null,
                      isSeparated: Boolean = false,
                      noGrid: Boolean = false,
                      @Nls title: String? = null): Row
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun createNoteOrCommentRow(component: JComponent): Row
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun checkBoxGroup(@Nls title: String?, body: () -> Unit)
 
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
@@ -52,14 +59,20 @@ interface RowBuilder : BaseBuilder {
    * Creates row with a huge gap after it, that can be used to group related components.
    * Think of [titledRow] without a title and additional indent.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun blockRow(init: Row.() -> Unit): Row
 
   /**
    * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun hideableRow(@NlsContexts.Separator title: String, incrementsIndent: Boolean = true, init: Row.() -> Unit): Row
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun hideableRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row {
     return hideableRow(title = title, true, init)
   }
@@ -71,6 +84,8 @@ interface RowBuilder : BaseBuilder {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun commentRow(@Nls text: String) {
     createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1, true))
   }
@@ -78,6 +93,8 @@ interface RowBuilder : BaseBuilder {
   /**
    * Creates a nested UI DSL panel, with a grid which is independent of this pane.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun nestedPanel(@NlsContexts.BorderTitle title: String? = null, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel>
 
   fun onGlobalApply(callback: () -> Unit): Row
@@ -133,12 +150,16 @@ abstract class Row : Cell(), RowBuilder {
   /**
    * Specifies the right alignment for the component if the cell is larger than the component plus its gaps.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   inline fun right(init: Row.() -> Unit) {
     alignRight()
     init()
   }
 
   @PublishedApi
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   internal abstract fun alignRight()
 
   abstract fun largeGapAfter()
@@ -155,12 +176,17 @@ abstract class Row : Cell(), RowBuilder {
   }
 
   @PublishedApi
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   internal abstract fun createRow(label: String?): Row
 
   @PublishedApi
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)
 
   // backward compatibility
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
   operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
     invoke(constraints = *constraints, growPolicy = growPolicy).withLeftGap(gapLeft)
@@ -176,6 +202,8 @@ fun Row.enableIf(predicate: ComponentPredicate) {
   predicate.addListener { enabled = it }
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun Row.enableSubRowsIf(predicate: ComponentPredicate) {
   subRowsEnabled = predicate()
   predicate.addListener { subRowsEnabled = it }

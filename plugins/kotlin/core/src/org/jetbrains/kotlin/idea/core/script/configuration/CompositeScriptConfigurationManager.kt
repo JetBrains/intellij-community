@@ -69,6 +69,10 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
         plugins
     }
 
+    fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
+        notifier.updateScriptDependenciesIfNeeded(file)
+    }
+
     fun tryGetScriptDefinitionFast(locationId: String): ScriptDefinition? {
         return classpathRoots.getLightScriptInfo(locationId)?.definition
     }
@@ -83,7 +87,12 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
         // check that this script should be loaded later in special way (e.g. gradle project import)
         // (and not for syntactic diff files)
         if (!OutsidersPsiFileSupport.isOutsiderFile(virtualFile)) {
-            if (plugins.any { it.isApplicable(virtualFile) }) return null
+            val plugin = plugins.firstOrNull { it.isApplicable(virtualFile) }
+            if (plugin != null) {
+                return plugin.getConfigurationImmediately(virtualFile)?.also {
+                    updater.addConfiguration(virtualFile, it)
+                }
+            }
         }
 
         return default.getOrLoadConfiguration(virtualFile, preloadedKtFile)

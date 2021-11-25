@@ -31,8 +31,8 @@ public class ReferencesPanel extends JPanel {
   @NotNull private List<VcsRef> myReferences;
   @NotNull protected MultiMap<VcsRefType, VcsRef> myGroupedVisibleReferences;
 
-  public ReferencesPanel() {
-    this(new WrappedFlowLayout(JBUIScale.scale(H_GAP), JBUIScale.scale(V_GAP)), -1);
+  public ReferencesPanel(int limit) {
+    this(new WrappedFlowLayout(JBUIScale.scale(H_GAP), JBUIScale.scale(V_GAP)), limit);
   }
 
   public ReferencesPanel(LayoutManager layout, int limit) {

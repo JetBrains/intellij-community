@@ -2,7 +2,6 @@
 package com.intellij.slicer
 
 import com.intellij.lang.LangBundle
-import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.JTextField
@@ -14,6 +13,6 @@ class SliceBackwardAdditionalUi {
       field = textField()
         .horizontalAlign(HorizontalAlign.FILL)
         .component
-    }.topGap(TopGap.MEDIUM)
+    }
   }
 }

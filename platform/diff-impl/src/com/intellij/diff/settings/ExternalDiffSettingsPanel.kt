@@ -30,6 +30,12 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import javax.swing.JComponent
 
@@ -40,57 +46,64 @@ class ExternalDiffSettingsPanel {
     val settings = ExternalDiffSettings.instance
 
     panel = panel {
-      blockRow {
-        val diffEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.diff.tool"), settings::isDiffEnabled)
-        enableSubRowsIf(diffEnabled.component.selected)
-
-        row {
+      lateinit var diffEnabled: Cell<JBCheckBox>
+      row {
+        diffEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.diff.tool"))
+          .bindSelected(settings::isDiffEnabled)
+      }
+      indent {
+        panel {
           row(DiffBundle.message("settings.external.diff.path.to.executable")) {
-            executableTextField(DiffBundle.message("select.external.diff.program.dialog.title"),
-                                { settings.diffExePath }, { settings.diffExePath = it })
+            executableTextField(DiffBundle.message("select.external.diff.program.dialog.title"))
+              .bindText(settings::diffExePath)
+              .horizontalAlign(HorizontalAlign.FILL)
           }
           row(DiffBundle.message("settings.external.diff.parameters")) {
-            textField(settings::diffParameters)
+            textField()
+              .bindText(settings::diffParameters)
+              .horizontalAlign(HorizontalAlign.FILL)
           }
           row {
-            checkBox(DiffBundle.message("settings.external.diff.use.by.default"), settings::isDiffDefault)
+            checkBox(DiffBundle.message("settings.external.diff.use.by.default"))
+              .bindSelected(settings::isDiffDefault)
           }
           row {
-            cell(isFullWidth = true) {
-              button(DiffBundle.message("settings.external.diff.test.diff")) { showTestDiff() }
-              button(DiffBundle.message("settings.external.diff.test.three.side.diff")) { showTestThreeDiff() }
-                .withLargeLeftGap()
-            }
+            button(DiffBundle.message("settings.external.diff.test.diff")) { showTestDiff() }
+            button(DiffBundle.message("settings.external.diff.test.three.side.diff")) { showTestThreeDiff() }
           }
-        }
+        }.enabledIf(diffEnabled.component.selected)
       }
 
-      blockRow {
-        val mergeEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.merge.tool"), settings::isMergeEnabled)
-        enableSubRowsIf(mergeEnabled.component.selected)
-
-        row {
+      lateinit var mergeEnabled: Cell<JBCheckBox>
+      row {
+        mergeEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.merge.tool"))
+          .bindSelected(settings::isMergeEnabled)
+      }.topGap(TopGap.MEDIUM)
+      indent {
+        panel {
           row(DiffBundle.message("settings.external.diff.path.to.executable.merge")) {
-            executableTextField(DiffBundle.message("select.external.merge.program.dialog.title"),
-                                { settings.mergeExePath }, { settings.mergeExePath = it })
+            executableTextField(DiffBundle.message("select.external.merge.program.dialog.title"))
+              .bindText(settings::mergeExePath)
+              .horizontalAlign(HorizontalAlign.FILL)
           }
           row(DiffBundle.message("settings.external.diff.parameters.merge")) {
-            textField(settings::mergeParameters)
+            textField()
+              .bindText(settings::mergeParameters)
+              .horizontalAlign(HorizontalAlign.FILL)
           }
           row {
-            checkBox(DiffBundle.message("settings.external.diff.trust.process.exit.code"), settings::isMergeTrustExitCode)
+            checkBox(DiffBundle.message("settings.external.diff.trust.process.exit.code"))
+              .bindSelected(settings::isMergeTrustExitCode)
           }
           row {
-            cell(isFullWidth = true) {
-              button(DiffBundle.message("settings.external.diff.test.merge")) { showTestMerge() }
-            }
+            button(DiffBundle.message("settings.external.diff.test.merge")) { showTestMerge() }
           }
-        }
+        }.enabledIf(mergeEnabled.component.selected)
       }
 
       row {
         comment(DiffBundle.message("settings.diff.tools.parameters"))
-      }
+      }.topGap(TopGap.MEDIUM)
     }
   }
 
@@ -110,13 +123,10 @@ class ExternalDiffSettingsPanel {
     panel.reset()
   }
 
-  private fun Cell.executableTextField(title: @NlsContexts.DialogTitle String,
-                                       modelGet: () -> String,
-                                       modelSet: (String) -> Unit): CellBuilder<TextFieldWithBrowseButton> {
+  private fun Row.executableTextField(title: @NlsContexts.DialogTitle String): Cell<TextFieldWithBrowseButton> {
     val pathField = TextFieldWithBrowseButton()
     pathField.addBrowseFolderListener(title, null, null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor())
-    return pathField().withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText,
-                                   PropertyBinding(modelGet, modelSet))
+    return cell(pathField)
   }
 
   private fun showTestDiff() {

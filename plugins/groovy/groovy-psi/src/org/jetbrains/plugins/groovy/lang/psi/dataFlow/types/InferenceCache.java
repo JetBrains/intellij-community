@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Pair;
@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.util.LazyKt.lazyPub;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.findReadDependencies;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.getDefUseMaps;
@@ -44,7 +43,7 @@ final class InferenceCache {
   private final Lazy<Object2IntMap<VariableDescriptor>> myVarIndexes;
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
-  private final AtomicReference<List<TypeDfaState>> myVarTypes;
+  private final AtomicReference<List<Map<VariableDescriptor, DFAType>>> myVarTypes;
   private final SharedVariableInferenceCache mySharedVariableInferenceCache;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
 
@@ -55,9 +54,9 @@ final class InferenceCache {
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
     mySharedVariableInferenceCache = new SharedVariableInferenceCache(scope);
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
-    List<TypeDfaState> noTypes = new ArrayList<>();
+    List<Map<VariableDescriptor, DFAType>> noTypes = new ArrayList<>();
     for (int i = 0; i < myFlow.length; i++) {
-      noTypes.add(new TypeDfaState());
+      noTypes.add(new HashMap<>());
     }
     myVarTypes = new AtomicReference<>(noTypes);
   }
@@ -70,14 +69,14 @@ final class InferenceCache {
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly) {
-    return getInferredType(descriptor, instruction, mixinOnly, emptyMap());
+    return getInferredType(descriptor, instruction, mixinOnly, null);
   }
 
   @Nullable
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly,
-                          @NotNull Map<VariableDescriptor, DFAType> initialState) {
+                          @Nullable Map<VariableDescriptor, DFAType> initialState) {
     if (myTooComplexInstructions.contains(instruction)) return null;
 
     final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
@@ -85,8 +84,8 @@ final class InferenceCache {
       return null;
     }
 
-    TypeDfaState cache = myVarTypes.get().get(instruction.num());
-    if (!cache.containsVariable(descriptor)) {
+    Map<VariableDescriptor, DFAType> cache = myVarTypes.get().get(instruction.num());
+    if (!cache.containsKey(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
       DFAFlowInfo flowInfo = collectFlowInfo(definitionMaps, instruction, descriptor, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo, initialState);
@@ -113,10 +112,10 @@ final class InferenceCache {
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
                                             @NotNull DFAFlowInfo flowInfo,
-                                            @NotNull Map<VariableDescriptor, DFAType> initialTypes) {
+                                            @Nullable Map<VariableDescriptor, DFAType> initialTypes) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager());
     final TypeDfaState initialState = computeInitialState(flowInfo, new InitialTypeProvider(owner, initialTypes));
-    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager(), initialState);
+    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager(), initialState, myVarIndexes.getValue());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }
 
@@ -137,7 +136,7 @@ final class InferenceCache {
 
   @Nullable
   DFAType getCachedInferredType(@NotNull VariableDescriptor descriptor, @NotNull Instruction instruction) {
-    return myVarTypes.get().get(instruction.num()).getVariableType(descriptor);
+    return myVarTypes.get().get(instruction.num()).get(descriptor);
   }
 
   private DFAFlowInfo collectFlowInfo(@NotNull List<DefinitionMap> definitionMaps,
@@ -180,7 +179,8 @@ final class InferenceCache {
     return new DFAFlowInfo(interestingInstructions,
                            acyclicInstructions,
                            interestingDescriptors,
-                           dependentOnSharedVariables);
+                           dependentOnSharedVariables,
+                           myVarIndexes.getValue());
   }
 
   private List<Pair<Instruction, Set<? extends VariableDescriptor>>> getClosureInstructionsWithForeigns() {
@@ -240,7 +240,7 @@ final class InferenceCache {
 
   private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult,
                               Set<Instruction> storingInstructions) {
-    myVarTypes.accumulateAndGet(dfaResult, (oldState, newState) -> addDfaResult(oldState, newState, storingInstructions));
+    myVarTypes.getAndUpdate((currentState) -> addDfaResult(currentState, dfaResult, storingInstructions, myVarIndexes.getValue()));
   }
 
   @NotNull SharedVariableInferenceCache getSharedVariableInferenceCache() {
@@ -248,14 +248,15 @@ final class InferenceCache {
   }
 
   @NotNull
-  private static List<TypeDfaState> addDfaResult(@NotNull List<TypeDfaState> oldTypes,
-                                                 @NotNull List<TypeDfaState> dfaResult,
-                                                 @NotNull Set<Instruction> storingInstructions) {
-    List<TypeDfaState> newTypes = new ArrayList<>(oldTypes);
+  private static List<Map<VariableDescriptor, DFAType>> addDfaResult(@NotNull List<Map<VariableDescriptor, DFAType>> oldTypes,
+                                                                     @NotNull List<TypeDfaState> dfaResult,
+                                                                     @NotNull Set<Instruction> storingInstructions,
+                                                                     @NotNull Object2IntMap<VariableDescriptor> varIndexes) {
+    List<Map<VariableDescriptor, DFAType>> newTypes = new ArrayList<>(oldTypes);
     Set<Integer> interestingInstructionNums = storingInstructions.stream().map(Instruction::num).collect(Collectors.toSet());
     for (int i = 0; i < dfaResult.size(); i++) {
       if (interestingInstructionNums.contains(i)) {
-        newTypes.set(i, newTypes.get(i).mergeWith(dfaResult.get(i)));
+        newTypes.set(i, TypesSemilattice.mergeForCaching(newTypes.get(i), dfaResult.get(i), varIndexes));
       }
     }
     return newTypes;

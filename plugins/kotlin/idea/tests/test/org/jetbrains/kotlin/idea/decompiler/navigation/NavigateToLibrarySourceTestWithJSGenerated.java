@@ -33,6 +33,11 @@ public class NavigateToLibrarySourceTestWithJSGenerated extends AbstractNavigate
         runTest("testData/decompiler/navigation/usercode/Constructor.kt");
     }
 
+    @TestMetadata("DefaultParameter.kt")
+    public void testDefaultParameter() throws Exception {
+        runTest("testData/decompiler/navigation/usercode/DefaultParameter.kt");
+    }
+
     @TestMetadata("Enum.kt")
     public void testEnum() throws Exception {
         runTest("testData/decompiler/navigation/usercode/Enum.kt");

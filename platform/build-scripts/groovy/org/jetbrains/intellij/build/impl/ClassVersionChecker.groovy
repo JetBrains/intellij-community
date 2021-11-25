@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.trace.Span
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
@@ -14,6 +15,9 @@ import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.ForkJoinTask
+import java.util.function.Supplier
 import java.util.zip.ZipException
 
 /**
@@ -43,8 +47,8 @@ final class ClassVersionChecker {
 
   private final List<Rule> myRules
   private final Set<Rule> myUsedRules = new HashSet<>()
-  private int myJars, myClasses
-  private List<String> myErrors
+  private int checkedJarCount, checkedClassCount
+  private Collection<String> errors
 
   ClassVersionChecker(Map<String, String> config) {
     myRules = config.entrySet().collect { new Rule(it.key, classVersion(it.value)) }.sort { -it.path.length() }.toList()
@@ -54,54 +58,80 @@ final class ClassVersionChecker {
   }
 
   static int classVersion(String version) {
-    version.isEmpty() ? -1 : JavaVersion.parse(version).feature + 44  // 1.1 = 45
+    return version.isEmpty() ? -1 : JavaVersion.parse(version).feature + 44  // 1.1 = 45
   }
 
-  void checkVersions(BuildContext buildContext, Path root) {
-    buildContext.messages.block("Verifying class file versions") {
-      myJars = 0
-      myClasses = 0
-      myErrors = []
+  void checkVersions(BuildContext context, Path root) {
+    context.messages.block(TracerManager.spanBuilder("verify class file versions")
+                                  .setAttribute("ruleCount", myRules.size())
+                                  .setAttribute("root", root.toString()), new Supplier<Void>() {
+      @Override
+      Void get() {
+        checkedJarCount = 0
+        checkedClassCount = 0
+        errors = new ConcurrentLinkedQueue<>()
+        if (Files.isDirectory(root)) {
+          visitDirectory(root, "")
+        }
+        else {
+          visitFile(root, "")
+        }
 
-      buildContext.messages.info("Checking with ${myRules.size()} rules in ${root} ...")
-      if (Files.isDirectory(root)) {
-        visitDirectory(root, "")
-      }
-      else {
-        visitFile(root, "")
-      }
+        if (checkedClassCount == 0) {
+          context.messages.error("No classes found under $root - please check the configuration")
+        }
 
-      if (myClasses == 0) {
-        buildContext.messages.error("No classes found under ${root} - please check the configuration")
-      }
-      buildContext.messages.info("Done, checked ${myClasses} classes in ${myJars} JARs")
-      if (!myErrors.isEmpty()) {
-        myErrors.each { buildContext.messages.warning(it) }
-        buildContext.messages.error("Failed with ${myErrors.size()} problems")
-      }
+        int errorCount = errors.size()
+        Span.current()
+          .setAttribute("checkedClasses", checkedClassCount)
+          .setAttribute("checkedJarCount", checkedJarCount)
+          .setAttribute("errorCount", errorCount)
+        if (errorCount != 0) {
+          for (String error in errors) {
+            context.messages.warning(error)
+          }
+          context.messages.error("Failed with $errorCount problems")
+        }
 
-      List<Rule> unusedRules = myRules - myUsedRules
-      if (!unusedRules.isEmpty()) {
-        buildContext.messages.error("Class version check rules for the following paths don't match any files, probably entries in " +
-                                    "ProductProperties::versionCheckerConfig are out of date:\n${unusedRules.collect { it.path }.join("\n")}")
+        List<Rule> unusedRules = myRules - myUsedRules
+        if (!unusedRules.isEmpty()) {
+          context.messages.error("Class version check rules for the following paths don't match any files, probably entries in " +
+                                      "ProductProperties::versionCheckerConfig are out of date:\n${String.join("\n", unusedRules.collect { it.path })}")
+        }
+        return null
       }
-    }
+    })
   }
 
   private void visitDirectory(Path directory, String relPath) {
+    List<ForkJoinTask<?>> tasks = new ArrayList<>()
     DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)
     try {
       for (Path child in dirStream) {
         if (Files.isDirectory(child)) {
-          visitDirectory(child, join(relPath, '/', child.fileName.toString()))
+          tasks.add(createVisitDirectory(child, join(relPath, '/', child.fileName.toString())))
         }
         else {
-          visitFile(child, join(relPath, '/', child.fileName.toString()))
+          tasks.add(createVisitFileTask(child, join(relPath, '/', child.fileName.toString())))
         }
       }
     }
     finally {
       dirStream.close()
+    }
+
+    ForkJoinTask.invokeAll(tasks)
+  }
+
+  private ForkJoinTask<?> createVisitDirectory(Path directory, String relPath) {
+    return ForkJoinTask.adapt {
+      visitDirectory(directory, relPath)
+    }
+  }
+
+  private ForkJoinTask<?> createVisitFileTask(Path file, String relPath) {
+    return ForkJoinTask.adapt {
+      visitFile(file, relPath)
     }
   }
 
@@ -122,7 +152,7 @@ final class ClassVersionChecker {
   // use ZipFile - avoid a lot of small lookups to read entry headers (ZipFile uses central directory)
   private void visitZip(String zipPath, String zipRelPath, ZipFile file) {
     try {
-      myJars++
+      checkedJarCount++
       Enumeration<ZipArchiveEntry> entries = file.entries
       while (entries.hasMoreElements()) {
         ZipArchiveEntry entry = entries.nextElement()
@@ -155,18 +185,18 @@ final class ClassVersionChecker {
   }
 
   private void checkVersion(String path, InputStream stream) {
-    myClasses++
+    checkedClassCount++
 
     DataInputStream dataStream = new DataInputStream(stream)
     if (dataStream.readInt() != (int)0xCAFEBABE || dataStream.skipBytes(3) != 3) {
-      myErrors.add(path + ": invalid .class file header")
+      errors.add(path + ": invalid .class file header")
       return
     }
 
     int major = dataStream.readUnsignedByte()
     if (major == 196653) major = 45
     if (major < 44 || major >= 100) {
-      myErrors.add(path + ": suspicious .class file version: " + major)
+      errors.add(path + ": suspicious .class file version: " + major)
       return
     }
 
@@ -174,7 +204,7 @@ final class ClassVersionChecker {
     myUsedRules.add(rule)
     int expected = rule.version
     if (expected > 0 && major > expected) {
-      myErrors.add(path + ": .class file version " + major + " exceeds expected " + expected)
+      errors.add(path + ": .class file version " + major + " exceeds expected " + expected)
     }
   }
 }

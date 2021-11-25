@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,32 +122,37 @@ public class AutoPopupControllerImpl extends AutoPopupController {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-      PsiFile file = documentManager.getPsiFile(editor.getDocument());
-      if (file == null) return;
-
-      if (!documentManager.isUncommited(editor.getDocument())) {
-        file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+      int offset = editor.getCaretModel().getOffset();
+      ReadAction.nonBlocking(() -> {
+        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        PsiFile file = documentManager.getPsiFile(editor.getDocument());
         if (file == null) return;
-      }
 
-      Runnable request = () -> {
-        if (!myProject.isDisposed() && !editor.isDisposed() &&
-            UIUtil.isShowing(editor.getContentComponent())) {
-          int lbraceOffset = editor.getCaretModel().getOffset() - 1;
-          try {
-            PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-            if (file1 != null) {
-              ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
-                                              true, null);
+        if (!documentManager.isUncommited(editor.getDocument())) {
+          file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+          if (file == null) return;
+        }
+
+        Runnable request = () -> {
+          if (!myProject.isDisposed() && !editor.isDisposed() &&
+              UIUtil.isShowing(editor.getContentComponent())) {
+            int lbraceOffset = offset - 1;
+            try {
+              PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+              if (file1 != null) {
+                ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
+                                                true, null);
+              }
+            }
+            catch (IndexNotReadyException ignored) { //anything can happen on alarm
             }
           }
-          catch (IndexNotReadyException ignored) { //anything can happen on alarm
-          }
-        }
-      };
+        };
 
-      addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
+        addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
+      }).expireWith(myAlarm)
+        .expireWhen(() -> editor.isDisposed() || editor.getCaretModel().getOffset() != offset)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 

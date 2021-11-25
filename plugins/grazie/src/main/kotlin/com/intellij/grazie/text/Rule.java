@@ -45,6 +45,13 @@ public abstract class Rule {
   public abstract @NotNull String getDescription();
 
   /**
+   * @return a description text to honor while searching the rule settings
+   */
+  public @NotNull String getSearchableDescription() {
+    return getDescription();
+  }
+
+  /**
    * An optional URL describing the rule match in more detail.
    * Typically, it points to a dictionary or grammar website with explanations and examples.
    */

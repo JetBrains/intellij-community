@@ -1,5 +1,5 @@
 // DISABLE-ERRORS
-// WITH_RUNTIME
+// WITH_STDLIB
 
 val someNullableString: String? = ""
 fun String.bar(): Result<String> = Result.success("")

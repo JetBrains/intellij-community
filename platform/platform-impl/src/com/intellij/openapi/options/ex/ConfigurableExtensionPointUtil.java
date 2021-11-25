@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
@@ -201,8 +201,9 @@ public final class ConfigurableExtensionPointUtil {
   private static void addGroup(@NotNull Map<String, Node<SortedConfigurableGroup>> tree, Project project,
                                String groupId, List<? extends Configurable> configurables, ResourceBundle alternative) {
     boolean root = "root".equals(groupId);
+    ConfigurableGroupEP ep = root ? null : ConfigurableGroupEP.find(groupId);
     String id = "configurable.group." + groupId;
-    ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
+    ResourceBundle bundle = ep != null ? ep.getResourceBundle() : getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
       bundle = OptionsBundle.INSTANCE.getResourceBundle();
       if (!root) {
@@ -211,7 +212,6 @@ public final class ConfigurableExtensionPointUtil {
         id = "configurable.group." + groupId;
       }
     }
-    ConfigurableGroupEP ep = root ? null : ConfigurableGroupEP.find(groupId);
     Node<SortedConfigurableGroup> node = Node.get(tree, groupId);
     if (node.myValue == null) {
       if (ep != null) {
@@ -525,6 +525,17 @@ public final class ConfigurableExtensionPointUtil {
         id = idDefault;
       }
       return id;
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void patch(@NotNull String id, @Nullable String parentId, @Nullable String bundle) {
+    ConfigurableGroupEP ep = ConfigurableGroupEP.find(id);
+    if (ep != null) {
+      ep.parentId = parentId;
+      if (bundle != null) {
+        ep.bundle = bundle;
+      }
     }
   }
 }

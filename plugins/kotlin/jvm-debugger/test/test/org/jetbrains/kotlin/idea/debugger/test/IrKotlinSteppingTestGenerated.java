@@ -231,6 +231,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/stepInto/inlineClass.kt");
         }
 
+        @TestMetadata("inlineFunctionLambdaOneLine.kt")
+        public void testInlineFunctionLambdaOneLine() throws Exception {
+            runTest("testData/stepping/stepInto/inlineFunctionLambdaOneLine.kt");
+        }
+
         @TestMetadata("inlineOnly.kt")
         public void testInlineOnly() throws Exception {
             runTest("testData/stepping/stepInto/inlineOnly.kt");
@@ -430,6 +435,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("inlineFunInPropertyGetter.kt")
         public void testInlineFunInPropertyGetter() throws Exception {
             runTest("testData/stepping/stepOver/inlineFunInPropertyGetter.kt");
+        }
+
+        @TestMetadata("inlineFunctionLambdaOneLine.kt")
+        public void testInlineFunctionLambdaOneLine() throws Exception {
+            runTest("testData/stepping/stepOver/inlineFunctionLambdaOneLine.kt");
         }
 
         @TestMetadata("inlineFunctionSameLines.kt")
@@ -1069,6 +1079,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("anonymousFunAsParamDefaultValue.kt")
         public void testAnonymousFunAsParamDefaultValue() throws Exception {
             runTest("testData/stepping/custom/anonymousFunAsParamDefaultValue.kt");
+        }
+
+        @TestMetadata("breakpointOnWhen.kt")
+        public void testBreakpointOnWhen() throws Exception {
+            runTest("testData/stepping/custom/breakpointOnWhen.kt");
         }
 
         @TestMetadata("constantConditions.kt")

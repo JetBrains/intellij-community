@@ -3,14 +3,13 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.DiffPreview;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.content.Content;
@@ -30,15 +29,15 @@ public class ChangeListViewerDialog extends DialogWrapper {
   public static void show(@NotNull Project project,
                           @Nullable @Nls String title,
                           @NotNull LoadingCommittedChangeListPanel loadingPanel) {
-    show(project, title, loadingPanel, null);
+    show(project, title, loadingPanel, null, AbstractVcsHelperImpl.showCommittedChangesAsTab());
   }
 
   public static void show(@NotNull Project project,
                           @Nullable @Nls String title,
                           @NotNull LoadingCommittedChangeListPanel loadingPanel,
-                          @Nullable BackgroundableActionLock lock) {
-    if (Registry.is("vcs.show.affected.files.as.tab") &&
-        ModalityState.current() == ModalityState.NON_MODAL) {
+                          @Nullable BackgroundableActionLock lock,
+                          boolean showAsTab) {
+    if (showAsTab) {
       showAsTab(project, title, loadingPanel);
     }
     else {

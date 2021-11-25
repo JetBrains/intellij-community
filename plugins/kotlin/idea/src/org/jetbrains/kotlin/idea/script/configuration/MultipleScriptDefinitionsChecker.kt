@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.script.configuration
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -32,7 +33,7 @@ class MultipleScriptDefinitionsChecker(private val project: Project) : EditorNot
     override fun getKey(): Key<EditorNotificationPanel> = KEY
 
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
-        if (file.fileType != KotlinFileType.INSTANCE) return null
+        if (!FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)) return null
 
         val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
 

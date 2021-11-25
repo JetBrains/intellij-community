@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -120,6 +106,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
   public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
+  public boolean NEW_LINE_AFTER_LPAREN_IN_ANNOTATION = false;
+  public boolean RPAREN_ON_NEW_LINE_IN_ANNOTATION = false;
 
   public boolean ALIGN_MULTILINE_TEXT_BLOCKS = false;
 
@@ -160,6 +148,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
    * "record R(String s)"
    */
   public boolean SPACE_WITHIN_RECORD_HEADER = false;
+
+  @WrapConstant
+  public int MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  public boolean ALIGN_TYPES_IN_MULTI_CATCH = true;
 
 
   // region JavaDoc

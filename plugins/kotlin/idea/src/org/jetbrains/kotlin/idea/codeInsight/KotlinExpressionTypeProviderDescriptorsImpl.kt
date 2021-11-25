@@ -52,7 +52,14 @@ class KotlinExpressionTypeProviderDescriptorsImpl : KotlinExpressionTypeProvider
     override fun getInformationHint(element: KtExpression): String {
         val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
 
-        return "<html>${renderExpressionType(element, bindingContext)}</html>"
+        return "<html>${escapeBrackets(renderExpressionType(element, bindingContext))}</html>"
+    }
+
+    @NlsSafe
+    private fun escapeBrackets(string: String): String {
+        return string
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
     }
 
     @NlsSafe

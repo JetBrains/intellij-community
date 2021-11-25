@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'c' is never used
 inline fun <reified T> foo<caret>() = of(T::class.java)
 

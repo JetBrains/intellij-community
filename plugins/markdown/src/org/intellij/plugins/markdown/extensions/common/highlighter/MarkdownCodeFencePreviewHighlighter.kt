@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.common.highlighter
 
+import com.intellij.collaboration.lang.HtmlSyntaxHighlighter
 import com.intellij.lang.Language
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ColorUtil
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
@@ -43,6 +41,7 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   override fun isApplicable(language: String): Boolean {
     return LanguageGuesser.guessLanguageForInjection(language) != null
   }
+
   fun generateHtmlForFile(language: String, raw: String, node: ASTNode, file: VirtualFile): String {
     currentFile.set(file)
     val result = generateHtml(language, raw, node)
@@ -85,7 +84,15 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   }
 
   private fun render(lang: Language, text: String, node: ASTNode): String {
-    val highlightTokens = collectHighlightTokens(lang, text)
+    val highlightTokens = mutableMapOf<IntRange, String>()
+    HtmlSyntaxHighlighter.parseContent(null, lang, text) { content, intRange, color ->
+      if (color != null) {
+        highlightTokens[intRange] = "<span style=\"color:${ColorUtil.toHtmlColor(color)}\">${
+          MarkdownCodeFenceGeneratingProvider.escape(content)
+        }</span>"
+      }
+    }
+
     // Mannually walk over each line and recalculate line offsets
     val baseOffset = MarkdownCodeFenceGeneratingProvider.calcCodeFenceContentBaseOffset(node)
     val lines = ArrayList<String>()
@@ -113,29 +120,6 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
         "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='${it.startOffset}..${it.endOffset}'/>"
       } ?: ""
     )
-  }
-
-  private fun collectHighlightTokens(lang: Language, text: String): Map<IntRange, String> {
-    val file = LightVirtualFile("markdown_temp", text)
-    val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file)
-    val lexer = highlighter.highlightingLexer
-    lexer.start(text)
-    val colorScheme = EditorColorsManager.getInstance().globalScheme
-    // Collect all tokens that needs to be highlighted
-    val highlightTokens = hashMapOf<IntRange, String>()
-    while (lexer.tokenType != null) {
-      val type = lexer.tokenType
-      val highlights = highlighter.getTokenHighlights(type).lastOrNull()
-      val color = highlights?.let {
-        colorScheme.getAttributes(it)?.foregroundColor
-      } ?: highlights?.defaultAttributes?.foregroundColor
-      if (color != null) {
-        highlightTokens[lexer.tokenStart..lexer.tokenEnd] =
-          "<span style=\"color:${ColorUtil.toHtmlColor(color)}\">${MarkdownCodeFenceGeneratingProvider.escape(lexer.tokenText)}</span>"
-      }
-      lexer.advance()
-    }
-    return highlightTokens
   }
 
   private fun IntRange.shift(value: Int): IntRange = (first + value)..(last + value)

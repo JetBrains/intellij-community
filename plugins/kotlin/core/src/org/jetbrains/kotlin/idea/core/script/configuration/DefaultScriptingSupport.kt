@@ -163,13 +163,15 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
     ): Boolean {
         val virtualFile = file.originalFile.virtualFile ?: return false
 
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
+        if (project.isDisposed || !ScriptDefinitionsManager.getInstance(project).isReady()) return false
         val scriptDefinition = file.findScriptDefinition() ?: return false
 
         val (async, sync) = loaders.partition { it.shouldRunInBackground(scriptDefinition) }
 
-        val syncLoader = sync.firstOrNull { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }
-        if (syncLoader == null) {
+        val syncLoader =
+            sync.filter { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }.firstOrNull()
+
+        return if (syncLoader == null) {
             if (!fromCacheOnly) {
                 if (forceSync) {
                     loaders.firstOrNull { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }
@@ -192,9 +194,9 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
                 }
             }
 
-            return false
+            false
         } else {
-            return true
+            true
         }
     }
 
@@ -271,46 +273,46 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
             val newConfiguration = newResult.configuration
             if (newConfiguration == null) {
                 saveReports(file, newResult.reports)
-            } else {
-                val old = getCachedConfigurationState(file)
-                val oldConfiguration = old?.applied?.configuration
-                if (oldConfiguration != null && areSimilar(oldConfiguration, newConfiguration)) {
+                return
+            }
+            val old = getCachedConfigurationState(file)
+            val oldConfiguration = old?.applied?.configuration
+            if (oldConfiguration != null && areSimilar(oldConfiguration, newConfiguration)) {
+                saveReports(file, newResult.reports)
+                file.removeScriptDependenciesNotificationPanel(project)
+                return
+            }
+            val skipNotification = forceSkipNotification
+                    || oldConfiguration == null
+                    || ApplicationManager.getApplication().isUnitTestModeWithoutScriptLoadingNotification
+
+            if (skipNotification) {
+                if (oldConfiguration != null) {
+                    file.removeScriptDependenciesNotificationPanel(project)
+                }
+                saveReports(file, newResult.reports)
+                setAppliedConfiguration(file, newResult, syncUpdate = true)
+                return
+            }
+            scriptingDebugLog(file) {
+                "configuration changed, notification is shown: old = $oldConfiguration, new = $newConfiguration"
+            }
+
+            // restore reports for applied configuration in case of previous error
+            old?.applied?.reports?.let {
+                saveReports(file, it)
+            }
+
+            file.addScriptDependenciesNotificationPanel(
+                newConfiguration, project,
+                onClick = {
                     saveReports(file, newResult.reports)
                     file.removeScriptDependenciesNotificationPanel(project)
-                } else {
-                    val skipNotification = forceSkipNotification
-                            || oldConfiguration == null
-                            || ApplicationManager.getApplication().isUnitTestModeWithoutScriptLoadingNotification
-
-                    if (skipNotification) {
-                        if (oldConfiguration != null) {
-                            file.removeScriptDependenciesNotificationPanel(project)
-                        }
-                        saveReports(file, newResult.reports)
-                        setAppliedConfiguration(file, newResult, syncUpdate = true)
-                    } else {
-                        scriptingDebugLog(file) {
-                            "configuration changed, notification is shown: old = $oldConfiguration, new = $newConfiguration"
-                        }
-
-                        // restore reports for applied configuration in case of previous error
-                        old?.applied?.reports?.let {
-                            saveReports(file, it)
-                        }
-
-                        file.addScriptDependenciesNotificationPanel(
-                            newConfiguration, project,
-                            onClick = {
-                                saveReports(file, newResult.reports)
-                                file.removeScriptDependenciesNotificationPanel(project)
-                                manager.updater.update {
-                                    setAppliedConfiguration(file, newResult)
-                                }
-                            }
-                        )
+                    manager.updater.update {
+                        setAppliedConfiguration(file, newResult)
                     }
                 }
-            }
+            )
         }
     }
 
@@ -441,18 +443,17 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
     }
 
     /**
-     * Load new configuration and suggest to apply it (only if it is changed)
+     * Load new configuration and suggest applying it (only if it is changed)
      */
     fun ensureUpToDatedConfigurationSuggested(file: KtFile, skipNotification: Boolean = false, forceSync: Boolean = false) {
         reloadIfOutOfDate(file, skipNotification, forceSync)
     }
 
     private fun reloadIfOutOfDate(file: KtFile, skipNotification: Boolean = false, forceSync: Boolean = false) {
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return
+        if (!forceSync && !ScriptDefinitionsManager.getInstance(project).isReady()) return
 
         manager.updater.update {
-            val virtualFile = file.originalFile.virtualFile
-            if (virtualFile != null) {
+            file.originalFile.virtualFile?.let { virtualFile ->
                 val state = cache[virtualFile]
                 if (state == null || forceSync || !state.isUpToDate(project, virtualFile, file)) {
                     reloadOutOfDateConfiguration(

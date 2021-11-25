@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -347,13 +348,16 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     });
   }
 
-  private static <T extends Throwable> void runWithDetector(@NotNull FileTypeRegistry.FileTypeDetector detector, @NotNull ThrowableRunnable<T> runnable) throws T {
+  private <T extends Throwable> void runWithDetector(@NotNull FileTypeRegistry.FileTypeDetector detector, @NotNull ThrowableRunnable<T> runnable) throws T {
     Disposable disposable = Disposer.newDisposable();
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, disposable);
+    FileTypeManagerImpl fileTypeManager = myFileTypeManager;
+    fileTypeManager.toLog = true;
     try {
       runnable.run();
     }
     finally {
+      fileTypeManager.toLog = false;
       Disposer.dispose(disposable);
     }
   }
@@ -1398,6 +1402,65 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     finally {
       Disposer.dispose(disposable);
       WriteAction.run(() -> myFileTypeManager.removeAssociatedExtension(PlainTextFileType.INSTANCE, myWeirdExtension));
+    }
+  }
+
+  public void testIsFileOfTypeMustNotQueryAllFileTypesIdentifiableByVirtualFileForPerformanceReasons() throws IOException {
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      AtomicInteger myFileTypeCalledCount = new AtomicInteger();
+      class MyFileTypeIdentifiableByFile extends FakeFileType {
+        @Override public boolean isMyFileType(@NotNull VirtualFile file) { myFileTypeCalledCount.incrementAndGet(); return false; }
+        @Override public @NotNull String getName() { return "myfake"; }
+        @Override public @Nls @NotNull String getDisplayName() { return getName(); }
+        @Override public @NotNull @NlsContexts.Label String getDescription() { return getName(); }
+      }
+      myFileTypeManager.registerFileType(new MyFileTypeIdentifiableByFile(), List.of(), disposable);
+
+      AtomicInteger otherFileTypeCalledCount = new AtomicInteger();
+      class MyOtherFileTypeIdentifiableByFile extends FakeFileType {
+        @Override public boolean isMyFileType(@NotNull VirtualFile file) {
+          otherFileTypeCalledCount.incrementAndGet();
+          return false;
+        }
+        @Override public @NotNull String getName() { return "myotherfake"; }
+        @Override public @Nls @NotNull String getDisplayName() { return getName(); }
+        @Override public @NotNull @NlsContexts.Label String getDescription() { return getName(); }
+      }
+      myFileTypeManager.registerFileType(new MyOtherFileTypeIdentifiableByFile(), List.of(), disposable);
+
+      File f = createTempFile("xx.lkj_lkj_lkj_ljk", "a");
+      VirtualFile virtualFile = getVirtualFile(f);
+
+      FakeVirtualFile vf = new FakeVirtualFile(virtualFile, "myname.myname") {
+        @Override
+        public @NotNull FileType getFileType() {
+          return myFileTypeManager.getFileTypeByFile(this); // otherwise this call will be redirected to FileTypeManger.getInstance() which is not what we are testing
+        }
+
+        @Override
+        public boolean isValid() {
+          return false; //to avoid detect by content
+        }
+      };
+      FileType ft = myFileTypeManager.getFileTypeByFile(vf);
+      assertEquals(UnknownFileType.INSTANCE, ft);
+      // during getFileType() we must check all possible file types
+      assertTrue(myFileTypeCalledCount.toString(), myFileTypeCalledCount.get() > 0);
+      assertTrue(otherFileTypeCalledCount.toString(), otherFileTypeCalledCount.get() > 0);
+
+      myFileTypeCalledCount.set(0);
+      otherFileTypeCalledCount.set(0);
+      assertFalse(myFileTypeManager.isFileOfType(vf, PlainTextFileType.INSTANCE));
+      assertEquals(myFileTypeCalledCount.toString(), 0, myFileTypeCalledCount.get());
+      assertEquals(otherFileTypeCalledCount.toString(), 0, otherFileTypeCalledCount.get());
+
+      assertFalse(myFileTypeManager.isFileOfType(vf, new MyOtherFileTypeIdentifiableByFile()));
+      assertEquals(myFileTypeCalledCount.toString(), 0, myFileTypeCalledCount.get()); // must not call irrelevant file types
+      assertTrue(otherFileTypeCalledCount.toString(), otherFileTypeCalledCount.get() > 0); // must call requested file type
+    }
+    finally {
+      Disposer.dispose(disposable);
     }
   }
 }

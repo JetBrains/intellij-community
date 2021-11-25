@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -77,7 +78,7 @@ public class ConvertSchemaAction extends AnAction {
       }
       if (files.length > 1) {
         for (VirtualFile virtualFile : files) {
-          if (virtualFile.getFileType() != XmlFileType.INSTANCE || getInputType(project, virtualFile) != null) {
+          if (!FileTypeRegistry.getInstance().isFileOfType(virtualFile, XmlFileType.INSTANCE) || getInputType(project, virtualFile) != null) {
             return null;
           }
         }

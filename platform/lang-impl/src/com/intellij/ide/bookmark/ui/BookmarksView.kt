@@ -6,19 +6,17 @@ import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.dnd.DnDSupport
+import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB
-import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.TreeSpeedSearch
@@ -27,7 +25,6 @@ import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
-import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.OpenSourceUtil
@@ -50,7 +47,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   private val structure = BookmarksTreeStructure(this)
   private val model = StructureTreeModel(structure, this)
-  val tree = Tree(AsyncTreeModel(model, this))
+  val tree = DnDAwareTree(AsyncTreeModel(model, this))
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
 
@@ -61,24 +58,29 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     get() = tree.selectionPaths?.mapNotNull { TreeUtil.getAbstractTreeNode(it) }?.ifEmpty { null }
 
   private val previousOccurrence
-    get() = selectedNode?.bookmarkOccurrence?.previous { it.bookmark is LineBookmark }
+    get() = when (val occurrence = selectedNode?.bookmarkOccurrence) {
+      null -> BookmarkOccurrence.lastLineBookmark(project)
+      else -> occurrence.previousLineBookmark()
+    }
 
   private val nextOccurrence
-    get() = selectedNode?.bookmarkOccurrence?.next { it.bookmark is LineBookmark }
+    get() = when (val occurrence = selectedNode?.bookmarkOccurrence) {
+      null -> BookmarkOccurrence.firstLineBookmark(project)
+      else -> occurrence.nextLineBookmark()
+    }
 
 
   override fun dispose() = preview.close()
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Navigatable>())
-      else -> null
-    }
+  override fun getData(dataId: String): Any? = when {
+    PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
+    PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
+    PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
+    else -> null
   }
 
-  override fun getNextOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.next.action.text")
-  override fun getPreviousOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.previous.action.text")
+  override fun getNextOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.next.occurence.action.text")
+  override fun getPreviousOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.previous.occurence.action.text")
 
   override fun hasNextOccurence() = nextOccurrence != null
   override fun hasPreviousOccurence() = previousOccurrence != null
@@ -86,7 +88,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun goNextOccurence() = nextOccurrence?.let { go(it) }
   override fun goPreviousOccurence() = previousOccurrence?.let { go(it) }
   private fun go(occurrence: BookmarkOccurrence): OccurenceNavigator.OccurenceInfo? {
-    select(occurrence.group, occurrence.bookmark).onSuccess { OpenSourceUtil.navigateToSource(true, false, selectedNode) }
+    select(occurrence.group, occurrence.bookmark).onSuccess { navigateToSource(true) }
     return null
   }
 
@@ -163,17 +165,16 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     else {
       preview.close()
       if (autoScroll && (autoScrollToSource.isSelected || openInPreviewTab.isSelected)) {
-        OpenSourceUtil.navigateToSource(false, false, selectedNode)
+        navigateToSource(false)
       }
     }
   }
 
-  /**
-   * Creates an action that navigates to a bookmark by a digit or a letter.
-   */
-  private fun registerActionFor(type: BookmarkType) = LightEditActionFactory
-    .create { BookmarksManager.getInstance(project)?.getBookmark(type)?.run { if (canNavigate()) navigate(true) } }
-    .registerCustomShortcutSet(CustomShortcutSet.fromString(type.mnemonic.toString()), this, this)
+  private fun navigateToSource(requestFocus: Boolean) {
+    val node = selectedNode ?: return
+    val task = Runnable { OpenSourceUtil.navigateToSource(requestFocus, false, node) }
+    ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
+  }
 
   init {
     panel.addToCenter(createScrollPane(tree, true))
@@ -184,17 +185,14 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     tree.isHorizontalAutoScrollingEnabled = false
     tree.isRootVisible = false
     tree.showsRootHandles = true // TODO: fix auto-expand
-    if (isPopup) {
-      BookmarkType.values().forEach { if (it != BookmarkType.DEFAULT) registerActionFor(it) }
-    }
-    else {
-      TreeSpeedSearch(tree)
+    if (!isPopup) {
       val handler = DragAndDropHandler(this)
       DnDSupport.createBuilder(tree)
         .setDisposableParent(this)
         .setBeanProvider(handler::createBean)
         .setDropHandlerWithResult(handler)
         .setTargetChecker(handler)
+        .enableAsNativeTarget()
         .install()
     }
 
@@ -206,6 +204,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       override fun focusGained(event: FocusEvent?) = selectionAlarm.cancelAndRequest()
     })
 
+    TreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)

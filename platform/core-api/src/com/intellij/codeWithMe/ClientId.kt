@@ -1,16 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeWithMe
 
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Processor
+import kotlinx.coroutines.ThreadContextElement
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Function
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * ClientId is a global context class that is used to distinguish the originator of an action in multi-client systems
@@ -38,24 +41,24 @@ data class ClientId(val value: String) {
     /**
      * Default client id for local application
      */
-    val defaultLocalId = ClientId("Host")
+    val defaultLocalId: ClientId = ClientId("Host")
 
     /**
      * Specifies behavior for [ClientId.current]
      */
-    var AbsenceBehaviorValue = AbsenceBehavior.RETURN_LOCAL
+    var AbsenceBehaviorValue: AbsenceBehavior = AbsenceBehavior.RETURN_LOCAL
 
     /**
      * Controls propagation behavior. When false, decorateRunnable does nothing.
      */
     @JvmStatic
-    var propagateAcrossThreads = false
+    var propagateAcrossThreads: Boolean = false
 
     /**
      * The ID considered local to this process. All other IDs (except for null) are considered remote
      */
     @JvmStatic
-    var localId = defaultLocalId
+    var localId: ClientId = defaultLocalId
       private set
 
     /**
@@ -63,7 +66,10 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     val isCurrentlyUnderLocalId: Boolean
-      get() = currentOrNull.isLocal
+      get() {
+        val clientIdValue = getCachedService()?.clientIdValue
+        return clientIdValue == null || clientIdValue == localId.value
+      }
 
     /**
      * Gets the current [ClientId]. Subject to [AbsenceBehaviorValue]
@@ -75,12 +81,20 @@ data class ClientId(val value: String) {
         AbsenceBehavior.THROW -> currentOrNull ?: throw NullPointerException("ClientId not set")
       }
 
+    @JvmStatic
+    @ApiStatus.Internal
+    // optimization method for avoiding allocating ClientId in the hot path
+    fun getCurrentValue(): String {
+      val service = getCachedService()
+      return if (service == null) localId.value else service.clientIdValue ?: localId.value
+    }
+
     /**
      * Gets the current [ClientId]. Can be null if none was set.
      */
     @JvmStatic
     val currentOrNull: ClientId?
-      get() = ClientIdService.tryGetInstance()?.clientIdValue?.let(::ClientId)
+      get() = getCachedService()?.clientIdValue?.let(::ClientId)
 
     /**
      * Overrides the ID that is considered to be local to this process. Can be only invoked once.
@@ -123,7 +137,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     val ClientId?.isValid: Boolean
-      get() = ClientIdService.tryGetInstance()?.isValid(this) ?: true
+      get() = getCachedService()?.isValid(this) ?: true
 
     /**
      * Returns a disposable object associated with the given ID.
@@ -131,7 +145,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     fun ClientId?.toDisposable(): Disposable {
-      return ClientIdService.tryGetInstance()?.toDisposable(this) ?: Disposer.newDisposable()
+      return getCachedService()?.toDisposable(this) ?: Disposer.newDisposable()
     }
 
     /**
@@ -140,7 +154,7 @@ data class ClientId(val value: String) {
     @JvmStatic
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated("Consider using an overload that returns a AccessToken to follow java try-with-resources pattern")
-    fun withClientId(clientId: ClientId?, action: Runnable) = withClientId(clientId) { action.run() }
+    fun withClientId(clientId: ClientId?, action: Runnable): Unit = withClientId(clientId) { action.run() }
 
     /**
      * Computes a value under given [ClientId]
@@ -175,27 +189,41 @@ data class ClientId(val value: String) {
       }
     }
 
-    @JvmStatic
-    fun withClientId(clientId: ClientId?) = object : AccessToken() {
-      private val service = ClientIdService.tryGetInstance()
-      private var oldClientIdValue: String? = null
-
-      init {
-        if (service != null) {
-          val newClientIdValue = if (!service.isValid(clientId)) {
-            LOG.trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
-            null
-          }
-          else clientId?.value
-
-          oldClientIdValue = service.clientIdValue
-          service.clientIdValue = newClientIdValue
-        }
-      }
-
+    class ClientIdAccessToken(val oldClientIdValue: String?) : AccessToken() {
       override fun finish() {
-        service?.clientIdValue = oldClientIdValue
+        getCachedService()?.clientIdValue = oldClientIdValue
       }
+    }
+    @JvmStatic
+    fun withClientId(clientId: ClientId?): AccessToken {
+      if (clientId == null) return AccessToken.EMPTY_ACCESS_TOKEN
+      return withClientId(clientId.value)
+    }
+    @JvmStatic
+    fun withClientId(clientIdValue: String): AccessToken {
+      val service = getCachedService()
+      val oldClientIdValue: String?
+      oldClientIdValue = service?.clientIdValue
+      if (service == null || clientIdValue == oldClientIdValue) return AccessToken.EMPTY_ACCESS_TOKEN
+      val newClientIdValue = if (service.isValid(ClientId(clientIdValue))) clientIdValue
+      else {
+        LOG.trace { "Invalid ClientId $clientIdValue replaced with null at ${Throwable().fillInStackTrace()}" }
+        null
+      }
+
+      service.clientIdValue = newClientIdValue
+      return ClientIdAccessToken(oldClientIdValue)
+    }
+
+    private var service:ClientIdService? = null
+    private fun getCachedService(): ClientIdService? {
+      var cached = service
+      if (cached != null) return cached
+      cached = ClientIdService.tryGetInstance()
+      if (cached != null) {
+        service = cached
+      }
+      return cached
     }
 
     @JvmStatic
@@ -249,17 +277,7 @@ data class ClientId(val value: String) {
       return Processor { withClientId(currentId) { processor.process(it) } }
     }
 
-    /** Sets current [ClientId].
-     * Please, TRY NOT TO USE THIS METHOD except cases you sure you know what it does and there is no other ways.
-     * In most cases it's convenient and preferable to use [withClientId].
-     */
-    @JvmStatic
-    fun trySetCurrentClientId(clientId: ClientId?) {
-      val clientIdService = ClientIdService.tryGetInstance()
-      if (clientIdService != null) {
-        clientIdService.clientIdValue = clientId?.value
-      }
-    }
+    fun coroutineContext(): CoroutineContext = currentOrNull?.asContextElement() ?: EmptyCoroutineContext
   }
 }
 
@@ -269,4 +287,21 @@ fun isForeignClientOnServer(): Boolean {
 
 fun isOnGuest(): Boolean {
   return ClientId.localId != ClientId.defaultLocalId
+}
+
+fun ClientId.asContextElement(): CoroutineContext.Element = ClientIdElement(this)
+
+private object ClientIdElementKey : CoroutineContext.Key<ClientIdElement>
+
+private class ClientIdElement(private val clientId: ClientId) : ThreadContextElement<AccessToken> {
+
+  override val key: CoroutineContext.Key<*> get() = ClientIdElementKey
+
+  override fun updateThreadContext(context: CoroutineContext): AccessToken {
+    return ClientId.withClientId(clientId)
+  }
+
+  override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken): Unit {
+    oldState.finish()
+  }
 }

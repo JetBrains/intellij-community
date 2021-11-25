@@ -21,8 +21,8 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Internal
-internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
-                              private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
+                         private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
@@ -62,6 +62,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     if (label == null) {
       result = RowImpl(dialogPanelConfig, panelContext, this, false, RowLayout.INDEPENDENT)
     } else {
+      label.putClientProperty(DslComponentProperty.ROW_LABEL, true)
       result = RowImpl(dialogPanelConfig, panelContext, this, true, RowLayout.LABEL_ALIGNED)
       result.cell(label)
     }
@@ -154,7 +155,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun panel(init: Panel.() -> Unit): PanelImpl {
     lateinit var result: PanelImpl
     row {
-      result = panel(init) as PanelImpl
+      result = panel(init).verticalAlign(VerticalAlign.FILL) as PanelImpl
     }
     return result
   }
@@ -166,28 +167,20 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun group(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
-                     init: Panel.() -> Unit): Panel {
-    lateinit var result: Panel
-    val separator = createSeparator(title)
-    val row = row {
-      result = panel {
-        row {
-          cell(separator)
-            .horizontalAlign(HorizontalAlign.FILL)
+  override fun group(title: String?, indent: Boolean, init: Panel.() -> Unit): RowImpl {
+    val result = row {
+      panel {
+        separator(title)
+        if (indent) {
+          indent(init)
         }
-      }
+        else {
+          init()
+        }
+      }.verticalAlign(VerticalAlign.FILL)
     }
-
-    if (indent) {
-      result.indent(init)
-    }
-    else {
-      result.init()
-    }
-
-    setTopGroupGap(row, topGroupGap)
-    setBottomGroupGap(row, bottomGroupGap)
+    result.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
+    result.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
 
     return result
   }
@@ -214,10 +207,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun collapsibleGroup(title: String, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
-                                init: Panel.() -> Unit): CollapsiblePanelImpl {
-    val row = row { }
-    val result = CollapsiblePanelImpl(dialogPanelConfig, row, title) {
+  override fun collapsibleGroup(title: String, indent: Boolean, init: Panel.() -> Unit): CollapsibleRowImpl {
+    val result = CollapsibleRowImpl(dialogPanelConfig, panelContext, this, title) {
       if (indent) {
         indent(init)
       }
@@ -227,10 +218,9 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
 
     result.expanded = false
-    row.cell(result)
-
-    setTopGroupGap(row, topGroupGap)
-    setBottomGroupGap(row, bottomGroupGap)
+    result.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
+    result.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
+    _rows.add(result)
 
     return result
   }
@@ -284,7 +274,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  fun enabledFromParent(parentEnabled: Boolean) {
+  override fun enabledFromParent(parentEnabled: Boolean) {
     enabledFromParent(parentEnabled, _rows.indices)
   }
 
@@ -297,8 +287,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun enabledIf(predicate: ComponentPredicate): PanelImpl {
-    enabled(predicate())
-    predicate.addListener { enabled(it) }
+    super.enabledIf(predicate)
     return this
   }
 
@@ -310,7 +299,12 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  fun visibleFromParent(parentVisible: Boolean) {
+  override fun visibleIf(predicate: ComponentPredicate): Panel {
+    super.visibleIf(predicate)
+    return this
+  }
+
+  override fun visibleFromParent(parentVisible: Boolean) {
     visibleFromParent(parentVisible, _rows.indices)
   }
 
@@ -399,7 +393,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
       if (title != null) {
         val row = row {
           label(title)
-            .applyToComponent { putClientProperty(DslComponentProperty.LABEL_NO_BOTTOM_GAP, true) }
+            .applyToComponent { putClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP, true) }
         }
         row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
       }

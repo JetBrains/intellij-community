@@ -80,6 +80,7 @@
                                       id="environmentYml"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPipfileSdkConfiguration"
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPoetrySdkConfiguration"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">

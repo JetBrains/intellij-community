@@ -251,7 +251,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
                             @NotNull BulkMethodInfo info,
                             @NotNull PsiReferenceExpression methodExpression) {
         PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(methodExpression));
-        if (qualifier instanceof PsiThisExpression) {
+        if (qualifier instanceof PsiQualifiedExpression) {
           PsiMethod method = PsiTreeUtil.getParentOfType(iterable, PsiMethod.class);
           // Likely we are inside of the bulk method implementation
           if (method != null && method.getName().equals(info.getBulkName())) return;
@@ -265,7 +265,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
 
       @Contract("null -> false")
       private boolean isSupportedQualifier(PsiExpression qualifier) {
-        if (qualifier instanceof PsiThisExpression) return true;
+        if (qualifier instanceof PsiQualifiedExpression) return true;
         if (qualifier instanceof PsiReferenceExpression) {
           PsiExpression subQualifier = ((PsiReferenceExpression)qualifier).getQualifierExpression();
           return subQualifier == null || isSupportedQualifier(subQualifier);
@@ -315,11 +315,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       PsiElement parent = RefactoringUtil.getParentStatement(iterable, false);
       if (parent == null) return;
       CommentTracker ct = new CommentTracker();
-      PsiType type = iterable.getType();
-      String iterableText = ct.text(iterable);
-      if (type instanceof PsiArrayType) {
-        iterableText = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + iterableText + ")";
-      }
+      String iterableText = calculateIterableText(iterable, ct);
       if (parent instanceof PsiDeclarationStatement) {
         PsiLoopStatement loop = PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
         if (loop != null && loop.getParent() == parent.getParent()) {
@@ -330,6 +326,21 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
                                                                + (parent instanceof PsiStatement ? ";" : ""));
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
+    }
+
+    @NotNull
+    private static String calculateIterableText(PsiExpression iterable, CommentTracker ct) {
+      if (iterable instanceof PsiSuperExpression) {
+        PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression)iterable).getQualifier();
+        return (qualifier != null) ? ct.text(qualifier) + ".this" : "this";
+      }
+      String iterableText;
+      PsiType type = iterable.getType();
+      iterableText = ct.text(iterable);
+      if (type instanceof PsiArrayType) {
+        iterableText = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + iterableText + ")";
+      }
+      return iterableText;
     }
   }
 }

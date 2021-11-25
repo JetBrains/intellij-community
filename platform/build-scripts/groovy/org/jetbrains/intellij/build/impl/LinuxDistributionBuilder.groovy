@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
@@ -18,13 +18,15 @@ import java.nio.file.*
 final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final LinuxDistributionCustomizer customizer
   private final Path ideaProperties
-  private final String iconPngPath
+  private final Path iconPngPath
 
   LinuxDistributionBuilder(BuildContext buildContext, LinuxDistributionCustomizer customizer, Path ideaProperties) {
     super(buildContext)
     this.customizer = customizer
     this.ideaProperties = ideaProperties
-    iconPngPath = (buildContext.applicationInfo.isEAP ? customizer.iconPngPathForEAP : null) ?: customizer.iconPngPath
+
+    String iconPng = (buildContext.applicationInfo.isEAP ? customizer.iconPngPathForEAP : null) ?: customizer.iconPngPath
+    iconPngPath = iconPng == null || iconPng.isEmpty() ? null : Path.of(iconPng)
   }
 
   @Override
@@ -33,44 +35,44 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void copyFilesForOsDistribution(@NotNull Path unixDistPath, JvmArchitecture arch = null) {
-    buildContext.messages.progress("Building distributions for $targetOs.osName")
+    BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
+    buildHelper.span(TracerManager.spanBuilder("copy files for os distribution")
+                       .setAttribute("os", targetOs.osName)
+                       .setAttribute("arch", arch?.name()), new Runnable() {
+      @Override
+      void run() {
+        Path distBinDir = unixDistPath.resolve("bin")
 
-    Path distBinDir = unixDistPath.resolve("bin")
-
-    buildContext.ant.copy(todir: distBinDir.toString()) {
-      fileset(dir: "$buildContext.paths.communityHome/bin/linux")
-    }
-    BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
-    BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
-    BuildTasksImpl.copyDistFiles(buildContext, unixDistPath)
-    List<String> extraJars = BuildTasksImpl.addDbusJava(buildContext, unixDistPath)
-    if (buildContext.productProperties.addRemoteDevelopmentLibraries()) {
-      extraJars.addAll(BuildTasksImpl.addProjectorServer(buildContext, unixDistPath))
-    }
-    BuildTasksImpl.appendLibsToClasspathJar(buildContext, unixDistPath, extraJars)
-    Files.copy(ideaProperties, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
-    //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
-    // for real installers we need to checkout all text files with 'lf' separators anyway
-    BuildUtils.convertLineSeparators(unixDistPath.resolve("bin/idea.properties"), "\n")
-    if (iconPngPath != null) {
-      Files.copy(Paths.get(iconPngPath), distBinDir.resolve("${buildContext.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
-    }
-    generateScripts(distBinDir)
-    generateVMOptions(distBinDir)
-    generateReadme(unixDistPath)
-    generateVersionMarker(unixDistPath)
-    customizer.copyAdditionalFiles(buildContext, unixDistPath)
+        buildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
+        BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
+        BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
+        BuildTasksImpl.copyDistFiles(buildContext, unixDistPath)
+        List<String> extraJarNames = BuildTasksImpl.addDbusJava(buildContext, unixDistPath.resolve("lib"))
+        Files.copy(ideaProperties, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
+        //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
+        // for real installers we need to checkout all text files with 'lf' separators anyway
+        BuildUtils.convertLineSeparators(unixDistPath.resolve("bin/idea.properties"), "\n")
+        if (iconPngPath != null) {
+          Files.copy(iconPngPath, distBinDir.resolve("${buildContext.productProperties.baseFileName}.png"),
+                     StandardCopyOption.REPLACE_EXISTING)
+        }
+        generateVMOptions(distBinDir)
+        UnixScriptBuilder.generateScripts(buildContext, extraJarNames, distBinDir, OsFamily.LINUX)
+        generateReadme(unixDistPath)
+        generateVersionMarker(unixDistPath, buildContext)
+        customizer.copyAdditionalFiles(buildContext, unixDistPath)
+      }
+    })
   }
 
   @Override
   void buildArtifacts(Path osSpecificDistPath) {
     copyFilesForOsDistribution(osSpecificDistPath)
-    buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
+    buildContext.executeStep("build linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledJre) {
         buildContext.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
-          buildTarGz(null, osSpecificDistPath, "-no-jbr")
+          buildTarGz(null, osSpecificDistPath, "-no-jbr", buildContext)
         }
       }
 
@@ -78,8 +80,8 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         return
       }
 
-      Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
-      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "")
+      Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX, JvmArchitecture.x64)
+      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "", buildContext)
 
       if (jreDirectoryPath != null) {
         buildSnapPackage(jreDirectoryPath.toString(), osSpecificDistPath)
@@ -90,51 +92,13 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       Path tempTar = Files.createTempDirectory(buildContext.paths.tempDir, "tar-")
       try {
         BuildHelper.runProcess(buildContext, ["tar", "xzf", tarGzPath.toString(), "--directory", tempTar.toString()])
-        def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-        RepairUtilityBuilder.generateManifest(buildContext, tempTar.resolve(tarRoot).toString(), tarGzPath.fileName.toString())
+        String tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+        RepairUtilityBuilder.generateManifest(buildContext, tempTar.resolve(tarRoot), tarGzPath.fileName.toString())
       }
       finally {
         NioFiles.deleteRecursively(tempTar)
       }
     }
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void generateScripts(@NotNull Path distBinDir) {
-    String fullName = buildContext.applicationInfo.productName
-    String baseName = buildContext.productProperties.baseFileName
-    String scriptName = "${baseName}.sh"
-    String vmOptionsFileName = baseName
-
-    String classPath = "CLASSPATH=\"\$IDE_HOME/lib/${buildContext.bootClassPathJarNames[0]}\"\n"
-    classPath += buildContext.bootClassPathJarNames[1..-1].collect { "CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/lib/${it}\"" }.join("\n")
-    if (buildContext.productProperties.toolsJarRequired) {
-      classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
-    }
-
-    buildContext.ant.copy(todir: distBinDir.toString()) {
-      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts") {
-        if (!buildContext.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")) {
-          exclude(name: "remote-dev-server.sh")
-        }
-      }
-
-      filterset(begintoken: "__", endtoken: "__") {
-        filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
-        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
-        filter(token: "vm_options", value: vmOptionsFileName)
-        filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments.join(' '))
-        filter(token: "class_path", value: classPath)
-        filter(token: "script_name", value: scriptName)
-      }
-    }
-
-    Files.move(distBinDir.resolve("executable-template.sh"), distBinDir.resolve(scriptName), StandardCopyOption.REPLACE_EXISTING)
-    BuildTasksImpl.copyInspectScript(buildContext, distBinDir)
-
-    buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.sh", eol: "unix")
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -148,7 +112,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private void generateReadme(Path unixDistPath) {
     String fullName = buildContext.applicationInfo.productName
     BuildUtils.copyAndPatchFile(
-      Paths.get(buildContext.paths.communityHome, "platform/build-scripts/resources/linux/Install-Linux-tar.txt"),
+      buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt"),
       unixDistPath.resolve("Install-Linux-tar.txt"),
       ["product_full"   : fullName,
        "product"        : buildContext.productProperties.baseFileName,
@@ -158,10 +122,10 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   // please keep in sync with `SystemHealthMonitor#checkInstallationIntegrity`
   @CompileStatic
-  private void generateVersionMarker(Path unixDistPath) {
+  private static void generateVersionMarker(Path unixDistPath, BuildContext context) {
     Path targetDir = unixDistPath.resolve("lib")
-    Files.writeString(targetDir.resolve("build-marker-${buildContext.fullBuildNumber}"), buildContext.fullBuildNumber)
     Files.createDirectories(targetDir)
+    Files.writeString(targetDir.resolve("build-marker-${context.fullBuildNumber}"), context.fullBuildNumber)
   }
 
   @Override
@@ -183,10 +147,10 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private Path buildTarGz(String jreDirectoryPath, Path unixDistPath, String suffix) {
+  private Path buildTarGz(String jreDirectoryPath, Path unixDistPath, String suffix, BuildContext buildContext) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-    def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz"
+    Path tarPath = Path.of("${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz")
     def paths = [buildContext.paths.distAll, unixDistPath.toString()]
 
     String javaExecutablePath = null
@@ -194,7 +158,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       paths += jreDirectoryPath
       javaExecutablePath = "jbr/bin/java"
     }
-    boolean hasPatchedClasspathTxt = Files.exists(unixDistPath.resolve("lib/classpath.txt"))
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(Paths.get(productJsonDir), javaExecutablePath)
     paths += productJsonDir
@@ -204,14 +167,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar.gz $description")
-      buildContext.ant.tar(tarfile: tarPath, longfile: "gnu", compression: "gzip") {
+      buildContext.ant.tar(tarfile: tarPath.toString(), longfile: "gnu", compression: "gzip") {
         paths.each { path ->
           tarfileset(dir: path, prefix: tarRoot) {
             executableFilesPatterns.each {pattern ->
               exclude(name: pattern)
-            }
-            if (hasPatchedClasspathTxt && path == buildContext.paths.distAll) {
-              exclude(name: "lib/classpath.txt")
             }
             type(type: "file")
           }
@@ -229,7 +189,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
       ProductInfoValidator.checkInArchive(buildContext, tarPath, tarRoot)
       buildContext.notifyArtifactBuilt(tarPath)
-      return Paths.get(tarPath)
+      return tarPath
     }
   }
 
@@ -241,24 +201,28 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @CompileStatic(TypeCheckingMode.SKIP)
   private void buildSnapPackage(String jreDirectoryPath, Path unixDistPath) {
-    if (!buildContext.options.buildUnixSnaps || customizer.snapName == null) return
+    if (!buildContext.options.buildUnixSnaps || customizer.snapName == null) {
+      return
+    }
 
-    if (StringUtil.isEmpty(iconPngPath)) buildContext.messages.error("'iconPngPath' not set")
-    if (StringUtil.isEmpty(customizer.snapDescription)) buildContext.messages.error("'snapDescription' not set")
+    if (iconPngPath == null) {
+      buildContext.messages.error("'iconPngPath' not set")
+    }
+    if (Strings.isEmpty(customizer.snapDescription)) {
+      buildContext.messages.error("'snapDescription' not set")
+    }
 
-    String snapDir = "${buildContext.paths.buildOutputRoot}/dist.snap"
+    Path snapDir = buildContext.paths.buildOutputDir.resolve("dist.snap")
 
-    buildContext.messages.block("Build Linux .snap package") {
+    buildContext.messages.block("build Linux .snap package") {
       buildContext.messages.progress("Preparing files")
 
-      String unixSnapDistPath = "$buildContext.paths.buildOutputRoot/dist.unix.snap"
-      buildContext.ant.copy(todir: unixSnapDistPath) {
-        fileset(dir: unixDistPath.toString())
-      }
+      Path unixSnapDistPath = buildContext.paths.buildOutputDir.resolve("dist.unix.snap")
+      BuildHelper.getInstance(buildContext).copyDir(unixDistPath, unixSnapDistPath)
 
       def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
       def productName = buildContext.applicationInfo.productNameWithEdition
-      buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/${customizer.snapName}.desktop") {
+      buildContext.ant.copy(file: desktopTemplate, tofile: snapDir.resolve("${customizer.snapName}.desktop").toString()) {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: productName)
           filter(token: "ICON", value: "\${SNAP}/bin/${buildContext.productProperties.baseFileName}.png")
@@ -268,12 +232,12 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      buildContext.ant.copy(file: iconPngPath, tofile: "${snapDir}/${customizer.snapName}.png")
+      BuildHelper.moveFile(iconPngPath, snapDir.resolve(customizer.snapName + ".png"))
 
       def snapcraftTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/snapcraft-template.yaml"
       def versionSuffix = buildContext.applicationInfo.versionSuffix?.replace(' ', '-') ?: ""
       def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}${versionSuffix.isEmpty() ? "" : "-${versionSuffix}"}"
-      buildContext.ant.copy(file: snapcraftTemplate, tofile: "${snapDir}/snapcraft.yaml") {
+      buildContext.ant.copy(file: snapcraftTemplate, tofile: snapDir.resolve("snapcraft.yaml").toString()) {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: customizer.snapName)
           filter(token: "VERSION", value: version)
@@ -285,7 +249,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       buildContext.ant.chmod(perm: "755") {
-        fileset(dir: unixSnapDistPath) {
+        fileset(dir: unixSnapDistPath.toString()) {
           include(name: "bin/*.sh")
           include(name: "bin/*.py")
           include(name: "bin/fsnotifier*")
@@ -299,15 +263,18 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      Path unixSnapDistDir = Paths.get(unixSnapDistPath)
-      generateProductJson(unixSnapDistDir, "jbr/bin/java")
-      new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistDir, "", [unixSnapDistPath, jreDirectoryPath], [])
+      generateProductJson(unixSnapDistPath, "jbr/bin/java")
+      new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath,
+                                                                 "",
+                                                                 List.of(unixSnapDistPath, Path.of(jreDirectoryPath)),
+                                                                 [])
 
-      Files.createDirectories(Paths.get(snapDir, "result"))
+      Path resultDir = snapDir.resolve("result")
+      Files.createDirectories(resultDir)
       buildContext.messages.progress("Building package")
 
-      def snapArtifact = "${customizer.snapName}_${version}_amd64.snap"
-      buildContext.ant.exec(executable: "docker", dir: snapDir, failonerror: true) {
+      String snapArtifact = "${customizer.snapName}_${version}_amd64.snap"
+      buildContext.ant.exec(executable: "docker", dir: snapDir.toString(), failonerror: true) {
         arg(value: "run")
         arg(value: "--rm")
         arg(value: "--volume=${snapDir}/snapcraft.yaml:/build/snapcraft.yaml:ro")
@@ -315,7 +282,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro")
         arg(value: "--volume=${snapDir}/result:/build/result")
         arg(value: "--volume=${buildContext.paths.distAll}:/build/dist.all:ro")
-        arg(value: "--volume=${unixSnapDistPath}/lib/classpath.txt:/build/dist.all/lib/classpath.txt:ro")
         arg(value: "--volume=${unixSnapDistPath}:/build/dist.unix:ro")
         arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
         arg(value: "--workdir=/build")
@@ -326,7 +292,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "result/$snapArtifact")
       }
 
-      buildContext.ant.move(file: "${snapDir}/result/${snapArtifact}", todir: buildContext.paths.artifacts)
+      BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), Path.of(buildContext.paths.artifacts))
       buildContext.notifyArtifactBuilt("${buildContext.paths.artifacts}/" + snapArtifact)
     }
   }

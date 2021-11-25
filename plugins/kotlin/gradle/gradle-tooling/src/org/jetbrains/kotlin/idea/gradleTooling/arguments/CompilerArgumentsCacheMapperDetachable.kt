@@ -5,23 +5,40 @@ import org.jetbrains.kotlin.idea.projectModel.CompilerArgumentsCacheAware
 import org.jetbrains.kotlin.idea.projectModel.CompilerArgumentsCacheMapper
 
 interface CompilerArgumentsMapperDetachable : CompilerArgumentsCacheMapper {
-    fun detachCacheAware(): CompilerArgumentsCacheAware
+     fun detachCacheAware(full: Boolean = false): CompilerArgumentsCacheAware
 }
 
-class CompilerArgumentsMapperDetachableImpl(private val masterCacheMapper: CompilerArgumentsCacheMapper) :
+class CompilerArgumentsMapperDetachableImpl(private val masterCacheMapper: AbstractCompilerArgumentsCacheMapper) :
     AbstractCompilerArgumentsCacheMapper(),
     CompilerArgumentsMapperDetachable {
+
+    override val offset: Int = masterCacheMapper.cacheByValueMap.keys.toIntArray().sortedArray().lastOrNull()?.plus(1) ?: 0
+
+    override fun cacheArgument(arg: String): Int {
+        return if (masterCacheMapper.checkCached(arg)) {
+            val key = masterCacheMapper.cacheArgument(arg)
+            cacheByValueMap[key] = arg
+            valueByCacheMap[arg] = key
+            key
+        } else super.cacheArgument(arg)
+    }
 
     override val cacheOriginIdentifier: Long
         get() = masterCacheMapper.cacheOriginIdentifier
 
-    override fun cacheArgument(arg: String): Int =
-        if (masterCacheMapper.checkCached(arg))
-            masterCacheMapper.cacheArgument(arg)
-        else masterCacheMapper.cacheArgument(arg).also {
-            cacheByValueMap[it] = arg
-            valueByCacheMap[arg] = it
+    override fun detachCacheAware(full: Boolean): CompilerArgumentsCacheAware {
+        val uniqueKeys = cacheByValueMap.keys - masterCacheMapper.distributeCacheIds().toSet()
+        uniqueKeys.forEach {
+            val key = it
+            val value = cacheByValueMap.getValue(it)
+            masterCacheMapper.cacheByValueMap[key] = value
+            masterCacheMapper.valueByCacheMap[value] = key
         }
+        val detachedKeys = if (full) cacheByValueMap.keys else uniqueKeys
 
-    override fun detachCacheAware(): CompilerArgumentsCacheAware = CompilerArgumentsCacheAwareImpl(this)
+        return CompilerArgumentsCacheAwareImpl(
+            cacheOriginIdentifier,
+            HashMap(detachedKeys.associateWith { cacheByValueMap.getValue(it) })
+        )
+    }
 }

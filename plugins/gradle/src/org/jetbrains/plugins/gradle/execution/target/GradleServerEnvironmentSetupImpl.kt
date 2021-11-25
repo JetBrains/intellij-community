@@ -356,7 +356,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
       val languageRuntime = environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java)
       val toolingFileOnTarget = LanguageRuntimeType.VolumeDescriptor(LanguageRuntimeType.VolumeType("gradleToolingFilesOnTarget"),
-                                                                     "", "", "", request.projectPathOnTarget)
+                                                                     "", "", "", "")
       val uploadRoot = languageRuntime?.createUploadRoot(toolingFileOnTarget, localRootPath) ?: TargetEnvironment.UploadRoot(localRootPath,
                                                                                                                              TargetEnvironment.TargetPath.Temporary())
       request.uploadVolumes += uploadRoot

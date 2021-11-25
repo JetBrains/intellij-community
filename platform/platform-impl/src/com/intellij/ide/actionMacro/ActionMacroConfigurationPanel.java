@@ -11,17 +11,13 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Couple;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public final class ActionMacroConfigurationPanel implements Disposable {
   private static final String SPLITTER_PROPORTION = "ActionMacroConfigurationPanel.SPLITTER_PROPORTION";
@@ -29,8 +25,7 @@ public final class ActionMacroConfigurationPanel implements Disposable {
   private final JList<ActionMacro> myMacrosList;
   private final JList<ActionMacro.ActionDescriptor> myMacroActionsList;
   final DefaultListModel<ActionMacro> myMacrosModel = new DefaultListModel<>();
-  private List<Couple<String>> myRenamingList;
-
+  private final Map<String, String> myRenamingMap = new HashMap<>();
 
   public ActionMacroConfigurationPanel() {
     myMacrosList = new JBList<>();
@@ -62,24 +57,23 @@ public final class ActionMacroConfigurationPanel implements Disposable {
   }
 
   public void apply() {
-    if (myRenamingList != null) {
-      for (Couple<String> pair : myRenamingList) {
-        Keymap[] allKeymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();
-        for (Keymap keymap : allKeymaps) {
-          keymap.removeAllActionShortcuts(ActionMacro.MACRO_ACTION_PREFIX + pair.getSecond());
-          for(Shortcut shortcut : keymap.getShortcuts(ActionMacro.MACRO_ACTION_PREFIX + pair.getFirst())) {
-            keymap.addShortcut(ActionMacro.MACRO_ACTION_PREFIX + pair.getSecond(), shortcut);
-          }
-          keymap.removeAllActionShortcuts(ActionMacro.MACRO_ACTION_PREFIX + pair.getFirst());
+    Keymap[] allKeymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();
+    for (Map.Entry<String, String> pair : myRenamingMap.entrySet()) {
+      for (Keymap keymap : allKeymaps) {
+        final String oldId = pair.getKey();
+        final String newId = pair.getValue();
+        keymap.removeAllActionShortcuts(newId);
+        for (Shortcut shortcut : keymap.getShortcuts(oldId)) {
+          keymap.addShortcut(newId, shortcut);
         }
+        keymap.removeAllActionShortcuts(oldId);
       }
     }
 
     final ActionMacroManager manager = ActionMacroManager.getInstance();
-    ActionMacro[] macros = manager.getAllMacros();
     HashSet<String> removedIds = new HashSet<>();
-    for (ActionMacro macro1 : macros) {
-      removedIds.add(macro1.getActionId());
+    for (ActionMacro macro : manager.getAllMacros()) {
+      removedIds.add(macro.getActionId());
     }
 
     manager.removeAllMacros();
@@ -90,10 +84,9 @@ public final class ActionMacroConfigurationPanel implements Disposable {
       manager.addMacro(macro);
       removedIds.remove(macro.getActionId());
     }
-    manager.registerActions(ActionManager.getInstance());
+    manager.registerActions(ActionManager.getInstance(), myRenamingMap);
 
     for (String id : removedIds) {
-      Keymap[] allKeymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();
       for (Keymap keymap : allKeymaps) {
         keymap.removeAllActionShortcuts(id);
       }
@@ -146,8 +139,7 @@ public final class ActionMacroConfigurationPanel implements Disposable {
               }
               while (!canRenameMacro(newName));
 
-              if (myRenamingList == null) myRenamingList = new ArrayList<>();
-              myRenamingList.add(Couple.of(macro.getName(), newName));
+              myRenamingMap.put(ActionMacro.MACRO_ACTION_PREFIX + macro.getName(), ActionMacro.MACRO_ACTION_PREFIX + newName);
               macro.setName(newName);
               myMacrosList.repaint();
             }

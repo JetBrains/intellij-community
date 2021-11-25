@@ -2,11 +2,13 @@
 package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.ui.JBMenuItem;
-import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
-import com.intellij.ui.tabs.impl.*;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.LayoutPassInfo;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class TableLayout extends TabLayout implements MorePopupAware {
+public class TableLayout extends TabLayout {
   private int myScrollOffset = 0;
   private boolean myScrollSelectionInViewPending = false;
 
@@ -42,20 +44,21 @@ public class TableLayout extends TabLayout implements MorePopupAware {
     int titleWidth = myTabs.myTitleWrapper.getPreferredSize().width;
 
     data.titleRect.setBounds(data.toFitRec.x, data.toFitRec.y, titleWidth, myTabs.myHeaderFitSize.height);
+    data.entryPointRect.setBounds(data.toFitRec.x + data.toFitRec.width, data.toFitRec.y, myTabs.getEntryPointPreferredSize().width, myTabs.myHeaderFitSize.height);
     data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width, data.toFitRec.y, 0, myTabs.myHeaderFitSize.height);
     calculateLengths(data);
 
     int eachX = data.titleRect.x + data.titleRect.width;
     Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
-    TableRow eachTableRow = new TableRow(data);
-    data.table.add(eachTableRow);
     int requiredRowsPinned = 0;
     int requiredRowsUnpinned = 0;
 
     final int maxX = data.moreRect.x - 1;
+    ActionToolbar entryPointToolbar = myTabs.myEntryPointToolbar;
 
     int hGap = myTabs.getTabHGap();
+    int entryPointMargin = entryPointToolbar != null ? entryPointToolbar.getComponent().getPreferredSize().width : 0;
     for (TabInfo eachInfo : data.myVisibleInfos) {
       TabLabel eachLabel = myTabs.getTabLabel(eachInfo);
       boolean pinned = eachLabel.isPinned();
@@ -71,7 +74,7 @@ public class TableLayout extends TabLayout implements MorePopupAware {
         data.bounds.put(eachInfo, eachLabel.getBounds());
       }
       else {
-        if ((!scrollable && eachX + width + hGap > maxX && !singleRow) || (showPinnedTabsSeparately && eachLabel.isNextToLastPinned())) {
+        if ((!scrollable && eachX + width + hGap > maxX - entryPointMargin && !singleRow) || (showPinnedTabsSeparately && eachLabel.isNextToLastPinned())) {
           requiredRowsUnpinned++;
           eachY += myTabs.myHeaderFitSize.height;
           eachX = data.toFitRec.x;
@@ -80,7 +83,7 @@ public class TableLayout extends TabLayout implements MorePopupAware {
           requiredRowsUnpinned = 1;
         }
         if (scrollable) {
-          if (eachX - getScrollOffset() + width + hGap > maxX) {
+          if (eachX - getScrollOffset() + width + hGap > maxX - entryPointMargin) {
             width = Math.max(0, maxX - eachX + getScrollOffset());
             data.invisible.add(eachInfo);
           }
@@ -95,6 +98,9 @@ public class TableLayout extends TabLayout implements MorePopupAware {
         }
       }
       eachX += width + hGap;
+      if (requiredRowsPinned + requiredRowsUnpinned > 1) {
+        entryPointMargin = singleRow ? 0 : - data.moreRect.width;
+      }
     }
     if (requiredRowsPinned > 0 && requiredRowsUnpinned > 0) data.moreRect.y += myTabs.myHeaderFitSize.height /*+ myTabs.getSeparatorWidth()*/;
 
@@ -102,32 +108,19 @@ public class TableLayout extends TabLayout implements MorePopupAware {
       data.moreRect.setBounds(0, 0, 0, 0);
     }
 
-    eachX = data.toFitRec.x + titleWidth;
+    eachY = -1;
+    TableRow eachTableRow = new TableRow(data);
 
     for (TabInfo eachInfo : data.myVisibleInfos) {
       final TabLabel eachLabel = myTabs.getTabLabel(eachInfo);
-      boolean pinned = eachLabel.isPinned();
-      int width = data.lengths.get(eachInfo);
-      if (pinned && showPinnedTabsSeparately) {
-        eachTableRow.add(eachInfo, width);
-        eachX += width;
-      }
-      else {
-        boolean useSameRow = singleRow || eachX + /*size.*/width + hGap <= maxX;
-        if (showPinnedTabsSeparately && eachLabel.isNextToLastPinned()) {
-          useSameRow = false;
-        }
-        if (useSameRow) {
-          eachTableRow.add(eachInfo, width);
-          eachX += width;
-        }
-        else {
+      if (eachY == -1 || eachY != eachLabel.getY()) {
+        if (eachY != -1) {
           eachTableRow = new TableRow(data);
-          data.table.add(eachTableRow);
-          eachX = data.toFitRec.x + titleWidth + width;
-          eachTableRow.add(eachInfo, width);
         }
+        eachY = eachLabel.getY();
+        data.table.add(eachTableRow);
       }
+      eachTableRow.add(eachInfo, eachLabel.getWidth());
     }
     if (myScrollSelectionInViewPending) {
       myScrollSelectionInViewPending = false;
@@ -145,7 +138,7 @@ public class TableLayout extends TabLayout implements MorePopupAware {
     if (compressible || showPinnedTabsSeparately) {
       if (showPinnedTabsSeparately) {
         List<TabInfo> pinned = ContainerUtil.filter(data.myVisibleInfos, info -> info.isPinned());
-        calculateCompressibleLengths(pinned, data, standardLengthToFit + data.moreRect.width);
+        calculateCompressibleLengths(pinned, data, standardLengthToFit + data.moreRect.width - data.entryPointRect.width);
         List<TabInfo> unpinned = ContainerUtil.filter(data.myVisibleInfos, info -> !info.isPinned());
         if (compressible) {
           calculateCompressibleLengths(unpinned, data, pinned.isEmpty()
@@ -156,7 +149,8 @@ public class TableLayout extends TabLayout implements MorePopupAware {
           calculateRawLengths(unpinned, data);
           if (getTotalLength(unpinned, data) > standardLengthToFit) {
             int moreWidth = myTabs.isSingleRow() ? myTabs.myMoreToolbar.getComponent().getPreferredSize().width : 0;
-            data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, /*data.toFitRec.y*/myTabs.getLayoutInsets().top, moreWidth, myTabs.myHeaderFitSize.height /*- myTabs.getSeparatorWidth()*/);
+            int entryPointsWidth = pinned.isEmpty() ? myTabs.getEntryPointPreferredSize().width : 0;
+            data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth - entryPointsWidth, /*data.toFitRec.y*/myTabs.getLayoutInsets().top, moreWidth, myTabs.myHeaderFitSize.height /*- myTabs.getSeparatorWidth()*/);
             calculateRawLengths(unpinned, data);
           }
         }
@@ -394,8 +388,9 @@ public class TableLayout extends TabLayout implements MorePopupAware {
       myScrollOffset = 0;
     }
     else {
+      int entryPointsWidth = data.moreRect.y == data.entryPointRect.y ? data.entryPointRect.width + 1 : 0;
       myScrollOffset = Math.max(0, Math.min(myScrollOffset,
-                                            data.requiredLength - data.toFitRec.width + data.moreRect.width /*+ (1 + myTabs.getIndexOf(myTabs.getSelectedInfo())) * myTabs.getBorderThickness()*/+ data.titleRect.width));
+                                            data.requiredLength - data.toFitRec.width + data.moreRect.width + entryPointsWidth /*+ (1 + myTabs.getIndexOf(myTabs.getSelectedInfo())) * myTabs.getBorderThickness()*/+ data.titleRect.width));
     }
   }
 
@@ -406,31 +401,6 @@ public class TableLayout extends TabLayout implements MorePopupAware {
   public void scrollSelectionInView() {
     myScrollSelectionInViewPending = true;
     doScrollSelectionInView(myLastTableLayout);
-  }
-
-  @Override
-  public boolean canShowMorePopup() {
-    return myLastTableLayout != null && !myLastTableLayout.moreRect.isEmpty();
-  }
-
-  @Override
-  public void showMorePopup() {
-    Rectangle rect = myLastTableLayout != null ? myLastTableLayout.moreRect : null;
-    if (rect == null || rect.isEmpty()) return;
-
-    JBPopupMenu menu = new JBPopupMenu();
-    for (final TabInfo each : myLastTableLayout.invisible) {
-      menu.add(createMenuItem(each));
-    }
-    menu.show(myTabs, rect.x, rect.y + rect.height);
-  }
-
-  private JBMenuItem createMenuItem(@NotNull TabInfo tabInfo) {
-    final JBMenuItem item = new JBMenuItem(tabInfo.getText(), tabInfo.getIcon());
-    item.setForeground(tabInfo.getDefaultForeground());
-    item.setBackground(tabInfo.getTabColor());
-    item.addActionListener(__ -> myTabs.select(tabInfo, true));
-    return item;
   }
 
   private void doScrollSelectionInView(TablePassInfo data) {

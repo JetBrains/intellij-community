@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class SomeException : RuntimeException()
 fun foo(): Int = 1
 fun bar(): Int = 2

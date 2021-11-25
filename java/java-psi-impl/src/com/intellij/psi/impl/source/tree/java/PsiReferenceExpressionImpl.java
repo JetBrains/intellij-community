@@ -465,9 +465,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       private boolean ensureNonShadowedVariable(@NotNull PsiVariable element) {
-        if (PsiUtil.isJvmLocalVariable(element) && myVarNames.contains(element.getName())) return false;
-        myVarNames.add(element.getName());
-        return true;
+        boolean added = myVarNames.add(element.getName());
+        return !PsiUtil.isJvmLocalVariable(element) || added;
       }
 
       private boolean shouldProcessMethod(@NotNull PsiMethod method) {
@@ -572,6 +571,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   public PsiType @NotNull [] getTypeParameters() {
     PsiReferenceParameterList parameterList = getParameterList();
     return parameterList != null ? parameterList.getTypeArguments() : PsiType.EMPTY_ARRAY;
+  }
+
+  @Override
+  public int getTypeParameterCount() {
+    PsiReferenceParameterList parameterList = getParameterList();
+    return parameterList != null ? parameterList.getTypeArgumentCount() : 0;
   }
 
   @Override

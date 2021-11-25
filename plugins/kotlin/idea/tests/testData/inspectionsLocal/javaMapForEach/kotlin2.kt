@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(map: Map<Int, String>) {
     map.<caret>forEach {
         foo(it)

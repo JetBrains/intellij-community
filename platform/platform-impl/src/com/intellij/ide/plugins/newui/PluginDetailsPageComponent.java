@@ -241,15 +241,18 @@ public class PluginDetailsPageComponent extends MultiPanel {
         }
         return size;
       }
+
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD, 18));
+      }
     };
 
     UIUtil.convertToLabel(editorPane);
     editorPane.setCaret(EmptyCaret.INSTANCE);
 
-    Font font = editorPane.getFont();
-    if (font != null) {
-      editorPane.setFont(font.deriveFont(Font.BOLD, 18));
-    }
+    editorPane.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD, 18));
 
     @NlsSafe String text = "<html><span>Foo</span></html>";
     editorPane.setText(text);
@@ -292,7 +295,23 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private void createMetricsPanel(@NotNull JPanel centerPanel) {
     // text field without horizontal margins
-    myVersion = new JTextField();
+    myVersion = new JTextField() {
+      @Override
+      public void setBorder(Border border) {
+        super.setBorder(null);
+      }
+
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        if (myVersion != null) {
+          PluginDetailsPageComponent.setFont(myVersion);
+        }
+        if (myVersionSize != null) {
+          PluginDetailsPageComponent.setFont(myVersionSize);
+        }
+      }
+    };
     myVersion.putClientProperty("TextFieldWithoutMargins", Boolean.TRUE);
     myVersion.setEditable(false);
     setFont(myVersion);

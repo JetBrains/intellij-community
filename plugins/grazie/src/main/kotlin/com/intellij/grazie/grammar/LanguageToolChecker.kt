@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.html.*
@@ -51,6 +52,7 @@ open class LanguageToolChecker : TextChecker() {
             null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
           matches.asSequence()
             .map { Problem(it, lang, extracted, this is TestChecker) }
+            .filterNot { isGitCherryPickedFrom(it.match, extracted) }
             .filterNot { isKnownLTBug(it.match, extracted) }
             .filterNot { extracted.hasUnknownFragmentsIn(it.patternRange) }
             .toList()
@@ -119,6 +121,17 @@ open class LanguageToolChecker : TextChecker() {
         .toList()
     }
 
+    /**
+     * Git adds "cherry picked from", which doesn't seem entirely grammatical,
+     * but zillions of tools depend on this message, and it's unlikely to be changed.
+     * So we ignore this pattern in commit messages and literals (which might be used for parsing git output)
+     */
+    private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean {
+      return match.rule.id == "EN_COMPOUNDS" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
+             (text.domain == TextContent.TextDomain.LITERALS ||
+              text.domain == TextContent.TextDomain.PLAIN_TEXT && CommitMessage.isCommitMessage(text.containingFile))
+    }
+
     private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
       if (match.rule is GenericUnpairedBracketsRule && match.fromPos > 0 &&
           (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
@@ -129,15 +142,26 @@ open class LanguageToolChecker : TextChecker() {
         return true // https://github.com/languagetool-org/languagetool/issues/5270
       }
 
-      if (match.rule.id == "EN_A_VS_AN" && text.subSequence(match.toPos, text.length).matches(Regex("[^\\p{javaLetterOrDigit}]*hour.*"))) {
-        return true // https://github.com/languagetool-org/languagetool/issues/5260
-      }
-
       if (match.rule.id == "THIS_NNS_VB" && text.subSequence(match.toPos, text.length).matches(Regex("\\s+reverts\\s.*"))) {
         return true // https://github.com/languagetool-org/languagetool/issues/5455
       }
 
+      if (match.rule.id.endsWith("DOUBLE_PUNCTUATION") &&
+          (isNumberRange(match.fromPos, match.toPos, text) || isPathPart(match.fromPos, match.toPos, text))) {
+        return true
+      }
+
       return false
+    }
+
+    // https://github.com/languagetool-org/languagetool/issues/5230
+    private fun isNumberRange(startOffset: Int, endOffset: Int, text: TextContent): Boolean {
+      return startOffset > 0 && endOffset < text.length && text[startOffset - 1].isDigit() && text[endOffset].isDigit()
+    }
+
+    // https://github.com/languagetool-org/languagetool/issues/5883
+    private fun isPathPart(startOffset: Int, endOffset: Int, text: TextContent): Boolean {
+      return text.subSequence(0, startOffset).endsWith('/') || text.subSequence(endOffset, text.length).startsWith('/')
     }
 
     @NlsSafe

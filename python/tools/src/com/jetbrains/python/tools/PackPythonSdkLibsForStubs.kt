@@ -21,8 +21,15 @@ fun main() {
     }
     val sdkHome = python.absolutePath
 
-    val executable = File(PythonSdkUtil.getPythonExecutable(sdkHome) ?: throw AssertionError("No python on $sdkHome"))
-    println("Packing stdlib of $sdkHome")
+    val executable = PythonSdkUtil.getPythonExecutable(sdkHome)?.let { File(it) }
+
+    if (executable == null) {
+      println("No python on $sdkHome")
+      continue
+    }
+    else {
+      println("Packing stdlib of $sdkHome")
+    }
 
     val process = ProcessBuilder(executable.absolutePath, PythonHelper.GENERATOR3.asParamString(), "-u", baseDir).start()
 

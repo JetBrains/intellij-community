@@ -60,6 +60,10 @@ public final class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexE
     return true;
   }
 
+  /**
+   * Provides a way to expand TO-DO index filter beyond open projects content scope.
+   * It shall be used primarily to create the index for files inside custom {@link com.intellij.util.indexing.IndexableSetContributor} implementations.
+   */
   public interface ExtraPlaceChecker {
     boolean accept(@Nullable Project project, @NotNull VirtualFile file);
   }

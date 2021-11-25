@@ -18,6 +18,8 @@ public abstract class SerializationManagerEx implements StubTreeSerializer {
     return ApplicationManager.getApplication().getService(SerializationManagerEx.class);
   }
 
+  public abstract void performShutdown();
+
   /**
    * @deprecated only kept to support prebuilt stubs
    */
@@ -27,6 +29,8 @@ public abstract class SerializationManagerEx implements StubTreeSerializer {
                                    @NotNull StubTreeSerializer newSerializationManager) throws IOException;
 
   protected abstract void initSerializers();
+
+  public abstract void initialize();
 
   public abstract boolean isNameStorageCorrupted();
 

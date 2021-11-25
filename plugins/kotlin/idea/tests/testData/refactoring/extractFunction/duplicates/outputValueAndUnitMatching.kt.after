@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_TYPES: kotlin.Int
 // PARAM_DESCRIPTOR: val z: kotlin.Int defined in test
 

@@ -8,6 +8,7 @@ import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import javax.swing.JList
 
 abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name")) {
@@ -68,7 +69,7 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
         text(LessonsBundle.message("basic.completion.activate.explicitly", action(it)))
         trigger(it)
         triggerByListItemAndHighlight { item ->
-          item.toString().contains(item2Completion)
+          item.isToStringContains(item2Completion)
         }
         proposeRestore {
           checkExpectedStateOfEditor(sample2) { change ->
@@ -95,7 +96,12 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
     }
 
   private fun isTheFirstVariant(it: JList<*>) =
-    it.model.size >= 1 && it.model.getElementAt(0).toString().contains(item1Completion)
+    it.model.size >= 1 && it.model.getElementAt(0).isToStringContains(item1Completion)
 
   override val suitableTips = listOf("CodeCompletion")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("basic.completion.help.code.completion"),
+         LessonUtil.getHelpLink("auto-completing-code.html#basic_completion")),
+  )
 }

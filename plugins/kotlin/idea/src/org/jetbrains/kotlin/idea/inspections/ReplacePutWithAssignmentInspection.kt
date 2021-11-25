@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
@@ -21,6 +22,8 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getExplicitReceiverValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
+import org.jetbrains.kotlin.resolve.descriptorUtil.overriddenTreeAsSequence
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ReplacePutWithAssignmentInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
@@ -51,9 +54,13 @@ class ReplacePutWithAssignmentInspection : AbstractApplicabilityBasedInspection<
         val receiverClass = receiverType.constructor.declarationDescriptor as? ClassDescriptor ?: return false
         if (!receiverClass.isSubclassOf(DefaultBuiltIns.Instance.mutableMap)) return false
 
+        val overriddenTree =
+            resolvedCall.resultingDescriptor.safeAs<CallableMemberDescriptor>()?.overriddenTreeAsSequence(true) ?: return false
+        if (overriddenTree.none { it.fqNameOrNull() == mutableMapPutFqName }) return false
+
         val assignment = createAssignmentExpression(element) ?: return false
         val newContext = assignment.analyzeAsReplacement(element, context)
-        return assignment.left.getResolvedCall(newContext)?.resultingDescriptor?.fqNameOrNull() == FqName("kotlin.collections.set")
+        return assignment.left.getResolvedCall(newContext)?.resultingDescriptor?.fqNameOrNull() == collectionsSetFqName
     }
 
     override fun applyTo(element: KtDotQualifiedExpression, project: Project, editor: Editor?) {
@@ -71,9 +78,8 @@ class ReplacePutWithAssignmentInspection : AbstractApplicabilityBasedInspection<
         } else ""
         return KtPsiFactory(element).createExpressionByPattern(
             "$0[$1] = $label$2",
-            element.receiverExpression,
-            firstArg,
-            secondArg
+            element.receiverExpression, firstArg, secondArg,
+            reformat = false
         ) as? KtBinaryExpression
     }
 
@@ -86,5 +92,7 @@ class ReplacePutWithAssignmentInspection : AbstractApplicabilityBasedInspection<
 
     companion object {
         private val compatibleNames = setOf("put")
+        private val collectionsSetFqName = FqName("kotlin.collections.set")
+        private val mutableMapPutFqName = FqName("kotlin.collections.MutableMap.put")
     }
 }

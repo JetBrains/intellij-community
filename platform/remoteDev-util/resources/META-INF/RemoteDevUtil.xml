@@ -1,8 +1,8 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="codewithme.check.guest.signature" defaultValue="false"
-                 description="Check that Code With Me Guest is signed with a correct JetBrains PGP signature"
-                 restartRequired="false"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.remoteDev.downloader.RemoteDevStatisticsCollector" />
+    <applicationService serviceInterface="com.intellij.remoteDev.downloader.JetBrainsClientDownloaderConfigurationProvider"
+                        serviceImplementation="com.intellij.remoteDev.downloader.RealJetBrainsClientDownloaderConfigurationProvider"
+                        testServiceImplementation="com.intellij.remoteDev.downloader.TestJetBrainsClientDownloaderConfigurationProvider"/>
   </extensions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
@@ -14,7 +14,7 @@ public final class ExpressionUtil {
     if (qualifier == null) {
       return true;
     }
-    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+    if (qualifier instanceof PsiQualifiedExpression) {
       final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
       if (thisQualifier == null) return true;
       final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);

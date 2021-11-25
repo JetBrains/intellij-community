@@ -50,7 +50,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
     if (selectorType == null) return;
     List<PsiElement> branches = SwitchUtils.getSwitchBranches(switchBlock);
     for (PsiElement branch : branches) {
-      // jus for the case if we already contain null or total pattern, there is no need to apply the fix
+      // just for the case if we already contain null or total pattern, there is no need to apply the fix
       if (branch instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)branch).getType())) return;
       if (branch instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)branch), selectorType)) return;
     }
@@ -72,7 +72,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
       .stream()
       .map(text -> factory.createStatementFromText(text, body))
       .forEach(statement -> body.addBefore(statement, anchor));
-    CreateDefaultBranchFix.adjustEditor(switchBlock, PsiTreeUtil.getPrevSiblingOfType(anchor, PsiStatement.class));
+    CreateDefaultBranchFix.startTemplateOnStatement(PsiTreeUtil.getPrevSiblingOfType(anchor, PsiStatement.class));
   }
 
   private static @NonNls List<String> generateStatements(@NotNull PsiSwitchBlock switchBlock, boolean isRuleBasedFormat,
@@ -88,7 +88,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
     if (!isRuleBasedFormat && previousStatement != null && ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
       result.add("break;");
     }
-    result.addAll(CreateSwitchBranchesUtil.generateStatements("null", switchBlock, isRuleBasedFormat));
+    result.addAll(CreateSwitchBranchesUtil.generateStatements("null", switchBlock, isRuleBasedFormat, false));
     return result;
   }
 }

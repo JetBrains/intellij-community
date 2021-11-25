@@ -6,6 +6,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -51,4 +52,9 @@ class SingleLineCommentLesson(private val sample: LessonSample)
   }
 
   override val suitableTips = listOf("CommentCode")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.lines.of.code"),
+         LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),
+  )
 }

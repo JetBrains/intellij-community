@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +19,27 @@ import java.util.Locale;
 
 public final class ResourceUtil {
   private ResourceUtil() {
+  }
+
+  public static byte @Nullable [] getResourceAsBytes(@NotNull String path, @NotNull ClassLoader classLoader) throws IOException {
+    return getResourceAsBytes(path, classLoader, false);
+  }
+
+  public static byte @Nullable [] getResourceAsBytes(@NotNull String path,
+                                                     @NotNull ClassLoader classLoader,
+                                                     boolean checkParents) throws IOException {
+    if (classLoader instanceof UrlClassLoader) {
+      return ((UrlClassLoader)classLoader).getResourceAsBytes(path, checkParents);
+    }
+
+    InputStream stream = classLoader.getResourceAsStream(path);
+    if (stream == null) {
+      return null;
+    }
+
+    try (stream) {
+      return stream.readAllBytes();
+    }
   }
 
   /**
@@ -39,7 +61,7 @@ public final class ResourceUtil {
   }
 
   public static InputStream getResourceAsStream(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
+    String fixedPath = Strings.trimStart(Strings.trimEnd(basePath, "/"), "/");
     if (fixedPath.isEmpty()) {
       return loader.getResourceAsStream(fileName);
     }
@@ -57,7 +79,7 @@ public final class ResourceUtil {
   }
 
   public static URL getResource(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
+    String fixedPath = Strings.trimStart(Strings.trimEnd(basePath, "/"), "/");
 
     List<String> bundles = calculateBundleNames(fixedPath, Locale.getDefault());
     for (String bundle : bundles) {

@@ -187,15 +187,19 @@ public class StatementParser {
           return declStatement;
         }
 
-        PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, 0);
-        if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {
+        ReferenceParser.TypeInfo type = myParser.getReferenceParser().parseTypeInfo(builder, 0);
+        if (suspectedLT == JavaTokenType.LT && (type == null || !type.isParameterized)) {
+          declStatement.rollbackTo();
+        }
+        else if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {
           error(builder, JavaPsiBundle.message("expected.identifier"));
           if (type == null) builder.advanceLexer();
           done(declStatement, JavaElementType.DECLARATION_STATEMENT);
           return declStatement;
         }
-
-        declStatement.rollbackTo();  // generic type followed by the double colon is a good candidate for being a constructor reference
+        else {
+          declStatement.rollbackTo();  // generic type followed by the double colon is a good candidate for being a constructor reference
+        }
       }
     }
 

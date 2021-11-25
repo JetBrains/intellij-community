@@ -1018,4 +1018,25 @@ class AutoImportTest : AutoImportTestCase() {
       }
     }
   }
+
+  @Test
+  fun `test handle explicit settings files list change event`() {
+    initialize()
+    setAutoReloadType(ALL)
+
+    val settingsFile1 = createVirtualFile("script1.groovy").path
+    val settingsFile2 = createVirtualFile("script2.groovy").path
+
+    val projectAware = mockProjectAware(ExternalSystemProjectId(ProjectSystemId("External System 1"), projectPath))
+    projectAware.registerSettingsFile(settingsFile1)
+    register(projectAware)
+    assertProjectAware(projectAware, refresh = 1, event = "register project")
+
+    projectAware.notifySettingsFilesListChanged()
+    assertProjectAware(projectAware, refresh = 1, event = "handle settings files list change event when nothing actually changed")
+
+    projectAware.registerSettingsFile(settingsFile2)
+    projectAware.notifySettingsFilesListChanged()
+    assertProjectAware(projectAware, refresh = 2, event = "handle settings files list change event when file added")
+  }
 }

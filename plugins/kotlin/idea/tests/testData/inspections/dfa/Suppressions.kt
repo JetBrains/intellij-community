@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun assertCall(x: Int, b: Boolean, c: Boolean) {
     if (x < 0) return
     if (Math.random() > 0.5) {
@@ -11,19 +11,19 @@ fun assertCall(x: Int, b: Boolean, c: Boolean) {
         assert(b || x >= 0)
     }
     if (Math.random() > 0.5) {
-        assert(<warning descr="Condition is always false">c && <warning descr="Condition is always false when reached">!(b || <warning descr="Condition is always true when reached">x >= 0</warning>)</warning></warning>)
+        assert(<warning descr="Condition 'c && !(b || x >= 0)' is always false">c && <warning descr="Condition '!(b || x >= 0)' is always false when reached">!(b || <warning descr="Condition 'x >= 0' is always true when reached">x >= 0</warning>)</warning></warning>)
     }
     if (Math.random() > 0.5) {
         assert(c && !(b || x < 0))
     }
     if (Math.random() > 0.5) {
-        assert(<warning descr="Condition is always false">x < 0</warning>)
+        assert(<warning descr="Condition 'x < 0' is always false">x < 0</warning>)
     }
 }
 fun requireCall(x: Int) {
     if (x < 0) return
     require(x >= 0)
-    require(<warning descr="Condition is always false">x < 0</warning>)
+    require(<warning descr="Condition 'x < 0' is always false">x < 0</warning>)
 }
 fun compilerWarningSuppression() {
     val x: Int = 1
@@ -80,8 +80,8 @@ fun updateChainBoolean(b: Boolean, c: Boolean): Boolean {
 fun updateChainInterrupted(b: Boolean, c: Boolean): Int {
     var x = 0
     x++
-    <warning descr="Value is always zero">x--</warning>
-    if (b) x = <weak_warning descr="Value is always zero">x</weak_warning> or 1
+    <warning descr="Value of 'x--' is always zero">x--</warning>
+    if (b) x = <weak_warning descr="Value of 'x' is always zero">x</weak_warning> or 1
     if (c) x = x or 2
     return x
 }

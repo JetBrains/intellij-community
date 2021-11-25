@@ -1,5 +1,5 @@
 // CHOOSE_USE_SITE_TARGET: field
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 
 annotation class A

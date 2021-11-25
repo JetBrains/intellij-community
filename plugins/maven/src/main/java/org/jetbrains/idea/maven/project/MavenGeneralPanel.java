@@ -22,6 +22,8 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Objects;
 
+import static com.intellij.openapi.util.text.StringUtil.nullize;
+
 public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservable {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
@@ -176,7 +178,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   }
 
   private boolean isModifiedNotOverridableData(MavenGeneralSettings data) {
-    return !Objects.equals(myInitialSettings.getThreads(), data.getThreads())
+    return !Objects.equals(nullize(myInitialSettings.getThreads()), nullize(data.getThreads()))
            || !Objects.equals(myInitialSettings.getChecksumPolicy(), data.getChecksumPolicy())
            || !Objects.equals(myInitialSettings.getFailureBehavior(), data.getFailureBehavior())
            || !Objects.equals(myInitialSettings.getOutputLevel(), data.getOutputLevel())

@@ -4,13 +4,15 @@ package com.intellij.vcs.log.ui.table
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.index.IndexedDetails.Companion.getSubject
+import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.ui.table.column.Author
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
 import java.beans.PropertyChangeEvent
 
-open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, component: VcsLogGraphTable) :
+open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, private val storage: VcsLogStorage, component: VcsLogGraphTable) :
   VcsLogSpeedSearch(component) {
 
   private val userRegistry: VcsUserRegistry
@@ -49,25 +51,28 @@ open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, co
     return false
   }
 
-  override fun getElementText(row: Any): String? {
-    throw UnsupportedOperationException("Getting row text in a Log is unsupported since we match commit subject and author separately.")
-  }
-
-  private fun getCommitSubject(row: Int): String? {
-    val dataGetter = index.dataGetter ?: return super.getElementText(row)
-    val id = myComponent.model.getIdAtRow(row)
-    val message = dataGetter.getFullMessage(id) ?: return super.getElementText(row)
-    return getSubject(message)
-  }
-
   override fun isMatchingElement(row: Any, pattern: String): Boolean {
-    val str = getCommitSubject(row as Int)
-    if (str != null && compare(str, pattern)) return true
+    if (super.isMatchingElement(row, pattern)) return true
     return matchResult?.run {
       commitsForUsers.isNotEmpty() &&  // getting id from row takes time, so optimizing a little here
-      commitsForUsers.contains(myComponent.model.getIdAtRow(row))
+      commitsForUsers.contains(getCommitId(row as Int))
     } ?: false
   }
+
+  override fun isMatchingMetadata(pattern: String, metadata: VcsCommitMetadata?): Boolean {
+    if (metadata is IndexedDetails) {
+      // Author column is excluded here since authors are filtered separately in "matchUsers" due to performance reasons
+      return isMatchingMetadata(pattern, metadata, columnsForSpeedSearch - Author)
+    }
+    return super.isMatchingMetadata(pattern, metadata)
+  }
+
+  override fun getCommitMetadata(row: Int): VcsCommitMetadata? {
+    val dataGetter = index.dataGetter ?: return super.getCommitMetadata(row)
+    return IndexedDetails(dataGetter, storage, getCommitId(row))
+  }
+
+  protected fun getCommitId(row: Int) = myComponent.model.getIdAtRow(row)
 
   private data class MatchResult(val pattern: String,
                                  val commitsForUsers: Set<Int> = emptySet(),

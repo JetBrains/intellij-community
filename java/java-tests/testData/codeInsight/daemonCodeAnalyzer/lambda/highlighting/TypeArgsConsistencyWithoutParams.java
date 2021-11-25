@@ -20,7 +20,7 @@ class Test5 {
     static <T> void bar(I<T> i){}
 
     {
-        bar(<error descr="Incompatible parameter types in lambda expression">() -> null</error>);
+        bar(<error descr="Wrong number of lambda parameters: expected 1 but found 0">() -> null</error>);
     }
 }
 class Test6 {

@@ -1,5 +1,5 @@
 {
-  "version": "0.4",
+  "version": "0.5",
   "definitions": {
     "color": {
       "type": "string",
@@ -316,6 +316,15 @@
       "type": "object",
       "title": "Theme Color Palette",
       "description": "Define common colors here and use color names in 'ui' section instead of #rrggbb values",
+      "patternProperties": {
+        ".*": {"$ref": "#/definitions/color"}
+      }
+    },
+    "iconColorsOnSelection": {
+      "type": "object",
+      "title": "Theme selection colors tuner",
+      "description": "Provides a way to change icon colors under focused selection. Provide a map of colors to colors. When the icon under active selection, the key color will be replaced by the value color.",
+      "examples": [ "'#6e6e6e': '#afb1b3'" ],
       "patternProperties": {
         ".*": {"$ref": "#/definitions/color"}
       }

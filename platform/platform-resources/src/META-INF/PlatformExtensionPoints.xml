@@ -74,7 +74,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="getDataRule"
-                    beanClass="com.intellij.util.KeyedLazyInstanceEP"
+                    beanClass="com.intellij.ide.impl.DataManagerImpl$GetDataRuleBean"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.impl.dataRules.GetDataRule"/>
     </extensionPoint>
@@ -342,6 +342,8 @@
     <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
     <extensionPoint name="notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
 
+    <extensionPoint name="notificationRemindLaterHandler" interface="com.intellij.notification.NotificationRemindLaterHandler" dynamic="true"/>
+
     <extensionPoint name="troubleInfoCollector" interface="com.intellij.troubleshooting.TroubleInfoCollector" dynamic="true"/>
     <extensionPoint name="generalTroubleInfoCollector" interface="com.intellij.troubleshooting.GeneralTroubleInfoCollector" dynamic="true"/>
 
@@ -451,14 +453,14 @@
     <extensionPoint name="contentTabActionProvider" interface="com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider"/>
 
     <extensionPoint name="inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
-    <extensionPoint name="commandLineCustomHandler" interface="com.intellij.ide.CommandLineCustomHandler" dynamic="true"/>
 
-    <extensionPoint name="recoveryAction"
-                    interface="com.intellij.ide.actions.cache.RecoveryAction"
-                    dynamic="true"/>
+    <extensionPoint name="protocolHandler" interface="com.intellij.ide.ProtocolHandler" dynamic="true"/>
 
-    <extensionPoint name="fragments.dsl.builder.extender"
-                    interface="com.intellij.execution.ui.utils.FragmentsDslBuilderExtender"
-                    dynamic="true"/>
+    <extensionPoint name="recoveryAction" interface="com.intellij.ide.actions.cache.RecoveryAction" dynamic="true"/>
+
+    <extensionPoint name="fragments.dsl.builder.extender" interface="com.intellij.execution.ui.utils.FragmentsDslBuilderExtender" dynamic="true"/>
+
+    <extensionPoint name="toolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory" dynamic="true"/>
+
   </extensionPoints>
 </idea-plugin>

@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.application.impl.InvocationUtil;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
@@ -72,11 +72,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.application.impl.InvocationUtil.*;
-
 public final class IdeEventQueue extends EventQueue {
-  private static final Set<Class<? extends Runnable>> ourRunnablesWoWrite = Set.of(REPAINT_PROCESSING_CLASS);
-  private static final Set<Class<? extends Runnable>> ourRunnablesWithWrite = Set.of(FLUSH_NOW_CLASS);
   private static final boolean ourDefaultEventWithWrite = true;
 
   private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
@@ -427,30 +423,37 @@ public final class IdeEventQueue extends EventQueue {
       myCurrentEvent = e;
 
       AWTEvent finalE1 = e;
-      Runnable runnable = extractRunnable(e);
+      Runnable runnable = InvocationUtil.extractRunnable(e);
       Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
       Runnable processEventRunnable = () -> {
-        ProgressManager progressManager = null;
+        ProgressManager progressManager;
         Application app = ApplicationManager.getApplication();
         if (app != null && !app.isDisposed()) {
+          ProgressManager p = null;
           try {
-            progressManager = ProgressManager.getInstance();
+            p = ProgressManager.getInstance();
           }
           catch (RuntimeException ex) {
             LOG.warn("app services aren't yet initialized", ex);
           }
+          progressManager = p;
+        }
+        else {
+          progressManager = null;
         }
 
-        try (AccessToken ignored = startActivity(finalE1)) {
-          if (progressManager != null) {
-            progressManager.computePrioritized(() -> {
+        try {
+          performActivity(finalE1, () -> {
+            if (progressManager != null) {
+              progressManager.computePrioritized(() -> {
+                _dispatchEvent(myCurrentEvent);
+                return null;
+              });
+            }
+            else {
               _dispatchEvent(myCurrentEvent);
-              return null;
-            });
-          }
-          else {
-            _dispatchEvent(myCurrentEvent);
-          }
+            }
+          });
         }
         catch (Throwable t) {
           processException(t);
@@ -470,8 +473,7 @@ public final class IdeEventQueue extends EventQueue {
           if (finalE1 instanceof KeyEvent) {
             maybeReady();
           }
-          if (eventWatcher != null &&
-              runnableClass != FLUSH_NOW_CLASS) {
+          if (eventWatcher != null && runnable != null && !InvocationUtil.isFlushNow(runnable)) {
             eventWatcher.logTimeMillis(runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
                                        startedAt,
                                        runnableClass);
@@ -483,15 +485,9 @@ public final class IdeEventQueue extends EventQueue {
         }
       };
 
-      if (runnableClass != Runnable.class) {
-        if (ourRunnablesWoWrite.contains(runnableClass)) {
-          processEventRunnable.run();
-          return;
-        }
-        if (ourRunnablesWithWrite.contains(runnableClass)) {
-          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable);
-          return;
-        }
+      if (runnableClass == InvocationUtil.REPAINT_PROCESSING_CLASS) {
+        processEventRunnable.run();
+        return;
       }
 
       if (ourDefaultEventWithWrite) {
@@ -603,16 +599,20 @@ public final class IdeEventQueue extends EventQueue {
     return event;
   }
 
-  static @Nullable AccessToken startActivity(@NotNull AWTEvent e) {
-    if (ourTransactionGuard == null && appIsLoaded()) {
+  static void performActivity(@NotNull AWTEvent e, @NotNull Runnable runnable) {
+    TransactionGuardImpl transactionGuard = ourTransactionGuard;
+    if (transactionGuard == null && appIsLoaded()) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+        ourTransactionGuard = transactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
       }
     }
-    return ourTransactionGuard == null
-           ? null
-           : ourTransactionGuard.startActivity(isInputEvent(e) || e instanceof ItemEvent || e instanceof FocusEvent);
+    if (transactionGuard == null) {
+      runnable.run();
+    }
+    else {
+      transactionGuard.performActivity(isInputEvent(e) || e instanceof ItemEvent || e instanceof FocusEvent, runnable);
+    }
   }
 
   private void processException(@NotNull Throwable t) {
@@ -1519,18 +1519,6 @@ public final class IdeEventQueue extends EventQueue {
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
     return event instanceof KeyEvent;
-  }
-
-  @Override
-  public AWTEvent peekEvent() {
-    AWTEvent event = super.peekEvent();
-    if (event != null) {
-      return event;
-    }
-    if (isTestMode() && LaterInvocator.ensureFlushRequested()) {
-      return super.peekEvent();
-    }
-    return null;
   }
 
   private Boolean myTestMode;

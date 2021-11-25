@@ -6,6 +6,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.components.fields.ExtendableTextField
 import training.dsl.TaskRuntimeContext
+import training.util.isToStringContains
+import java.util.*
 
 fun TaskRuntimeContext.textBeforeCaret(text: String): Boolean {
   val offset = editor.caretModel.offset
@@ -29,7 +31,7 @@ fun TaskRuntimeContext.textOnLine(line: Int, text: String): Boolean {
   val lineStartOffset = editor.document.getLineStartOffset(line)
   val lineEndOffset = editor.document.getLineEndOffset(line)
   val subSequence = editor.document.charsSequence.subSequence(lineStartOffset, lineEndOffset)
-  return subSequence.toString().contains(text)
+  return subSequence.isToStringContains(text)
 }
 
 fun TaskRuntimeContext.findElementAtCaret(): PsiElement? {
@@ -56,6 +58,5 @@ fun shiftSymbol(): String {
   return "Shift"
 }
 
-
 fun TaskRuntimeContext.checkWordInSearchEverywhereInput(expected: String): Boolean =
-  (focusOwner as? ExtendableTextField)?.text?.toLowerCase()?.contains(expected.toLowerCase()) == true
+  (focusOwner as? ExtendableTextField)?.text?.lowercase(Locale.ENGLISH).isToStringContains(expected.lowercase(Locale.ENGLISH))

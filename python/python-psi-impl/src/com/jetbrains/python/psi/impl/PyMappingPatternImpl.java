@@ -13,4 +13,9 @@ public class PyMappingPatternImpl extends PyElementImpl implements PyMappingPatt
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyMappingPattern(this);
   }
+
+  @Override
+  public boolean isIrrefutable() {
+    return false;
+  }
 }

@@ -25,7 +25,10 @@ internal class ModificationNotifier(private val project: Project) : BookmarksLis
     view?.let { if (it.isShowing) select(it) }
   }
 
+  internal var snapshot: List<BookmarkOccurrence>? = null
+
   private fun notifyLater(notify: (BookmarksListener) -> Unit) {
+    snapshot = null // cleanup cached snapshot
     modification.incrementAndGet()
     invokeLater { publisher?.let(notify) }
   }

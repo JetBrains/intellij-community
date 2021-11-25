@@ -217,14 +217,20 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     return !appSettings.DISABLE_MANAGE_IGNORE_FILES && (appSettings.MANAGE_IGNORE_FILES || super.needDoForCurrentProject())
   }
 
-  private fun getAffectedFilePath(event: VFileEvent): FilePath? = when {
-    event is VFileCreateEvent -> VcsUtil.getFilePath(event.path, event.isDirectory)
-    event is VFileMoveEvent ||
-    event is VFileCopyEvent ||
-    event is VFilePropertyChangeEvent && event.isRename -> {
-      VcsUtil.getFilePath(event.path, event.file!!.isDirectory)
+  private fun getAffectedFilePath(event: VFileEvent): FilePath? {
+    if (event.fileSystem !is LocalFileSystem) {
+      return null
     }
-    else -> null
+
+    return when {
+      event is VFileCreateEvent -> VcsUtil.getFilePath(event.path, event.isDirectory)
+      event is VFileMoveEvent ||
+      event is VFileCopyEvent ||
+      event is VFilePropertyChangeEvent && event.isRename -> {
+        VcsUtil.getFilePath(event.path, event.file!!.isDirectory)
+      }
+      else -> null
+    }
   }
 
   private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation")

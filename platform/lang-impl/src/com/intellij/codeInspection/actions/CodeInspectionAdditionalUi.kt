@@ -7,8 +7,8 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 
 class CodeInspectionAdditionalUi {
   val browseProfilesCombo: SchemesCombo<InspectionProfileImpl> = object : SchemesCombo<InspectionProfileImpl>() {
@@ -28,7 +28,9 @@ class CodeInspectionAdditionalUi {
   val panel = panel {
       row(InspectionsBundle.message("inspection.action.profile.label")) {
         cell(browseProfilesCombo)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .resizableColumn()
         link = link(CommonBundle.message("action.text.configure.ellipsis")) {}.component
-      }.topGap(TopGap.MEDIUM)
+      }
     }
 }

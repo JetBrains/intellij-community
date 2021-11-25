@@ -18,10 +18,13 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
+import com.intellij.ui.mac.screenmenu.Menu;
+import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,6 +47,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   private final DataContext myContext;
   private boolean myToggled;
   private final boolean myUseDarkIcons;
+  private final @Nullable MenuItem myScreenMenuItemPeer;
 
   public ActionMenuItem(@NotNull AnAction action,
                         @NotNull Presentation presentation,
@@ -61,9 +65,24 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     myToggleable = action instanceof Toggleable;
     myInsideCheckedGroup = insideCheckedGroup;
     myUseDarkIcons = useDarkIcons;
-
-    addActionListener(new ActionTransmitter());
+    final ActionTransmitter actionTransmitter = new ActionTransmitter();
+    addActionListener(actionTransmitter);
     setBorderPainted(false);
+
+    if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      myScreenMenuItemPeer = new MenuItem();
+      myScreenMenuItemPeer.setActionDelegate(()-> {
+        // Called on AppKit when user activates menu item
+        if (isToggleable()) {
+          myToggled = !myToggled;
+          myScreenMenuItemPeer.setState(myToggled);
+        }
+        ApplicationManager.getApplication().invokeLater(()->{
+          actionTransmitter.performAction(0);
+        });//invokeLater
+      });//setActionDelegate
+    } else
+      myScreenMenuItemPeer = null;
 
     updateUI();
     init();
@@ -76,6 +95,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   public @NotNull String getPlace() {
     return myPlace;
   }
+
+  public @Nullable MenuItem getScreenMenuItemPeer() { return myScreenMenuItemPeer; }
 
   private static boolean isEnterKeyStroke(KeyStroke keyStroke) {
     return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && keyStroke.getModifiers() == 0;
@@ -104,13 +125,18 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     }
   }
 
-  private void updateFromPresentation() {
+  void updateFromPresentation() {
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
     setMnemonic(myPresentation.getMnemonic());
     setText(myPresentation.getText(myEnableMnemonics));
     setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
     updateIcon();
+
+    if (myScreenMenuItemPeer != null) {
+      myScreenMenuItemPeer.setLabel(getText(), getAccelerator());
+      myScreenMenuItemPeer.setEnabled(isEnabled());
+    }
   }
 
   @Override
@@ -130,8 +156,11 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         //If action has Enter shortcut, do not add it. Otherwise, user won't be able to chose any ActionMenuItem other than that
         if (!isEnterKeyStroke(firstKeyStroke)) {
           setAccelerator(firstKeyStroke);
+          if (myScreenMenuItemPeer != null) myScreenMenuItemPeer.setLabel(getText(), firstKeyStroke);
           if (KeymapUtil.isSimplifiedMacShortcuts()) {
-            putClientProperty("accelerator.text", KeymapUtil.getPreferredShortcutText(shortcuts));
+            final String shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts);
+            putClientProperty("accelerator.text", shortcutText);
+            if (myScreenMenuItemPeer != null) myScreenMenuItemPeer.setAcceleratorText(shortcutText);
           }
         }
         break;
@@ -163,6 +192,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().getShowIconsInMenus())) {
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
+        if (myScreenMenuItemPeer != null) myScreenMenuItemPeer.setState(myToggled);
         setIcon(wrapNullIcon(getIcon()));
       }
       else if (myToggled) {
@@ -216,6 +246,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
     }
     super.setIcon(icon);
+    if (myScreenMenuItemPeer != null) myScreenMenuItemPeer.setIcon(icon);
   }
 
   public boolean isToggleable() {
@@ -228,9 +259,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private final class ActionTransmitter implements ActionListener {
-
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
+    void performAction(int modifiers) {
       IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
       String id = ActionManager.getInstance().getId(myAction.getAction());
       if (id != null) {
@@ -241,13 +270,18 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
         final AnActionEvent event = new AnActionEvent(
           currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
-          myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers(), true, false
+          myContext, myPlace, myPresentation, ActionManager.getInstance(), modifiers, true, false
         );
         AnAction menuItemAction = myAction.getAction();
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
           ActionUtil.performActionDumbAwareWithCallbacks(menuItemAction, event);
         }
       });
+    }
+
+    @Override
+    public void actionPerformed(@NotNull ActionEvent e) {
+      performAction(e.getModifiers());
     }
   }
 }

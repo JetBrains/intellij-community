@@ -387,6 +387,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     throws StorageException, IOException {
     ((StubIndexImpl)StubIndex.getInstance()).initializeStubIndexes();
     checkNameStorage();
+    mySerializationManager.initialize();
 
     StubUpdatingIndexStorage index = new StubUpdatingIndexStorage(extension, new VfsAwareIndexStorageLayout<>() {
       @Override

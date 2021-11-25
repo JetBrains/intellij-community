@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.intellij.util.indexing.diagnostic.*
@@ -72,9 +72,10 @@ fun IndexingJobStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics
   wasFullyIndexedByExtensions = wasFullyIndexedByExtensions
 )
 
-fun ProjectIndexingHistoryImpl.IndexingTimesImpl.toJson() =
+fun IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
     indexingReason = indexingReason,
+    wasFullIndexing = wasFullIndexing,
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
     contentLoadingTime = JsonDuration(contentLoadingDuration.toNanos()),
@@ -90,7 +91,8 @@ fun ProjectIndexingHistoryImpl.IndexingTimesImpl.toJson() =
 private fun calculatePercentages(part: Long, total: Long): JsonPercentages = JsonPercentages(part, total)
 
 fun ProjectIndexingHistoryImpl.toJson(): JsonProjectIndexingHistory {
-  times.contentLoadingDuration = Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingTime.nano })
+  (times as ProjectIndexingHistoryImpl.IndexingTimesImpl).contentLoadingDuration =
+    Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingTime.nano })
   return JsonProjectIndexingHistory(
     projectName = project.name,
     times = times.toJson(),

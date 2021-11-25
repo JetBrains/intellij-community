@@ -1,1 +1,4 @@
-val num = sqrt(81.0)
+fun test()
+{
+    val list = listOf(81.0)
+}

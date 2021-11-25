@@ -40,6 +40,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -49,6 +52,7 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
@@ -80,8 +84,10 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.jetbrains.python.console.PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY;
+
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
-  static Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
+  public static final Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final boolean myTestMode;
 
@@ -106,6 +112,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean isShowQueue;
 
   private ActionToolbar myToolbar;
+  private boolean myIsToolwindowHorizontal = true;
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -132,6 +139,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
     myPyHighlighter = new PyHighlighter(languageLevel);
     myScheme = getConsoleEditor().getColorsScheme();
+    addToolwindowPositionListener(project);
   }
 
   public void setCommandQueueTitle(String title) {
@@ -142,9 +150,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
-    getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY, communication);
+    getFile().putCopyableUserData(CONSOLE_COMMUNICATION_KEY, communication);
 
     if (isShowVars && communication instanceof PydevConsoleCommunication) {
+      myIsToolwindowHorizontal = isToolwindowHorizontal(PythonConsoleToolWindow.getInstance(getProject()).getToolWindow());
       showVariables((PydevConsoleCommunication)communication);
     }
     if (RegistryManager.getInstance().is("python.console.CommandQueue")){
@@ -154,7 +163,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
           .addListener(communication, new CommandQueueListener() {
           @Override
           public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-            myCommandQueuePanel.removeCommand(command);
+            ApplicationManager.getApplication().invokeLater(() -> {
+              myCommandQueuePanel.removeCommand(command);
+            });
           }
 
           @Override
@@ -426,9 +437,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   public void showVariables(PydevConsoleCommunication consoleCommunication) {
-    PyStackFrame stackFrame = new PyStackFrame(getProject(), consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
+    Project project = getProject();
+    PyStackFrame stackFrame = new PyStackFrame(project, consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
     stackFrame.restoreChildrenDescriptors(myDescriptorsCache);
-    final XStandaloneVariablesView view = new XStandaloneVariablesView(getProject(), new PyDebuggerEditorsProvider(), stackFrame);
+    final XStandaloneVariablesView view = new XStandaloneVariablesView(project, new PyDebuggerEditorsProvider(), stackFrame);
     consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
       public void commandExecuted(boolean more) {
@@ -444,43 +456,71 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     splitWindow();
   }
 
+  private static boolean isToolwindowHorizontal(ToolWindow toolWindow) {
+    return toolWindow.getAnchor() == ToolWindowAnchor.BOTTOM || toolWindow.getAnchor() == ToolWindowAnchor.TOP;
+  }
+
+  private void addToolwindowPositionListener(Project project) {
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+    busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+      @Override
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+        ToolWindow consoleToolWindow = PythonConsoleToolWindow.getInstance(project).getToolWindow();
+        if (myIsToolwindowHorizontal != isToolwindowHorizontal(consoleToolWindow)) {
+          myIsToolwindowHorizontal = !myIsToolwindowHorizontal;
+          if (isShowVars) {
+            restoreWindow();
+            ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
+            if (communication instanceof PydevConsoleCommunication) {
+              showVariables((PydevConsoleCommunication)communication);
+            }
+          }
+        }
+      }
+    });
+  }
+
   //the main function for drawing the queue
   public void showQueue() {
-      JBPopupListener listener = new JBPopupListener() {
-        @Override
-        public void beforeShown(@NotNull LightweightWindowEvent event) {}
+    JBPopupListener listener = new JBPopupListener() {
+      @Override
+      public void beforeShown(@NotNull LightweightWindowEvent event) { }
 
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-          isShowQueue = false;
-        }
-      };
-      String commandQueueName = getConsoleDisplayName(getProject());
-      myCommandQueue = JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(myCommandQueuePanel, null)
-        .setMovable(true)
-        .setResizable(true)
-        .setShowShadow(true)
-        .setCancelOnClickOutside(false)
-        .setTitle(PyBundle.message(
-          "python.console.command.queue.add.title",
-          commandQueueName != null ? commandQueueName : "Python Console"))
-        .setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")))
-        .addListener(listener)
-        .setBorderColor(JBColor.background())
-        .setCancelOnOtherWindowOpen(true)
-        .createPopup();
-      ((TitlePanel)((AbstractPopup)myCommandQueue).getTitle()).getLabel().setForeground(JBColor.foreground());
-      ((AbstractPopup)myCommandQueue).addResizeListener(this::commandQueueWasResized, this);
-
-      if (commandQueueDimension != null) {
-        myCommandQueue.setSize(commandQueueDimension);
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        isShowQueue = false;
       }
-      var editor = getConsoleEditor();
-      if (UIUtil.isShowing(editor.getContentComponent()))
-        myCommandQueue.showInBestPositionFor(getConsoleEditor());
+    };
+    String commandQueueName = getConsoleDisplayName(getProject());
+    myCommandQueue = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(myCommandQueuePanel, null)
+      .setMovable(true)
+      .setResizable(true)
+      .setShowShadow(true)
+      .setCancelOnClickOutside(false)
+      .setTitle(PyBundle.message(
+        "python.console.command.queue.add.title",
+        commandQueueName != null ? commandQueueName : "Python Console"))
+      .setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")))
+      .addListener(listener)
+      .setBorderColor(JBColor.background())
+      .setCancelOnOtherWindowOpen(true)
+      .createPopup();
 
-      Disposer.register(this, myCommandQueue);
+    var title = (TitlePanel)((AbstractPopup)myCommandQueue).getTitle();
+    title.getLabel().setForeground(JBColor.foreground());
+    title.setActive(true);
+    ((AbstractPopup)myCommandQueue).addResizeListener(this::commandQueueWasResized, this);
+
+    if (commandQueueDimension != null) {
+      myCommandQueue.setSize(commandQueueDimension);
+    }
+    var editor = getConsoleEditor();
+    if (UIUtil.isShowing(editor.getContentComponent())) {
+      myCommandQueue.showInBestPositionFor(getConsoleEditor());
+    }
+
+    Disposer.register(this, myCommandQueue);
   }
 
   private void commandQueueWasResized() {
@@ -505,7 +545,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private void splitWindow() {
     Component console = getComponent(0);
     removeAll();
-    JBSplitter p = new JBSplitter(false, 2f / 3);
+    JBSplitter p = new JBSplitter(!myIsToolwindowHorizontal, 2f / 3);
     p.setFirstComponent((JComponent)console);
     p.setSecondComponent(mySplitView.getPanel());
     p.setShowDividerControls(true);

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class A(val _value: Int): Comparable<A> {
     override operator fun compareTo(other: A) = _value.compareTo(other._value)
 }

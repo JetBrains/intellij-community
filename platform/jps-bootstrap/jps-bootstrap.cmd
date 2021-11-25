@@ -9,12 +9,14 @@ if "%JPS_BOOTSTRAP_WORK_DIR%"=="" set JPS_BOOTSTRAP_WORK_DIR=%JPS_BOOTSTRAP_COMM
 
 setlocal
 
+set ZULU_PREFIX=zulu11.50.19-ca-jdk11.0.12
+set ZULU_ARCH=win_x64
 set SCRIPT_VERSION=jps-bootstrap-cmd-v1
 set COMPANY_NAME=JetBrains
 set TARGET_DIR=%LOCALAPPDATA%\Temp\%COMPANY_NAME%\
-set JVM_TARGET_DIR=%TARGET_DIR%amazon-corretto-11.0.9.12.1-windows-x64-jdk-%SCRIPT_VERSION%\
+set JVM_TARGET_DIR=%TARGET_DIR%%ZULU_PREFIX%-%ZULU_ARCH%-%SCRIPT_VERSION%\
 set JVM_TEMP_FILE=jvm-windows-x64.zip
-set JVM_URL=https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-windows-x64-jdk.zip
+set JVM_URL=https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/%ZULU_PREFIX%-%ZULU_ARCH%.zip
 
 set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
 
@@ -70,7 +72,7 @@ endlocal
 "%JAVA_HOME%\bin\java.exe" -jar "%JPS_BOOTSTRAP_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_WORK_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
 if errorlevel 1 goto fail
 
-"%JAVA_HOME%\bin\java.exe" -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain %*
+"%JAVA_HOME%\bin\java.exe" -Xmx2g -Djava.awt.headless=true -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain %*
 exit /B %ERRORLEVEL%
 
 :fail

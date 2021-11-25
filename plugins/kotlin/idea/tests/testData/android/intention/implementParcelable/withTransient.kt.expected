@@ -2,7 +2,7 @@ import android.os.Parcel
 import android.os.Parcelable
 
 // INTENTION_CLASS: org.jetbrains.kotlin.android.intention.ImplementParcelableAction
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class WithTransient() : Parcelable {
     @Transient var transientText: String = ""

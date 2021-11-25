@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.CommonBundle;
@@ -921,13 +921,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @Override
-  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment) {
+  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
     return addChangeList(name, comment, null);
   }
 
-  @NotNull
   @Override
-  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final ChangeListData data) {
+  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
@@ -1439,14 +1438,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @TestOnly
-  public boolean ensureUpToDate() {
+  public void ensureUpToDate() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      updateImmediately();
-      return true;
-    }
     waitUntilRefreshed();
-    return true;
   }
 
   @RequiresEdt

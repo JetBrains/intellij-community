@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.hasOnlyUserName
-import com.intellij.credentialStore.isFulfilled
 import com.intellij.diagnostic.ITNProxy.ErrorBean
 import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
@@ -18,6 +17,7 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -33,6 +33,7 @@ private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions 
  * by JetBrains to processing at JetBrains. **It isn't supposed to be used by third-party plugins.** Third-party plugins need to provide
  * their own implementations of [ErrorReportSubmitter].
  */
+@InternalIgnoreDependencyViolation
 open class ITNReporter : ErrorReportSubmitter() {
 
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")

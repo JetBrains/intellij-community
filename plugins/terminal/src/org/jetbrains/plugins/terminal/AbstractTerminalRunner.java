@@ -126,7 +126,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   /**
-   * @deprecated use {@link AbstractTerminalRunner#createTerminalWidget(com.intellij.openapi.Disposable, java.lang.String, boolean)} instead
+   * @deprecated use {@link AbstractTerminalRunner#createTerminalWidget(Disposable, String, boolean)} instead
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
@@ -241,6 +241,14 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public abstract String runningTargetName();
+
+  /**
+   * @return true if all live terminal sessions created with this runner
+   *              should be recreated when the project is opened for the next time
+   */
+  public boolean isTerminalSessionPersistent() {
+    return true;
+  }
 
   @Nullable
   private static String getParentDirectoryPath(@Nullable VirtualFile file) {

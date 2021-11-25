@@ -427,7 +427,7 @@ class VirtualFileUrlProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEnti
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value)
+    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value)
   }
 }
 
@@ -446,7 +446,7 @@ class VirtualFileUrlNullableProperty<T : ModifiableWorkspaceEntityBase<out Works
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value)
+    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value)
   }
 }
 
@@ -465,7 +465,7 @@ class VirtualFileUrlListProperty<T : ModifiableWorkspaceEntityBase<out Workspace
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value.toHashSet())
+    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value.toHashSet())
   }
 }
 
@@ -488,12 +488,12 @@ class VirtualFileUrlLibraryRootProperty<T : ModifiableWorkspaceEntityBase<out Wo
     field.set(thisRef.original, value)
 
     val jarDirectories = mutableSetOf<VirtualFileUrl>()
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value.map {
+    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value.map {
       if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
         jarDirectories.add(it.url)
       }
       it.url
     }.toHashSet())
-    thisRef.diff.indexes.virtualFileIndex.indexJarDirectories(thisRef.id, jarDirectories)
+    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.indexJarDirectories(thisRef.id, jarDirectories)
   }
 }

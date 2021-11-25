@@ -17,6 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrPermitsClause
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
+import org.jetbrains.plugins.groovy.lang.psi.util.forbidRecord
 
 class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
   companion object {
@@ -95,5 +97,10 @@ class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElement
         .range(literal)
         .create()
     }
+  }
+
+  override fun visitRecordDefinition(recordDefinition: GrRecordDefinition) {
+    forbidRecord(holder, recordDefinition)
+    super.visitRecordDefinition(recordDefinition)
   }
 }

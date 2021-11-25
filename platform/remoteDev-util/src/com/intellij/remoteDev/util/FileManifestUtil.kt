@@ -25,6 +25,8 @@ object FileManifestUtil {
   const val ManifestFileName = ".manifest.txt"
   const val HashSeed = "e69b0a64-b91a-4da6-bc80-35828c9a97d1"
 
+  private fun isSymlink(file: Path) = FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
+
   class ManifestGenerator(private val targetDir: Path, private val includeInManifest: (Path) -> Boolean) : BiConsumer<Decompressor.Entry, Path> {
     private val list = mutableListOf<String>()
 
@@ -115,8 +117,7 @@ object FileManifestUtil {
       override fun visitFileFailed(file: Path?, exc: IOException?): FileVisitResult {
         if (exc is NoSuchFileException && file != null) {
           try {
-            val isSymlink = FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
-            val isBrokenSymlink = isSymlink && !file.exists()
+            val isBrokenSymlink = isSymlink(file) && !file.exists()
             if (isBrokenSymlink && file.isDirectory(LinkOption.NOFOLLOW_LINKS))
               return FileVisitResult.CONTINUE
           } catch (e: Throwable){
@@ -127,18 +128,16 @@ object FileManifestUtil {
       }
 
       override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes?): FileVisitResult {
-        val isSymlink = FileSystemUtil.getAttributes(dir.toFile())?.isSymLink == true
-        if (isSymlink) return FileVisitResult.SKIP_SUBTREE
-        if (!includeInManifest(dir)) return FileVisitResult.CONTINUE
         if (dir == targetDir) return FileVisitResult.CONTINUE
 
-        val name = dir.relativeTo(targetDir).toString().replace("\\", "/") + "/"
-        val type = EntryType.DIR
-        val attributes = readAttributesNoFollowLinks(dir)
+        if (includeInManifest(dir)) {
+          val name = dir.relativeTo(targetDir).toString().replace("\\", "/") + "/"
+          val type = EntryType.DIR
+          val attributes = readAttributesNoFollowLinks(dir)
+          addManifestEntry(name, type, attributes.mode, attributes.size, attributes.lastModifiedTime)
+        }
 
-        addManifestEntry(name, type, attributes.mode, attributes.size, attributes.lastModifiedTime)
-
-        return FileVisitResult.CONTINUE
+        return if (isSymlink(dir)) FileVisitResult.SKIP_SUBTREE else FileVisitResult.CONTINUE
       }
     }
 
@@ -199,6 +198,19 @@ object FileManifestUtil {
     logger.info("isUpToDate false for '$root': manifest file $manifestFile differs from on disk content\n" +
                 "on disk content:\n$actualOnDiskContent\n" +
                 "saved manifest in $manifestFile content:\n$manifestFileContent")
+
+    val onDiskLines = actualOnDiskContent.lines().toHashSet()
+    val manifestLines = manifestFileContent.lines().toHashSet()
+
+    val commonLines = onDiskLines.intersect(manifestLines)
+    val onDiskOnly = onDiskLines - commonLines
+    val manifestOnly = manifestLines - commonLines
+
+    logger.info("${onDiskOnly.size} elements are present only on disk and not found in the manifest: " +
+                  onDiskOnly.joinToString { "'$it'" })
+    logger.info("${manifestOnly.size} elements are present only in the manifest and not found on disk: " +
+                  manifestOnly.joinToString { "'$it'" })
+
     return false
   }
 

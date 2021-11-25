@@ -11,16 +11,16 @@ class Simple {
   }
 
     @Untainted String foo() {
-        return field;
-    }
+    return field;
+  }
 
   void setFieldToBar() {
     this.field = bar();
   }
 
     @Untainted String bar() {
-        return "safe";
-    }
+    return "safe";
+  }
 
   void sink(@Untainted String s) {}
 }

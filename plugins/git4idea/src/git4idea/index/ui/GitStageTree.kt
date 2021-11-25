@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
@@ -236,24 +235,12 @@ abstract class GitStageTree(project: Project,
 
   protected class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
     AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
-    private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
+
     internal val conflict by lazy { getUserObject().createConflict() }
 
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
 
-    override fun originText(userObject: GitFileStatusNode): String? {
-      val originalPath = userObject.origPath ?: return null
-      if (movedRelativePath != null) {
-        return VcsBundle.message("change.file.moved.from.text", movedRelativePath)
-      }
-      return VcsBundle.message("change.file.renamed.from.text", originalPath.name)
-    }
-
-    private fun getMovedRelativePath(userObject: GitFileStatusNode): String? {
-      val origPath = userObject.origPath
-      if (origPath == null || origPath.parentPath == userObject.filePath.parentPath) return null
-      return PlatformVcsPathPresenter.getPresentableRelativePath(userObject.filePath, origPath)
-    }
+    override fun originPath(userObject: GitFileStatusNode): FilePath? = userObject.origPath
 
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
       super.render(renderer, selected, expanded, hasFocus)

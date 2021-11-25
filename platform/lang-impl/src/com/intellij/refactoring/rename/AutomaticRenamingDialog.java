@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
@@ -197,7 +197,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myPanelForPreview.add(myUsagePreviewPanel, BorderLayout.CENTER);
     myUsagePreviewPanel.updateLayout(null);
     myPanelForPreview.add(myUsageFileLabel, BorderLayout.NORTH);
-    mySplitPane.setDividerLocation(0.5);
+    double top = mySplitPane.getTopComponent().getPreferredSize().getHeight();
+    double bottom = mySplitPane.getBottomComponent().getPreferredSize().getHeight();
+    mySplitPane.setDividerLocation(top / (top + bottom));
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
 

@@ -6,8 +6,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionPopup
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.observable.properties.comap
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -23,8 +22,7 @@ class CommandLineField(
   commandLineInfo: CommandLineInfo
 ) : ExtendableTextField() {
 
-  private val propertyGraph = PropertyGraph()
-  private val commandLineProperty = propertyGraph.graphProperty { "" }
+  private val commandLineProperty = AtomicLazyProperty { "" }
 
   var commandLine by commandLineProperty
 

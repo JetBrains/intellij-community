@@ -1,4 +1,5 @@
 // "Change type of overriden property 'A.x' to '(Int) -> Int'" "false"
+// WITH_STDLIB
 // ACTION: Add full qualifier
 // ACTION: Change type to '(String) -> Int'
 // ACTION: Go To Super Property

@@ -4,29 +4,34 @@ package org.jetbrains.intellij.build.impl
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 
+import java.nio.file.Files
+import java.nio.file.Path
+
 @CompileStatic
 final class DependenciesProperties {
   private final BuildContext context
-  private final File directory
-  private final File propertiesFile
+  private final Path directory
+  private final Path propertiesFile
 
   DependenciesProperties(BuildContext context) {
     this.context = context
-    this.directory = new File(context.paths.communityHome, 'build/dependencies')
-    this.propertiesFile = new File(directory, 'build/dependencies.properties')
+    this.directory = context.paths.communityHomeDir.resolve("build/dependencies")
+    this.propertiesFile = directory.resolve("build/dependencies.properties")
   }
 
   @Lazy
-  File file = {
-    if (props.isEmpty()) throw new IllegalStateException('Dependencies properties are empty')
+  Path file = {
+    if (props.isEmpty()) {
+      throw new IllegalStateException("Dependencies properties are empty")
+    }
     propertiesFile
   }()
 
   @Lazy
   private Properties props = {
     synchronized (DependenciesProperties.class) {
-      context.gradle.run('Preparing dependencies file', 'dependenciesFile')
-      propertiesFile.newInputStream().withStream {
+      context.gradle.run("prepare dependencies file", "dependenciesFile")
+      Files.newInputStream(propertiesFile).withCloseable {
         Properties properties = new Properties()
         properties.load(it)
         properties

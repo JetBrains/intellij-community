@@ -4,6 +4,7 @@ package com.intellij.grazie.ide.inspection.grammar.quickfix
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInspection.LocalQuickFix
@@ -23,9 +24,14 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
 import kotlin.math.min
 
-internal object GrazieReplaceTypoQuickFix {
+object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
-    HighPriorityAction
+    HighPriorityAction {
+    override fun compareTo(other: IntentionAction): Int {
+      if (other is GrazieCustomFixWrapper) return -1
+      return super.compareTo(other)
+    }
+  }
 
   private class ChangeToVariantAction(
     private val rule: Rule,
@@ -37,7 +43,11 @@ internal object GrazieReplaceTypoQuickFix {
     private val replacementRange: SmartPsiFileRange,
   )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
-    override fun getName(): String = suggestion.takeIf { it.isNotEmpty() } ?: msg("grazie.grammar.quickfix.remove.typo.tooltip")
+    override fun getName(): String {
+      if (suggestion.isEmpty()) return msg("grazie.grammar.quickfix.remove.typo.tooltip")
+      if (suggestion[0].isWhitespace() || suggestion.last().isWhitespace()) return "'$suggestion'"
+      return suggestion
+    }
 
     override fun getTooltipText(): String = if (suggestion.isNotEmpty()) {
       msg("grazie.grammar.quickfix.replace.typo.tooltip", suggestion)
@@ -65,13 +75,26 @@ internal object GrazieReplaceTypoQuickFix {
     }
 
     override fun startInWriteAction(): Boolean = true
+
+    override fun compareTo(other: IntentionAction): Int {
+      if (other is GrazieCustomFixWrapper) return -1
+      return super.compareTo(other)
+    }
   }
 
+  @Deprecated(message = "use getReplacementFixes(problem, underlineRanges)")
+  @Suppress("UNUSED_PARAMETER", "DeprecatedCallableAddReplaceWith")
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>, file: PsiFile): List<LocalQuickFix> {
+    return getReplacementFixes(problem, underlineRanges)
+  }
+
+  @JvmStatic
+  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val replacementRange = problem.replacementRange
     val replacedText = replacementRange.subSequence(problem.text)
+    val file = problem.text.containingFile
     val spm = SmartPointerManager.getInstance(file.project)
-    val familyName = GrazieBundle.message("grazie.grammar.quickfix.replace.typo.text", problem.shortMessage)
+    @Suppress("HardCodedStringLiteral") val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
     problem.corrections.forEachIndexed { index, suggestion ->
       val commonPrefix = commonPrefixLength(suggestion, replacedText)
@@ -85,6 +108,9 @@ internal object GrazieReplaceTypoQuickFix {
     }
     return result
   }
+
+  fun familyName(problem: TextProblem): @IntentionFamilyName String =
+    GrazieBundle.message("grazie.grammar.quickfix.replace.typo.text", problem.shortMessage)
 
   // custom common prefix/suffix calculation to honor cases when the text is separated by a synthetic \n,
   // but LT suggests a space instead (https://github.com/languagetool-org/languagetool/issues/5297)

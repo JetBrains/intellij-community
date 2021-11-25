@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ final class ActivateNavigationBarAction extends AnAction implements DumbAware {
       return;
     }
 
-    IdeRootPaneNorthExtension navBar = ideRootPane.findByName(NavBarRootPaneExtension.NAV_BAR);
+    IdeRootPaneNorthExtension navBar = ideRootPane.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
     if (navBar == null) {
       return;
     }

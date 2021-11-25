@@ -13,10 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -422,6 +419,7 @@ public class XDebuggerTreeInlayPopup<D> {
           }
         }
       });
+      actionPanel.setVisible(presentation.isEnabled());
 
       return actionPanel;
     }
@@ -450,7 +448,6 @@ public class XDebuggerTreeInlayPopup<D> {
                      @Nullable DataProvider contextComponent) {
       //noinspection ConstantConditions
       super(presentation.getText(), action);
-      setEnabled(presentation.isEnabled());
       setDataProvider(contextComponent);
       setFont(UIUtil.getToolTipFont());
     }

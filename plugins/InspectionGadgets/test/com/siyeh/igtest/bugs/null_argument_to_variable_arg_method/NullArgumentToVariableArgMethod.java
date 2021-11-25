@@ -38,3 +38,10 @@ enum Inequitity {
 
     Inequitity(String... ss) {}
 }
+class Demo<E> {
+  public void call(E... e) {}
+
+  public static void main(String[] args) {
+    new Demo<String>().call( <warning descr="Confusing argument 'null', unclear if a varargs or non-varargs call is desired"><caret>null</warning>);
+  }
+}

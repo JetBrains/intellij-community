@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
@@ -24,8 +24,6 @@ private const val GROUP_ID = "Language Plugins Notifications"
 internal class LanguagePluginDetectionStartupActivity : StartupActivity.Background {
 
   override fun runActivity(project: Project) {
-    if (!Experiments.getInstance().isFeatureEnabled("language.detect.notification")) return
-
     val pluginId = findLanguagePluginToInstall()
     if (pluginId == null) return
 
@@ -45,7 +43,7 @@ internal class LanguagePluginDetectionStartupActivity : StartupActivity.Backgrou
 
   companion object {
 
-    private fun getLanguagePlugins(implementationName: String) = MarketplaceRequests.Instance.getFeatures(
+    private fun getLanguagePlugins(implementationName: String) = MarketplaceRequests.getInstance().getFeatures(
       LOCALE_FEATURE_TYPE,
       implementationName,
     )
@@ -60,7 +58,7 @@ internal class LanguagePluginDetectionStartupActivity : StartupActivity.Backgrou
       val matchedLanguagePlugins = getLanguagePlugins(locale.toLanguageTag())
         .ifEmpty { getLanguagePlugins(locale.language) }
 
-      return MarketplaceRequests.Instance
+      return MarketplaceRequests.getInstance()
         .searchPlugins("tags=Language%20Pack", 10)
         .map { it.pluginId }
         .firstOrNull { pluginId ->

@@ -9,10 +9,11 @@ import com.intellij.ui.tree.TreeVisitor
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.ift.PythonLessonsBundle
-import org.fest.swing.fixture.JTreeFixture
+import org.assertj.swing.fixture.JTreeFixture
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import javax.swing.JButton
 import javax.swing.JTree
 import javax.swing.tree.TreePath
@@ -94,7 +95,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
                                        code("teams"), strong(dynamicReferencesString)))
 
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
-        path.pathCount == 6 && path.getPathComponent(5).toString().contains("company_members")
+        path.pathCount == 6 && path.getPathComponent(5).isToStringContains("company_members")
       }
       showWarningIfFindToolbarClosed()
       test {
@@ -138,7 +139,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
     val confirmRefactoringButton = RefactoringBundle.message("usageView.doAction").dropMnemonic()
     task {
       triggerByUiComponentAndHighlight(highlightInside = false) { button: JButton ->
-        button.text?.contains(confirmRefactoringButton) == true
+        button.text.isToStringContains(confirmRefactoringButton)
       }
     }
 
@@ -157,7 +158,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
 
   private fun pathToExclude(tree: JTree): TreePath? {
     return TreeUtil.promiseVisit(tree, TreeVisitor { path ->
-      if (path.pathCount == 7 && path.getPathComponent(6).toString().contains("lambda"))
+      if (path.pathCount == 7 && path.getPathComponent(6).isToStringContains("lambda"))
         TreeVisitor.Action.INTERRUPT
       else
         TreeVisitor.Action.CONTINUE
@@ -172,4 +173,9 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
   }
 
   override val suitableTips = listOf("Rename")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("rename.help.link"),
+         LessonUtil.getHelpLink("rename-refactorings.html")),
+  )
 }

@@ -15,9 +15,12 @@ import org.jetbrains.mvstore.MVStore;
 import org.jetbrains.mvstore.type.FixedByteArrayDataType;
 
 import java.awt.*;
-import java.awt.color.ColorSpace;
 import java.awt.image.*;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,15 +29,25 @@ import java.util.function.BiConsumer;
 @SuppressWarnings("UndesirableClassUsage")
 @ApiStatus.Internal
 public final class SvgCacheManager {
-  public static final long HASH_SEED = 0x9747b28c;
-  private static final int[] B_OFFS = new int[]{3, 2, 1, 0};
-  private static final int IMAGE_KEY_SIZE = Integer.BYTES + Long.BYTES;
-
-  private static final ComponentColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8, 8, 8, 8}, true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
+  private static final long HASH_SEED = 0x9747b28c;
+  private static final int IMAGE_KEY_SIZE = Long.BYTES + 3;
 
   private final MVStore store;
   private final Map<Float, MVMap<byte[], ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
   private final MVMap.Builder<byte[], ImageValue> mapBuilder;
+
+  private static final @Nullable MethodHandle getDataHandle = getGetDataHandle();
+
+  private static MethodHandle getGetDataHandle() {
+    try {
+      return MethodHandles.privateLookupIn(DataBufferInt.class, MethodHandles.lookup())
+        .findGetter(DataBufferInt.class, "data", int[].class);
+    }
+    catch (Throwable e) {
+      getLogger().error("cannot create DataBufferByte.data accessor", e);
+      return null;
+    }
+  }
 
   private static final class StoreErrorHandler implements BiConsumer<Throwable, MVStore> {
     private boolean isStoreOpened;
@@ -57,7 +70,7 @@ public final class SvgCacheManager {
     MVStore.Builder storeBuilder = new MVStore.Builder()
       .backgroundExceptionHandler(storeErrorHandler)
       .autoCommitDelay(60_000)
-      .compressHigh();
+      .compressionLevel(1);
     store = storeBuilder.openOrNewOnIoError(dbFile, true, e -> {
       getLogger().debug("Cannot open icon cache database", e);
     });
@@ -92,34 +105,37 @@ public final class SvgCacheManager {
     store.triggerAutoSave();
   }
 
-  private static byte[] getCacheKey(byte @NotNull [] theme, byte @NotNull [] imageBytes) {
+  private static byte[] getCacheKey(byte @NotNull [] themeDigest, byte @NotNull [] imageBytes) {
     XXHashFactory hashFactory = XXHashFactory.fastestJavaInstance();
     long contentDigest;
-    if (theme.length == 0) {
+    if (themeDigest.length == 0) {
       contentDigest = hashFactory.hash64().hash(imageBytes, 0, imageBytes.length, HASH_SEED);
     }
     else {
       StreamingXXHash64 hasher = hashFactory.newStreamingHash64(HASH_SEED);
       // hash content to ensure that value is not reused if outdated
-      hasher.update(theme, 0, theme.length);
+      hasher.update(themeDigest, 0, themeDigest.length);
       hasher.update(imageBytes, 0, imageBytes.length);
       contentDigest = hasher.getValue();
       hasher.close();
     }
 
     ByteBuffer buffer = ByteBuffer.allocate(IMAGE_KEY_SIZE);
-    // add content size to key to reduce chance of hash collision
-    buffer.putInt(imageBytes.length);
+    // add content size to key to reduce chance of hash collision (write as medium int)
+    buffer.put((byte)(imageBytes.length >>> 16));
+    buffer.put((byte)(imageBytes.length >>> 8));
+    buffer.put((byte)imageBytes.length);
+
     buffer.putLong(contentDigest);
     return buffer.array();
   }
 
-  public @Nullable Image loadFromCache(byte @NotNull [] theme,
+  public @Nullable Image loadFromCache(byte @NotNull [] themeDigest,
                                        byte @NotNull [] imageBytes,
                                        float scale,
                                        boolean isDark,
                                        @NotNull ImageLoader.Dimension2DDouble docSize) {
-    byte[] key = getCacheKey(theme, imageBytes);
+    byte[] key = getCacheKey(themeDigest, imageBytes);
     MVMap<byte[], ImageValue> map = getMap(scale, isDark, scaleToMap, store, mapBuilder);
     try {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
@@ -129,11 +145,12 @@ public final class SvgCacheManager {
         return null;
       }
 
-      Image image = readImage(data, docSize);
+      Image image = readImage(data);
+      docSize.setSize((data.w / scale), (data.h / scale));
       IconLoadMeasurer.svgCacheRead.end(start);
       return image;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       getLogger().error(e);
       try {
         map.remove(key);
@@ -145,57 +162,69 @@ public final class SvgCacheManager {
     }
   }
 
-  public void storeLoadedImage(byte @NotNull [] theme,
+  public void storeLoadedImage(byte @NotNull [] themeDigest,
                                byte @NotNull [] imageBytes,
                                float scale,
-                               @NotNull BufferedImage image,
-                               @NotNull ImageLoader.Dimension2DDouble size) {
-    byte[] key = getCacheKey(theme, imageBytes);
-    getMap(scale, false, scaleToMap, store, mapBuilder).put(key, writeImage(image, size));
+                               @NotNull BufferedImage image) {
+    byte[] key = getCacheKey(themeDigest, imageBytes);
+    getMap(scale, false, scaleToMap, store, mapBuilder).put(key, writeImage(image));
   }
 
-  static @Nullable Image readImage(@NotNull ImageValue value, @NotNull ImageLoader.Dimension2DDouble docSize) {
-    // sanity check to make sure file is not corrupted
-    if (value.actualWidth <= 0 || value.actualHeight <= 0 || value.actualWidth * value.actualHeight <= 0) {
-      return null;
+  static @NotNull Image readImage(@NotNull ImageValue value) throws Throwable {
+    // Create a STABLE internal buffer. It will be marked dirty for now, but will remain STABLE after a refresh.
+    DataBufferInt dataBuffer = new DataBufferInt(value.w * value.h);
+
+    if (getDataHandle == null) {
+      for (int i = 0; i < value.data.length; i++) {
+        dataBuffer.setElem(i, value.data[i]);
+      }
     }
-
-    DataBuffer dataBuffer = createBuffer(value.data, value.actualWidth * 4 * (value.actualHeight - 1) + 4 * value.actualWidth);
-    WritableRaster raster = Raster.createInterleavedRaster(dataBuffer, value.actualWidth, value.actualHeight, value.actualWidth * 4, 4, B_OFFS, null);
-    Image image = new BufferedImage(colorModel, raster, false, null);
-    docSize.setSize(value.width, value.height);
-    return image;
+    else {
+      int[] ints = (int[])getDataHandle.invokeExact(dataBuffer);
+      System.arraycopy(value.data, 0, ints, 0, value.data.length);
+    }
+    return createImage(value.w, value.h, dataBuffer);
   }
 
-  public static @NotNull ImageValue writeImage(@NotNull BufferedImage image, @NotNull ImageLoader.Dimension2DDouble size) {
-    int actualWidth = image.getWidth();
-    int actualHeight = image.getHeight();
+  private static final Point ZERO_POINT = new Point(0, 0);
 
-    BufferedImage convertedImage = new BufferedImage(actualWidth, actualHeight, BufferedImage.TYPE_4BYTE_ABGR);
+  static Image readImage(@NotNull ByteBuffer buffer, int w, int h) throws Throwable {
+    // Create a STABLE internal buffer. It will be marked dirty for now, but will remain STABLE after a refresh.
+    int size = w * h;
+    DataBufferInt dataBuffer = new DataBufferInt(size);
 
+    // critical for a proper colors, see https://en.wikipedia.org/wiki/RGBA_color_model
+    // On little-endian systems, this is equivalent to BGRA byte order. On big-endian systems, this is equivalent to ARGB byte order.
+    buffer.order(ByteOrder.BIG_ENDIAN);
+
+    if (getDataHandle == null) {
+      IntBuffer intBuffer = buffer.asIntBuffer();
+      for (int i = 0; intBuffer.hasRemaining(); i++) {
+        dataBuffer.setElem(i, intBuffer.get());
+      }
+    }
+    else {
+      buffer.asIntBuffer().get((int[])getDataHandle.invokeExact(dataBuffer));
+    }
+    return createImage(w, h, dataBuffer);
+  }
+
+  private static @NotNull BufferedImage createImage(int w, int h, DataBufferInt dataBuffer) {
+    DirectColorModel colorModel = (DirectColorModel)ColorModel.getRGBdefault();
+    WritableRaster raster = Raster.createPackedRaster(dataBuffer, w, h, w, colorModel.getMasks(), ZERO_POINT);
+    return new BufferedImage(colorModel, raster, false, null);
+  }
+
+  private static @NotNull ImageValue writeImage(@NotNull BufferedImage image) {
+    int w = image.getWidth();
+    int h = image.getHeight();
+
+    BufferedImage convertedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = convertedImage.createGraphics();
     g.drawImage(image, 0, 0, null);
     g.dispose();
 
-    byte[] imageData = extractBufferData((DataBufferByte)convertedImage.getRaster().getDataBuffer());
-    return new ImageValue(imageData, (float)size.getWidth(), (float)size.getHeight(), actualWidth, actualHeight);
-  }
-
-  private static DataBuffer createBuffer(byte[] data, int size) {
-    // Create a STABLE internal buffer. It will be marked dirty for now, but will remain STABLE after a refresh.
-    DataBufferByte dataBuffer = new DataBufferByte(size);
-    for (int i = 0; i < data.length; i++) {
-      dataBuffer.setElem(i, data[i]);
-    }
-    return dataBuffer;
-  }
-
-  private static byte[] extractBufferData(DataBufferByte dataBufferByte) {
-    // Calling getData() directly will mark the internal buffer UNTRACKABLE, so preserve ownership.
-    byte[] imageData = new byte[dataBufferByte.getSize()];
-    for (int i = 0; i < imageData.length; i++) {
-      imageData[i] = (byte)dataBufferByte.getElem(i);
-    }
-    return imageData;
+    DataBufferInt dataBufferInt = (DataBufferInt)convertedImage.getRaster().getDataBuffer();
+    return new ImageValue(dataBufferInt.getData(), w, h);
   }
 }

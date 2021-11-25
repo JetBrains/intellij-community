@@ -1,9 +1,9 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun qualifierDoesNotAddSmartCast(x: Any) {
     x as String
     if (x.length == 0) return
     // x participates in condition and smartcast on x is present but smartcast is induced earlier
-    if (<warning descr="Condition is always true">x.length > 0</warning>) {
+    if (<warning descr="Condition 'x.length > 0' is always true">x.length > 0</warning>) {
         println(x.trim())
     }
 }
@@ -12,7 +12,7 @@ fun qualifierDoesNotAddSmartCastNullity(x: String?) {
     x!!
     if (x.length == 0) return
     // x participates in condition and smartcast on x is present but smartcast is induced earlier
-    if (<warning descr="Condition is always true">x.length > 0</warning>) {
+    if (<warning descr="Condition 'x.length > 0' is always true">x.length > 0</warning>) {
         println(x.trim())
     }
 }
@@ -20,7 +20,7 @@ fun qualifierDoesNotAddSmartCastNullity(x: String?) {
 fun branchDisappears(x: String?) {
     val b = x != null
     if (b) return
-    if (<warning descr="Condition is always true">x == null</warning>) {
+    if (<warning descr="Condition 'x == null' is always true">x == null</warning>) {
         println(123)
     } else {
         println(x.trim())
@@ -33,7 +33,7 @@ fun nullity(x: Any?) {
         if (x != null) {
             simple(x) // smartcast necessary
         }
-        if (<warning descr="Condition is always true">x != null</warning>) {
+        if (<warning descr="Condition 'x != null' is always true">x != null</warning>) {
             println(x) // smartcast unnecessary
         }
     }
@@ -64,7 +64,7 @@ fun tooWeakVariableType(a: B) {
     if (b) {
         // TODO: we suppress here as Kotlin reports the smartcast but
         //       smartcast is unnecessary, as b() is declared in B supertype as well
-        if (<warning descr="Condition is always true">a is C</warning>) {
+        if (<warning descr="Condition 'a is C' is always true">a is C</warning>) {
             a.b()
         }
         a.b()
@@ -74,10 +74,10 @@ fun tooWeakVariableType(a: B) {
 fun equality(a: A, b: B) {
     val x = a === b
     if (x) {
-        if (<warning descr="Condition is always true">a === b</warning>) a.a()
+        if (<warning descr="Condition 'a === b' is always true">a === b</warning>) a.a()
         if (a === b) a.b()
         if (a === b) b.a()
-        if (<warning descr="Condition is always true">a === b</warning>) b.b()
+        if (<warning descr="Condition 'a === b' is always true">a === b</warning>) b.b()
     }
 }
 
@@ -106,7 +106,7 @@ fun testWhen(x: String?) {
     val b = x == null
     if (b) {
         when {
-            <warning descr="Condition is always false">x != null</warning> -> {
+            <warning descr="Condition 'x != null' is always false">x != null</warning> -> {
                 println(x.trim())
             }
         }

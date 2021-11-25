@@ -36,6 +36,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.IndexingBundle;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -71,7 +72,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
         return true;
       }
     }.installOn(myComponent, true);
-    myComponent.setBorder(WidgetBorder.WIDE);
+    myComponent.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
   }
 
   protected JPanel createComponent() {

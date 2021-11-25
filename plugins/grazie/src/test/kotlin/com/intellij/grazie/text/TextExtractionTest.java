@@ -9,6 +9,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -17,27 +19,43 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.lang.regexp.RegExpLanguage;
+import org.intellij.plugins.markdown.lang.MarkdownFileType;
+import org.intellij.plugins.markdown.lang.MarkdownLanguage;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraphImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.grazie.text.TextContentTest.unknownOffsets;
 
 public class TextExtractionTest extends BasePlatformTestCase {
   public void testMarkdownInlineLink() {
     TextContent extracted = extractText("a.md", "* list [item](http://x) with a local link", 3);
-    assertEquals("list item with a local link", TextContentTest.unknownOffsets(extracted));
+    assertEquals("list item with a local link", unknownOffsets(extracted));
     int prefix = "* ".length();
     assertEquals(prefix + "list [".length(), extracted.textOffsetToFile("list ".length()));
     assertEquals(prefix + "list [item".length(), extracted.textOffsetToFile("list item".length()));
   }
 
+  public void testMarkdownUrlLink() {
+    TextContent extracted = extractText("a.md", "go to [http://localhost](http://localhost) and validate", 3);
+    assertEquals("go to http://localhost and validate", unknownOffsets(extracted));
+  }
+
   public void testMarkdownImage() {
     TextContent extracted = extractText("a.md", "[Before ![AltText](http://www.google.com.au/images/nav_logo7.png) after](http://google.com.au/)", 3);
-    assertEquals("Before  after", TextContentTest.unknownOffsets(extracted));
+    assertEquals("Before  after", unknownOffsets(extracted));
+  }
+
+  public void testMarkdownIndent() {
+    TextContent extracted = extractText("a.md", "* first line\n  second line", 3);
+    assertEquals("first line\nsecond line", unknownOffsets(extracted));
   }
 
   public void testMarkdownInlineCode() {
     TextContent extracted = extractText("a.md", "you can use a number of predefined fields (e.g. `EventFields.InputEvent`)", 0);
-    assertEquals("you can use a number of predefined fields (e.g. |)", TextContentTest.unknownOffsets(extracted));
+    assertEquals("you can use a number of predefined fields (e.g. |)", unknownOffsets(extracted));
   }
 
   public void testMergeAdjacentJavaComments() {
@@ -63,19 +81,19 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
   public void testProcessPropertyMessageFormat() {
     String text = "a=Hello World ''{0}''!";
-    assertEquals("Hello World '|'!", TextContentTest.unknownOffsets(extractText("a.properties", text, text.length())));
+    assertEquals("Hello World '|'!", unknownOffsets(extractText("a.properties", text, text.length())));
   }
 
   public void testBrokenPropertyMessageFormat() {
-    assertEquals("a |", TextContentTest.unknownOffsets(extractText("a.properties", "a=a {0, choice, 1#1 code fragment|2#{0,number} code fragments", 4)));
+    assertEquals("a |", unknownOffsets(extractText("a.properties", "a=a {0, choice, 1#1 code fragment|2#{0,number} code fragments", 4)));
   }
 
   public void testExcludePropertyHtml() {
-    assertEquals("Hello |World", TextContentTest.unknownOffsets(extractText("a.properties", "a=<html>Hello <p/>World</html>", 8)));
+    assertEquals("Hello |World", unknownOffsets(extractText("a.properties", "a=<html>Hello <p/>World</html>", 8)));
   }
 
   public void testMultiLineCommentInProperties() {
-    assertEquals("line1\nline2", TextContentTest.unknownOffsets(extractText("a.properties", "# line1\n! line2", 4)));
+    assertEquals("line1\nline2", unknownOffsets(extractText("a.properties", "# line1\n! line2", 4)));
   }
 
   public void testJavadoc() {
@@ -90,7 +108,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
                      "* @return the offset of {@link #bar} in something\n" +
                      " */";
     TextContent text = extractText("a.java", docText, 6);
-    assertEquals("Hello |,\nhere's an asterisk: *\nand some |.\ntags1 |\ntags2 |\n|is unknown.", TextContentTest.unknownOffsets(text));
+    assertEquals("Hello |,\nhere's an asterisk: *\nand some |.\ntags1 |\ntags2 |\n|is unknown.", unknownOffsets(text));
 
     text = extractText("a.java", docText, docText.indexOf("the offset"));
     assertEquals("the offset of  in something", text.toString());
@@ -149,14 +167,40 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testXmlHtml() {
-    assertEquals("|abc|", TextContentTest.unknownOffsets(extractText("a.html", "<b>abc</b>", 4)));
-    assertEquals("abc", extractText("a.xml", "<code>abc</code>", 6).toString());
-    assertEquals("|characters with markup|", TextContentTest.unknownOffsets(extractText("a.xml", "<b><![CDATA[\n   characters with markup\n]]></b>", 22)));
-    assertEquals("abcd", TextContentTest.unknownOffsets(extractText("a.xml", "<tag attr=\"abcd\"/>", 14)));
+    checkHtmlXml(false);
+
+    Registry.get("grazie.html.concatenate.inline.tag.contents").setValue(true, getTestRootDisposable());
+    checkHtmlXml(true);
+  }
+
+  private void checkHtmlXml(boolean inlineTagsSupported) {
+    assertEquals(inlineTagsSupported ? "abc" : "|abc|", unknownOffsets(extractText("a.html", "<b>abc</b>", 4)));
+    assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<b>abc</b>", 4)));
+
+    assertEquals("|characters with markup\nand without it|",
+                 unknownOffsets(extractText("a.xml", "<b><![CDATA[\n   characters with markup\n]]>and without it</b>", 22)));
+
+    assertEquals("abcd", unknownOffsets(extractText("a.xml", "<tag attr=\"abcd\"/>", 14)));
     assertEquals("comment", extractText("a.xml", "<!-- comment -->", 10).toString());
 
+    assertEquals("top-level text", unknownOffsets(extractText("a.html", "top-level text", 2)));
+
     //nothing in HTML <code> tag
-    assertNull(extractText("a.html", "<code>abc</code>", 7));
+    assertNull(extractText("a.html", "<code>abc</code>def", 7));
+    assertEquals("|def", unknownOffsets(extractText("a.html", "<code>abc</code>def", 18)));
+    assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<code>abc</code>", 6)));
+
+    if (inlineTagsSupported) {
+      String longHtml = "<body><a>Hello</a> <b>world</b><code>without code</code>!<div/>Another text.</body>";
+      assertEquals("Hello world|", unknownOffsets(extractText("a.html", longHtml, 9)));
+      assertEquals("|Another text.", unknownOffsets(extractText("a.html", longHtml, 70)));
+
+      assertEquals("|Hello world!|", unknownOffsets(extractText("a.html", "<div>Hello <span>world</span>!</div>", 20)));
+      assertEquals("|Hello\nworld!|", unknownOffsets(extractText("a.html", "<div>\n  Hello\n  world!\n</div>", 20)));
+      assertEquals("|def", unknownOffsets(extractText("a.html", "<div>abc</div>def", 16)));
+
+      assertOrderedEquals(extractText("a.html", "<div>Hello world!</div>", 10).getRangesInFile(), new TextRange(5, 17));
+    }
   }
 
   public void testBuildingPerformance_concatenation() {
@@ -189,6 +233,45 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PlatformTestUtil.startPerformanceTest("TextContent building with HTML removal", 200, () -> {
       assertEquals(expected, extractor.buildTextContent(comment, TextContent.TextDomain.ALL).toString());
     }).assertTiming();
+  }
+
+  public void testBuildingPerformance_longTextFragment() {
+    String line = "here's some relative long text that helps make this text fragment a bit longer than it could have been otherwise";
+    String text = ("\n\n\n" + line).repeat(10_000);
+    String expected = (line + "\n\n\n").repeat(10_000).trim();
+    PsiFile file = myFixture.configureByText("a.java", "class C { String s = \"\"\"\n" + text + "\"\"\"; }");
+    var literal = PsiTreeUtil.findElementOfClassAtOffset(file, 100, PsiLiteralExpression.class, false);
+    var extractor = new JavaTextExtractor();
+    PlatformTestUtil.startPerformanceTest("TextContent building from a long text fragment", 200, () -> {
+      assertEquals(expected, extractor.buildTextContent(literal, TextContent.TextDomain.ALL).toString());
+    }).assertTiming();
+  }
+
+  public void testCachingWorks() {
+    TextExtractor delegate = TextExtractor.EP.forLanguage(MarkdownLanguage.INSTANCE);
+    var countingExtractor = new TextExtractor() {
+      int count = 0;
+
+      @Override
+      protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
+                                                             @NotNull Set<TextContent.TextDomain> allowedDomains) {
+        if (element instanceof MarkdownParagraphImpl) {
+          count++;
+        }
+        return delegate.buildTextContents(element, allowedDomains);
+      }
+    };
+    TextExtractor.EP.addExplicitExtension(MarkdownLanguage.INSTANCE, countingExtractor);
+    disposeOnTearDown(() -> TextExtractor.EP.removeExplicitExtension(MarkdownLanguage.INSTANCE, countingExtractor));
+
+    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText(
+      "a.md", MarkdownFileType.INSTANCE,
+      "[Before ![AltText](http://www.google.com.au/images/nav_logo7.png) after](http://google.com.au/)");
+    for (int i = 0; i <= file.getTextLength(); i++) {
+      TextExtractor.findTextAt(file, i, TextContent.TextDomain.ALL);
+    }
+    // should be invoked once, but allow some repetitions in case GC kicks in
+    assertTrue(String.valueOf(countingExtractor.count), countingExtractor.count < 3);
   }
 
   private TextContent extractText(String fileName, String fileText, int offset) {

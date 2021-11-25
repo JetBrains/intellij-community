@@ -33,19 +33,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
 
-public class DynamicRegexReplaceableByCompiledPatternInspection extends
-                                                                BaseInspection {
+public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInspection {
   @NonNls
-  protected static final Collection<String> regexMethodNames = new HashSet<>(4);
-   static {
-    regexMethodNames.add("matches");
-    regexMethodNames.add("replace");
-    regexMethodNames.add("replaceFirst");
-    regexMethodNames.add("replaceAll");
-    regexMethodNames.add("split");
-  }
+  protected static final Collection<String> regexMethodNames = Set.of(
+    "matches", "replace", "replaceFirst", "replaceAll", "split"
+  );
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -132,8 +127,12 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
           expressionText.append(methodName);
         }
         expressionText.append('(');
+        boolean quote = false;
         if (literalReplacement) {
-          expressionText.append("java.util.regex.Matcher.quoteReplacement(");
+          quote = (expressionsLength > 1 && needsQuote(expressions[1]));
+          if (quote) {
+            expressionText.append("java.util.regex.Matcher.quoteReplacement(");
+          }
         }
         if (expressionsLength > 1) {
           expressionText.append(commentTracker.text(expressions[1]));
@@ -141,7 +140,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
             expressionText.append(',').append(commentTracker.text(expressions[i]));
           }
         }
-        if (literalReplacement) {
+        if (literalReplacement && quote) {
           expressionText.append(')');
         }
         expressionText.append(')');
@@ -149,10 +148,18 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiElement field = aClass.add(factory.createFieldFromText(fieldText.toString(), element));
-      PsiMethodCallExpression newMethodCallExpression = (PsiMethodCallExpression)commentTracker.replaceAndRestoreComments(methodCallExpression, expressionText.toString());
+      PsiMethodCallExpression newMethodCallExpression =
+        (PsiMethodCallExpression)commentTracker.replaceAndRestoreComments(methodCallExpression, expressionText.toString());
       newMethodCallExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newMethodCallExpression);
+      if (newMethodCallExpression == null) return;
       final PsiReferenceExpression reference = getReference(newMethodCallExpression);
       HighlightUtils.showRenameTemplate(aClass, (PsiNameIdentifierOwner)field, reference);
+    }
+
+    private static boolean needsQuote(PsiExpression expr) {
+      Object constExprValue = ExpressionUtils.computeConstantExpression(expr);
+      return !(constExprValue instanceof String) ||
+             Matcher.quoteReplacement((String) constExprValue) != constExprValue;
     }
 
     private static PsiReferenceExpression getReference(PsiMethodCallExpression newMethodCallExpression) {

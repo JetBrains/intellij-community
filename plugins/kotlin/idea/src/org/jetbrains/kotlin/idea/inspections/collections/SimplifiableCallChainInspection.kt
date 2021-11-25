@@ -33,7 +33,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
         return qualifiedExpressionVisitor(fun(expression) {
             var conversion = findQualifiedConversion(expression, conversionGroups) check@{ conversion, firstResolvedCall, _, context ->
                 // Do not apply on maps due to lack of relevant stdlib functions
-                val firstReceiverType = firstResolvedCall.extensionReceiver?.type
+                val firstReceiverType = firstResolvedCall.resultingDescriptor?.extensionReceiverParameter?.type
                 if (firstReceiverType != null) {
                     if (conversion.replacement == "mapNotNull" && KotlinBuiltIns.isPrimitiveArray(firstReceiverType)) return@check false
                     val builtIns = context[BindingContext.EXPRESSION_TYPE_INFO, expression]?.type?.builtIns ?: return@check false

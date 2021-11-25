@@ -3,6 +3,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
@@ -10,13 +11,25 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class LightRecordCanonicalConstructor extends LightMethod implements SyntheticElement {
   public LightRecordCanonicalConstructor(@NotNull PsiMethod method,
                                          @NotNull PsiClass containingClass) {
     super(method.getManager(), method, containingClass);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getContainingClass();
+  }
+
+  @Override
+  public PsiIdentifier getNameIdentifier() {
+    return getContainingClass().getNameIdentifier();
   }
 
   @Override
@@ -56,6 +69,11 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
       }
 
       @Override
+      public PsiFile getContainingFile() {
+        return getParent().getContainingFile();
+      }
+
+      @Override
       public PsiParameter @NotNull [] getParameters() {
         return ContainerUtil.map2Array(super.getParameters(), PsiParameter.class,
                                        p -> new LightRecordConstructorParameter(p, this, mySubstitutor));
@@ -73,9 +91,51 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
       myWrapper = wrapper;
     }
 
+    public @Nullable PsiRecordComponent getRecordComponent() {
+      PsiClass psiClass = PsiTreeUtil.getParentOfType(this, PsiClass.class);
+      if (psiClass == null) return null;
+      PsiRecordComponent[] recordComponents = psiClass.getRecordComponents();
+      for (PsiRecordComponent recordComponent : recordComponents) {
+        if (Objects.equals(recordComponent.getName(), this.getName())) {
+          return recordComponent;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public @Nullable PsiModifierList getModifierList() {
+      PsiRecordComponent recordComponent = getRecordComponent();
+      if (recordComponent == null) return super.getModifierList();
+
+      return new LightModifierList(getPrototype()) {
+        @Override
+        public PsiAnnotation @NotNull [] getAnnotations() {
+          return recordComponent.getAnnotations();
+        }
+      };
+    }
+
+    @Override
+    public @NotNull PsiElement getNavigationElement() {
+      PsiRecordComponent recordComponent = getRecordComponent();
+      if (recordComponent != null) return recordComponent;
+      return super.getNavigationElement();
+    }
+
     @Override
     public PsiElement getParent() {
       return myWrapper;
+    }
+
+    @Override
+    public @Nullable Icon getIcon(int flags) {
+      return getPrototype().getIcon(flags);
+    }
+
+    @Override
+    public PsiFile getContainingFile() {
+      return getParent().getContainingFile();
     }
 
     @Override

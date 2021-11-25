@@ -1,5 +1,5 @@
 // "Replace with 'bar(f)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test(list: List<Int>) {
     list.bar { it }

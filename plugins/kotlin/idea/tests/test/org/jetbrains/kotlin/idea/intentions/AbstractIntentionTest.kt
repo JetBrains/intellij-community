@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.testFramework.PsiTestUtil
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
@@ -127,6 +128,8 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                             }
                             DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
                         }
+
+                        PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
                     } finally {
                         ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
                     }

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
+import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil.isAnyTestModeEnabled
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil.isTestModeEnabled
@@ -22,9 +23,9 @@ class CleanupEventsTestSchemeAction(private val recorderId: String? = null)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
+    val project = e.project
 
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Removing Test Scheme", false) {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, StatisticsBundle.message("stats.removing.test.scheme"), false) {
       override fun run(indicator: ProgressIndicator) {
         if (recorderId == null) {
           ValidationTestRulesPersistedStorage.cleanupAll()

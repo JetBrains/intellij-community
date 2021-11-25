@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/** removes destruction caused by {@link com.intellij.openapi.file.exclude.OverrideFileTypeAction} and restore the original file type */
+/** removes destruction caused by {@link OverrideFileTypeAction} and restores the original file type */
 class ReverteOverrideFileTypeAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {

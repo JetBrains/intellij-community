@@ -11,18 +11,18 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
 
   class Step(parent: NewProjectWizardLanguageStep) :
     AbstractNewProjectWizardMultiStep<Step>(parent, BuildSystemJavaNewProjectWizard.EP_NAME),
-    NewProjectWizardLanguageData by parent,
-    NewProjectWizardBuildSystemData {
+    LanguageNewProjectWizardData by parent,
+    BuildSystemJavaNewProjectWizardData {
 
     override val self = this
 
     override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
 
     override val buildSystemProperty by ::stepProperty
-    override val buildSystem by ::step
+    override var buildSystem by ::step
 
     init {
-      data.putUserData(NewProjectWizardBuildSystemData.KEY, this)
+      data.putUserData(BuildSystemJavaNewProjectWizardData.KEY, this)
     }
   }
 }

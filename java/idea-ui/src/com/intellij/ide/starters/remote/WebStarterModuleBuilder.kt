@@ -67,8 +67,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   private val starterSettings: StarterWizardSettings by lazy { createSettings() }
 
   override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
-  override fun getParentGroup(): String = JavaModuleType.BUILD_TOOLS_GROUP
-  override fun getWeight(): Int = JavaModuleBuilder.BUILD_SYSTEM_WEIGHT + 10
+  override fun getWeight(): Int = JVM_WEIGHT
   open fun getHelpId(): String? = null
 
   // Required settings

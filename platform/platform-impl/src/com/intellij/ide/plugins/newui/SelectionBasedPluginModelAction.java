@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
@@ -9,7 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.Producer;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
@@ -67,6 +68,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
   static final class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C, IdeaPluginDescriptor> {
 
     private static final CustomShortcutSet SHORTCUT_SET = new CustomShortcutSet(KeyEvent.VK_SPACE);
+    private static final RegistryValue EXCLUSION_LIST = RegistryManager.getInstance().get("ide.plugins.per.project.exclusion.list");
 
     private final @NotNull PluginEnableDisableAction myAction;
 
@@ -100,7 +102,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                           myAction == PluginEnableDisableAction.DISABLE_FOR_PROJECT) &&
                          exists(pluginIds, myPluginModel::isRequiredPluginForProject) ||
                          myAction.isPerProject() && (e.getProject() == null ||
-                                                     !PluginEnabler.isPerProjectEnabled() ||
+                                                     !DynamicPluginEnabler.isPerProjectEnabled() ||
                                                      exists(pluginIds, EnableDisableAction::isPluginExcluded) ||
                                                      exists(descriptors, myPluginModel::requiresRestart));
 
@@ -120,7 +122,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     }
 
     private static boolean isPluginExcluded(@NotNull PluginId pluginId) {
-      return split(Registry.stringValue("ide.plugins.per.project.exclusion.list"), ",")
+      return split(EXCLUSION_LIST.asString(), ",")
         .contains(pluginId.getIdString());
     }
   }
@@ -173,12 +175,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
         return;
       }
 
-      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
       ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
       for (Map.Entry<C, IdeaPluginDescriptorImpl> entry : selection.entrySet()) {
         IdeaPluginDescriptorImpl descriptor = entry.getValue();
         List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor,
-                                                                                pluginIdMap,
                                                                                 applicationInfo);
 
         if (dependents.isEmpty() ||

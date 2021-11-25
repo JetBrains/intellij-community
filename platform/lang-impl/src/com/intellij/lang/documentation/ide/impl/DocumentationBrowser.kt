@@ -3,6 +3,7 @@ package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationTarget
+import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.InternalLinkResult
@@ -12,6 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
@@ -22,11 +24,14 @@ import kotlinx.coroutines.*
 
 internal class DocumentationBrowser private constructor(
   private val project: Project
-) : Disposable {
+) : DocumentationBrowserFacade, Disposable {
 
   private val cs = CoroutineScope(SupervisorJob())
-  private val stateListeners = ArrayList<BrowserStateListener>(2)
+
+  @Volatile // written from EDT, read from any thread
   private lateinit var state: BrowserState
+
+  private val stateListeners = ArrayList<BrowserStateListener>(2)
   private val backStack = Stack<HistorySnapshot>()
   private val forwardStack = Stack<HistorySnapshot>()
 
@@ -39,11 +44,7 @@ internal class DocumentationBrowser private constructor(
 
   var snapshooter: () -> UISnapshot by lateinitVal()
 
-  val targetPointer: Pointer<out DocumentationTarget>
-    get() {
-      EDT.assertIsEdt()
-      return state.request.targetPointer
-    }
+  override val targetPointer: Pointer<out DocumentationTarget> get() = state.request.targetPointer
 
   private fun setState(state: BrowserState, byLink: Boolean) {
     EDT.assertIsEdt()
@@ -76,6 +77,13 @@ internal class DocumentationBrowser private constructor(
     }
   }
 
+  override fun reload() {
+    cs.coroutineContext.cancelChildren()
+    cs.launch(Dispatchers.EDT) {
+      browseDocumentation(state.request, false)
+    }
+  }
+
   private fun browseDocumentation(request: DocumentationRequest, byLink: Boolean) {
     setState(BrowserState(request, cs.computeDocumentationAsync(request.targetPointer)), byLink)
   }
@@ -91,7 +99,13 @@ internal class DocumentationBrowser private constructor(
   private suspend fun handleLink(url: String) {
     EDT.assertIsEdt()
     val targetPointer = state.request.targetPointer
-    when (val internalResult = handleLink(project, targetPointer, url)) {
+    val internalResult = try {
+      handleLink(project, targetPointer, url)
+    }
+    catch (e: IndexNotReadyException) {
+      return // normal situation, nothing to do
+    }
+    when (internalResult) {
       is OrderEntry -> if (internalResult.isValid) {
         ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(internalResult)
       }
@@ -118,11 +132,6 @@ internal class DocumentationBrowser private constructor(
     if (!result.isCompleted || result.isCancelled) return null
     @Suppress("EXPERIMENTAL_API_USAGE")
     return result.getCompleted()?.externalUrl
-  }
-
-  fun openCurrentExternalUrl() {
-    val url = currentExternalUrl() ?: return
-    openUrl(project, state.request.targetPointer, url)
   }
 
   private class HistorySnapshot(

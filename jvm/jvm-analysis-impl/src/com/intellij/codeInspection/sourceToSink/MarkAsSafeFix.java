@@ -4,19 +4,16 @@ package com.intellij.codeInspection.sourceToSink;
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.codeInspection.UntaintedAnnotationProvider;
+import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lang.jvm.JvmModifiersOwner;
-import com.intellij.lang.jvm.actions.AnnotationRequest;
-import com.intellij.lang.jvm.actions.AnnotationRequestsKt;
-import com.intellij.lang.jvm.actions.JvmElementActionFactories;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.lang.jvm.JvmParameter;
+import com.intellij.lang.jvm.actions.*;
+import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UExpression;
@@ -24,6 +21,9 @@ import org.jetbrains.uast.UReferenceExpression;
 import org.jetbrains.uast.UastContextKt;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION;
 
 public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
 
@@ -57,16 +57,37 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     taintAnalyzer.getNonMarkedElements().forEach(owner -> markAsSafe(project, owner.myNonMarked));
   }
 
-  public static void markAsSafe(@NotNull Project project, @NotNull PsiModifierListOwner owner) {
-    AnnotationRequest request = AnnotationRequestsKt.annotationRequest(UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION);
-    PsiFile file = owner.getContainingFile();
-    VirtualFile virtualFile = file.getVirtualFile();
-    TextEditor textEditor = ObjectUtils.tryCast(FileEditorManager.getInstance(project).getSelectedEditor(virtualFile), TextEditor.class);
-    if (textEditor == null) return;
-    Editor editor = textEditor.getEditor();
-    // TODO: support for kotlin type use annotations
-    List<IntentionAction> actions = JvmElementActionFactories.createAddAnnotationActions((JvmModifiersOwner)owner, request);
-    if (actions.size() == 1) actions.get(0).invoke(project, editor, file);
-    CodeStyleManager.getInstance(project).reformat(owner);
+  public static void markAsSafe(@NotNull Project project, @NotNull PsiElement element) {
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null || !psiFile.isWritable()) return;
+    JvmMethod jvmMethod = ObjectUtils.tryCast(element, JvmMethod.class);
+    if (jvmMethod != null) {
+      JvmType returnType = jvmMethod.getReturnType();
+      if (returnType == null) return;
+      ChangeTypeRequest changeTypeRequest = createTypeRequest(returnType);
+      List<IntentionAction> actions = JvmElementActionFactories.createChangeTypeActions(jvmMethod, changeTypeRequest);
+      if (actions.size() == 1) actions.get(0).invoke(project, null, psiFile);
+      return;
+    }
+    JvmParameter jvmParameter = ObjectUtils.tryCast(element, JvmParameter.class);
+    if (jvmParameter != null) {
+      ChangeTypeRequest changeTypeRequest = createTypeRequest(jvmParameter.getType());
+      List<IntentionAction> actions = JvmElementActionFactories.createChangeTypeActions(jvmParameter, changeTypeRequest);
+      if (actions.size() == 1) actions.get(0).invoke(project, null, psiFile);
+      return;
+    }
+    JvmModifiersOwner jvmModifiersOwner = ObjectUtils.tryCast(element, JvmModifiersOwner.class);
+    if (jvmModifiersOwner == null) return;
+    AnnotationRequest request = AnnotationRequestsKt.annotationRequest(DEFAULT_UNTAINTED_ANNOTATION);
+    List<IntentionAction> actions = JvmElementActionFactories.createAddAnnotationActions(jvmModifiersOwner, request);
+    if (actions.size() == 1) actions.get(0).invoke(project, null, psiFile);
+  }
+
+  private static @NotNull ChangeTypeRequest createTypeRequest(@NotNull JvmType jvmType) {
+    List<AnnotationRequest> annotations = StreamEx.of(jvmType.getAnnotations())
+      .map(annotation -> AnnotationRequestsKt.annotationRequest(annotation))
+      .append(AnnotationRequestsKt.annotationRequest(DEFAULT_UNTAINTED_ANNOTATION))
+      .collect(Collectors.toList());
+    return MethodRequestsKt.typeRequest(null, annotations);
   }
 }

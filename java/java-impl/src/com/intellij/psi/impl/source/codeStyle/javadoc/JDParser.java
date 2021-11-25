@@ -465,15 +465,7 @@ public class JDParser {
         else {
           // wrap paragraph
 
-          int wrapPos = Math.min(seq.length() - 1, width);
-          wrapPos = seq.lastIndexOf(' ', wrapPos);
-
-          // either the only word is too long or it looks better to wrap
-          // after the border
-          if (wrapPos <= 2 * width / 3) {
-            wrapPos = Math.min(seq.length() - 1, width);
-            wrapPos = seq.indexOf(' ', wrapPos);
-          }
+          int wrapPos = computeWrapPosition(seq, width);
 
           // wrap now
           if (wrapPos >= seq.length() - 1 || wrapPos < 0) {
@@ -490,6 +482,66 @@ public class JDParser {
     }
 
     return list;
+  }
+
+
+  /**
+   * Chooses the point within the string at which to wrap the line. Wrapping is always done at a
+   * space character with a preference to not splitting inline JavaDoc tags in the process. The
+   * position returned is the greatest position, less than or equal to the given width, which does
+   * not fall within an inline tag.
+   *
+   * <p>If no such position exists it can be for one of two reasons,
+   * <ol>
+   *   <li>The line begins with a long inline tag which exceeds the right margin.</li>
+   *   <li>The line begins with a long unbroken string (e.g. a URL) which exceeds the right margin.</li>
+   * </ol>
+   * </p>
+   *
+   * If the first case we ignore the preference to not split tags and do so regardless. In the
+   * second case we allow the line to run over the margin and split at the first available position.
+   */
+  private static int computeWrapPosition(String line, int width) {
+    if (line.length() < width) {
+      return line.length();
+    }
+
+    int preferredBreakPoint = -1;
+    int backupBreakPoint = -1;
+    int tagBraceBalance = 0;
+
+    for (int i = 0; i < line.length() && (i <= width || backupBreakPoint < 0); i++) {
+      char c = line.charAt(i);
+      if (tagBraceBalance > 0) {
+        if (c == '{') {
+          tagBraceBalance++;
+        }
+        else if (c == '}') {
+          tagBraceBalance--;
+        }
+      }
+      else if (c == '@' && i > 0 && line.charAt(i - 1) == '{') {
+        // We're now inside of an inline tag. Start keeping track of the balance
+        // of opening and closing braces to determine when we've left the tag.
+        tagBraceBalance++;
+      }
+      else if (c == ' ') {
+        preferredBreakPoint = i;
+      }
+
+      // We'll use this position in a pitch if we can't break somewhere not inside a tag.
+      if (c == ' ') {
+        backupBreakPoint = i;
+      }
+    }
+
+    if (preferredBreakPoint > 0) {
+      return preferredBreakPoint;
+    }
+    if (backupBreakPoint > 0) {
+      return backupBreakPoint;
+    }
+    return line.length();
   }
 
   /**

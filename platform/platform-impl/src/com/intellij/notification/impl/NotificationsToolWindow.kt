@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.ui.NotificationsUtil
@@ -12,6 +13,7 @@ import com.intellij.notification.impl.widget.IdeNotificationArea
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -131,7 +133,7 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     val myNotifications = ArrayList<Notification>()
 
     val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
-    val consumer = Consumer<Notification> { notification ->
+    val addConsumer = Consumer<Notification> { notification ->
       if (notification.isSuggestionType) {
         suggestions.add(notification)
       }
@@ -141,9 +143,9 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
       myNotifications.add(notification)
       updateIcon(toolWindow, myNotifications)
     }
-    content.putUserData(ADD_KEY, consumer)
+    content.putUserData(ADD_KEY, addConsumer)
 
-    content.putUserData(REMOVE_KEY, Consumer<Notification?> { notification ->
+    val removeConsumer = Consumer<Notification?> { notification ->
       if (notification == null) {
         myNotifications.clear()
         suggestions.clear()
@@ -159,7 +161,9 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
         myNotifications.remove(notification)
       }
       updateIcon(toolWindow, myNotifications)
-    })
+    }
+    content.putUserData(REMOVE_KEY, removeConsumer)
+    suggestions.setRemoveCallback(removeConsumer)
 
     timeline.setClearCallback { notifications: List<Notification> ->
       myNotifications.removeAll(notifications)
@@ -175,7 +179,7 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
       })
 
       for (notification in myNotificationList) {
-        consumer.accept(notification)
+        addConsumer.accept(notification)
       }
       myNotificationList.clear()
     }
@@ -203,6 +207,11 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
         }
       }
     })
+
+    ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      suggestions.updateLaf()
+      timeline.updateLaf()
+    })
   }
 
   private fun updateIcon(toolWindow: ToolWindow, notifications: List<Notification>) {
@@ -220,7 +229,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
 
   private val myList = JPanel(VerticalLayout(JBUI.scale(18)))
   private val myScrollPane = object : JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+                                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
     override fun setupCorners() {
       super.setupCorners()
       border = null
@@ -245,6 +254,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   private val mySuggestionGotItPanel = JPanel(BorderLayout())
 
   private lateinit var myClearCallback: (List<Notification>) -> Unit
+  private lateinit var myRemoveCallback: Consumer<Notification?>
 
   init {
     background = NotificationComponent.BG_COLOR
@@ -338,6 +348,14 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     myEventHandler.add(this)
   }
 
+  fun updateLaf() {
+    val count = myList.componentCount
+    for (i in 0 until count) {
+      val component = myList.getComponent(i) as NotificationComponent
+      component.updateLaf()
+    }
+  }
+
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
     if (myScrollValue > 0) {
@@ -362,6 +380,16 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
 
     updateContent()
+
+    if (mySuggestionType) {
+      component.setDoNotAskHandler { forProject ->
+        component.notification.setDoNotAsFor(if (forProject) myProject else null)
+        myRemoveCallback.accept(component.notification)
+        component.notification.hideBalloon()
+      }
+
+      component.setRemoveCallback(myRemoveCallback)
+    }
   }
 
   private fun updateLayout() {
@@ -372,6 +400,10 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       layout.removeLayoutComponent(component)
       layout.addLayoutComponent(null, component)
     }
+  }
+
+  fun setRemoveCallback(callback: Consumer<Notification?>) {
+    myRemoveCallback = callback
   }
 
   fun remove(notification: Notification) {
@@ -472,6 +504,9 @@ private class NotificationComponent(val notification: Notification, timeComponen
   private val myMoreButton: Component?
   private var myMorePopupVisible = false
   private var myRoundColor = BG_COLOR
+  private lateinit var myDoNotAskHandler: (Boolean) -> Unit
+  private lateinit var myRemoveCallback: Consumer<Notification?>
+  private var myLafUpdater: Runnable? = null
 
   init {
     isOpaque = true
@@ -489,8 +524,8 @@ private class NotificationComponent(val notification: Notification, timeComponen
     var titlePanel: JPanel? = null
 
     if (notification.hasTitle()) {
-      val titleContent = NotificationsUtil.buildHtml(notification, "white-space:nowrap;", false, null, null)
-      val title = JBLabel(titleContent)
+      val titleContent = NotificationsUtil.buildHtml(notification, null, false, null, null)
+      val title = JBLabel(titleContent).setCopyable(true)
 
       if (notification.isSuggestionType) {
         centerPanel.add(title)
@@ -498,14 +533,24 @@ private class NotificationComponent(val notification: Notification, timeComponen
       else {
         titlePanel = JPanel(BorderLayout())
         titlePanel.isOpaque = false
-        titlePanel.add(title, BorderLayout.WEST)
+        titlePanel.add(title)
         centerPanel.add(titlePanel)
       }
     }
 
     if (notification.hasContent()) {
-      val textContent = NotificationsUtil.buildHtml(notification, null, true, null, null)
-      centerPanel.add(createTextComponent(textContent))
+      val textContent = NotificationsUtil.buildHtml(notification, null, true, null, NotificationsUtil.getFontStyle())
+      val text = createTextComponent(textContent)
+
+      if (!notification.hasTitle() && !notification.isSuggestionType) {
+        titlePanel = JPanel(BorderLayout())
+        titlePanel.isOpaque = false
+        titlePanel.add(text)
+        centerPanel.add(titlePanel)
+      }
+      else {
+        centerPanel.add(text)
+      }
     }
 
     val actions = notification.actions
@@ -543,25 +588,32 @@ private class NotificationComponent(val notification: Notification, timeComponen
 
     add(centerPanel)
 
-    val panel = JPanel(BorderLayout())
-    panel.isOpaque = false
-
     if (notification.isSuggestionType) {
       val group = DefaultActionGroup()
       group.isPopup = true
-      group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
-        override fun actionPerformed(e: AnActionEvent) {
-          TODO("Not yet implemented")
-        }
-      })
+
+      val remindAction = RemindLaterManager.createAction(notification, DateFormatUtil.DAY)
+      if (remindAction != null) {
+        @Suppress("DialogTitleCapitalization")
+        group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            remindAction.run()
+            myRemoveCallback.accept(notification)
+            notification.hideBalloon()
+          }
+        })
+      }
+
+      @Suppress("DialogTitleCapitalization")
       group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.dont.show.again.for.this.project")) {
         override fun actionPerformed(e: AnActionEvent) {
-          TODO("Not yet implemented")
+          myDoNotAskHandler.invoke(true)
         }
       })
+      @Suppress("DialogTitleCapitalization")
       group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.dont.show.again")) {
         override fun actionPerformed(e: AnActionEvent) {
-          TODO("Not yet implemented")
+          myDoNotAskHandler.invoke(false)
         }
       })
 
@@ -575,8 +627,10 @@ private class NotificationComponent(val notification: Notification, timeComponen
           val popup = super.createAndShowActionGroupPopup(actionGroup, event)
           popup.addListener(object : JBPopupListener {
             override fun onClosed(event: LightweightWindowEvent) {
-              myMorePopupVisible = false
-              isVisible = myHoverState
+              ApplicationManager.getApplication().invokeLater {
+                myMorePopupVisible = false
+                isVisible = myHoverState
+              }
             }
           })
           return popup
@@ -585,11 +639,17 @@ private class NotificationComponent(val notification: Notification, timeComponen
       button.border = JBUI.Borders.emptyRight(5)
       button.isVisible = false
       myMoreButton = button
+
+      val panel = JPanel(BorderLayout())
+      panel.isOpaque = false
       panel.add(button, BorderLayout.NORTH)
+      add(panel, BorderLayout.EAST)
     }
     else {
       val timeComponent = JBLabel(DateFormatUtil.formatPrettyDateTime(notification.timestamp))
       timeComponent.putClientProperty(TIME_KEY, notification.timestamp)
+      timeComponent.verticalAlignment = SwingConstants.TOP
+      timeComponent.verticalTextPosition = SwingConstants.TOP
       timeComponent.toolTipText = DateFormatUtil.formatDateTime(notification.timestamp)
       timeComponent.border = JBUI.Borders.emptyRight(10)
       timeComponent.font = JBFont.small()
@@ -600,8 +660,6 @@ private class NotificationComponent(val notification: Notification, timeComponen
 
       myMoreButton = null
     }
-
-    add(panel, BorderLayout.EAST)
   }
 
   private fun createAction(action: AnAction): Action {
@@ -623,13 +681,16 @@ private class NotificationComponent(val notification: Notification, timeComponen
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     component.contentType = "text/html"
     component.isOpaque = false
-    component.isFocusable = false
     component.border = null
 
     val kit = UIUtil.JBWordWrapHtmlEditorKit()
-    kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")
+    NotificationsUtil.setLinkForeground(kit.styleSheet)
     component.editorKit = kit
-    component.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+
+    val listener = NotificationsUtil.wrapListener(notification)
+    if (listener != null) {
+      component.addHyperlinkListener(listener)
+    }
 
     component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, StringUtil.unescapeXmlEntities(StringUtil.stripHtml(text, " ")))
 
@@ -640,7 +701,28 @@ private class NotificationComponent(val notification: Notification, timeComponen
       component.caretPosition = 0
     }
 
+    myLafUpdater = Runnable {
+      val newKit = UIUtil.JBWordWrapHtmlEditorKit()
+      NotificationsUtil.setLinkForeground(newKit.styleSheet)
+      component.editorKit = newKit
+      component.text = text
+      component.revalidate()
+      component.repaint()
+    }
+
     return component
+  }
+
+  fun updateLaf() {
+    myLafUpdater?.run()
+  }
+
+  fun setDoNotAskHandler(handler: (Boolean) -> Unit) {
+    myDoNotAskHandler = handler
+  }
+
+  fun setRemoveCallback(callback: Consumer<Notification?>) {
+    myRemoveCallback = callback
   }
 
   fun isHover(): Boolean = myHoverState
@@ -692,7 +774,8 @@ private class NotificationComponent(val notification: Notification, timeComponen
     if (myRoundColor !== BG_COLOR) {
       g.color = myRoundColor
       val config = GraphicsUtil.setupAAPainting(g)
-      g.fillRoundRect(0, 0, width, height, 12, 12)
+      val cornerRadius = NotificationBalloonRoundShadowBorderProvider.CORNER_RADIUS.get()
+      g.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
       config.restore()
     }
   }

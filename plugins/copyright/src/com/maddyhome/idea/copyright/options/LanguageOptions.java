@@ -248,6 +248,8 @@ public final class LanguageOptions implements Cloneable {
     this.trim = trim;
   }
 
+  public void setNotice(String notice){this.notice = notice;}
+
   public int fileTypeOverride;
   public boolean relativeBefore;
   public boolean addBlankAfter;
@@ -263,4 +265,5 @@ public final class LanguageOptions implements Cloneable {
   public boolean box;
   public String filler;
   public boolean trim;
+  public String notice;
 }

@@ -2,7 +2,15 @@
 package org.jetbrains.intellij.build.dependencies
 
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.StatusCode
 
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -13,7 +21,8 @@ import java.time.Instant
 
 @CompileStatic
 final class BuildDependenciesDownloader {
-  private static String HTTP_HEADER_CONTENT_LENGTH = "Content-Length"
+  private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length"
+  private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
 
   static void debug(String message) {
     println(message)
@@ -83,10 +92,10 @@ final class BuildDependenciesDownloader {
   }
 
   static synchronized Path downloadFileToCacheLocation(Path communityRoot, URI uri) {
-    def uriString = uri.toString()
-    def lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
-    def fileName = uriString.sha256().substring(0, 10) + "-" + lastNameFromUri
-    def targetFile = getDownloadCachePath(communityRoot).resolve(fileName)
+    String uriString = uri.toString()
+    String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
+    String fileName = uriString.sha256().substring(0, 10) + "-" + lastNameFromUri
+    Path targetFile = getDownloadCachePath(communityRoot).resolve(fileName)
 
     downloadFile(uri, targetFile)
     return targetFile
@@ -167,47 +176,62 @@ final class BuildDependenciesDownloader {
   }
 
   private static void downloadFile(URI uri, Path target) {
-    if (Files.exists(target)) {
-      debug("Target file $target already exists, skipping download from $uri")
+    Attributes attributes = Attributes.of(
+      AttributeKey.stringKey("uri"), uri.toString(),
+      AttributeKey.stringKey("target"), target.toString(),
+    )
 
-      // Update file modification time to maintain FIFO caches i.e.
-      // in persistent cache folder on TeamCity agent
-      Files.setLastModifiedTime(target, FileTime.from(Instant.now()))
-
-      return
-    }
-
-    info(" * Downloading $uri -> $target")
-
-    Path tempFile = Files.createTempFile(target.parent, target.fileName.toString(), ".tmp")
+    Span span = GlobalOpenTelemetry.getTracer("build-script").spanBuilder("download").setAllAttributes(attributes).startSpan()
     try {
-      def connection = (HttpURLConnection)uri.toURL().openConnection()
-      connection.instanceFollowRedirects = true
+      Instant now = Instant.now()
+      if (Files.exists(target)) {
+        span.addEvent("skip downloading because target file already exists")
 
-      if (connection.responseCode != 200) {
-        throw new IllegalStateException("Error download $uri: non-200 http status code ${connection.responseCode}")
+        // Update file modification time to maintain FIFO caches i.e.
+        // in persistent cache folder on TeamCity agent
+        Files.setLastModifiedTime(target, FileTime.from(now))
+        return
       }
 
-      connection.inputStream.withStream { inputStream ->
-        Files.newOutputStream(tempFile).withCloseable { outputStream ->
-          inputStream.transferTo(outputStream)
+      // save to the same disk to ensure that move will be atomic and not as a copy
+      Path tempFile = target.parent.resolve(("${target.fileName}-${(now.epochSecond - 1634886185).toString(36)}-${now.nano.toString(36)}.tmp" as String)
+                                              .with { it.length() > 255 ? it.substring(it.length() - 255) : it})
+      try {
+        HttpRequest request = HttpRequest.newBuilder()
+          .GET()
+          .uri(uri)
+          .setHeader("User-Agent", "Build Script Downloader")
+          .build()
+
+        HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile))
+        if (response.statusCode() != 200) {
+          throw new IllegalStateException("Error downloading $uri: non-200 http status code ${response.statusCode()}")
         }
-      }
 
-      def contentLength = connection.getHeaderFieldLong(HTTP_HEADER_CONTENT_LENGTH, -1L)
-      if (contentLength <= 0) {
-        throw new IllegalStateException("Header '$HTTP_HEADER_CONTENT_LENGTH' is missing or zero for uri '$uri'")
-      }
+        long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElseGet { -1 }
+        if (contentLength <= 0) {
+          throw new IllegalStateException("Header '$HTTP_HEADER_CONTENT_LENGTH' is missing or zero for uri '$uri'")
+        }
 
-      if (Files.size(tempFile) != contentLength) {
-        throw new IllegalStateException(
-          "Wrong file length after downloading uri '$uri' to '$tempFile': expected length $contentLength from Content-Length header, but got ${Files.size(tempFile)} on disk")
-      }
+        long fileSize = Files.size(tempFile)
+        if (fileSize != contentLength) {
+          throw new IllegalStateException("Wrong file length after downloading uri '$uri' to '$tempFile': expected length $contentLength " +
+                                          "from Content-Length header, but got ${fileSize} on disk")
+        }
 
-      Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+      }
+      finally {
+        Files.deleteIfExists(tempFile)
+      }
+    }
+    catch (Throwable e) {
+      span.recordException(e)
+      span.setStatus(StatusCode.ERROR)
+      throw e
     }
     finally {
-      Files.deleteIfExists(tempFile)
+      span.end()
     }
   }
 }

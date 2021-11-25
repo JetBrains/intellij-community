@@ -47,6 +47,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
+import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +105,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     mySdkCombo = buildSdkComboBox(this::onShowAllSelected, this::onSdkSelected);
 
-    final PackagesNotificationPanel packagesNotificationPanel = new PackagesNotificationPanel();
+    final PackagesNotificationPanel packagesNotificationPanel = new PyPackagesNotificationPanel();
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
     myPackagesPanel.setShowGrid(false);
 
@@ -114,7 +115,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
     final JButton additionalAction;
-    if (Experiments.getInstance().isFeatureEnabled("add.python.interpreter.dialog.on.targets")) {
+    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
       additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
                                             link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
     }

@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.*;
@@ -35,7 +36,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.bugs.EqualsWithItselfInspection;
 import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.numeric.ComparisonToNaNInspection;
@@ -248,7 +248,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return Collections.emptyList();
   }
 
-  protected @NotNull List<LocalQuickFix> createNPEFixes(@NotNull PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+  protected @NotNull List<LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     return Collections.emptyList();
   }
 
@@ -278,7 +278,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
   private void createDescription(ProblemsHolder holder,
                                  final DataFlowInstructionVisitor visitor,
-                                 PsiElement scope, 
+                                 PsiElement scope,
                                  Instruction @NotNull [] instructions) {
     ProblemReporter reporter = new ProblemReporter(holder, scope);
 
@@ -332,71 +332,46 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     });
   }
 
-  private void reportUnreachableSwitchBranches(Map<PsiExpression, ThreeState> labelReachability, ProblemsHolder holder) {
+  private void reportUnreachableSwitchBranches(Map<PsiCaseLabelElement, ThreeState> labelReachability, ProblemsHolder holder) {
     if (labelReachability.isEmpty()) return;
-    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labelReachability.keySet().iterator().next(), PsiSwitchBlock.class);
-    MultiMap<Object, PsiElement> elementsToCheckDuplicates = getElementsToCheckDuplicates(switchBlock);
     Set<PsiSwitchBlock> coveredSwitches = new HashSet<>();
 
-    for (Map.Entry<PsiExpression, ThreeState> entry : labelReachability.entrySet()) {
+    for (Map.Entry<PsiCaseLabelElement, ThreeState> entry : labelReachability.entrySet()) {
       if (entry.getValue() != ThreeState.YES) continue;
-      PsiExpression label = entry.getKey();
+      PsiCaseLabelElement label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
-      PsiSwitchBlock statement = labelStatement.getEnclosingSwitchBlock();
-      if (statement == null || !canRemoveUnreachableBranches(labelStatement, statement)) continue;
+      PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
+      if (switchBlock == null || !canRemoveUnreachableBranches(labelStatement, switchBlock)) continue;
+      if (!canRemoveTheOnlyReachableLabel(label, switchBlock)) continue;
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
         .nonNull().flatArray(PsiCaseLabelElementList::getElements)
-        .append(StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiExpression.class)).skip(1))
+        .append(StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiCaseLabelElement.class)).skip(1))
         .allMatch(l -> labelReachability.get(l) == ThreeState.NO)) {
         continue;
       }
-      coveredSwitches.add(statement);
-      holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"),
-                             createUnwrapSwitchLabelFix());
+      coveredSwitches.add(switchBlock);
+      LocalQuickFix unwrapFix;
+      if (switchBlock instanceof PsiSwitchExpression && !CodeBlockSurrounder.canSurround(((PsiSwitchExpression)switchBlock))) {
+        unwrapFix = null;
+      }
+      else {
+        unwrapFix = createUnwrapSwitchLabelFix();
+      }
+      holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"), unwrapFix);
     }
-    for (Map.Entry<PsiExpression, ThreeState> entry : labelReachability.entrySet()) {
+    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labelReachability.keySet().iterator().next(), PsiSwitchBlock.class);
+    Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
+    for (Map.Entry<PsiCaseLabelElement, ThreeState> entry : labelReachability.entrySet()) {
       if (entry.getValue() != ThreeState.NO) continue;
-      PsiExpression label = entry.getKey();
+      PsiCaseLabelElement label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
-      boolean isDuplicateLabel = elementsToCheckDuplicates.get(evaluateConstant(label)).size() > 1;
       // duplicate case label is a compilation error so no need to highlight by the inspection
-      if (!coveredSwitches.contains(labelStatement.getEnclosingSwitchBlock()) && !isDuplicateLabel) {
+      if (!coveredSwitches.contains(labelStatement.getEnclosingSwitchBlock()) && !suspiciousElements.contains(label)) {
         holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"),
                                new DeleteSwitchLabelFix(label));
       }
     }
-  }
-
-  @NotNull
-  private static MultiMap<Object, PsiElement> getElementsToCheckDuplicates(@Nullable PsiSwitchBlock switchBlock) {
-    MultiMap<Object, PsiElement> result = new MultiMap<>();
-    if (switchBlock == null) return result;
-    PsiCodeBlock body = switchBlock.getBody();
-    if (body == null) return result;
-    PsiExpression selector = switchBlock.getExpression();
-    if (selector == null) return result;
-    PsiType selectorType = selector.getType();
-    if (selectorType == null) return result;
-    for (PsiStatement statement : body.getStatements()) {
-      PsiSwitchLabelStatementBase labelStatement = tryCast(statement, PsiSwitchLabelStatementBase.class);
-      if (labelStatement == null) continue;
-      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
-      if (labelElementList == null) continue;
-      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-        PsiExpression expression = tryCast(labelElement, PsiExpression.class);
-        if (expression == null) continue;
-        Object object = evaluateConstant(labelElement);
-        if (object == null && !ExpressionUtils.isNullLiteral(expression)) continue;
-        result.putValue(evaluateConstant(labelElement), labelElement);
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  private static Object evaluateConstant(@NotNull PsiCaseLabelElement constant) {
-    return JavaPsiFacade.getInstance(constant.getProject()).getConstantEvaluationHelper().computeConstantExpression(constant);
   }
 
   private static boolean canRemoveUnreachableBranches(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock statement) {
@@ -404,7 +379,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     List<PsiSwitchLabelStatementBase> allBranches =
       PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
     if (statement instanceof PsiSwitchStatement) {
-      // Cannot do anything if we have already single branch and we cannot restore flow due to non-terminal breaks
+      // Cannot do anything if we have already single branch, and we cannot restore flow due to non-terminal breaks
       return allBranches.size() != 1 || BreakConverter.from(statement) != null;
     }
     // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either
@@ -412,6 +387,18 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
            !ContainerUtil.and(allBranches, branch -> branch == labelStatement || SwitchUtils.isDefaultLabel(branch))) ||
            (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
             ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
+  }
+
+  private static boolean canRemoveTheOnlyReachableLabel(@NotNull PsiCaseLabelElement label, @NotNull PsiSwitchBlock switchBlock) {
+    if (!(label instanceof PsiPattern)) return true;
+    PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return false;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return false;
+    if (!JavaPsiPatternUtil.isTotalForType(((PsiPattern)label), selectorType)) return true;
+    int branchCount = SwitchUtils.calculateBranchCount(switchBlock);
+    // it's a compilation error if switch contains both default and total pattern, so no additional suggestion is needed
+    return branchCount > 1;
   }
 
   private void reportConstants(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
@@ -631,13 +618,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                            Map<PsiExpression, ConstantResult> expressions) {
     for (NullabilityProblem<?> problem : problems) {
       PsiExpression expression = problem.getDereferencedExpression();
+      boolean nullLiteral = ExpressionUtils.isNullLiteral(PsiUtil.skipParenthesizedExprDown(expression));
       if (!REPORT_UNSOUND_WARNINGS) {
-        if (expression == null) continue;
-        PsiExpression unwrapped = PsiUtil.skipParenthesizedExprDown(expression);
-        if (!ExpressionUtils.isNullLiteral(unwrapped) && expressions.get(expression) != ConstantResult.NULL) {
-          continue;
-        }
+        if (expression == null || !nullLiteral && expressions.get(expression) != ConstantResult.NULL) continue;
       }
+      // Expression of null type: could be failed LVTI, skip it to avoid confusion
+      if (expression != null && !nullLiteral && PsiType.NULL.equals(expression.getType())) continue;
       NullabilityProblemKind.innerClassNPE.ifMyProblem(problem, newExpression -> {
         List<LocalQuickFix> fixes = createNPEFixes(newExpression.getQualifier(), newExpression, reporter.isOnTheFly());
         reporter
@@ -1113,7 +1099,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
           // always true operand makes always true OR-chain and does not affect the result of AND-chain
           // Note that in `assert unknownExpression && trueExpression;` the trueExpression should not be reported
-          // because this assert is essentially the shortened `assert unknownExpression; assert trueExpression;`
+          // because this assertion is essentially the shortened `assert unknownExpression; assert trueExpression;`
           // which is not reported.
           boolean causesShortCircuit = (tokenType.equals(JavaTokenType.OROR) == evaluatesToTrue) &&
                                        ArrayUtil.getLastElement(((PsiPolyadicExpression)parent).getOperands()) != anchor;

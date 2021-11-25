@@ -8,12 +8,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -25,7 +23,7 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-public class IdeaMenuUI extends BasicMenuUI{
+public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
   private static final Rectangle ourTextRect = new Rectangle();
   private static final Rectangle ourArrowIconRect = new Rectangle();
@@ -57,7 +55,7 @@ public class IdeaMenuUI extends BasicMenuUI{
       myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
-    selectionBackground = UIUtil.getListSelectionBackground(true);
+    selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
   }
 
   private void checkEmptyIcon(JComponent comp) {
@@ -204,7 +202,8 @@ public class IdeaMenuUI extends BasicMenuUI{
     }
     else if (IdeaPopupMenuUI.isPartOfPopupMenu(comp) && (Registry.is("popup.menu.roundSelection.enabled", false) || ExperimentalUI.isNewUI())) {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      g.fillRoundRect(4, 1, jMenu.getWidth() - 8, jMenu.getHeight() - 2, 8, 8);
+      int radius = JBUI.getInt("MenuItem.Selection.arc", 8);
+      g.fillRoundRect(4, 1, jMenu.getWidth() - 8, jMenu.getHeight() - 2, radius, radius);
       config.restore();
     }
     else {

@@ -380,6 +380,13 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       StatusBar statusBar = myRootPane.getStatusBar();
       if (statusBar != null) {
         project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
+
+        if (ExperimentalUI.isNewUI()) {
+          var navBar = myRootPane.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
+          if (navBar instanceof StatusBarCentralWidget) {
+            statusBar.setCentralWidget((StatusBarCentralWidget)navBar);
+          }
+        }
       }
     }
 
@@ -397,7 +404,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
-    project.getService(StatusBarWidgetsManager.class).updateAllWidgets();
+    project.getService(StatusBarWidgetsManager.class).installPendingWidgets();
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
     PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
   }

@@ -23,25 +23,20 @@ object ComposeWebModuleTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.compose.web.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.web.description")
 
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
-        module.configurator.moduleType == ModuleType.js && projectKind == ProjectKind.COMPOSE
-
-    override fun isApplicableTo(
-        reader: Reader,
-        module: Module
-    ): Boolean =
-        when (module.configurator) {
-            JsComposeMppConfigurator -> true
-            else -> false
-    }
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
+        module.configurator.moduleType == ModuleType.js
+                && projectKind == ProjectKind.COMPOSE
+                && when (module.configurator) {
+                    JsComposeMppConfigurator -> true
+                    else -> false
+                }
 
     override fun Writer.getIrsToAddToBuildFile(
         module: ModuleIR
     ) = irsList {
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
         +RepositoryIR(DefaultRepository.GOOGLE)
-        +GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE)
-
+        //+GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE) //this module is intended to be used inside Compose MPP module!
         +GradleImportIR("org.jetbrains.compose.compose")
     }
 

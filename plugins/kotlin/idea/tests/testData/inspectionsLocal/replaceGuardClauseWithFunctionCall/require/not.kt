@@ -1,5 +1,5 @@
 // FIX: Replace with 'require()' call
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(foo: Boolean) {
     <caret>if (!foo) throw IllegalArgumentException("test")
 }

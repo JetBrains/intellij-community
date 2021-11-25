@@ -3,6 +3,7 @@ package com.intellij.java.ift.lesson.completion
 
 import com.intellij.java.ift.JavaLessonsBundle
 import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskContext
 import training.dsl.parseLessonSample
@@ -72,4 +73,9 @@ class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBu
   }
 
   override val suitableTips = listOf("SmartTypeCompletion", "SmartTypeAfterNew", "SecondSmartCompletionToar")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.code.completion"),
+         LessonUtil.getHelpLink("auto-completing-code.html")),
+  )
 }

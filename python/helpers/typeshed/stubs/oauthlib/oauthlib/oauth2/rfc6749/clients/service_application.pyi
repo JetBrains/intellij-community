@@ -17,7 +17,7 @@ class ServiceApplicationClient(Client):
         audience: Any | None = ...,
         **kwargs,
     ) -> None: ...
-    def prepare_request_body(  # type: ignore[override]
+    def prepare_request_body(  # type: ignore
         self,
         private_key: Any | None = ...,
         subject: Any | None = ...,

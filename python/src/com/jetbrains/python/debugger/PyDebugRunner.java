@@ -122,7 +122,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
       .thenAsync(ignored ->
-                   Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")
+                   Experiments.getInstance().isFeatureEnabled("python.use.targets.api")
                    ? createSessionUsingTargetsApi(state, environment)
                    : createSessionLegacy(state, environment));
   }

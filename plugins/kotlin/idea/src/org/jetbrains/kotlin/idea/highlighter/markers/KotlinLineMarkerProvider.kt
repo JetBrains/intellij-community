@@ -255,7 +255,7 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
 
     val implements = isImplementsAndNotOverrides(resolveWithParents.descriptor!!, resolveWithParents.overriddenDescriptors)
 
-    val anchor = (declaration as? KtNamedDeclaration)?.nameIdentifier ?: declaration
+    val anchor = (declaration as? KtNamedDeclaration)?.nameIdentifier ?: PsiTreeUtil.getDeepestVisibleFirst(declaration) ?: declaration
 
     // NOTE: Don't store descriptors in line markers because line markers are not deleted while editing other files and this can prevent
     // clearing the whole BindingTrace.
@@ -536,7 +536,7 @@ private fun collectOverriddenFunctions(functions: Collection<KtNamedFunction>, r
     for (function in getOverriddenDeclarations(mappingToJava, classes)) {
         ProgressManager.checkCanceled()
 
-        val anchor = function.nameIdentifier ?: function
+        val anchor = function.nameIdentifier ?: PsiTreeUtil.getDeepestVisibleFirst(function) ?: function
         val gutter = if (isImplemented(function)) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         val lineMarkerInfo = LineMarkerInfo(
             anchor,

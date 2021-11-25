@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
@@ -35,6 +35,8 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.gist.GistManager;
+import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
@@ -219,7 +221,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         else {
           statistics = null;
         }
-        performDelayedPushTasks(statistics);
+        ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
+        try {
+          performDelayedPushTasks(statistics);
+        }
+        finally {
+          ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
+        }
       }
     };
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -347,7 +355,9 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
             Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, project);
-            if (module == null) return Stream.empty();
+            if (module == null) {
+              return Stream.empty();
+            }
             ProgressManager.checkCanceled();
             return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, project), it -> new Object() {
                 final IndexableFilesIterator files = it;

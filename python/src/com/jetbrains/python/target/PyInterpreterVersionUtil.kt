@@ -4,12 +4,11 @@
 package com.jetbrains.python.target
 
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.RemoteSdkException
@@ -49,16 +48,12 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
                 return
               }
               else {
-                throw RemoteSdkException("Python interpreter returned the empty output as a version string")
+                throw RemoteSdkException(PyBundle.message("python.sdk.empty.version.string"), processOutput.stdout, processOutput.stderr)
               }
             }
             else {
-              throw RemoteSdkException("Python interpreter process exited with non-zero exit code").also {
-                it.addSuppressed(RuntimeExceptionWithAttachments(
-                  "Exit code $${processOutput.exitCode}",
-                  Attachment("stdout.txt", processOutput.stdout),
-                  Attachment("stderr.txt", processOutput.stderr)))
-              }
+              throw RemoteSdkException(
+                PyBundle.message("python.sdk.non.zero.exit.code", processOutput.exitCode), processOutput.stdout, processOutput.stderr)
             }
           }
           catch (e: Exception) {

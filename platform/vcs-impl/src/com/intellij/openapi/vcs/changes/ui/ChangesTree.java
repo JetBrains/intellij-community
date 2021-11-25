@@ -541,6 +541,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void expandDefaults() {
+    // expanding lots of nodes is a slow operation (and result is not very useful)
+    if (TreeUtil.hasManyNodes(this, 30000)) {
+      return;
+    }
     TreeUtil.promiseExpand(this, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof ChangesBrowserNode && !((ChangesBrowserNode<?>)node).shouldExpandByDefault()) {

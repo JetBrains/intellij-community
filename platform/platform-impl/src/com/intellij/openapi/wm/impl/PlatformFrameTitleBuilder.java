@@ -40,7 +40,7 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
 
   @Override
   public String getFileTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    String overriddenTitle = VfsPresentationUtil.getOverriddenPresentableNameForUI(project, file);
+    String overriddenTitle = VfsPresentationUtil.getCustomPresentableNameForUI(project, file);
     if (overriddenTitle != null) {
       return overriddenTitle;
     }

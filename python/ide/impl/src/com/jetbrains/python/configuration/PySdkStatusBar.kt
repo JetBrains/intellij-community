@@ -31,7 +31,7 @@ import com.jetbrains.python.sdk.noInterpreterMarker
 
 private const val pySdkWidgetId: String = "pythonInterpreterWidget"
 
-fun isDataSpellInterpreterWidgetEnabled() = PlatformUtils.isPyCharmDs() && Registry.`is`("dataspell.interpreter.widget")
+fun isDataSpellInterpreterWidgetEnabled() = PlatformUtils.isDataSpell() && Registry.`is`("dataspell.interpreter.widget")
 
 class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
 

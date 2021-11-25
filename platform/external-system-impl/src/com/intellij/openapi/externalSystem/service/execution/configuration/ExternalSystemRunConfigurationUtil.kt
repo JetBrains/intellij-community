@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.RawCommandLineEditor
@@ -32,8 +33,13 @@ import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.textFieldWithBrowseButton
+import com.intellij.util.text.nullize
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.WrapLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.FlowLayout
 import java.util.*
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JComboBox
@@ -141,9 +147,7 @@ fun <S> SettingsFragmentsContainer<S>.addWorkingDirectoryFragment(
   workingDirectoryInfo,
   { it, c -> it.getWorkingDirectory().let { p -> if (p.isNotBlank()) c.workingDirectory = p } },
   { it, c -> it.setWorkingDirectory(c.workingDirectory) }
-).apply {
-  isRemovable = false
-}.addValidation {
+).addValidation {
   if (it.getWorkingDirectory().isBlank()) {
     throw RuntimeConfigurationError(workingDirectoryInfo.emptyFieldError)
   }
@@ -182,7 +186,7 @@ fun <S> SettingsFragmentsContainer<S>.addVmOptionsFragment(
   info: LabeledSettingsFragmentInfo,
   getVmOptions: S.() -> String?,
   setVmOptions: S.(String?) -> Unit
-) = addLabeledTextSettingsEditorFragment(
+) = addRemovableLabeledTextSettingsEditorFragment(
   RawCommandLineEditor().apply {
     MacrosDialog.addMacroSupport(editorField, MacrosDialog.Filters.ALL) { false }
   },
@@ -233,9 +237,10 @@ fun <S> SettingsFragmentsContainer<S>.addEnvironmentFragment(
 fun <S> SettingsFragmentsContainer<S>.addPathFragment(
   project: Project,
   pathFragmentInfo: PathFragmentInfo,
-  getPath: S.() -> String?,
-  setPath: S.(String?) -> Unit
-) = addLabeledTextSettingsEditorFragment(
+  getPath: S.() -> String,
+  setPath: S.(String) -> Unit,
+  defaultPath: S.() -> String = { "" }
+) = addRemovableLabeledTextSettingsEditorFragment(
   textFieldWithBrowseButton(
     project,
     pathFragmentInfo.fileChooserTitle,
@@ -249,44 +254,37 @@ fun <S> SettingsFragmentsContainer<S>.addPathFragment(
     pathFragmentInfo.fileChooserDescriptor
   ) { getPresentablePath(it.path) },
   pathFragmentInfo,
-  { getPath()?.let(::getPresentablePath) },
-  { setPath(it?.let(::getCanonicalPath)) }
+  { getPath().let(::getPresentablePath).nullize() },
+  { setPath(it?.let(::getCanonicalPath) ?: "") },
+  { defaultPath().let(::getPresentablePath).nullize() }
 )
 
-fun <S, C> SettingsFragmentsContainer<S>.addLabeledTextSettingsEditorFragment(
+fun <S, C> SettingsFragmentsContainer<S>.addRemovableLabeledTextSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   getter: S.() -> String?,
-  setter: S.(String?) -> Unit
-) where C : JComponent, C : TextAccessor = addLabeledSettingsEditorFragment(
+  setter: S.(String?) -> Unit,
+  default: S.() -> String? = { null }
+) where C : JComponent, C : TextAccessor = addRemovableLabeledSettingsEditorFragment(
   component,
   info,
   TextAccessor::getText,
   TextAccessor::setText,
   getter,
-  setter
+  setter,
+  default
 )
 
-fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFragment(
+fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addRemovableLabeledSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   getterC: C.() -> V,
   setterC: C.(V) -> Unit,
   getterS: S.() -> V?,
-  setterS: S.(V?) -> Unit
-) = addLabeledSettingsEditorFragment(
-  component, info, getterC, setterC, { null }, getterS, setterS)
-
-fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFragment(
-  component: C,
-  info: LabeledSettingsFragmentInfo,
-  getterC: C.() -> V,
-  setterC: C.(V) -> Unit,
-  defaultS: S.() -> V?,
-  getterS: S.() -> V?,
-  setterS: S.(V?) -> Unit
-): SettingsEditorFragment<S, LabeledComponent<C>> {
-  val ref = Ref<SettingsEditorFragment<S, LabeledComponent<C>>>()
+  setterS: S.(V?) -> Unit,
+  defaultS: S.() -> V? = { null }
+): SettingsEditorFragment<S, SettingsEditorLabeledComponent<C>> {
+  val ref = Ref<SettingsEditorFragment<S, SettingsEditorLabeledComponent<C>>>()
   return addLabeledSettingsEditorFragment(
     component,
     info,
@@ -322,7 +320,7 @@ fun <S, C : JComponent> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFr
   apply: (S, C) -> Unit,
   initialSelection: (S) -> Boolean
 ) = addSettingsEditorFragment(
-  LabeledComponent.create(component, info.editorLabel, BorderLayout.WEST),
+  SettingsEditorLabeledComponent(info.editorLabel, component),
   info,
   { it, c -> reset(it, c.component) },
   { it, c -> apply(it, c.component) },
@@ -350,9 +348,11 @@ fun <S, C : JComponent> SettingsFragmentsContainer<S>.addSettingsEditorFragment(
   actionHint = settingsFragmentInfo.settingsActionHint
 
   val editorComponent = editorComponent
-  if (editorComponent is JTextComponent ||
-      editorComponent is JComboBox<*>) {
-    CommonParameterFragments.setMonospaced(editorComponent)
+  if (settingsFragmentInfo.settingsType == SettingsEditorFragmentType.COMMAND_LINE) {
+    if (editorComponent is JTextComponent ||
+        editorComponent is JComboBox<*>) {
+      CommonParameterFragments.setMonospaced(editorComponent)
+    }
   }
   if (editorComponent is JBTextField) {
     FragmentedSettingsUtil.setupPlaceholderVisibility(editorComponent)
@@ -362,3 +362,20 @@ fun <S, C : JComponent> SettingsFragmentsContainer<S>.addSettingsEditorFragment(
 fun <S, C : JComponent, F : SettingsEditorFragment<S, C>> F.applyToComponent(action: C.() -> Unit): F = apply {
   component().action()
 }
+
+class SettingsEditorLabeledComponent<C : JComponent>(label: @NlsContexts.Label String, component: C) : LabeledComponent<C>() {
+  fun modifyComponentSize(configure: C.() -> Unit) {
+    layout = WrapLayout(FlowLayout.LEADING, UIUtil.DEFAULT_HGAP, 2)
+    border = JBUI.Borders.empty(0, -UIUtil.DEFAULT_HGAP, 0, 0)
+    component.configure()
+  }
+
+  init {
+    text = label
+    labelLocation = BorderLayout.WEST
+    setComponent(component)
+  }
+}
+
+fun <C : JComponent, F : SettingsEditorFragment<*, SettingsEditorLabeledComponent<C>>> F.modifyLabeledComponentSize(configure: C.() -> Unit) =
+  apply { component().modifyComponentSize(configure) }

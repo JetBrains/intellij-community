@@ -51,7 +51,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   private RunConfiguration myConfiguration;
 
   public BeforeRunComponent(@NotNull Disposable parentDisposable) {
-    super(new WrapLayout(FlowLayout.LEADING, 0, FragmentedSettingsBuilder.TAG_VGAP));
+    super(new WrapLayout(FlowLayout.LEADING, 0, JBUI.scale(FragmentedSettingsBuilder.TAG_VGAP)));
     Disposer.register(parentDisposable, this);
     add(Box.createVerticalStrut(30));
 

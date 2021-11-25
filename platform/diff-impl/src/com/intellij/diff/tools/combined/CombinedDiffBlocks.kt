@@ -2,8 +2,13 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -13,9 +18,13 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.CheckBox
+import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.util.FontUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -50,26 +59,73 @@ class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory {
     CombinedSimpleDiffBlock(content, withBorder)
 }
 
-private class CombinedSimpleDiffHeader(path: FilePath, withBorder: Boolean) : BorderLayoutPanel() {
+private class CombinedSimpleDiffHeader(block: CombinedDiffBlock, path: FilePath, withBorder: Boolean) : BorderLayoutPanel() {
   init {
-    background = UIUtil.getListBackground()
     if (withBorder) {
       border = IdeBorderFactory.createBorder(SideBorder.TOP)
     }
-    val parentPath = path.parentPath?.let(FilePath::getPresentableUrl)?.let(FileUtil::getLocationRelativeToUserHome)
-    val textComponent = SimpleColoredComponent().append(path.name).apply {
-      if (parentPath != null) {
-        append(FontUtil.spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      }
+
+    addToCenter(buildToolbar(path, block).component)
+  }
+
+  private fun buildToolbar(path: FilePath, block: CombinedDiffBlock): ActionToolbar {
+    val toolbarGroup = DefaultActionGroup()
+    toolbarGroup.add(OpenInEditorAction())
+    toolbarGroup.addSeparator()
+    toolbarGroup.add(SelectableFilePathLabel(path))
+
+    val toolbar = ActionManager.getInstance().createActionToolbar("CombinedDiffBlockHeaderToolbar", toolbarGroup, true)
+    toolbar.targetComponent = this
+    toolbar.component.background = UIUtil.getListBackground()
+    toolbarGroup.add(CombinedPrevNextFileAction(block, toolbar.component, false))
+    toolbarGroup.add(CombinedPrevNextFileAction(block, toolbar.component, true))
+
+    return toolbar
+  }
+
+  private class SelectableFilePathLabel(private val path: FilePath) : DumbAwareAction(), CustomComponentAction {
+
+    private val checkBox = CheckBox("").apply { background = UIUtil.getListBackground() }
+
+    var selected: Boolean
+      get() = checkBox.isSelected
+      set(value) { checkBox.isSelected = value }
+
+    fun setSelectable(selectable: Boolean) {
+      checkBox.isVisible = selectable
     }
-    addToCenter(textComponent)
+
+    init {
+      selected = false
+      setSelectable(false)
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {}
+
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      val textComponent = SimpleColoredComponent().append(path.name)
+        .apply {
+          val parentPath = path.parentPath?.let(FilePath::getPresentableUrl)?.let(FileUtil::getLocationRelativeToUserHome)
+          if (parentPath != null) {
+            append(FontUtil.spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+          }
+          icon = FileTypeRegistry.getInstance().getFileTypeByFileName(path.name).icon
+        }
+      val component = OpaquePanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(3), 0))
+        .apply {
+          add(checkBox)
+          add(textComponent)
+        }
+
+      return component
+    }
   }
 }
 
 private class CombinedSimpleDiffBlock(override val content: CombinedDiffBlockContent, withBorder: Boolean) :
   JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)), CombinedDiffBlock {
 
-  override val header = CombinedSimpleDiffHeader(content.path, withBorder)
+  override val header = CombinedSimpleDiffHeader(this, content.path, withBorder)
   override val body = content.viewer.component
 
   init {

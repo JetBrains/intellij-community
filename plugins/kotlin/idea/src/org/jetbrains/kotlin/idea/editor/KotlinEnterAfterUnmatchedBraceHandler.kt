@@ -43,6 +43,8 @@ class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() 
 
     override fun getRBraceOffset(file: PsiFile, editor: Editor, caretOffset: Int): Int {
         val element = file.findElementAt(caretOffset - 1)
+        val nextSibling = element?.nextSibling
+        if (nextSibling is PsiWhiteSpace && nextSibling.textContains('\n')) return super.getRBraceOffset(file, editor, caretOffset)
         val endOffset = when (val parent = element?.parent) {
             is KtFunctionLiteral -> {
                 val call = parent.getStrictParentOfType<KtCallExpression>()

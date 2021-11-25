@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_DESCRIPTOR: value-parameter a: kotlin.Int? defined in foo
 // PARAM_TYPES: kotlin.Int?
 fun foo(a: Int?): Int {

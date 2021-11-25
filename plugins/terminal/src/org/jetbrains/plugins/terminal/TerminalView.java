@@ -67,6 +67,7 @@ import java.util.*;
 public final class TerminalView implements Disposable {
   private final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
   private static final Logger LOG = Logger.getInstance(TerminalView.class);
+  private static final Key<AbstractTerminalRunner<?>> RUNNER_KEY = Key.create("RUNNER_KEY");
 
   private ToolWindow myToolWindow;
   private final Project myProject;
@@ -210,6 +211,7 @@ public final class TerminalView implements Disposable {
                                boolean requestFocus,
                                boolean deferSessionStartUntilUiShown) {
     final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState, deferSessionStartUntilUiShown);
+    content.putUserData(RUNNER_KEY, terminalRunner);
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
     new TerminalTabCloseListener(content, myProject, this);
@@ -473,6 +475,10 @@ public final class TerminalView implements Disposable {
   @Nullable
   public static JBTerminalWidget getWidgetByContent(@NotNull Content content) {
     return content.getUserData(TERMINAL_WIDGET_KEY);
+  }
+
+  public static @Nullable AbstractTerminalRunner<?> getRunnerByContent(@NotNull Content content) {
+    return content.getUserData(RUNNER_KEY);
   }
 
   public void detachWidgetAndRemoveContent(@NotNull Content content) {

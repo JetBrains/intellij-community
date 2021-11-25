@@ -234,7 +234,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   }
 
   private static boolean isSeparatorShown(ToolbarComboWidget widget) {
-    return !widget.getExpandListeners().isEmpty();
+    return !widget.getPressListeners().isEmpty();
   }
 
   //todo minimum size
@@ -305,18 +305,13 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     @Override
     public void mouseClicked(MouseEvent e) {
       if (!isSeparatorShown(comp)) {
-        notifyPressListeners(e);
+        comp.doExpand(e);
         return;
       }
 
       int leftPartWidth = comp.getWidth() - (ELEMENTS_GAP + EXPAND_ICON.getIconWidth() + comp.getInsets().right);
       if (e.getPoint().x <= leftPartWidth) notifyPressListeners(e);
-      else notifyExpandListeners(e);
-    }
-
-    private void notifyExpandListeners(MouseEvent e) {
-      ActionEvent ae = new ActionEvent(comp, 0, null, System.currentTimeMillis(), e.getModifiersEx());
-      comp.getExpandListeners().forEach(listener -> listener.actionPerformed(ae));
+      else comp.doExpand(e);
     }
 
     private void notifyPressListeners(MouseEvent e) {

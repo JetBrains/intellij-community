@@ -25,7 +25,7 @@ class ToggleDiffAligningModeAction : DumbAwareToggleAction() {
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    val viewer = e.getData(DIFF_VIEWER) as SimpleDiffViewer
+    val viewer = e.getData(DIFF_VIEWER) as? SimpleDiffViewer ?: return false
     return TextDiffViewerUtil.getTextSettings(viewer.context).isEnableAligningChangesMode
   }
 

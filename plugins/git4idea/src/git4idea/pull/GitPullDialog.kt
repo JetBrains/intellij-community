@@ -217,12 +217,11 @@ class GitPullDialog(private val project: Project,
     }
   }
 
-  private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
-                                                            GitBundle.message("pull.options.modify.popup.title"),
-                                                            ::getOptions,
-                                                            OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
-                                                            ::optionChosen,
-                                                            ::isOptionEnabled)
+  private fun createPopupBuilder() = GitOptionsPopupBuilder(
+    project,
+    GitBundle.message("pull.options.modify.popup.title"),
+    ::getOptions, ::getOptionInfo, ::isOptionSelected, ::isOptionEnabled, ::optionChosen
+  )
 
   private fun isOptionSelected(option: GitPullOption) = option in selectedOptions
 
@@ -236,7 +235,7 @@ class GitPullDialog(private val project: Project,
     OptionInfo(option, option.option, option.description)
   }
 
-  private fun getOptions() = GitPullOption.values().toMutableList().apply {
+  private fun getOptions(): List<GitPullOption> = GitPullOption.values().toMutableList().apply {
     if (!isNoVerifySupported) {
       remove(GitPullOption.NO_VERIFY)
     }

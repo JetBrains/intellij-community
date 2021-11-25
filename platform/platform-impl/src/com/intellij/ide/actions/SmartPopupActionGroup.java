@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This group turns itself into a popup if there's more than one child.
+ * This group turns itself into a popup if there's more than {@link #getChildrenCountThreshold()} children
  *
  * @see NonEmptyActionGroup
  * @see NonTrivialActionGroup
@@ -18,6 +18,10 @@ public class SmartPopupActionGroup extends DefaultActionGroup implements DumbAwa
 
   private boolean myCachedIsPopup = true;
 
+  protected int getChildrenCountThreshold() {
+    return 2;
+  }
+
   @Override
   public boolean isPopup() {
     return myCachedIsPopup; // called after update()
@@ -25,9 +29,9 @@ public class SmartPopupActionGroup extends DefaultActionGroup implements DumbAwa
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    int size = ActionGroupUtil.getVisibleActions(this, e).take(3).size();
+    int size = ActionGroupUtil.getVisibleActions(this, e).take(getChildrenCountThreshold() + 1).size();
     e.getPresentation().setEnabledAndVisible(size > 0);
-    myCachedIsPopup = size > 2;
+    myCachedIsPopup = size > getChildrenCountThreshold();
   }
 
   @Override

@@ -98,7 +98,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
     assert !isDirty();
     if (myFileLength == 0) return true;
-
+    IOCancellationCallbackHolder.checkCancelled();
     return readInputStream(is -> {
       // calculation may restart few times, so it's expected that processor processes duplicated
       LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), myFileLength) {

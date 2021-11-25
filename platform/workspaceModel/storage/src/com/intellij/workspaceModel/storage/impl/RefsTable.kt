@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.storage.impl.containers.*
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import java.util.function.IntFunction
 
-internal class ConnectionId private constructor(
+class ConnectionId private constructor(
   val parentClass: Int,
   val childClass: Int,
   val connectionType: ConnectionType,
@@ -241,19 +241,19 @@ internal class MutableRefsTable(
     }.let { }
   }
 
-  fun <Child : WorkspaceEntityBase> updateOneToManyChildrenOfParent(connectionId: ConnectionId, parentId: Int, childrenEntities: Sequence<Child>) {
+  fun updateOneToManyChildrenOfParent(connectionId: ConnectionId, parentId: Int, childrenEntityIds: Sequence<ChildEntityId>) {
     val copiedMap = getOneToManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
-    val children = childrenEntities.mapToIntArray { it.id.arrayId }
+    val children = childrenEntityIds.mapToIntArray { it.id.arrayId }
     copiedMap.putAll(children, parentId)
   }
 
-  fun <Child : WorkspaceEntityBase> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
-                                                                            parentId: ParentEntityId,
-                                                                            childrenEntities: Sequence<Child>) {
+  fun updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
+                                              parentId: ParentEntityId,
+                                              childrenEntityIds: Sequence<ChildEntityId>) {
     val copiedMap = getOneToAbstractManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
-    childrenEntities.forEach { copiedMap[it.id.asChild()] = parentId }
+    childrenEntityIds.forEach { copiedMap[it] = parentId }
   }
 
   fun <Parent : WorkspaceEntityBase, OriginParent : Parent> updateOneToAbstractOneParentOfChild(connectionId: ConnectionId,
@@ -264,18 +264,18 @@ internal class MutableRefsTable(
     copiedMap[childId] = parentEntity.id.asParent()
   }
 
-  fun <Child : WorkspaceEntityBase, OriginChild : Child> updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
-                                                                                             parentId: ParentEntityId,
-                                                                                             childEntity: OriginChild) {
+  fun updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
+                                          parentId: ParentEntityId,
+                                          childEntityId: ChildEntityId) {
     val copiedMap = getAbstractOneToOneMutableMap(connectionId)
     copiedMap.inverse().remove(parentId)
-    copiedMap[childEntity.id.asChild()] = parentId
+    copiedMap[childEntityId.id.asChild()] = parentId
   }
 
-  fun <Child : WorkspaceEntityBase> updateOneToOneChildOfParent(connectionId: ConnectionId, parentId: Int, childEntity: Child) {
+  fun updateOneToOneChildOfParent(connectionId: ConnectionId, parentId: Int, childEntityId: ChildEntityId) {
     val copiedMap = getOneToOneMutableMap(connectionId)
     copiedMap.removeValue(parentId)
-    copiedMap.put(childEntity.id.arrayId, parentId)
+    copiedMap.put(childEntityId.id.arrayId, parentId)
   }
 
   fun <Parent : WorkspaceEntityBase> updateOneToOneParentOfChild(connectionId: ConnectionId, childId: Int, parentEntity: Parent) {

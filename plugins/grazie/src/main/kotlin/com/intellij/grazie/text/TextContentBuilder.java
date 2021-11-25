@@ -1,5 +1,7 @@
 package com.intellij.grazie.text;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
@@ -17,6 +19,7 @@ import java.util.function.Predicate;
  * The common usage pattern is {@code TextContentBuilder.FromPsi. ... .build(psi, domain)}.
  */
 public class TextContentBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.grazie.text.TextContentBuilder");
 
   /**
    * A basic builder that takes the full PSI text, considering any {@link OuterLanguageElement}s as unknown fragments.
@@ -64,13 +67,31 @@ public class TextContentBuilder {
   @Nullable
   public TextContent build(PsiElement root, TextContent.TextDomain domain) {
     ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(root);
-    return build(root, domain, manipulator != null ? manipulator.getRangeInElement(root) : new TextRange(0, root.getTextLength()));
+    int length = root.getTextLength();
+    if (manipulator != null) {
+      TextRange valueRange = manipulator.getRangeInElement(root);
+      if (isWrongRange(valueRange, length)) {
+        PluginException.logPluginError(LOG,
+                                       "The manipulator returned an incorrect range " + valueRange +
+                                       " for PSI " + root.getClass() +
+                                       " of length " + length,
+                                       null, manipulator.getClass());
+        return null;
+      }
+      return build(root, domain, valueRange);
+    }
+    return build(root, domain, new TextRange(0, length));
   }
 
   @Nullable
-  TextContent build(PsiElement root, TextContent.TextDomain domain, TextRange valueRange) {
+  public TextContent build(PsiElement root, TextContent.TextDomain domain, TextRange valueRange) {
     int rootStart = root.getTextRange().getStartOffset();
     String rootText = root.getText();
+    if (isWrongRange(valueRange, rootText.length())) {
+      LOG.error("The range " + valueRange + " is out of the PSI element, length " + rootText.length());
+      return null;
+    }
+
     TextContent content = new PsiRecursiveElementWalkingVisitor() {
       final List<TextContentImpl.TokenInfo> tokens = new ArrayList<>();
       int currentStart = valueRange.getStartOffset();
@@ -107,5 +128,9 @@ public class TextContentBuilder {
       }
     }.walkPsiTree();
     return content == null ? null : content.removeIndents(indentChars).trimWhitespace();
+  }
+
+  private static boolean isWrongRange(TextRange valueRange, int maxLength) {
+    return valueRange.getStartOffset() < 0 || valueRange.getEndOffset() > maxLength;
   }
 }

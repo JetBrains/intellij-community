@@ -186,7 +186,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
                 .applyToComponent { isSelected = modelBinding.get() != null }
-              comboBox(supportedValues.toTypedArray())
+              comboBox(supportedValues)
                 .enabledIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create<ColorBlindness>("") { PlatformEditorBundle.message(it.key) } }
                 .comment(UIBundle.message("color.blindness.combobox.comment"))
@@ -273,11 +273,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 0 to JLabel("0%"),
                 50 to JLabel("50%"),
                 100 to JLabel("100%")))
-              .bindValue(
-                PropertyBinding(
-                  { (settingsState.alphaModeRatio * 100f).toInt() },
-                  { settingsState.alphaModeRatio = it / 100f }
-                ))
+              .bindValue({ (settingsState.alphaModeRatio * 100f).toInt() }, { settingsState.alphaModeRatio = it / 100f })
               .showValueHint()
           }.enabledIf(checkbox.selected)
             .layout(RowLayout.INDEPENDENT)

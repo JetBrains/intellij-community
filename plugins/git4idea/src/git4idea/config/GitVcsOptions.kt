@@ -33,8 +33,6 @@ class GitVcsOptions : BaseState() {
 
   @get:OptionTag("PUSH_AUTO_UPDATE")
   var isPushAutoUpdate by property(false)
-  @get:OptionTag("PUSH_UPDATE_ALL_ROOTS")
-  var isPushUpdateAllRoots by property(true)
   @get:OptionTag("ROOT_SYNC")
   var rootSync by enum(DvcsSyncSettings.Value.NOT_DECIDED)
 

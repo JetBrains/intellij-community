@@ -57,6 +57,7 @@ class SimplifyIfExpressionFix(
                 val parent = expression.parent
                 if (parent.node.elementType == KtNodeTypes.ELSE) {
                     (parent.parent as? KtIfExpression)?.elseKeyword?.delete()
+                    parent.delete()
                 }
                 expression.delete()
                 return

@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.ApplicationScope.Com
 import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.ApplicationScope.Companion.initSdk
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
 import org.jetbrains.kotlin.idea.perf.util.logMessage
+import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.testFramework.*
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
@@ -56,7 +57,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
 
     override fun setUp() {
         super.setUp()
-
+        ExpressionsOfTypeProcessor.prodMode()
         myApplication = initApp(testRootDisposable)
         jdk18 = initSdk(testRootDisposable)
     }
@@ -78,6 +79,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
     override fun tearDown() {
         RunAll(
             ThrowableRunnable { commitAllDocuments() },
+            ThrowableRunnable { ExpressionsOfTypeProcessor.resetMode() },
             ThrowableRunnable { super.tearDown() },
             ThrowableRunnable {
                 myProject?.let { project ->

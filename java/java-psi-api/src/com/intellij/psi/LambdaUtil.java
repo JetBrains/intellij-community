@@ -914,11 +914,16 @@ public final class LambdaUtil {
         PsiExpression function = replacer.apply(lambdaCopy);
         if (function == null) return false;
         JavaResolveResult resultCopy = copyCall.resolveMethodGenerics();
-        if (resultCopy.getElement() != oldTarget) return false;
+        if (!oldTarget.getManager().areElementsEquivalent(resultCopy.getElement(), oldTarget)) return false;
         String copyMessage = resultCopy instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resultCopy).getInferenceErrorMessage() : null;
         if (!Objects.equals(origErrorMessage, copyMessage)) return false;
-        if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
-          return false;
+        if (function instanceof PsiFunctionalExpression) {
+          PsiType functionalType = ((PsiFunctionalExpression)function).getFunctionalInterfaceType();
+          if (functionalType == null) return false;
+          PsiType lambdaFunctionalType = lambda.getFunctionalInterfaceType();
+          if (lambdaFunctionalType != null && !functionalType.getCanonicalText().equals(lambdaFunctionalType.getCanonicalText())) {
+            return false;
+          }
         }
         if (origType instanceof PsiClassType && !((PsiClassType)origType).isRaw() &&
             //when lambda has no formal parameter types, it's ignored during applicability check

@@ -3,12 +3,14 @@ package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
@@ -18,14 +20,22 @@ import java.util.Set;
 
 public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCoordinatesConverter {
   @Override
-  protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
+  protected boolean doIsValid(MavenId id, MavenIndicesManager manager, ConvertContext context) {
     if (StringUtil.isEmpty(id.getGroupId()) || StringUtil.isEmpty(id.getArtifactId())) return false;
-    if (manager.hasArtifactId(id.getGroupId(), id.getArtifactId())) {
-      return true;
+
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
+    if (StringUtil.isNotEmpty(id.getVersion())) {
+      if (projectsManager.findProject(id) != null) return true;
+    } else {
+      for (MavenProject project : projectsManager.getProjects()) {
+        MavenId mavenId = project.getMavenId();
+        if (id.getGroupId().equals(mavenId.getGroupId()) && id.getArtifactId().equals(mavenId.getArtifactId())) return true;
+      }
     }
 
     // Check if artifact was found on importing.
-    MavenProject mavenProject = findMavenProject(context);
+    VirtualFile projectFile = getMavenProjectFile(context);
+    MavenProject mavenProject = projectFile == null ? null : projectsManager.findProject(projectFile);
     if (mavenProject != null) {
       for (MavenArtifact artifact : mavenProject.findDependencies(id.getGroupId(), id.getArtifactId())) {
         if (MavenArtifactUtilKt.resolved(artifact)) {
@@ -34,7 +44,7 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
       }
     }
 
-    return false;
+    return manager.hasLocalArtifactId(id.getGroupId(), id.getArtifactId());
   }
 
   @Nullable

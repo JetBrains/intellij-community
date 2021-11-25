@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -59,7 +58,6 @@ import org.zmlx.hg4idea.util.HgVersion;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -332,11 +330,16 @@ public class HgVcs extends AbstractVcs {
   @Override
   @RequiresEdt
   public void enableIntegration() {
+    enableIntegration(null);
+  }
+
+  @Override
+  @RequiresEdt
+  public void enableIntegration(@Nullable VirtualFile targetDirectory) {
     new Task.Backgroundable(myProject, HgBundle.message("progress.title.enabling.hg"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Collection<VcsRoot> roots = myProject.getService(VcsRootDetector.class).detect();
-        new HgIntegrationEnabler(HgVcs.this).enable(roots);
+        new HgIntegrationEnabler(HgVcs.this, targetDirectory).detectAndEnable();
       }
     }.queue();
   }
@@ -368,7 +371,7 @@ public class HgVcs extends AbstractVcs {
       }
     };
     try {
-      myVersion = HgVersion.identifyVersion(executable);
+      myVersion = HgVersion.identifyVersion(myProject, executable);
       //if version is not supported, but have valid hg executable
       if (!myVersion.isSupported()) {
         LOG.info("Unsupported Hg version: " + myVersion);

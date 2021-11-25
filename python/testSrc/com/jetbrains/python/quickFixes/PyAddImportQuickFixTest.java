@@ -355,6 +355,27 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileNegativeTest("Import");
   }
 
+  // PY-46344
+  public void testImportAbstractContainersFromCollectionsABC() {
+    Consumer<VirtualFile> fileConsumer = file -> {
+      doMultiFileAutoImportTest("Import", fix -> {
+        final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());
+        assertNotNull(candidates);
+        assertContainsElements(candidates, "collections.abc.Sized");
+        assertDoesntContain(candidates, "collections.Sized");
+        return false;
+      });
+    };
+    runWithAdditionalFileInLibDir(
+      "_collections_abc.py",
+      "__all__ = [\"Sized\"]\n" +
+      "__name__ = \"collections.abc\"\n" +
+      "class Sized:\n" +
+      "    pass\n",
+      fileConsumer
+    );
+  }
+
   private void doTestProposedImportsOrdering(String @NotNull ... expected) {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());

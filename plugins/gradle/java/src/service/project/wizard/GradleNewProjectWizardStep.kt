@@ -30,15 +30,15 @@ import org.jetbrains.plugins.gradle.util.*
 import javax.swing.Icon
 
 abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
-  MavenizedNewProjectWizardStep<ProjectData, ParentStep>(parent)
+  MavenizedNewProjectWizardStep<ProjectData, ParentStep>(parent), GradleNewProjectWizardData
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
-  private val useKotlinDslProperty = propertyGraph.graphProperty { false }
+  final override val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+  final override val useKotlinDslProperty = propertyGraph.graphProperty { false }
 
-  val sdk by sdkProperty
-  var useKotlinDsl by useKotlinDslProperty
+  final override var sdk by sdkProperty
+  final override var useKotlinDsl by useKotlinDslProperty
 
   override fun createView(data: ProjectData) = GradleDataView(data)
 

@@ -1,4 +1,4 @@
-// "Mark 'source' as safe" "false"
+// "Mark 'source' as requiring validation" "false"
 package org.checkerframework.checker.tainting.qual;
 
 class Simple {

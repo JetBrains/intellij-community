@@ -24,9 +24,10 @@ class GithubCopyPathProvider: DumbAwareCopyPathProvider() {
     val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories
-      .mapNotNull { GHPathUtil.getFileURL(project, repository.root, it.ghRepositoryCoordinates, virtualFile, editor) }
+    val refs = accessibleRepositories
+      .mapNotNull { GHPathUtil.getFileURL(repository, it.ghRepositoryCoordinates, virtualFile, editor) }
       .distinct()
-      .joinToString("\n")
+
+    return if (refs.isNotEmpty()) refs.joinToString("\n") else null
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -160,8 +160,10 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     myProblemLevels.drop();
     if (isQuickFixAppliedFromView() || isAlreadySuppressedFromView()) return;
     // calculate all data on background thread
-    ReadAction.run(() -> myValid = calculateIsValid());
-    myPresentableName = calculatePresentableName();
+    ReadAction.run(() -> {
+      myValid = calculateIsValid();
+      myPresentableName = calculatePresentableName();
+    });
 
     for (InspectionTreeNode child : getChildren()) {
       if (child instanceof SuppressableInspectionTreeNode) {

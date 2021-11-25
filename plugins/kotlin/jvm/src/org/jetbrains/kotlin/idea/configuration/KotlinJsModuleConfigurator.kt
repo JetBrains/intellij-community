@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryType
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryStdDescription
@@ -22,7 +23,7 @@ import org.jetbrains.kotlin.js.JavaScript
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 
-open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator() {
+open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibraryProperties>() {
     override val name: String
         get() = NAME
 
@@ -43,24 +44,19 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator() {
     override val dialogTitle: String
         get() = JSLibraryStdDescription.DIALOG_TITLE
 
-    override val libraryCaption: String
-        get() = JSLibraryStdDescription.LIBRARY_CAPTION
-
     override val messageForOverrideDialog: String
         get() = JSLibraryStdDescription.JAVA_SCRIPT_LIBRARY_CREATION
 
-    override fun getLibraryJarDescriptors(sdk: Sdk?): List<LibraryJarDescriptor> =
-        listOf(
-            LibraryJarDescriptor.JS_STDLIB_JAR,
-            LibraryJarDescriptor.JS_STDLIB_SRC_JAR
-        )
+    override val libraryJarDescriptor: LibraryJarDescriptor get() = LibraryJarDescriptor.JS_STDLIB_JAR
 
     override val libraryMatcher: (Library, Project) -> Boolean = { library, project ->
         JsLibraryStdDetectionUtil.hasJsStdlibJar(library, project)
     }
 
-    override val libraryType: LibraryType<DummyLibraryProperties>?
-        get() = JSLibraryType.getInstance()
+    override val libraryType: LibraryType<DummyLibraryProperties> get() = JSLibraryType.getInstance()
+
+    override val libraryProperties: DummyLibraryProperties
+        get() = DummyLibraryProperties.INSTANCE
 
     companion object {
         const val NAME = JavaScript.LOWER_NAME

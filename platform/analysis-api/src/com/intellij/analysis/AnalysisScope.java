@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.analysis;
 
@@ -154,22 +154,14 @@ public class AnalysisScope {
     myAnalyzeInjectedCode = analyzeInjectedCode;
   }
 
-  @NotNull
-  protected PsiElementVisitor createFileSearcher(@NotNull Collection<? super VirtualFile> addTo) {
+  protected @NotNull Processor<? super VirtualFile> createFileSearcher(@NotNull Collection<? super VirtualFile> addTo) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(AnalysisBundle.message("scanning.scope.progress.title"));
     }
-    return new PsiElementVisitor() {
-      @Override
-      public void visitFile(@NotNull PsiFile file) {
-        if (mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
-          VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null && !isFilteredOut(virtualFile)) {
-            addTo.add(virtualFile);
-          }
-        }
-      }
+    return virtualFile -> {
+      addTo.add(virtualFile);
+      return true;
     };
   }
 
@@ -248,6 +240,7 @@ public class AnalysisScope {
             }
           });
         }
+        fileSet.freeze();
         break;
       default:
         throw new IllegalStateException("Invalid type: "+myType+"; can't create file set off it");
@@ -287,7 +280,7 @@ public class AnalysisScope {
 
   public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
     if (myType == VIRTUAL_FILES) {
-      return ((CompactVirtualFileSet)getFileSet()).process(file -> isFilteredOut(file) || processor.process(file));
+      return ((VirtualFileSet)getFileSet()).process(file -> isFilteredOut(file) || processor.process(file));
     }
     FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {

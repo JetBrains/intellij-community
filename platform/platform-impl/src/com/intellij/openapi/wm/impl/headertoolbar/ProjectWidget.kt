@@ -17,8 +17,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.messages.MessageBusConnection
@@ -28,60 +31,135 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.event.ActionListener
+import java.awt.event.InputEvent
+import java.util.concurrent.Executor
 import java.util.function.Function
 import javax.swing.*
+import kotlin.properties.Delegates
 
 private const val MAX_RECENT_COUNT = 100
 
-class ProjectWidget(project: Project?): ToolbarComboWidget(), Disposable {
+object ProjectWidgetFactory : MainToolbarWidgetFactory {
 
-  private var currentFile: VirtualFile?
-  private var currentProject: Project? = project
-  private var editorConnection: MessageBusConnection? = null
-
-  private val updater: Updater = Updater()
-
-  private val projectListener = object: ProjectManagerListener {
-    override fun projectOpened(project: Project) {
-      currentProject = project
-      editorConnection?.disconnect()
-      editorConnection = project.messageBus.connect(this@ProjectWidget)
-      editorConnection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener)
-
-      updater.performUpdate()
-    }
+  override fun createWidget(): JComponent {
+    val p = getCurrentProject()
+    val widget = ProjectWidget()
+    UIManager.getColor("MainToolbar.dropdown.foreground")?.let { widget.foreground = it }
+    UIManager.getColor("MainToolbar.dropdown.background")?.let { widget.background = it}
+    UIManager.getColor("MainToolbar.dropdown.hoverBackground")?.let { widget.hoverBackground = it }
+    ProjectWidgetUpdater(p, widget).subscribe()
+    return widget
   }
 
-  private val editorListener = object: FileEditorManagerListener {
-    override fun selectionChanged(event: FileEditorManagerEvent) {
-      currentFile = event.newFile
-      updater.performUpdate()
-    }
-  }
+  override fun getPosition(): Position = Position.Center
+
+  private fun getCurrentProject(): Project? = ProjectManager.getInstance().openProjects.firstOrNull()
+}
+
+private class ProjectWidgetUpdater(proj: Project?, val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
+
+  private var project: Project? by Delegates.observable(null) { _, _, _ -> updateProject() }
+  private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
+  private var settings: UISettings by Delegates.observable(UISettings.instance) { _, _, _ -> updateText() }
+
+  @Volatile
+  private var projectConnection: MessageBusConnection? = null
+
+  private val swingExecutor: Executor = Executor { run -> SwingUtilities.invokeLater(run) }
 
   init {
-    currentFile = project?.let { FileEditorManager.getInstance(it).selectedFiles.firstOrNull() }
+    project = proj
+    file = proj?.let { FileEditorManager.getInstance(it).selectedFiles.firstOrNull() }
+  }
 
-    val connection = ApplicationManager.getApplication().messageBus.connect(this)
-    connection.subscribe(ProjectManager.TOPIC, projectListener)
-    connection.subscribe(UISettingsListener.TOPIC, updater)
+  private fun updateText() {
+    val pair = project?.let { p ->
+      val currentFile = file
+      val showFileName = settings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null
+      val maxLength = if (showFileName) 12 else 24
 
-    addPressListener(ActionListener {
-      val myStep = MyStep(createActionsList())
-      val myRenderer = ProjectWidgetRenderer(myStep::getSeparatorAbove)
-
-      val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
-        ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
-          if (value is ReopenProjectAction) myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-          else base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-        }
+      val fullName = StringBuilder(p.name)
+      val cutName = StringBuilder(cutProject(p.name, maxLength))
+      if (showFileName) {
+        fullName.append(" — ").append(currentFile!!.name)
+        cutName.append(" — ").append(cutFile(currentFile.name, maxLength))
       }
+      return@let Pair(cutName.toString(), fullName.toString())
+    }
 
-      currentProject?.let {
-        JBPopupFactory.getInstance().createListPopup(it, myStep, renderer).showUnderneathOf(this)
+    widget.text = pair?.first ?: IdeBundle.message("project.widget.empty")
+    @NlsSafe val fullName = if (pair?.first == pair?.second) null else pair?.second
+    widget.toolTipText = fullName
+  }
+
+  private fun cutFile(value: String, maxLength: Int): String {
+    if (value.length <= maxLength) return value
+
+    val extension = value.substringAfterLast(".", "")
+    val name = value.substringBeforeLast(".")
+    if (name.length + extension.length <= maxLength) return value
+
+    return name.substring(0, maxLength - extension.length) + "..." + extension
+  }
+
+  private fun cutProject(value: String, maxLength: Int): String =
+    if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
+
+
+  private fun updateProject() {
+    widget.project = project
+    updateText()
+  }
+
+  fun subscribe() {
+    val appConnection = ApplicationManager.getApplication().messageBus.connect(widget)
+    appConnection.subscribe(ProjectManager.TOPIC, this)
+    appConnection.subscribe(UISettingsListener.TOPIC, this)
+    project?.let { projectSubscribe(it) }
+  }
+
+  private fun projectSubscribe(p: Project) {
+    projectConnection?.disconnect()
+    val conn = p.messageBus.connect(widget)
+    conn.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
+    projectConnection = conn
+  }
+
+  override fun projectOpened(prj: Project) {
+    swingExecutor.execute { project = prj }
+    projectSubscribe(prj)
+  }
+
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    swingExecutor.execute { settings = uiSettings }
+  }
+
+  override fun selectionChanged(event: FileEditorManagerEvent) {
+    swingExecutor.execute { file = event.newFile }
+  }
+}
+
+private class ProjectWidget: ToolbarComboWidget(), Disposable {
+
+  var project: Project? = null
+
+  override fun doExpand(e: InputEvent) {
+    val myStep = MyStep(createActionsList())
+    val myRenderer = ProjectWidgetRenderer(myStep::getSeparatorAbove)
+
+    val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
+      ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
+        if (value is ReopenProjectAction) myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        else base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
       }
-    })
+    }
+
+    project?.let { JBPopupFactory.getInstance().createListPopup(it, myStep, renderer).showUnderneathOf(this) }
+  }
+
+  override fun removeNotify() {
+    super.removeNotify()
+    Disposer.dispose(this)
   }
 
   override fun dispose() {}
@@ -201,25 +279,6 @@ class ProjectWidget(project: Project?): ToolbarComboWidget(), Disposable {
       panel.add(res)
 
       return panel
-    }
-  }
-
-  private inner class Updater : UISettingsListener {
-
-    var uiSettings = UISettings.instance
-
-    override fun uiSettingsChanged(settings: UISettings) {
-      uiSettings = settings
-      performUpdate()
-    }
-
-    fun performUpdate() {
-      val sb = StringBuilder(currentProject?.name ?: IdeBundle.message("project.widget.empty"))
-      if (uiSettings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null) {
-        sb.append(" — ").append(currentFile!!.name)
-      }
-
-      text = sb.toString()
     }
   }
 }

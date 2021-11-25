@@ -478,7 +478,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     if (myMlService != null) {
       myMlService.onSearchRestart(
         myProject, tabId, reason,
-        mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, mySearchField.getText().length(),
+        mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, namePattern,
         () -> myListModel.getFoundElementsInfo()
       );
     }

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 const val ONE = 1
 
 fun foo() {

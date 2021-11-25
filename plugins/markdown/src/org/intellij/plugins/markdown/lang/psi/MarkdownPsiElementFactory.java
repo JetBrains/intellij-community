@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.psi;
 
 import com.intellij.openapi.project.Project;
@@ -8,15 +8,19 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.editor.images.ImageUtils;
 import org.intellij.plugins.markdown.editor.images.MarkdownImageData;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.lang.psi.impl.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Objects;
 
 public final class MarkdownPsiElementFactory {
@@ -133,5 +137,93 @@ public final class MarkdownPsiElementFactory {
     assert declaration instanceof MarkdownParagraphImpl || declaration instanceof MarkdownLinkDefinitionImpl;
 
     return Pair.create(ref, declaration);
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static MarkdownTableSeparatorRow createTableSeparatorRow(@NotNull Project project, @NotNull String text) {
+    final var columnsCount = StringUtil.countChars(text, '|') - 1;
+    if (columnsCount < 1) {
+      throw new IllegalArgumentException("Passed separator text should be valid and contain at least one column.\n Text passed: [" + text + "]");
+    }
+    final var builder = new StringBuilder();
+    builder.append("|");
+    for (var column = 0; column < columnsCount; column += 1) {
+      builder.append("    |");
+    }
+    builder.append('\n');
+    builder.append(text);
+    final var file = createFile(project, builder.toString());
+    final var table = Objects.requireNonNull(file.findElementAt(0)).getParent().getParent();
+    return Objects.requireNonNull(PsiTreeUtil.getChildOfType(table, MarkdownTableSeparatorRow.class));
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static Pair<MarkdownTableCellImpl, PsiElement> createTableCell(@NotNull Project project, @NotNull String text) {
+    final var content = "|" + text + "|\n|----|";
+    final var file = createFile(project, content);
+    final var contentElement = file.findElementAt(1);
+    final var cell = Objects.requireNonNull(PsiTreeUtil.getParentOfType(contentElement, MarkdownTableCellImpl.class));
+    final var separator = cell.getNextSibling();
+    return new Pair<>(cell, separator);
+  }
+
+  @NotNull
+  private static MarkdownTableImpl findTable(@NotNull PsiElement element) {
+    return Objects.requireNonNull(PsiTreeUtil.getParentOfType(element, MarkdownTableImpl.class));
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static PsiElement createTableSeparator(@NotNull Project project) {
+    final var content = "|    |\n|----|";
+    final var file = createFile(project, content);
+    return Objects.requireNonNull(file.findElementAt(0));
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static MarkdownTableRowImpl createTableRow(@NotNull Project project, @NotNull Collection<String> contents) {
+    final var builder = new StringBuilder();
+    builder.append('|');
+    //noinspection StringRepeatCanBeUsed
+    for (int count = 0; count < contents.size(); count += 1) {
+      builder.append("     |");
+    }
+    builder.append('\n');
+    builder.append('|');
+    //noinspection StringRepeatCanBeUsed
+    for (int count = 0; count < contents.size(); count += 1) {
+      builder.append("-----|");
+    }
+    builder.append('\n');
+    builder.append('|');
+    for (var content : contents) {
+      builder.append(content);
+      builder.append('|');
+    }
+    builder.append('\n');
+    builder.append('|');
+    //noinspection StringRepeatCanBeUsed
+    for (int count = 0; count < contents.size(); count += 1) {
+      builder.append("     |");
+    }
+    builder.append('\n');
+    final var file = createFile(project, builder.toString());
+    final var element = Objects.requireNonNull(file.findElementAt(0));
+    final var row = Objects.requireNonNull(findTable(element).getLastChild().getPrevSibling().getPrevSibling());
+    if (row instanceof MarkdownTableRowImpl) {
+      return (MarkdownTableRowImpl)row;
+    } else {
+      throw new IllegalStateException("Failed to find row element");
+    }
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static MarkdownTableRowImpl createTableEmptyRow(@NotNull Project project, @NotNull Collection<Integer> widths) {
+    final var contents = ContainerUtil.map(widths, width -> " ".repeat(width));
+    return createTableRow(project, contents);
   }
 }

@@ -78,12 +78,27 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
             .bindItem(distributionsProperty.transform(
               { it?.let(Item::Distribution) ?: Item.NoDistribution },
               { (it as? Item.Distribution)?.info }
-            )).columns(COLUMNS_MEDIUM)
+            ))
+            .validationOnInput { validateGroovySdkPath(it) }
+            .columns(COLUMNS_MEDIUM)
         }.bottomGap(BottomGap.SMALL)
     }
 
+    private fun ValidationInfoBuilder.validateGroovySdkPath(comboBox: DistributionComboBox) : ValidationInfo? {
+      val localDistribution = comboBox.selectedDistribution as? LocalDistributionInfo ?: return null
+      val path = localDistribution.path
+      if (path.isEmpty()) {
+        return error(GroovyBundle.message("dialog.title.validation.path.should.not.be.empty"))
+      }
+      else if (isInvalidSdk(localDistribution)) {
+        return error(GroovyBundle.message("dialog.title.validation.path.does.not.contain.groovy.sdk"))
+      } else {
+        return null
+      }
+    }
+
     private fun ValidationInfoBuilder.validateGroovySdk(): ValidationInfo? {
-      if (distribution == null) {
+      if (isBlankDistribution(distribution)) {
         if (Messages.showDialog(GroovyBundle.message("dialog.title.no.jdk.specified.prompt"),
             GroovyBundle.message("dialog.title.no.jdk.specified.title"),
             arrayOf(CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()), 1,
@@ -91,7 +106,26 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
           return error(GroovyBundle.message("dialog.title.no.jdk.specified.error"))
         }
       }
+      if (isInvalidSdk(distribution)) {
+        if (Messages.showDialog(
+            GroovyBundle.message("dialog.title.validation.directory.you.specified.does.not.contain.groovy.sdk.do.you.want.to.create.project.with.this.configuration"),
+            GroovyBundle.message("dialog.title.validation.invalid.sdk.specified.title"),
+            arrayOf(CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()), 1,
+            Messages.getWarningIcon()) != Messages.YES) {
+          return error(GroovyBundle.message("dialog.title.validation.invalid.sdk.specified.error"))
+        }
+      }
       return null
+    }
+
+    private fun isBlankDistribution(distribution: DistributionInfo?) : Boolean {
+      return distribution == null || (distribution is LocalDistributionInfo &&
+                                      distribution.path == "")
+    }
+
+    private fun isInvalidSdk(distribution: DistributionInfo?) : Boolean {
+      return distribution == null || (distribution is LocalDistributionInfo &&
+                                      GroovyConfigUtils.getInstance().getSDKVersionOrNull(distribution.path) == null)
     }
 
     private fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {

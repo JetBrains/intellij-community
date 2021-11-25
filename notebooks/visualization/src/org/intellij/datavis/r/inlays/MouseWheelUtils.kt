@@ -4,18 +4,16 @@
 
 package org.intellij.datavis.r.inlays
 
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.MouseEventAdapter
 import java.awt.Component
 import java.awt.event.MouseWheelEvent
 import java.awt.event.MouseWheelListener
-import javax.swing.JComponent
 import javax.swing.JScrollPane
-
 
 /**
  * Utility class to make smooth scroll of editor with inlay components.
@@ -32,7 +30,6 @@ import javax.swing.JScrollPane
  * ToDo we can also drop editor scroll time on mouse move event over other components.
  */
 object MouseWheelUtils {
-
   private class MouseWheelListenerWrapper(private val component: Component,
                                           private val listeners: Array<MouseWheelListener>) : MouseWheelListener {
 
@@ -47,7 +44,6 @@ object MouseWheelUtils {
   }
 
   private class EditorMouseWheelListenerWrapper(private val listeners: Array<MouseWheelListener>) : MouseWheelListener {
-
     override fun mouseWheelMoved(e: MouseWheelEvent) {
       for (listener in listeners) {
         listener.mouseWheelMoved(e)
@@ -56,7 +52,6 @@ object MouseWheelUtils {
   }
 
   fun wrapEditorMouseWheelListeners(editor: EditorImpl) {
-
     fun addListener(component: Component) {
       val lst = component.mouseWheelListeners.toCollection(ArrayList())
 
@@ -71,11 +66,12 @@ object MouseWheelUtils {
 
     addListener(editor.scrollPane)
 
-    LafManager.getInstance().addLafManagerListener(LafManagerListener { addListener(editor.scrollPane) }, editor.disposable)
+    ApplicationManager.getApplication().messageBus.connect(editor.disposable).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      addListener(editor.scrollPane)
+    })
   }
 
   fun wrapMouseWheelListeners(component: Component, disposable: Disposable?) {
-
     fun addListener(component: Component) {
       val lst = component.mouseWheelListeners.toCollection(ArrayList())
 
@@ -91,7 +87,9 @@ object MouseWheelUtils {
     addListener(component)
 
     if (disposable != null) {
-      LafManager.getInstance().addLafManagerListener(LafManagerListener { addListener(component) }, disposable)
+      ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+        addListener(component)
+      })
     }
   }
 }

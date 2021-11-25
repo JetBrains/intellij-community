@@ -13,6 +13,7 @@ class ToolwindowRightToolbar : ToolwindowToolbar() {
 
   init {
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 1, 0, 0)
+    topPane.background = JBUI.CurrentTheme.ToolWindow.background()
     add(topPane)
   }
 

@@ -12,8 +12,10 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection.Companion.replaceBlockExpressionWithLambdaBody
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -66,7 +68,7 @@ class RedundantWithInspection : AbstractKotlinInspection() {
                 }
                 holder.registerProblem(
                     callee,
-                    KotlinBundle.message("redundant.with.call"),
+                    KotlinBundle.message("inspection.redundant.with.display.name"),
                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     quickfix
                 )
@@ -92,12 +94,18 @@ private class RemoveRedundantWithFix : LocalQuickFix {
             if (singleReturnedExpression != null) {
                 callExpression.replaced(singleReturnedExpression)
             } else {
-                declaration.equalsToken?.delete()
-                declaration.bodyExpression?.replaced(KtPsiFactory(project).createSingleStatementBlock(lambdaBody))
+                declaration.replaceBlockExpressionWithLambdaBody(lambdaBody)
+                declaration.bodyExpression
             }
         } else {
-            callExpression.replaced(lambdaBody)
+            val result = lambdaBody.allChildren.takeUnless { it.isEmpty }?.let { range ->
+                callExpression.parent.addRangeAfter(range.first, range.last, callExpression)
+            }
+
+            callExpression.delete()
+            result
         }
+
         if (replaced != null) {
             replaced.findExistingEditor()?.moveCaret(replaced.startOffset)
         }

@@ -3,7 +3,6 @@ package com.intellij.lang.documentation;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.MathUtil;
@@ -18,25 +17,19 @@ public class DocumentationSettings {
   }
 
   public static boolean isHighlightingOfQuickDocSignaturesEnabled() {
-    return ApplicationManager.getApplication().isUnitTestMode()
-           || Registry.is("documentation.component.enable.highlighting.of.quick.doc.signatures");
+    return ClientDocumentationSettings.getCurrentInstance().isHighlightingOfQuickDocSignaturesEnabled();
   }
 
   public static boolean isHighlightingOfCodeBlocksEnabled() {
-    return ApplicationManager.getApplication().isUnitTestMode()
-           || AdvancedSettings.getBoolean("documentation.components.enable.code.blocks.highlighting");
+    return ClientDocumentationSettings.getCurrentInstance().isHighlightingOfCodeBlocksEnabled();
   }
 
   public static boolean isSemanticHighlightingOfLinksEnabled() {
-    return ApplicationManager.getApplication().isUnitTestMode()
-           || AdvancedSettings.getBoolean("documentation.components.enable.highlighting.of.links");
+    return ClientDocumentationSettings.getCurrentInstance().isSemanticHighlightingOfLinksEnabled();
   }
 
   public static @NotNull InlineCodeHighlightingMode getInlineCodeHighlightingMode() {
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || AdvancedSettings.getBoolean("documentation.components.enable.inline.code.highlighting"))
-           ? InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING
-           : InlineCodeHighlightingMode.NO_HIGHLIGHTING;
+    return ClientDocumentationSettings.getCurrentInstance().getInlineCodeHighlightingMode();
   }
 
   /**

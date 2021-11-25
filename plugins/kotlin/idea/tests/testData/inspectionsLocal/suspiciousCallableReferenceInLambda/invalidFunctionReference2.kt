@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: none
 fun test(x: Int) {
     val p = { _: String -> true }

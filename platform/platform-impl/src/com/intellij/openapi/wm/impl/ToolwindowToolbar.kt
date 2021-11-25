@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -20,6 +21,7 @@ abstract class ToolwindowToolbar : JPanel() {
   init {
     layout = BorderLayout()
     isOpaque = true
+    background = JBUI.CurrentTheme.ToolWindow.background()
   }
 
   abstract fun getButtonFor(toolWindowId: String): SquareStripeButton?
@@ -30,11 +32,18 @@ abstract class ToolwindowToolbar : JPanel() {
 
   abstract fun reset()
 
-  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow) {
+  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow, addToBeginning: Boolean = false) {
     if (toolWindow !is ToolWindowImpl) return
 
     if (toolWindow.orderOnLargeStripe == -1) {
-      toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
+      if (addToBeginning) {
+        toolWindow.orderOnLargeStripe = 0
+        panel.components
+          .filterIsInstance(SquareStripeButton::class.java)
+          .forEach { it.button.toolWindow.orderOnLargeStripe++ }
+      } else {
+        toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
+      }
     }
 
     //temporary add new button

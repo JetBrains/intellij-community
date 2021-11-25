@@ -4,7 +4,7 @@
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with filter
 // ACTION: Replace with ordinary assignment
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(otherList: List<Int>) {
     var list = emptyList<Int>()
     foo()

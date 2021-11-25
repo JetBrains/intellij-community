@@ -31,19 +31,23 @@ import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.gotItStep
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.openPushDialogText
+import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
+import git4idea.ift.GitLessonsUtil.restoreCommitWindowStateInformer
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnCheckout
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions
-import org.fest.swing.fixture.JListFixture
+import org.assertj.swing.fixture.JListFixture
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import training.util.toNullableString
 import java.awt.Point
 import java.awt.Rectangle
@@ -68,6 +72,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     val cloneActionText = GitBundle.message("action.Git.Clone.text")
 
     showWarningIfModalCommitEnabled()
+    showWarningIfStagingAreaEnabled()
 
     task {
       text(GitLessonsBundle.message("git.quick.start.introduction"))
@@ -205,10 +210,9 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     task {
       text(GitLessonsBundle.message("git.quick.start.name.new.branch", LessonUtil.rawEnter(), strong(createButtonText)))
-      val checkoutStartedFuture = triggerOnCheckout()
-      restoreState(showBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
-        previous.ui?.isShowing != true && !checkoutStartedFuture.isDone
-      }
+      triggerOnCheckout()
+      restoreByUiAndBackgroundTask(GitBundle.message("branch.checking.out.branch.from.process", "\\w+", "HEAD"),
+                                   delayMillis = 2 * defaultRestoreDelay, showBranchesTaskId)
       test(waitEditorToBeReady = false) {
         type("newBranch")
         ideFrame { button(createButtonText).click() }
@@ -315,13 +319,15 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
-      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
+      restoreByUiAndBackgroundTask(DvcsBundle.message("push.process.pushing"), delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         ideFrame {
           button { b: JBOptionButton -> b.text == pushButtonText }.click()
         }
       }
     }
+
+    restoreCommitWindowStateInformer()
   }
 
   override fun prepare(project: Project) {
@@ -329,10 +335,15 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     GitProjectUtil.createRemoteProject("origin", project)
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     LessonUtil.restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupSearchEverywhereLocation)
     backupSearchEverywhereLocation = null
   }
 
   override val suitableTips = listOf("VCS_general")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.quick.start.help.link"),
+         LessonUtil.getHelpLink("set-up-a-git-repository.html")),
+  )
 }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -51,9 +49,13 @@ public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
       if (method == null || exceptionTypes == null) return;
       RefElement refMethod = myRefManager.getReference(method);
       if (refMethod == null) return;
-      for (PsiClassType exceptionType : exceptionTypes) {
-        ((RefMethodImpl)refMethod).updateThrowsList(exceptionType);
-      }
+      Collection<PsiClassType> finalExceptionTypes = exceptionTypes;
+      myRefManager.executeTask(() -> {
+        refMethod.waitForInitialized();
+        for (PsiClassType exceptionType : finalExceptionTypes) {
+          ((RefMethodImpl)refMethod).updateThrowsList(exceptionType);
+        }
+      });
     }
   }
 

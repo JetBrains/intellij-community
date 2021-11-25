@@ -5,6 +5,8 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
@@ -91,8 +93,14 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
       return "<" + jspxFile.getName() + ">";
     }
 
-    if (element instanceof PsiMethod && element instanceof SyntheticElement) {
-      return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+    if (element instanceof PsiMethod) {
+      if (element instanceof SyntheticElement) {
+        return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+      }
+      return PsiFormatUtil.formatMethod((PsiMethod)element,
+                                        PsiSubstitutor.EMPTY,
+                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                        PsiFormatUtilBase.SHOW_TYPE);
     }
 
     if (declaration instanceof ULambdaExpression || declaration instanceof UCallableReferenceExpression) {

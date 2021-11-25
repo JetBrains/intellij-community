@@ -5,7 +5,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -156,8 +158,9 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Override
   public String getInstallToUserText() {
     String userSiteText = PyBundle.message("button.install.to.user.site.packages.directory");
-    if (!PythonSdkUtil.isRemote(mySdk))
+    if (!PythonSdkUtil.isRemote(mySdk)) {
       userSiteText += " (" + PythonSdkUtil.getUserSite() + ")";
+    }
     return userSiteText;
   }
 
@@ -179,8 +182,12 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @Override
-  public void installPackage(@NotNull RepoPackage repoPackage, @Nullable String version, boolean forceUpgrade, @Nullable String extraOptions,
-                             @NotNull Listener listener, boolean installToUser) {
+  public void installPackage(@NotNull RepoPackage repoPackage,
+                             @Nullable String version,
+                             boolean forceUpgrade,
+                             @Nullable String extraOptions,
+                             @NotNull Listener listener,
+                             boolean installToUser) {
     final String packageName = repoPackage.getName();
     final String repository = PyPIPackageUtil.isPyPIRepository(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
     final List<String> extraArgs = new ArrayList<>();
@@ -210,7 +217,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
       @Override
       public void finished(@Nullable List<ExecutionException> exceptions) {
-        listener.operationFinished(packageName, toErrorDescription(exceptions, mySdk));
+        listener.operationFinished(packageName, toErrorDescription(exceptions, mySdk, repoPackage.getName()));
       }
     });
     ui.install(Collections.singletonList(req), extraArgs);
@@ -218,8 +225,15 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Nullable
   public static ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions, @Nullable Sdk sdk) {
+    return toErrorDescription(exceptions, sdk, null);
+  }
+
+  @Nullable
+  public static PyPackageInstallationErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions,
+                                                                         @Nullable Sdk sdk,
+                                                                         @Nullable String packageName) {
     if (exceptions != null && !exceptions.isEmpty() && !isCancelled(exceptions)) {
-      return createDescription(exceptions.get(0), sdk);
+      return createDescription(exceptions.get(0), sdk, packageName);
     }
     return null;
   }
@@ -316,18 +330,22 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @NotNull
-  private static ErrorDescription createDescription(@NotNull ExecutionException e, @Nullable Sdk sdk) {
+  private static PyPackageInstallationErrorDescription createDescription(@NotNull ExecutionException e,
+                                                                         @Nullable Sdk sdk,
+                                                                         @Nullable String packageName) {
     if (e instanceof PyExecutionException) {
       final PyExecutionException ee = (PyExecutionException)e;
-      final String stdoutCause = findErrorCause(ee.getStdout());
+      final String stdout = ee.getStdout();
+      final String stdoutCause = findErrorCause(stdout);
       final String stderrCause = findErrorCause(ee.getStderr());
       final String cause = stdoutCause != null ? stdoutCause : stderrCause;
-      final String message =  cause != null ? cause : ee.getMessage();
+      final String message = cause != null ? cause : ee.getMessage();
       final String command = ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " ");
-      return new ErrorDescription(message, command, ee.getStdout() + "\n" + ee.getStderr(), findErrorSolution(ee, cause, sdk));
+      return new PyPackageInstallationErrorDescription(message, command, stdout.isEmpty() ? ee.getStderr() : stdout + "\n" + ee.getStderr(),
+                                                       findErrorSolution(ee, cause, sdk), packageName, sdk);
     }
     else {
-      return ErrorDescription.fromMessage(e.getMessage());
+      return new PyPackageInstallationErrorDescription(e.getMessage(), null, null, null, packageName, sdk);
     }
   }
 
@@ -404,5 +422,46 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Override
   public String getID() {
     return "Python";
+  }
+
+  public static class PyPackageInstallationErrorDescription extends ErrorDescription {
+    @Nullable private final String myPackageName;
+    @Nullable private final String myPythonVersion;
+    @Nullable private final String myInterpreterPath;
+    @Nullable private final Sdk mySdk;
+
+    public PyPackageInstallationErrorDescription(@NotNull @DetailedDescription String message,
+                                                 @Nullable String command,
+                                                 @Nullable String output,
+                                                 @Nullable @DetailedDescription String solution,
+                                                 @Nullable String packageName,
+                                                 @Nullable Sdk sdk) {
+      super(message, command, output, solution);
+      myPackageName = packageName;
+      mySdk = sdk;
+      myPythonVersion = sdk != null ? sdk.getVersionString() : null;
+      myInterpreterPath = sdk != null ? sdk.getHomePath() : null;
+    }
+
+    @Nullable
+    public static PyPackageInstallationErrorDescription createFromMessage(@Nullable @NlsContexts.DetailedDescription String message) {
+      return message != null ? new PyPackageInstallationErrorDescription(message, null, null, null, null, null) : null;
+    }
+
+    public @Nullable @NlsSafe String getPackageName() {
+      return myPackageName;
+    }
+
+    public @Nullable @NlsSafe String getPythonVersion() {
+      return myPythonVersion;
+    }
+
+    public @Nullable @NlsSafe String getInterpreterPath() {
+      return myInterpreterPath;
+    }
+
+    public @Nullable Sdk getSdk() {
+      return mySdk;
+    }
   }
 }

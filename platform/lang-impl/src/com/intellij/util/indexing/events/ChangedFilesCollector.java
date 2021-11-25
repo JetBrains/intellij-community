@@ -227,7 +227,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   }
 
-  private void processFilesToUpdateInReadAction() {
+  public void processFilesToUpdateInReadAction() {
     processFilesInReadAction(info -> {
       int fileId = info.getFileId();
       VirtualFile file = info.getFile();

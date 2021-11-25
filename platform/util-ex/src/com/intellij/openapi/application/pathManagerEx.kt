@@ -7,18 +7,17 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-private val LOG = Logger.getInstance(PathManager::class.java)
-
 /**
  * Absolute canonical path to system cache dir.
  */
-val appSystemDir: Path by lazy {
-  val path = Paths.get(PathManager.getSystemPath())
-  try {
-    return@lazy path.toRealPath()
+val appSystemDir: Path
+  get() {
+    val path = Paths.get(PathManager.getSystemPath())
+    try {
+      return path.toRealPath()
+    }
+    catch (e: IOException) {
+      Logger.getInstance(PathManager::class.java).warn(e)
+    }
+    return path
   }
-  catch (e: IOException) {
-    LOG.warn(e)
-  }
-  path
-}

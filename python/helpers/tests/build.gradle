@@ -2,7 +2,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
   id "groovy"
-  id "com.jetbrains.python.envs" version "0.0.30"
+  id "com.jetbrains.python.envs" version "0.0.31"
 }
 
 File pythonDirectory = new File(buildDir, 'pythons')

@@ -244,7 +244,7 @@ public final class RecursionManager {
     private int firstLoopStart = Integer.MAX_VALUE; // outermost recursion-prevented frame depth; memoized values are dropped on its change.
     private final LinkedHashMap<MyKey, StackFrame> progressMap = new LinkedHashMap<>();
     private final Map<MyKey, Throwable> preventions = new IdentityHashMap<>();
-    private final Map<MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
+    private final Map<@NotNull MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
     private int enters;
     private int exits;
 
@@ -280,7 +280,7 @@ public final class RecursionManager {
       return frame;
     }
 
-    void memoize(MyKey key, @Nullable Object result, @NotNull Set<MyKey> preventionsInside) {
+    void memoize(@NotNull MyKey key, @Nullable Object result, @NotNull Set<MyKey> preventionsInside) {
       intermediateCache.put(key, new MemoizedValue(result, preventionsInside.toArray(new MyKey[0])));
     }
 

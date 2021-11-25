@@ -208,10 +208,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     if (myDialog != null && myDialog.isVisible()) {
       return;
     }
-    if (myDialog != null && !Disposer.isDisposed(myDialog.getDisposable())) {
+    if (myDialog != null && !myDialog.isDisposed()) {
       myDialog.doCancelAction();
     }
-    if (myDialog == null || Disposer.isDisposed(myDialog.getDisposable())) {
+    if (myDialog == null || myDialog.isDisposed()) {
       myDialog = new DialogWrapper(myHelper.getProject(), null, true, DialogWrapper.IdeModalityType.MODELESS, false) {
         {
           init();
@@ -358,7 +358,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           // true focus owner (Search Everywhere popup etc.) appears later so the check should be postponed too
           ApplicationManager.getApplication().invokeLater(() -> {
             Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-            if (SwingUtilities.isDescendingFrom(focusOwner, FindPopupPanel.this)) return;
+            if (focusOwner == null || SwingUtilities.isDescendingFrom(focusOwner, FindPopupPanel.this)) return;
             Window w = ComponentUtil.getWindow(focusOwner);
             if (w != null && w.getOwner() != dialogWindow) {
               closeIfPossible();

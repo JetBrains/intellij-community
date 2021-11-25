@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("TestOnlyProblems")
+
 package com.intellij.lang.documentation.impl
 
 import com.intellij.lang.documentation.*
@@ -6,14 +8,18 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   return DocumentationRequest(createPointer(), presentation)
 }
 
-internal fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationData?> {
+@ApiStatus.Internal
+fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationData?> {
   return async(Dispatchers.Default) {
     val documentationResult: DocumentationResult? = readAction {
       targetPointer.dereference()?.computeDocumentation()
@@ -28,7 +34,8 @@ internal fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out
   }
 }
 
-internal suspend fun resolveLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
+@ApiStatus.Internal
+suspend fun resolveLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
   return withContext(Dispatchers.Default) {
     readAction {
       doResolveLink(targetPointer, url)
@@ -48,4 +55,13 @@ internal fun resolveLink(target: DocumentationTarget, url: String): LinkResult? 
     return handler.resolveLink(target, url) ?: continue
   }
   return null
+}
+
+@TestOnly
+fun computeDocumentation(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
+  return runBlockingCancellable {
+    withContext(Dispatchers.Default) {
+      computeDocumentationAsync(targetPointer).await()
+    }
+  }
 }

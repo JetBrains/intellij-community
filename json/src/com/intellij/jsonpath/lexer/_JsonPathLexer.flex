@@ -78,6 +78,7 @@ EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
   "."                                  { pushState(WILDCARD_EXPECTED); return JsonPathTypes.DOT; }
   ".."                                 { pushState(WILDCARD_EXPECTED); return JsonPathTypes.RECURSIVE_DESCENT; }
   "["                                  { pushState(SEGMENT_EXPRESSION); return JsonPathTypes.LBRACKET; }
+  "*"                                  { return JsonPathTypes.WILDCARD; }
   {ROOT_CONTEXT}                       { return JsonPathTypes.ROOT_CONTEXT; }
   {EVAL_CONTEXT}                       { return JsonPathTypes.EVAL_CONTEXT; }
   {IDENTIFIER}                         { return JsonPathTypes.IDENTIFIER; }

@@ -346,7 +346,8 @@ public class Alarm implements Disposable {
     private final ModalityState myModalityState;
     private Future<?> myFuture; // guarded by LOCK
     private final long myDelayMillis;
-    private final ClientId myClientId;
+    @NotNull
+    private final String myClientId;
 
     @Async.Schedule
     private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
@@ -355,7 +356,7 @@ public class Alarm implements Disposable {
 
         myModalityState = modalityState;
         myDelayMillis = delayMillis;
-        myClientId = ClientId.getCurrent();
+        myClientId = ClientId.getCurrentValue();
       }
     }
 

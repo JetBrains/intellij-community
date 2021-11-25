@@ -17,10 +17,13 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
@@ -67,24 +70,38 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
   /**
    * Updates inlays recursively for a given element.
    * Use {@link NonBlockingReadActionImpl#waitForAsyncTaskCompletion() } in tests to wait for the results.
+   * <p>
+   * Return promise in EDT.
    */
   public static @NotNull CancellablePromise<?> asyncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
     MethodInfoExcludeListFilter filter = MethodInfoExcludeListFilter.forLanguage(element.getLanguage());
-    return ReadAction.nonBlocking(() -> {
-        try {
-          ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
-          pass.doCollectInformation(new ProgressIndicatorBase());
-          return pass;
-        }
-        catch (IndexNotReadyException e) {
-          return null; // cannot update now, hints will be updated after indexing ends by the complete pass
-        }
-      }).finishOnUiThread(ModalityState.defaultModalityState(), pass -> {
+    AsyncPromise<Object> promise = new AsyncPromise<>();
+    SmartPsiElementPointer<PsiElement> elementPtr = SmartPointerManager.getInstance(element.getProject())
+      .createSmartPsiElementPointer(element);
+    ReadAction.nonBlocking(() -> collectInlaysInPass(editor, filter, elementPtr))
+      .finishOnUiThread(ModalityState.any(), pass -> {
         if (pass != null) {
           pass.applyInformationToEditor();
         }
+        promise.setResult(null);
       })
       .submit(AppExecutorUtil.getAppExecutorService());
+    return promise;
+  }
+
+  private static ParameterHintsPass collectInlaysInPass(Editor editor,
+                                                        MethodInfoExcludeListFilter filter,
+                                                        SmartPsiElementPointer<PsiElement> elementPtr) {
+    PsiElement element = elementPtr.getElement();
+    if (element == null || editor.isDisposed()) return null;
+    try {
+      ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
+      pass.doCollectInformation(new ProgressIndicatorBase());
+      return pass;
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
   }
 
   @Override

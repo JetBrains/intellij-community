@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.formatter.blocks
 
 import com.intellij.formatting.*
@@ -10,6 +10,7 @@ import com.intellij.psi.tree.TokenSet
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 import org.intellij.plugins.markdown.util.children
 import org.intellij.plugins.markdown.util.parents
@@ -21,8 +22,10 @@ import org.intellij.plugins.markdown.util.parents
  */
 internal open class MarkdownFormattingBlock(
   node: ASTNode,
-  private val settings: CodeStyleSettings, protected val spacing: SpacingBuilder,
-  alignment: Alignment? = null, wrap: Wrap? = null
+  private val settings: CodeStyleSettings,
+  protected val spacing: SpacingBuilder,
+  alignment: Alignment? = null,
+  wrap: Wrap? = null
 ) : AbstractBlock(node, wrap, alignment), SettingsAwareBlock {
 
   companion object {
@@ -30,6 +33,10 @@ internal open class MarkdownFormattingBlock(
   }
 
   override fun getSettings(): CodeStyleSettings = settings
+
+  protected fun obtainCustomSettings(): MarkdownCustomCodeStyleSettings {
+    return settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
+  }
 
   override fun isLeaf(): Boolean = subBlocks.isEmpty()
 

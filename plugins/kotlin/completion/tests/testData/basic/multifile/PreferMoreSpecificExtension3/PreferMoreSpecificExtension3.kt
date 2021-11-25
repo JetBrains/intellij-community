@@ -13,5 +13,5 @@ class C : I {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "() for C in dependency2", typeText: "Int" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "() for C in dependency2", typeText: "Int", icon: "nodes/function.svg"}
 // NOTHING_ELSE

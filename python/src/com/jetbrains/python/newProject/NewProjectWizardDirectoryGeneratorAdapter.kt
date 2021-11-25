@@ -2,14 +2,11 @@
 package com.jetbrains.python.newProject
 
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
-import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder
 import com.intellij.ide.wizard.GeneratorNewProjectWizard
-import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStepPanel
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.vfs.VirtualFile
@@ -28,31 +25,23 @@ import javax.swing.JPanel
  * @see NewProjectWizardProjectSettingsStep
  */
 open class NewProjectWizardDirectoryGeneratorAdapter<T>(val wizard: GeneratorNewProjectWizard) : DirectoryProjectGeneratorBase<T>() {
-  internal lateinit var step: NewProjectWizardStep
-  internal lateinit var moduleWizardStep: ModuleWizardStep
+  internal lateinit var panel: NewProjectWizardStepPanel
 
   @Suppress("DialogTitleCapitalization")
   override fun getName(): String = wizard.name
   override fun getLogo(): Icon = wizard.icon
 
   override fun generateProject(project: Project, baseDir: VirtualFile, settings: T, module: Module) {
-    step.setupProject(project)
+    panel.step.setupProject(project)
   }
 
   override fun createPeer(): ProjectGeneratorPeer<T> {
     val context = WizardContext(null) {}
-    val builder = object : AbstractNewProjectWizardBuilder() {
-      override fun getModuleType(): ModuleType<*>? = null
-      override fun createStep(context: WizardContext): NewProjectWizardStep =
-        wizard.createStep(context).also {
-          step = it
-        }
-    }
     return object : GeneratorPeerImpl<T>() {
-      override fun getComponent(): JComponent =
-        builder.getCustomOptionsStep(context, context.disposable).also {
-          moduleWizardStep = it
-        }.component
+      override fun getComponent(): JComponent {
+        panel = NewProjectWizardStepPanel(wizard.createStep(context))
+        return panel.component
+      }
     }
   }
 }
@@ -77,12 +66,12 @@ class NewProjectWizardProjectSettingsStep<T>(val projectGenerator: NewProjectWiz
   override fun registerValidators() {}
 
   override fun getProjectLocation(): String =
-    projectGenerator.step.context.projectFileDirectory
+    projectGenerator.panel.step.context.projectFileDirectory
 
   override fun getActionButton(): JButton =
     super.getActionButton().apply {
       addActionListener {
-        projectGenerator.moduleWizardStep.updateDataModel()
+        projectGenerator.panel.apply()
       }
     }
 }

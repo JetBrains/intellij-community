@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.util.compareTo
@@ -57,7 +56,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     override fun setUp() {
         if (kotlinPluginVersionString == masterKotlinPluginVersion && IS_UNDER_TEAMCITY) {
             assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
-        } else if  (kotlinPluginVersionString == masterKotlinPluginVersion) {
+        } else if (kotlinPluginVersionString == masterKotlinPluginVersion) {
             assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
         }
         super.setUp()
@@ -73,7 +72,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             val classLoaderKey = "java.system.class.loader"
             System.getProperty(classLoaderKey)?.let { configuredClassLoader ->
                 System.clearProperty(classLoaderKey)
-                Disposer.register (testRootDisposable) {
+                Disposer.register(testRootDisposable) {
                     System.setProperty(classLoaderKey, configuredClassLoader)
                 }
             }
@@ -92,7 +91,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     companion object {
         val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.6.255-SNAPSHOT"
         const val kotlinAndGradleParametersName: String = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}"
-        private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("6.8.2", "master"))
+        private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("7.2", "master"))
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
@@ -104,12 +103,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                 return listOf<Array<Any>>(
                     arrayOf("4.9", "1.3.30"),
                     arrayOf("5.6.4", "1.3.72"),
-                    arrayOf("6.7.1", "1.4.0"),
                     arrayOf("6.8.2", "1.4.32"),
-                    arrayOf("7.0.2", "1.5.10"),
-                    arrayOf("7.0.2", "1.5.21"),
-                    arrayOf("7.0.2", "1.5.31"),
-                    arrayOf("7.0.2", "master")
+                    arrayOf("6.8.2", "master"),
+                    arrayOf("7.2", "1.5.21"),
+                    arrayOf("7.2", "1.5.31"),
                 ).plus(safePushParams)
         }
     }
@@ -140,18 +137,13 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         return repositories.joinToString("\n")
     }
 
-    override fun configureByFiles(properties: Map<String, String>?): List<VirtualFile> {
-        val unitedProperties = HashMap(properties ?: emptyMap())
-
-        unitedProperties.putAll(androidProperties())
-
-        unitedProperties["kotlin_plugin_version"] = kotlinPluginVersionString
-
-        unitedProperties["kotlin_plugin_repositories"] = repositories(false)
-        unitedProperties["kts_kotlin_plugin_repositories"] = repositories(true)
-        return super.configureByFiles(unitedProperties)
-    }
-
+    override val defaultProperties: Map<String, String>
+        get() = super.defaultProperties.toMutableMap().apply {
+            putAll(androidProperties())
+            put("kotlin_plugin_version", kotlinPluginVersionString)
+            put("kotlin_plugin_repositories", repositories(false))
+            put("kts_kotlin_plugin_repositories", repositories(true))
+        }
 
     protected open fun checkProjectStructure(
         exhaustiveModuleList: Boolean = true,

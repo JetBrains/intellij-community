@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: Replace 'addAll()' with '+='
 fun foo() {
     val a = arrayListOf<Int>(1, 2, 3)

@@ -15,7 +15,7 @@ import java.util.List;
 
 public abstract class RefEntityImpl extends UserDataHolderBase implements RefEntity, WritableRefEntity {
   private volatile WritableRefEntity myOwner;
-  protected List<RefEntity> myChildren;  // guarded by this
+  private List<RefEntity> myChildren;  // guarded by this
   private final String myName;
   protected long myFlags; // guarded by this
   protected final RefManagerImpl myManager;
@@ -55,12 +55,16 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
 
   @Override
   public synchronized void add(@NotNull final RefEntity child) {
+    addChild(child);
+    ((RefEntityImpl)child).setOwner(this);
+  }
+
+  protected synchronized void addChild(@NotNull RefEntity child) {
     List<RefEntity> children = myChildren;
     if (children == null) {
       myChildren = children = new ArrayList<>(1);
     }
     children.add(child);
-    ((RefEntityImpl)child).setOwner(this);
   }
 
   @Override

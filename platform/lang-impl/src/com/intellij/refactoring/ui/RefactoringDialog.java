@@ -1,20 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -170,6 +172,27 @@ public abstract class RefactoringDialog extends DialogWrapper {
     }
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
+  }
+  
+  protected void validateButtonsAsync() {
+    setErrorText(null);
+    ReadAction.nonBlocking(() -> {
+        try {
+          canRun();
+          return null;
+        }
+        catch (ConfigurationException e) {
+          return e;
+        }
+      }).finishOnUiThread(ModalityState.stateForComponent(getContentPanel()), e -> {
+        if (e != null) {
+          setErrorText(e.getMessage());
+        }
+        getPreviewAction().setEnabled(e == null);
+        getRefactorAction().setEnabled(e == null);
+      })
+      .coalesceBy(myProject, getClass())
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   protected boolean hasHelpAction() {

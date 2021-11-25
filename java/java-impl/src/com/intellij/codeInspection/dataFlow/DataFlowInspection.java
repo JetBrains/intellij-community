@@ -164,7 +164,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   @NotNull
-  protected List<LocalQuickFix> createNPEFixes(@NotNull PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+  protected List<LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
 
     final List<LocalQuickFix> fixes = new SmartList<>();

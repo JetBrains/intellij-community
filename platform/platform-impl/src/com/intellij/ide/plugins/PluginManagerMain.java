@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.CommonBundle;
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
+import com.intellij.idea.Main;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -44,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public final class PluginManagerMain {
   private PluginManagerMain() { }
@@ -218,10 +222,10 @@ public final class PluginManagerMain {
 
       if (result) {
         disabled.addAll(disabledDependants);
-        pluginEnabler.enablePlugins(disabled);
+        pluginEnabler.enable(disabled);
       }
       else if (!disabled.isEmpty()) {
-        pluginEnabler.enablePlugins(disabled);
+        pluginEnabler.enable(disabled);
       }
       return true;
     }
@@ -233,13 +237,28 @@ public final class PluginManagerMain {
   @Deprecated
   public interface PluginEnabler extends com.intellij.ide.plugins.PluginEnabler {
     @Override
-    default void setEnabledState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors, @NotNull PluginEnableDisableAction action) {
-      HEADLESS.setEnabledState(descriptors, action);
+    default boolean isDisabled(@NotNull PluginId pluginId) {
+      return HEADLESS.isDisabled(pluginId);
     }
 
     @Override
-    default boolean isDisabled(@NotNull PluginId pluginId) {
-      return HEADLESS.isDisabled(pluginId);
+    default boolean enableById(@NotNull Set<PluginId> pluginIds) {
+      return HEADLESS.enableById(pluginIds);
+    }
+
+    @Override
+    default boolean enable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+      return HEADLESS.enable(descriptors);
+    }
+
+    @Override
+    default boolean disableById(@NotNull Set<PluginId> pluginIds) {
+      return HEADLESS.disableById(pluginIds);
+    }
+
+    @Override
+    default boolean disable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+      return HEADLESS.disable(descriptors);
     }
 
     final class HEADLESS implements PluginEnabler { }
@@ -282,31 +301,50 @@ public final class PluginManagerMain {
       .notify(project);
   }
 
-  public static boolean checkThirdPartyPluginsAllowed(@NotNull Iterable<? extends IdeaPluginDescriptor> descriptors) {
+  public static boolean checkThirdPartyPluginsAllowed(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+    @SuppressWarnings("SSBasedInspection") Collection<? extends IdeaPluginDescriptor> aliens = descriptors.stream()
+      .filter(descriptor -> !(descriptor.isBundled() || PluginManagerCore.isDevelopedByJetBrains(descriptor)))
+      .collect(Collectors.toList());
+    if (aliens.isEmpty()) return true;
+
     UpdateSettings updateSettings = UpdateSettings.getInstance();
     if (updateSettings.isThirdPartyPluginsAllowed()) {
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);
       return true;
     }
 
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (!PluginManagerCore.isDevelopedByJetBrains(descriptor)) {
-        String title = IdeBundle.message("third.party.plugins.privacy.note.title");
-        String message = IdeBundle.message("third.party.plugins.privacy.note.message");
-        String yesText = IdeBundle.message("third.party.plugins.privacy.note.yes");
-        String noText = IdeBundle.message("third.party.plugins.privacy.note.no");
-        if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
-          updateSettings.setThirdPartyPluginsAllowed(true);
-          PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
-          return true;
-        }
-        else {
-          PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
-          return false;
-        }
-      }
+    if (Main.isHeadless()) {
+      // postponing the dialog till the next start
+      PluginManagerCore.write3rdPartyPlugins(aliens);
+      return true;
     }
 
-    return true;
+    String title = CoreBundle.message("third.party.plugins.privacy.note.title");
+    String pluginList = aliens.stream()
+      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + descriptor.getName() + " (" + descriptor.getVendor() + ')')
+      .collect(Collectors.joining("<br>"));
+    String message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
+    String yesText = CoreBundle.message("third.party.plugins.privacy.note.accept"), noText = CommonBundle.getCancelButtonText();
+    if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
+      updateSettings.setThirdPartyPluginsAllowed(true);
+      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
+      return true;
+    }
+    else {
+      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
+      return false;
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void checkThirdPartyPluginsAllowed() {
+    Boolean noteAccepted = PluginManagerCore.isThirdPartyPluginsNoteAccepted();
+    if (noteAccepted == Boolean.TRUE) {
+      UpdateSettings.getInstance().setThirdPartyPluginsAllowed(true);
+      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
+    }
+    else if (noteAccepted == Boolean.FALSE) {
+      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
+    }
   }
 }

@@ -5,6 +5,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.application.ApplicationBundle.message
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -24,12 +26,9 @@ private fun optionName(@NonNls option: String): String = when (option) {
 
 internal val CLOSE_BUTTON_POSITION = message("tabs.close.button.placement")
 
-internal fun Cell.closeButtonPositionComboBox() {
-  comboBox(CollectionComboBoxModel<String>(items),
-           { getCloseButtonPlacement() },
-           { set(it) },
-           listCellRenderer { value, _, _ -> text = optionName(value) }
-  )
+internal fun Row.closeButtonPositionComboBox() {
+  comboBox(CollectionComboBoxModel(items), listCellRenderer { value, _, _ -> text = optionName(value) })
+    .bindItem({ getCloseButtonPlacement() }, { set(it) })
 }
 
 internal fun closeButtonPlacementOptionDescription(): Collection<BooleanOptionDescription> = items.map { asOptionDescriptor(it) }

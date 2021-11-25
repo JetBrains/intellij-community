@@ -4,6 +4,7 @@ package com.intellij.ide.ui
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ReportValue
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 
@@ -26,6 +27,7 @@ interface ToolbarSettings : PersistentStateComponent<ExperimentalToolbarSettings
 @ApiStatus.Experimental
 class ExperimentalToolbarSettingsState : BaseState() {
 
+  @get:ReportValue
   @get:OptionTag("SHOW_NEW_MAIN_TOOLBAR")
   var showNewMainToolbar by property(false)
 }

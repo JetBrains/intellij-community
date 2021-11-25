@@ -1,40 +1,42 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("UsePropertyAccessSyntax")
+
 package org.jetbrains.intellij.build.io
 
-import org.junit.*
+import com.intellij.openapi.util.SystemInfoRt
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
 
 class ProcessTest {
   companion object {
-    @BeforeClass
+    @BeforeAll
     @JvmStatic
     fun assumeShell() {
-      try {
-        runProcess("sh", "--version")
-      }
-      catch (e: Throwable) {
-        Assume.assumeNoException(e)
+      assumeTrue(SystemInfoRt.isUnix)
+      assumeTrue {
+        runCatching {
+          runProcess("sh", "--version")
+        }.isSuccess
       }
     }
   }
 
-  @After
+  @AfterEach
   fun allErrorOutputReadersAreDone() {
-    val errorOutputReaders = Thread.getAllStackTraces().keys.filter {
-      it.name.startsWith(errorOutputReaderNamePrefix)
-    }
-    assert(errorOutputReaders.isEmpty()) {
-      errorOutputReaders.joinToString { it.name }
-    }
+    assertThat(areAllIoTasksCompleted()).isTrue()
   }
 
   private fun runShell(@Suppress("SameParameterValue") code: String, timeoutMillis: Long) {
     val script = Files.createTempFile("script", ".sh").toFile()
     try {
       script.writeText(code)
-      Assert.assertTrue(script.setExecutable(true))
+      assertThat(script.setExecutable(true)).isTrue()
       if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
         Files.setPosixFilePermissions(script.toPath(), PosixFilePermission.values().toSet())
       }
@@ -56,7 +58,7 @@ class ProcessTest {
       runShell(code = "sleep 1", timeoutMillis = 10L)
       throw AssertionError("Timeout had no effect")
     }
-    catch (e: ProcessRunTimedOut) {
+    catch (ignore: ProcessRunTimedOut) {
     }
   }
 

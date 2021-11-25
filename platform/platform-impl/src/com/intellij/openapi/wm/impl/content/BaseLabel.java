@@ -3,10 +3,7 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.EngravedTextGraphics;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.OffsetIcon;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -45,6 +42,10 @@ public class BaseLabel extends JLabel {
       }
     });
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
+
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets()));
+    }
   }
 
   @Override

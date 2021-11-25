@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
@@ -261,15 +263,15 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       result.add(0, new AddModuleDependencyFix(reference, currentModule, modules, scope, exported));
     }
 
-    Map<Library, String> libraries = targets.stream()
-      .map(e -> e instanceof PsiCompiledElement ? e.getContainingFile() : null)
-      .map(f -> f != null ? f.getVirtualFile() : null)
+    Set<Library> libraries = targets.stream()
+      .map(e -> e instanceof LightJavaModule ? ((LightJavaModule)e).getRootVirtualFile() : null)
       .flatMap(vf -> vf != null ? index.getOrderEntriesForFile(vf).stream() : Stream.empty())
       .map(e -> e instanceof LibraryOrderEntry ? ((LibraryOrderEntry)e).getLibrary() : null)
       .filter(Objects::nonNull)
-      .distinct().collect(Collectors.toMap(l -> l, l -> null));
+      .collect(Collectors.toSet());
     if (!libraries.isEmpty()) {
-      result.add(new AddLibraryDependencyFix(reference, currentModule, libraries, scope, exported));
+      result.add(new AddLibraryDependencyFix(reference, currentModule,
+                                             ContainerUtil.map2Map(libraries, library -> Pair.create(library, null)), scope, exported));
     }
   }
 

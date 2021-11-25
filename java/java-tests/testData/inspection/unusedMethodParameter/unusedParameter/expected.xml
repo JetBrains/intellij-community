@@ -2,8 +2,27 @@
 <problems>
   <problem>
     <file>Test.java</file>
+    <line>1</line>
+    <entry_point TYPE="class" FQNAME="Test" />
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Class is not instantiated.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
     <line>2</line>
-    <description>b</description>
+    <entry_point TYPE="method" FQNAME="Test void foo(boolean b)" />
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>2</line>
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused declaration</problem_class>
+    <description>Parameter &lt;code&gt;b&lt;/code&gt; is not used in either this method or any of its derived methods</description>
+    <highlighted_element>b</highlighted_element>
+    <language>JAVA</language>
+    <offset>26</offset>
+    <length>1</length>
   </problem>
 </problems>
 

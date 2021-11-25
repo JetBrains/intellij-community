@@ -32,12 +32,16 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
+import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
+import git4idea.ift.GitLessonsUtil.restoreCommitWindowStateInformer
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JButton
@@ -69,17 +73,18 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
 
     showWarningIfModalCommitEnabled()
+    showWarningIfStagingAreaEnabled()
 
+    lateinit var highlightLineMarkerTaskId: TaskContext.TaskId
     task {
+      highlightLineMarkerTaskId = taskId
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) l@{ ui: EditorGutterComponentEx ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         ui.getLineMarkerRect(commentText)
       }
     }
 
-    lateinit var clickLineMarkerTaskId: TaskContext.TaskId
     task {
-      clickLineMarkerTaskId = taskId
       text(GitLessonsBundle.message("git.changelists.shelf.introduction"))
       text(GitLessonsBundle.message("git.changelists.shelf.click.line.marker.balloon"),
            LearningBalloonConfig(Balloon.Position.below, 0))
@@ -104,7 +109,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: EditorComponentImpl ->
         ui.text.contains(defaultChangelistName)
       }
-      restoreByUi()
+      restoreByUi(highlightLineMarkerTaskId)
       test {
         ideFrame {
           button(defaultChangelistName).click()
@@ -125,7 +130,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
         }
         else false
       }
-      restoreState(clickLineMarkerTaskId) {
+      restoreState(highlightLineMarkerTaskId) {
         (previous.ui?.isShowing != true).also {
           if (it) HintManager.getInstance().hideAllHints()
         }
@@ -159,24 +164,25 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     task {
       text(GitLessonsBundle.message("git.changelists.shelf.explanation", strong(shelfText)))
       proceedLink()
-    }
-
-    task {
-      triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
-        path.getPathComponent(path.pathCount - 1).toString().contains(newChangeListName)
-      }
+      showWarningIfCommitWindowClosed()
     }
 
     lateinit var letsShelveTaskId: TaskContext.TaskId
     task {
       letsShelveTaskId = taskId
+      triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
+        path.getPathComponent(path.pathCount - 1).toString().contains(newChangeListName)
+      }
+    }
+
+    task {
       text(GitLessonsBundle.message("git.changelists.shelf.open.context.menu"))
       text(GitLessonsBundle.message("git.changelists.shelf.click.changelist.tooltip", strong(newChangeListName)),
            LearningBalloonConfig(Balloon.Position.above, 250))
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
         ui.anAction is ShelveChangesAction
       }
-      showWarningIfCommitWindowClosed()
+      showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           val tree = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == newChangeListName }
@@ -189,7 +195,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       text(GitLessonsBundle.message("git.changelists.shelf.open.shelf.dialog",
                                     strong(ActionsBundle.message("action.ChangesView.Shelve.text")), strong(shelfText)))
       triggerStart("ChangesView.Shelve")
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(letsShelveTaskId, delayMillis = defaultRestoreDelay)
       test {
         ideFrame {
           jMenuItem { item: ActionMenuItem -> item.anAction is ShelveChangesAction }.click()
@@ -267,7 +273,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       }
       text(GitLessonsBundle.message("git.changelists.shelf.unshelve.changelist", strong(unshelveChangesButtonText)))
       stateCheck { editor.document.text.contains(commentText) }
-      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
+      restoreByUiAndBackgroundTask(VcsBundle.message("vcs.unshelving.changes"), delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         Thread.sleep(500)
         ideFrame { button(unshelveChangesButtonText).click() }
@@ -277,9 +283,11 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     task {
       text(GitLessonsBundle.message("git.changelists.shelf.congratulations"))
     }
+
+    restoreCommitWindowStateInformer()
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, CommitChangeListDialog.DIMENSION_SERVICE_KEY, backupShelveDialogLocation)
     backupShelveDialogLocation = null
     restorePopupPosition(project, ApplyPatchDifferentiatedDialog.DIMENSION_SERVICE_KEY, backupUnshelveDialogLocation)
@@ -325,4 +333,9 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
     return Rectangle(this.x + this.width - 15, y, 10, editor.lineHeight)
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.changelists.shelf.help.link"),
+         LessonUtil.getHelpLink("work-on-several-features-simultaneously.html")),
+  )
 }

@@ -48,19 +48,19 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
     }
 
     override fun onThrowable(error: Throwable) {
-      MarkdownNotifier.notifyIfConvertFailed(project, "[${mdFile.name}] ${error.localizedMessage}")
+      MarkdownNotifier.showErrorNotification(project, "[${mdFile.name}] ${error.localizedMessage}")
     }
 
     override fun onSuccess() {
       if (output.stderrLines.isEmpty()) {
         MarkdownImportExportUtils.refreshProjectDirectory(project, mdFile.parent.path)
-        MarkdownNotifier.notifyOfSuccessfulExport(
+        MarkdownNotifier.showInfoNotification(
           project,
           MarkdownBundle.message("markdown.export.success.msg", mdFile.name)
         )
       }
       else {
-        MarkdownNotifier.notifyIfConvertFailed(project, "[${mdFile.name}] ${output.stderrLines.joinToString("\n")}")
+        MarkdownNotifier.showErrorNotification(project, "[${mdFile.name}] ${output.stderrLines.joinToString("\n")}")
       }
     }
 

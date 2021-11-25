@@ -34,7 +34,7 @@ abstract class MultiWebTemplateNewProjectWizard(protected val templates: List<We
       override val label: String
         get() = UIBundle.message("label.project.wizard.new.project.project.type")
       override val steps: Map<String, NewProjectWizardStep>
-        get() = templates.associateBy({ it.name }, { WebTemplateProjectWizardStep(parent, it) })
+        by lazy { templates.associateBy({ it.name }, { WebTemplateProjectWizardStep(parent, it) }) }
     }
   }
 }

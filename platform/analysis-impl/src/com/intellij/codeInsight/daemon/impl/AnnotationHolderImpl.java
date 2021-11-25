@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -27,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
@@ -45,6 +32,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   private final boolean myBatchMode;
   Annotator myCurrentAnnotator;
+  private ExternalAnnotator<?, ?> myExternalAnnotator;
 
   /**
    * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
@@ -72,74 +60,74 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   @Override
-  public Annotation createErrorAnnotation(@NotNull PsiElement elt, String message) {
+  public Annotation createErrorAnnotation(@NotNull PsiElement elt, @NlsContexts.DetailedDescription String message) {
     assertMyFile(elt);
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.ERROR, elt.getTextRange(), message, wrapXml(message), callerClass, "createErrorAnnotation");
   }
 
   @Override
-  public Annotation createErrorAnnotation(@NotNull ASTNode node, String message) {
+  public Annotation createErrorAnnotation(@NotNull ASTNode node, @NlsContexts.DetailedDescription String message) {
     assertMyFile(node.getPsi());
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.ERROR, node.getTextRange(), message, wrapXml(message), callerClass, "createErrorAnnotation");
   }
 
   @Override
-  public Annotation createErrorAnnotation(@NotNull TextRange range, String message) {
+  public Annotation createErrorAnnotation(@NotNull TextRange range, @NlsContexts.DetailedDescription String message) {
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.ERROR, range, message, wrapXml(message), callerClass, "createErrorAnnotation");
   }
 
   @Override
-  public Annotation createWarningAnnotation(@NotNull PsiElement elt, String message) {
+  public Annotation createWarningAnnotation(@NotNull PsiElement elt, @NlsContexts.DetailedDescription String message) {
     assertMyFile(elt);
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.WARNING, elt.getTextRange(), message, wrapXml(message), callerClass, "createWarningAnnotation");
   }
 
   @Override
-  public Annotation createWarningAnnotation(@NotNull ASTNode node, String message) {
+  public Annotation createWarningAnnotation(@NotNull ASTNode node, @NlsContexts.DetailedDescription String message) {
     assertMyFile(node.getPsi());
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.WARNING, node.getTextRange(), message, wrapXml(message), callerClass, "createWarningAnnotation");
   }
 
   @Override
-  public Annotation createWarningAnnotation(@NotNull TextRange range, String message) {
+  public Annotation createWarningAnnotation(@NotNull TextRange range, @NlsContexts.DetailedDescription String message) {
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.WARNING, range, message, wrapXml(message), callerClass, "createWarningAnnotation");
   }
 
   @Override
-  public Annotation createWeakWarningAnnotation(@NotNull PsiElement elt, @Nullable String message) {
+  public Annotation createWeakWarningAnnotation(@NotNull PsiElement elt, @NlsContexts.DetailedDescription @Nullable String message) {
     assertMyFile(elt);
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.WEAK_WARNING, elt.getTextRange(), message, wrapXml(message), callerClass, "createWeakWarningAnnotation");
   }
 
   @Override
-  public Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @Nullable String message) {
+  public Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @NlsContexts.DetailedDescription @Nullable String message) {
     assertMyFile(node.getPsi());
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.WEAK_WARNING, node.getTextRange(), message, wrapXml(message), callerClass, "createWeakWarningAnnotation");
   }
 
   @Override
-  public Annotation createWeakWarningAnnotation(@NotNull TextRange range, String message) {
+  public Annotation createWeakWarningAnnotation(@NotNull TextRange range, @NlsContexts.DetailedDescription String message) {
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.WEAK_WARNING, range, message, wrapXml(message), callerClass, "createWeakWarningAnnotation");
   }
 
   @Override
-  public Annotation createInfoAnnotation(@NotNull PsiElement elt, String message) {
+  public Annotation createInfoAnnotation(@NotNull PsiElement elt, @NlsContexts.DetailedDescription String message) {
     assertMyFile(elt);
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.INFORMATION, elt.getTextRange(), message, wrapXml(message), callerClass, "createInfoAnnotation");
   }
 
   @Override
-  public Annotation createInfoAnnotation(@NotNull ASTNode node, String message) {
+  public Annotation createInfoAnnotation(@NotNull ASTNode node, @NlsContexts.DetailedDescription String message) {
     assertMyFile(node.getPsi());
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.INFORMATION, node.getTextRange(), message, wrapXml(message), callerClass, "createInfoAnnotation");
@@ -160,24 +148,25 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   @Override
-  public Annotation createInfoAnnotation(@NotNull TextRange range, String message) {
+  public Annotation createInfoAnnotation(@NotNull TextRange range, @NlsContexts.DetailedDescription String message) {
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.INFORMATION, range, message, wrapXml(message), callerClass, "createInfoAnnotation");
   }
 
   @Override
-  public Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable String message) {
+  public Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable @NlsContexts.DetailedDescription String message) {
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(severity, range, message, wrapXml(message), callerClass, "createAnnotation");
   }
 
   @Nullable
-  private static @NonNls String wrapXml(@Nullable String message) {
+  @Contract(pure = true)
+  private static String wrapXml(@Nullable String message) {
     return message == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
   }
 
   @Override
-  public Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable String message,
+  public Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @NlsContexts.DetailedDescription @Nullable String message,
                                      @Nullable @NlsContexts.Tooltip String tooltip) {
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(severity, range, message, tooltip, callerClass, "createAnnotation");
@@ -190,8 +179,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   @Deprecated
   private Annotation doCreateAnnotation(@NotNull HighlightSeverity severity,
                                         @NotNull TextRange range,
-                                        @Nullable String message,
-                                        @Nullable String tooltip,
+                                        @NlsContexts.DetailedDescription @Nullable String message,
+                                        @NlsContexts.Tooltip @Nullable String tooltip,
                                         @Nullable Class<?> callerClass,
                                         @NotNull String methodName) {
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
@@ -235,26 +224,30 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   @NotNull
   @Override
   public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
-    return new B(this, severity, message, myCurrentElement);
+    return new B(this, severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
   @NotNull
   @Override
   public AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
-    return new B(this, severity, null, myCurrentElement);
+    return new B(this, severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
 
   PsiElement myCurrentElement;
   @ApiStatus.Internal
   public void runAnnotatorWithContext(@NotNull PsiElement element, @NotNull Annotator annotator) {
+    myCurrentAnnotator = annotator;
     myCurrentElement = element;
     annotator.annotate(element, this);
     myCurrentElement = null;
+    myCurrentAnnotator = null;
   }
   @ApiStatus.Internal
   public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile file, @NotNull ExternalAnnotator<?,R> annotator, R result) {
+    myExternalAnnotator = annotator;
     myCurrentElement = file;
     annotator.apply(file, result, this);
     myCurrentElement = null;
+    myExternalAnnotator = null;
   }
 
   // to assert each AnnotationBuilder did call .create() in the end

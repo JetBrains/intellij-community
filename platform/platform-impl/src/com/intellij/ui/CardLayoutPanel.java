@@ -5,7 +5,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,8 +102,24 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
       if (value == null && !myContent.containsKey(key)) {
         value = createValue(key, ui);
       }
+      boolean wasFocused = UIUtil.isFocusAncestor(this);
       for (Component component : getComponents()) {
         component.setVisible(component == value);
+      }
+      if (value instanceof JScrollPane) {
+        JScrollPane pane = (JScrollPane)value;
+        JViewport viewport = pane.getViewport();
+        if (viewport != null) {
+          Component view = viewport.getView();
+          if (view != null) {
+            view.revalidate();
+            view.repaint();
+          }
+        }
+      }
+      if (wasFocused && value instanceof JComponent) {
+        JComponent focusable = IdeFocusManager.getGlobalInstance().getFocusTargetFor((JComponent)value);
+        if (focusable != null) focusable.requestFocusInWindow();
       }
       callback.setDone();
     }

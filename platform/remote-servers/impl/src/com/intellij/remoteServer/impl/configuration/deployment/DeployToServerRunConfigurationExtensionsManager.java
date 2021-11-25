@@ -28,4 +28,11 @@ public class DeployToServerRunConfigurationExtensionsManager
       });
     }
   }
+
+  public void extendCreatedConfiguration(DeployToServerRunConfiguration<?, ?> configuration) {
+    processApplicableExtensions(configuration, next -> {
+      next.extendCreatedConfiguration(configuration);
+      return null;
+    });
+  }
 }

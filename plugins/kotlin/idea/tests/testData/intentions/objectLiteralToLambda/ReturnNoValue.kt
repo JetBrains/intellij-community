@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'runnable' is never used
 
 fun foo(runnable: Runnable) {}

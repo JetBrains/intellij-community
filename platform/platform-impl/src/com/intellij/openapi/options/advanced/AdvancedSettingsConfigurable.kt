@@ -34,7 +34,7 @@ import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable {
 
-  private class SettingsGroup(val groupPanel: Panel,
+  private class SettingsGroup(val groupRow: Row,
                               val title: String,
                               val settingsRows: Collection<SettingsRow>)
 
@@ -198,7 +198,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private fun applyFilter(searchText: String?, onlyShowModified: Boolean) {
     if (searchText.isNullOrBlank() && !onlyShowModified) {
       for (groupPanel in settingsGroups) {
-        groupPanel.groupPanel.visible(true)
+        groupPanel.groupRow.visible(true)
         for (settingsRow in groupPanel.settingsRows) {
           settingsRow.setVisible(true)
           updateMatchText(settingsRow.component, settingsRow.text, null)
@@ -214,7 +214,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     var matchCount = 0
 
     for (settingsGroup in settingsGroups) {
-      settingsGroup.groupPanel.visible(true)
+      settingsGroup.groupRow.visible(true)
       var groupVisible = false
       if (!onlyShowModified && isMatch(filterWords, settingsGroup.title)) {
         matchCount++
@@ -241,7 +241,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
       }
 
       if (!groupVisible) {
-        settingsGroup.groupPanel.visible(false)
+        settingsGroup.groupRow.visible(false)
       }
     }
 

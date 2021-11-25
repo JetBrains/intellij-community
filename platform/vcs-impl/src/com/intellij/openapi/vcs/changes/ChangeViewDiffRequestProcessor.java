@@ -207,6 +207,12 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     }
 
     @Override
+    protected boolean canNavigate() {
+      List<? extends Wrapper> allChanges = toListIfNotMany(getAllChanges(), true);
+      return allChanges == null || allChanges.size() > 1;
+    }
+
+    @Override
     protected void onSelected(@NotNull Wrapper change) {
       selectChange(change);
     }
@@ -318,7 +324,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Nullable
-  private static <T> List<T> toListIfNotMany(@NotNull Stream<T> stream, boolean fromUpdate) {
+  private static <T> List<T> toListIfNotMany(@NotNull Stream<? extends T> stream, boolean fromUpdate) {
     if (!fromUpdate) return stream.collect(Collectors.toList());
 
     List<T> result = stream.limit(MANY_CHANGES_THRESHOLD + 1).collect(Collectors.toList());

@@ -6,7 +6,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
-import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -14,27 +13,18 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.DimensionService
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 
-internal fun showDocumentationPopup(project: Project, request: DocumentationRequest, popupContext: PopupContext): AbstractPopup {
-  EDT.assertIsEdt()
-
-  val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, initialRequest = request)
-  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
-  val popup = createDocumentationPopup(project, popupUI, popupContext)
-  popupUI.setPopup(popup)
-  popupContext.setUpPopup(popup, popupUI)
-  popupUI.coroutineScope.showPopupLater(popup, browseJob, popupContext)
-  return popup
-}
-
-private fun createDocumentationPopup(
+internal fun createDocumentationPopup(
   project: Project,
-  popupUI: DocumentationPopupUI,
-  popupContext: PopupContext,
+  browser: DocumentationBrowser,
+  popupContext: PopupContext
 ): AbstractPopup {
+  EDT.assertIsEdt()
+  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
   val builder = JBPopupFactory.getInstance()
     .createComponentPopupBuilder(popupUI.component, popupUI.preferableFocusComponent)
     .setProject(project)
@@ -44,20 +34,23 @@ private fun createDocumentationPopup(
     .setFocusable(true)
     .setModalContext(false)
   popupContext.preparePopup(builder)
-  return builder
-    .createPopup() as AbstractPopup
+  val popup = builder.createPopup() as AbstractPopup
+  popupUI.setPopup(popup)
+  popupContext.setUpPopup(popup, popupUI)
+  return popup
 }
 
-private fun CoroutineScope.showPopupLater(popup: AbstractPopup, browseJob: Job, popupContext: PopupContext) {
+internal fun CoroutineScope.showPopupLater(popup: AbstractPopup, browseJob: Job, popupContext: PopupContext) {
   EDT.assertIsEdt()
-  launch(ModalityState.current().asContextElement()) {
+  val showJob = launch(ModalityState.current().asContextElement()) {
     browseJob.tryJoin() // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
     withContext(Dispatchers.EDT) {
-      check(!popup.isDisposed)
-      check(popup.canShow())
+      check(!popup.isDisposed) // popup disposal should've cancelled this coroutine
+      check(popup.canShow()) // sanity check
       popupContext.showPopup(popup)
     }
   }
+  Disposer.register(popup, showJob::cancel)
 }
 
 /**

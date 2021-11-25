@@ -218,8 +218,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
 
           @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
+          public boolean isFileSelectable(@Nullable VirtualFile file) {
+            return file != null && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
           }
         };
         descriptor.setDescription(JavaDebuggerBundle.message("please.select.a.file.to.import"));

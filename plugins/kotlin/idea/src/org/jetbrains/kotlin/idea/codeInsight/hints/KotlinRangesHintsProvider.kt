@@ -13,8 +13,8 @@ class KotlinRangesHintsProvider : KotlinAbstractHintsProvider<NoSettings>() {
 
     override val key: SettingsKey<NoSettings> = SettingsKey("kotlin.ranges.hints")
     override val name: String = KotlinBundle.message("hints.settings.ranges")
-    override val groupId: String
-        get() = VALUES_GROUP
+    override val group: InlayGroup
+        get() = InlayGroup.VALUES_GROUP
 
     override fun createSettings(): NoSettings = NoSettings()
 

@@ -6,6 +6,7 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.lang.Integer.min
 import javax.swing.JComponent
 
 class NewToolbarBorderLayout : BorderLayout() {
@@ -56,15 +57,18 @@ class NewToolbarBorderLayout : BorderLayout() {
 
         right -= d.width + hgap
       }
-      if (getLayoutComponent(WEST).also { c = it } != null) {
-        c!!.setSize(c!!.width, bottom - top)
-        val d = c!!.preferredSize
-        c!!.setBounds(left, top, d.width, bottom - top)
 
-        left += d.width + hgap
-      }
       if (getLayoutComponent(CENTER).also { c = it } != null) {
         c!!.setBounds(right - c!!.preferredSize.width, top, c!!.preferredSize.width, bottom - top)
+        val d = c!!.preferredSize
+        right -= d.width + hgap
+      }
+
+      if (getLayoutComponent(WEST).also { c = it } != null) {
+        val d = c!!.preferredSize
+        c!!.setBounds(left, top, min(d.width, right), bottom - top)
+
+        left += d.width + hgap
       }
     }
   }

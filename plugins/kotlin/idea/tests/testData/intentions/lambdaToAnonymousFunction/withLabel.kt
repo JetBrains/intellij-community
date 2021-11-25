@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'action' is never used
 
 fun testAAA(action: () -> Unit) = Unit

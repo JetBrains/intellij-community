@@ -56,7 +56,7 @@ class CtxDialogs {
     //
 
     final ModalityState ms = LaterInvocator.getCurrentModalityState();
-    final TouchBar.CrossEscInfo crossEscInfo = isCrossEscGroup(actions) ? new TouchBar.CrossEscInfo(true, false) : null;
+    final TBPanel.CrossEscInfo crossEscInfo = isCrossEscGroup(actions) ? new TBPanel.CrossEscInfo(true, false) : null;
     final Customizer customizer = new Customizer(crossEscInfo, null/*dialog actions mustn't be closed because of auto-close*/) {
       private final @NotNull WeakReference<Component> myRoot = new WeakReference<>(contentPane);
       @Override

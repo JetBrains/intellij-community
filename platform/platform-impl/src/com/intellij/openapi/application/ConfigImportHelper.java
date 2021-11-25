@@ -7,10 +7,8 @@ import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginDescriptorLoader;
-import com.intellij.ide.plugins.PluginInstaller;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.idea.Main;
@@ -37,7 +35,6 @@ import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -74,6 +72,7 @@ public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
   public static final String CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY = "intellij.config.imported.from.other.product";
+  public static final String CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY = "intellij.config.imported.from.previous.version";
 
   private static final String CONFIG = "config";
   private static final String[] OPTIONS = {
@@ -85,6 +84,8 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
+
+  private static final Set<String> SESSION_FILES = Set.of(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN, BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
 
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
@@ -185,12 +186,19 @@ public final class ConfigImportHelper {
         if (!guessedOldConfigDirs.fromSameProduct) {
           // do not import plugins from other products even if configs are imported
           configImportOptions.importPlugins = false;
-          System.setProperty(CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY, oldConfigDir.getFileName().toString());
+          configImportOptions.importSettings = settings;
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
         else if (importScenarioStatistics == null) {
           importScenarioStatistics = IMPORTED_FROM_PREVIOUS_VERSION;
         }
+
+        if (guessedOldConfigDirs.fromSameProduct) {
+          System.setProperty(CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY, oldConfigDir.toString());
+        } else {
+          System.setProperty(CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY, oldConfigDir.toString());
+        }
+
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
         if (settings != null) {
@@ -254,7 +262,7 @@ public final class ConfigImportHelper {
   }
 
   private static boolean doesVmOptionsFileExist(Path configDir) {
-    return Files.isRegularFile(configDir.resolve(VMOptions.getCustomVMOptionsFileName()));
+    return Files.isRegularFile(configDir.resolve(VMOptions.getFileName()));
   }
 
   private static void restart() {
@@ -361,14 +369,13 @@ public final class ConfigImportHelper {
   }
 
   /**
-   * Checks that current user is "new" (i.e. this is the very first launch of the IDE on this machine).
+   * Checks that current user is a "new" one (i.e. this is the very first launch of the IDE on this machine).
    */
   public static boolean isNewUser() {
     return isFirstSession() && !isConfigImported();
   }
 
   /** Simple check by file type, content is not checked. */
-  @SuppressWarnings("IdentifierGrammar")
   public static boolean isSettingsFile(@NotNull VirtualFile file) {
     return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
   }
@@ -715,8 +722,9 @@ public final class ConfigImportHelper {
     final Logger log;
     boolean headless;
     boolean importPlugins = true;
+    @Nullable ConfigImportSettings importSettings;
     BuildNumber compatibleBuildNumber = null;
-    ThrowableNotNullBiFunction<? super String, ? super ProgressIndicator, ? extends File, ? extends IOException> downloadFunction = null;
+    MarketplacePluginDownloadService downloadService = null;
     Path bundledPluginPath = null;
     Map<PluginId, Set<String>> brokenPluginVersions = null;
 
@@ -733,35 +741,51 @@ public final class ConfigImportHelper {
                        @NotNull ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     if (Files.isRegularFile(oldConfigDir)) {
-      new Decompressor.Zip(oldConfigDir.toFile()).extract(newConfigDir);
+      new Decompressor.Zip(oldConfigDir).extract(newConfigDir);
       return;
     }
 
     // Copy everything except plugins.
     // The filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.).
-    FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), file -> !blockImport(file.toPath(), oldConfigDir, newConfigDir, oldPluginsDir));
+    Files.walkFileTree(oldConfigDir, new SimpleFileVisitor<>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+        return blockImport(dir, oldConfigDir, newConfigDir, oldPluginsDir) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir)) {
+          Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
+          NioFiles.createDirectories(target.getParent());
+          Files.copy(file, target, LinkOption.NOFOLLOW_LINKS);
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
 
     List<ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
 
-    // Copy plugins, unless the new plugin directory is not empty (the plugin manager will sort out incompatible ones).
-    if (!options.importPlugins) {
+    // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
+    boolean importBundledPlugins = options.importSettings != null && options.importSettings.shouldImportBundledPlugins();
+    if (!options.importPlugins && !importBundledPlugins) {
       log.info("plugins are not imported.");
     }
-    else if (!Files.isDirectory(oldPluginsDir)) {
+    else if (options.importPlugins && !Files.isDirectory(oldPluginsDir)) {
       log.info("non-existing plugins directory: " + oldPluginsDir);
     }
     else if (!isEmptyDirectory(newPluginsDir)) {
       log.info("non-empty plugins directory: " + newPluginsDir);
     }
     else {
-      migratePlugins(oldPluginsDir, newPluginsDir, actionCommands, options);
+      migratePlugins(oldPluginsDir, newPluginsDir, oldConfigDir, actionCommands, options);
     }
 
     if (SystemInfo.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
       setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
     }
 
-    // apply stale plugin updates
+    // applying prepared updates to copied plugins
     StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
 
     updateVMOptions(newConfigDir, log);
@@ -789,25 +813,36 @@ public final class ConfigImportHelper {
 
   private static void migratePlugins(Path oldPluginsDir,
                                      Path newPluginsDir,
+                                     Path oldConfigDir,
                                      List<ActionCommand> actionCommands,
                                      ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     try {
-      List<IdeaPluginDescriptorImpl> pluginsToMigrate = new ArrayList<>();
-      List<IdeaPluginDescriptorImpl> incompatiblePlugins = new ArrayList<>();
-      List<PluginId> pendingUpdates = collectPendingPluginUpdates(actionCommands, options);
-      PluginDescriptorLoader.getDescriptorsToMigrate(oldPluginsDir,
-                                                     options.compatibleBuildNumber,
-                                                     options.bundledPluginPath,
-                                                     options.brokenPluginVersions,
-                                                     pluginsToMigrate,
-                                                     incompatiblePlugins);
+      List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
+      List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
+      List<PluginId> pendingUpdates;
+      if (options.importPlugins) {
+        pendingUpdates = collectPendingPluginUpdates(actionCommands, options);
+        PluginDescriptorLoader.getDescriptorsToMigrate(oldPluginsDir,
+                                                       options.compatibleBuildNumber,
+                                                       options.bundledPluginPath,
+                                                       options.brokenPluginVersions,
+                                                       pluginsToMigrate,
+                                                       pluginsToDownload);
 
-      migratePlugins(newPluginsDir, pluginsToMigrate, pendingUpdates, log);
+        migratePlugins(newPluginsDir, pluginsToMigrate, pendingUpdates, log);
+      } else {
+        pendingUpdates = new ArrayList<>();
+        log.info("non-bundled plugins are not imported.");
+      }
 
-      if (!incompatiblePlugins.isEmpty()) {
+      if (options.importSettings != null && options.importSettings.shouldImportBundledPlugins()) {
+        collectBundledPluginsToDownload(oldConfigDir, pluginsToDownload, options.importSettings);
+      }
+
+      if (!pluginsToDownload.isEmpty()) {
         if (options.headless) {
-          downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, pendingUpdates, new EmptyProgressIndicator());
+          downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload, pendingUpdates, new EmptyProgressIndicator());
         }
         else {
           ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
@@ -816,7 +851,7 @@ public final class ConfigImportHelper {
 
           SplashManager.executeWithHiddenSplash(dialog, () -> {
             new Thread(() -> {
-              downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, pendingUpdates, dialog.getIndicator());
+              downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload, pendingUpdates, dialog.getIndicator());
               SwingUtilities.invokeLater(() -> dialog.setVisible(false));
             }, "Plugin migration downloader").start();
 
@@ -824,8 +859,8 @@ public final class ConfigImportHelper {
           });
         }
 
-        // Migrate plugins for which we couldn't download updates
-        migratePlugins(newPluginsDir, incompatiblePlugins, pendingUpdates, log);
+        // migrating plugins for which we weren't able to download updates
+        migratePlugins(newPluginsDir, pluginsToDownload, pendingUpdates, log);
       }
     }
     catch (ExecutionException | InterruptedException e) {
@@ -866,15 +901,18 @@ public final class ConfigImportHelper {
   }
 
   private static void migratePlugins(Path newPluginsDir,
-                                     List<IdeaPluginDescriptorImpl> pluginsToMigrate,
+                                     List<IdeaPluginDescriptor> pluginsToMigrate,
                                      List<PluginId> idsToSkip,
                                      Logger log) throws IOException {
-    for (IdeaPluginDescriptorImpl descriptor : pluginsToMigrate) {
+    for (IdeaPluginDescriptor descriptor : pluginsToMigrate) {
       if (idsToSkip.contains(descriptor.getPluginId())) {
         log.info("Skipping migration of plugin " + descriptor.getPluginId() + " because there's a pending update for it");
         continue;
       }
       log.info("Migrating plugin " + descriptor.getPluginId() + " version " + descriptor.getVersion());
+      if (descriptor.getPluginPath() == null) {
+        continue;
+      }
       File path = descriptor.getPluginPath().toFile();
       if (path.isDirectory()) {
         FileUtil.copyDir(path, new File(newPluginsDir.toFile(), path.getName()));
@@ -887,12 +925,12 @@ public final class ConfigImportHelper {
 
   private static void downloadUpdatesForIncompatiblePlugins(Path newPluginsDir,
                                                             ConfigImportOptions options,
-                                                            List<IdeaPluginDescriptorImpl> incompatiblePlugins,
+                                                            List<IdeaPluginDescriptor> incompatiblePlugins,
                                                             List<PluginId> pendingUpdates,
                                                             ProgressIndicator indicator) {
     Logger log = options.log;
-    for (Iterator<IdeaPluginDescriptorImpl> iterator = incompatiblePlugins.iterator(); iterator.hasNext(); ) {
-      IdeaPluginDescriptorImpl plugin = iterator.next();
+    for (Iterator<IdeaPluginDescriptor> iterator = incompatiblePlugins.iterator(); iterator.hasNext(); ) {
+      IdeaPluginDescriptor plugin = iterator.next();
       if (pendingUpdates.contains(plugin.getPluginId())) {
         log.info("Skipping download of compatible version for plugin with pending update: " + plugin.getPluginId());
         iterator.remove();
@@ -900,12 +938,12 @@ public final class ConfigImportHelper {
       }
 
       try {
-        PluginDownloader downloader = PluginDownloader.createDownloader(plugin);
-        if (options.downloadFunction != null) {
-          downloader.setDownloadFunction(options.downloadFunction);
-        }
-        if (downloader.prepareToInstallAndLoadDescriptor(indicator, false) != null) {
-          PluginInstaller.unpackPlugin(downloader.getFile().toPath(), newPluginsDir);
+        PluginDownloader downloader = PluginDownloader.createDownloader(plugin)
+          .withErrorsConsumer(__ -> {})
+          .withDownloadService(options.downloadService);
+
+        if (downloader.prepareToInstall(indicator)) {
+          PluginInstaller.unpackPlugin(downloader.getFilePath(), newPluginsDir);
           log.info("Downloaded and unpacked compatible version of plugin " + plugin.getPluginId());
           iterator.remove();
         }
@@ -923,7 +961,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static boolean isBrokenPlugin(IdeaPluginDescriptorImpl plugin, ConfigImportOptions options) {
+  private static boolean isBrokenPlugin(IdeaPluginDescriptor plugin, ConfigImportOptions options) {
     Map<PluginId, Set<String>> versions = options.brokenPluginVersions;
     return versions != null ? versions.get(plugin.getPluginId()).contains(plugin.getVersion()) : PluginManagerCore.isBrokenPlugin(plugin);
   }
@@ -965,25 +1003,33 @@ public final class ConfigImportHelper {
     }
   }
 
-  /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version. */
+  /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version or duplicate/undercut platform ones. */
   private static void updateVMOptions(Path newConfigDir, Logger log) {
-    Path vmOptionsFile = newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName());
+    Path vmOptionsFile = newConfigDir.resolve(VMOptions.getFileName());
     if (Files.exists(vmOptionsFile)) {
       try {
         List<String> lines = Files.readAllLines(vmOptionsFile, VMOptions.getFileCharset());
+        Path platformVmOptionsFile = newConfigDir.getFileSystem().getPath(VMOptions.getPlatformOptionsFile().toString());
+        Collection<String> platformLines = new LinkedHashSet<>(readPlatformOptions(platformVmOptionsFile, log));
         boolean updated = false;
+
         for (ListIterator<String> i = lines.listIterator(); i.hasNext(); ) {
           String line = i.next().trim();
           if (line.equals("-XX:MaxJavaStackTraceDepth=-1")) {
             i.set("-XX:MaxJavaStackTraceDepth=10000"); updated = true;
           }
-          else if ("-XX:+UseConcMarkSweepGC".equals(line) && JavaVersion.current().isAtLeast(17) ||
+          else if ("-XX:+UseConcMarkSweepGC".equals(line) ||
                    "-Xverify:none".equals(line) || "-noverify".equals(line) ||
+                   "-XX:+UseCompressedOops".equals(line) ||
                    line.startsWith("-agentlib:yjpagent") ||
-                   line.startsWith("-agentpath:") && line.contains("yjpagent")) {
+                   line.startsWith("-agentpath:") && line.contains("yjpagent") ||
+                   "-Dsun.io.useCanonPrefixCache=false".equals(line) ||
+                   "-Dfile.encoding=UTF-8".equals(line) && SystemInfo.isMac ||
+                   isDuplicateOrLowerValue(line, platformLines)) {
             i.remove(); updated = true;
           }
         }
+
         if (updated) {
           Files.write(vmOptionsFile, lines, VMOptions.getFileCharset());
         }
@@ -992,6 +1038,46 @@ public final class ConfigImportHelper {
         log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
       }
     }
+  }
+
+  private static List<String> readPlatformOptions(Path platformVmOptionsFile, Logger log) {
+    try {
+      return Files.readAllLines(platformVmOptionsFile, VMOptions.getFileCharset());
+    }
+    catch (IOException e) {
+      // should not prevent a user's VM options file from being processed
+      log.warn("Cannot read platform VM options file " + platformVmOptionsFile, e);
+      return List.of();
+    }
+  }
+
+  private static boolean isDuplicateOrLowerValue(String line, Collection<String> platformLines) {
+    if (platformLines.isEmpty()) {
+      return false;
+    }
+    if (platformLines.contains(line)) {
+      return true;
+    }
+    if (line.startsWith("-Xms") || line.startsWith("-Xmx") || line.startsWith("-Xss")) {
+      return isLowerValue(line.substring(0, 4), line.substring(4), platformLines);
+    }
+    if (line.startsWith("-XX:")) {
+      int p = line.indexOf('=', 4);
+      if (p > 0) return isLowerValue(line.substring(0, p + 1), line.substring(p + 1), platformLines);
+    }
+    return false;
+  }
+
+  private static boolean isLowerValue(String prefix, String userValue, Collection<String> platformLines) {
+    for (String line : platformLines) {
+      if (line.startsWith(prefix)) {
+        try {
+          return VMOptions.parseMemoryOption(userValue) <= VMOptions.parseMemoryOption(line.substring(prefix.length()));
+        }
+        catch (IllegalArgumentException ignored) { }
+      }
+    }
+    return false;
   }
 
   private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir) {
@@ -1005,8 +1091,9 @@ public final class ConfigImportHelper {
   }
 
   private static boolean shouldSkipFileDuringImport(String fileName) {
-    List<String> filesToSkip = Arrays.asList(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
-    return filesToSkip.contains(fileName) || fileName.startsWith(CHROME_USER_DATA);
+    return SESSION_FILES.contains(fileName) ||
+           fileName.startsWith(CHROME_USER_DATA) ||
+           fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName()));
   }
 
   private static String defaultConfigPath(String selector) {
@@ -1076,5 +1163,20 @@ public final class ConfigImportHelper {
     }
 
     return result;
+  }
+
+  private static void collectBundledPluginsToDownload(Path configDir,
+                                                      List<IdeaPluginDescriptor> pluginsToDownload,
+                                                      @NotNull ConfigImportSettings settings) {
+    @Nullable List<kotlin.Pair<PluginId, @Nullable String>> plugins = BundledPluginsState.getBundledPlugins(configDir);
+    if (plugins != null) {
+      // pairs of PluginId to Category
+      for (kotlin.Pair<PluginId, @Nullable String> plugin : plugins) {
+        if (settings.shouldImport(plugin.getFirst(), plugin.getSecond())) {
+          PluginNode pluginNode = new PluginNode(plugin.getFirst());
+          pluginsToDownload.add(pluginNode);
+        }
+      }
+    }
   }
 }

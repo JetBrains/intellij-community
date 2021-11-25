@@ -35,6 +35,7 @@ package
 private
 protected
 public
+record
 return
 sealed
 short

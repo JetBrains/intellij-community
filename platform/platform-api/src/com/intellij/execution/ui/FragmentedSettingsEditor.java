@@ -3,6 +3,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.openapi.options.CompositeSettingsEditor;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.containers.ContainerUtil;
@@ -10,6 +11,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -91,18 +93,40 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
     super.installWatcher(c);
     addSettingsEditorListener(editor -> SwingUtilities.invokeLater(() -> {
       UIUtil.setupEnclosingDialogBounds(c);
-      alignPanels();
     }));
+    installFragmentsAligner();
   }
 
   protected void initFragments(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
   }
 
-  private void alignPanels() {
-    JComponent container = getComponent();
+  private void installFragmentsAligner() {
+    installFragmentsAligner(this);
+    for (SettingsEditorFragment<Settings, ?> fragment : getFragments()) {
+      if (fragment instanceof NestedGroupFragment) {
+        installFragmentsAligner(fragment);
+      }
+    }
+  }
+
+  private static void installFragmentsAligner(SettingsEditor<?> fragment) {
+    JComponent component = fragment.getComponent();
+    for (Component childComponent : component.getComponents()) {
+      if (childComponent instanceof PanelWithAnchor) {
+        UIUtil.runWhenVisibilityChanged(childComponent, () -> SwingUtilities.invokeLater(() -> {
+          alignPanels(component);
+        }));
+      }
+    }
+  }
+
+  private static void alignPanels(JComponent container) {
     List<PanelWithAnchor> panels =
-      Arrays.stream(container.getComponents()).filter(component -> component instanceof PanelWithAnchor)
-        .map(component -> (PanelWithAnchor)component).collect(Collectors.toList());
+      Arrays.stream(container.getComponents())
+        .filter(component -> component.isVisible())
+        .filter(component -> component instanceof PanelWithAnchor)
+        .map(component -> (PanelWithAnchor)component)
+        .collect(Collectors.toList());
     UIUtil.mergeComponentsWithAnchor(panels, true);
   }
 }

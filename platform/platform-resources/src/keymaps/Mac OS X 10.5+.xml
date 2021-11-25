@@ -453,6 +453,9 @@
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="meta F3"/>
   </action>
+  <action id="ShowTypeBookmarks">
+    <keyboard-shortcut first-keystroke="meta alt F3"/>
+  </action>
 
   <action id="ImplementMethods">
     <keyboard-shortcut first-keystroke="control I"/>
@@ -484,7 +487,6 @@
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
-    <keyboard-shortcut first-keystroke="meta E"/>
   </action>
 
   <action id="ChangesView.SetDefault">
@@ -499,6 +501,7 @@
   <action id="EditorScrollUp"/> <!-- Disables meta up -->
   <action id="EditorScrollDown"/>  <!-- Disables meta down -->
   <action id="FindWordAtCaret"/> <!-- Disables meta F3 -->
+  <action id="FindPrevWordAtCaret"/> <!-- Disables shift meta F3 -->
   <action id="EditorScrollToCenter"/> <!-- Disables meta M -->
 
   <action id="$Undo">

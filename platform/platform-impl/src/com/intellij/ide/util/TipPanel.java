@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,8 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
@@ -134,6 +137,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     if (myCurrentPromotion != null) {
       remove(myCurrentPromotion);
       myCurrentPromotion = null;
+      myBrowser.getComponent().setBorder(JBUI.Borders.empty(8, 12));
     }
     List<JPanel> promotions = ContainerUtil.mapNotNull(TipAndTrickPromotionFactory.getEP_NAME().getExtensionList(),
                                                        factory -> factory.createPromotionPanel(myProject, myCurrentTip));
@@ -143,9 +147,24 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
       }
       myCurrentPromotion = promotions.get(0);
       add(myCurrentPromotion, BorderLayout.NORTH);
+      myBrowser.getComponent().setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+      removeTopMarginFromTipContent();
     }
     revalidate();
     repaint();
+  }
+
+  // Removes the top margin from first tag inside <body> of TipAndTrick text
+  // to reduce the indent between promotion panel and Tip content
+  private void removeTopMarginFromTipContent() {
+    @Nls String tipText = myBrowser.getText();
+    Matcher firstTagMatcher = Pattern.compile("<body>\\s*<\\w+", Pattern.CASE_INSENSITIVE).matcher(tipText);
+    if (firstTagMatcher.find()) {
+      int endOffset = firstTagMatcher.end();
+      @SuppressWarnings("HardCodedStringLiteral")
+      @Nls String editedTipText = new StringBuilder(tipText).insert(endOffset, " style=\"margin-top: 0px\"").toString();
+      myBrowser.setText(editedTipText);
+    }
   }
 
   @Override

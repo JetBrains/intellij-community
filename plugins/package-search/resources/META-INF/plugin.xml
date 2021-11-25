@@ -74,6 +74,9 @@ Supports Maven and Gradle projects.
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService"/>
 
+        <applicationService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizerService"/>
+
         <toolWindow id="Dependencies" anchor="bottom" secondary="false"
                     icon="/icons/artifactSmall.svg"
                     canCloseContents="true"

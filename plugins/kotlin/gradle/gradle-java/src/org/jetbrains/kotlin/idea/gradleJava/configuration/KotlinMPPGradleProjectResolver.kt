@@ -69,8 +69,11 @@ import java.util.stream.Collectors
 
 @Order(ExternalSystemConstants.UNORDERED + 1)
 open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
+    private val cacheManager = KotlinMPPCompilerArgumentsCacheMergeManager
+
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
         return super.createModule(gradleModule, projectDataNode)?.also {
+            cacheManager.mergeCache(gradleModule, resolverCtx)
             initializeModuleData(gradleModule, it, projectDataNode, resolverCtx)
             populateSourceSetInfos(gradleModule, it, resolverCtx)
         }
@@ -213,8 +216,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             Key.create<MutableMap<String/* artifact path */, MutableList<String> /* module ids*/>>("gradleMPPArtifactsMap")
         val proxyObjectCloningCache = WeakHashMap<Any, Any>()
 
-        private val moduleNodesByCompilationMap = WeakHashMap<KotlinCompilation, DataNode<out ModuleData>>()
-
         //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
         private var DataNode<ModuleData>.isMppDataInitialized
                 by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_MPP_DATA_INITIALIZED"), false)
@@ -315,7 +316,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
             val sourceSetToCompilationData = LinkedHashMap<String, MutableSet<GradleSourceSetData>>()
             for (target in mppModel.targets) {
-                target.compilations.forEach { moduleNodesByCompilationMap[it] = mainModuleNode }
                 if (shouldDelegateToOtherPlugin(target)) continue
                 if (target.name == KotlinTarget.METADATA_TARGET_NAME) continue
                 val targetData = KotlinTargetData(target.name).also {
@@ -479,7 +479,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             val mppModel = resolverCtx.getMppModel(gradleModule)
             if (mppModel == null || externalProject == null) return
             mainModuleNode.isMppDataInitialized = true
-            moduleNodesByCompilationMap.clear()
 
             // save artifacts locations.
             val userData = projectDataNode.getUserData(MPP_CONFIGURATION_ARTIFACTS) ?: HashMap<String, MutableList<String>>().apply {
@@ -525,7 +524,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                         .map {
                             ExternalSystemTestRunTask(
                                 it.taskName,
-                                getKotlinModuleId(gradleModule, compilation, resolverCtx),
+                                gradleModule.gradleProject.path,
                                 target.name
                             )
                         }
@@ -851,16 +850,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 )
             }
 
-            val moduleDataNode = moduleNodesByCompilationMap[compilation]
-                ?.also { moduleNodesByCompilationMap.remove(compilation) }
-                ?: return null
-            val projectDataNode = ExternalSystemApiUtil.findParent(moduleDataNode, ProjectKeys.PROJECT)
-                ?: error("Failed to find ProjectData for module node '$moduleDataNode'")
-            val cacheHolder = ExternalSystemApiUtil.find(projectDataNode, KotlinIdeaProjectData.KEY)
-                ?.data
-                ?.compilerArgumentsCacheHolder
-                ?: error("Failed to find KotlinIdeaProjectData for project node '$projectDataNode'")
-
+            val cacheHolder = CompilerArgumentsCacheMergeManager.compilerArgumentsCacheHolder
 
             return KotlinSourceSetInfo(compilation).also { sourceSetInfo ->
                 sourceSetInfo.moduleId = getKotlinModuleId(gradleModule, compilation, resolverCtx)

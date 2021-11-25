@@ -8,7 +8,6 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -358,18 +357,12 @@ public class RefManagerImpl extends RefManager {
         future.get();
       }
     }
-    catch (ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InterruptedException e) {
+    catch (ExecutionException | InterruptedException e) {
       throw new RuntimeException(e);
     }
   }
 
-  /**
-   * To submit task during processing of project usages. The task will be run in a read action in parallel on a separate thread if possible.
-   * @param runnable  the task to run.
-   */
+  @Override
   public void executeTask(Runnable runnable) {
     if (myTasks != null) {
       try {
@@ -422,17 +415,20 @@ public class RefManagerImpl extends RefManager {
     return myDeclarationsFound.get();
   }
 
-  public void inspectionReadActionStarted() {
+  public void runInsideInspectionReadAction(@NotNull Runnable runnable) {
     myIsInProcess = true;
-  }
-
-  public void inspectionReadActionFinished() {
-    myTasks = null; // remove any pending tasks
-    waitForTasksToComplete();
-    myIsInProcess = false;
-    if (myScope != null) myScope.invalidate();
-
-    myCachedSortedRefs = null;
+    try {
+      runnable.run();
+    }
+    finally {
+      myTasks = null; // remove any pending tasks
+      waitForTasksToComplete();
+      myIsInProcess = false;
+      if (myScope != null) {
+        myScope.invalidate();
+      }
+      myCachedSortedRefs = null;
+    }
   }
 
   public void startOfflineView() {
@@ -441,10 +437,6 @@ public class RefManagerImpl extends RefManager {
 
   public boolean isOfflineView() {
     return myOfflineView;
-  }
-
-  public boolean isInProcess() {
-    return myIsInProcess;
   }
 
   @Override
@@ -532,6 +524,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   private class ProjectIterator extends PsiElementVisitor {
+
     @Override
     public void visitElement(@NotNull PsiElement element) {
       ProgressManager.checkCanceled();
@@ -624,7 +617,6 @@ public class RefManagerImpl extends RefManager {
         }
       }
       myPsiManager.dropResolveCaches();
-      InjectedLanguageManager.getInstance(myProject).dropFileCaches(file);
     }
   }
 
@@ -655,14 +647,14 @@ public class RefManagerImpl extends RefManager {
         }
         return null;
       }),
-      element -> ReadAction.run(() -> {
+      element -> {
         element.initialize();
         element.setInitialized(true);
         for (RefManagerExtension<?> each : myExtensions.values()) {
           each.onEntityInitialized(element, elem);
         }
         fireNodeInitialized(element);
-      }));
+      });
   }
 
   private RefManagerExtension<?> getExtension(final Language language) {
@@ -702,11 +694,9 @@ public class RefManagerImpl extends RefManager {
   private @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
                                                                     @NotNull NullableFactory<? extends T> factory,
                                                                     @Nullable Consumer<? super T> whenCached) {
-
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked
     T result = (T)myRefTable.get(psiAnchor);
-
     if (result != null) return result;
 
     if (!isValidPointForReference()) {
@@ -714,20 +704,20 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
 
-    result = factory.create();
-    if (result == null) return null;
+    T newElement = factory.create();
+    if (newElement == null) return null;
 
     myCachedSortedRefs = null;
-    RefElement prev = myRefTable.putIfAbsent(psiAnchor, result);
+    RefElement prev = myRefTable.putIfAbsent(psiAnchor, newElement);
     if (prev != null) {
       //noinspection unchecked
-      result = (T)prev;
+      return (T)prev;
     }
-    else if (whenCached != null) {
-      whenCached.consume(result);
+    if (whenCached != null) {
+      ReadAction.nonBlocking(() -> whenCached.consume(newElement)).executeSynchronously();
     }
 
-    return result;
+    return newElement;
   }
 
   @Override

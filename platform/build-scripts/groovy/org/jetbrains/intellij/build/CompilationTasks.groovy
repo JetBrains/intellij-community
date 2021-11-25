@@ -11,7 +11,7 @@ abstract class CompilationTasks {
 
   abstract void compileModules(@NotNull Collection<String> moduleNames, List<String> includingTestsInModules = [])
 
-  abstract void buildProjectArtifacts(Collection<String> artifactNames)
+  abstract void buildProjectArtifacts(Set<String> artifactNames)
 
   abstract void resolveProjectDependencies()
 

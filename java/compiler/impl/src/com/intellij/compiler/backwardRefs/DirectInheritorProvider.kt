@@ -13,8 +13,17 @@ import org.jetbrains.jps.backwardRefs.NameEnumerator
 interface DirectInheritorProvider {
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<DirectInheritorProvider>("com.intellij.languageCompilerRefAdapter.directInheritorProvider");
+    val EP_NAME = ExtensionPointName.create<DirectInheritorProvider>("com.intellij.languageCompilerRefAdapter.directInheritorProvider")
   }
 
   fun findDirectInheritors(searchId: SearchId, nameEnumerator: NameEnumerator): Collection<CompilerRef.CompilerClassHierarchyElementDef>
+}
+
+/**
+ * An interface provides missing information to [JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader.getHierarchy] for finding
+ * classes not involved in Java compilation
+ */
+@IntellijInternalApi
+interface SearchIdHolder {
+  val searchId: SearchId
 }

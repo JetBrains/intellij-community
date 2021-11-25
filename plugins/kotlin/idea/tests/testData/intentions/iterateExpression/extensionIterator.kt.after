@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 class T<U>
 
 operator fun <U> T<U>.iterator(): Iterator<U> = listOf<U>().iterator()

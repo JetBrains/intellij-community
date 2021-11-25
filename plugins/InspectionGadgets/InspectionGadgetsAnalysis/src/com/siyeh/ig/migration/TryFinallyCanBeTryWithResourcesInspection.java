@@ -94,10 +94,12 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       String resourceListAfter = joinToString(after);
       @NonNls StringBuilder sb = new StringBuilder("try(");
       PsiResourceList resourceListElement = tryStatement.getResourceList();
+      boolean hasSemicolon = false;
       if (!before.isEmpty()) {
         sb.append(resourceListBefore);
         if (resourceListElement != null || !after.isEmpty()) {
           sb.append(";");
+          hasSemicolon = true;
         }
       }
       if (resourceListElement != null) {
@@ -109,7 +111,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         }
       }
       if (!after.isEmpty()) {
-        if (!before.isEmpty() || resourceListElement != null) {
+        if ((!before.isEmpty() || resourceListElement != null) && !hasSemicolon) {
           sb.append(";");
         }
         sb.append(resourceListAfter);

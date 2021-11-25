@@ -14,6 +14,7 @@ import training.learn.CourseManager
 import training.learn.course.KLesson
 import training.learn.course.Lesson
 import training.learn.lesson.LessonListener
+import training.statistic.LessonStartingWay
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -23,7 +24,8 @@ private val LOG: Logger = Logger.getInstance(LearningLessonsAutoExecutor::class.
 class LearningLessonsAutoExecutor(val project: Project, private val progress: ProgressIndicator) {
   private fun runSingleLesson(lesson: Lesson) {
     invokeAndWaitIfNeeded {
-      CourseManager.instance.openLesson(project, lesson)
+      // starting way does not matter because it should not be executed on release builds
+      CourseManager.instance.openLesson(project, lesson, LessonStartingWay.LEARN_TAB)
     }
     try {
       executeLesson(lesson)
@@ -45,6 +47,8 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
       if (lesson !is KLesson || lesson.testScriptProperties.skipTesting) continue
       if (durations.containsKey(lesson.id)) continue // Just duplicate from another module
       progress.checkCanceled()
+      // Some lessons may have post-completed activities (in onLessonEnd)
+      Thread.sleep(1000)
       val duration = TimeoutUtil.measureExecutionTime<Throwable> {
         runSingleLesson(lesson)
       }

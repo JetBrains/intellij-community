@@ -6,6 +6,7 @@ import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindModelExtension;
 import com.intellij.find.findInProject.FindInProjectManager;
+import com.intellij.find.ngrams.TrigramTextSearchService;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -62,6 +64,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,9 +195,8 @@ final class FindInProjectTask {
     Map<VirtualFile, Set<UsageInfo>> usagesBeingProcessed = new ConcurrentHashMap<>();
     AtomicBoolean reportedFirst = new AtomicBoolean();
 
-    String stringToFind = !myFindModel.isRegularExpressions() ? myFindModel.getStringToFind() :
-                          FindInProjectUtil.buildStringToFindForIndicesFromRegExp(myFindModel.getStringToFind(), myProject);
-    StringSearcher searcher = stringToFind.isEmpty() ? null : new StringSearcher(stringToFind, myFindModel.isCaseSensitive(), true);
+    StringSearcher searcher = myFindModel.isRegularExpressions() || StringUtil.isEmpty(myFindModel.getStringToFind()) ? null :
+                              new StringSearcher(myFindModel.getStringToFind(), myFindModel.isCaseSensitive(), true);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
 
     //noinspection UnnecessaryLocalVariable
@@ -399,7 +401,7 @@ final class FindInProjectTask {
   }
 
   private boolean canRelyOnSearchers() {
-    if (!Registry.is("find.use.indexing.searcher.extensions")) return false;
+    if (!TrigramTextSearchService.useIndexingSearchExtensions()) return false;
     return ContainerUtil.find(mySearchers, s -> s.isReliable()) != null;
   }
 
@@ -411,7 +413,7 @@ final class FindInProjectTask {
         resultFiles.add(file);
       }
     }
-    if (!Registry.is("find.use.indexing.searcher.extensions")) return resultFiles;
+    if (!TrigramTextSearchService.useIndexingSearchExtensions()) return resultFiles;
     for (FindInProjectSearchEngine.FindInProjectSearcher searcher : mySearchers) {
       Collection<VirtualFile> virtualFiles = searcher.searchForOccurrences();
       for (VirtualFile file : virtualFiles) {

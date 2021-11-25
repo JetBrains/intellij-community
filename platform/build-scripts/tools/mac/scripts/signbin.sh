@@ -1,11 +1,15 @@
 #!/bin/bash
 
-#immediately exit script with an error if a command fails
+# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 set -euo pipefail
 
-FILENAME=$1
 USERNAME=$2
 PASSWORD=$3
+
+# after setting user and password - do not expose credentials in output
+set -x
+
+FILENAME=$1
 CODESIGN_STRING=$4
 FILEPATH="$(dirname "$0")/$FILENAME"
 
@@ -13,9 +17,12 @@ function log() {
   echo "$(date '+[%H:%M:%S]') $*"
 }
 
-log "Unlocking keychain..."
 # Make sure *.p12 is imported into local KeyChain
+log "Unlocking keychain..."
+# do not expose password in log
+set +x
 security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain"
+set -x
 
 attempt=1
 limit=3

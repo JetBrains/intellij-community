@@ -41,7 +41,7 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
                                      "<artifactId>project2</artifactId>" +
                                      "<version>1</version>");
 
-    myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(p1.getPath()));
+    setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
     importProjects(p1, p2);
     assertModules("project2");
   }
@@ -62,13 +62,13 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
     importProjects(p1, p2);
     assertModules("project1", "project2");
 
-    myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(p1.getPath()));
+    setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
     waitForReadingCompletion();
     myProjectsManager.performScheduledImportInTests();
 
     assertModules("project2");
 
-    myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(p2.getPath()));
+    setIgnoredFilesPathForNextImport(Collections.singletonList(p2.getPath()));
     waitForReadingCompletion();
     myProjectsManager.performScheduledImportInTests();
 
@@ -91,7 +91,7 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
     importProjects(p1, p2);
     assertModules("project1", "project2");
 
-    myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(p1.getPath()));
+    setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
     waitForReadingCompletion();
     myProjectsManager.performScheduledImportInTests();
 

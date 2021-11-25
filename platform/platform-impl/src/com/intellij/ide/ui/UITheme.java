@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.jr.ob.JSON;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +14,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.io.DigestUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -39,6 +38,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.function.Function;
 
@@ -56,14 +56,16 @@ public final class UITheme {
   private String id;
   private String editorScheme;
   private Map<String, Object> ui;
-  private Map<String, Object> icons;
+  private @Nullable Map<String, Object> icons;
   private IconPathPatcher patcher;
   private Map<String, Object> background;
   private Map<String, Object> emptyFrameBackground;
-  private Map<String, Object> colors;
+  private @Nullable Map<String, Object> colors;
+  private @Nullable Map<String, Object> iconColorsOnSelection;
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
   private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
+  private SVGLoader.SvgElementColorPatcherProvider selectionColorPatcher;
 
   private static final String OS_MACOS_KEY = "os.mac";
   private static final String OS_WINDOWS_KEY = "os.windows";
@@ -118,7 +120,7 @@ public final class UITheme {
     return "Temp theme".equals(id);
   }
 
-  // caches classes - must be not extracted to util class
+  // it caches classes - must be not extracted to util class
   private static final NotNullLazyValue<JSON> JSON_READER = NotNullLazyValue.atomicLazy(() -> {
     // .disable(JSON.Feature.PRESERVE_FIELD_ORDERING) - cannot be disabled, for unknown reason order is important
     // for example, button label font color for light theme is not white, but black
@@ -130,119 +132,160 @@ public final class UITheme {
   public static @NotNull UITheme loadFromJson(@NotNull InputStream stream,
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
-                                              @NotNull Function<? super String, String> iconsMapper)
-    throws IllegalStateException, IOException {
-
-    //UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
+                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = JSON_READER.getValue().beanFrom(UITheme.class, stream);
     theme.id = themeId;
+    return loadFromJson(theme, provider, iconsMapper);
+  }
 
+  public static @NotNull UITheme loadFromJson(byte[] data,
+                                              @NotNull @NonNls String themeId,
+                                              @Nullable ClassLoader provider,
+                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
+    UITheme theme = JSON_READER.getValue().beanFrom(UITheme.class, data);
+    theme.id = themeId;
+    return loadFromJson(theme, provider, iconsMapper);
+  }
+
+  private static @NotNull UITheme loadFromJson(@NotNull UITheme theme,
+                                               @Nullable ClassLoader provider,
+                                               @NotNull Function<? super String, String> iconsMapper)
+    throws IllegalStateException {
     if (provider != null) {
       theme.providerClassLoader = provider;
     }
 
     initializeNamedColors(theme);
 
-    if (theme.icons == null || theme.icons.isEmpty()) {
-      return theme;
+    if (theme.iconColorsOnSelection != null && !theme.iconColorsOnSelection.isEmpty()) {
+      Map<String, String> colors = new HashMap<>(theme.iconColorsOnSelection.size());
+      for (Map.Entry<String, Object> entry : theme.iconColorsOnSelection.entrySet()) {
+        colors.put(entry.getKey(), entry.getValue().toString());
+      }
+
+      Map<String, Integer> alpha = new HashMap<>(colors.size());
+      colors.forEach((key, value) -> alpha.put(value, 255));
+      theme.selectionColorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
+        @Override
+        public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
+          return SVGLoader.newPatcher(null, colors, alpha);
+        }
+      };
     }
 
-    theme.patcher = new IconPathPatcher() {
-      @Nullable
-      @Override
-      public String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
-        if (classLoader instanceof PluginAwareClassLoader) {
-          String pluginId = ((PluginAwareClassLoader)classLoader).getPluginId().getIdString();
-          Object icons = theme.icons.get(pluginId);
-          if (icons instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Object pluginIconPath = ((Map<String, Object>)icons).get(path);
-            if (pluginIconPath instanceof String) {
-              return iconsMapper.apply((String)pluginIconPath);
+    if (theme.icons != null && !theme.icons.isEmpty()) {
+      theme.patcher = new IconPathPatcher() {
+        @Nullable
+        @Override
+        public String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+          if (classLoader instanceof PluginAwareClassLoader) {
+            String pluginId = ((PluginAwareClassLoader)classLoader).getPluginId().getIdString();
+            Object icons = theme.icons.get(pluginId);
+            if (icons instanceof Map) {
+              @SuppressWarnings("unchecked")
+              Object pluginIconPath = ((Map<String, Object>)icons).get(path);
+              if (pluginIconPath instanceof String) {
+                return iconsMapper.apply((String)pluginIconPath);
+              }
+            }
+          }
+
+          Object value = theme.icons.get(path);
+          if (value == null && path.charAt(0) != '/') {
+            value = theme.icons.get('/' + path);
+          }
+          return value instanceof String ? iconsMapper.apply((String)value) : null;
+        }
+
+        @Override
+        public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
+          return theme.providerClassLoader;
+        }
+      };
+
+      Object palette = theme.icons.get("ColorPalette");
+      if (palette instanceof Map) {
+
+        @SuppressWarnings("rawtypes")
+        Map colors = (Map)palette;
+        PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
+        for (Object o : colors.keySet()) {
+          String colorKey = o.toString();
+          PaletteScope scope = paletteScopeManager.getScope(colorKey);
+          if (scope == null) {
+            continue;
+          }
+
+          String key = toColorString(colorKey, theme.isDark());
+          Object v = colors.get(colorKey);
+          if (v instanceof String) {
+            String value = (String)v;
+            Object namedColor = theme.colors != null ? theme.colors.get(value) : null;
+            if (namedColor instanceof String) {
+              value = (String)namedColor;
+            }
+            String alpha = null;
+            if (value.length() == 9) {
+              alpha = value.substring(7);
+              value = value.substring(0, 7);
+            }
+            if (ColorUtil.fromHex(key, null) != null && ColorUtil.fromHex(value, null) != null) {
+              scope.newPalette.put(key, value);
+              int fillTransparency = -1;
+              if (alpha != null) {
+                try {
+                  fillTransparency = Integer.parseInt(alpha, 16);
+                }
+                catch (Exception ignore) {
+                }
+              }
+              if (fillTransparency != -1) {
+                scope.alphas.put(value, fillTransparency);
+              }
             }
           }
         }
 
-        Object value = theme.icons.get(path);
-        if (value == null && path.charAt(0) != '/') {
-          value = theme.icons.get('/' + path);
-        }
-        return value instanceof String ? iconsMapper.apply((String)value) : null;
-      }
-
-      @Override
-      public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
-        return theme.providerClassLoader;
-      }
-    };
-
-    Object palette = theme.icons.get("ColorPalette");
-    if (!(palette instanceof Map)) {
-      return theme;
-    }
-
-    @SuppressWarnings("rawtypes")
-    Map colors = (Map)palette;
-    PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
-    for (Object o : colors.keySet()) {
-      String colorKey = o.toString();
-      PaletteScope scope = paletteScopeManager.getScope(colorKey);
-      if (scope == null) {
-        continue;
-      }
-
-      String key = toColorString(colorKey, theme.isDark());
-      Object v = colors.get(colorKey);
-      if (v instanceof String) {
-        String value = (String)v;
-        String alpha = null;
-        if (value.length() == 9) {
-          alpha = value.substring(7);
-          value = value.substring(0, 7);
-        }
-        if (ColorUtil.fromHex(key, null) != null && ColorUtil.fromHex(value, null) != null) {
-          scope.newPalette.put(key, value);
-          int fillTransparency = -1;
-          if (alpha != null) {
-            try {
-              fillTransparency = Integer.parseInt(alpha, 16);
-            }
-            catch (Exception ignore) { }
+        theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
+          @Override
+          public @Nullable SVGLoader.SvgElementColorPatcher forPath(@Nullable String path) {
+            PaletteScope scope = paletteScopeManager.getScopeByPath(path);
+            return scope == null ? null : SVGLoader.newPatcher(scope.digest(), scope.newPalette, scope.alphas);
           }
-          if (fillTransparency != -1) {
-            scope.alphas.put(value, fillTransparency);
-          }
-        }
+        };
       }
     }
-
-    theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
-      @Override
-      public @Nullable SVGLoader.SvgElementColorPatcher forPath(@Nullable String path) {
-        PaletteScope scope = paletteScopeManager.getScopeByPath(path);
-        if (scope == null) {
-          return null;
-        }
-
-        byte[] digest = scope.digest();
-        Map<String, String> newPalette = scope.newPalette;
-        Map<String, Integer> alphas = scope.alphas;
-        return SVGLoader.newPatcher(digest, newPalette, alphas);
-      }
-    };
 
     return theme;
   }
 
   private static void initializeNamedColors(UITheme theme) {
     Map<String, Object> map = theme.colors;
-    if (map == null) return;
+    if (map == null) {
+      return;
+    }
 
     Set<String> namedColors = map.keySet();
     for (String key : namedColors) {
       Object value = map.get(key);
       if (value instanceof String && !((String)value).startsWith("#")) {
         map.put(key, ObjectUtils.notNull(map.get(map.get(key)), Gray.TRANSPARENT));
+      }
+    }
+
+    if (theme.iconColorsOnSelection != null) {
+      HashSet<Map.Entry<String, Object>> entries = new HashSet<>(theme.iconColorsOnSelection.entrySet());
+      theme.iconColorsOnSelection.clear();
+      for (Map.Entry<String, Object> entry : entries) {
+        Object key = entry.getKey();
+        Object value = entry.getValue();
+
+        if (!key.toString().startsWith("#")) key = map.get(key);
+        if (!value.toString().startsWith("#")) value = map.get(value);
+
+        if (key.toString().startsWith("#") & value.toString().startsWith("#")) {
+          theme.iconColorsOnSelection.put(key.toString(), value);
+        }
       }
     }
   }
@@ -363,6 +406,10 @@ public final class UITheme {
 
   public SVGLoader.SvgElementColorPatcherProvider getColorPatcher() {
     return colorPatcher;
+  }
+
+  public SVGLoader.SvgElementColorPatcherProvider getSelectionColorPatcher() {
+    return selectionColorPatcher;
   }
 
   public @NotNull ClassLoader getProviderClassLoader() {
@@ -603,26 +650,36 @@ public final class UITheme {
     final Map<String, String> newPalette = new HashMap<>();
     final Map<String, Integer> alphas = new HashMap<>();
 
-    private byte[] hash = null;
+    private byte[] hash;
 
     byte @NotNull [] digest() {
-      if (hash != null) return hash;
-
-      final Hasher hasher = Hashing.sha256().newHasher();
-      //order is significant
-      for (Map.Entry<String, String> e : new TreeMap<>(newPalette).entrySet()) {
-        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
-        hasher.putString(e.getValue(), StandardCharsets.UTF_8);
+      if (hash != null) {
+        return hash;
       }
-      //order is significant
-      for (Map.Entry<String, Integer> e : new TreeMap<>(alphas).entrySet()) {
-        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
-        final Integer value = e.getValue();
-        if (value != null) {
-          hasher.putInt(value);
+
+      MessageDigest hasher = DigestUtil.sha512();
+      // order is significant
+      if (!newPalette.isEmpty()) {
+        for (Map.Entry<String, String> e : new TreeMap<>(newPalette).entrySet()) {
+          hasher.update(e.getKey().getBytes(StandardCharsets.UTF_8));
+          hasher.update(e.getValue().getBytes(StandardCharsets.UTF_8));
         }
       }
-      hash = hasher.hash().asBytes();
+      if (!alphas.isEmpty()) {
+        // order is significant
+        for (Map.Entry<String, Integer> e : new TreeMap<>(alphas).entrySet()) {
+          hasher.update(e.getKey().getBytes(StandardCharsets.UTF_8));
+          Integer value = e.getValue();
+          if (value != null) {
+            int i = value.intValue();
+            hasher.update((byte)i);
+            hasher.update((byte)(i >>> 8));
+            hasher.update((byte)(i >>> 16));
+            hasher.update((byte)(i >>> 24));
+          }
+        }
+      }
+      hash = hasher.digest();
       return hash;
     }
   }
@@ -679,7 +736,7 @@ public final class UITheme {
   }
 
   @SuppressWarnings("unused")
-  private void setIcons(Map<String, Object> icons) {
+  private void setIcons(@Nullable Map<String, Object> icons) {
     this.icons = icons;
   }
 
@@ -692,15 +749,19 @@ public final class UITheme {
     this.background = background;
   }
 
+  public void setIconColorsOnSelection(@Nullable Map<String, Object> iconColorsOnSelection) {
+    this.iconColorsOnSelection = iconColorsOnSelection;
+  }
+
   public void setEmptyFrameBackground(Map<String, Object> emptyFrameBackground) {
     this.emptyFrameBackground = emptyFrameBackground;
   }
 
-  public Map<String, Object> getColors() {
+  public @Nullable Map<String, Object> getColors() {
     return colors;
   }
 
-  public void setColors(Map<String, Object> colors) {
+  public void setColors(@Nullable Map<String, Object> colors) {
     this.colors = colors;
   }
   //</editor-fold>

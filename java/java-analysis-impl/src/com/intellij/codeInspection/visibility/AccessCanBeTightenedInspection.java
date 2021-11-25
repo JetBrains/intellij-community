@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -35,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(AccessCanBeTightenedInspection.class);
   private final VisibilityInspection myVisibilityInspection;
 
   AccessCanBeTightenedInspection(@NotNull VisibilityInspection visibilityInspection) {
@@ -106,7 +108,9 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         }
       }
 
-      log(member.getName() + ": effective level is '" + PsiUtil.getAccessModifier(suggestedLevel) + "'");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(member.getName() + ": effective level is '" + PsiUtil.getAccessModifier(suggestedLevel) + "'");
+      }
 
       if (suggestedLevel < currentLevel) {
         if (member instanceof PsiClass) {
@@ -139,11 +143,15 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
         if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) {
-          log(member.getName() + " overrides");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(member.getName() + " overrides");
+          }
           return currentLevel; // overrides
         }
         if (MethodUtils.isOverridden(method)) {
-          log(member.getName() + " overridden");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(member.getName() + " overridden");
+          }
           return currentLevel;
         }
       }
@@ -179,12 +187,16 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       boolean entryPoint = myDeadCodeInspection.isEntryPoint(member) ||
                            member instanceof PsiField && (UnusedSymbolUtil.isImplicitWrite((PsiVariable)member) || UnusedSymbolUtil.isImplicitRead((PsiVariable)member));
       if (entryPoint && level <= 0) {
-        log(member.getName() + " is entry point");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(member.getName() + " is entry point");
+        }
         return currentLevel;
       }
 
       final PsiPackage memberPackage = getPackage(memberFile);
-      log(member.getName()+ ": checking effective level for "+member);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(member.getName() + ": checking effective level for " + member);
+      }
 
       int minLevel = Math.max(PsiUtil.ACCESS_LEVEL_PRIVATE, level);
       AtomicInteger maxLevel = new AtomicInteger(minLevel);
@@ -206,7 +218,9 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         });
       }
       if (!foundUsage.get() && !entryPoint) {
-        log(member.getName() + " unused; ignore");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(member.getName() + " unused; ignore");
+        }
         return currentLevel; // do not propose private for unused method
       }
 
@@ -217,7 +231,9 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       }
 
       String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
-      log(member.getName() + ": effective level is '" + suggestedModifier + "'");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(member.getName() + ": effective level is '" + suggestedModifier + "'");
+      }
 
       return suggestedLevel;
     }
@@ -232,13 +248,17 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
                                 @NotNull AtomicBoolean foundUsage) {
       foundUsage.set(true);
       if (!(psiFile instanceof PsiJavaFile)) {
-        log("     refd from " + psiFile.getName() + "; set to public");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("     refd from " + psiFile.getName() + "; set to public");
+        }
         maxLevel.set(PsiUtil.ACCESS_LEVEL_PUBLIC);
         return false; // referenced from XML, has to be public
       }
       @PsiUtil.AccessLevel
       int level = getEffectiveLevel(element, psiFile, member, memberClass, memberPackage);
-      log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
+      }
       maxLevel.getAndAccumulate(level, Math::max);
 
       return level != PsiUtil.ACCESS_LEVEL_PUBLIC;
@@ -348,7 +368,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       qualifier = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
     }
 
-    return qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression ? null : qualifier;
+    return qualifier instanceof PsiQualifiedExpression ? null : qualifier;
   }
 
   private static boolean isInnerClass(@NotNull PsiClass memberClass) {
@@ -385,9 +405,5 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
                 ? myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES
                 : myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS;
     return suggestPackageLocal ? PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL : PsiUtil.ACCESS_LEVEL_PUBLIC;
-  }
-
-  private static void log(String s) {
-    //System.out.println(s);
   }
 }

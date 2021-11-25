@@ -34,6 +34,7 @@ class KotlinModuleBuilder(
     override fun getDescription() = builderDescription
     override fun getNodeIcon() = icon
     override fun getGroupName() = KotlinTemplatesFactory.KOTLIN_GROUP_NAME
+    override fun getWeight() = KOTLIN_WEIGHT
 
     override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<out ModuleWizardStep>? {
         return ModuleWizardStep.EMPTY_ARRAY

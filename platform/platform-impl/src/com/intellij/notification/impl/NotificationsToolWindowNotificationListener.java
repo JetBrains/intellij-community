@@ -24,7 +24,7 @@ public class NotificationsToolWindowNotificationListener implements Notification
 
   @Override
   public void notify(@NotNull Notification notification) {
-    if (Registry.is("ide.notification.action.center", false)) {
+    if (Registry.is("ide.notification.action.center", false) && notification.canShowFor(myProject)) {
       NotificationsToolWindowKt.addNotification(myProject, notification);
     }
   }

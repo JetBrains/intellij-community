@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import groovy.transform.CompileStatic
 import org.apache.tools.tar.TarEntry
 import org.apache.tools.tar.TarInputStream
 import org.jetbrains.annotations.Nullable
@@ -11,9 +12,10 @@ import java.nio.file.Path
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipFile
 
+@CompileStatic
 final class ArchiveUtils {
-  static boolean archiveContainsEntry(String archivePath, String entryPath) {
-    File archiveFile = new File(archivePath)
+  static boolean archiveContainsEntry(Path archivePath, String entryPath) {
+    File archiveFile = archivePath.toFile()
     String fileName = archiveFile.name
     if (isZipFile(fileName)) {
       return new ZipFile(archiveFile).withCloseable {
@@ -22,8 +24,8 @@ final class ArchiveUtils {
     }
 
     if (fileName.endsWith(".tar.gz")) {
-      return archiveFile.withInputStream {
-        TarInputStream inputStream = new TarInputStream(new GZIPInputStream(it))
+      return Files.newInputStream(archivePath).withCloseable {
+        TarInputStream inputStream = new TarInputStream(new GZIPInputStream(it, 32 * 1024))
         TarEntry entry
         String altEntryPath = "./$entryPath"
         while (null != (entry = inputStream.nextEntry)) {
@@ -70,6 +72,6 @@ final class ArchiveUtils {
   }
 
   private static boolean isZipFile(String fileName) {
-    fileName.endsWith(".zip") || fileName.endsWith(".jar")
+    return fileName.endsWith(".zip") || fileName.endsWith(".jar")
   }
 }

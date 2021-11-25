@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -256,13 +257,17 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   public void setInitialized(final boolean initialized) {
+    setFlag(initialized, IS_INITIALIZED_MASK);
     if (initialized) {
       myInitSignal.countDown();
     }
-    setFlag(initialized, IS_INITIALIZED_MASK);
   }
 
-  public void waitForInitialized() {
+  @Override
+  public final void waitForInitialized() {
+    if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
+      return;
+    }
     try {
       myInitSignal.await();
     }

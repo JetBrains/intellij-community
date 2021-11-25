@@ -55,7 +55,6 @@
       "foreground": "#BBBBBB"
     },
 
-    "BookmarkIcon.background": "#AA8542",
     "Borders.ContrastBorderColor": "#323232",
 
     "Button": {
@@ -247,10 +246,13 @@
       "maxGutterIconWidth": 18
     },
 
-    "BookmarkMnemonicIcon": {
-      "background": "#5B5341",
-      "borderColor": "#D9A343",
-      "foreground": "#BBBBBB"
+    "Bookmark": {
+      "iconBackground": "#AA8542",
+      "Mnemonic": {
+        "iconForeground": "#BBBBBB",
+        "iconBackground": "#5B5341",
+        "iconBorderColor": "#D9A343"
+      }
     },
 
     "NavBar.borderColor": "#515151",
@@ -507,6 +509,8 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
+    "TitlePane.Button.preferredSize": "47,28",
+
     "activeCaption": "#434E60",
     "control": "#3c3f41",
     "controlText": "#bbbbbb",
@@ -521,5 +525,28 @@
   },
 
   "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
-  "WelcomeScreen.Projects.actions.background": "#3C5C86"
+  "WelcomeScreen.Projects.actions.background": "#3C5C86",
+
+  "iconColorsOnSelection": {
+    "#5e5e5e": "#5778ad",
+    "#c75450": "#a95768",
+    "#6e6e6e": "#afb1b3",
+    "#f26522b3": "#bc6b43",
+    "#f2652299": "#bc6b43",
+    "#62b54399": "#579b41",
+    "#f98b9e99": "#ba7481",
+    "#f4af3d99": "#aa823f",
+    "#b99bf899": "#977fca",
+    "#9aa7b0cc": "#97acc6",
+    "#9aa7b099": "#97acc6"
+  },
+
+  "MainToolbar": {
+    "icon": {
+      "borderInsets": "10,10,10,10"
+    },
+    "dropdown": {
+      "borderInsets": "12,6,12,6"
+    }
+  }
 }

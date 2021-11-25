@@ -527,11 +527,14 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
           myExecutor.submit(() -> {
             stopDumping();
 
+            long durationMs = getDuration(taskStop, TimeUnit.MILLISECONDS);
             IdePerformanceListener publisher = getPublisher();
             if (publisher != null) {
-              long durationMs = getDuration(taskStop, TimeUnit.MILLISECONDS);
-              publisher.uiFreezeFinished(durationMs,
-                                         findReportDirectory(durationMs));
+              publisher.uiFreezeFinished(durationMs, new File(myLogDir, myFreezeFolder));
+            }
+            File reportDir = postProcessReportFolder(durationMs);
+            if (publisher != null) {
+              publisher.uiFreezeRecorded(durationMs, reportDir);
             }
           }).get();
         }
@@ -585,7 +588,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
       }
     }
 
-    private @Nullable File findReportDirectory(long durationMs) {
+    private @Nullable File postProcessReportFolder(long durationMs) {
       File dir = new File(myLogDir, myFreezeFolder);
       File reportDir = null;
       if (dir.exists()) {

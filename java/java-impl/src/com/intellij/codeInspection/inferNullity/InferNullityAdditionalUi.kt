@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.inferNullity
 
 import com.intellij.java.JavaBundle
-import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JCheckBox
 
@@ -11,7 +10,7 @@ class InferNullityAdditionalUi {
   val panel = panel {
     row {
       checkBox = checkBox(JavaBundle.message("checkbox.annotate.local.variables")).component
-    }.topGap(TopGap.MEDIUM)
+    }
   }
 
 }

@@ -190,7 +190,16 @@ public final class TreeUtil {
    */
   @NotNull
   public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends T> mapper) {
-    return collectVisibleRows(tree, tree::isExpanded, mapper);
+    int count = tree.getRowCount();
+    if (count == 0) return Collections.emptyList(); // tree is empty
+    List<T> list = new ArrayList<>();
+    for (int row = 0; row < count; row++) {
+      if (tree.isExpanded(row)) {
+        TreePath path = getVisiblePathWithValidation(tree, row, count);
+        ContainerUtil.addIfNotNull(list, mapper.apply(path));
+      }
+    }
+    return list;
   }
 
   @Nullable
@@ -241,8 +250,24 @@ public final class TreeUtil {
    */
   @NotNull
   public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<? super TreePath, ? extends T> mapper) {
-    if (!tree.isVisible(root)) return Collections.emptyList(); // invisible path should not be expanded
-    return collectVisibleRows(tree, path -> tree.isExpanded(path) && root.isDescendant(path), mapper);
+    int count = tree.getRowCount();
+    if (count == 0) return Collections.emptyList(); // tree is empty
+    int row = tree.getRowForPath(root);
+    if (row < 0) {
+      return !tree.isRootVisible() && root.equals(getVisiblePathWithValidation(tree, 0, count).getParentPath())
+             ? collectExpandedObjects(tree, mapper) // collect expanded objects under a hidden root
+             : Collections.emptyList(); // root path is not visible
+    }
+    if (!tree.isExpanded(row)) return Collections.emptyList(); // root path is not expanded
+    List<T> list = new ArrayList<>(count);
+    ContainerUtil.addIfNotNull(list, mapper.apply(root));
+    int depth = root.getPathCount();
+    for (row++; row < count; row++) {
+      TreePath path = getVisiblePathWithValidation(tree, row, count);
+      if (depth >= path.getPathCount()) break; // not a descendant of a root path
+      if (tree.isExpanded(row)) ContainerUtil.addIfNotNull(list, mapper.apply(path));
+    }
+    return list;
   }
 
   /**
@@ -1880,13 +1905,7 @@ public final class TreeUtil {
     TreePath parent = null;
     int count = tree.getRowCount();
     for (int row = 0; row < count; row++) {
-      if (count != tree.getRowCount()) {
-        throw new ConcurrentModificationException("tree is modified");
-      }
-      TreePath path = tree.getPathForRow(row);
-      if (path == null) {
-        throw new NullPointerException("path is not found at row " + row);
-      }
+      TreePath path = getVisiblePathWithValidation(tree, row, count);
       if (parent == null || !parent.isDescendant(path)) {
         switch (visitor.visit(path)) {
           case INTERRUPT:
@@ -1923,28 +1942,11 @@ public final class TreeUtil {
   }
 
   /**
-   * @param tree   a tree, which visible paths are processed
-   * @param filter a predicate to filter visible tree paths
-   * @param mapper a function to convert a visible tree path to a corresponding object
-   * @return a list of objects which correspond to filtered visible paths
-   */
-  @NotNull
-  private static <T> List<T> collectVisibleRows(@NotNull JTree tree,
-                                                @NotNull Predicate<? super TreePath> filter,
-                                                @NotNull Function<? super TreePath, ? extends T> mapper) {
-    int count = tree.getRowCount();
-    if (count == 0) return Collections.emptyList();
-    List<T> list = new ArrayList<>(count);
-    visitVisibleRows(tree, path -> filter.test(path) ? mapper.apply(path) : null, list::add);
-    return list;
-  }
-
-  /**
    * @param tree a tree, which nodes should be iterated
    * @param lead a starting tree path
    * @return next tree path with the same parent, or {@code null} if it is not found
    */
-  public static @Nullable TreePath nextVisibleSibling(@NotNull JTree tree, TreePath lead) {
+  public static @Nullable TreePath nextVisibleSibling(@NotNull JTree tree, @Nullable TreePath lead) {
     TreePath parent = lead == null ? null : lead.getParentPath();
     return parent == null ? null : nextVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
   }
@@ -1998,7 +2000,7 @@ public final class TreeUtil {
    * @param lead a starting tree path
    * @return previous tree path with the same parent, or {@code null} if it is not found
    */
-  public static @Nullable TreePath previousVisibleSibling(@NotNull JTree tree, TreePath lead) {
+  public static @Nullable TreePath previousVisibleSibling(@NotNull JTree tree, @Nullable TreePath lead) {
     TreePath parent = lead == null ? null : lead.getParentPath();
     return parent == null ? null : previousVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
   }
@@ -2055,5 +2057,18 @@ public final class TreeUtil {
     if (!Registry.is("ide.tree.ui.cyclic.scrolling.allowed")) return false;
     UISettings settings = UISettings.getInstanceOrNull();
     return settings != null && settings.getCycleScrolling();
+  }
+
+  /**
+   * @param tree  a tree, which paths should be requested
+   * @param row   an index of a visible tree path
+   * @param count an expected amount of visible tree paths
+   * @return a requested tree path
+   */
+  private static @NotNull TreePath getVisiblePathWithValidation(@NotNull JTree tree, int row, int count) {
+    if (count != tree.getRowCount()) throw new ConcurrentModificationException("tree is modified");
+    TreePath path = tree.getPathForRow(row);
+    if (path == null) throw new NullPointerException("path is not found at row " + row);
+    return path;
   }
 }

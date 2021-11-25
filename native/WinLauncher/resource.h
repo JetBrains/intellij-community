@@ -24,4 +24,5 @@
 #define IDS_VM_OPTIONS                  129
 #define IDB_BITMAP1                     130
 #define IDB_SPLASH                      130
+#define IDS_BOOTCLASSPATH_LIBS          131
 #define IDC_STATIC                      -1

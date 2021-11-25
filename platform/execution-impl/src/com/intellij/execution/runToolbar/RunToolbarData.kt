@@ -8,26 +8,30 @@ import com.intellij.execution.impl.ProjectRunConfigurationConfigurable
 import com.intellij.execution.impl.RunConfigurable
 import com.intellij.execution.impl.SingleConfigurationConfigurable
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 interface RunToolbarData {
   companion object {
-    var RUN_TOOLBAR_DATA_KEY: DataKey<RunToolbarData> = DataKey.create("RUN_TOOLBAR_DATA_KEY")
-    var RUN_TOOLBAR_POPUP_STATE_KEY: DataKey<Boolean> = DataKey.create("RUN_TOOLBAR_POPUP_STATE_KEY")
-    var RUN_TOOLBAR_MAIN_STATE: DataKey<RunToolbarMainSlotState> = DataKey.create("RUN_TOOLBAR_MAIN_STATE")
+    @JvmField val RUN_TOOLBAR_DATA_KEY: DataKey<RunToolbarData> = DataKey.create("RUN_TOOLBAR_DATA_KEY")
+    @JvmField val RUN_TOOLBAR_POPUP_STATE_KEY: DataKey<Boolean> = DataKey.create("RUN_TOOLBAR_POPUP_STATE_KEY")
+    @JvmField val RUN_TOOLBAR_MAIN_STATE: DataKey<RunToolbarMainSlotState> = DataKey.create("RUN_TOOLBAR_MAIN_STATE")
+
+    @ApiStatus.Internal
+    @JvmField val RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY = Key<Boolean>("RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY")
 
     internal fun prepareDescription(@Nls text: String, @Nls description: String): @Nls String {
       return HtmlBuilder().append(text)
@@ -43,7 +47,15 @@ interface RunToolbarData {
   val id: String
   var configuration: RunnerAndConfigurationSettings?
   val environment: ExecutionEnvironment?
-  val waitingForProcess: MutableSet<String>
+  val waitingForAProcesses: WaitingForAProcesses
+
+  fun clear()
+}
+
+internal fun RunContentDescriptor.environment(): ExecutionEnvironment? {
+  return this.attachedContent?.component?.let {
+    ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(it))
+  }
 }
 
 internal fun AnActionEvent.runToolbarData(): RunToolbarData? {
@@ -70,22 +82,20 @@ internal fun AnActionEvent.isActiveProcess(): Boolean {
   return this.environment() != null
 }
 
-internal fun AnActionEvent.addWaitingForAProcess(executorId: String) {
-  runToolbarData()?.waitingForProcess?.add(executorId)
+internal fun RunToolbarData.startWaitingForAProcess(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
+  RunToolbarSlotManager.getInstance(project).startWaitingForAProcess(this, settings, executorId)
 }
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {
-  this.dataContext.setConfiguration(value)
+  this.runToolbarData()?.configuration = value
 }
 
 internal fun DataContext.setConfiguration(value: RunnerAndConfigurationSettings?) {
-  val runToolbarData = runToolbarData()
-  runToolbarData?.configuration = value
+  runToolbarData()?.configuration = value
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
-  val runToolbarData = runToolbarData()
-  return runToolbarData?.environment?.runnerAndConfigurationSettings ?: runToolbarData?.configuration
+  return runToolbarData()?.configuration
 }
 
 internal fun AnActionEvent.arrowIcon(): Icon? {

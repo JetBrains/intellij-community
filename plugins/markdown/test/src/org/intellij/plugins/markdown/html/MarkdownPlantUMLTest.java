@@ -10,8 +10,8 @@ import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider;
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles;
 import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider;
+import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLJarManager;
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
-import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 
@@ -48,6 +48,7 @@ public class MarkdownPlantUMLTest extends BasePlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      PlantUMLJarManager.getInstance().dropCache();
       myFixture.tearDown();
     }
     catch (Throwable e) {

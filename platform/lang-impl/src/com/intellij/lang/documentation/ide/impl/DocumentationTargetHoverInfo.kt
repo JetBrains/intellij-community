@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.DocumentationHoverInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.PopupBridge
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.progress.runSuspendingAction
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -30,7 +30,7 @@ import javax.swing.JComponent
 
 internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, hostOffset: Int): DocumentationHoverInfo? {
   ApplicationManager.getApplication().assertIsNonDispatchThread()
-  return runSuspendingAction {
+  return runBlockingCancellable {
     val request = readAction {
       val targets = injectedThenHost(
         project, hostEditor, hostOffset,
@@ -39,13 +39,13 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
       targets?.singleOrNull()?.documentationRequest()
     }
     if (request == null) {
-      return@runSuspendingAction null
+      return@runBlockingCancellable null
     }
     val preview = withContext(Dispatchers.EDT) {
-      DocumentationToolWindowManager.instance(project).updateVisiblePreview(request)
+      DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(request)
     }
     if (preview) {
-      return@runSuspendingAction null
+      return@runBlockingCancellable null
     }
     val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, request)
     withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
@@ -61,13 +61,24 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
 private fun <X : Any> injectedThenHost(project: Project, hostEditor: Editor, hostOffset: Int, f: (Editor, PsiFile, Int) -> X?): X? {
   val hostFile = PsiUtilBase.getPsiFileInEditor(hostEditor, project)
                  ?: return null
-  val injectedLeaf = InjectedLanguageManager.getInstance(project).findInjectedElementAt(hostFile, hostOffset)
-                     ?: return f(hostEditor, hostFile, hostOffset)
-  val injectedFile = injectedLeaf.containingFile
-  val injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile)
-  val injectedOffset = (injectedEditor as EditorWindow).document.hostToInjected(hostOffset)
-  return f(injectedEditor, injectedFile, injectedOffset)
+  return tryInjected(project, hostFile, hostEditor, hostOffset, f)
          ?: f(hostEditor, hostFile, hostOffset)
+}
+
+private fun <X : Any> tryInjected(
+  project: Project,
+  hostFile: PsiFile,
+  hostEditor: Editor,
+  hostOffset: Int,
+  f: (Editor, PsiFile, Int) -> X?
+): X? {
+  val injectedLeaf = InjectedLanguageManager.getInstance(project).findInjectedElementAt(hostFile, hostOffset)
+                     ?: return null
+  val injectedFile = injectedLeaf.containingFile
+  val injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile) as? EditorWindow
+                       ?: return null
+  val injectedOffset = injectedEditor.document.hostToInjected(hostOffset)
+  return f(injectedEditor, injectedFile, injectedOffset)
 }
 
 private class DocumentationTargetHoverInfo(

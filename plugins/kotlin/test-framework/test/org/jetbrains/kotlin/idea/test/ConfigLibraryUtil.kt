@@ -170,7 +170,7 @@ object ConfigLibraryUtil {
                             }
                             modifiableModel.commit()
 
-                            model.moduleLibraryTable.removeLibrary(library)
+                            model.removeOrderEntry(orderEntry)
 
                             removed = true
                             break

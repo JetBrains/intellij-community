@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analyzer.*
@@ -56,6 +55,7 @@ import org.jetbrains.kotlin.resolve.jvm.TopPackageNamesProvider
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addIfNotNull
+import java.util.concurrent.ConcurrentHashMap
 
 internal val LOG = Logger.getInstance(IdeaModuleInfo::class.java)
 
@@ -74,7 +74,7 @@ interface IdeaModuleInfo : org.jetbrains.kotlin.idea.caches.resolve.IdeaModuleIn
 }
 
 private val Project.libraryInfoCache: MutableMap<Library, List<LibraryInfo>>
-    get() = cacheInvalidatingOnRootModifications { ContainerUtil.createConcurrentWeakMap() }
+    get() = cacheInvalidatingOnRootModifications { ConcurrentHashMap<Library, List<LibraryInfo>>() }
 
 fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> =
     project.libraryInfoCache.getOrPut(library) {
@@ -271,8 +271,10 @@ abstract class LibraryInfo(override val project: Project, val library: Library) 
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = platform.findAnalyzerServices(project)
 
+    private val _sourcesModuleInfo: SourceForBinaryModuleInfo by lazy { LibrarySourceInfo(project, library, this) }
+
     override val sourcesModuleInfo: SourceForBinaryModuleInfo
-        get() = LibrarySourceInfo(project, library, this)
+        get() = _sourcesModuleInfo
 
     override fun getLibraryRoots(): Collection<String> =
         library.getFiles(OrderRootType.CLASSES).mapNotNull(PathUtil::getLocalPath)

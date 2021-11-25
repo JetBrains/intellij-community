@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.ide.file.BatchFileChangeListener
-import com.intellij.ide.impl.getTrustedState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -17,7 +16,6 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Modification
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -27,7 +25,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.LocalTimeCounter.currentTime
-import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import org.jetbrains.annotations.TestOnly
@@ -61,16 +58,16 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     }
 
   private fun createProjectReloadListener(projectData: ProjectData) =
-    object : ExternalSystemProjectRefreshListener {
+    object : ExternalSystemProjectListener {
       val id = "ProjectTracker: ${projectData.projectAware.projectId.debugName}"
 
-      override fun beforeProjectRefresh() {
+      override fun onProjectReloadStart() {
         projectReloadOperation.startTask(id)
         projectData.status.markSynchronized(currentTime())
         projectData.isActivated = true
       }
 
-      override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
+      override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
         if (status != SUCCESS) projectData.status.markBroken(currentTime())
         projectReloadOperation.finishTask(id)
       }
@@ -138,10 +135,6 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
       return
     }
 
-    val systemIds = projectsToReload.map { it.projectAware.projectId.systemId }
-    val isFirstLoad = ThreeState.UNSURE == project.getTrustedState()
-    ExternalSystemUtil.confirmLoadingUntrustedProject(project, isFirstLoad, systemIds)
-
     for (projectData in projectsToReload) {
       LOG.debug("${projectData.projectAware.projectId.debugName}: Project reload")
       val hasUndefinedModifications = !projectData.status.isUpToDate()
@@ -155,7 +148,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     LOG.debug("Notification status update")
 
     val isDisabledAutoReload = isDisabledAutoReload()
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     for ((projectId, data) in projectDataMap) {
       when (isDisabledAutoReload || data.isUpToDate()) {
         true -> notificationAware.notificationExpire(projectId)
@@ -188,7 +181,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     val parentDisposable = Disposer.newDisposable(projectIdName)
     val settingsTracker = ProjectSettingsTracker(project, this, backgroundExecutor, projectAware, parentDisposable)
     val projectData = ProjectData(projectStatus, activationProperty, projectAware, settingsTracker, parentDisposable)
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
 
     projectDataMap[projectId] = projectData
 
@@ -290,7 +283,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   }
 
   init {
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     projectReloadOperation.beforeOperation { LOG.debug("Project reload started") }
     projectReloadOperation.beforeOperation { notificationAware.notificationExpire() }
     projectReloadOperation.afterOperation { scheduleChangeProcessing() }

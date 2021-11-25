@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
@@ -13,6 +14,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.ResourceUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.xmlb.SerializationFilter
 
 class NewInlayProviderSettingsModel<T : Any>(
@@ -27,8 +29,8 @@ class NewInlayProviderSettingsModel<T : Any>(
     get() = providerWithSettings.provider.name
   override val mainCheckBoxLabel: String
     get() = providerWithSettings.configurable.mainCheckboxText
-  override val groupId: String
-    get() = providerWithSettings.provider.groupId
+  override val group: InlayGroup
+    get() = providerWithSettings.provider.group
 
   override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
     providerWithSettings.provider.createFile(project, fileType, document)
@@ -39,12 +41,14 @@ class NewInlayProviderSettingsModel<T : Any>(
   override val component by lazy {
     providerWithSettings.configurable.createComponent(onChangeListener!!)
   }
-  override fun collectAndApply(editor: Editor, file: PsiFile) {
-    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApply(editor, file, isEnabled)
-  }
 
-  override fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) {
-    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApplyOnEdt(editor, file, isEnabled)
+  override fun collectAndApply(editor: Editor, file: PsiFile) {
+    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.let { collectorWrapperFor ->
+      ReadAction.nonBlocking {
+        collectorWrapperFor.collectTraversingAndApplyOnEdt(editor, file, isEnabled)
+      }.inSmartMode(file.project)
+        .submit(AppExecutorUtil.getAppExecutorService())
+    }
   }
 
   override val cases: List<ImmediateConfigurable.Case>

@@ -414,7 +414,9 @@
     <keyboard-shortcut first-keystroke="shift ctrl h" />
   </action>
   <action id="Rerun" />
-  <action id="Resume" />
+  <action id="Resume">
+    <keyboard-shortcut first-keystroke="f5"/>
+  </action>
   <action id="RevealIn">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="r" />
   </action>
@@ -470,6 +472,7 @@
     <keyboard-shortcut first-keystroke="f2" />
   </action>
   <action id="ShowBookmarks" />
+  <action id="ShowTypeBookmarks"/>
   <action id="ShowContent" />
   <action id="ShowIntentionActions">
     <keyboard-shortcut first-keystroke="ctrl period" />

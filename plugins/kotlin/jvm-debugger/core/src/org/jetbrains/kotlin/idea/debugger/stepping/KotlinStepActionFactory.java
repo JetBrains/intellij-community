@@ -21,7 +21,7 @@ public class KotlinStepActionFactory {
             DebugProcessImpl debugProcess,
             SuspendContextImpl suspendContext,
             boolean ignoreBreakpoints,
-            KotlinMethodFilter methodFilter
+            @NotNull KotlinMethodFilter methodFilter
     ) {
         return debugProcess.new StepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, StepRequest.STEP_LINE) {
             @Override
@@ -38,6 +38,23 @@ public class KotlinStepActionFactory {
                 } catch (EvaluateException e) {
                     LOG.info(e);
                 }
+                return hint;
+            }
+        };
+    }
+
+    @NotNull
+    public static DebugProcessImpl.StepIntoCommand createKotlinStepIntoCommand(
+            DebugProcessImpl debugProcess,
+            SuspendContextImpl suspendContext,
+            boolean ignoreBreakpoints,
+            @Nullable MethodFilter methodFilter
+    ) {
+        return debugProcess.new StepIntoCommand(suspendContext, ignoreBreakpoints, methodFilter, StepRequest.STEP_LINE) {
+            @Override
+            public @NotNull RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
+                KotlinStepIntoRequestHint hint = new KotlinStepIntoRequestHint(stepThread, suspendContext, methodFilter, parentHint);
+                hint.setResetIgnoreFilters(myMethodFilter != null && !debugProcess.getSession().shouldIgnoreSteppingFilters());
                 return hint;
             }
         };

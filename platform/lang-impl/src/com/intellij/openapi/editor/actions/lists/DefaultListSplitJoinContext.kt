@@ -39,7 +39,7 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
    * foo(a,
    *     b)
    * </code>
-   * vs 
+   * vs
    * <code>
    * foo(
    *     a,
@@ -107,7 +107,7 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
       replacements.add(textRange to "\n")
       hasInnerReplacement = true
     }
-    
+
     //don't split if there are no nested elements for splitting
     if (!hasInnerReplacement) return emptyList()
 
@@ -228,8 +228,42 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
 
   private fun validateRange(data: ListWithElements): Boolean {
     val elements = data.elements.toSet()
-    return extractRange(data).all { elements.contains(it) || isSeparator(it) || isValidIntermediateElement(data, it) }
+    return extractRange(data).all { elements.contains(it) || isSeparator(it) || isValidIntermediateElement(data, it) } &&
+           validateHeadElement(data, data.elements.first()) &&
+           validateTailElement(data, data.elements.last())
   }
+
+  protected open fun validateHeadElement(data: ListWithElements, head: PsiElement): Boolean =
+    validateHeadOrTail(data, head, false)
+
+  protected open fun validateTailElement(data: ListWithElements, tail: PsiElement): Boolean =
+    validateHeadOrTail(data, tail, true)
+
+  /**
+   * Reject split/join if before head / after tail there is an unsupported comment 
+   */
+  private fun validateHeadOrTail(data: ListWithElements, element: PsiElement, next: Boolean): Boolean {
+    var current = when (next) {
+      true -> element.nextSibling
+      false -> element.prevSibling
+    }
+    while (current != null) {
+      if (current is PsiComment) {
+        if (!isValidIntermediateElement(data, current)) return false
+      }
+      else if (current !is PsiWhiteSpace) {
+        break
+      }
+      
+      current = when (next) {
+        true -> current.nextSibling
+        false -> current.prevSibling
+      }
+    }
+
+    return true
+  }
+
 
   private fun extractRange(data: ListWithElements): List<PsiElement> {
     val mutableList = mutableListOf<PsiElement>()
@@ -283,7 +317,7 @@ abstract class CommaListSplitJoinContext : DefaultListSplitJoinContext() {
 
   override fun getSplitText(data: ListWithElements): String = CodeInsightBundle.message("intention.name.split.comma.values")
   override fun getJoinText(data: ListWithElements): String = CodeInsightBundle.message("intention.name.join.comma.values")
-  
+
   private fun addOrRemoveTrailingComma(data: ListWithElements,
                                        replacements: MutableList<Pair<TextRange, String>>,
                                        split: JoinOrSplit,

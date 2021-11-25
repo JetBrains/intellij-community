@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ValueKey;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -150,12 +149,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getColumnModel().setColumnSelectionAllowed(false);
 
     ScrollingUtil.installActions(this, false);
-    new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), this) {
-      @Override
-      protected boolean isSpeedSearchEnabled() {
-        return VcsLogGraphTable.this.isSpeedSearchEnabled() && super.isSpeedSearchEnabled();
-      }
-    };
   }
 
   public @NotNull @NonNls String getId() {
@@ -170,10 +163,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     TableColumnModel columnModel = new MyTableColumnModel(myProperties);
     setColumnModel(columnModel);
     setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
-  }
-
-  protected boolean isSpeedSearchEnabled() {
-    return Registry.is("vcs.log.speedsearch");
   }
 
   protected void updateEmptyText() {
@@ -237,20 +226,24 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
-    updateOrder(myProperties, ContainerUtil.map(getVisibleColumns(), it ->
-      VcsLogColumnManager.getInstance().getColumn(it)
-    ));
+    updateOrder(myProperties, getVisibleColumns());
     return null;
   }
 
   @NotNull
-  private List<Integer> getVisibleColumns() {
+  private List<Integer> getVisibleColumnIndices() {
     List<Integer> columnOrder = new ArrayList<>();
 
     for (int i = 0; i < getVisibleColumnCount(); i++) {
       columnOrder.add(getColumnModel().getColumn(i).getModelIndex());
     }
     return columnOrder;
+  }
+
+  @NotNull
+  public List<VcsLogColumn<?>> getVisibleColumns() {
+    return ContainerUtil.map2List(getVisibleColumnIndices(),
+                                  columnModelIndex -> VcsLogColumnManager.getInstance().getColumn(columnModelIndex));
   }
 
   private int getVisibleColumnCount() {
@@ -534,7 +527,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public void performCopy(@NotNull DataContext dataContext) {
     StringBuilder sb = new StringBuilder();
 
-    List<Integer> visibleColumns = getVisibleColumns();
+    List<Integer> visibleColumns = getVisibleColumnIndices();
     int[] selectedRows = getSelectedRows();
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];

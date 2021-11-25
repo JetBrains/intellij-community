@@ -843,6 +843,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return true;
   }
 
+  @Override
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId,
+                                    @NotNull Processor<? super K> processor,
+                                    @NotNull GlobalSearchScope scope,
+                                    @Nullable IdFilter idFilter) {
+    Boolean scanResult = FileBasedIndexScanUtil.processAllKeys(indexId, processor, scope, idFilter);
+    if (scanResult != null) return scanResult;
+    return super.processAllKeys(indexId, processor, scope, idFilter);
+  }
+
   private boolean areUnsavedDocumentsIndexed(@NotNull ID<?, ?> indexId) {
     return myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId);
   }
@@ -1123,6 +1133,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     return super.getFileData(id, virtualFile, project);
+  }
+
+  @Override
+  protected <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
+                                                @NotNull K dataKey,
+                                                boolean ensureValueProcessedOnce,
+                                                @NotNull GlobalSearchScope scope,
+                                                @Nullable IdFilter idFilter,
+                                                @NotNull ValueProcessor<? super V> processor) {
+    Boolean scanResult = FileBasedIndexScanUtil.processValuesInScope(indexId, dataKey, ensureValueProcessedOnce, scope, idFilter, processor);
+    if (scanResult != null) return scanResult;
+    return super.processValuesInScope(indexId, dataKey, ensureValueProcessedOnce, scope, idFilter, processor);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -1517,7 +1539,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       myIndexableFilesFilterHolder.addFileId(inputId, () -> getContainingProjects(file));
     }
 
-    if (currentFC instanceof FileContentImpl && FileBasedIndex.ourSnapshotMappingsEnabled) {
+    if (currentFC instanceof FileContentImpl &&
+        FileBasedIndex.ourSnapshotMappingsEnabled &&
+        (((FileBasedIndexExtension<?, ?>)index.getExtension()).hasSnapshotMapping() ||
+        ((FileBasedIndexExtension<?, ?>)index.getExtension()).canBeShared())) {
       // Optimization: initialize indexed file hash eagerly. The hash is calculated by raw content bytes.
       // If we pass the currentFC to an indexer that calls "FileContentImpl.getContentAsText",
       // the raw bytes will be converted to text and assigned to null.
@@ -1611,7 +1636,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  private static void markFileIndexed(@Nullable VirtualFile file,
+  public static void markFileIndexed(@Nullable VirtualFile file,
                                       @Nullable FileContent fc) {
     // TODO restore original assertion
     if (fc != null && (ourIndexedFile.get() != null || ourFileToBeIndexed.get() != null)) {
@@ -1620,7 +1645,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ourIndexedFile.set(file);
   }
 
-  private static void unmarkBeingIndexed() {
+  public static void unmarkBeingIndexed() {
     ourIndexedFile.remove();
   }
 

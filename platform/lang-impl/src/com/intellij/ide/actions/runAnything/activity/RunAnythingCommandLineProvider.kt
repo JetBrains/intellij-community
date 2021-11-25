@@ -3,9 +3,7 @@ package com.intellij.ide.actions.runAnything.activity
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.util.execution.ParametersListUtil
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 abstract class RunAnythingCommandLineProvider : RunAnythingNotifiableProvider<String>() {
 
   open fun getHelpCommandAliases(): List<String> = emptyList()
@@ -20,8 +18,13 @@ abstract class RunAnythingCommandLineProvider : RunAnythingNotifiableProvider<St
 
   private fun getHelpCommands() = listOf(helpCommand) + getHelpCommandAliases()
 
-  override fun findMatchingValue(dataContext: DataContext, pattern: String) =
-    if (extractLeadingHelpPrefix(pattern) != null) getCommand(pattern) else null
+  override fun findMatchingValue(dataContext: DataContext, pattern: String): String? {
+    val (helpCommand, _) = extractLeadingHelpPrefix(pattern) ?: return null
+    if (pattern.startsWith(helpCommand)) {
+      return getCommand(pattern)
+    }
+    return null
+  }
 
   private fun extractLeadingHelpPrefix(commandLine: String): Pair<String, String>? {
     for (helpCommand in getHelpCommands()) {

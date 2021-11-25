@@ -17,32 +17,23 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.jcef.JBCefApp
-import com.intellij.ui.paint.PaintUtil
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.IconUtil
-import com.intellij.util.ui.ImageUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
-import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
+import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
-import java.awt.image.BufferedImage
-import java.io.ByteArrayOutputStream
-import javax.imageio.ImageIO
-import javax.swing.Icon
 
 internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
                                       private val provider: Provider)
@@ -91,13 +82,15 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
 
-  fun processCodeLine(rawCodeLine: String, inBlock: Boolean): String {
+  fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
     val project = panel.project
     val file = panel.virtualFile
-    if (project != null && file != null && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim())) {
+    if (project != null && file != null && file.parent != null
+        && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim(), allowRunConfigurations = !insideFence)
+    ) {
       val hash = MarkdownUtil.md5(rawCodeLine, "")
       hash2Cmd[hash] = rawCodeLine
-      val cssClass = "run-icon hidden" + if (inBlock) " code-block" else ""
+      val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
       return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
              "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
              "</a>"
@@ -173,7 +166,9 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     }
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
-      if (!isEnabled || panel.virtualFile == null || panel.project == null) return null
+      if ( panel.project == null || panel.virtualFile == null
+          || !MarkdownSettings.getInstance(panel.project!!).isRunnerEnabled
+      ) return null
 
       extensions.computeIfAbsent(panel.virtualFile!!) { CommandRunnerExtension(panel, this) }
       return extensions[panel.virtualFile]
@@ -201,7 +196,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
         else -> return null
       }
       val format = resourceName.substringAfterLast(".")
-      return ResourceProvider.Resource(icon2Stream(icon, format))
+      return ResourceProvider.Resource(MarkdownExtensionsUtil.loadIcon(icon, format))
     }
   }
 
@@ -219,14 +214,16 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       return MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()?.extensions?.get(file)
     }
 
-    fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
+    fun matches(project: Project, workingDirectory: String?, localSession: Boolean,
+                command: String,
+                allowRunConfigurations: Boolean = false): Boolean {
       val trimmedCmd = command.trim()
       if (trimmedCmd.isEmpty()) return false
       val dataContext = createDataContext(project, localSession, workingDirectory)
 
       return RunAnythingProvider.EP_NAME.extensionList
         .asSequence()
-        .filter { checkForCLI(it) }
+        .filter { checkForCLI(it, allowRunConfigurations) }
         .any { provider -> provider.findMatchingValue(dataContext, trimmedCmd) != null }
     }
 
@@ -255,24 +252,10 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
         .build()
     }
 
-    private fun checkForCLI(it: RunAnythingProvider<*>?): Boolean {
+    private fun checkForCLI(it: RunAnythingProvider<*>?, allowRunConfigurations: Boolean): Boolean {
       return (it !is RunAnythingCommandProvider
               && it !is RunAnythingRecentProjectProvider
-              && it !is RunAnythingRunConfigurationProvider)
-    }
-
-    fun icon2Stream(icon: Icon, format: String): ByteArray {
-      val output = ByteArrayOutputStream()
-      val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1).toFloat()
-      //MarkdownExtension.currentProjectSettings.fontSize.toFloat()
-      val scaledIcon = IconUtil.scaleByFont(icon, null, fontSize)
-      val image = ImageUtil.createImage(ScaleContext.create(), scaledIcon.iconWidth.toDouble(), scaledIcon.iconHeight.toDouble(),
-        BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.FLOOR)
-      scaledIcon.paintIcon(null, image.graphics, 0, 0)
-
-      //val image = IconUtil.toBufferedImage(scaledIcon, true)
-      ImageIO.write(image, format, output)
-      return output.toByteArray()
+              && (it !is RunAnythingRunConfigurationProvider || allowRunConfigurations))
     }
 
     private val LOG = logger<CommandRunnerExtension>()

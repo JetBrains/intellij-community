@@ -6,19 +6,19 @@ import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankingModel
-import com.intellij.ide.util.gotoByName.GotoActionModel
 
 internal class SearchEverywhereMlSearchState(
   val sessionStartTime: Long, val searchStartTime: Long,
   val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
-  val keysTyped: Int, val backspacesTyped: Int, private val queryLength: Int,
+  val keysTyped: Int, val backspacesTyped: Int, private val searchQuery: String,
   private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
 ) {
   private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
   private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
 
   private val model: SearchEverywhereRankingModel by lazy {
-    SearchEverywhereRankingModel(SearchEverywhereMLRankingModelProvider.getForTab(tabId))
+    val provider = SearchEverywhereMLRankingModelProvider.getForTab(tabId)
+    SearchEverywhereRankingModel(provider)
   }
 
   @Synchronized
@@ -28,11 +28,9 @@ internal class SearchEverywhereMlSearchState(
                          priority: Int): SearchEverywhereMLItemInfo {
     return cachedElementsInfo.computeIfAbsent(elementId) {
       val features = mutableMapOf<String, Any>()
-      SearchEverywhereElementFeaturesProvider.getFeatureProviders().forEach { provider ->
-        if (provider.isElementSupported(element)) {
-          val cache = providersCaches[provider::class.java]
-          features.putAll(provider.getElementFeatures(element, sessionStartTime, queryLength, priority, cache))
-        }
+      SearchEverywhereElementFeaturesProvider.getFeatureProvidersForTab(tabId).forEach { provider ->
+        val cache = providersCaches[provider::class.java]
+        features.putAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, cache))
       }
 
       return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributor.searchProviderId, features)
@@ -46,7 +44,7 @@ internal class SearchEverywhereMlSearchState(
 
   @Synchronized
   fun getMLWeight(elementId: Int,
-                  element: GotoActionModel.MatchedValue,
+                  element: Any,
                   contributor: SearchEverywhereContributor<*>,
                   context: SearchEverywhereMLContextInfo,
                   priority: Int): Double {

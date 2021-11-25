@@ -16,11 +16,9 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.awt.Component
 
@@ -49,12 +47,13 @@ internal class QuickSearchPopupContext(
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)
-    popupUI.coroutineScope.updateFromRequests(items.asRequestFlow(), popupUI.browser)
     searchComponent.registerHint(popup)
     Disposer.register(popup) {
       searchComponent.unregisterHint()
     }
   }
+
+  override fun requestFlow(): Flow<DocumentationRequest?> = items.asRequestFlow()
 }
 
 private fun Flow<Any?>.asRequestFlow(): Flow<DocumentationRequest?> {
@@ -67,5 +66,5 @@ private fun Flow<Any?>.asRequestFlow(): Flow<DocumentationRequest?> {
       }
       PsiElementDocumentationTarget(targetElement.project, targetElement).documentationRequest()
     }
-  }.flowOn(Dispatchers.Default)
+  }
 }

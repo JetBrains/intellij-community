@@ -16,8 +16,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -84,7 +86,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
-    selectionBackground = UIUtil.getListSelectionBackground(true);
+    selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
   }
 
   private static boolean isSelected(JMenuItem item) {
@@ -141,7 +143,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         }
         else if (IdeaPopupMenuUI.isPartOfPopupMenu(comp) && (Registry.is("popup.menu.roundSelection.enabled", false) || ExperimentalUI.isNewUI())) {
           GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-          g.fillRoundRect(4, 1, j1 - 8, k1 - 2, 8, 8);
+          int radius = JBUI.getInt("MenuItem.Selection.arc", 8);
+          g.fillRoundRect(4, 1, j1 - 8, k1 - 2, radius, radius);
           config.restore();
         }
         else {

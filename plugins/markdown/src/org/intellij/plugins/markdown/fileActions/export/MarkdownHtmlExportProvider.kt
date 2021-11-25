@@ -50,7 +50,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
           notifyAndRefreshIfExportSuccess(File(path), project)
         }
         else {
-          MarkdownNotifier.notifyIfConvertFailed(
+          MarkdownNotifier.showErrorNotification(
             project,
             MarkdownBundle.message("markdown.export.failure.msg", File(path).name)
           )

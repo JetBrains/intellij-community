@@ -388,7 +388,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
           int count = 0;
           myMap = new Object2IntOpenHashMap<>(plugins.size());
           for (IdeaPluginDescriptor descriptor : plugins) {
-            myMap.put(descriptor.getPluginClassLoader(), count++);
+            myMap.put(descriptor.getClassLoader(), count++);
           }
         }
 

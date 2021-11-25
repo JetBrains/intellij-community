@@ -9,24 +9,22 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.upgradeCandidateVersionOrNull
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedRepository
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 internal class PackageSearchOperationFactory {
 
-    inline fun <reified T : PackageModel> computeInstallActionsFor(
+    inline fun <reified T : PackageModel, V : PackageVersion> computeInstallActionsFor(
         packageModel: T,
         moduleModel: ModuleModel,
         defaultScope: PackageScope,
         knownRepositories: KnownRepositories.InTargetModules,
-        onlyStable: Boolean
+        targetVersion: NormalizedPackageVersion<V>
     ): List<PackageSearchOperation<*>> {
         if (packageModel !is PackageModel.SearchResult) return emptyList()
 
-        val versionToInstall = packageModel.getAvailableVersions(onlyStable).first().originalVersion
+        val versionToInstall = targetVersion.originalVersion
         return createAddPackageOperations(
             packageModel = packageModel,
             version = versionToInstall,
@@ -36,31 +34,22 @@ internal class PackageSearchOperationFactory {
         )
     }
 
-    inline fun <reified T : PackageModel> computeUpgradeActionsFor(
+    inline fun <reified T : PackageModel, V : PackageVersion> computeUpgradeActionsFor(
         packageModel: T,
         moduleModel: ModuleModel,
         knownRepositories: KnownRepositories.InTargetModules,
-        onlyStable: Boolean
+        targetVersion: NormalizedPackageVersion<V>
     ): List<PackageSearchOperation<*>> {
         if (packageModel !is PackageModel.Installed) return emptyList()
 
         return packageModel.usageInfo.asSequence()
             .filter { it.projectModule == moduleModel.projectModule }
             .flatMap { usageInfo ->
-                val upgradeVersion = if (usageInfo.version is PackageVersion.Named) {
-                    PackageVersionUtils.upgradeCandidateVersionOrNull(
-                        currentVersion = NormalizedPackageVersion.parseFrom(usageInfo.version),
-                        availableVersions = packageModel.getAvailableVersions(onlyStable)
-                    ) ?: return@flatMap emptyList()
-                } else {
-                    return@flatMap emptyList()
-                }
-
                 createChangePackageVersionOperations(
                     packageModel = packageModel,
-                    newVersion = upgradeVersion.originalVersion,
+                    newVersion = targetVersion.originalVersion,
                     targetModules = TargetModules.from(moduleModel),
-                    repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, upgradeVersion.originalVersion)
+                    repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, targetVersion.originalVersion)
                 )
             }
             .toList()

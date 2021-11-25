@@ -4,14 +4,8 @@ package com.intellij.vcs.log.statistics
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomValidationRule
-import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.graph.PermanentGraph
-import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter
-import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
-import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter
-import com.intellij.vcs.log.ui.table.column.getDefaultDynamicColumns
 
+@Deprecated("Use com.intellij.internal.statistic.eventLog.events.EventFields.String instead")
 open class CustomStringsValidationRule(private val id: String, private val values: Collection<String>) : CustomValidationRule() {
   final override fun acceptRuleId(ruleId: String?): Boolean = id == ruleId
 
@@ -20,16 +14,3 @@ open class CustomStringsValidationRule(private val id: String, private val value
     return ValidationResultType.REJECTED
   }
 }
-
-class VcsLogFilterNameValidator :
-  CustomStringsValidationRule("vcs_log_filter_name", VcsLogFilterCollection.STANDARD_KEYS.map { it.name }.toSet())
-
-class VcsLogSortKindValidator :
-  LocalEnumCustomValidationRule("vcs_log_sort_kind", PermanentGraph.SortType::class.java)
-
-class VcsLogHighlighterIdValidator :
-  CustomStringsValidationRule("vcs_log_highlighter_id", setOf(MyCommitsHighlighter.Factory.ID, MergeCommitsHighlighter.Factory.ID,
-                                                              CurrentBranchHighlighter.Factory.ID))
-
-class VcsLogColumnNameValidator :
-  CustomStringsValidationRule("vcs_log_column_name", getDefaultDynamicColumns().map { it.stableName }.toSet())

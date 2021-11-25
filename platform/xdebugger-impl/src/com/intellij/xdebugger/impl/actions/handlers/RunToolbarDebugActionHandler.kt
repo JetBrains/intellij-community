@@ -30,7 +30,7 @@ abstract class RunToolbarDebugActionHandler() : DebuggerActionHandler() {
     return !event.isProcessTerminating()
   }
 
-  private fun getSession(e: AnActionEvent): XDebugSessionImpl? {
+  protected fun getSession(e: AnActionEvent): XDebugSessionImpl? {
     return e.environment()?.let { environment ->
       e.project?.let {
         XDebuggerManager.getInstance(it)
@@ -56,7 +56,7 @@ class RunToolbarResumeActionHandler : RunToolbarDebugActionHandler() {
   }
 }
 
-class RunToolbarPauseActionHandler : RunToolbarDebugActionHandler() {
+open class RunToolbarPauseActionHandler : RunToolbarDebugActionHandler() {
   override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
     return !session.isPauseActionSupported || session.isPaused
   }

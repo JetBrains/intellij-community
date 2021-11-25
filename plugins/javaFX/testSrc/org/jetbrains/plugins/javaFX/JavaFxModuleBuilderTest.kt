@@ -10,7 +10,7 @@ import org.junit.Test
 
 class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
   @Test
-  fun EmptyMavenProject() {
+  fun emptyMavenProject() {
     JavaFxModuleBuilder().setupTestModule(fixture.module) {
       language = JAVA_STARTER_LANGUAGE
       projectType = MAVEN_PROJECT
@@ -102,7 +102,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                   <plugin>
                       <groupId>org.openjfx</groupId>
                       <artifactId>javafx-maven-plugin</artifactId>
-                      <version>0.0.7</version>
+                      <version>0.0.8</version>
                       <executions>
                           <execution>
                               <!-- Default configuration for running with: mvn clean javafx:run -->
@@ -126,7 +126,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
   }
 
   @Test
-  fun EmptyGradleProject() {
+  fun emptyGradleProject() {
     JavaFxModuleBuilder().setupTestModule(fixture.module) {
       language = JAVA_STARTER_LANGUAGE
       projectType = GRADLE_PROJECT

@@ -2,10 +2,12 @@
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.ui.tree.FileNode
+import com.intellij.ide.bookmark.ui.tree.LineNode
+import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.DirectoryUrl
 import com.intellij.ide.projectView.impl.PsiFileUrl
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -18,16 +20,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.Alarm.ThreadToUse.POOLED_THREAD
+import com.intellij.util.SingleAlarm
+import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
+import javax.swing.tree.TreePath
 
-class LineBookmarkProvider(private val project: Project) : BookmarkProvider, EditorMouseListener, Simple {
+class LineBookmarkProvider(private val project: Project) : BookmarkProvider, EditorMouseListener, Simple, AsyncFileListener {
   override fun getWeight() = Int.MIN_VALUE
   override fun getProject() = project
 
@@ -52,11 +63,38 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     return StringUtil.naturalCompare(file1.presentableName, file2.presentableName)
   }
 
-  override fun createBookmark(map: Map<String, String>) = createBookmark(map["url"], StringUtil.parseInt(map["line"], -1))
+  override fun prepareGroup(nodes: List<AbstractTreeNode<*>>): List<AbstractTreeNode<*>> {
+    nodes.forEach { (it as? FileNode)?.ungroup() } // clean all file groups if needed
+    val node = nodes.firstNotNullOfOrNull { it as? LineNode } ?: return nodes.filter(::isNodeVisible) // nothing to group
+    if (node.bookmarksView?.groupLineBookmarks?.isSelected != true) return nodes.filter(::isNodeVisible) // grouping disabled
 
-  override fun createBookmark(context: Any?): FileBookmark? = when (context) {
-    is AbstractTreeNode<*> -> createBookmark(context.value)
-    is NodeDescriptor<*> -> createBookmark(context.element)
+    val map = mutableMapOf<VirtualFile, FileNode?>()
+    nodes.forEach {
+      when (it) {
+        is LineNode -> map.putIfAbsent(it.virtualFile, null)
+        is FileNode -> map[it.virtualFile] = it
+      }
+    }
+    // create fake file nodes to group corresponding line nodes
+    map.mapNotNull { if (it.value == null) it.key else null }.forEach {
+      map[it] = FileNode(project, FileBookmarkImpl(this, it)).apply {
+        bookmarkGroup = node.bookmarkGroup
+        parent = node.parent
+      }
+    }
+    return nodes.mapNotNull {
+      when {
+        !isNodeVisible(it) -> null
+        it is LineNode -> map[it.virtualFile]!!.grouped(it)
+        it is FileNode -> it.grouped()
+        else -> it
+      }
+    }
+  }
+
+  override fun createBookmark(map: Map<String, String>) = map["url"]?.let { createBookmark(it, StringUtil.parseInt(map["line"], -1)) }
+
+  override fun createBookmark(context: Any?) = when (context) {
     // below // migrate old bookmarks and favorites
     is com.intellij.ide.bookmarks.Bookmark -> createBookmark(context.file, context.line)
     is DirectoryUrl -> createBookmark(context.url)
@@ -64,6 +102,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     // above // migrate old bookmarks and favorites
     is PsiElement -> createBookmark(context)
     is VirtualFile -> createBookmark(context, -1)
+    is TreePath -> createBookmark(context)
     else -> null
   }
 
@@ -73,24 +112,37 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     else -> FileBookmarkImpl(this, file)
   }
 
-  fun createBookmark(editor: Editor, line: Int? = null): Bookmark? {
+  fun createBookmark(editor: Editor, line: Int? = null): FileBookmark? {
     if (editor.isOneLineMode) return null
     val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
     return createBookmark(file, line ?: editor.caretModel.logicalPosition.line)
   }
 
-  private fun createBookmark(url: String?, line: Int = -1) = url
-    ?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
-    ?.let { createBookmark(it, line) }
+  private fun createBookmark(url: String, line: Int = -1) = createValidBookmark(url, line) ?: createInvalidBookmark(url, line)
+  private fun createValidBookmark(url: String, line: Int = -1) = VFM.findFileByUrl(url)?.let { createBookmark(it, line) }
+  private fun createInvalidBookmark(url: String, line: Int = -1) = InvalidBookmark(this, url, line)
 
   private fun createBookmark(element: PsiElement): FileBookmark? {
     if (element is PsiFileSystemItem) return element.virtualFile?.let { createBookmark(it) }
     if (element is PsiCompiledElement) return null
-    val file = element.containingFile.virtualFile ?: return null
+    val file = PsiUtilCore.getVirtualFile(element) ?: return null
     if (file is LightVirtualFile) return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-    return createBookmark(file, document.getLineNumber(element.textOffset))
+    return when (val offset = element.textOffset) {
+      in 0..document.textLength -> createBookmark(file, document.getLineNumber(offset))
+      else -> null
+    }
   }
+
+  private fun createBookmark(path: TreePath): FileBookmark? {
+    val file = path.asVirtualFile ?: return null
+    val parent = path.parentPath?.asVirtualFile ?: return null
+    // see com.intellij.ide.projectView.impl.ClassesTreeStructureProvider
+    return if (!parent.isDirectory || file.parent != parent) null else createBookmark(file)
+  }
+
+  private val TreePath.asVirtualFile
+    get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
   private val MouseEvent.isUnexpected
     get() = !SwingUtilities.isLeftMouseButton(this) || isPopupTrigger || if (SystemInfo.isMac) !isMetaDown else !isControlDown
@@ -135,11 +187,39 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     manager.update(bookmarks)
   }
 
+  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+    val update = events.any { it is VFileCreateEvent || it is VFileDeleteEvent }
+    if (update) validateAlarm.cancelAndRequest()
+    return null
+  }
+
+  private val validateAlarm = SingleAlarm(::validateAndUpdate, 100, project, POOLED_THREAD)
+
+  private fun validateAndUpdate() {
+    val manager = BookmarksManager.getInstance(project) ?: return
+    val bookmarks = mutableMapOf<Bookmark, Bookmark?>()
+    manager.bookmarks.forEach { validate(it)?.run { bookmarks[it] = this } }
+    manager.update(bookmarks)
+  }
+
+  private fun validate(bookmark: Bookmark) = when (bookmark) {
+    is InvalidBookmark -> createValidBookmark(bookmark.url, bookmark.line)
+    is FileBookmarkImpl -> bookmark.file.run { if (isValid) null else createBookmark(url) }
+    is LineBookmarkImpl -> bookmark.file.run { if (isValid) null else createBookmark(url, bookmark.line) }
+    else -> null
+  }
+
+  private fun isNodeVisible(node: AbstractTreeNode<*>) = (node.value as? InvalidBookmark)?.run { line < 0 } ?: true
+
+  private val VFM
+    get() = VirtualFileManager.getInstance()
+
   init {
     if (!project.isDefault) {
       val multicaster = EditorFactory.getInstance().eventMulticaster
       multicaster.addDocumentListener(this, project)
       multicaster.addEditorMouseListener(this, project)
+      VFM.addAsyncFileListener(this, project)
     }
   }
 
@@ -154,6 +234,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
 
     fun readLineText(file: VirtualFile, line: Int): String? {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+      if (line < 0 || document.lineCount <= line) return null
       val start = document.getLineStartOffset(line)
       if (start < 0) return null
       val end = document.getLineEndOffset(line)

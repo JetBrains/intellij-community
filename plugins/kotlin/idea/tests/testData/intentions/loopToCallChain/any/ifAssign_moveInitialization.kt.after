@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'any{}'"
 // IS_APPLICABLE_2: false
 // AFTER-WARNING: The value 'list.any { it.length > 0 }' assigned to 'var found: Boolean defined in foo' is never used

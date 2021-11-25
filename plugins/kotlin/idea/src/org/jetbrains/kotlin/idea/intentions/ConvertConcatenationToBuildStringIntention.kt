@@ -47,7 +47,7 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
                 val tailComments = expression.tailComments()
                 if (tailComments.isNotEmpty()) {
                     appendFixedText(" ")
-                    tailComments.forEach { appendFixedText(it.text) }
+                    tailComments.forEach { appendNonFormattedText(it.text) }
                 }
                 appendFixedText("\n")
             }

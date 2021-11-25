@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -8,6 +9,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.ui.layout.*
@@ -38,6 +40,10 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
   init {
     application.messageBus.connect(disposable).subscribe(GitExecutableManager.TOPIC,
       GitExecutableListener { runInEdt(getModalityState()) { resetPathSelector() } })
+
+    BackgroundTaskUtil.executeOnPooledThread(disposable) {
+      GitExecutableManager.getInstance().getDetectedExecutable(project, true) // detect executable if needed
+    }
   }
 
   private fun RowBuilder.createRow() = row {
@@ -80,6 +86,11 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
       GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
       modalityState, disposable
     )
+
+    if (!project.isTrusted()) {
+      errorNotifier.showError(GitBundle.message("git.executable.validation.cant.run.in.safe.mode"), null)
+      return
+    }
 
     object : Task.Modal(project, GitBundle.message("git.executable.version.progress.title"), true) {
       private lateinit var gitVersion: GitVersion

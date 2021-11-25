@@ -49,7 +49,7 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
-  @NotNull private final StatusPanel myStatusPanel;
+  @NotNull private final MyStatusPanel myStatusPanel;
 
   @NotNull private final SimpleDiffModel myModel = new SimpleDiffModel(this);
 
@@ -358,6 +358,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @Override
   protected StatusPanel getStatusPanel() {
     return myStatusPanel;
+  }
+
+  public @Nullable String getStatusMessage() {
+    return myStatusPanel.getMessage();
   }
 
   @NotNull

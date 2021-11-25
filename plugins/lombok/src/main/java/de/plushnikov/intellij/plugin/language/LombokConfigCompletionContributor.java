@@ -27,6 +27,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
       ConfigKey.ACCESSORS_CHAIN.getConfigKey(), ConfigKey.ACCESSORS_FLUENT.getConfigKey(),
       ConfigKey.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES.getConfigKey(),
       ConfigKey.ANYCONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES.getConfigKey(),
+      ConfigKey.STANDARD_EXCEPTION_ADD_CONSTRUCTOR_PROPERTIES.getConfigKey(),
       ConfigKey.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS.getConfigKey(),
       ConfigKey.GETTER_NO_IS_PREFIX.getConfigKey(),
       ConfigKey.LOG_FIELD_IS_STATIC.getConfigKey(),

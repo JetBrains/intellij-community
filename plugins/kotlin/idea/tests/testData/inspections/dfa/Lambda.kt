@@ -1,8 +1,8 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun itVariable(x:List<Int>) {
     x.forEach {
         if (it > 0) {
-            if (<warning descr="Condition is always false">it < 0</warning>) {
+            if (<warning descr="Condition 'it < 0' is always false">it < 0</warning>) {
             }
             x.forEach {
                 if (it < 0) {}
@@ -45,6 +45,6 @@ fun localReturn() {
     consume { a ->
         if (a.isEmpty()) return@consume
     }
-    if (<warning descr="Condition is always true">y == 11</warning>) {}
+    if (<warning descr="Condition 'y == 11' is always true">y == 11</warning>) {}
 }
 fun consume(<warning descr="[UNUSED_PARAMETER] Parameter 'lambda' is never used">lambda</warning>: (String) -> Unit) {}

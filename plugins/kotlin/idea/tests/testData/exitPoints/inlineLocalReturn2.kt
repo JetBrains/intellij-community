@@ -11,4 +11,5 @@ fun f(a: Int): Int {
 
 inline public fun <T> run(f: () -> T): T { }
 
+//HIGHLIGHTED: f
 //HIGHLIGHTED: return 2

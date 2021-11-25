@@ -203,7 +203,7 @@ public class TestAll implements Test {
       testResult.addListener(testListener);
     }
 
-    testResult = Retries.maybeEnable(testResult);
+    testResult = RetriesImpl.maybeEnable(testResult);
 
     List<Class<?>> classes = myTestCaseLoader.getClasses();
 
@@ -430,7 +430,7 @@ public class TestAll implements Test {
           cache = JUnit4TestAdapterCache.getDefault();
         }
       }
-      ourUnit4TestAdapterCache = Retries.maybeEnable(cache);
+      ourUnit4TestAdapterCache = RetriesImpl.maybeEnable(cache);
     }
     return ourUnit4TestAdapterCache;
   }

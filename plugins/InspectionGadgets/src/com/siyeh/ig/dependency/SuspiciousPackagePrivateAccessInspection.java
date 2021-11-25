@@ -12,9 +12,11 @@ import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -36,6 +38,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.uast.*;
 
 import javax.swing.*;
@@ -62,6 +65,11 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    VirtualFile file = holder.getFile().getVirtualFile();
+    if (file == null || !ProjectFileIndex.getInstance(holder.getProject()).isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     return ApiUsageUastVisitor.createPsiElementVisitor(
       new SuspiciousApiUsageProcessor(holder, myModuleSetByModuleName.getValue())
     );

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun testIf(x: Any) {
     <caret>if (x is String) {

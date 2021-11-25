@@ -53,6 +53,10 @@ public final class LightEditMainMenuHelper {
       )
     );
     topGroup.add(
+      createActionGroup(ActionsBundle.message("group.CodeMenu.text"),
+                        standardAction(IdeActions.ACTION_EDITOR_REFORMAT))
+    );
+    topGroup.add(
       createActionGroup(ActionsBundle.message("group.WindowMenu.text"),
                         standardAction("NextProjectWindow"),
                         standardAction("PreviousProjectWindow"))

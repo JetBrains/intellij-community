@@ -186,11 +186,7 @@ public final class TypeInferenceHelper {
    */
   private static void internalize(@NotNull List<DefinitionMap> maps) {
     Map<DefinitionMap, DefinitionMap> internedMaps = new HashMap<>();
-    for (int i = 0; i < maps.size(); i++) {
-      DefinitionMap map = maps.get(i);
-      DefinitionMap internedMap = internedMaps.computeIfAbsent(map, Function.identity());
-      maps.set(i, internedMap);
-    }
+    maps.replaceAll(map -> internedMaps.computeIfAbsent(map, Function.identity()));
   }
 
   @Nullable

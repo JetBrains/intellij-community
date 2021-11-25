@@ -41,12 +41,6 @@ class PyTensorFlowTest : PyEnvTestCase() {
   }
 
   @Test
-  @EnvTestTagsRequired(tags = ["tensorflow2", "tensorflow_oldpaths"])
-  fun tensorFlow2ModulesOldPaths() {
-    runPythonTest(TensorFlowModulesTask("tf2old.txt", setOf("lite")))
-  }
-
-  @Test
   @EnvTestTagsRequired(tags = ["tensorflow2", "tensorflow_newpaths"])
   fun tensorFlow2ModulesNewPaths() {
     runPythonTest(TensorFlowModulesTask("tf2new.txt"))

@@ -28,5 +28,7 @@
                  description="Wrap workspace model error report with IJ classes"/>
     <registryKey key="ide.new.project.model.index.case.sensitivity" defaultValue="false" restartRequired="true"
                  description="Enable checking FS sensitivity for paths stored at VFU index"/>
+    <registryKey key="ide.new.project.model.artifacts.sync.initialization" defaultValue="true" restartRequired="false"
+                 description="Enable locks during artifacts initialization"/>
   </extensions>
 </idea-plugin>

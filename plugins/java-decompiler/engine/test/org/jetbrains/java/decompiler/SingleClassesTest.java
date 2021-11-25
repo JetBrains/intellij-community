@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -66,6 +66,7 @@ public class SingleClassesTest {
   @Test public void testInnerClassConstructor() { doTest("pkg/TestInnerClassConstructor"); }
   @Test public void testInnerClassConstructor11() { doTest("v11/TestInnerClassConstructor"); }
   @Test public void testTryCatchFinally() { doTest("pkg/TestTryCatchFinally"); }
+  @Test public void testTryCatchFinallyJsrRet() { doTest("pkg/TestTryCatchFinallyJsrRet"); }
   @Test public void testAmbiguousCall() { doTest("pkg/TestAmbiguousCall"); }
   @Test public void testAmbiguousCallWithDebugInfo() { doTest("pkg/TestAmbiguousCallWithDebugInfo"); }
   @Test public void testSimpleBytecodeMapping() { doTest("pkg/TestClassSimpleBytecodeMapping"); }
@@ -83,7 +84,10 @@ public class SingleClassesTest {
   @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }
   @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
   @Test public void testJava9ModuleInfo() { doTest("java9/module-info"); }
+  @Test public void testJava9PrivateInterfaceMethod() { doTest("java9/TestJava9PrivateInterfaceMethod"); }
   @Test public void testJava11StringConcat() { doTest("java11/TestJava11StringConcat"); }
+  @Test public void testJava11StringConcatEmptyAffix() { doTest("java11/TestJava11StringConcatEmptyAffix"); }
+  @Test public void testJava11StringConcatSpecialChars() { doTest("java11/TestJava11StringConcatSpecialChars"); }
   @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
   @Test public void testConstructorReference() { doTest("pkg/TestConstructorReference"); }
@@ -125,6 +129,7 @@ public class SingleClassesTest {
   @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
   @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
   @Test public void testPackageInfo() { doTest("pkg/package-info"); }
+  @Test public void testIntVarMerge() { doTest("pkg/TestIntVarMerge"); }
 
   // TODO: fix all below
   //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
@@ -143,7 +148,6 @@ public class SingleClassesTest {
   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
-
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
 
   private void doTest(String testFile, String... companionFiles) {

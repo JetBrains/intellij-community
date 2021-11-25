@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -47,7 +48,8 @@ import static com.intellij.util.indexing.FileBasedIndexImpl.getCauseToRebuildInd
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
   @SuppressWarnings("SSBasedInspection")
-  private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack = ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
+  private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack =
+    ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
   private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
@@ -123,22 +125,23 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project) {
-    return processAllKeys(indexId, processor, project == null ? new EverythingGlobalScope() : GlobalSearchScope.everythingScope(project), null);
+    return processAllKeys(indexId, processor, project == null ? new EverythingGlobalScope() : GlobalSearchScope.everythingScope(project),
+                          null);
   }
 
   @Override
-  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId,
+                                    @NotNull Processor<? super K> processor,
+                                    @NotNull GlobalSearchScope scope,
+                                    @Nullable IdFilter idFilter) {
     try {
       waitUntilIndicesAreInitialized();
       UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
         return true;
       }
-      if (idFilter == null) {
-        idFilter = extractIdFilter(scope, scope.getProject());
-      }
-      @Nullable IdFilter finalIdFilter = idFilter;
-      return myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, finalIdFilter));
+      IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
+      return myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, idFilterAdjusted));
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -245,7 +248,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         return null;
       }
 
-      return myAccessValidator.validate(indexId, () -> ConcurrencyUtil.withLock(index.getLock().readLock(), ()->computable.convert(index)));
+      return myAccessValidator.validate(indexId,
+                                        () -> ConcurrencyUtil.withLock(index.getLock().readLock(), () -> computable.convert(index)));
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -299,12 +303,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return !data.containsKey(dataKey) || processor.process(file, data.get(dataKey));
   }
 
-  private <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
-                                              @NotNull K dataKey,
-                                              boolean ensureValueProcessedOnce,
-                                              @NotNull GlobalSearchScope scope,
-                                              @Nullable IdFilter idFilter,
-                                              @NotNull ValueProcessor<? super V> processor) {
+  protected <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
+                                                @NotNull K dataKey,
+                                                boolean ensureValueProcessedOnce,
+                                                @NotNull GlobalSearchScope scope,
+                                                @Nullable IdFilter idFilter,
+                                                @NotNull ValueProcessor<? super V> processor) {
     Project project = scope.getProject();
     if (project != null &&
         !ModelBranchImpl.processModifiedFilesInScope(scope, file -> processInMemoryFileData(indexId, dataKey, project, file, processor))) {
@@ -347,7 +351,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                               @NotNull GlobalSearchScope scope,
                                               @NotNull Processor<? super InvertedIndexValueIterator<V>> valueProcessor) {
     final Boolean result = processExceptions(indexId, restrictToFile, scope,
-                                             index -> valueProcessor.process((InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator()));
+                                             index -> valueProcessor.process(
+                                               (InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator()));
     return result == null || result.booleanValue();
   }
 
@@ -468,17 +473,23 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    */
   @NotNull
   public List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
+    List<String> allowedIteratorPatterns = StringUtil.split(System.getProperty("idea.test.files.allowed.iterators", ""), ";");
     if (LightEdit.owns(project)) {
       return Collections.emptyList();
     }
-
-    return IndexableFilesContributor.EP_NAME
+    List<IndexableFilesIterator> providers = IndexableFilesContributor.EP_NAME
       .getExtensionList()
       .stream()
       .flatMap(c -> {
         return ReadAction.nonBlocking(() -> c.getIndexableFiles(project)).expireWith(project).executeSynchronously().stream();
       })
       .collect(Collectors.toList());
+    if (!allowedIteratorPatterns.isEmpty()) {
+      providers = ContainerUtil.filter(providers, p -> {
+        return allowedIteratorPatterns.stream().anyMatch(pattern -> p.getDebugName().contains(pattern));
+      });
+    }
+    return providers;
   }
 
   @Nullable
@@ -534,7 +545,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public @Nullable DumbModeAccessType getCurrentDumbModeAccessType() {
     DumbModeAccessType result = getCurrentDumbModeAccessType_NoDumbChecks();
     if (result != null) {
-      LOG.assertTrue(ContainerUtil.exists(ProjectManager.getInstance().getOpenProjects(), p -> DumbService.isDumb(p)), "getCurrentDumbModeAccessType may only be called during indexing");
+      LOG.assertTrue(ContainerUtil.exists(ProjectManager.getInstance().getOpenProjects(), p -> DumbService.isDumb(p)),
+                     "getCurrentDumbModeAccessType may only be called during indexing");
     }
     return result;
   }
@@ -574,7 +586,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       Disposable disposable = Disposer.newDisposable();
       if (app.isWriteThread()) {
         app.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
-                () -> RecursionManager.dropCurrentMemoizationCache());
+                                                          () -> RecursionManager.dropCurrentMemoizationCache());
       }
       try {
         return preventCaching
@@ -586,7 +598,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         DumbModeAccessType type = dumbModeAccessTypeStack.pop();
         assert dumbModeAccessType == type;
       }
-    } else {
+    }
+    else {
       return computable.compute();
     }
   }

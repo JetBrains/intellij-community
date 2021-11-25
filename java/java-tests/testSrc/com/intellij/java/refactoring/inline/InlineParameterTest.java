@@ -188,6 +188,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
   public void testRefNewTopLevel() {
     doTest(false);
   }
+  
+  public void testConflictingFieldName() {
+    doTest(true);
+  }
 
   public void testRefNewLocal() {
     try {

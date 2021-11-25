@@ -80,6 +80,11 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
+  public boolean isTerminalSessionPersistent() {
+    return false;
+  }
+
+  @Override
   protected TtyConnector createTtyConnector(CloudTerminalProcess process) {
     return new ProcessTtyConnector(process, Charset.defaultCharset()) {
       private Dimension myAppliedTermSize;

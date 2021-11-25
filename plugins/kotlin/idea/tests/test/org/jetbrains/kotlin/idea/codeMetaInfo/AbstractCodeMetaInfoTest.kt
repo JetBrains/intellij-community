@@ -23,13 +23,13 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.LineSeparator
 import com.intellij.util.io.exists
 import org.jetbrains.kotlin.checkers.diagnostics.DebugInfoDiagnostic
 import org.jetbrains.kotlin.checkers.diagnostics.SyntaxErrorDiagnostic
 import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory0
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
 import org.jetbrains.kotlin.checkers.utils.DiagnosticsRenderingConfiguration
-import org.jetbrains.kotlin.codeMetaInfo.CodeMetaInfoRenderer
 import org.jetbrains.kotlin.daemon.common.OSKind
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.AbstractDiagnostic
@@ -170,7 +170,9 @@ class CodeMetaInfoTestCase(
                 getDiagnosticCodeMetaInfos(DiagnosticCodeMetaInfoConfiguration(), false).filterIsInstance<DiagnosticCodeMetaInfo>()
             )
         }
-        val parsedMetaInfo = CodeMetaInfoParser.getCodeMetaInfoFromText(expectedFile.readText()).toMutableList()
+        val parsedMetaInfo = CodeMetaInfoParser.getCodeMetaInfoFromText(
+            expectedFile.readText().replace(LineSeparator.CRLF.separatorString, LineSeparator.LF.separatorString) // Fix for Windows
+        ).toMutableList()
         codeMetaInfoForCheck.forEach { codeMetaInfo ->
             val correspondingParsed = parsedMetaInfo.firstOrNull { it == codeMetaInfo }
             if (correspondingParsed != null) {

@@ -13,7 +13,7 @@ import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
-import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
+import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +39,7 @@ public class PyRegexpTest extends PyTestCase {
   }
 
   public void testRedundantEscape() {
-    myFixture.enableInspections(new RedundantEscapeInspection());
+    myFixture.enableInspections(new RegExpRedundantEscapeInspection());
     doTestHighlighting();
   }
 

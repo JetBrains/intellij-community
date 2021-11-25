@@ -1,5 +1,5 @@
 // "Import" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Type 'MyDelegate<TypeVariable(T)>' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
 
 package import

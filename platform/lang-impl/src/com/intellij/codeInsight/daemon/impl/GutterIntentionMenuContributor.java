@@ -16,10 +16,7 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class GutterIntentionMenuContributor implements IntentionMenuContributor {
@@ -37,7 +34,7 @@ public class GutterIntentionMenuContributor implements IntentionMenuContributor 
     model.processRangeHighlightersOverlappingWith(hostDocument.getLineStartOffset(line),
                                                   hostDocument.getLineEndOffset(line),
                                                   Processors.cancelableCollectProcessor(result));
-    List<AnAction> actions = result.stream()
+    Collection<AnAction> actions = result.stream()
       .map(RangeHighlighter::getGutterIconRenderer)
       .filter(Objects::nonNull)
       .filter(r -> !DumbService.isDumb(project) || DumbService.isDumbAware(r))
@@ -47,7 +44,7 @@ public class GutterIntentionMenuContributor implements IntentionMenuContributor 
         return (group == null ? clickActions : ContainerUtil.append(clickActions, group.getChildren(null))).stream();
       })
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .collect(Collectors.toCollection(LinkedHashSet::new));
     intentions.guttersToShow.addAll(actions);
   }
 }

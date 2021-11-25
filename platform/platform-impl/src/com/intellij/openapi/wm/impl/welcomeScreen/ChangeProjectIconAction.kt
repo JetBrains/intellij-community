@@ -16,8 +16,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -41,17 +43,18 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
 
     val panel = panel {
       row {
-        cell {
-          component(IconPreviewPanel(ui.iconLabel)).withLargeLeftGap()
-        }
-        cell {
-          component(panel {
-            fullRow {
-              component(ui.setIconActionLink)
-                .comment(IdeBundle.message("link.change.project.icon.description"))
-              component(ui.removeIcon.component)
+        cell(IconPreviewPanel(ui.iconLabel))
+        panel {
+          row {
+            cell(ui.setIconActionLink)
+              .gap(RightGap.SMALL)
+            cell(ui.removeIcon.component)
+          }
+          row {
+            text(IdeBundle.message("link.change.project.icon.description")).applyToComponent {
+              foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
             }
-          }).withLargeLeftGap()
+          }
         }
       }
     }

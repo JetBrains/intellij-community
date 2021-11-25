@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
 import com.intellij.ide.TipsOfTheDayUsagesCollector.TipInfoValidationRule
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
@@ -23,13 +23,15 @@ import training.statistic.FeatureUsageStatisticConsts.COMPLETED_COUNT
 import training.statistic.FeatureUsageStatisticConsts.COURSE_SIZE
 import training.statistic.FeatureUsageStatisticConsts.DURATION
 import training.statistic.FeatureUsageStatisticConsts.EXPAND_WELCOME_PANEL
+import training.statistic.FeatureUsageStatisticConsts.HELP_LINK_CLICKED
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
 import training.statistic.FeatureUsageStatisticConsts.LAST_BUILD_LEARNING_OPENED
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENED_FIRST_TIME
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
-import training.statistic.FeatureUsageStatisticConsts.LESSON_OPENED_FROM_TIP
+import training.statistic.FeatureUsageStatisticConsts.LESSON_LINK_CLICKED_FROM_TIP
+import training.statistic.FeatureUsageStatisticConsts.LESSON_STARTING_WAY
 import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
 import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTIFICATIONS
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_COUNT
@@ -52,6 +54,10 @@ import java.awt.event.KeyEvent
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JOptionPane
 
+enum class LessonStartingWay {
+  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER
+}
+
 internal class StatisticBase : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
@@ -69,7 +75,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 14)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 15)
 
     var isLearnProjectCloseLogged = false
 
@@ -89,6 +95,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val newLessonsCount = EventFields.Int(NEW_LESSONS_COUNT)
     private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
     private val tipFilenameField = EventFields.StringValidatedByCustomRule(TIP_FILENAME, TipInfoValidationRule.RULE_ID)
+    private val lessonStartingWayField = EventFields.Enum<LessonStartingWay>(LESSON_STARTING_WAY)
     private val lastBuildLearningOpened = object : PrimitiveEventField<String?>() {
       override val name: String = LAST_BUILD_LEARNING_OPENED
       override val validationRule: List<String>
@@ -102,7 +109,8 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     // EVENTS
-    private val lessonStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START, lessonIdField, languageField)
+    private val lessonStartedEvent: EventId3<String?, String?, LessonStartingWay> = GROUP.registerEvent(START, lessonIdField, languageField,
+                                                                                                        lessonStartingWayField)
     private val lessonPassedEvent: EventId3<String?, String?, Long> = GROUP.registerEvent(PASSED, lessonIdField, languageField,
                                                                                           EventFields.Long(DURATION))
     private val lessonStoppedEvent = GROUP.registerVarargEvent(STOPPED, lessonIdField, taskIdField, languageField, reasonField)
@@ -125,12 +133,13 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val needShowNewLessonsNotifications =
       GROUP.registerEvent(NEED_SHOW_NEW_LESSONS_NOTIFICATIONS, newLessonsCount, lastBuildLearningOpened, showNewLessonsState)
 
-    private val lessonOpenedFromTip = GROUP.registerEvent(LESSON_OPENED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
+    private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
+    private val helpLinkClicked = GROUP.registerEvent(HELP_LINK_CLICKED, lessonIdField, languageField)
 
     // LOGGING
-    fun logLessonStarted(lesson: Lesson) {
+    fun logLessonStarted(lesson: Lesson, startingWay: LessonStartingWay) {
       sessionLessonTimestamp[lesson.id] = System.nanoTime()
-      lessonStartedEvent.log(lesson.id, courseLanguage())
+      lessonStartedEvent.log(lesson.id, courseLanguage(), startingWay)
     }
 
     fun logLessonPassed(lesson: Lesson) {
@@ -164,7 +173,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     fun logModuleStarted(module: IftModule) {
-      moduleStartedEvent.log(module.name, courseLanguage())
+      moduleStartedEvent.log(module.id, courseLanguage())
     }
 
     fun logWelcomeScreenPanelExpanded() {
@@ -220,8 +229,12 @@ internal class StatisticBase : CounterUsagesCollector() {
       needShowNewLessonsNotifications.log(newLessonsCount, previousOpenedVersion?.asString(), showNewLessons)
     }
 
-    fun logLessonOpenedFromTip(lessonId: String, tipFilename: String) {
-      lessonOpenedFromTip.log(lessonId, courseLanguage(), tipFilename)
+    fun logLessonLinkClickedFromTip(lessonId: String, tipFilename: String) {
+      lessonLinkClickedFromTip.log(lessonId, courseLanguage(), tipFilename)
+    }
+
+    fun logHelpLinkClicked(lessonId: String) {
+      helpLinkClicked.log(lessonId, courseLanguage())
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
@@ -241,8 +254,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     private fun getPluginVersion(lesson: Lesson): String? {
-      val pluginId = PluginManagerCore.getPluginByClassName(lesson::class.java.name)
-      return PluginManagerCore.getPlugin(pluginId)?.version
+      return PluginManager.getPluginByClass(lesson::class.java)?.version
     }
 
     private fun getDefaultKeymap(): Keymap? {

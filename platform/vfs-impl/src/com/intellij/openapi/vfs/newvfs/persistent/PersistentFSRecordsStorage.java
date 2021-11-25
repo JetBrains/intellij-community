@@ -2,10 +2,15 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.Processor;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -277,5 +282,42 @@ public final class PersistentFSRecordsStorage {
 
   boolean isDirty() {
     return myFile.isDirty();
+  }
+
+  boolean processAll(@NotNull Processor<? super Record> processor) throws IOException {
+    Record r = new Record();
+    byte[] bytes = new byte[RECORD_SIZE];
+    ByteBuffer buffer = ByteBuffer.wrap(bytes);
+    if (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER) buffer.order(ByteOrder.nativeOrder());
+    return read(() -> {
+      myFile.force();
+      return myFile.readInputStream(is -> {
+        try (BufferedInputStream bis = new BufferedInputStream(is)) {
+          if (bis.read(bytes) != bytes.length) return true; // header
+          int id = 1;
+          while (bis.read(bytes) == bytes.length) {
+            r.id = id++;
+            buffer.position(0);
+            r.parent = buffer.getInt();
+            r.name = buffer.getInt();
+            r.flags = buffer.getInt();
+            r.attr_ref = buffer.getInt();
+            r.content = buffer.getInt();
+            r.timestamp = buffer.getLong();
+            r.mod_count = buffer.getInt();
+            r.length = buffer.getLong();
+            if (!processor.process(r)) return false;
+          }
+        }
+        catch (IOException ignore) {
+        }
+        return true;
+      });
+    });
+  }
+
+  static final class Record {
+    int id, parent, name, flags, attr_ref, content, mod_count;
+    long timestamp, length;
   }
 }

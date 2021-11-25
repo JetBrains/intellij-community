@@ -108,7 +108,6 @@
     },
 
     "BigSpinner.background": "panel",
-    "BookmarkIcon.background": "#F7C777",
 
     "Borders": {
       "color": "border",
@@ -369,10 +368,13 @@
       "maxGutterIconWidth": 18
     },
 
-    "BookmarkMnemonicIcon": {
-      "background": "#FEF7EC",
-      "borderColor": "#F4AF3D",
-      "foreground": "foreground"
+    "Bookmark": {
+      "iconBackground": "#F7C777",
+      "Mnemonic": {
+        "iconForeground": "foreground",
+        "iconBackground": "#FEF7EC",
+        "iconBorderColor": "#F4AF3D"
+      }
     },
 
     "NavBar.borderColor": "border",
@@ -753,6 +755,7 @@
     "TitlePane": {
       "background": "panel",
       "Button.hoverBackground": "#00000019",
+      "Button.preferredSize": "47,28",
       "inactiveBackground": "panel",
       "inactiveInfoForeground": "grey04",
       "infoForeground": "grey01"
@@ -789,6 +792,7 @@
     },
 
     "ToolWindow": {
+      "background": "grey15",
       "Button": {
         "hoverBackground": "#55555528",
         "selectedBackground": "#55555555",
@@ -895,6 +899,11 @@
       "hoverBackground": "#dfdfdf",
       "borderInsets": "3,5,3,5",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
+    },
+
+    "MainToolbar": {
+      "icon.borderInsets": "10,10,10,10",
+      "dropdown.borderInsets": "12,6,12,6"
     },
 
     "Tag": {

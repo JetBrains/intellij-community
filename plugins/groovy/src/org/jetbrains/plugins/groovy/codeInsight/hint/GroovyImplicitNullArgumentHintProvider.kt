@@ -23,8 +23,8 @@ class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<NoSettings> {
   override val name: String
     get() = GroovyBundle.message("settings.inlay.implicit.null.argument")
   override val key: SettingsKey<NoSettings> = ourKey
-  override val groupId: String
-    get() = VALUES_GROUP
+  override val group: InlayGroup
+    get() = InlayGroup.VALUES_GROUP
   override val previewText: String
     get() = """
       def foo(a) {}

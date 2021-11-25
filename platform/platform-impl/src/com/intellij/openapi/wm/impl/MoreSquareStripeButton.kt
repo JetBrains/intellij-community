@@ -20,6 +20,10 @@ import java.util.function.Predicate
 class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar) :
   ActionButton(createAction(toolwindowSideBar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
 
+  init {
+    setLook(SquareStripeButtonLook(this))
+  }
+
   override fun updateToolTipText() {
     HelpTooltip().
       setTitle(UIBundle.message("title.tool.window.square.more")).

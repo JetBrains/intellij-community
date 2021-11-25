@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
@@ -9,10 +9,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
@@ -21,71 +19,74 @@ import git4idea.i18n.GitBundle
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Insets
+import javax.swing.Icon
 import javax.swing.JComponent
 
 /**
  * Git implementation of the quick popup action
  */
 internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
+
   init {
     templatePresentation.text = GitBundle.message("action.Vcs.ShowMoreActions.text")
   }
 
-  private class MyActionButtonWithText(action: AnAction,
-                                       presentation: Presentation,
-                                       place: String,
-                                       minimumSize: Dimension) : ActionButtonWithText(action, presentation, place, minimumSize) {
-    public override fun getText(): @NlsActions.ActionText String {
-      val iconWithText = myPresentation.getClientProperty(KEY_ICON_WITH_TEXT)
-      return if (iconWithText == true) {
-        super.getText() + " "
-      }
-      else {
-        ""
-      }
-    }
+  private inner class MyActionButtonWithText(
+    action: AnAction,
+    presentation: Presentation,
+    place: String,
+  ) : ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
 
-    override fun getInactiveTextColor(): Color {
-      return foreground
-    }
+    override fun getInactiveTextColor(): Color = foreground
 
-    override fun getInsets(): Insets {
-      return JBInsets(0, 0, 0, 0)
-    }
+    override fun getInsets(): Insets = JBInsets(0, 0, 0, 0)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return MyActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    return MyActionButtonWithText(this, presentation, place)
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
+    val repo = e.project?.let { GitBranchUtil.getCurrentRepository(it) }
+    val noRepo = repo == null
+
     val presentation = e.presentation
-    val repo = project?.let { GitBranchUtil.getCurrentRepository(it) }
-    if (repo == null) {
-      presentation.putClientProperty(KEY_ICON_WITH_TEXT, true)
-      presentation.icon = AllIcons.Vcs.BranchNode
+    presentation.icon = if (noRepo) {
+      AllIcons.Vcs.BranchNode
     }
     else {
-      var icon = AllIcons.Actions.More
-      if (icon.iconWidth < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width) {
-        icon = IconUtil.toSize(icon, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width,
-          ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
-      }
-      presentation.putClientProperty(KEY_ICON_WITH_TEXT, false)
-      presentation.icon = icon
+      templatePresentation.icon.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    }
+
+    presentation.text = if (noRepo) {
+      templatePresentation.text + " "
+    }
+    else {
+      ""
     }
   }
 
-  companion object {
-    private val KEY_ICON_WITH_TEXT = Key.create<Boolean>("KEY_ICON_WITH_TEXT")
+  internal class MyGitRepositoryListener(private val project: Project) : VcsRepositoryMappingListener {
+
+    override fun mappingChanged() {
+      ApplicationManager.getApplication().invokeLater(Runnable {
+        project.messageBus
+          .syncPublisher(NewToolbarPaneListener.TOPIC)
+          .stateChanged()
+      }, project.disposed)
+    }
   }
 
-  class MyGitRepositoryListener(val project: Project) : VcsRepositoryMappingListener {
-    override fun mappingChanged() {
-      invokeLater {
-        project.messageBus.syncPublisher(NewToolbarPaneListener.TOPIC).stateChanged()
-      }
+  private fun Icon.toSize(dimension: Dimension): Icon {
+    return if (iconWidth < dimension.width) {
+      IconUtil.toSize(
+        this,
+        dimension.width,
+        dimension.height,
+      )
+    }
+    else {
+      this
     }
   }
 }

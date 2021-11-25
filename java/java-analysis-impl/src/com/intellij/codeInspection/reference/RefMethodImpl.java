@@ -45,6 +45,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   RefMethodImpl(UMethod method, PsiElement psi, RefManager manager) {
     super(method, psi, manager);
+
+    setConstructor(method.isConstructor());
+    PsiType returnType = method.getReturnType();
+    setFlag(returnType == null || PsiType.VOID.equals(returnType) ||
+            returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID), IS_RETURN_VALUE_USED_MASK);
   }
 
   // To be used only from RefImplicitConstructor!
@@ -98,7 +103,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         if (param.getSourcePsi() != null) {
           final RefParameter refParameter = getRefJavaManager().getParameterReference(param, i, this);
           if (refParameter != null) {
-            add(refParameter);
             refUtil.setIsFinal(refParameter, param.isFinal());
             newParameters.add(refParameter);
           }
@@ -111,22 +115,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     RefElement parentRef = findParentRef(sourcePsi, method, myManager);
     if (parentRef == null) return;
-    ((WritableRefEntity)parentRef).add(this);
+    this.setOwner((WritableRefEntity)parentRef);
     if (!myManager.isDeclarationsFound()) return;
 
     PsiMethod javaPsi = method.getJavaPsi();
-    setConstructor(method.isConstructor());
-    final PsiType returnType = method.getReturnType();
-    setFlag(returnType == null ||
-            PsiType.VOID.equals(returnType) ||
-            returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID), IS_RETURN_VALUE_USED_MASK);
-
-    RefClass ownerClass = getOwnerClass();
-    if (isConstructor()) {
-      LOG.assertTrue(ownerClass != null);
-      addReference(ownerClass, ownerClass.getPsiElement(), method, false, true, null);
-    }
-    else {
+    RefClass ownerClass = ObjectUtils.tryCast(parentRef, RefClass.class);
+    if (!isConstructor()) {
       if (ownerClass != null && ownerClass.isInterface()) {
         setAbstract(false);
       }
@@ -152,16 +146,18 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       }
     }
 
-    if (sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+    if (sourcePsi instanceof PsiMethod && sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       collectUncaughtExceptions((PsiMethod)sourcePsi);
     }
   }
 
   public void setParametersAreUnknown() {
     for (RefParameter parameter : getParameters()) {
+      parameter.waitForInitialized();
       ((RefParameterImpl)parameter).clearTemplateValue();
     }
     for (RefMethod method : getSuperMethods()) {
+      method.waitForInitialized();
       ((RefMethodImpl)method).setParametersAreUnknown();
     }
   }
@@ -302,7 +298,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public synchronized RefParameter @NotNull [] getParameters() {
-    LOG.assertTrue(isInitialized(), getName() + " not initialized");
+    LOG.assertTrue(isInitialized());
     return ObjectUtils.notNull(myParameters, EMPTY_PARAMS_ARRAY);
   }
 
@@ -313,9 +309,16 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       getRefManager().executeTask(() -> buildReferences());
       return;
     }
+
     // Work on code block to find what we're referencing...
     UMethod method = (UMethod)getUastElement();
     if (method == null) return;
+    if (isConstructor()) {
+      final RefClass ownerClass = getOwnerClass();
+      assert ownerClass != null;
+      ownerClass.waitForInitialized();
+      addReference(ownerClass, ownerClass.getPsiElement(), method, false, true, null);
+    }
     UExpression body = method.getUastBody();
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     refUtil.addReferencesTo(method, this, method);
@@ -440,24 +443,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return ObjectUtils.tryCast(getOwner(), RefClass.class);
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    if (isValid()) {
-      return ReadAction.compute(() -> {
-        UMethod uMethod = (UMethod)getUastElement();
-        if (uMethod instanceof SyntheticElement) {
-          return uMethod.getName();
-        }
-        return PsiFormatUtil.formatMethod(uMethod.getJavaPsi(),
-                                          PsiSubstitutor.EMPTY,
-                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                          PsiFormatUtilBase.SHOW_TYPE);
-      });
-    }
-    return super.getName();
-  }
-
   @Override
   public String getExternalName() {
     return ReadAction.compute(() -> {
@@ -528,9 +513,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   void setReturnValueUsed(boolean value) {
+    LOG.assertTrue(isInitialized());
     if (checkFlag(IS_RETURN_VALUE_USED_MASK) == value) return;
     setFlag(value, IS_RETURN_VALUE_USED_MASK);
     for (RefMethod refSuper : getSuperMethods()) {
+      refSuper.waitForInitialized();
       ((RefMethodImpl)refSuper).setReturnValueUsed(value);
     }
   }
@@ -541,6 +528,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   void updateReturnValueTemplate(UExpression expression) {
+    LOG.assertTrue(isInitialized());
     if (expression == null) return;
     synchronized (this) {
       if (myReturnValueTemplate == null) return;
@@ -549,6 +537,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (!getSuperMethods().isEmpty()) {
       for (final RefMethod refMethod : getSuperMethods()) {
         RefMethodImpl refSuper = (RefMethodImpl)refMethod;
+        refSuper.waitForInitialized();
         refSuper.updateReturnValueTemplate(expression);
       }
     }
@@ -589,11 +578,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   void updateParameterValues(List<UExpression> args, @Nullable PsiElement elementPlace) {
-    LOG.assertTrue(isInitialized(), getName() + " not initialized");
+    LOG.assertTrue(isInitialized());
     if (isExternalOverride()) return;
 
     if (!getSuperMethods().isEmpty()) {
       for (RefMethod refSuper : getSuperMethods()) {
+        refSuper.waitForInitialized();
         ((RefMethodImpl)refSuper).updateParameterValues(args, null);
       }
     }
@@ -617,6 +607,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public void updateThrowsList(PsiClassType exceptionType) {
+    LOG.assertTrue(isInitialized());
     for (RefMethod refSuper : getSuperMethods()) {
       ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
     }

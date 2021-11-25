@@ -45,8 +45,6 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     var isEnabled: Boolean = true
 
     var disabledLanguages: TreeSet<String> = sortedSetOf()
-
-    var disabledGroups: TreeSet<String> = sortedSetOf()
   }
 
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()
@@ -72,21 +70,6 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
       }
       else {
         myState.disabledLanguages.add(id)
-      }
-    }
-    if (settingsChanged) {
-      listener.languageStatusChanged()
-      listener.settingsChanged()
-    }
-  }
-
-  fun enableGroup(group: String, enabled: Boolean) {
-    val settingsChanged = synchronized(lock) {
-      if (enabled) {
-        myState.disabledGroups.remove(group)
-      }
-      else {
-        myState.disabledGroups.add(group)
       }
     }
     if (settingsChanged) {
@@ -153,10 +136,6 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     return language.id !in myState.disabledLanguages
   }
 
-  fun hintsEnabled(group: String) : Boolean = synchronized(lock) {
-    return group !in myState.disabledGroups
-  }
-
   fun hintsShouldBeShown(language: Language) : Boolean = synchronized(lock) {
     if (!hintsEnabledGlobally()) return false
     return hintsEnabled(language)
@@ -173,11 +152,10 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     return true
   }
 
-  fun hintsShouldBeShown(group: String, language: Language, key: SettingsKey<*>): Boolean = synchronized(lock) {
+  fun hintsShouldBeShown(key: SettingsKey<*>, language: Language): Boolean = synchronized(lock) {
     return hintsEnabledGlobally() &&
            hintsEnabled(language) &&
-           hintsEnabled(key, language) &&
-           hintsEnabled(group)
+           hintsEnabled(key, language)
   }
 
   override fun getState(): State = synchronized(lock) {

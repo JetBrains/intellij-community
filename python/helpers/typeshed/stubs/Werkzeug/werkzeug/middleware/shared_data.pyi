@@ -9,13 +9,13 @@ _Loader = Callable[[Optional[Text]], Union[Tuple[None, None], Tuple[Text, _Opene
 
 class SharedDataMiddleware(object):
     app: WSGIApplication
-    exports: list[Tuple[Text, _Loader]]
+    exports: list[tuple[Text, _Loader]]
     cache: bool
     cache_timeout: float
     def __init__(
         self,
         app: WSGIApplication,
-        exports: Mapping[Text, _V] | Iterable[Tuple[Text, _V]],
+        exports: Mapping[Text, _V] | Iterable[tuple[Text, _V]],
         disallow: Text | None = ...,
         cache: bool = ...,
         cache_timeout: float = ...,

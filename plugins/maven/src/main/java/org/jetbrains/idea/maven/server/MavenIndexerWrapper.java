@@ -28,14 +28,14 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     myProject = project;
   }
 
-  public void releaseIndex(String indexId) throws MavenServerIndexerException {
-    MavenLog.LOG.debug("releaseIndex " + indexId);
+  public void releaseIndex(MavenIndexId mavenIndexId) throws MavenServerIndexerException {
+    MavenLog.LOG.debug("releaseIndex " + mavenIndexId.indexId);
 
     MavenServerIndexer w = getWrappee();
     if (w == null) return;
 
     try {
-      w.releaseIndex(indexId, ourToken);
+      w.releaseIndex(mavenIndexId, ourToken);
     }
     catch (RemoteException e) {
       handleRemoteError(e);
@@ -87,7 +87,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
         while (list != null);
         return null;
       } catch (Exception e){
-        MavenLog.LOG.error(e);
+        MavenLog.LOG.error("maven index id " + mavenIndexId, e);
         return null;
       }
     });

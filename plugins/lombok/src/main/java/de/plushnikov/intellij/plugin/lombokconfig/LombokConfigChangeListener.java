@@ -1,6 +1,9 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -18,9 +21,16 @@ public class LombokConfigChangeListener implements BulkFileListener {
   public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent event : events) {
       VirtualFile eventFile = event.getFile();
-      if (null != eventFile && LombokConfigFileType.INSTANCE.equals(eventFile.getFileType())) {
-        CONFIG_CHANGE_COUNTER.incrementAndGet();
-        break;
+      if (null != eventFile) {
+        final CharSequence nameSequence = eventFile.getNameSequence();
+        if (Strings.endsWith(nameSequence, "lombok.config")) {
+          final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(nameSequence);
+
+          if (LombokConfigFileType.INSTANCE.equals(fileType)) {
+            CONFIG_CHANGE_COUNTER.incrementAndGet();
+            break;
+          }
+        }
       }
     }
   }

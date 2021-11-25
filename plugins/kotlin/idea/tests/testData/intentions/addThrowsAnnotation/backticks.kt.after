@@ -1,0 +1,9 @@
+// WITH_STDLIB
+package foo.bar
+
+class `My$Exception` : Exception()
+
+@Throws(`My$Exception`::class)
+fun test() {
+    throw `My$Exception`()
+}

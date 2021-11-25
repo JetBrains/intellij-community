@@ -15,7 +15,6 @@ object TargetConfigurationGroups {
         KotlinIcons.Wizard.JS,
         listOf(
           JsBrowserTargetConfigurator,
-          MppLibJsBrowserTargetConfigurator,
           JsNodeTargetConfigurator
         )
     )

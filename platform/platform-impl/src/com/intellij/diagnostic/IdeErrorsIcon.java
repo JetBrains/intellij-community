@@ -14,7 +14,7 @@ final class IdeErrorsIcon extends JLabel {
   private final boolean myEnableBlink;
 
   IdeErrorsIcon(boolean enableBlink) {
-    myEnableBlink = enableBlink && !Boolean.getBoolean("fatal.error.icon.disable.blinking");
+    myEnableBlink = enableBlink;
   }
 
   void setState(MessagePool.State state) {

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with '...filter{}.map{}.firstOrNull()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence()...filter{}.map{}.firstOrNull()'"
 // AFTER-WARNING: Parameter 'o' is never used

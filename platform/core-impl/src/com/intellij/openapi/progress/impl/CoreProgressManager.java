@@ -130,8 +130,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
-    if (Cancellation.isCancelled() && !isInNonCancelableSection()) {
-      throw new JobCanceledException();
+    if (!isInNonCancelableSection()) {
+      Cancellation.checkCancelled();
     }
 
     CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
@@ -413,10 +413,15 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
+  @NotNull
+  protected ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
+    return new EmptyProgressIndicator();
+  }
+
   // from any: bg
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
-    return runProcessWithProgressAsynchronously(task, new EmptyProgressIndicator(), null);
+    return runProcessWithProgressAsynchronously(task, createDefaultAsynchronousProgressIndicator(task), null);
   }
 
   // from any: bg
@@ -479,16 +484,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     else {
       indicatorDisposable = null;
     }
-    return runProcessWithProgressAsync(task, CompletableFuture.completedFuture(progressIndicator), continuation, indicatorDisposable,
-                                       modalityState);
-  }
 
-  @NotNull
-  protected Future<?> runProcessWithProgressAsync(@NotNull Task.Backgroundable task,
-                                                  @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicator,
-                                                  @Nullable Runnable continuation,
-                                                  @Nullable IndicatorDisposable indicatorDisposable,
-                                                  @Nullable ModalityState modalityState) {
     AtomicLong elapsed = new AtomicLong();
     return new ProgressRunner<>(progress -> {
       long start = System.currentTimeMillis();
@@ -507,20 +503,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           notifyTaskFinished(task, elapsed.get());
         }
 
-        ModalityState modality;
-        if (modalityState != null) {
-          modality = modalityState;
-        }
-        else {
-          try {
-            modality = progressIndicator.get().getModalityState();
-          }
-          catch (Throwable e) {
-            modality = ModalityState.NON_MODAL;
-          }
-        }
-
-        ApplicationUtil.invokeLaterSomewhere(task.whereToRunCallbacks(), modality, () -> {
+        ApplicationUtil.invokeLaterSomewhere(task.whereToRunCallbacks(), modalityState, () -> {
           finishTask(task, result.isCanceled(), result.getThrowable() instanceof ProcessCanceledException ? null : result.getThrowable());
           if (indicatorDisposable != null) {
             Disposer.dispose(indicatorDisposable);

@@ -10,7 +10,6 @@ import com.intellij.find.impl.FindManagerImpl
 import com.intellij.icons.AllIcons.Actions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -73,8 +72,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             if (factory.findFunctionOptions.isSearchForBaseMethod) {
                 val supers = KotlinFindUsagesSupport.getSuperMethods(psiElement as KtFunction, null)
                 if (supers.contains(psiElement)) supers.toTypedArray() else (supers + psiElement).toTypedArray()
-            }
-            else super.getPrimaryElements()
+            } else super.getPrimaryElements()
 
         override fun getFindUsagesDialog(
             isSingleFile: Boolean,
@@ -159,8 +157,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                         }
                     }
                 }
-            }
-            else if (factory.findPropertyOptions.isSearchForBaseAccessors) {
+            } else if (factory.findPropertyOptions.isSearchForBaseAccessors) {
                 val supers = KotlinFindUsagesSupport.getSuperMethods(element, null)
                 return if (supers.contains(psiElement)) supers.toTypedArray() else (supers + psiElement).toTypedArray()
             }
@@ -374,13 +371,18 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                     }
                 }
 
-                ToolWindowManager.getInstance(project).notifyByBalloon(
-                    ToolWindowId.FIND,
-                    MessageType.INFO,
-                    DISABLE_COMPONENT_AND_DESTRUCTION_SEARCH_TEXT,
-                    Actions.Find,
-                    listener
-                )
+                val windowManager = ToolWindowManager.getInstance(project)
+                windowManager.getToolWindow(ToolWindowId.FIND)?.let { toolWindow ->
+                    windowManager.notifyByBalloon(
+                        toolWindow.id,
+                        MessageType.INFO,
+                        DISABLE_COMPONENT_AND_DESTRUCTION_SEARCH_TEXT,
+                        Actions.Find,
+                        listener
+                    )
+                }
+
+                Unit
             }
 
             return Alarm().also {

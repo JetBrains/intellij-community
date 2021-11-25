@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.JetBrainsProductProperties
 
 @CompileStatic
 abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
-  protected String dependenciesPath
 
   PyCharmPropertiesBase() {
     baseFileName = "pycharm"

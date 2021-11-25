@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.BiConsumer
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
@@ -196,6 +197,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.java.rareRefactorings"),
     plugin("intellij.toml") {
       withModule("intellij.toml.core")
+      withModule("intellij.toml.json")
     }
   ]
 
@@ -510,15 +512,14 @@ final class CommunityRepositoryModules {
       // FIXME-ank: We abuse `withGeneratedResources`. There is no intention to generate any resources, instead we want to create empty
       // output compile directory for modules with no sources, but have module libraries. This is to leverage existing logic that collects
       // module runtime libraries, and to avoid validation error saying that the module output dir does not exist.
-      withGeneratedResources(new ResourcesGenerator() {
+      withGeneratedResources(new BiConsumer<Path, BuildContext>() {
         @Override
-        File generateResources(BuildContext buildContext) {
-          for (JpsModule module in buildContext.project.modules) {
-            Files.createDirectories(Path.of(buildContext.getModuleOutputPath(module)))
+        void accept(Path targetDir, BuildContext context) {
+          for (JpsModule module in context.project.modules) {
+            Files.createDirectories(context.getModuleOutputDir(module))
           }
-          return null
         }
-      }, "lib")
+      })
     }
   }
 

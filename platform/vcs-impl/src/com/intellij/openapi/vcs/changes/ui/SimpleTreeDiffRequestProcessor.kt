@@ -49,8 +49,6 @@ class SimpleTreeDiffRequestProcessor(
     TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
   }
 
-  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean = false
-
   private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
     return treeModelData.userObjectsStream(Change::class.java).map { ChangeWrapper(it) }
   }

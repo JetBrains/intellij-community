@@ -25,7 +25,7 @@ public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
-  public void testDuplicateLabels() {
+  public void testSuspiciousLabelElements() {
     doTest();
   }
 
@@ -36,6 +36,18 @@ public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
   }
 
   public void testBoxedTypeNullability() {
+    doTest();
+  }
+
+  public void testPatternsNullability() {
+    doTest();
+  }
+
+  public void testPatterns() {
+    doTest();
+  }
+
+  public void testInstanceof() {
     doTest();
   }
 }

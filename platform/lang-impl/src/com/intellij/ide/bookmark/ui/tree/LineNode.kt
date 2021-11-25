@@ -18,14 +18,10 @@ class LineNode(project: Project, bookmark: LineBookmark) : BookmarkNode<LineBook
     val line = value.line + 1
     presentation.setIcon(wrapIcon(null))
     if (parent is FileNode) {
-      val description = bookmarkDescription
-      if (description != null) {
-        presentation.addText("$line: ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-        presentation.addText(description, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-      }
-      else {
-        presentation.addText(line.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES)
-      }
+      presentation.addText("$line: ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      bookmarkDescription
+        ?.also { presentation.presentableText = it } // configure speed search
+        ?.also { presentation.addText(it, SimpleTextAttributes.REGULAR_ATTRIBUTES) }
     }
     else {
       addTextTo(presentation, value.file, line)

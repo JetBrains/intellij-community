@@ -12,11 +12,12 @@ import com.intellij.compiler.server.CustomBuilderMessageHandler
 import com.intellij.compiler.server.PortableCachesLoadListener
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
@@ -36,6 +37,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.containers.generateRecursiveSequence
+import com.intellij.util.indexing.StorageException
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.backwardRefs.CompilerRef
@@ -48,16 +50,15 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchReques
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.search.syntheticAccessors
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -200,13 +201,33 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         withDirtyScopeUnderWriteLock { upToDateCheckFinished(modules) }
     }
 
-    fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? = element.takeIf(this::isServiceEnabledFor)?.let {
-        CachedValuesManager.getCachedValue(element) {
-            CachedValueProvider.Result.create(
-                buildScopeWithReferences(referentFiles(element), element),
-                PsiModificationTracker.MODIFICATION_COUNT,
-                this,
-            )
+    private fun <T> runActionSafe(actionName: String, action: () -> T): T? = try {
+        action()
+    } catch (e: Throwable) {
+        if (e is ControlFlowException) throw e
+
+        try {
+            LOG.error("an exception during $actionName calculation", e)
+        } finally {
+            if (e is IOException || e is StorageException) {
+                withWriteLock { closeStorage() }
+            }
+        }
+
+        null
+    }
+
+    fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? {
+        if (!isServiceEnabledFor(element)) return null
+
+        return runActionSafe("scope with code references") {
+            CachedValuesManager.getCachedValue(element) {
+                CachedValueProvider.Result.create(
+                    buildScopeWithReferences(referentFiles(element), element),
+                    PsiModificationTracker.MODIFICATION_COUNT,
+                    this,
+                )
+            }
         }
     }
 
@@ -403,6 +424,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         fun getInstanceIfEnable(project: Project): KotlinCompilerReferenceIndexService? = if (isEnabled) get(project) else null
         const val SETTINGS_ID: String = "kotlin.compiler.ref.index"
         val isEnabled: Boolean get() = AdvancedSettings.getBoolean(SETTINGS_ID)
+        private val LOG = logger<KotlinCompilerReferenceIndexService>()
     }
 
     class InitializationActivity : StartupActivity.DumbAware {
@@ -455,17 +477,8 @@ private fun extractFqNamesFromPsiMethod(psiMethod: PsiMethod): List<FqName>? {
 
     val fqName = psiMethod.getKotlinFqName() ?: return null
     val listOfFqName = listOf(fqName)
-    if (psiMethod.hasModifier(JvmModifier.STATIC)) return listOfFqName
-
-    val name = psiMethod.name
-    val parametersSize = psiMethod.parameters.size
-    if (psiMethod.hasTypeParameters() ||
-        JvmAbi.isGetterName(name) && parametersSize != 0 ||
-        JvmAbi.isSetterName(name) && parametersSize != 1
-    ) {
-        return listOfFqName
-    }
+    val propertyAssessors = psiMethod.syntheticAccessors.ifEmpty { return listOfFqName }
 
     val parentFqName = fqName.parent()
-    return listOfFqName + getPropertyNamesCandidatesByAccessorName(Name.identifier(name)).map { parentFqName.child(it) }
+    return listOfFqName + propertyAssessors.map { parentFqName.child(it) }
 }

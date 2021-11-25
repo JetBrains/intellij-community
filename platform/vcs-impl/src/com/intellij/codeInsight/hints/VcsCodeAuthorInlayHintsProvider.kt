@@ -34,11 +34,11 @@ private fun isCodeAuthorEnabledForApplication(): Boolean =
 private fun isCodeAuthorEnabledInSettings(): Boolean =
   InlayHintsProviderExtension.findProviders()
     .filter { it.provider.key == KEY }
-    .any { InlayHintsSettings.instance().hintsShouldBeShown(it.provider.groupId, it.language, it.provider.key) }
+    .any { InlayHintsSettings.instance().hintsShouldBeShown(it.provider.key, it.language) }
 
 private fun isCodeAuthorEnabledInSettings(language: Language): Boolean {
   val hasProviderForLanguage = InlayHintsProviderExtension.allForLanguage(language).any { it.key == KEY }
-  return hasProviderForLanguage && InlayHintsSettings.instance().hintsShouldBeShown(CODE_AUTHOR_GROUP, language, KEY)
+  return hasProviderForLanguage && InlayHintsSettings.instance().hintsShouldBeShown(KEY, language)
 }
 
 internal fun isCodeAuthorInlayHintsEnabled(): Boolean = isCodeAuthorEnabledForApplication() && isCodeAuthorEnabledInSettings()
@@ -59,8 +59,8 @@ internal fun refreshCodeAuthorInlayHints(project: Project, file: VirtualFile) {
 }
 
 abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> {
-  override val groupId: String
-    get() = CODE_AUTHOR_GROUP
+  override val group: InlayGroup
+    get() = InlayGroup.CODE_AUTHOR_GROUP
 
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     if (!isCodeAuthorEnabledForApplication()) return null
@@ -70,6 +70,21 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
     val authorAspect = annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR } ?: return null
 
     return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
+  }
+
+  override fun getPlaceholdersCollectorFor(
+    file: PsiFile,
+    editor: Editor,
+    settings: NoSettings,
+    sink: InlayHintsSink
+  ): InlayHintsCollector? {
+    if (!isCodeAuthorEnabledForApplication()) return null
+    if (!AnnotationsPreloader.isEnabled()) return null
+
+    val virtualFile = file.virtualFile ?: return null
+    if (!AnnotationsPreloader.canPreload(file.project, virtualFile)) return null
+
+    return VcsCodeAuthorPlaceholdersCollector(editor, this::isAccepted)
   }
 
   protected abstract fun isAccepted(element: PsiElement): Boolean

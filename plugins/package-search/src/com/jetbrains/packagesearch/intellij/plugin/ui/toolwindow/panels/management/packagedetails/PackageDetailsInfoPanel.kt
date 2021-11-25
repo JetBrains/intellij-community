@@ -4,6 +4,7 @@ import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
+import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
@@ -20,7 +21,6 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.apache.commons.lang3.StringUtils
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -161,7 +161,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
         }
 
         descriptionLabel.isVisible = true
-        descriptionLabel.text = description.withHtmlStyling(wordWrap = true)
+        descriptionLabel.text = description.normalizeWhitespace().withHtmlStyling(wordWrap = true)
     }
 
     private fun displayRepositoriesIfAny(
@@ -194,7 +194,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
         }
 
         val authorNames = authors.filterNot { it.name.isNullOrBlank() }
-            .map { StringUtils.normalizeSpace(it.name) }
+            .map { it.name.normalizeWhitespace() }
 
         val authorsString = if (authorNames.size == 1) {
             PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.author", authorNames.joinToString())

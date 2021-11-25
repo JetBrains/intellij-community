@@ -259,7 +259,21 @@ public final class TerminalShellCommandHandlerHelper {
 
     Project project = myWidget.getProject();
     String workingDirectory = getWorkingDirectory();
-    boolean localSession = !hasRunningCommands();
+    Executor executor = matchedExecutor(keyPressed);
+    boolean hasRunningCommands;
+    if (executor != null) {
+      hasRunningCommands = hasRunningCommands();
+    }
+    else {
+      Boolean hasRunningCommandsLocal = myHasRunningCommands;
+      if (hasRunningCommandsLocal == null) {
+        // to not execute hasRunningCommands() on EDT just to report statistics
+        onShellCommandExecuted();
+        return false;
+      }
+      hasRunningCommands = hasRunningCommandsLocal;
+    }
+    boolean localSession = !hasRunningCommands;
     if (!TerminalShellCommandHandler.Companion.matches(project, workingDirectory, localSession, command)) {
       onShellCommandExecuted();
       return false;
@@ -270,7 +284,6 @@ public final class TerminalShellCommandHandlerHelper {
       .findFirst()
       .orElseThrow(() -> new RuntimeException("Cannot find matching command handler."));
 
-    Executor executor = matchedExecutor(keyPressed);
     if (executor == null) {
       onShellCommandExecuted();
       TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, false);

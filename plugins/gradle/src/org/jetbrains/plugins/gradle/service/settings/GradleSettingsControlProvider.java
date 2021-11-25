@@ -26,7 +26,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 /**
  * Extension of Gradle Settings Control.
  *<br/><br/>
- * Implement this to provide custom Gradle settings instead of default ones.
+ * Implement this to provide custom Gradle settings UI components instead of default ones.
  * Only one extension should be available for current platform prefix, see {@link PlatformUtils#getPlatformPrefix}
  */
 public abstract class GradleSettingsControlProvider {
