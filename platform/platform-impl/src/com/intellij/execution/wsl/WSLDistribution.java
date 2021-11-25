@@ -38,6 +38,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -343,6 +344,12 @@ public class WSLDistribution {
       commandLine.setExePath(executable.toString());
       commandLine.addParameter(getRunCommandLineParameter());
       commandLine.addParameter(linuxCommandStr);
+    }
+
+    if (Registry.is("wsl.use.utf8.encoding")) {
+      // Unlike the default system encoding on Windows (e.g. cp-1251),
+      // UTF8 is supported by the majority of linux distributions
+      commandLine.setCharset(StandardCharsets.UTF_8);
     }
 
     logCommandLineAfter(commandLine);
