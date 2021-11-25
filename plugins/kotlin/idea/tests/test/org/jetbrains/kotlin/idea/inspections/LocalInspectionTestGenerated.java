@@ -9652,6 +9652,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantWith/nested.kt");
         }
 
+        @TestMetadata("notApplicable_delegatedProperty.kt")
+        public void testNotApplicable_delegatedProperty() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/notApplicable_delegatedProperty.kt");
+        }
+
+        @TestMetadata("notApplicable_delegatedPropertyByProvideDelegate.kt")
+        public void testNotApplicable_delegatedPropertyByProvideDelegate() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/notApplicable_delegatedPropertyByProvideDelegate.kt");
+        }
+
         @TestMetadata("notApplicable_destructuringDeclarationEntry.kt")
         public void testNotApplicable_destructuringDeclarationEntry() throws Exception {
             runTest("testData/inspectionsLocal/redundantWith/notApplicable_destructuringDeclarationEntry.kt");
@@ -9705,6 +9715,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notApplicable_inValueArgument.kt")
         public void testNotApplicable_inValueArgument() throws Exception {
             runTest("testData/inspectionsLocal/redundantWith/notApplicable_inValueArgument.kt");
+        }
+
+        @TestMetadata("notApplicable_iterator.kt")
+        public void testNotApplicable_iterator() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/notApplicable_iterator.kt");
+        }
+
+        @TestMetadata("notApplicable_iteratorWithNextOperator.kt")
+        public void testNotApplicable_iteratorWithNextOperator() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/notApplicable_iteratorWithNextOperator.kt");
         }
 
         @TestMetadata("notApplicable_labeledReturn.kt")

@@ -8,6 +8,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.moveCaret
@@ -53,13 +55,7 @@ class RedundantWithInspection : AbstractKotlinInspection() {
                         return
                     }
 
-                    val resolvedCall = if (element is KtDestructuringDeclarationEntry) {
-                        context[BindingContext.COMPONENT_RESOLVED_CALL, element]
-                    } else {
-                        element.getResolvedCall(context)
-                    } ?: return
-
-                    if (isUsageOfDescriptor(lambdaDescriptor, resolvedCall, context)) {
+                    if (isUsageOfDescriptor(lambdaDescriptor, element, context)) {
                         used = true
                     }
                 }
@@ -82,6 +78,38 @@ class RedundantWithInspection : AbstractKotlinInspection() {
 
 private fun KtValueArgument.lambdaExpression(): KtLambdaExpression? =
     (this as? KtLambdaArgument)?.getLambdaExpression() ?: this.getArgumentExpression() as? KtLambdaExpression
+
+private fun isUsageOfDescriptor(lambdaDescriptor: SimpleFunctionDescriptor, element: KtElement, context: BindingContext): Boolean {
+    if (element !is KtExpression) return false
+    return when (element) {
+        is KtDestructuringDeclarationEntry -> {
+            listOf { context[BindingContext.COMPONENT_RESOLVED_CALL, element] }
+        }
+        is KtProperty -> {
+            val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] as? VariableDescriptorWithAccessors
+            if (descriptor != null) {
+                listOf(
+                    { context[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, descriptor.getter] },
+                    { context[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, descriptor.setter] },
+                    { context[BindingContext.PROVIDE_DELEGATE_RESOLVED_CALL, descriptor] },
+                )
+            } else {
+                emptyList()
+            }
+        }
+        else -> {
+            listOf(
+                { element.getResolvedCall(context) },
+                { context[BindingContext.LOOP_RANGE_ITERATOR_RESOLVED_CALL, element] },
+                { context[BindingContext.LOOP_RANGE_HAS_NEXT_RESOLVED_CALL, element] },
+                { context[BindingContext.LOOP_RANGE_NEXT_RESOLVED_CALL, element] }
+            )
+        }
+    }.any { getResolveCall ->
+        val resolvedCall = getResolveCall() ?: return@any false
+        isUsageOfDescriptor(lambdaDescriptor, resolvedCall, context)
+    }
+}
 
 private class RemoveRedundantWithFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("remove.redundant.with.fix.text")
