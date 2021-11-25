@@ -6,9 +6,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.ide.impl.dataRules.GetDataRule;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -27,18 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class TestLocationDataRule implements GetDataRule {
-  @Nullable
-  @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
-    final Project project = CommonDataKeys.PROJECT.getData(dataProvider);
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataProvider);
-    if (project != null && file != null) {
-      final List<Location> locations = collectRelativeLocations(project, file);
-      return locations.size() == 1 ? locations.get(0) : null;
-    }
-    return null;
-  }
+public final class TestLocationUtil {
 
   @NotNull
   static List<Location> collectRelativeLocations(Project project, VirtualFile file) {
