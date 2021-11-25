@@ -15,6 +15,7 @@
       "blank_lines_after_class_header": 0,
       "blank_lines_around_block_when_branches": 0,
       "blank_lines_before_declaration_with_comment_or_annotation_on_separate_line": 1,
+      "block_comment_add_space": false,
       "block_comment_at_first_column": true,
       "call_parameters_new_line_after_left_paren": true,
       "call_parameters_right_paren_on_new_line": true,
