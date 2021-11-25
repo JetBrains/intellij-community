@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.preview.jcef
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.NonHeadlessRule
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownTestingUtil
@@ -32,9 +33,11 @@ import java.io.File
  */
 @RunWith(Parameterized::class)
 class MarkdownContentEscapingTest(enableOsr: Boolean) {
+  private val disposableRule = DisposableRule()
+
   @Rule
   @JvmField
-  val rule: TestRule = RuleChain.outerRule(NonHeadlessRule()).around(createJcefTestRule(enableOsr))
+  val ruleChain: TestRule = RuleChain.outerRule(NonHeadlessRule()).around(createJcefTestRule(enableOsr)).around(disposableRule)
 
   @Test
   fun `applied patch sanity`() = doTest("appliedPatchSanity")
@@ -56,7 +59,7 @@ class MarkdownContentEscapingTest(enableOsr: Boolean) {
 
   private fun doTest(name: String) {
     val content = File(testPath, "$name.html").readText()
-    val panel = MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content)
+    val panel = MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content, disposableRule.disposable)
     val expected = parseContentBody(content)
     var got = parseContentBody(panel.collectPageSource()!!)
     // can't listen for the content load, so use this primitive approach

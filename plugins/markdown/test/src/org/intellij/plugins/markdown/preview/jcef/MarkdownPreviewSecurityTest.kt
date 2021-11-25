@@ -47,7 +47,7 @@ class MarkdownPreviewSecurityTest(enableOsr: Boolean) {
     """.trimIndent()
     val latch = CountDownLatch(2)
     var canceledUrl: String? = null
-    MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content) {
+    MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content, disposableRule.disposable) {
       jbCefClient.addLoadHandler(object: CefLoadHandlerAdapter() {
         override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
           latch.countDown()
@@ -71,7 +71,7 @@ class MarkdownPreviewSecurityTest(enableOsr: Boolean) {
     val content = "<html><body></body></html>"
     val latch = CountDownLatch(1)
     var canceledUrl: String? = null
-    MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content) {
+    MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content, disposableRule.disposable) {
       jbCefClient.addLoadHandler(object: CefLoadHandlerAdapter() {
         override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
           browser.executeJavaScript("window.location.replace('$maliciousUrl')", null, 0)
@@ -96,7 +96,7 @@ class MarkdownPreviewSecurityTest(enableOsr: Boolean) {
     // language=HTML
     val content = "<html><body><script src='$maliciousUrl'></body></html>"
     val latch = CountDownLatch(1)
-    MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content) {
+    MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content, disposableRule.disposable) {
       addConsoleMessageHandler { _, message, _, _ ->
         if (message.contains("Refused to load the script 'https://evil.example.com/some-script.js'")) {
           latch.countDown()
@@ -112,7 +112,7 @@ class MarkdownPreviewSecurityTest(enableOsr: Boolean) {
     // language=HTML
     val content = "<html><body><script>console.log('Ops!');</script></body></html>"
     val latch = CountDownLatch(1)
-    MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content) {
+    MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content, disposableRule.disposable) {
       jbCefClient.addLoadHandler(object: CefLoadHandlerAdapter() {
         override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
           // language=JavaScript
