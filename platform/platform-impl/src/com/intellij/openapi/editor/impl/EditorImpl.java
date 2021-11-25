@@ -79,7 +79,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
@@ -1101,7 +1100,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       };
 
       layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
-      layeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER);
+      UiNotifyConnector.doWhenFirstShown(
+        myPanel, () -> layeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER), getDisposable());
       myPanel.add(layeredPane);
     }
     else {
@@ -1149,13 +1149,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent.addFocusListener(this);
 
-    UiNotifyConnector connector = new UiNotifyConnector(myEditorComponent, new Activatable() {
-      @Override
-      public void showNotify() {
-        myGutterComponent.updateSizeOnShowNotify();
-      }
-    });
-    Disposer.register(getDisposable(), connector);
+    UiNotifyConnector.doWhenFirstShown(myEditorComponent, myGutterComponent::updateSizeOnShowNotify, getDisposable());
 
     try {
       final DropTarget dropTarget = myEditorComponent.getDropTarget();
