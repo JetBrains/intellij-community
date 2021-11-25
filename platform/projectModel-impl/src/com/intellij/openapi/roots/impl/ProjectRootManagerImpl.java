@@ -55,6 +55,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final OrderRootsCache myRootsCache;
 
   protected boolean myStartupActivityPerformed;
+  private boolean myStateLoaded;
 
   private final RootProvider.RootSetChangedListener myRootProviderChangeListener = new RootProviderChangeListener();
 
@@ -316,6 +317,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   protected void projectJdkChanged() {
     incModificationCount();
     mergeRootsChangesDuring(getActionToRunWhenProjectJdkChanges());
+    fireJdkChanged();
+  }
+
+  private void fireJdkChanged() {
     Sdk sdk = getProjectSdk();
     for (ProjectExtension extension : EP_NAME.getExtensions(myProject)) {
       extension.projectSdkChanged(sdk);
@@ -356,8 +361,18 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     Application app = ApplicationManager.getApplication();
     if (app != null) {
-      app.invokeLater(() -> app.runWriteAction(() -> projectJdkChanged()), app.getNoneModalityState());
+      Runnable runnable = myStateLoaded ?
+                          () -> projectJdkChanged() :
+                          // Prevent root changed event during startup to improve startup performance
+                          () -> fireJdkChanged();
+      app.invokeLater(() -> app.runWriteAction(runnable), app.getNoneModalityState());
     }
+    myStateLoaded = true;
+  }
+
+  @Override
+  public void noStateLoaded() {
+    myStateLoaded = true;
   }
 
   @Override
