@@ -10,13 +10,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class CastMethodArgumentFix extends MethodArgumentFix implements HighPriorityAction {
   private final @IntentionName String myText;
 
   private CastMethodArgumentFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
     super(list, i, toType, factory);
-    myText = myArgList.getExpressionCount() == 1
+    myText = list.getExpressionCount() == 1
              ? QuickFixBundle.message("cast.single.parameter.text", myToType.getPresentableText())
              : QuickFixBundle.message("cast.parameter.text", myIndex + 1, myToType.getPresentableText());
   }
@@ -66,8 +67,10 @@ public final class CastMethodArgumentFix extends MethodArgumentFix implements Hi
   }
 
   @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new CastMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiExpressionList list = myArgList.getElement();
+    if (list == null) return null;
+    return new CastMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
                                      myArgumentFixerActionFactory);
   }
 
