@@ -1,0 +1,14 @@
+// "Create member function 'X.Companion.callSomethingNew'" "true"
+
+class X {
+    fun callee() {
+        X.callSomethingNew(123)
+    }
+
+    companion object {
+        fun callSomethingNew(i: Int) {
+            <selection>TODO("Not yet implemented")<caret></selection>
+        }
+    }
+
+    fun test(x:Int): Unit {

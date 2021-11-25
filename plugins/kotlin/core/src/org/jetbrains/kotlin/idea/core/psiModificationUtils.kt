@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
@@ -301,7 +302,14 @@ fun PsiElement.deleteSingle() {
 
 fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
     companionObjects.firstOrNull()?.let { return it }
-    return addDeclaration(KtPsiFactory(this).createCompanionObject())
+    return appendDeclaration(KtPsiFactory(this).createCompanionObject())
+}
+
+inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
+    val body = getOrCreateBody()
+    val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
+    val newDeclaration = if (anchor?.nextSibling is PsiErrorElement) body.addBefore(declaration, anchor) else body.addAfter(declaration, anchor)
+    return newDeclaration as T
 }
 
 fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {

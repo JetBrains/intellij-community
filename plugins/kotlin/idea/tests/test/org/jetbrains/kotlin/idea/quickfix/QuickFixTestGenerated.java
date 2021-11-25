@@ -4139,6 +4139,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createFunction/call/binaryOperationInCall.kt");
                 }
 
+                @TestMetadata("brokenPsi.kt")
+                public void testBrokenPsi() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/call/brokenPsi.kt");
+                }
+
+                @TestMetadata("brokenPsi2.kt")
+                public void testBrokenPsi2() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/call/brokenPsi2.kt");
+                }
+
                 @TestMetadata("callInAnnotationEntry.kt")
                 public void testCallInAnnotationEntry() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/call/callInAnnotationEntry.kt");
