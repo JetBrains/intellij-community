@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -626,6 +626,12 @@ public class ExprProcessor implements CodeConstants {
       }
       return block.getOldOffset(index);
     }
+
+    List<BasicBlock> successors = block.getSuccs();
+    if (successors.size() == 1) {
+      return successors.get(0).getOldOffset(0);
+    }
+
     return -1;
   }
 
