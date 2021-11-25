@@ -80,6 +80,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     "  // IntelliJ API Decompiler stub source generated from a class file\n" +
     "  // Implementation of methods is not available\n" +
     "\n";
+  private static final String CORRUPTED_CLASS_PACKAGE = "corrupted_class_file";
 
   private static final Key<Document> CLS_DOCUMENT_LINK_KEY = Key.create("cls.document.link");
 
@@ -291,13 +292,13 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     }
     else {
       PsiClass[] classes = getClasses(), mirrors = mirrorFile.getClasses();
+      PsiPackageStatement pkg = getPackageStatement(), mirrorPkg = mirrorFile.getPackageStatement();
       if (classes.length == 1 && mirrors.length == 0 && PsiPackage.PACKAGE_INFO_CLASS.equals(classes[0].getName())) {
-        PsiPackageStatement pkg = getPackageStatement(), mirrorPkg = mirrorFile.getPackageStatement();
         ClsElementImpl.setMirror(pkg, mirrorPkg);
         ClsElementImpl.setMirrorIfPresent(classes[0].getModifierList(), mirrorPkg.getAnnotationList());
       }
-      else {
-        ClsElementImpl.setMirrorIfPresent(getPackageStatement(), mirrorFile.getPackageStatement());
+      else if (pkg == null || !CORRUPTED_CLASS_PACKAGE.equals(pkg.getPackageName())) {
+        ClsElementImpl.setMirrorIfPresent(pkg, mirrorPkg);
         ClsElementImpl.setMirrors(classes, mirrors);
       }
     }
@@ -483,11 +484,11 @@ public class ClsFileImpl extends PsiBinaryFileImpl
                                                : stubTreeLoader.readOrBuild(project, virtualFile, this));
     if (newStubTree == null) {
       if (LOG.isDebugEnabled()) LOG.debug("No stub for class file " + virtualFile.getPresentableUrl());
-      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
+      newStubTree = new StubTree(new PsiJavaFileStubImpl(CORRUPTED_CLASS_PACKAGE, true));
     }
     else if (!(newStubTree.getRoot() instanceof PsiClassHolderFileStub)) {
       if (LOG.isDebugEnabled()) LOG.debug("Invalid stub for class file " + virtualFile.getPresentableUrl() + ": " + newStubTree.getRoot());
-      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
+      newStubTree = new StubTree(new PsiJavaFileStubImpl(CORRUPTED_CLASS_PACKAGE, true));
     }
 
     synchronized (myStubLock) {
