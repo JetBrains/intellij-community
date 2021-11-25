@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -48,7 +48,7 @@ public final class DomHelper {
     for (BasicBlock block : blocks) {
       Statement stat = stats.getWithKey(block.id);
 
-      for (BasicBlock succ : block.getSuccs()) {
+      for (BasicBlock succ : block.getSuccessors()) {
         Statement stsucc = stats.getWithKey(succ.id);
 
         int type;
@@ -72,7 +72,7 @@ public final class DomHelper {
       }
 
       // exceptions edges
-      for (BasicBlock succex : block.getSuccExceptions()) {
+      for (BasicBlock succex : block.getSuccessorExceptions()) {
         Statement stsuccex = stats.getWithKey(succex.id);
 
         ExceptionRangeCFG range = graph.getExceptionRange(succex, block);
