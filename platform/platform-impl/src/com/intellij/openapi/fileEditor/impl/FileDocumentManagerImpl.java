@@ -433,7 +433,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
   }
 
-  private void removeFromUnsaved(@NotNull Document document) {
+  @ApiStatus.Internal
+  public void removeFromUnsaved(@NotNull Document document) {
     myUnsavedDocuments.remove(document);
     myMultiCaster.unsavedDocumentDropped(document);
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
