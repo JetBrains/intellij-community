@@ -208,7 +208,7 @@ public final class WindowWatcher implements PropertyChangeListener {
 
   public @Nullable FocusWatcher getFocusWatcherFor(Component c) {
     final Window window = SwingUtilities.getWindowAncestor(c);
-    final WindowInfo info = windowToInfo.get(window);
+    final WindowInfo info = window == null ? null : windowToInfo.get(window);
     return info == null ? null : info.myFocusWatcherRef.get();
   }
 
@@ -313,8 +313,8 @@ public final class WindowWatcher implements PropertyChangeListener {
   }
 
   private static final class WindowInfo {
-    public final WeakReference<FocusWatcher> myFocusWatcherRef;
-    public boolean mySuggestAsParent;
+    final WeakReference<FocusWatcher> myFocusWatcherRef;
+    boolean mySuggestAsParent;
 
     WindowInfo(final Window window, final boolean suggestAsParent) {
       final FocusWatcher focusWatcher = new FocusWatcher();
