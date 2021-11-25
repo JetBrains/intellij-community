@@ -75,7 +75,7 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
   }
 
   companion object {
-    fun detectCreatedModule(project: Project, action: () -> Unit): Module? {
+    private fun detectCreatedModule(project: Project, action: () -> Unit): Module? {
       val manager = ModuleManager.getInstance(project)
       val modules = manager.modules
       action()
