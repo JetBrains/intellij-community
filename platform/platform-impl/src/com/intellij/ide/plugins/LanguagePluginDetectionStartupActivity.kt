@@ -9,12 +9,12 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.util.*
 import java.util.function.BiConsumer
 
@@ -23,18 +23,27 @@ private const val GROUP_ID = "Language Plugins Notifications"
 
 internal class LanguagePluginDetectionStartupActivity : StartupActivity.Background {
 
+  @RequiresBackgroundThread
   override fun runActivity(project: Project) {
-    val pluginId = findLanguagePluginToInstall()
-    if (pluginId == null) return
+    val application = ApplicationManagerEx.getApplicationEx()
+    if (application.isUnitTestMode ||
+        application.isHeadlessEnvironment) {
+      return
+    }
+
+    val pluginId = findLanguagePluginToInstall() ?: return
 
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup(GROUP_ID)
-      .createNotification(ApplicationBundle.message("notification.title.language.plugin.enable", ApplicationInfo.getInstance().fullApplicationName), NotificationType.INFORMATION)
+      .createNotification(
+        ApplicationBundle.message("notification.title.language.plugin.enable", ApplicationInfo.getInstance().fullApplicationName),
+        NotificationType.INFORMATION,
+      )
 
     val action = createSwitchAndRestartAction { _, _ ->
       installAndEnable(project, setOf(pluginId)) {
         notification.expire()
-        ApplicationManagerEx.getApplicationEx().restart(true)
+        application.restart(true)
       }
     }
 
