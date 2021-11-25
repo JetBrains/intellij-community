@@ -161,10 +161,6 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       Messages.showErrorDialog(project, message.toString(), VcsBundle.message("error.adding.files.title"));
     }
 
-    FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
-    for (VirtualFile file : allProcessedFiles) {
-      fileStatusManager.fileStatusChanged(file);
-    }
     VcsDirtyScopeManager.getInstance(project).filesDirty(allProcessedFiles, null);
 
     boolean moveRequired = list != null && !list.isDefault() && !allProcessedFiles.isEmpty() && changeListManager.areChangeListsEnabled();
