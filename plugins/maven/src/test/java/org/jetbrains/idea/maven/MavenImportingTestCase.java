@@ -39,10 +39,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
-import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
-import org.jetbrains.idea.maven.project.importing.MavenReadContext;
-import org.jetbrains.idea.maven.project.importing.MavenResolvedContext;
+import org.jetbrains.idea.maven.project.importing.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -65,6 +62,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected final boolean isNewImportingProcess = Boolean.parseBoolean(System.getProperty("maven.new.importing.process"));
   private List<String> myIgnorePaths;
   private List<String> myIgnorePatterns;
+  protected MavenReadContext myReadContext;
+  protected MavenResolvedContext myResolvedContext;
+  protected MavenImportedContext myImportedContext;
+  protected MavenSourcesGeneratedContext mySourcesGeneratedContext;
+  protected MavenPluginResolvedContext myPluginResolvedContext;
 
   @Override
   protected void setUp() throws Exception {
@@ -458,21 +460,19 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     MavenImportFlow flow = new MavenImportFlow();
     MavenInitialImportContext initialImportContext =
       flow.prepareNewImport(myProject, getMavenProgressIndicator(),
-                            files,
+                            new FilesList(files),
                             getMavenGeneralSettings(),
                             getMavenImporterSettings(),
                             Arrays.asList(profiles),
                             disabledProfiles);
-    MavenReadContext readContext = flow.readMavenFiles(initialImportContext, myIgnorePaths, myIgnorePatterns);
+    myReadContext = flow.readMavenFiles(initialImportContext, myIgnorePaths, myIgnorePatterns);
     if(failOnReadingError) {
-      assertFalse("Failed to import Maven project: " + readContext.collectProblems(), readContext.hasReadingProblems());
+      assertFalse("Failed to import Maven project: " + myReadContext.collectProblems(), myReadContext.hasReadingProblems());
     }
 
-    MavenResolvedContext resolvedContext = flow.resolveDependencies(readContext);
-    resolvedContext = flow.resolveFolders(resolvedContext);
-    flow.resolvePlugins(resolvedContext);
-    flow.commitToWorkspaceModel(resolvedContext);
-    myProjectsTree = readContext.getProjectsTree();
+    myResolvedContext = flow.resolveDependencies(myReadContext);
+    myImportedContext = flow.commitToWorkspaceModel(myResolvedContext);
+    myProjectsTree = myReadContext.getProjectsTree();
     myProjectsManager.initForTests();
 
   }
@@ -572,6 +572,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void resolveFoldersAndImport() {
     if(isNewImportingProcess) {
       importProject();
+      mySourcesGeneratedContext = new MavenImportFlow().resolveFolders(myResolvedContext);
       return;
     }
 
@@ -582,7 +583,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void resolvePlugins() {
     if(isNewImportingProcess) {
-      importProject();
+      assertNotNull(myResolvedContext);
+      myPluginResolvedContext = new MavenImportFlow().resolvePlugins(myResolvedContext);
       return;
     }
 
@@ -607,6 +609,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void performPostImportTasks() {
+    if(isNewImportingProcess) {
+      assertNotNull(myImportedContext);
+      new MavenImportFlow().runPostImportTasks(myImportedContext);
+      return;
+    }
     myProjectsManager.waitForPostImportTasksCompletion();
   }
 

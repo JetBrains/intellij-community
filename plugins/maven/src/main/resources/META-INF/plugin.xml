@@ -256,6 +256,9 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="build.maven.packagesearch" version="2"/>
 
+    <registryKey key="maven.new.import" defaultValue="false"
+                 description="new maven import"/>
+
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 

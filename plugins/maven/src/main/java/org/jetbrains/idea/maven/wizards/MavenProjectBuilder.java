@@ -11,6 +11,9 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
@@ -43,6 +46,8 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
+import org.jetbrains.idea.maven.project.importing.RootPath;
 import org.jetbrains.idea.maven.server.MavenWrapperSupport;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -132,7 +137,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   }
 
 
-
   @Override
   public List<Module> commit(Project project,
                              ModifiableModuleModel model,
@@ -143,11 +147,22 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       ExternalStorageConfigurationManager.getInstance(project).setEnabled(true);
     }
 
-    if(ApplicationManager.getApplication().isDispatchThread()){
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       FileDocumentManager.getInstance().saveAllDocuments();
     }
 
     MavenUtil.setupProjectSdk(project);
+
+
+    if (Registry.is("maven.new.import")) {
+      Module dummyModule = createDummyModule(project);
+      MavenImportingManager.getInstance(project).openProjectAndImport(
+        new RootPath(LocalFileSystem.getInstance().findFileByNioFile(getRootPath())),
+        getImportingSettings(),
+        getGeneralSettings()
+      );
+      return Collections.singletonList(dummyModule);
+    }
 
     if (!setupProjectImport(project)) {
       LOG.debug(String.format("Cannot import project for %s", project.toString()));
@@ -190,6 +205,8 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     }
 
     manager.setIgnoredState(getParameters().mySelectedProjects, false);
+
+
     if (isVeryNewProject && Registry.is("maven.create.dummy.module.on.first.import")) {
       Module dummyModule = createDummyModule(project);
       manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, dummyModule);
@@ -203,7 +220,8 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     //noinspection UnresolvedPluginConfigReference
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() &&
-        (!MavenUtil.isMavenUnitTestModeEnabled() || Registry.is("ide.force.maven.import", false)) // workaround for inspection integration test
+        (!MavenUtil.isMavenUnitTestModeEnabled() ||
+         Registry.is("ide.force.maven.import", false)) // workaround for inspection integration test
     ) {
       Promise<List<Module>> promise = manager.scheduleImportAndResolve();
       manager.waitForResolvingCompletion();
