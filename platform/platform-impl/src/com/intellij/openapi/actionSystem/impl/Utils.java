@@ -166,7 +166,7 @@ public final class Utils extends DataContextUtils {
     Project project = CommonDataKeys.PROJECT.getData(context);
     List<AnAction> list;
     if (async) {
-      if (expander.allowsFastUpdate(project, place)) {
+      if (expander.allowsFastUpdate(project, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
         Set<String> missedKeys = new HashSet<>();
         list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
         if (list != null && missedKeys.isEmpty()) {
@@ -518,14 +518,14 @@ public final class Utils extends DataContextUtils {
           Ref<T> ref = Ref.create();
           Ref<UpdateSession> sessionRef = Ref.create();
           Runnable runnable = () -> {
-            Set<String> missedKeys = ContainerUtil.newConcurrentSet();
-            UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
-            T fastResult = function.apply(fastSession);
-            sessionRef.set(fastSession);
-            if (fastResult != null) {
+            Set<String> missedKeys = Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt") ? null : ContainerUtil.newConcurrentSet();
+            if (missedKeys != null) {
+              UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
+              T fastResult = function.apply(fastSession);
               ref.set(fastResult);
+              sessionRef.set(fastSession);
             }
-            else if (tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
+            if (ref.isNull() && (missedKeys == null || tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null)))) {
               UpdateSession slowSession = actionUpdater.asUpdateSession();
               T slowResult = function.apply(slowSession);
               ref.set(slowResult);
