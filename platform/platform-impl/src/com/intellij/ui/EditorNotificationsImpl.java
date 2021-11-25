@@ -194,7 +194,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   public void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass) {
     if (providerKey == null || runnableClass == null) return;
 
-    EditorNotificationPanelCollector.logActionInvoked(myProject, providerKey.toString(), runnableClass.getName(),
+    EditorNotificationPanelCollector.logActionInvoked(myProject, providerKey.toString(), runnableClass,
                                                       PluginInfoDetectorKt.getPluginInfo(runnableClass));
   }
 
