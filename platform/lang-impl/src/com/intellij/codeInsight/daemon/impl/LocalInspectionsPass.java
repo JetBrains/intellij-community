@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -207,16 +207,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
     }
 
-    ApplicationManager.getApplication().invokeLater(()->{
-      PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement == null) return;
-      PsiFile file = psiElement.getContainingFile();
-      Document thisDocument = Objects.requireNonNull(documentManager.getDocument(file));
+    PsiElement psiElement = descriptor.getPsiElement();
+    if (psiElement == null) return;
+    PsiFile file = psiElement.getContainingFile();
+    Document thisDocument = Objects.requireNonNull(documentManager.getDocument(file));
 
-      HighlightSeverity severity = myProfileWrapper.getErrorLevel(tool.getDisplayKey(), file).getSeverity();
-
+    HighlightSeverity severity = myProfileWrapper.getErrorLevel(tool.getDisplayKey(), file).getSeverity();
+    
+    ArrayList<HighlightInfo> newInfos = new ArrayList<>(2);
+    createHighlightsForDescriptor(newInfos, emptyActionRegistered, file, thisDocument, tool, severity, descriptor, psiElement);
+    ApplicationManager.getApplication().invokeLater(() -> {
       infos.clear();
-      createHighlightsForDescriptor(infos, emptyActionRegistered, file, thisDocument, tool, severity, descriptor, psiElement);
+      infos.addAll(newInfos);
       for (HighlightInfo info : infos) {
         EditorColorsScheme colorsScheme = getColorsScheme();
         UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getFile(),
@@ -225,7 +227,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                    info, colorsScheme, getId(),
                                                                    ranges2markersCache);
       }
-    }, __->myProject.isDisposed() || indicator.isCanceled());
+    }, __ -> myProject.isDisposed() || indicator.isCanceled());
   }
 
   @Override
