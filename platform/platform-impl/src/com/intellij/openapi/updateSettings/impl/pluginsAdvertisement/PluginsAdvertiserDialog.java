@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -67,7 +68,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     assert myPanel != null;
-    if (doInstallPlugins(myPanel::isChecked)) {
+    if (doInstallPlugins(myPanel::isChecked, ModalityState.stateForComponent(myPanel))) {
       super.doOKAction();
     }
   }
@@ -77,11 +78,11 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
       showAndGet();
     }
     else {
-      doInstallPlugins(__ -> true);
+      doInstallPlugins(__ -> true, ModalityState.NON_MODAL);
     }
   }
 
-  private boolean doInstallPlugins(@NotNull Predicate<? super PluginDownloader> predicate) {
+  private boolean doInstallPlugins(@NotNull Predicate<? super PluginDownloader> predicate, @NotNull ModalityState modalityState) {
     ArrayList<IdeaPluginDescriptor> pluginsToEnable = new ArrayList<>();
     ArrayList<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myPluginToInstall) {
@@ -123,7 +124,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
       }
     };
 
-    PluginEnabler.HEADLESS.enablePlugins(pluginsToEnable);
+    PluginEnabler.HEADLESS.enable(pluginsToEnable);
     if (!nodes.isEmpty()) {
       try {
         PluginManagerMain.downloadPlugins(nodes,
@@ -131,6 +132,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
                                           true,
                                           notifyRunnable,
                                           PluginEnabler.HEADLESS,
+                                          modalityState,
                                           myFinishFunction);
       }
       catch (IOException e) {
