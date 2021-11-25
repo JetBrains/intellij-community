@@ -45,49 +45,49 @@ public class SettingsImpl implements EditorSettings {
   private int                     myAdditionalColumnsCount        = 3;
   private int                     myLineCursorWidth               = EditorUtil.getDefaultCaretWidth();
   private boolean                 myLineMarkerAreaShown           = true;
-  private boolean                 myAllowSingleLogicalLineFolding = false;
+  private boolean                 myAllowSingleLogicalLineFolding;
   private boolean myAutoCodeFoldingEnabled = true;
 
   // These comes from CodeStyleSettings
-  private Integer myTabSize         = null;
-  private Integer myCachedTabSize   = null;
-  private Boolean myUseTabCharacter = null;
+  private Integer myTabSize;
+  private Integer myCachedTabSize;
+  private Boolean myUseTabCharacter;
   private final Object myTabSizeLock = new Object();
 
   // These comes from EditorSettingsExternalizable defaults.
-  private Boolean myIsVirtualSpace                        = null;
-  private Boolean myIsCaretInsideTabs                     = null;
-  private Boolean myIsCaretBlinking                       = null;
-  private Integer myCaretBlinkingPeriod                   = null;
-  private Boolean myIsRightMarginShown                    = null;
-  private Integer myRightMargin                           = null;
-  private Boolean myAreLineNumbersShown                   = null;
-  private Boolean myGutterIconsShown                      = null;
-  private Boolean myIsFoldingOutlineShown                 = null;
-  private Boolean myIsSmartHome                           = null;
-  private Boolean myIsBlockCursor                         = null;
-  private Boolean myCaretRowShown                         = null;
-  private Boolean myIsWhitespacesShown                    = null;
-  private Boolean myIsLeadingWhitespacesShown             = null;
-  private Boolean myIsInnerWhitespacesShown               = null;
-  private Boolean myIsTrailingWhitespacesShown            = null;
-  private Boolean myIndentGuidesShown                     = null;
-  private Boolean myIsAnimatedScrolling                   = null;
-  private Boolean myIsAdditionalPageAtBottom              = null;
-  private Boolean myIsDndEnabled                          = null;
-  private Boolean myIsWheelFontChangeEnabled              = null;
-  private Boolean myIsMouseClickSelectionHonorsCamelWords = null;
-  private Boolean myIsRenameVariablesInplace              = null;
-  private Boolean myIsRefrainFromScrolling                = null;
-  private Boolean myUseSoftWraps                          = null;
-  private Boolean myUseCustomSoftWrapIndent               = null;
-  private Integer myCustomSoftWrapIndent                  = null;
-  private Boolean myRenamePreselect                       = null;
-  private Boolean myWrapWhenTypingReachesRightMargin      = null;
-  private Boolean myShowIntentionBulb                     = null;
-  private Boolean myShowingSpecialCharacters              = null;
+  private Boolean myIsVirtualSpace;
+  private Boolean myIsCaretInsideTabs;
+  private Boolean myIsCaretBlinking;
+  private Integer myCaretBlinkingPeriod;
+  private Boolean myIsRightMarginShown;
+  private Integer myRightMargin;
+  private Boolean myAreLineNumbersShown;
+  private Boolean myGutterIconsShown;
+  private Boolean myIsFoldingOutlineShown;
+  private Boolean myIsSmartHome;
+  private Boolean myIsBlockCursor;
+  private Boolean myCaretRowShown;
+  private Boolean myIsWhitespacesShown;
+  private Boolean myIsLeadingWhitespacesShown;
+  private Boolean myIsInnerWhitespacesShown;
+  private Boolean myIsTrailingWhitespacesShown;
+  private Boolean myIndentGuidesShown;
+  private Boolean myIsAnimatedScrolling;
+  private Boolean myIsAdditionalPageAtBottom;
+  private Boolean myIsDndEnabled;
+  private Boolean myIsWheelFontChangeEnabled;
+  private Boolean myIsMouseClickSelectionHonorsCamelWords;
+  private Boolean myIsRenameVariablesInplace;
+  private Boolean myIsRefrainFromScrolling;
+  private Boolean myUseSoftWraps;
+  private Boolean myUseCustomSoftWrapIndent;
+  private Integer myCustomSoftWrapIndent;
+  private Boolean myRenamePreselect;
+  private Boolean myWrapWhenTypingReachesRightMargin;
+  private Boolean myShowIntentionBulb;
+  private Boolean myShowingSpecialCharacters;
 
-  private List<Integer> mySoftMargins = null;
+  private List<Integer> mySoftMargins;
 
   public SettingsImpl() {
     this(null, null);

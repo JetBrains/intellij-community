@@ -71,10 +71,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    final List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
+    List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
     FileViewProvider viewProvider = myFile.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
-      final PsiFile root = viewProvider.getPsi(language);
+      PsiFile root = viewProvider.getPsi(language);
       if (root == null) {
         LOG.error(viewProvider+" for file " +myFile+" returned null root for language "+language+" despite listing it as one of its own languages: "+viewProvider.getLanguages());
         continue;
@@ -137,10 +137,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  public static List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull final Project project) {
+  public static List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
     List<LineMarkerProvider> forLanguage = LineMarkerProviders.getInstance().allForLanguageOrAny(language);
     List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
-    final LineMarkerSettings settings = LineMarkerSettings.getSettings();
+    LineMarkerSettings settings = LineMarkerSettings.getSettings();
     return ContainerUtil.filter(providers, provider -> !(provider instanceof LineMarkerProviderDescriptor)
                                                        || settings.isEnabled((LineMarkerProviderDescriptor)provider));
   }
@@ -214,19 +214,19 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   }
 
   private static void queryLineMarkersForInjected(@NotNull PsiElement element,
-                                                  @NotNull final PsiFile containingFile,
+                                                  @NotNull PsiFile containingFile,
                                                   @NotNull Set<? super PsiFile> visitedInjectedFiles,
-                                                  @NotNull final PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
-    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
+                                                  @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
     if (manager.isInjectedFragment(containingFile)) return;
 
     InjectedLanguageManager.getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false, (injectedPsi, places) -> {
       if (!visitedInjectedFiles.add(injectedPsi)) return; // there may be several concatenated literals making the one injected file
-      final Project project = injectedPsi.getProject();
+      Project project = injectedPsi.getProject();
       Document document = PsiDocumentManager.getInstance(project).getCachedDocument(injectedPsi);
       if (!(document instanceof DocumentWindow)) return;
       List<PsiElement> injElements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
-      final List<LineMarkerProvider> providers = getMarkerProviders(injectedPsi.getLanguage(), project);
+      List<LineMarkerProvider> providers = getMarkerProviders(injectedPsi.getLanguage(), project);
 
       queryProviders(injElements, injectedPsi, providers, (injectedElement, injectedMarker) -> {
         GutterIconRenderer gutterRenderer = injectedMarker.createGutterRenderer();
