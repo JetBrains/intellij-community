@@ -301,7 +301,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     mySuffix = StringUtil.notNullize(element.getChildText("suffix"));
     setValuePattern(element.getChildText("value-pattern"));
     setIgnorePattern(element.getChildText("ignore-pattern"));
-    mySingleFile = element.getChild("single-file") != null;
+    Element singleFileElement = element.getChild("single-file");
+    mySingleFile = singleFileElement == null || Boolean.parseBoolean(singleFileElement.getAttributeValue("value", "true"));
     readExternalImpl(element);
     final List<Element> placeElements = element.getChildren("place");
     myPlaces = InjectionPlace.ARRAY_FACTORY.create(placeElements.size());
@@ -344,9 +345,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     if (StringUtil.isNotEmpty(myIgnorePattern)) {
       e.addContent(new Element("ignore-pattern").setText(myIgnorePattern));
     }
-    if (mySingleFile) {
-      e.addContent(new Element("single-file"));
-    }
+    e.addContent(new Element("single-file").setAttribute("value", mySingleFile ? "true" : "false"));
     Arrays.sort(myPlaces, (o1, o2) -> Comparing.compare(o1.getText(), o2.getText()));
     for (InjectionPlace place : myPlaces) {
       final Element child = new Element("place").setContent(new CDATA(place.getText()));
