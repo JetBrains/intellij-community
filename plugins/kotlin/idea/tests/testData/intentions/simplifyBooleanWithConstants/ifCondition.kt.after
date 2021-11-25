@@ -1,3 +1,4 @@
+// INTENTION_TEXT: "Unwrap 'if' statement"
 fun foo() {
     bar()
 }

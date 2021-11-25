@@ -39,7 +39,23 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
     KtBinaryExpression::class.java,
     KotlinBundle.lazyMessage("simplify.boolean.expression")
 ) {
-    override fun isApplicableTo(element: KtBinaryExpression): Boolean = areThereExpressionsToBeSimplified(element.topBinary())
+    override fun isApplicableTo(element: KtBinaryExpression): Boolean {
+        val topBinary = element.topBinary()
+        if (!areThereExpressionsToBeSimplified(topBinary)) return false
+
+        val parentIf = topBinary.getStrictParentOfType<KtIfExpression>()?.takeIf { it.condition == topBinary }
+        val constantValue = when {
+            element.canBeReducedToBooleanConstant(true) -> true
+            element.canBeReducedToBooleanConstant(false) -> false
+            else -> null
+        }
+        if (parentIf != null && constantValue != null && SimplifyIfExpressionFix.canSimplify(parentIf, constantValue)) {
+            setTextGetter(KotlinBundle.lazyMessage("unwrap.if.statement"))
+        } else {
+            setTextGetter(KotlinBundle.lazyMessage("simplify.boolean.expression"))
+        }
+        return true
+    }
 
     private fun KtBinaryExpression.topBinary(): KtBinaryExpression =
         this.parentsWithSelf.takeWhile { it is KtBinaryExpression }.lastOrNull() as? KtBinaryExpression ?: this

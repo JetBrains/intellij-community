@@ -70,6 +70,9 @@ class SimplifyIfExpressionFix(
             }
         }
 
+        fun canSimplify(expression: KtIfExpression, conditionValue: Boolean) =
+            canRemove(expression, conditionValue) || expression.branch(conditionValue) != null
+
         private fun canRemove(expression: KtIfExpression?, conditionValue: Boolean) =
             expression != null && !conditionValue && expression.`else` == null
 
