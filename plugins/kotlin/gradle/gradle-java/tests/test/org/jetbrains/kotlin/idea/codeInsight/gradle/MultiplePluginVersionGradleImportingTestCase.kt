@@ -113,12 +113,11 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         }
     }
 
-    fun androidProperties(): Map<String, String> {
-        return mapOf(
-            "compile_sdk_version" to "30",
-            "build_tools_version" to "28.0.3"
-        )
-    }
+    fun androidProperties(): Map<String, String> = mapOf(
+        "android_gradle_plugin_version" to "4.0.2",
+        "compile_sdk_version" to "30",
+        "build_tools_version" to "28.0.3",
+    )
 
     protected fun repositories(useKts: Boolean): String {
         val repositories = mutableListOf<String>()

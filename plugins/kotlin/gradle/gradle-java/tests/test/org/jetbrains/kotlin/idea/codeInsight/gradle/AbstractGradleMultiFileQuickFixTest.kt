@@ -45,7 +45,10 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
         )
     }
 
-    protected fun doMultiFileQuickFixTest(ignoreChangesInBuildScriptFiles: Boolean = true) {
+    protected fun doMultiFileQuickFixTest(
+        ignoreChangesInBuildScriptFiles: Boolean = true,
+        additionalResultFileFilter: (VirtualFile) -> Boolean = { true },
+    ) {
         configureByFiles()
         val projectPath = myProjectRoot.toNioPath()
 
@@ -90,7 +93,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
 
                         if (ignoreChangesInBuildScriptFiles && ".gradle" in vFile.name) return false
 
-                        return true
+                        return additionalResultFileFilter(vFile)
                     },
                 )
             }
