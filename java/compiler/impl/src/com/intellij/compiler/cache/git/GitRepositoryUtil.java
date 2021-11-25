@@ -169,6 +169,41 @@ public final class GitRepositoryUtil {
     return processOutput.toString();
   }
 
+  public static boolean isAutoCrlfSetRight(@NotNull Project project) {
+    String projectBasePath = project.getBasePath();
+    if (projectBasePath == null) return true;
+    GeneralCommandLine commandLine = new GeneralCommandLine()
+      .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+      .withWorkDirectory(projectBasePath)
+      .withExePath("git")
+      .withParameters("config")
+      .withParameters("--get")
+      .withParameters("core.autocrlf");
+
+    StringBuilder processOutput = new StringBuilder();
+    try {
+      OSProcessHandler handler = new OSProcessHandler(commandLine.withCharset(StandardCharsets.UTF_8));
+      handler.addProcessListener(new CapturingProcessAdapter() {
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          if (event.getExitCode() != 0) {
+            LOG.warn("Couldn't fetch repository remote name: " + getOutput().getStderr());
+          } else {
+            processOutput.append(getOutput().getStdout());
+          }
+        }
+      });
+      handler.startNotify();
+      handler.waitFor();
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Couldn't execute command for getting remote name", e);
+    }
+    String value = processOutput.toString().lines().findFirst().orElse("");
+    LOG.info("CRLF configuration for " + project.getName() + " project: " + value);
+    return value.equalsIgnoreCase("input");
+  }
+
   public static void saveLatestDownloadedCommit(@NotNull String latestDownloadedCommit) {
     PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, latestDownloadedCommit);
     LOG.info("Saving latest downloaded commit: " + latestDownloadedCommit);
@@ -209,12 +244,5 @@ public final class GitRepositoryUtil {
   //  }
   //  LOG.info("Project doesn't contain Git repository");
   //  return null;
-  //}
-
-  //public static boolean isAutoCrlfSetRight(@NotNull GitRepository  gitRepository) {
-  //  GitCommandResult result = Git.getInstance().config(gitRepository, GitConfigUtil.CORE_AUTOCRLF);
-  //  String value = result.getOutputAsJoinedString();
-  //  LOG.info("CRLF configuration for " + gitRepository + " project: " + value);
-  //  return value.equalsIgnoreCase("input");
   //}
 }

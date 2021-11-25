@@ -104,41 +104,9 @@ public class JpsOutputLoaderManager implements Disposable {
     myNettyClient.saveLatestBuiltCommit();
   }
 
-  //public void load(boolean isForceUpdate, boolean verbose) {
-  //  Task.Backgroundable task = new Task.Backgroundable(myProject, JpsCacheBundle.message("progress.title.updating.compiler.caches")) {
-  //    @Override
-  //    public void run(@NotNull ProgressIndicator indicator) {
-  //      Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate, verbose);
-  //      if (commitInfo != null) {
-  //        assert myProject != null;
-  //        myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingStarted();
-  //        // Drop JPS metadata to force plugin for downloading all compilation outputs
-  //        if (isForceUpdate) {
-  //          myMetadataLoader.dropCurrentProjectMetadata();
-  //          File outDir = new File(myBuildOutDir);
-  //          if (outDir.exists()) {
-  //            indicator.setText(JpsCacheBundle.message("progress.text.clean.output.directories"));
-  //            FileUtil.delete(outDir);
-  //          }
-  //          LOG.info("Compilation output folder empty");
-  //        }
-  //        startLoadingForCommit(commitInfo.first);
-  //      }
-  //      hasRunningTask.set(false);
-  //    }
-  //  };
-  //
-  //  if (!canRunNewLoading()) return;
-  //  BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
-  //  processIndicator.setIndeterminate(false);
-  //  ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
-  //}
-
   @Nullable
   private Pair<String, Integer> getNearestCommit(boolean isForceUpdate, boolean verbose) {
     Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myNettyClient);
-
-    //String latestDownloadedCommit = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
     //List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
 
     GitCommitsIterator commitsIterator = new GitCommitsIterator(myNettyClient, INTELLIJ_REPO_NAME);
@@ -211,10 +179,7 @@ public class JpsOutputLoaderManager implements Disposable {
 
     // Calculate downloads
     Map<String, Map<String, BuildTargetState>> currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
-    int totalDownloads =
-      getLoaders().stream().mapToInt(loader -> loader.calculateDownloads(commitSourcesState, currentSourcesState)).sum();
-    //indicator.setFraction(0.01);
-
+    int totalDownloads = getLoaders().stream().mapToInt(loader -> loader.calculateDownloads(commitSourcesState, currentSourcesState)).sum();
     try {
       // Computation with loaders results. If at least one of them failed rollback all job
       initLoaders(commitId, totalDownloads, commitSourcesState, currentSourcesState).thenAccept(loaderStatus -> {
@@ -241,39 +206,6 @@ public class JpsOutputLoaderManager implements Disposable {
       //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
     }
   }
-
-  //@Nullable
-  //private static String getBuildOutDir(@NotNull Project project) {
-  //  VirtualFile projectFile = project.getProjectFile();
-  //  String projectBasePath = project.getBasePath();
-  //  if (projectFile == null || projectBasePath == null) {
-  //    LOG.warn("Project files doesn't exist");
-  //    return null;
-  //  }
-  //  String fileExtension = projectFile.getExtension();
-  //  if (fileExtension != null && fileExtension.equals("irp")) {
-  //    LOG.warn("File base project not supported");
-  //    return null;
-  //  }
-  //
-  //  Path configFile = Paths.get(FileUtil.toCanonicalPath(projectFile.getPath()));
-  //  Element componentTag = JDomSerializationUtil.findComponent(JpsLoaderBase.tryLoadRootElement(configFile), "ProjectRootManager");
-  //  if (componentTag == null) {
-  //    LOG.warn("Component tag in config file doesn't exist");
-  //    return null;
-  //  }
-  //  Element output = componentTag.getChild(OUTPUT_TAG);
-  //  if (output == null) {
-  //    LOG.warn("Output tag in config file doesn't exist");
-  //    return null;
-  //  }
-  //  String url = output.getAttributeValue(URL_ATTRIBUTE);
-  //  if (url == null) {
-  //    LOG.warn("URL attribute in output tag doesn't exist");
-  //    return null;
-  //  }
-  //  return JpsPathUtil.urlToPath(url).replace("$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$", projectBasePath);
-  //}
 
   @Nullable
   private static String getBuildDirPath(@NotNull JpsProject project) {

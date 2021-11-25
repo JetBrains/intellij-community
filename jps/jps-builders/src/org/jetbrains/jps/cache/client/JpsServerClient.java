@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cache.model.AffectedModule;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
 import org.jetbrains.jps.cache.model.OutputLoadResult;
-import org.jetbrains.jps.cache.ui.SegmentedProgressIndicatorManager;
 
 import java.io.File;
 import java.util.List;

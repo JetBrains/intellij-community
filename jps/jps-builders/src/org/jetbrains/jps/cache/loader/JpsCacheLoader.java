@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
-import org.jetbrains.jps.cache.ui.SegmentedProgressIndicatorManager;
 import org.jetbrains.jps.incremental.Utils;
 
 import java.io.File;

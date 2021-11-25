@@ -8,6 +8,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.YourKitProfilerService;
+import com.intellij.compiler.cache.JpsCacheStartupActivity;
 import com.intellij.compiler.cache.git.GitRepositoryUtil;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
@@ -1406,7 +1407,9 @@ public final class BuildManager implements Disposable {
     }
 
     // portable caches
-    if (Registry.is("compiler.process.use.portable.caches") && GitRepositoryUtil.isIntelliJRepository(project)) {
+    if ( Registry.is("compiler.process.use.portable.caches")
+         && GitRepositoryUtil.isIntelliJRepository(project)
+         && JpsCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
       //cmdLine.addParameter("-Didea.resizeable.file.truncate.on.close=true");
       //cmdLine.addParameter("-Dkotlin.jps.non.caching.storage=true");
       cmdLine.addParameter("-D" + ProjectStamps.PORTABLE_CACHES_PROPERTY + "=true");

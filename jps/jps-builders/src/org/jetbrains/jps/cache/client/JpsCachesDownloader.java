@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jetbrains.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
+import static org.jetbrains.jps.cache.client.JpsServerConnectionUtil.saveToFile;
 
 class JpsCachesDownloader {
   private static final Logger LOG = Logger.getInstance(JpsCachesDownloader.class);
@@ -199,49 +200,5 @@ class JpsCachesDownloader {
       result.add(Pair.create(toFile, description));
     }
     return result;
-  }
-
-  public @NotNull Path saveToFile(@NotNull Path file, HttpEntity responseEntity) throws IOException {
-    NioFiles.createDirectories(file.getParent());
-
-    boolean deleteFile = true;
-    try (OutputStream out = Files.newOutputStream(file)) {
-      copyStreamContent(responseEntity.getContent(), out, responseEntity.getContentLength());
-      deleteFile = false;
-    }
-    finally {
-      if (deleteFile) {
-        Files.deleteIfExists(file);
-      }
-    }
-
-    return file;
-  }
-
-  private long copyStreamContent(@NotNull InputStream inputStream,
-                                 @NotNull OutputStream outputStream,
-                                 long expectedContentLength) throws IOException, ProcessCanceledException {
-
-    CountingGZIPInputStream gzipStream = inputStream instanceof CountingGZIPInputStream ? (CountingGZIPInputStream)inputStream : null;
-    byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
-    int count;
-    long bytesWritten = 0;
-    long bytesRead = 0;
-    while ((count = inputStream.read(buffer)) > 0) {
-      outputStream.write(buffer, 0, count);
-      bytesWritten += count;
-      bytesRead = gzipStream != null ? gzipStream.getCompressedBytesRead() : bytesWritten;
-
-    }
-    if (gzipStream != null) {
-      // Amount of read bytes may have changed when 'inputStream.read(buffer)' returns -1
-      // E.g. reading GZIP trailer doesn't produce inflated stream data.
-      bytesRead = gzipStream.getCompressedBytesRead();
-    }
-
-    if (bytesRead < expectedContentLength) {
-      throw new IOException("Connection closed at byte " + bytesRead + ". Expected " + expectedContentLength + " bytes.");
-    }
-    return bytesWritten;
   }
 }
