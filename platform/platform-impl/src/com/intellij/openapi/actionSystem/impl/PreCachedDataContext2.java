@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
@@ -69,7 +69,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     }
 
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
-      int count = IdeEventQueue.getInstance().getEventCount();
+      int count = ActivityTracker.getInstance().getCount();
       if (ourPrevMapEventCount != count) {
         ourPrevMaps.clear();
       }
@@ -78,17 +78,18 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
       Component topParent = components.isEmpty() ? component : components.get(0).getParent();
       FList<ProviderData> initial = topParent == null ? FList.emptyList() : ourPrevMaps.get(topParent);
 
-      DataKey<?>[] keys = DataKey.allKeys();
-      myDataKeysCount = keys.length;
-      if (ourDataKeysIndices.size() < myDataKeysCount) {
-        for (DataKey<?> key : keys) {
-          ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
-        }
-      }
       if (components.isEmpty()) {
         myCachedData = initial;
+        myDataKeysCount = ourDataKeysIndices.size();
       }
       else {
+        DataKey<?>[] keys = DataKey.allKeys();
+        myDataKeysCount = keys.length;
+        if (ourDataKeysIndices.size() < myDataKeysCount) {
+          for (DataKey<?> key : keys) {
+            ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
+          }
+        }
         myCachedData = preGetAllData(components, initial, keys);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
