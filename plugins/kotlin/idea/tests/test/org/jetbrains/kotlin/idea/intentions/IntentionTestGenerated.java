@@ -14355,6 +14355,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("arrayForVararg.kt")
+        public void testArrayForVararg() throws Exception {
+            runTest("testData/intentions/removeArgumentName/arrayForVararg.kt");
+        }
+
+        @TestMetadata("arrayForVararg2.kt")
+        public void testArrayForVararg2() throws Exception {
+            runTest("testData/intentions/removeArgumentName/arrayForVararg2.kt");
+        }
+
         @TestMetadata("arrayLiteral.kt")
         public void testArrayLiteral() throws Exception {
             runTest("testData/intentions/removeArgumentName/arrayLiteral.kt");
