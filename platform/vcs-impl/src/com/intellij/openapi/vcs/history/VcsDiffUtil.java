@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
@@ -55,8 +54,9 @@ public final class VcsDiffUtil {
     ContentRevision beforeRevision = change.getBeforeRevision();
     FilePath aFile = afterRevision == null ? null : afterRevision.getFile();
     FilePath bFile = beforeRevision == null ? null : beforeRevision.getFile();
-    String afterRevisionName = getShortHash(afterRevision);
-    if (StringUtil.isEmpty(afterRevisionName)) afterRevisionName = VcsBundle.message("diff.title.local");
+    String afterRevisionName = afterRevision instanceof CurrentContentRevision
+                               ? VcsBundle.message("diff.title.local")
+                               : getShortHash(afterRevision);
     context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevisionName, aFile, null));
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
   }
