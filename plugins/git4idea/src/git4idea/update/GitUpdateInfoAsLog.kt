@@ -8,10 +8,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.util.ContentUtilEx
+import com.intellij.ui.content.TabGroupId
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.DateFormatUtil
@@ -40,7 +37,7 @@ import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.function.Supplier
+import java.util.function.Function
 
 private val LOG = logger<GitUpdateInfoAsLog>()
 
@@ -157,18 +154,12 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean) {
-    val logUi = logManager.createLogUi(logUiFactory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
-    val panel = VcsLogPanel(logManager, logUi)
-    val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
     val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
-    ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info",
-                                   VcsBundle.messagePointer("vcs.update.tab.name"), Supplier { tabName },
-                                   select, panel.getUi())
-    if (select) {
-      ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)?.activate(null)
-    }
+    VcsLogContentUtil.openLogTab(project, logManager, tabGroupId,
+                                 Function { tabName }, logUiFactory, select)
   }
 
+  private val tabGroupId = TabGroupId("Update Info", VcsBundle.messagePointer("vcs.update.tab.name"))
   private val updateTabPrefix = "git-update-project-info-"
   private fun generateUpdateTabId() = updateTabPrefix + UUID.randomUUID()
   private fun isUpdateTabId(id: String): Boolean = id.startsWith(updateTabPrefix)
