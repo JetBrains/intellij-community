@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresNoReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.mapSmartSet
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -79,7 +79,7 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       FileUtilRt.getExtension(fileName)).takeIf { it.isNotEmpty() }?.let { "*.$it" }
 
     @RequiresBackgroundThread
-    @RequiresNoReadLock
+    @RequiresReadLockAbsence
     private fun requestCompatiblePlugins(
       extensionOrFileName: String,
       dataSet: Set<PluginData>,
@@ -142,7 +142,7 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
   }
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   fun updateCache(extensionOrFileName: String): Boolean {
     if (cache.getIfPresent(extensionOrFileName) != null) {
       return false

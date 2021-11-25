@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  * <p/>Aside from a documentation purpose, the annotation is processed by the {@link org.jetbrains.jps.devkit.threadingModelHelper}.
  * The plugin instruments annotated elements with {@link Application#assertReadAccessNotAllowed()} calls
  * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
- * by setting {@link RequiresNoReadLock#generateAssertion()} to {@code false}.
+ * by setting {@link RequiresReadLockAbsence#generateAssertion()} to {@code false}.
  *
  * <p/> <b>Important:</b> the instrumentation has limitations. Please read the docs
  * of the {@link org.jetbrains.jps.devkit.threadingModelHelper} to learn about them.
@@ -45,7 +45,7 @@ import java.lang.annotation.Target;
 @ApiStatus.Experimental
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
-public @interface RequiresNoReadLock {
+public @interface RequiresReadLockAbsence {
   /**
    * @return {@code false} if annotated element must not be instrumented with the assertion.
    */

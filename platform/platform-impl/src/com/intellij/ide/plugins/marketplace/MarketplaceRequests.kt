@@ -17,7 +17,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresNoReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.exists
@@ -71,7 +71,7 @@ class MarketplaceRequests : PluginInfoProvider {
     }
 
     @RequiresBackgroundThread
-    @RequiresNoReadLock
+    @RequiresReadLockAbsence
     @JvmStatic
     @JvmOverloads
     fun loadLastCompatiblePluginDescriptors(
@@ -83,7 +83,7 @@ class MarketplaceRequests : PluginInfoProvider {
     }
 
     @RequiresBackgroundThread
-    @RequiresNoReadLock
+    @RequiresReadLockAbsence
     @JvmStatic
     @JvmOverloads
     fun getLastCompatiblePluginUpdate(
@@ -112,7 +112,7 @@ class MarketplaceRequests : PluginInfoProvider {
     }
 
     @RequiresBackgroundThread
-    @RequiresNoReadLock
+    @RequiresReadLockAbsence
     @JvmStatic
     @JvmOverloads
     @Throws(IOException::class)
@@ -365,7 +365,7 @@ class MarketplaceRequests : PluginInfoProvider {
   }
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   @JvmOverloads
   fun loadPluginDetails(
     pluginNode: PluginNode,
@@ -394,7 +394,7 @@ class MarketplaceRequests : PluginInfoProvider {
 
   @Deprecated("Please use `PluginId`", replaceWith = ReplaceWith("getLastCompatiblePluginUpdate(PluginId.get(id), buildNumber, indicator)"))
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(
     id: String,
@@ -403,7 +403,7 @@ class MarketplaceRequests : PluginInfoProvider {
   ): PluginNode? = getLastCompatiblePluginUpdate(PluginId.getId(id), buildNumber, indicator)
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(
     pluginId: PluginId,
