@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.StartPagePromoter
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -126,6 +128,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String, @NonNl
     invokeLater {
       langSupport.onboardingFeedbackData = null
       showOnboardingFeedbackNotification(null, onboardingFeedbackData)
+      (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
     }
   }
 }
