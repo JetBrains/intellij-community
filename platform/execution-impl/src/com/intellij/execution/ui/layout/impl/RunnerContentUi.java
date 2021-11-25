@@ -1461,7 +1461,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private static LayoutAttractionPolicy getOrCreatePolicyFor(@Nullable String contentId, @Nullable String condition,
                                                              @NotNull Map<Pair<String, String>, LayoutAttractionPolicy> map,
                                                              LayoutAttractionPolicy defaultPolicy) {
-    return map.computeIfAbsent(Pair.create(contentId, condition), __ -> defaultPolicy);
+    return map.putIfAbsent(Pair.create(contentId, condition), defaultPolicy);
   }
 
   public @Nullable Content findContent(@NotNull String key) {
