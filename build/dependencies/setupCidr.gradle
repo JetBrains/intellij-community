@@ -40,11 +40,11 @@ task setupCidr
         archs: ["x64", "x86"]
       ],
       linux: [
-        version: "26e38627b2203e151539e9c1259927b981ea0ffd",
+        version: "f9f6ec73b9475d2681a8b6bd11dd8605778a144f",
         archs: ["x64"]
       ],
       mac: [
-        version: "26e38627b2203e151539e9c1259927b981ea0ffd",
+        version: "f9f6ec73b9475d2681a8b6bd11dd8605778a144f",
         archs: ["x64"]
       ]
     ],
