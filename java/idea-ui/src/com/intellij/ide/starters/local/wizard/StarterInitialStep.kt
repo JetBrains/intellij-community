@@ -31,12 +31,14 @@ import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import org.jdom.Element
 import java.io.File
 import java.net.SocketTimeoutException
 import java.nio.file.Files
+import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -74,10 +76,14 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
   private val sdkModel: ProjectSdksModel = ProjectSdksModel()
 
+  @Volatile
+  private var isDisposed: Boolean = false
+
   override fun getHelpId(): String? = moduleBuilder.getHelpId()
 
   init {
     Disposer.register(parentDisposable, Disposable {
+      isDisposed = true
       sdkModel.disposeUIResources()
     })
   }
@@ -91,7 +97,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
     starterContext.includeExamples = exampleCodeProperty.get()
 
     wizardContext.projectName = entityName
-    wizardContext.setProjectFileDirectory(location)
+    wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
     val sdk = sdkProperty.get()
     if (wizardContext.project == null) {
@@ -107,9 +113,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   }
 
   private fun createComponent(): DialogPanel {
-    entityNameProperty.dependsOn(locationProperty) { File(location).name }
     entityNameProperty.dependsOn(artifactIdProperty) { artifactId }
-    locationProperty.dependsOn(entityNameProperty, ::suggestLocationByName)
     artifactIdProperty.dependsOn(entityNameProperty) { entityName }
 
     // query dependencies from builder, called only once
@@ -122,7 +126,8 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
       row(JavaStartersBundle.message("title.project.name.label")) {
         textField(entityNameProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
+          .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
+                                 createLocationWarningValidator(locationProperty))
           .focused()
 
         for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
@@ -135,7 +140,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
       row(JavaStartersBundle.message("title.project.location.label")) {
         projectLocationField(locationProperty, wizardContext)
-          .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR), CHECK_LOCATION_FOR_WARNING)
+          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
       }.largeGapAfter()
 
       addFieldsBefore(this)
@@ -231,20 +236,16 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
       val externalUpdates = loadStarterDependencyUpdatesFromNetwork(starter.id) ?: return
       val (dependencyUpdates, resourcePath) = externalUpdates
 
-      if (isDisposed()) return
+      if (isDisposed) return
 
       val dependencyConfig = StarterUtils.parseDependencyConfig(dependencyUpdates, resourcePath)
 
-      if (isDisposed()) return
+      if (isDisposed) return
 
       saveStarterDependencyUpdatesToFile(starter.id, dependencyUpdates)
 
       setStarterDependencyUpdates(starter.id, dependencyConfig)
     }
-  }
-
-  private fun isDisposed(): Boolean {
-    return Disposer.isDisposed(parentDisposable)
   }
 
   private fun suggestName(): String {
@@ -257,7 +258,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   }
 
   private fun suggestLocationByName(): String {
-    return FileUtil.join(wizardContext.projectFileDirectory, entityName)
+    return wizardContext.projectFileDirectory // no project name included
   }
 
   @RequiresBackgroundThread
@@ -306,18 +307,18 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
   @RequiresBackgroundThread
   private fun saveStarterDependencyUpdatesToFile(starterId: String, dependencyConfigUpdate: Element) {
-    val configUpdateDir = File(PathManager.getTempPath(), getDependencyConfigUpdatesDirLocation(starterId))
+    val configUpdateDir = Path.of(PathManager.getTempPath(), getDependencyConfigUpdatesDirLocation(starterId))
     if (!configUpdateDir.exists()) {
-      Files.createDirectories(configUpdateDir.toPath())
+      Files.createDirectories(configUpdateDir)
     }
 
-    val configUpdateFile = File(configUpdateDir, getPatchFileName(starterId))
+    val configUpdateFile = configUpdateDir.resolve(getPatchFileName(starterId))
     JDOMUtil.write(dependencyConfigUpdate, configUpdateFile)
   }
 
   private fun setStarterDependencyUpdates(starterId: String, dependencyConfigUpdate: DependencyConfig) {
     invokeLaterIfNeeded {
-      if (isDisposed()) return@invokeLaterIfNeeded
+      if (isDisposed) return@invokeLaterIfNeeded
 
       starterContext.startersDependencyUpdates[starterId] = dependencyConfigUpdate
     }

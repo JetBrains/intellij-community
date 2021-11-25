@@ -110,6 +110,9 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   @Volatile
   private var currentRequest: Future<*>? = null
 
+  @Volatile
+  private var isDisposed: Boolean = false
+
   private val serverOptionsLoadingSemaphore: Semaphore = Semaphore()
   private val serverSettingsButton: InplaceButton = InplaceButton(
     IconButton(JavaStartersBundle.message("button.tooltip.configure"), AllIcons.General.Gear, AllIcons.General.GearHover),
@@ -120,6 +123,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
 
   init {
     Disposer.register(parentDisposable, Disposable {
+      isDisposed = true
       sdkModel.disposeUIResources()
       currentRequest?.cancel(true)
     })
@@ -145,7 +149,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     starterContext.includeExamples = exampleCodeProperty.get()
 
     wizardContext.projectName = entityName
-    wizardContext.setProjectFileDirectory(location)
+    wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
     val sdk = sdkProperty.get()
     if (wizardContext.project == null) {
@@ -166,7 +170,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   }
 
   private fun suggestLocationByName(): String {
-    return FileUtil.join(wizardContext.projectFileDirectory, entityName)
+    return wizardContext.projectFileDirectory
   }
 
   private fun suggestPackageName(): String {
@@ -174,9 +178,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   }
 
   private fun createComponent(): DialogPanel {
-    entityNameProperty.dependsOn(locationProperty) { File(location).name }
     entityNameProperty.dependsOn(artifactIdProperty) { artifactId }
-    locationProperty.dependsOn(entityNameProperty, ::suggestLocationByName)
     artifactIdProperty.dependsOn(entityNameProperty) { entityName }
 
     packageNameProperty.dependsOn(artifactIdProperty, ::suggestPackageName)
@@ -198,7 +200,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       row(JavaStartersBundle.message("title.project.name.label")) {
         textField(entityNameProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
+          .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
+                                 createLocationWarningValidator(locationProperty))
           .focused()
 
         for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
@@ -211,7 +214,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
 
       row(JavaStartersBundle.message("title.project.location.label")) {
         projectLocationField(locationProperty, wizardContext)
-          .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR), CHECK_LOCATION_FOR_WARNING)
+          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
       }.largeGapAfter()
 
       addFieldsBefore(this)
@@ -447,7 +450,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     return ModalityState.stateForComponent(wizardContext.getUserData(AbstractWizard.KEY)!!.contentComponent)
   }
 
-  private fun getDisposed(): Condition<Any> = Condition<Any> { Disposer.isDisposed(parentDisposable) }
+  private fun getDisposed(): Condition<Any> = Condition<Any> { isDisposed }
 
   private fun configureServer() {
     val currentServerUrl = starterContext.serverUrl
