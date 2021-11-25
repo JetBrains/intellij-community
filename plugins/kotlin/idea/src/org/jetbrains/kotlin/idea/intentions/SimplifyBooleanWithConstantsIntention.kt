@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.copied
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.AbstractRangeInspection.Companion.constantValueOrNull
-import org.jetbrains.kotlin.idea.inspections.ConstantConditionIfInspection
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
+import org.jetbrains.kotlin.idea.quickfix.SimplifyIfExpressionFix
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -98,8 +98,7 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
         if (parentIf != null) {
             val constantValue = result.safeAs<KtConstantExpression>()?.constantValueOrNull()?.value as? Boolean
             if (constantValue != null) {
-                val constantConditionIfFix = ConstantConditionIfInspection.collectFixes(parentIf, constantValue).singleOrNull()
-                constantConditionIfFix?.applyFix(parentIf)
+                SimplifyIfExpressionFix.simplifyIfPossible(parentIf, constantValue)
                 return
             }
         }

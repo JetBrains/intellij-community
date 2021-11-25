@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticWithParameters2
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.inspections.ConstantConditionIfInspection
 import org.jetbrains.kotlin.idea.intentions.SimplifyBooleanWithConstantsIntention
+import org.jetbrains.kotlin.idea.quickfix.SimplifyIfExpressionFix.Companion.getConditionConstantValueIfAny
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -34,7 +34,12 @@ class SimplifyComparisonFix(element: KtExpression, val value: Boolean) : KotlinQ
         }
 
         val ifExpression = result.getStrictParentOfType<KtIfExpression>()?.takeIf { it.condition == result }
-        if (ifExpression != null) ConstantConditionIfInspection.applyFixIfSingle(ifExpression)
+        if (ifExpression != null) {
+            val conditionValue = ifExpression.getConditionConstantValueIfAny()
+            if (conditionValue != null) {
+                SimplifyIfExpressionFix.simplifyIfPossible(ifExpression, conditionValue)
+            }
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

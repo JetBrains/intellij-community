@@ -1,4 +1,4 @@
-// "Remove useless is check" "true"
+// "Delete expression" "true"
 fun foo(a: String) {
 }
 
