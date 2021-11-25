@@ -1,82 +1,66 @@
-package com.intellij.ide.customize;
+package com.intellij.ide.customize
 
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
-import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.ide.customize.CustomizeIDEWizardInteractionType.*
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventFields.Int
+import com.intellij.internal.statistic.eventLog.events.EventFields.Long
+import com.intellij.internal.statistic.eventLog.events.EventFields.String
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.utils.PluginInfo
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+class CustomizeWizardCollector : CounterUsagesCollector() {
 
-import static com.intellij.ide.customize.CustomizeIDEWizardInteractionType.*;
+  override fun getGroup(): EventLogGroup = GROUP
 
-public class CustomizeWizardCollector extends CounterUsagesCollector {
-  public static final EventLogGroup GROUP = new EventLogGroup("customize.wizard", 2);
+  companion object {
+    private val GROUP = EventLogGroup("customize.wizard", 2)
+    private val PAGE_FIELD = Int("page")
+    private val TIMESTAMP_FIELD = Long("timestamp")
+    private val GROUP_FIELD = String("group", listOf("Java_Frameworks", "Web_Development", "Version_Controls", "Test_Tools",
+                                                     "Application_Servers", "Clouds", "Swing", "Android", "Database_Tools",
+                                                     "Other_Tools", "Plugin_Development", "Build_Tools"))
+    private val REMAINING_PAGES_SKIPPED_EVENT = GROUP.registerEvent("remaining.pages.skipped", PAGE_FIELD)
 
-  private static final IntEventField PAGE_FIELD = EventFields.Int("page");
-  private static final LongEventField TIMESTAMP_FIELD = EventFields.Long("timestamp");
-  private static final StringEventField GROUP_FIELD =
-    EventFields.String("group", Arrays.asList("Java_Frameworks", "Web_Development", "Version_Controls", "Test_Tools", "Application_Servers",
-                                              "Clouds", "Swing", "Android", "Database_Tools", "Other_Tools", "Plugin_Development",
-                                              "Build_Tools"));
+    private val WIZARD_DISPLAYED_EVENT = getEvent(WizardDisplayed.toString())
+    private val BUNDLED_PLUGIN_GROUP_ENABLED_EVENT = getEvent(BundledPluginGroupEnabled.toString())
+    private val BUNDLED_PLUGIN_GROUP_CUSTOMIZED_EVENT = getEvent(BundledPluginGroupCustomized.toString())
+    private val BUNDLED_PLUGIN_GROUP_DISABLED_EVENT = getEvent(BundledPluginGroupDisabled.toString())
+    private val DESKTOP_ENTRY_CREATED_EVENT = getEvent(DesktopEntryCreated.toString())
+    private val LAUNCHER_SCRIPT_CREATED_EVENT = getEvent(LauncherScriptCreated.toString())
+    private val FEATURED_PLUGIN_INSTALLED_EVENT = getEvent(FeaturedPluginInstalled.toString())
+    private val UI_THEME_CHANGED_EVENT = getEvent(UIThemeChanged.toString())
 
-  public static final EventId1<Integer> REMAINING_PAGES_SKIPPED_EVENT = GROUP.registerEvent("remaining.pages.skipped", PAGE_FIELD);
-  public static final VarargEventId WIZARD_DISPLAYED_EVENT =
-    GROUP.registerVarargEvent(WizardDisplayed.toString(), TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD);
-  public static final VarargEventId BUNDLED_PLUGIN_GROUP_ENABLED_EVENT =
-    GROUP.registerVarargEvent(BundledPluginGroupEnabled.toString(), TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD);
-  public static final VarargEventId BUNDLED_PLUGIN_GROUP_CUSTOMIZED_EVENT =
-    GROUP.registerVarargEvent(BundledPluginGroupCustomized.toString(), TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD);
-  public static final VarargEventId BUNDLED_PLUGIN_GROUP_DISABLED_EVENT =
-    GROUP.registerVarargEvent(BundledPluginGroupDisabled.toString(), TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD);
-  public static final VarargEventId DESKTOP_ENTRY_CREATED_EVENT =
-    GROUP.registerVarargEvent(DesktopEntryCreated.toString(), TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD);
-  public static final VarargEventId LAUNCHER_SCRIPT_CREATED_EVENT =
-    GROUP.registerVarargEvent(LauncherScriptCreated.toString(), TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD);
-  public static final VarargEventId FEATURED_PLUGIN_INSTALLED_EVENT =
-    GROUP.registerVarargEvent(FeaturedPluginInstalled.toString(), TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD);
-  public static final VarargEventId UI_THEME_CHANGED_EVENT =
-    GROUP.registerVarargEvent(UIThemeChanged.toString(), TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD);
-
-  private static final HashMap<CustomizeIDEWizardInteractionType, VarargEventId> eventIdHashMap = new HashMap<>();
-
-  static {
-    eventIdHashMap.put(WizardDisplayed, WIZARD_DISPLAYED_EVENT);
-    eventIdHashMap.put(BundledPluginGroupEnabled, BUNDLED_PLUGIN_GROUP_ENABLED_EVENT);
-    eventIdHashMap.put(BundledPluginGroupCustomized, BUNDLED_PLUGIN_GROUP_CUSTOMIZED_EVENT);
-    eventIdHashMap.put(BundledPluginGroupDisabled, BUNDLED_PLUGIN_GROUP_DISABLED_EVENT);
-    eventIdHashMap.put(DesktopEntryCreated, DESKTOP_ENTRY_CREATED_EVENT);
-    eventIdHashMap.put(LauncherScriptCreated, LAUNCHER_SCRIPT_CREATED_EVENT);
-    eventIdHashMap.put(FeaturedPluginInstalled, FEATURED_PLUGIN_INSTALLED_EVENT);
-    eventIdHashMap.put(UIThemeChanged, UI_THEME_CHANGED_EVENT);
-  }
-
-  @Override
-  public EventLogGroup getGroup() {
-    return GROUP;
-  }
-
-  public static void logRemainingPagesSkipped(int page) {
-    REMAINING_PAGES_SKIPPED_EVENT.log(page);
-  }
-
-  public static void logEvent(String eventId, long timestamp, PluginInfo pluginInfo, String group) throws Exception {
-    VarargEventId event = eventIdHashMap.get(CustomizeIDEWizardInteractionType.valueOf(eventId));
-    if (event == null) {
-      throw new IllegalStateException(String.format("Not found event by eventId %s", eventId));
+    fun getEvent(eventId: String): VarargEventId {
+      return ActionsEventLogGroup.registerActionEvent(GROUP, eventId, TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD)
     }
 
-    List<EventPair<?>> data = new ArrayList<>();
-    data.add(TIMESTAMP_FIELD.with(timestamp));
-    if (pluginInfo != null) {
-      data.add(EventFields.PluginInfo.with(pluginInfo));
-    }
-    if (group != null) {
-      data.add(GROUP_FIELD.with(group));
+    fun logRemainingPagesSkipped(page: Int) {
+      REMAINING_PAGES_SKIPPED_EVENT.log(page)
     }
 
-    event.log(data);
+    fun logEvent(eventId: CustomizeIDEWizardInteractionType, timestamp: Long, pluginInfo: PluginInfo?, group: String?) {
+      val data: MutableList<EventPair<*>> = ArrayList()
+      data.add(TIMESTAMP_FIELD.with(timestamp))
+      if (pluginInfo != null) {
+        data.add(EventFields.PluginInfo.with(pluginInfo))
+      }
+      if (group != null) {
+        data.add(GROUP_FIELD.with(group))
+      }
+      when (eventId) {
+        WizardDisplayed -> WIZARD_DISPLAYED_EVENT.log(data)
+        UIThemeChanged -> UI_THEME_CHANGED_EVENT.log(data)
+        DesktopEntryCreated -> DESKTOP_ENTRY_CREATED_EVENT.log(data)
+        LauncherScriptCreated -> LAUNCHER_SCRIPT_CREATED_EVENT.log(data)
+        BundledPluginGroupDisabled -> BUNDLED_PLUGIN_GROUP_DISABLED_EVENT.log(data)
+        BundledPluginGroupEnabled -> BUNDLED_PLUGIN_GROUP_ENABLED_EVENT.log(data)
+        BundledPluginGroupCustomized -> BUNDLED_PLUGIN_GROUP_CUSTOMIZED_EVENT.log(data)
+        FeaturedPluginInstalled -> FEATURED_PLUGIN_INSTALLED_EVENT.log(data)
+      }
+    }
   }
 }

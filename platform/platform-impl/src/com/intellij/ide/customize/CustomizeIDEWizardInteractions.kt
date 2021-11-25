@@ -60,7 +60,7 @@ internal class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListe
         else
           null
 
-        CustomizeWizardCollector.logEvent(interaction.type.toString(), interaction.timestamp, pluginInfo, interaction.groupId)
+        CustomizeWizardCollector.logEvent(interaction.type, interaction.timestamp, pluginInfo, interaction.groupId)
       }
     }
   }
