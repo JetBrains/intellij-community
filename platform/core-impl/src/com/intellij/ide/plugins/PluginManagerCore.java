@@ -775,7 +775,8 @@ public final class PluginManagerCore {
 
   static @NotNull PluginManagerState initializePlugins(@NotNull DescriptorListLoadingContext context,
                                                        @NotNull ClassLoader coreLoader,
-                                                       boolean checkEssentialPlugins) {
+                                                       boolean checkEssentialPlugins,
+                                                       @Nullable Activity parentActivity) {
     PluginLoadingResult loadingResult = context.result;
     Map<PluginId, PluginLoadingError> pluginErrorsById = new HashMap<>(loadingResult.getPluginErrors$intellij_platform_core_impl());
     List<Supplier<String>> globalErrors = loadingResult.getGlobalErrors();
@@ -795,21 +796,13 @@ public final class PluginManagerCore {
         Collections.singletonList(CORE_ID + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
     }
 
+    Activity activity = parentActivity != null ? parentActivity.startChild("3rd-party plugins consent") : null;
     Collection<? extends IdeaPluginDescriptor> aliens = get3rdPartyPlugins(idMap);
     if (!aliens.isEmpty()) {
-      if (GraphicsEnvironment.isHeadless()) {
-        getLogger().info("3rd-party plugin privacy note not accepted yet; disabling plugins for this headless session");
-        aliens.forEach(descriptor -> descriptor.setEnabled(false));
-      }
-      else if (!ask3rdPartyPluginsPrivacyConsent(aliens)) {
-        getLogger().info("3rd-party plugin privacy note declined; disabling plugins");
-        aliens.forEach(descriptor -> descriptor.setEnabled(false));
-        PluginEnabler.HEADLESS.disableById(aliens.stream().map(descriptor -> descriptor.getPluginId()).collect(Collectors.toSet()));
-        thirdPartyPluginsNoteAccepted = Boolean.FALSE;
-      }
-      else {
-        thirdPartyPluginsNoteAccepted = Boolean.TRUE;
-      }
+      check3rdPartyPluginsPrivacyConsent(aliens);
+    }
+    if (activity != null) {
+      activity.end();
     }
 
     PluginSetBuilder pluginSetBuilder = new PluginSetBuilder(loadingResult.getEnabledPlugins());
@@ -848,6 +841,22 @@ public final class PluginManagerCore {
     PluginSet pluginSet = pluginSetBuilder.createPluginSet(context.result.incompletePlugins.values());
     new ClassLoaderConfigurator(pluginSet, coreLoader).configure();
     return new PluginManagerState(pluginSet, disabledRequired, disabledAfterInit);
+  }
+
+  private static void check3rdPartyPluginsPrivacyConsent(Collection<? extends IdeaPluginDescriptor> aliens) {
+    if (GraphicsEnvironment.isHeadless()) {
+      getLogger().info("3rd-party plugin privacy note not accepted yet; disabling plugins for this headless session");
+      aliens.forEach(descriptor -> descriptor.setEnabled(false));
+    }
+    else if (!ask3rdPartyPluginsPrivacyConsent(aliens)) {
+      getLogger().info("3rd-party plugin privacy note declined; disabling plugins");
+      aliens.forEach(descriptor -> descriptor.setEnabled(false));
+      PluginEnabler.HEADLESS.disableById(aliens.stream().map(descriptor -> descriptor.getPluginId()).collect(Collectors.toSet()));
+      thirdPartyPluginsNoteAccepted = Boolean.FALSE;
+    }
+    else {
+      thirdPartyPluginsNoteAccepted = Boolean.TRUE;
+    }
   }
 
   @ApiStatus.Internal
@@ -950,12 +959,11 @@ public final class PluginManagerCore {
     }
 
     Activity activity = StartUpMeasurer.startActivity("plugin initialization", ActivityCategory.DEFAULT);
-    PluginManagerState initResult = initializePlugins(context, coreLoader, !isUnitTestMode);
+    PluginManagerState initResult = initializePlugins(context, coreLoader, !isUnitTestMode, activity);
     PluginLoadingResult result = context.result;
 
     ourPluginsToDisable = initResult.effectiveDisabledIds;
     ourPluginsToEnable = initResult.disabledRequiredIds;
-
     ourShadowedBundledPlugins = result.shadowedBundledIds;
 
     activity.end();

@@ -363,7 +363,7 @@ public class PluginManagerTest {
     }
     parentContext.close();
     parentContext.result.finishLoading();
-    return PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
+    return PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false, null);
   }
 
   private static byte @NotNull [] elementAsBytes(XmlElement child) throws XMLStreamException {

@@ -50,7 +50,7 @@ private fun loadDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins
 }
 
 private fun loadAndInitDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins: Set<PluginId> = emptySet()): PluginManagerState {
-  return PluginManagerCore.initializePlugins(loadDescriptors(dir, buildNumber, disabledPlugins), UrlClassLoader.build().get(), false)
+  return PluginManagerCore.initializePlugins(loadDescriptors(dir, buildNumber, disabledPlugins), UrlClassLoader.build().get(), false, null)
 }
 
 class PluginDescriptorTest {
