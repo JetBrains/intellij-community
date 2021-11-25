@@ -14405,6 +14405,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeArgumentName/notInPosition.kt");
         }
 
+        @TestMetadata("notInPositionWithDefaultArgument.kt")
+        public void testNotInPositionWithDefaultArgument() throws Exception {
+            runTest("testData/intentions/removeArgumentName/notInPositionWithDefaultArgument.kt");
+        }
+
         @TestMetadata("notInRange.kt")
         public void testNotInRange() throws Exception {
             runTest("testData/intentions/removeArgumentName/notInRange.kt");
