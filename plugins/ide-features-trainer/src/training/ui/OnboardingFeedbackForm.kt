@@ -13,10 +13,13 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -46,14 +49,20 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
                                                              NotificationType.INFORMATION)
   notification.addAction(object : NotificationAction("Leave feedback") {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      showOnboardingLessonFeedbackForm(project, onboardingFeedbackData)
+      val feedbackHasBeenSent = showOnboardingLessonFeedbackForm(project, onboardingFeedbackData)
       notification.expire()
+      if (feedbackHasBeenSent) {
+        invokeLater {
+          // It is needed to show "Thank you" notification
+          (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
+        }
+      }
     }
   })
   notification.notify(project)
 }
 
-fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: OnboardingFeedbackData?) {
+fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: OnboardingFeedbackData?): Boolean {
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
   fun feedbackTextArea(fieldName: String, optionalText: String, width: Int, height: Int): JComponent {
@@ -153,7 +162,8 @@ fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: 
   installSubPanelLogic(technicalIssuesOption, technicalIssuesPanel, wholePanel, dialog)
   installSubPanelLogic(unusefulOption, usefulPanel, wholePanel, dialog)
 
-  if (dialog.showAndGet()) {
+  val maySendFeedback = dialog.showAndGet()
+  if (maySendFeedback) {
     val jsonConverter = Json { }
 
     val collectedData = buildJsonObject {
@@ -174,6 +184,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: 
                             onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData))
     }
   }
+  return maySendFeedback
 }
 
 private fun createOnboardingAgreementComponent(project: Project?,
