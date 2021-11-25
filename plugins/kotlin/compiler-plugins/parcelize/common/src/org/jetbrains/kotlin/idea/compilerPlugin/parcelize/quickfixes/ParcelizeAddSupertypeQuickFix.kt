@@ -26,7 +26,7 @@ class ParcelizeAddSupertypeQuickFix(clazz: KtClassOrObject) : AbstractParcelizeQ
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.add.parcelable.supertype")
 
     override fun invoke(ktPsiFactory: KtPsiFactory, element: KtClassOrObject) {
-        val supertypeName = ParcelizeNames.PARCEL_ID.asFqNameString()
+        val supertypeName = ParcelizeNames.PARCELABLE_ID.asFqNameString()
         element.addSuperTypeListEntry(ktPsiFactory.createSuperTypeEntry(supertypeName)).shortenReferences()
     }
 }
