@@ -104,18 +104,16 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         ) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.isIndeterminate = true
-                val files = project.runReadActionInSmartMode {
-                    val result = mutableSetOf<VirtualFile>()
+                val (templates, classpath) = project.runReadActionInSmartMode {
+                    val files = mutableSetOf<VirtualFile>()
                     FileTypeIndex.processFiles(ScriptDefinitionMarkerFileType, {
                         indicator.checkCanceled()
-                        result.add(it)
+                        files.add(it)
                         true
                     }, GlobalSearchScope.allScope(project))
-                    result
+                    getTemplateClassPath(files)
                 }
                 try {
-                    val (templates, classpath) = getTemplateClassPath(files)
-
                     if (!inProgress.get() || templates.isEmpty()) return onEarlyEnd()
 
                     val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
