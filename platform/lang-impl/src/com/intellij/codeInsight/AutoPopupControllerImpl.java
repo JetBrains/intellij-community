@@ -119,16 +119,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
       int offset = editor.getCaretModel().getOffset();
-      PsiModificationTracker psiModificationTracker = PsiModificationTracker.SERVICE.getInstance(myProject);
-      AtomicLong modificationCount = new AtomicLong(-1);
       ReadAction.nonBlocking(() -> {
-          long currentModificationCount = psiModificationTracker.getModificationCount();
-          if (modificationCount.get() == -1) {
-            modificationCount.set(currentModificationCount);
-          }
-          else if (modificationCount.get() != currentModificationCount) {
-            return;
-          }
           final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
           PsiFile file = documentManager.getPsiFile(editor.getDocument());
           if (file == null) return;
@@ -156,6 +147,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
 
           myAlarm.addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
         }).expireWith(myAlarm)
+        .coalesceBy(this, editor)
         .expireWhen(() -> editor.isDisposed() || editor.getCaretModel().getOffset() != offset)
         .submit(AppExecutorUtil.getAppExecutorService());
     }
