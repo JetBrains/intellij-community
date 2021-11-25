@@ -69,6 +69,7 @@ import org.jetbrains.kotlin.idea.editor.AbstractMultiLineStringIndentTest
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
+import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 //import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirClassLoadingTest
 //import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightClassTest
 //import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightFacadeClassTest
