@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -10,6 +10,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -32,8 +33,8 @@ internal fun gotoTarget(editor: Editor, file: PsiFile, navigatable: Navigatable)
 
 internal fun notifyNowhereToGo(project: Project, editor: Editor, file: PsiFile, offset: Int) {
   // Disable the 'no declaration found' notification for keywords
-  if (!isUnderDoubleClick() && !isKeywordUnderCaret(project, file, offset)) {
-    HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("declaration.navigation.nowhere.to.go"))
+  if (Registry.`is`("ide.gtd.show.error") && !isUnderDoubleClick() && !isKeywordUnderCaret(project, file, offset)) {
+    HintManager.getInstance().showInformationHint(editor, CodeInsightBundle.message("declaration.navigation.nowhere.to.go"))
   }
 }
 
