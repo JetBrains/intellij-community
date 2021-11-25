@@ -108,16 +108,17 @@ public class DefaultActionGroup extends ActionGroup {
         uniqueActions.add(action);
       }
       else {
-        errorDuplicateActionAdded(action);
+        throw newDuplicateActionAddedException(action);
       }
     }
     mySortedChildren.addAll(uniqueActions);
     incrementModificationStamp();
   }
 
-  private static void errorDuplicateActionAdded(@NotNull AnAction action) {
-    LOG.error("Cannot add an action twice: " + action + " (" +
-              (action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName()) + ")");
+  private static IllegalArgumentException newDuplicateActionAddedException(@NotNull AnAction action) {
+    return new IllegalArgumentException(
+      "Cannot add an action twice: " + action + " (" +
+      (action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName()) + ")");
   }
 
   /**
@@ -174,8 +175,7 @@ public class DefaultActionGroup extends ActionGroup {
 
     // check that action isn't already registered
     if (!(action instanceof Separator) && containsAction(action)) {
-      errorDuplicateActionAdded(action);
-      remove(action, actionManager.getId(action));
+      throw newDuplicateActionAddedException(action);
     }
 
     constraint = (Constraints)constraint.clone();
