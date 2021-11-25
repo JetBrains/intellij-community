@@ -14,8 +14,6 @@ final class ProjectTroubleInfoCollector implements GeneralTroubleInfoCollector {
 
   @Override
   public @NotNull String collectInfo(@NotNull Project project) {
-    String output = "Project trusted: ";
-    output += TrustedProjects.isTrusted(project);
-    return output;
+    return "Project trusted: " + TrustedProjects.isTrusted(project);
   }
 }
