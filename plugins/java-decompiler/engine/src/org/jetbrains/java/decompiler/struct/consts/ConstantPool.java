@@ -4,7 +4,7 @@ package org.jetbrains.java.decompiler.struct.consts;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
-import org.jetbrains.java.decompiler.struct.MalformedClassFormatException;
+import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.NewClassNameBuilder;
@@ -93,7 +93,7 @@ public class ConstantPool implements NewClassNameBuilder {
         default:
           // Fail-fast on unknown constant pool entry.
           // We have no chance to process this class correctly.
-          throw new MalformedClassFormatException(String.format("Unsupported constant pool entry type %d at index #%d! ", Byte.toUnsignedInt(tag), i));
+          throw new ClassFormatException(String.format("Unsupported constant pool entry type %d at index #%d! ", Byte.toUnsignedInt(tag), i));
       }
     }
 

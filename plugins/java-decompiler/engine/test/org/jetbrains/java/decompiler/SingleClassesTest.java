@@ -3,7 +3,7 @@ package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.jetbrains.java.decompiler.struct.MalformedClassFormatException;
+import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -131,19 +131,11 @@ public class SingleClassesTest {
   @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
   @Test public void testPackageInfo() { doTest("pkg/package-info"); }
   @Test public void testIntVarMerge() { doTest("pkg/TestIntVarMerge"); }
-
-  @Test(expected = MalformedClassFormatException.class)
-  public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
-
-  @Test
-  public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
-
   // TODO: fix all below
   //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
-
   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
   @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
@@ -156,6 +148,10 @@ public class SingleClassesTest {
   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
+  @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
+
+  @Test(expected = ClassFormatException.class)
+  public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
