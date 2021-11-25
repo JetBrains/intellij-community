@@ -28,9 +28,9 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
+import javax.swing.Icon
 import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
-import javax.swing.text.html.HTMLEditorKit
 
 internal class DocumentationUI(
   project: Project,
@@ -40,23 +40,23 @@ internal class DocumentationUI(
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
 
-  private val htmlFactory: DocumentationHtmlFactory get() = editorPane.editorKit.viewFactory as DocumentationHtmlFactory
+  private val icons = mutableMapOf<String, Icon>()
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
   private val cs = CoroutineScope(Dispatchers.EDT)
   private val contentListeners: MutableList<() -> Unit> = SmartList()
 
   override fun dispose() {
-    htmlFactory.clearIcons()
+    icons.clear()
     imageResolver = null
     cs.cancel()
   }
 
   init {
     scrollPane = DocumentationScrollPane()
-    editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane)) {
+    editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane), {
       imageResolver?.resolveImage(it)
-    }
+    }, { icons[it] })
     editorPane.applyFontProps(DocumentationComponent.getQuickDocFontSize())
     scrollPane.setViewportView(editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(editorPane::applyFontProps))
@@ -138,7 +138,7 @@ internal class DocumentationUI(
   }
 
   private fun applyState(request: DocumentationRequest, data: DocumentationData?) {
-    htmlFactory.clearIcons()
+    icons.clear()
     imageResolver = null
     if (data == null) {
       showMessage(CodeInsightBundle.message("no.documentation.found"))
@@ -148,7 +148,7 @@ internal class DocumentationUI(
     val presentation = request.presentation
     val locationChunk = presentation.locationText?.let { locationText ->
       presentation.locationIcon?.let { locationIcon ->
-        val iconKey = htmlFactory.registerIcon(locationIcon)
+        val iconKey = registerIcon(locationIcon)
         HtmlChunk.fragment(
           HtmlChunk.tag("icon").attr("src", iconKey),
           HtmlChunk.nbsp(),
@@ -159,6 +159,12 @@ internal class DocumentationUI(
     val linkChunk = getLink(presentation.presentableText, data.externalUrl)
     val decorated = decorate(data.html, locationChunk, linkChunk)
     update(decorated, data.anchor)
+  }
+
+  private fun registerIcon(icon: Icon): String {
+    val key = icons.size.toString()
+    icons[key] = icon
+    return key
   }
 
   private fun fetchingProgress() {

@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
@@ -427,26 +426,22 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   public static JEditorPane createDescriptionComponent(@Nullable Consumer<? super View> imageViewHandler) {
-    HTMLEditorKit kit = new HTMLEditorKitBuilder().withViewFactory(new JBHtmlEditorKit.JBHtmlFactory() {
-      @Override
-      public View create(Element e) {
-        View view = super.create(e);
-        if (view instanceof ParagraphView) {
-          return new ParagraphView(e) {
-            {
-              super.setLineSpacing(0.3f);
-            }
+    HTMLEditorKit kit = new HTMLEditorKitBuilder().withViewFactoryExtensions((e, view) -> {
+      if (view instanceof ParagraphView) {
+        return new ParagraphView(e) {
+          {
+            super.setLineSpacing(0.3f);
+          }
 
-            @Override
-            protected void setLineSpacing(float ls) {
-            }
-          };
-        }
-        if (imageViewHandler != null && view instanceof ImageView) {
-          imageViewHandler.accept(view);
-        }
-        return view;
+          @Override
+          protected void setLineSpacing(float ls) {
+          }
+        };
       }
+      if (imageViewHandler != null && view instanceof ImageView) {
+        imageViewHandler.accept(view);
+      }
+      return view;
     }).build();
 
     StyleSheet sheet = kit.getStyleSheet();

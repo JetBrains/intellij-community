@@ -34,7 +34,9 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.text.*;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.StyleConstants;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.TreePath;
@@ -743,29 +745,25 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       }
     } : new JEditorPane();
 
-    HTMLEditorKit kit = new HTMLEditorKitBuilder().withViewFactory(new JBHtmlEditorKit.JBHtmlFactory() {
-      @Override
-      public View create(Element elem) {
-        AttributeSet attrs = elem.getAttributes();
-        Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
-        Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
-        if (o instanceof HTML.Tag) {
-          HTML.Tag kind = (HTML.Tag)o;
-          if (kind == HTML.Tag.HR) {
-            View view = super.create(elem);
-            try {
-              Field field = view.getClass().getDeclaredField("size");
-              field.setAccessible(true);
-              field.set(view, JBUIScale.scale(1));
-              return view;
-            }
-            catch (Exception ignored) {
-              //ignore
-            }
+    HTMLEditorKit kit = new HTMLEditorKitBuilder().withViewFactoryExtensions((elem, view) -> {
+      AttributeSet attrs = elem.getAttributes();
+      Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
+      Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
+      if (o instanceof HTML.Tag) {
+        HTML.Tag kind = (HTML.Tag)o;
+        if (kind == HTML.Tag.HR) {
+          try {
+            Field field = view.getClass().getDeclaredField("size");
+            field.setAccessible(true);
+            field.set(view, JBUIScale.scale(1));
+            return view;
+          }
+          catch (Exception ignored) {
+            //ignore
           }
         }
-        return super.create(elem);
       }
+      return view;
     }).build();
     String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
     if (editorFontName != null) {

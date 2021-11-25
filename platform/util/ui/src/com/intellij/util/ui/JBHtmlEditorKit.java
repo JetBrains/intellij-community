@@ -2,16 +2,13 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -19,12 +16,8 @@ import javax.swing.text.*;
 import javax.swing.text.html.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -61,7 +54,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
    */
   @Deprecated
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
-    this(UIUtil.DEFAULT_HTML_VIEW_FACTORY, StyleSheetUtil.createJBDefaultStyleSheet(), false);
+    this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.createJBDefaultStyleSheet(), false);
     if (noGapsBetweenParagraphs) getStyleSheet().addStyleSheet(UIUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE);
   }
 
@@ -190,232 +183,18 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
+  /**
+   * @see HTMLEditorKitBuilder
+   * @deprecated in favor of {@link ExtendableHTMLViewFactory}
+   */
+  @Deprecated
   public static class JBHtmlFactory extends HTMLFactory {
+
+    private final ViewFactory myDelegate = ExtendableHTMLViewFactory.DEFAULT;
 
     @Override
     public View create(Element elem) {
-      AttributeSet attrs = elem.getAttributes();
-      if ("img".equals(elem.getName())) {
-        String src = (String)attrs.getAttribute(HTML.Attribute.SRC);
-        // example: "data:image/png;base64,ENCODED_IMAGE_HERE"
-        if (src != null && src.startsWith("data:image") && src.contains("base64")) {
-          String[] split = src.split(",");
-          if (split.length == 2) {
-            try (ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(split[1]))) {
-              BufferedImage image = ImageIO.read(bis);
-              if (image != null) {
-                return new MyBufferedImageView(elem, image);
-              }
-            }
-            catch (IllegalArgumentException | IOException e) {
-              LOG.debug(e);
-            }
-          }
-        }
-      }
-      else if ("icon".equals(elem.getName())) {
-        Object src = attrs.getAttribute(HTML.Attribute.SRC);
-        if (src instanceof String) {
-          Icon icon = getIcon((String)src);
-          if (icon != null) {
-            return new IconView(elem, icon);
-          }
-        }
-      }
-      return super.create(elem);
-    }
-
-    @Internal
-    protected @Nullable Icon getIcon(@NotNull String src) {
-      return IconLoader.findIcon(src, JBHtmlEditorKit.class, true, false);
-    }
-
-    private static final class MyBufferedImageView extends View {
-      private static final int DEFAULT_BORDER = 0;
-      private final BufferedImage myBufferedImage;
-      private final int width;
-      private final int height;
-      private final int border;
-      private final float vAlign;
-
-      private MyBufferedImageView(Element elem, BufferedImage myBufferedImage) {
-        super(elem);
-        this.myBufferedImage = myBufferedImage;
-        int width = getIntAttr(HTML.Attribute.WIDTH, -1);
-        int height = getIntAttr(HTML.Attribute.HEIGHT, -1);
-        if (width < 0 && height < 0) {
-          this.width = myBufferedImage.getWidth();
-          this.height = myBufferedImage.getHeight();
-        }
-        else if (width < 0) {
-          this.width = height * getAspectRatio();
-          this.height = height;
-        }
-        else if (height < 0) {
-          this.width = width;
-          this.height = width / getAspectRatio();
-        }
-        else {
-          this.width = width;
-          this.height = height;
-        }
-        this.border = getIntAttr(HTML.Attribute.BORDER, DEFAULT_BORDER);
-        Object alignment = elem.getAttributes().getAttribute(HTML.Attribute.ALIGN);
-        float vAlign = 1.0f;
-        if (alignment != null) {
-          alignment = alignment.toString();
-          if ("top".equals(alignment)) {
-            vAlign = 0f;
-          }
-          else if ("middle".equals(alignment)) {
-            vAlign = .5f;
-          }
-        }
-        this.vAlign = vAlign;
-      }
-
-      private int getAspectRatio() {
-        return myBufferedImage.getWidth() / myBufferedImage.getHeight();
-      }
-
-      private int getIntAttr(HTML.Attribute name, int defaultValue) {
-        AttributeSet attr = getElement().getAttributes();
-        if (attr.isDefined(name)) {
-          String val = (String)attr.getAttribute(name);
-          if (val == null) {
-            return defaultValue;
-          }
-          else {
-            try {
-              return Math.max(0, Integer.parseInt(val));
-            }
-            catch (NumberFormatException x) {
-              return defaultValue;
-            }
-          }
-        }
-        else {
-          return defaultValue;
-        }
-      }
-
-      @Override
-      public float getPreferredSpan(int axis) {
-        switch (axis) {
-          case View.X_AXIS:
-            return width + 2 * border;
-          case View.Y_AXIS:
-            return height + 2 * border;
-          default:
-            throw new IllegalArgumentException("Invalid axis: " + axis);
-        }
-      }
-
-      @Override
-      public String getToolTipText(float x, float y, Shape allocation) {
-        return (String)super.getElement().getAttributes().getAttribute(HTML.Attribute.ALT);
-      }
-
-      @Override
-      public void paint(Graphics g, Shape a) {
-        Rectangle bounds = a.getBounds();
-        g.drawImage(myBufferedImage, bounds.x + border, bounds.y + border, width, height, null);
-      }
-
-      @Override
-      public Shape modelToView(int pos, Shape a, Position.Bias b) {
-        int p0 = getStartOffset();
-        int p1 = getEndOffset();
-        if ((pos >= p0) && (pos <= p1)) {
-          Rectangle r = a.getBounds();
-          if (pos == p1) {
-            r.x += r.width;
-          }
-          r.width = 0;
-          return r;
-        }
-        return null;
-      }
-
-      @Override
-      public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
-        Rectangle alloc = (Rectangle)a;
-        if (x < alloc.x + alloc.width) {
-          bias[0] = Position.Bias.Forward;
-          return getStartOffset();
-        }
-        bias[0] = Position.Bias.Backward;
-        return getEndOffset();
-      }
-
-      @Override
-      public float getAlignment(int axis) {
-        if (axis == View.Y_AXIS) {
-          return vAlign;
-        }
-        return super.getAlignment(axis);
-      }
-    }
-
-    protected static final class IconView extends View {
-      private final Icon myViewIcon;
-
-      public IconView(Element elem, Icon viewIcon) {
-        super(elem);
-        myViewIcon = viewIcon;
-      }
-
-      @Override
-      public float getPreferredSpan(int axis) {
-        switch (axis) {
-          case View.X_AXIS:
-            return myViewIcon.getIconWidth();
-          case View.Y_AXIS:
-            return myViewIcon.getIconHeight();
-          default:
-            throw new IllegalArgumentException("Invalid axis: " + axis);
-        }
-      }
-
-      @Override
-      public String getToolTipText(float x, float y, Shape allocation) {
-        return (String)super.getElement().getAttributes().getAttribute(HTML.Attribute.ALT);
-      }
-
-      @Override
-      public void paint(Graphics g, Shape allocation) {
-        Graphics2D g2d = (Graphics2D)g;
-        Composite savedComposite = g2d.getComposite();
-        g2d.setComposite(AlphaComposite.SrcOver); // support transparency
-        myViewIcon.paintIcon(null, g, allocation.getBounds().x, allocation.getBounds().y - 4);
-        g2d.setComposite(savedComposite);
-      }
-
-      @Override
-      public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
-        int p0 = getStartOffset();
-        int p1 = getEndOffset();
-        if ((pos >= p0) && (pos <= p1)) {
-          Rectangle r = a.getBounds();
-          if (pos == p1) {
-            r.x += r.width;
-          }
-          r.width = 0;
-          return r;
-        }
-        throw new BadLocationException(pos + " not in range " + p0 + "," + p1, pos);
-      }
-
-      @Override
-      public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
-        Rectangle alloc = (Rectangle)a;
-        if (x < alloc.x + (alloc.width / 2f)) {
-          bias[0] = Position.Bias.Forward;
-          return getStartOffset();
-        }
-        bias[0] = Position.Bias.Backward;
-        return getEndOffset();
-      }
+      return myDelegate.create(elem);
     }
   }
 

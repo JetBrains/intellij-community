@@ -666,6 +666,7 @@ private class LimitedWidthLabel(htmlBuilder: HtmlBuilder, limit: Int) : JLabel()
                                  "body { margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0 }"
     }
 
+    //TODO: refactor to com.intellij.util.ui.ExtendableHTMLViewFactory
     private val viewFactory = object : HTMLFactory() {
       override fun create(elem: Element): View {
         val attr = elem.attributes

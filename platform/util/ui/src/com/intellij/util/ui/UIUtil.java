@@ -49,7 +49,6 @@ import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
@@ -98,7 +97,6 @@ public final class UIUtil {
   @ApiStatus.Internal
   public static final String NO_BORDER_UNDER_WINDOW_TITLE_KEY = "";
 
-  static final ViewFactory DEFAULT_HTML_VIEW_FACTORY = new JBHtmlEditorKit.JBHtmlFactory();
   //TODO: lazy
   static final StyleSheet NO_GAPS_BETWEEN_PARAGRAPHS_STYLE = StyleSheetUtil.createStyleSheet("p { margin-top: 0; }");
 
@@ -2086,38 +2084,13 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated replaced with {@code UIUtil.getWordWrapHTMLEditorKit()}
+   * @deprecated use {@link HTMLEditorKitBuilder#withWordWrapViewFactory()}
    */
   @Deprecated
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
-
-    final static ViewFactory ourFactory = new JBHtmlEditorKit.JBHtmlFactory() {
-      @Override
-      public View create(Element e) {
-        View view = super.create(e);
-        if (view instanceof javax.swing.text.html.ParagraphView) {
-          // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
-          return new ParagraphView(e) {
-            @Override
-            protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
-              if (r == null) {
-                r = new SizeRequirements();
-              }
-              r.minimum = (int)layoutPool.getMinimumSpan(axis);
-              r.preferred = Math.max(r.minimum, (int)layoutPool.getPreferredSpan(axis));
-              r.maximum = Integer.MAX_VALUE;
-              r.alignment = 0.5f;
-              return r;
-            }
-          };
-        }
-        return view;
-      }
-    };
-
     @Override
     public ViewFactory getViewFactory() {
-      return ourFactory;
+      return ExtendableHTMLViewFactory.DEFAULT_WORD_WRAP;
     }
   }
 

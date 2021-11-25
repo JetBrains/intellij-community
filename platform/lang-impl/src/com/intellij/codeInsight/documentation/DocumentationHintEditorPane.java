@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -17,6 +18,7 @@ import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
+import java.util.function.Function;
 
 @Internal
 public final class DocumentationHintEditorPane extends DocumentationEditorPane {
@@ -26,9 +28,21 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
   public DocumentationHintEditorPane(
     @NotNull Project project,
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
+    @NotNull DocumentationImageResolver imageResolver,
+    @NotNull Function<@NotNull String, @Nullable Icon> iconResolver
+  ) {
+    super(keyboardActions, imageResolver, iconResolver);
+    myProject = project;
+  }
+
+  public DocumentationHintEditorPane(
+    @NotNull Project project,
+    @NotNull Map<KeyStroke, ActionListener> keyboardActions,
     @NotNull DocumentationImageResolver imageResolver
   ) {
-    super(keyboardActions, imageResolver);
+    super(keyboardActions, imageResolver, (key) -> {
+      return null;
+    });
     myProject = project;
   }
 

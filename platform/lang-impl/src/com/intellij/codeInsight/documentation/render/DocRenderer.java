@@ -42,7 +42,10 @@ import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StyleSheetUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -533,7 +536,9 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
 
   private static EditorKit createEditorKit(@NotNull Editor editor) {
     HTMLEditorKit editorKit =
-      new HTMLEditorKitBuilder().withViewFactory(MyViewFactory.INSTANCE).withFontResolver(EditorCssFontResolver.getInstance(editor))
+      new HTMLEditorKitBuilder()
+        .withViewFactoryExtensions((element, view) -> view instanceof ImageView ? new MyScalingImageView(element) : null)
+        .withFontResolver(EditorCssFontResolver.getInstance(editor))
         .build();
     editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor));
     return editorKit;
@@ -741,16 +746,6 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     void dispose() {
       MEMORY_MANAGER.unregister(DocRenderer.this);
       myImages.forEach(image -> IMAGE_MANAGER.dispose(image));
-    }
-  }
-
-  private static class MyViewFactory extends JBHtmlEditorKit.JBHtmlFactory {
-    private static final MyViewFactory INSTANCE = new MyViewFactory();
-
-    @Override
-    public View create(Element elem) {
-      View view = super.create(elem);
-      return view instanceof ImageView ? new MyScalingImageView(elem) : view;
     }
   }
 

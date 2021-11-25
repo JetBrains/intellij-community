@@ -41,7 +41,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
@@ -452,119 +451,120 @@ public final class TipUIUtil {
           }
         }
       );
-      HTMLEditorKitBuilder builder = new HTMLEditorKitBuilder().withViewFactory(new HTMLEditorKit.HTMLFactory() {
-          @Override
-          public View create(Element elem) {
-            View view = super.create(elem);
-            if (view instanceof ImageView) {
-              String src = (String)view.getElement().getAttributes().getAttribute(HTML.Attribute.SRC);
-              if (src != null /*&& src.endsWith(".svg")*/) {
-                final Image image;
-                try {
-                  final URL url = new URL(src);
-                  Dictionary cache = (Dictionary)elem.getDocument().getProperty("imageCache");
-                  if (cache == null) {
-                    elem.getDocument().putProperty("imageCache", cache = new Dictionary() {
-                      private final HashMap myMap = new HashMap();
 
-                      @Override
-                      public int size() {
-                        return myMap.size();
-                      }
-
-                      @Override
-                      public boolean isEmpty() {
-                        return size() == 0;
-                      }
-
-                      @Override
-                      public Enumeration keys() {
-                        return Collections.enumeration(myMap.keySet());
-                      }
-
-                      @Override
-                      public Enumeration elements() {
-                        return Collections.enumeration(myMap.values());
-                      }
-
-                      @Override
-                      public Object get(Object key) {
-                        return myMap.get(key);
-                      }
-
-                      @Override
-                      public Object put(Object key, Object value) {
-                        return myMap.put(key, value);
-                      }
-
-                      @Override
-                      public Object remove(Object key) {
-                        return myMap.remove(key);
-                      }
-                    });
-                  }
-                  image = src.endsWith(".svg")
-                          ? SVGLoader.load(url, JBUI.isPixHiDPI((Component)null) ? 2f : 1f)
-                          : Toolkit.getDefaultToolkit().createImage(url);
-                  cache.put(url, image);
-                  if (src.endsWith(".svg")) {
-                    return new ImageView(elem) {
-                      @Override
-                      public Image getImage() {
-                        return image;
-                      }
-
-                      @Override
-                      public URL getImageURL() {
-                        return url;
-                      }
-
-                      @Override
-                      public void paint(Graphics g, Shape a) {
-                        Rectangle bounds = a.getBounds();
-                        int width = (int)getPreferredSpan(View.X_AXIS);
-                        int height = (int)getPreferredSpan(View.Y_AXIS);
-                        @SuppressWarnings("UndesirableClassUsage")
-                        BufferedImage buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                        Graphics2D graphics = buffer.createGraphics();
-                        super.paint(graphics, new Rectangle(buffer.getWidth(), buffer.getHeight()));
-                        drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create((Component)null)), bounds.x, bounds.y, null);
-                      }
-
-                      @Override
-                      public float getMaximumSpan(int axis) {
-                        return getPreferredSpan(axis);
-                      }
-
-                      @Override
-                      public float getMinimumSpan(int axis) {
-                        return getPreferredSpan(axis);
-                      }
-
-                      @Override
-                      public float getPreferredSpan(int axis) {
-                        return (axis == View.X_AXIS ? image.getWidth(null) : image.getHeight(null)) / JBUIScale.sysScale();
-                      }
-                    };
-                  }
-                }
-                catch (IOException e) {
-                  //ignore
-                }
-              }
-            }
-            return view;
-          }
-        });
-      builder.withGapsBetweenParagraphs();
-      /*&& src.endsWith(".svg")*/
-      //ignore
-      HTMLEditorKit kit = builder.build();
+      HTMLEditorKit kit = new HTMLEditorKitBuilder()
+        .withViewFactoryExtensions(getSVGImagesExtension())
+        .withGapsBetweenParagraphs()
+        .build();
 
       String fileName = StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css";
       URL resource = TipUIUtil.class.getClassLoader().getResource("tips/css/" + fileName);
       kit.getStyleSheet().addStyleSheet(StyleSheetUtil.loadStyleSheet(resource));
       setEditorKit(kit);
+    }
+
+    @NotNull
+    private ExtendableHTMLViewFactory.Extension getSVGImagesExtension() {
+      return (elem, view) -> {
+        if (!(view instanceof ImageView)) return null;
+        String src = (String)view.getElement().getAttributes().getAttribute(HTML.Attribute.SRC);
+        if (src != null /*&& src.endsWith(".svg")*/) {
+          final Image image;
+          try {
+            final URL url = new URL(src);
+            Dictionary cache = (Dictionary)elem.getDocument().getProperty("imageCache");
+            if (cache == null) {
+              elem.getDocument().putProperty("imageCache", cache = new Dictionary() {
+                private final HashMap myMap = new HashMap();
+
+                @Override
+                public int size() {
+                  return myMap.size();
+                }
+
+                @Override
+                public boolean isEmpty() {
+                  return size() == 0;
+                }
+
+                @Override
+                public Enumeration keys() {
+                  return Collections.enumeration(myMap.keySet());
+                }
+
+                @Override
+                public Enumeration elements() {
+                  return Collections.enumeration(myMap.values());
+                }
+
+                @Override
+                public Object get(Object key) {
+                  return myMap.get(key);
+                }
+
+                @Override
+                public Object put(Object key, Object value) {
+                  return myMap.put(key, value);
+                }
+
+                @Override
+                public Object remove(Object key) {
+                  return myMap.remove(key);
+                }
+              });
+            }
+            image = src.endsWith(".svg")
+                    ? SVGLoader.load(url, JBUI.isPixHiDPI((Component)null) ? 2f : 1f)
+                    : Toolkit.getDefaultToolkit().createImage(url);
+            cache.put(url, image);
+            if (src.endsWith(".svg")) {
+              return new ImageView(elem) {
+                @Override
+                public Image getImage() {
+                  return image;
+                }
+
+                @Override
+                public URL getImageURL() {
+                  return url;
+                }
+
+                @Override
+                public void paint(Graphics g, Shape a) {
+                  Rectangle bounds = a.getBounds();
+                  int width = (int)getPreferredSpan(View.X_AXIS);
+                  int height = (int)getPreferredSpan(View.Y_AXIS);
+                  @SuppressWarnings("UndesirableClassUsage")
+                  BufferedImage buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                  Graphics2D graphics = buffer.createGraphics();
+                  super.paint(graphics, new Rectangle(buffer.getWidth(), buffer.getHeight()));
+                  drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create((Component)null)), bounds.x, bounds.y, null);
+                }
+
+                @Override
+                public float getMaximumSpan(int axis) {
+                  return getPreferredSpan(axis);
+                }
+
+                @Override
+                public float getMinimumSpan(int axis) {
+                  return getPreferredSpan(axis);
+                }
+
+                @Override
+                public float getPreferredSpan(int axis) {
+                  return (axis == View.X_AXIS ? image.getWidth(null) : image.getHeight(null)) / JBUIScale.sysScale();
+                }
+              };
+            }
+          }
+          catch (IOException e) {
+            //ignore
+          }
+        }
+
+        return null;
+      };
     }
 
     @Override

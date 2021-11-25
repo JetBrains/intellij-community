@@ -9,9 +9,9 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -19,9 +19,6 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.text.Element
-import javax.swing.text.View
-import javax.swing.text.html.HTML
 
 internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(BorderLayout(),
                                                                             { panel -> IntentionPreviewLoadingDecorator(panel, project) }) {
@@ -63,22 +60,9 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
         }
       }
 
-      val factory = object : JBHtmlEditorKit.JBHtmlFactory() {
-        override fun create(elem: Element): View {
-          if (elem.name == "img") {
-            val src = elem.attributes.getAttribute(HTML.Attribute.SRC) as? String
-            val prefix = "local://"
-            if (src != null && src.startsWith(prefix)) {
-              val icon = htmlInfo.icon(src.substring(prefix.length))
-              if (icon != null) {
-                return IconView(elem, icon)
-              }
-            }
-          }
-          return super.create(elem)
-        }
-      }
-      editor.editorKit = HTMLEditorKitBuilder().withViewFactory(factory).build()
+      editor.editorKit = HTMLEditorKitBuilder()
+        .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.icons { htmlInfo.icon(it) })
+        .build()
       editor.text = htmlInfo.content().toString()
       editor.size = Dimension(IntentionPreviewPopupUpdateProcessor.MIN_WIDTH, Integer.MAX_VALUE)
       val panel = JPanel(BorderLayout())

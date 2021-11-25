@@ -137,7 +137,7 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
     IntentionPreviewInfo info = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action, getFile(), getEditor());
     assertTrue(info instanceof IntentionPreviewInfo.Html);
     HtmlChunk content = ((IntentionPreviewInfo.Html)info).content();
-    assertEquals("<img src=\"local://file\"/>&nbsp;Test.java &rarr; <img src=\"local://file\"/>&nbsp;Best.java",
+    assertEquals("<icon src=\"file\"/>&nbsp;Test.java &rarr; <icon src=\"file\"/>&nbsp;Best.java",
                  content.toString());
     assertNotNull(((IntentionPreviewInfo.Html)info).icon("file"));
   }

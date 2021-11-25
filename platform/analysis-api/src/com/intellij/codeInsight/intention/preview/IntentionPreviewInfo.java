@@ -83,7 +83,7 @@ public interface IntentionPreviewInfo {
     /**
      * Construct description from HtmlChunk and icon map
      *
-     * @param content content that may refer to some icons via {@code &lt;img src="local://$id$"&gt;}
+     * @param content content that may refer to some icons via {@code &lt;icon src="$id$"&gt;}
      * @param iconMap a map from icon ID used in URL to the icon itself
      */
     private Html(@NotNull HtmlChunk content, @NotNull Map<String, Icon> iconMap) {
@@ -100,7 +100,7 @@ public interface IntentionPreviewInfo {
 
     /**
      * @param id icon ID
-     * @return an icon referenced from HTML content via {@code &lt;img src="local://$id$"&gt;}
+     * @return an icon referenced from HTML content via {@code &lt;icon src="$id$"&gt;}
      */
     @ApiStatus.Experimental
     public @Nullable Icon icon(@NotNull String id) {
@@ -117,7 +117,7 @@ public interface IntentionPreviewInfo {
     Icon icon = file.getIcon(0);
     HtmlChunk iconChunk =
       icon == null ? HtmlChunk.empty() :
-      new HtmlBuilder().append(HtmlChunk.tag("img").attr("src", "local://file")).nbsp().toFragment();
+      new HtmlBuilder().append(HtmlChunk.tag("icon").attr("src", "file")).nbsp().toFragment();
     HtmlChunk fragment = new HtmlBuilder()
       .append(iconChunk)
       .append(file.getName())
