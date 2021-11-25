@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -19,18 +19,15 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class ConstExprent extends Exprent {
-  private static final Map<Integer, String> CHAR_ESCAPES;
-  static {
-    CHAR_ESCAPES = new HashMap<>();
-    CHAR_ESCAPES.put(0x8, "\\b");   /* \u0008: backspace BS */
-    CHAR_ESCAPES.put(0x9, "\\t");   /* \u0009: horizontal tab HT */
-    CHAR_ESCAPES.put(0xA, "\\n");   /* \u000a: linefeed LF */
-    CHAR_ESCAPES.put(0xC, "\\f");   /* \u000c: form feed FF */
-    CHAR_ESCAPES.put(0xD, "\\r");   /* \u000d: carriage return CR */
-    //CHAR_ESCAPES.put(0x22, "\\\""); /* \u0022: double quote " */
-    CHAR_ESCAPES.put(0x27, "\\'"); /* \u0027: single quote ' */
-    CHAR_ESCAPES.put(0x5C, "\\\\"); /* \u005c: backslash \ */
-  }
+  private static final Map<Integer, String> CHAR_ESCAPES = Map.of(
+    0x8, "\\b",   /* \u0008: backspace BS */
+    0x9, "\\t",   /* \u0009: horizontal tab HT */
+    0xA, "\\n",   /* \u000a: linefeed LF */
+    0xC, "\\f",   /* \u000c: form feed FF */
+    0xD, "\\r",   /* \u000d: carriage return CR */
+    0x27, "\\'",  /* \u0027: single quote ' */
+    0x5C, "\\\\"  /* \u005c: backslash \ */
+  );
 
   private VarType constType;
   private final Object value;

@@ -672,7 +672,6 @@ public class ControlFlowGraph implements CodeConstants {
   }
 
   private static void removeJsrInstructions(ConstantPool pool, BasicBlock block, DataPoint data) {
-
     ListStack<VarType> stack = data.getStack();
 
     InstructionSequence seq = block.getSeq();
@@ -713,11 +712,9 @@ public class ControlFlowGraph implements CodeConstants {
     for (int i = 0; i < block.getSuccessorExceptions().size(); i++) {
       BasicBlock suc = block.getSuccessorExceptions().get(i);
       if (suc.mark != 1) {
-
-        DataPoint point = new DataPoint();
-        point.setLocalVariables(new ArrayList<>(data.getLocalVariables()));
+        DataPoint point = data.copy();
+        point.getStack().clear();
         point.getStack().push(new VarType(CodeConstants.TYPE_OBJECT, 0, null));
-
         removeJsrInstructions(pool, suc, point);
       }
     }
