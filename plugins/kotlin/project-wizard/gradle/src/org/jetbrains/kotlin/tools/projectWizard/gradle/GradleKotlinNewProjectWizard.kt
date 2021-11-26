@@ -27,6 +27,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             projectGroupId = groupId,
             artifactId = artifactId,
             version = version,
+            wizardContext = parent.context
         )
     }
 }
