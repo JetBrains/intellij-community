@@ -26,8 +26,8 @@ internal class LanguagePluginDetectionStartupActivity : StartupActivity.Backgrou
   @RequiresBackgroundThread
   override fun runActivity(project: Project) {
     val application = ApplicationManagerEx.getApplicationEx()
-    if (application.isUnitTestMode ||
-        application.isHeadlessEnvironment) {
+    if (application.isUnitTestMode
+        || application.isHeadlessEnvironment) {
       return
     }
 
