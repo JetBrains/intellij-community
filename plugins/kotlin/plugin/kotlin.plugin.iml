@@ -12,9 +12,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.maven" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="PROVIDED" />

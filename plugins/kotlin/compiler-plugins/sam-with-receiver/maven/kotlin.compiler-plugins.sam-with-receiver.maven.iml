@@ -13,8 +13,8 @@
     <orderEntry type="library" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.maven" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.base-compiler-plugins-ide-support" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.maven" />
+    <orderEntry type="module" module-name="intellij.maven" />
   </component>
 </module>

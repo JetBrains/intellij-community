@@ -12,10 +12,10 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.tests" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" />

@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="kotlin.plugin" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.core" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" />
     <orderEntry type="module" module-name="kotlin.test-framework" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
