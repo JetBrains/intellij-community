@@ -406,10 +406,10 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       }
     }
 
-    private static final class MyIconView extends View {
+    protected static final class MyIconView extends View {
       private final Icon myViewIcon;
 
-      private MyIconView(Element elem, Icon viewIcon) {
+      public MyIconView(Element elem, Icon viewIcon) {
         super(elem);
         myViewIcon = viewIcon;
       }

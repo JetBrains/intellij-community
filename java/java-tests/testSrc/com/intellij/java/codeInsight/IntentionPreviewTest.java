@@ -4,8 +4,10 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection;
 
@@ -126,6 +128,18 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
                  "\n" +
                  "    }\n" +
                  "}\n", text);
+  }
+
+  public void testRenameFile() {
+    configureFromFileText("Test.java", "public class <caret>Best {}");
+    IntentionAction action = findActionWithText("Rename File");
+    assertNotNull(action);
+    IntentionPreviewInfo info = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action, getFile(), getEditor());
+    assertTrue(info instanceof IntentionPreviewInfo.Html);
+    HtmlChunk content = ((IntentionPreviewInfo.Html)info).content();
+    assertEquals("<img src=\"local://file\"/>&nbsp;Test.java &rarr; <img src=\"local://file\"/>&nbsp;Best.java",
+                 content.toString());
+    assertNotNull(((IntentionPreviewInfo.Html)info).icon("file"));
   }
 
   @Override

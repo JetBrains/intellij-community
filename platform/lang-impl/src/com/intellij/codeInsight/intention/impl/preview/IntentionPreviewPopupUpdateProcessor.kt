@@ -113,7 +113,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         select(index, editors)
       }
       is IntentionPreviewInfo.Html -> {
-        select(index, html = result.content().toString())
+        select(index, html = result)
       }
       else -> {
         select(NO_PREVIEW)
@@ -146,7 +146,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     return true
   }
 
-  private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: String = "") {
+  private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: IntentionPreviewInfo.Html? = null) {
     component.stopLoading()
     component.editors = editors
     component.html = html
@@ -194,12 +194,18 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                        action: IntentionAction,
                        originalFile: PsiFile,
                        originalEditor: Editor): String? {
-      val preview =
-        ProgressManager.getInstance().runProcess<IntentionPreviewInfo>(
-          { IntentionPreviewComputable(project, action, originalFile, originalEditor).generatePreview() },
-          EmptyProgressIndicator())
-      return (preview as? IntentionPreviewDiffResult)?.psiFile?.text
+      return (getPreviewInfo(project, action, originalFile, originalEditor) as? IntentionPreviewDiffResult)?.psiFile?.text
     }
+
+    @TestOnly
+    @JvmStatic
+    fun getPreviewInfo(project: Project,
+                       action: IntentionAction,
+                       originalFile: PsiFile,
+                       originalEditor: Editor): IntentionPreviewInfo =
+      ProgressManager.getInstance().runProcess<IntentionPreviewInfo>(
+        { IntentionPreviewComputable(project, action, originalFile, originalEditor).generatePreview() },
+        EmptyProgressIndicator()) ?: IntentionPreviewInfo.EMPTY
   }
 
   internal class IntentionPreviewPopupKey
