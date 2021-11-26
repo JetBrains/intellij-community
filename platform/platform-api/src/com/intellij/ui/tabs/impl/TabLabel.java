@@ -610,7 +610,7 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public String getToolTipText(MouseEvent event) {
     Point pointInLabel = new RelativePoint(event).getPoint(myLabel);
-    if (myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
+    if (!UISettings.getInstance().getShowTabsTooltips() && myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
       String toolTip = myIcon.getToolTip(false);
       if (toolTip != null) {
         return StringUtil.capitalize(toolTip);
