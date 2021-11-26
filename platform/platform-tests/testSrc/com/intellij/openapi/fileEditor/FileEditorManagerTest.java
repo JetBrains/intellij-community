@@ -25,6 +25,7 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -303,6 +304,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(2, secondaryWindow.getTabCount());
   }
 
+  @Language("XML")
   private static final String STRING = "<component name=\"FileEditorManager\">\n" +
                                        "    <leaf>\n" +
                                        "      <file pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
@@ -366,11 +368,6 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     @Override
     public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       return new Mock.MyFileEditor() {
-        @Override
-        public boolean isValid() {
-          return true;
-        }
-
         @NotNull
         @Override
         public JComponent getComponent() {
@@ -380,7 +377,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
         @NotNull
         @Override
         public String getName() {
-          return "mockEditor";
+          return "MockEditor";
         }
 
         @Override
