@@ -125,13 +125,12 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                                 USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                 UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
-                        ULambdaExpression [{ ...}] : PsiType:Function0<? extends List<? extends Integer>>
+                        ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                             UBlockExpression [{...}] : PsiType:Unit
-                                UReturnExpression [return listOf(1)]
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] : PsiType:List<? extends Integer>
-                                        UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends Integer>
-                                        ULiteralExpression (value = 1) [1] : PsiType:int
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] : PsiType:List<? extends Integer>
+                                    UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                                    USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends Integer>
+                                    ULiteralExpression (value = 1) [1] : PsiType:int
         UMethod (name = bar) [static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : void {...}]
             UParameter (name = lmbd) [@org.jetbrains.annotations.NotNull var lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
