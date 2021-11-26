@@ -24,6 +24,8 @@ import static com.intellij.grazie.text.TextContent.TextDomain.COMMENTS;
 
 public class PropertyTextExtractor extends TextExtractor {
   private static final Pattern apostrophes = Pattern.compile("'(?=')");
+  private static final Pattern continuationIndent = Pattern.compile("(?<=\n)[ \t]+");
+  private static final Pattern trailingSlash = Pattern.compile("\\\\\n");
 
   @Override
   public @Nullable TextContent buildTextContent(@NotNull PsiElement root,
@@ -38,6 +40,8 @@ public class PropertyTextExtractor extends TextExtractor {
       TextContent content = TextContent.builder().build(root, TextContent.TextDomain.PLAIN_TEXT);
       if (content != null) {
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(apostrophes, content), Exclusion::exclude));
+        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(continuationIndent, content), Exclusion::exclude));
+        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(trailingSlash, content), Exclusion::exclude));
       }
 
       while (content != null) {
