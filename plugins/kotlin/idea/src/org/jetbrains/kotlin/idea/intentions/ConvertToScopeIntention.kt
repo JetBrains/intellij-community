@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.ConvertToScopeIntention.ScopeFunction.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -158,7 +159,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         }
 
         val searchParameters = KotlinReferencesSearchParameters(
-            element, element.useScope, ignoreAccessScope = false
+            element, element.useScope(), ignoreAccessScope = false
         )
 
         val range = PsiTreeUtil.getElementsOfRange(firstTarget, lastTarget)
