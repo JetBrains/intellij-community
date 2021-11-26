@@ -302,7 +302,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     final ASTNode prevElement = skipCommentsAndWhitespacesBackwards(child);
-    if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST && !isMethodParameterAnnotation(prevElement)) {
+    if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
       return Indent.getNoneIndent();
     }
 
@@ -332,15 +332,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       currNode = currNode.getTreePrev();
     }
     return currNode;
-  }
-
-  private static boolean isMethodParameterAnnotation(@NotNull ASTNode element) {
-    ASTNode parent = element.getTreeParent();
-    if (parent != null && parent.getElementType() == JavaElementType.PARAMETER) {
-      ASTNode lastChild = element.getLastChildNode();
-      return lastChild != null && lastChild.getElementType() == JavaElementType.ANNOTATION;
-    }
-    return false;
   }
 
   @Nullable

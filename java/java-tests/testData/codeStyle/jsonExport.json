@@ -66,6 +66,7 @@
       "continuation_indent_size": 8,
       "do_not_indent_top_level_class_members": false,
       "do_not_wrap_after_single_annotation": false,
+      "do_not_wrap_after_single_annotation_in_parameter": false,
       "do_while_brace_force": "never",
       "doc_add_blank_line_after_description": true,
       "doc_add_blank_line_after_param_comments": false,

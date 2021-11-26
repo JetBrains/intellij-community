@@ -300,7 +300,9 @@ public final class JavaFormatterUtil {
         ASTNode last = prev.getLastChildNode();
         if (last != null && last.getElementType() == JavaElementType.ANNOTATION) {
           if (isTypeAnnotationOrFalseIfDumb(last) ||
-              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isFieldModifierListWithSingleAnnotation(prev)) {
+              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
+              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER && isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER)
+          ) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
           else {
@@ -333,7 +335,7 @@ public final class JavaFormatterUtil {
 
       ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
       if (prev != null && prev.getElementType() == JavaElementType.ANNOTATION) {
-        if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isFieldModifierListWithSingleAnnotation(parent)) {
+        if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(parent, JavaElementType.FIELD)) {
           return Wrap.createWrap(WrapType.NONE, false);
         }
         Wrap wrap = Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
@@ -440,9 +442,9 @@ public final class JavaFormatterUtil {
     }
   }
 
-  private static boolean isFieldModifierListWithSingleAnnotation(@NotNull ASTNode elem) {
+  private static boolean isModifierListWithSingleAnnotation(@NotNull ASTNode elem, IElementType parentElementType) {
     ASTNode parent = elem.getTreeParent();
-    if (parent != null && parent.getElementType() == JavaElementType.FIELD) {
+    if (parent != null && parent.getElementType() == parentElementType) {
       return isModifierListWithSingleAnnotation(elem);
     }
     return false;

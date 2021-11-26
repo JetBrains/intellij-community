@@ -45,9 +45,9 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "    public void foo(\n" +
                "            @Ann1\n" +
                "            @Ann2\n" +
-               "                    int p1,\n" +
+               "            int p1,\n" +
                "            @Ann3\n" +
-               "                    boolean p1) {\n" +
+               "            boolean p1) {\n" +
                "    }\n" +
                "}");
 
@@ -384,6 +384,24 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
       "        ashskjdhsajkhdkjasd = \"22222\"\n" +
       ")\n" +
       "class A {\n" +
+      "}\n");
+  }
+
+  public void testTypeAfterAnnotationInParametersNotIndented() {
+    doTextTest(
+      "class Cls {\n" +
+      "    void foo(\n" +
+      "            @Bar\n" +
+      "            BarObj bar\n" +
+      "    ) {}\n" +
+      "}\n",
+
+      "class Cls {\n" +
+      "    void foo(\n" +
+      "            @Bar\n" +
+      "            BarObj bar\n" +
+      "    ) {\n" +
+      "    }\n" +
       "}\n");
   }
 }

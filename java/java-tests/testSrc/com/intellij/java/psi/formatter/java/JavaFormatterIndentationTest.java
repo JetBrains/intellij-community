@@ -623,18 +623,22 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   }
   
   public void testAnnotatedParameters() {
+    // it is supposed that this
+    getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER = true;
+    getSettings().KEEP_LINE_BREAKS = false;
+    getSettings().RIGHT_MARGIN = 120;
+    getSettings().WRAP_LONG_LINES = true;
     String before = "public class Formatting {\n" +
                     "  @RequestMapping(value = \"/\", method = GET)\n" +
-                    "  public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name, @PageableDefault(page = 0, size = 10)\n" +
-                    "  Pageable pageable) {\n" +
+                    "  public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name, @PageableDefault(page = 0, size = 10) Pageable pageable) {\n" +
                     "    // I'd expect the line above to be indented by 4 spaces\n" +
                     "    return ResponseEntity.ok(\"Hello \" + name);\n" +
                     "  }\n" +
                     "}";
     String after = "public class Formatting {\n" +
                    "    @RequestMapping(value = \"/\", method = GET)\n" +
-                   "    public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name, @PageableDefault(page = 0, size = 10)\n" +
-                   "            Pageable pageable) {\n" +
+                   "    public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name,\n" +
+                   "                                         @PageableDefault(page = 0, size = 10) Pageable pageable) {\n" +
                    "        // I'd expect the line above to be indented by 4 spaces\n" +
                    "        return ResponseEntity.ok(\"Hello \" + name);\n" +
                    "    }\n" +

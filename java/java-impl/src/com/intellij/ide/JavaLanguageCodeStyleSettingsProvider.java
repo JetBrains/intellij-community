@@ -218,8 +218,13 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
                                 JavaBundle.message("wrapping.text.blocks") );
 
-      String groupName = ApplicationBundle.message("wrapping.fields.annotation");
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), groupName);
+      String fieldAnnotations = ApplicationBundle.message("wrapping.fields.annotation");
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION",
+                                JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), fieldAnnotations);
+
+      String parameterAnnotationsWrapping = ApplicationBundle.message("wrapping.parameters.annotation");
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER",
+                                JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), parameterAnnotationsWrapping);
 
       // Record components
       String recordComponentsGroup = JavaBundle.message("wrapping.record.components");
