@@ -2,10 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
-import com.intellij.debugger.engine.DebugProcess
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
