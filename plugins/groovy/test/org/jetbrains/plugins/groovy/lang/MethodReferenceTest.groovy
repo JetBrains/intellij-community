@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -22,7 +22,7 @@ class MethodReferenceTest extends GroovyResolveTestCase implements TypingTest, R
 
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
   final String basePath = TestUtils.testDataPath + 'lang/methodReferences/'
-  final Collection<Class<? extends LocalInspectionTool>> inspections = [GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection]
+  final Collection<Class<? extends LocalInspectionTool>> inspections = [GrUnresolvedAccessInspection as Class<? extends LocalInspectionTool>, GroovyAssignabilityCheckInspection]
 
   void 'test method reference in static context'() {
     fixture.addFileToProject 'classes.groovy', '''\
