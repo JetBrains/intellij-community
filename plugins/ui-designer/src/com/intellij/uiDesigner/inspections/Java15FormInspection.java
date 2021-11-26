@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.inspections;
 
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
@@ -54,7 +53,7 @@ public class Java15FormInspection extends BaseFormInspection {
                              final FormErrorCollector collector,
                              final IProperty prop,
                              @NonNls final String api) {
-    collector.addError(getID(), component, prop, JavaBundle.message("inspection.1.5.problem.descriptor", api),
+    collector.addError(getID(), component, prop, UIDesignerBundle.message("inspection.java15form.problem.descriptor", api),
                        (editor, component1) -> new RemovePropertyFix(editor, component1, (Property)prop));
   }
 
