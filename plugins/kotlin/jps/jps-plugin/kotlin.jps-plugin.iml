@@ -23,6 +23,5 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
-    <orderEntry type="module" module-name="kotlin.resources-fe10" scope="TEST" />
   </component>
 </module>
