@@ -54,6 +54,8 @@ class KotlinPluginBuilder {
     "kotlin.compiler-plugins.sam-with-receiver.common",
     "kotlin.compiler-plugins.sam-with-receiver.gradle",
     "kotlin.compiler-plugins.sam-with-receiver.maven",
+    "kotlin.compiler-plugins.lombok.gradle",
+    "kotlin.compiler-plugins.lombok.maven",
     "kotlin.compiler-plugins.scripting",
     "kotlin.jvm-run-configurations",
     "kotlin.maven",

@@ -27,7 +27,8 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.git" />
