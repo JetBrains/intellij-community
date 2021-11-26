@@ -11,6 +11,7 @@ import com.jetbrains.cloudconfig.ETagStorage
 import com.jetbrains.cloudconfig.HeaderStorage
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
+import java.io.IOException
 import java.io.InputStream
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
@@ -58,8 +59,14 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   override fun isUpdateNeeded(): Boolean {
-    val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP).versionId
-    return version != currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
+    try {
+      val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP).versionId
+      return version != currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
+    }
+    catch (e: Throwable) {
+      handleRemoteError(e)
+      return false
+    }
   }
 
   override fun receiveUpdates(): UpdateResult {
@@ -75,9 +82,9 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
         FileUtil.delete(tempFile)
       }
     }
-    catch (e: Exception) {
-      LOG.warn(e)
-      return UpdateResult.Error(e.message ?: "Error during updating")
+    catch (e: Throwable) {
+      val message = handleRemoteError(e)
+      return UpdateResult.Error(message)
     }
   }
 
@@ -101,8 +108,8 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
     // todo handle authentication failure: propose to login
     catch (e: Throwable) {
-      LOG.warn(e)
-      return SettingsSyncPushResult.Error(e.message ?: "Couldn't send file to server")
+      val message = handleRemoteError(e)
+      return SettingsSyncPushResult.Error(message)
     }
     finally {
       try {
@@ -111,6 +118,18 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       catch (e: Throwable) {
         LOG.warn(e)
       }
+    }
+  }
+
+  private fun handleRemoteError(e: Throwable) : String {
+    val defaultMessage = "Error during communication with server"
+    if (e is IOException) {
+      LOG.warn(e)
+      return e.message ?: defaultMessage
+    }
+    else {
+      LOG.error(e)
+      return defaultMessage
     }
   }
 
