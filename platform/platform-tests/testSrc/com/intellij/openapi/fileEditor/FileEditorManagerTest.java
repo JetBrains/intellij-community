@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
+
   public void testTabOrder() throws Exception {
     openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
@@ -137,7 +138,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
               "  </component>\n");
     FileEditor[] selectedEditors = myManager.getSelectedEditors();
     assertEquals(1, selectedEditors.length);
-    assertEquals("mockEditor", selectedEditors[0].getName());
+    assertEquals(MyFileEditorProvider.NAME, selectedEditors[0].getName());
   }
 
   public void testTrackSelectedEditor() {
@@ -148,11 +149,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(2, editors.length);
     assertEquals("Text", myManager.getSelectedEditor(file).getName());
     myManager.setSelectedEditor(file, "mock");
-    assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
+    assertEquals(MyFileEditorProvider.NAME, myManager.getSelectedEditor(file).getName());
 
     VirtualFile file1 = getFile("/src/2.txt");
     myManager.openFile(file1, true);
-    assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
+    assertEquals(MyFileEditorProvider.NAME, myManager.getSelectedEditor(file).getName());
   }
 
   public void testWindowClosingRetainsOtherWindows() {
@@ -353,6 +354,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   static class MyFileEditorProvider implements FileEditorProvider {
+    static final String NAME = "MockEditor";
+
     @NotNull
     @Override
     public String getEditorTypeId() {
@@ -377,7 +380,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
         @NotNull
         @Override
         public String getName() {
-          return "MockEditor";
+          return NAME;
         }
 
         @Override
@@ -507,4 +510,3 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertFalse(FileEditorManager.getInstance(getProject()).isFileOpen(file)); // must close
   }
 }
-
