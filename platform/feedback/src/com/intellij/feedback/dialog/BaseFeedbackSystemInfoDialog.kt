@@ -5,6 +5,7 @@ import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
@@ -55,7 +56,10 @@ fun showFeedbackSystemInfoDialog(project: Project?,
       title = FeedbackBundle.message("dialog.created.project.system.info.title")
     }
 
-    override fun createCenterPanel(): JComponent = infoPanel
+    override fun createCenterPanel(): JComponent = JBScrollPane(infoPanel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                                JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER).apply {
+      border = JBEmptyBorder(0)
+    }
 
     override fun createActions(): Array<Action> = arrayOf(okAction)
   }
