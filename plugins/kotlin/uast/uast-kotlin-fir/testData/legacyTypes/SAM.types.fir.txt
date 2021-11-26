@@ -11,7 +11,7 @@ UFile (package = ) [import java.lang.Thread...]
         UField (name = foo) [@org.jetbrains.annotations.NotNull private static var foo: java.lang.Runnable = { ...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
-                UBlockExpression [{...}] : PsiType:Runnable
+                UBlockExpression [{...}] : PsiType:Void
         UField (name = baz) [@org.jetbrains.annotations.NotNull private static final var baz: java.lang.Runnable = java.lang.Runnable({ ...})]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UQualifiedReferenceExpression [java.lang.Runnable({ ...})] : PsiType:Runnable
@@ -33,7 +33,7 @@ UFile (package = ) [import java.lang.Thread...]
                 UBinaryExpression (operator = =) [foo = { ...}] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = foo) [foo] : PsiType:Runnable
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
-                        UBlockExpression [{...}] : PsiType:Runnable
+                        UBlockExpression [{...}] : PsiType:Void
                 UDeclarationsExpression [var a: java.lang.Runnable = { ...} as java.lang.Runnable]
                     ULocalVariable (name = a) [var a: java.lang.Runnable = { ...} as java.lang.Runnable]
                         UBinaryExpressionWithType [{ ...} as java.lang.Runnable] : PsiType:Runnable
@@ -47,7 +47,7 @@ UFile (package = ) [import java.lang.Thread...]
                         UBlockExpression [{...}] : PsiType:Unit
                 UReturnExpression [return { ...}] : PsiType:Void
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
-                        UBlockExpression [{...}] : PsiType:Runnable
+                        UBlockExpression [{...}] : PsiType:Void
         UMethod (name = getBaz) [public static final fun getBaz() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = runRunnable) [public static final fun runRunnable(@org.jetbrains.annotations.NotNull r: java.lang.Runnable) : error.NonExistentClass {...}]
             UParameter (name = r) [@org.jetbrains.annotations.NotNull var r: java.lang.Runnable]
