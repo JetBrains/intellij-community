@@ -8,11 +8,14 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.getModalityFromDescriptor
+import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.ConvertSealedSubClassToObjectFix
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.GenerateIdentityEqualsFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
@@ -23,12 +26,17 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
 
         fun reportPossibleObject(klass: KtClass) {
             val keyword = klass.getClassOrInterfaceKeyword() ?: return
+            val fixes = if (klass.module?.platform?.isJvm() == true) {
+                arrayOf(ConvertSealedSubClassToObjectFix(), GenerateIdentityEqualsFix())
+            } else {
+                arrayOf(ConvertSealedSubClassToObjectFix())
+            }
+
             holder.registerProblem(
                 keyword,
                 KotlinBundle.message("sealed.sub.class.has.no.state.and.no.overridden.equals"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                ConvertSealedSubClassToObjectFix(),
-                GenerateIdentityEqualsFix()
+                *fixes,
             )
         }
 
