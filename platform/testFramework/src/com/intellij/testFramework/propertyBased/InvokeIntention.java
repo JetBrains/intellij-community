@@ -194,7 +194,7 @@ public class InvokeIntention extends ActionOnFile {
       // Should not require EDT or write-action
       previewText = ApplicationManager.getApplication().executeOnPooledThread(
         () -> ReadAction.compute(
-          () -> IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), intention, getFile(), editor))
+          () -> IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), intention, getFile(), editor))
       ).get();
     }
     catch (Exception e) {

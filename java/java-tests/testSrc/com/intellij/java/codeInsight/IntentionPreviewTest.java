@@ -21,7 +21,7 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
                           "}");
     IntentionAction action = findActionWithText("Split into declaration and assignment");
     assertNotNull(action);
-    String text = IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), action, getFile(), getEditor());
+    String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
     assertEquals("class Test {\n" +
                  "  public void test() {\n" +
                  "    int variable  ;\n" +
@@ -39,7 +39,7 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
                           "  }");
     IntentionAction action = findActionWithText("Add on-demand static import for 'java.lang.Math'");
     assertNotNull(action);
-    String text = IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), action, getFile(), getEditor());
+    String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
     assertEquals("import static java.lang.Math.*;\n" +
                  "\n" +
                  "class Computer {\n" +
@@ -136,7 +136,7 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
   private String getPreviewText(IntentionAction action) {
     // Run in background thread to catch accidental write-actions during preview generation
     try {
-      return ReadAction.nonBlocking(() -> IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), action, getFile(), getEditor()))
+      return ReadAction.nonBlocking(() -> IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor()))
         .submit(AppExecutorUtil.getAppExecutorService()).get();
     }
     catch (InterruptedException | ExecutionException e) {

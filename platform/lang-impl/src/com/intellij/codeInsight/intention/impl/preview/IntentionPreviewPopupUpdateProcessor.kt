@@ -189,6 +189,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     fun getShortcutSet(): ShortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_QUICK_JAVADOC)
 
     @TestOnly
+    @JvmStatic
     fun getPreviewText(project: Project,
                        action: IntentionAction,
                        originalFile: PsiFile,
