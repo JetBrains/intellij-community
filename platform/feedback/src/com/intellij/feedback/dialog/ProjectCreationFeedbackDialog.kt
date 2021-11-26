@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.*
@@ -173,7 +174,7 @@ class ProjectCreationFeedbackDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    return panel {
+    val mainPanel = panel {
       row {
         label(FeedbackBundle.message("dialog.creation.project.title")).applyToComponent {
           font = JBFont.h1()
@@ -299,6 +300,9 @@ class ProjectCreationFeedbackDialog(
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
+    }
+    return JBScrollPane(mainPanel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER).apply {
+      border = JBEmptyBorder(0)
     }
   }
 
