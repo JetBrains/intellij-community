@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.frontendService
+import org.jetbrains.kotlin.idea.util.isEffectivelyActual
+import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -46,13 +48,14 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection() {
             if (typeElement.innerType == null) return
             val questionMark = typeElement.questionMarkNode as? LeafPsiElement ?: return
 
-            if (declaration.isOverridable()) return
+            if (declaration.isOverridable() || declaration.isExpectDeclaration() || declaration.isEffectivelyActual()) return
 
             val (body, targetDeclaration) = when (declaration) {
                 is KtNamedFunction -> {
                     val body = declaration.bodyExpression
                     if (body != null) body to declaration else null
                 }
+
                 is KtProperty -> {
                     val initializer = declaration.initializer
                     val getter = declaration.accessors.singleOrNull { it.isGetter }
@@ -63,6 +66,7 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection() {
                         else -> null
                     }
                 }
+
                 else -> null
             } ?: return
             val context = body.analyze()
