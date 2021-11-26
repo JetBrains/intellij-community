@@ -23,6 +23,5 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
-    <orderEntry type="module" module-name="kotlin.resources-fe10" scope="TEST" />
   </component>
 </module>
