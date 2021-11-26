@@ -228,9 +228,21 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val (bindingContext, filesToCompile) = runReadAction {
             val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
             try {
-                val (_, filesToCompile) = analyzeInlinedFunctions(resolutionFacade, codeFragment, false, analysisResult.bindingContext)
-                val inlineFilesAnalysis = resolutionFacade.analyzeWithAllCompilerChecks(filesToCompile)
-                Pair(inlineFilesAnalysis.bindingContext, filesToCompile)
+                val filesToCompile = if (!CodeFragmentCompiler.useIRFragmentCompiler(debugProcess)) {
+                    analyzeInlinedFunctions(
+                        resolutionFacade,
+                        codeFragment,
+                        analyzeOnlyReifiedInlineFunctions = false,
+                        analysisResult.bindingContext
+                    ).second
+                } else {
+                    gatherProjectFilesDependedOnByFragment(
+                        codeFragment,
+                        analysisResult.bindingContext
+                    ).toList()
+                }
+                val analysis = resolutionFacade.analyzeWithAllCompilerChecks(filesToCompile)
+                Pair(analysis.bindingContext, filesToCompile)
             } catch (e: IllegalArgumentException) {
                 status.error(EvaluationError.ErrorElementOccurred)
                 evaluationException(e.message ?: e.toString())
