@@ -1409,4 +1409,42 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/redundantNullableReturnType/expectTopLevelProperty/");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/redundantNullableReturnType")
+    public static class RedundantNullableReturnType extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("actualMethod")
+        public void testActualMethod() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/actualMethod/");
+        }
+
+        @TestMetadata("actualTopLevelFunction")
+        public void testActualTopLevelFunction() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelFunction/");
+        }
+
+        @TestMetadata("actualTopLevelProperty")
+        public void testActualTopLevelProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelProperty/");
+        }
+
+        @TestMetadata("expectMemberProperty")
+        public void testExpectMemberProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/expectMemberProperty/");
+        }
+
+        @TestMetadata("expectTopLevelFunction")
+        public void testExpectTopLevelFunction() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/expectTopLevelFunction/");
+        }
+
+        @TestMetadata("expectTopLevelProperty")
+        public void testExpectTopLevelProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/expectTopLevelProperty/");
+        }
+    }
 }
