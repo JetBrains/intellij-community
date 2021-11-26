@@ -24,7 +24,6 @@ import com.intellij.util.animation.animation
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nullable
 import java.awt.Component
-import java.util.function.DoubleConsumer
 
 class MaximizeEditorInSplitAction : DumbAwareAction() {
   val myActiveAnimators = SmartList<JBAnimator>()
@@ -56,16 +55,15 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
       return
     }
     val animator = JBAnimator(disposable).also { myActiveAnimators.add(it) }
-    val from = splitter.proportion.toDouble()
-    val to = value.toDouble()
     animator.animate(
-      animation(from, to, DoubleConsumer { v -> splitter.proportion = v.toFloat() })
-        .setDuration(350)
-        .setEasing(bezier(0.215, 0.61, 0.355, 1.0))
-        .runWhenExpired {
+      animation(splitter.proportion, value, splitter::setProportion).apply {
+        duration = 350
+        easing = bezier(0.215, 0.61, 0.355, 1.0)
+        runWhenExpiredOrCancelled {
           Disposer.dispose(animator)
           myActiveAnimators.remove(animator)
         }
+      }
     )
   }
 
@@ -109,12 +107,12 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
         val parent = comp.parent
         if (parent is Splitter && UIUtil.isClientPropertyTrue(parent, EditorsSplitters.SPLITTER_KEY)) {
           if (parent.firstComponent == comp) {
-            if (parent.proportion < parent.maximumProportion - .005) {
+            if (parent.proportion < parent.maximumProportion) {
               set.add(Pair(parent, true))
             }
           }
           else {
-            if (parent.proportion > parent.minimumProportion + .005) {
+            if (parent.proportion > parent.minimumProportion) {
               set.add(Pair(parent, false))
             }
           }

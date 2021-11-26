@@ -37,7 +37,7 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
     get() = intValue("ide.animation.showing.duration", 130)
 
   protected val hidingDelay
-    get() = intValue("ide.animation.hiding.delay", 70)
+    get() = intValue("ide.animation.hiding.delay", 140)
 
   protected val hidingDuration
     get() = intValue("ide.animation.hiding.duration", 150)
