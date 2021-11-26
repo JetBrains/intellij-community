@@ -14,6 +14,6 @@ public final class GitIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, GitIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Signed = load("icons/signed.svg", 1201673178, 3);
+  /** 16x16 */ public static final @NotNull Icon Signed = load("icons/signed.svg", 1578917386, 1);
   /** 16x16 */ public static final @NotNull Icon Verified = load("icons/verified.svg", -1461805388, 2);
 }
