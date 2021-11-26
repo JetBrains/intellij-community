@@ -15,7 +15,7 @@ UFile (package = ) [public final class ReceiverFunKt {...]
                     UNamedExpression (name = name) [name = "RegExp"]
                         ULiteralExpression (value = "RegExp") ["RegExp"] : PsiType:String
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Regex
+            UBlockExpression [{...}] : PsiType:Void
                 UReturnExpression [return toRegex()] : PsiType:Void
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toRegex()] : PsiType:Regex
                         UIdentifier (Identifier (toRegex)) [UIdentifier (Identifier (toRegex))]
