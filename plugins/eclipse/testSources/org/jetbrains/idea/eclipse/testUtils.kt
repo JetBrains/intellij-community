@@ -123,7 +123,7 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
   }
 }
 
-private fun forceSave(project: Project) {
+internal fun forceSave(project: Project) {
   ModuleManager.getInstance(project).modules.forEach {
     it.moduleFile!!.delete(project)
     it.stateStore.clearCaches()
