@@ -40,7 +40,7 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
                 if (prefHeight == null) {
                   val pos = modelToView2D(document.endPosition.offset.coerceAtLeast(1) - 1)
                   if (pos != null) {
-                    prefHeight = pos.maxY.toInt() + 10
+                    prefHeight = pos.maxY.toInt() + 5
                   }
                 }
                 return Dimension(IntentionPreviewPopupUpdateProcessor.MIN_WIDTH, prefHeight ?: Integer.MAX_VALUE)
