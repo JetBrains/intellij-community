@@ -1,18 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.lombok.ide
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.compilerPlugin.lombok.maven
 
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor
 import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor.Companion.CONFIG_FILE_OPTION
-import org.jetbrains.kotlin.plugin.ide.AbstractMavenImportHandler
-import org.jetbrains.kotlin.plugin.ide.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import java.io.File
 
 class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId: String = LombokCommandLineProcessor.PLUGIN_ID
     override val pluginName: String = MAVEN_SUBPLUGIN_NAME
+    override val mavenPluginArtifactName: String = "kotlin-maven-lombok"
     override val pluginJarFileFromIdea: File = KotlinArtifacts.instance.lombokCompilerPlugin
 
     override fun getOptions(
@@ -33,10 +34,6 @@ class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
                 null
             }
         }
-    }
-
-    override fun getOptions(enabledCompilerPlugins: List<String>, compilerPluginOptions: List<String>): List<PluginOption>? {
-        throw NotImplementedError("Shouldn't be called")
     }
 
     companion object {
