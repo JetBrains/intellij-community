@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
-import com.intellij.psi.codeStyle.CodeStyleSettingsService;
 import com.intellij.psi.codeStyle.LanguageCodeStyleProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,7 @@ public class KeptLineFeedsCollector {
   }
 
   public static void setup(@NotNull PsiFile psiFile) {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProviderUsingBaseLanguage(psiFile.getLanguage());
+    LanguageCodeStyleProvider provider = LanguageCodeStyleProvider.findUsingBaseLanguage(psiFile.getLanguage());
     if (provider != null && provider.usesCommonKeepLineBreaks() && CodeStyle.getLanguageSettings(psiFile).KEEP_LINE_BREAKS) {
       THREAD_LOCAL.set(new KeptLineFeedsCollector(psiFile));
     }
