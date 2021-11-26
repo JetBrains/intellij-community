@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -158,7 +159,9 @@ public class DirectoryChooser extends DialogWrapper {
     actionGroup.add(new FilterExistentAction());
     ActionToolbar chooser = ActionManager.getInstance().createActionToolbar("DirectoryChooser", actionGroup, true);
     chooser.setTargetComponent(myView.getComponent());
-    panel.add(chooser.getComponent(), BorderLayout.NORTH);
+    JComponent chooserComponent = chooser.getComponent();
+    chooserComponent.setBorder(JBUI.Borders.empty(6, 0));
+    panel.add(chooserComponent, BorderLayout.NORTH);
 
     final Runnable runnable = () -> enableButtons();
     myView.onSelectionChange(runnable);
