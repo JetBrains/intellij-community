@@ -14,6 +14,5 @@
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
-    <orderEntry type="module" module-name="kotlin.resources-fe10" scope="TEST" />
   </component>
 </module>

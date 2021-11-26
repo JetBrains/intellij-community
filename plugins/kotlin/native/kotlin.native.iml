@@ -22,6 +22,5 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java.ui" />
-    <orderEntry type="module" module-name="kotlin.resources-fe10" scope="TEST" />
   </component>
 </module>
