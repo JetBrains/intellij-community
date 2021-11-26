@@ -519,7 +519,7 @@ final class BuildHelper {
     return new URLClassLoader(urls, new ClassLoader() {
       @Override
       Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if (name.startsWith("com.intellij.")) {
+        if (name.startsWith("com.intellij.") || name.startsWith("org.minperf.") || name.startsWith("net.openshift.")) {
           return null
         }
         return parent.loadClass(name)
