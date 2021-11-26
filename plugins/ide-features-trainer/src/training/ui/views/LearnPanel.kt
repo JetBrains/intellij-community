@@ -196,7 +196,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
           LessonManager.instance.stopLesson()
           val langSupport = LangManager.getInstance().getLangSupport()
           langSupport?.onboardingFeedbackData?.let {
-            showOnboardingLessonFeedbackForm(learnToolWindow.project, it)
+            showOnboardingLessonFeedbackForm(learnToolWindow.project, it, false)
             langSupport.onboardingFeedbackData = null
           }
           CloseProjectWindowHelper().windowClosing(learnToolWindow.project)

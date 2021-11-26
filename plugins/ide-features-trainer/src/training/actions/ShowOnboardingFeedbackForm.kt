@@ -7,7 +7,7 @@ import training.ui.showOnboardingLessonFeedbackForm
 
 private class ShowOnboardingFeedbackForm : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    showOnboardingLessonFeedbackForm(e.project, null)
+    showOnboardingLessonFeedbackForm(e.project, null, false)
   }
 
   override fun update(e: AnActionEvent) {
