@@ -84,7 +84,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
 
     override fun isAvailable(): Boolean = isCreatingNewProject()
 
-    private var wizardContext: WizardContext? = null
+    lateinit var wizardContext: WizardContext
     private var finishButtonClicked: Boolean = false
 
     override fun getModuleType(): ModuleType<*> = NewProjectWizardModuleType()
@@ -112,7 +112,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
             services = buildList {
                 +IdeaServices.createScopeDependent(project)
                 +IdeaServices.PROJECT_INDEPENDENT
-                +IdeaJpsWizardService(project, modulesModel, this@NewProjectWizardModuleBuilder, wizard)
+                +IdeaJpsWizardService(project, modulesModel, this@NewProjectWizardModuleBuilder, wizard, wizardContext)
             },
             phases = GenerationPhase.startingFrom(GenerationPhase.FIRST_STEP)
         ).onFailure { errors ->
@@ -205,7 +205,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     private fun clickFinishButton() {
         if (finishButtonClicked) return
         finishButtonClicked = true
-        wizardContext?.getNextButton()?.doClick()
+        wizardContext.getNextButton()?.doClick()
     }
 
     override fun modifySettingsStep(settingsStep: SettingsStep): ModuleWizardStep? {

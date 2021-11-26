@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -27,7 +28,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         private const val DEFAULT_GROUP_ID = "me.user"
 
         fun generateProject(
-            presetBuilder: NewProjectWizardModuleBuilder? = null,
+            wizardContext: WizardContext,
             project: Project,
             projectPath: String,
             projectName: String,
@@ -37,24 +38,25 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             artifactId: String? = projectName,
             version: String? = "1.0-SNAPSHOT"
         ) {
-            val builder = presetBuilder ?: NewProjectWizardModuleBuilder()
-            builder.apply {
-                wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
+            NewProjectWizardModuleBuilder()
+                .apply {
+                    wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
+                    this.wizardContext = wizardContext
 
-                wizard.jdk = sdk
-                wizard.context.writeSettings {
-                    StructurePlugin.name.reference.setValue(projectName)
-                    StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
+                    wizard.jdk = sdk
+                    wizard.context.writeSettings {
+                        StructurePlugin.name.reference.setValue(projectName)
+                        StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
 
-                    projectGroupId?.let { StructurePlugin.groupId.reference.setValue(it) }
-                    artifactId?.let { StructurePlugin.artifactId.reference.setValue(it) }
-                    version?.let { StructurePlugin.version.reference.setValue(it) }
+                        projectGroupId?.let { StructurePlugin.groupId.reference.setValue(it) }
+                        artifactId?.let { StructurePlugin.artifactId.reference.setValue(it) }
+                        version?.let { StructurePlugin.version.reference.setValue(it) }
 
-                    BuildSystemPlugin.type.reference.setValue(buildSystemType)
+                        BuildSystemPlugin.type.reference.setValue(buildSystemType)
 
-                    applyProjectTemplate(ConsoleApplicationProjectTemplate)
-                }
-            }.commit(project, null, null)
+                        applyProjectTemplate(ConsoleApplicationProjectTemplate)
+                    }
+                }.commit(project, null, null)
         }
 
         private fun suggestGroupId(): String {
