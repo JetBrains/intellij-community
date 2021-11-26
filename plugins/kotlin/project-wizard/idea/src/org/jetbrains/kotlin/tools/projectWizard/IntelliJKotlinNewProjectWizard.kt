@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.columns
@@ -39,7 +40,9 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 }
                 collapsibleGroup(KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.advanced"), topGroupGap = true) {
                     row("${KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime")}:") {
-                        cell(wizardBuilder.wizard.jpsData.libraryOptionsPanel.simplePanel)
+                        val libraryOptionsPanel = wizardBuilder.wizard.jpsData.libraryOptionsPanel
+                        Disposer.register(context.disposable, libraryOptionsPanel)
+                        cell(libraryOptionsPanel.simplePanel)
                     }
                 }
             }
@@ -51,7 +54,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 projectPath = parent.projectPath.systemIndependentPath,
                 projectName = parent.name,
                 sdk = sdk,
-                buildSystemType = BuildSystemType.Jps
+                buildSystemType = BuildSystemType.Jps,
+                wizardContext = parent.context
             )
     }
 }
