@@ -443,6 +443,16 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/Uncomment.kt");
     }
 
+    @TestMetadata("UnsignedIntInFun.kt")
+    public void testUnsignedIntInFun() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/UnsignedIntInFun.kt");
+    }
+
+    @TestMetadata("UnsignedIntProperty.kt")
+    public void testUnsignedIntProperty() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/UnsignedIntProperty.kt");
+    }
+
     @TestMetadata("WholeFileChanged.kt")
     public void testWholeFileChanged() throws Exception {
         runTest("testData/codeInsight/outOfBlock/WholeFileChanged.kt");

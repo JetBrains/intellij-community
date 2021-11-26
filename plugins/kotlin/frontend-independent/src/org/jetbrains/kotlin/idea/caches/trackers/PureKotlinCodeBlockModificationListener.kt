@@ -162,7 +162,11 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                     //                        }
                     //                    }
 
-                    if (blockDeclaration.typeReference != null) {
+                    if (blockDeclaration.typeReference != null &&
+                        // TODO: it's a workaround for KTIJ-20240 :
+                        //  FE does not report CONSTANT_EXPECTED_TYPE_MISMATCH within a property within a class
+                        (parentClassOrObject == null || element !is KtConstantExpression)
+                    ) {
 
                         // adding annotations to accessor is the same as change contract of property
                         if (element !is KtAnnotated || element.annotationEntries.isEmpty()) {
