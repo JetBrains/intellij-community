@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.lang.ClassPath;
+import com.intellij.util.lang.ClasspathCache;
 import com.intellij.util.lang.Resource;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EDT;
@@ -143,7 +144,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot,
                            @NotNull ClassLoader coreLoader) {
-    super(builder, null, isParallelCapable, false);
+    super(builder, null, isParallelCapable);
 
     instanceId = instanceIdProducer.incrementAndGet();
 
@@ -244,13 +245,17 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       return coreLoader.loadClass(name);
     }
 
+    String fileNameWithoutExtension = name.replace('.', '/');
+    String fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION;
+    long packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'));
+
     long startTime = StartUpMeasurer.measuringPluginStartupCosts ? StartUpMeasurer.getCurrentTime() : -1;
     Class<?> c;
     PluginException error = null;
     try {
       String consistencyError = resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, forceLoadFromSubPluginClassloader);
       if (consistencyError == null) {
-        c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
+        c = loadClassInsideSelf(name, fileName, packageNameHash, forceLoadFromSubPluginClassloader);
       }
       else {
         if (!consistencyError.isEmpty()) {
@@ -278,7 +283,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
               }
               continue;
             }
-            c = pluginClassLoader.loadClassInsideSelf(name, false);
+            c = pluginClassLoader.loadClassInsideSelf(name, fileName, packageNameHash, false);
           }
           catch (IOException e) {
             throw new ClassNotFoundException(name, e);
@@ -289,7 +294,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         }
         else if (classloader instanceof UrlClassLoader) {
           try {
-            c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, false);
+            c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, fileName, packageNameHash, false);
           }
           catch (IOException e) {
             throw new ClassNotFoundException(name, e);
@@ -384,7 +389,10 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @Override
-  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
+  public @Nullable Class<?> loadClassInsideSelf(String name,
+                                                String fileName,
+                                                long packageNameHash,
+                                                boolean forceLoadFromSubPluginClassloader) throws IOException {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null && c.getClassLoader() == this) {
@@ -393,7 +401,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
       Writer logStream = PluginClassLoader.logStream;
       try {
-        c = classPath.findClass(name, classDataConsumer);
+        c = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
       }
       catch (LinkageError e) {
         if (logStream != null) {
@@ -470,7 +478,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         }
       }
     }
-    return result;
+    return null;
   }
 
   @Override

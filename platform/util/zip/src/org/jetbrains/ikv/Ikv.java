@@ -2,10 +2,8 @@
 package org.jetbrains.ikv;
 
 import com.intellij.util.lang.ByteBufferCleaner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.minperf.RecSplitEvaluator;
-import org.minperf.RecSplitSettings;
-import org.minperf.UniversalHash;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,9 +26,14 @@ So, besides offset, we have to store size. Values are not sorted by MPH to ensur
 
 Little endian is used because both Intel and M1 CPU uses little endian (saves a little for writing and reading integers).
 */
+@ApiStatus.Internal
 public abstract class Ikv<T> implements AutoCloseable {
-  protected final RecSplitEvaluator<T> evaluator;
+  public final RecSplitEvaluator<T> evaluator;
   protected ByteBuffer mappedBuffer;
+
+  public ByteBuffer getMappedBufferAt(int position) {
+    return mappedBuffer.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN).position(position);
+  }
 
   public static final class SizeAwareIkv<T> extends Ikv<T> {
     private final long[] offsetAndSizePairs;
@@ -43,16 +46,31 @@ public abstract class Ikv<T> implements AutoCloseable {
 
     public ByteBuffer getValue(T key) {
       int index = evaluator.evaluate(key);
-      if (index < 0) {
-        return null;
-      }
+      return index < 0 ? null : getByteBufferAt(index);
+    }
 
+    public int getIndex(T key) {
+      return evaluator.evaluate(key);
+    }
+
+    public int getSizeAt(int index) {
+      return (int)offsetAndSizePairs[index];
+    }
+
+    public ByteBuffer getByteBufferAt(int index) {
       long pair = offsetAndSizePairs[index];
       int start = (int)(pair >> 32);
       ByteBuffer buffer = mappedBuffer.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
       buffer.position(start);
       buffer.limit(start + (int)pair);
       return buffer;
+    }
+
+    public byte @NotNull [] getByteArrayAt(int index) {
+      ByteBuffer buffer = getByteBufferAt(index);
+      byte[] result = new byte[buffer.remaining()];
+      buffer.get(result);
+      return result;
     }
   }
 
@@ -105,11 +123,17 @@ public abstract class Ikv<T> implements AutoCloseable {
         mappedBuffer.rewind();
       }
     }
-
     mappedBuffer.order(ByteOrder.LITTLE_ENDIAN);
+    mappedBuffer.position(fileSize);
+    return loadIkv(mappedBuffer, hash, settings);
+  }
 
-    int position = fileSize - Byte.BYTES - (Integer.BYTES * 2);
-    mappedBuffer.position(fileSize - Byte.BYTES - (Integer.BYTES * 2));
+  public static <T> @NotNull Ikv<T> loadIkv(@NotNull ByteBuffer mappedBuffer,
+                                            @NotNull UniversalHash<T> hash,
+                                            @NotNull RecSplitSettings settings) {
+    int position = mappedBuffer.position() - Byte.BYTES - (Integer.BYTES * 2);
+    mappedBuffer.position(position);
+
     int entryCount = mappedBuffer.getInt();
     int keyDataSize = mappedBuffer.getInt();
     boolean withSize = mappedBuffer.get() == 1;

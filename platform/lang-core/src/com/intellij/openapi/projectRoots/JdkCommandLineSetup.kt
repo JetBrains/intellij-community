@@ -242,7 +242,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     var dynamicMainClass = false
 
     // copies agent .jar files to the beginning of the classpath to load agent classes faster
-    if (vmParameters.isUrlClassloader()) {
+    if (isUrlClassloader(vmParameters)) {
       if (request !is LocalTargetEnvironmentRequest) {
         throw CantRunException(LangCoreBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
       }
@@ -480,7 +480,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
           classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, it))
         }
       }
-      if (vmParameters.isUrlClassloader()) {
+      if (isUrlClassloader(vmParameters)) {
         if (request !is LocalTargetEnvironmentRequest) {
           throw CantRunException(LangCoreBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
         }
@@ -708,8 +708,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       return this.hasParameter("-cp") || this.hasParameter("-classpath") || this.hasParameter("--class-path")
     }
 
-    private fun ParametersList.isUrlClassloader(): Boolean {
-      return UrlClassLoader::class.java.name == this.getPropertyValue("java.system.class.loader")
+    private fun isUrlClassloader(parametersList: ParametersList): Boolean {
+      return (parametersList.getPropertyValue("java.system.class.loader") ?: "").startsWith("com.intellij.util.lang.")
     }
 
     private fun ParametersList.isExplicitModulePath(): Boolean {

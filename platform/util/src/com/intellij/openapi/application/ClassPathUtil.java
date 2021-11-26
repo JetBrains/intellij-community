@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.util.XmlDomReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.xxh3.Xx3UnencodedString;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -44,6 +45,7 @@ public final class ClassPathUtil {
       MinusculeMatcher.class,                             // module 'intellij.platform.util.text.matching'
       com.intellij.openapi.util.SystemInfoRt.class,       // module 'intellij.platform.util.rt'
       com.intellij.util.lang.UrlClassLoader.class,        // module 'intellij.platform.util.classLoader'
+      Xx3UnencodedString.class,                           // intellij.platform.util.rt.java8 (required for classLoader)
       org.intellij.lang.annotations.Flow.class,           // jetbrains-annotations-java5
       org.jdom.Document.class,                            // jDOM
       org.apache.log4j.Appender.class,                    // Log4J

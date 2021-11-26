@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -20,7 +20,6 @@ import java.util.function.BiPredicate
 import java.util.function.Function
 
 private val DEFAULT_CLASSLOADER_CONFIGURATION = UrlClassLoader.build().useCache()
-private val EMPTY_DESCRIPTOR_ARRAY = emptyArray<IdeaPluginDescriptorImpl>()
 
 @ApiStatus.Internal
 class ClassLoaderConfigurator(
@@ -109,8 +108,7 @@ class ClassLoaderConfigurator(
       }
 
       val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
-      val pluginClassPath = ClassPath(files, Collections.emptySet(), DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory,
-                                      mimicJarUrlConnection)
+      val pluginClassPath = ClassPath(files, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection)
       val mainInfo = MainInfo(classPath = pluginClassPath, files = files, libDirectories = libDirectories)
       val existing = mainToClassPath.put(module.pluginId, mainInfo)
       if (existing != null) {

@@ -33,11 +33,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="library" name="jps-build-script-dependencies-bootstrap" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.immutableKeyValueStore" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
     <orderEntry type="module" module-name="intellij.idea.community.build" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
+    <orderEntry type="library" name="jps-build-script-dependencies-bootstrap" level="project" />
   </component>
 </module>

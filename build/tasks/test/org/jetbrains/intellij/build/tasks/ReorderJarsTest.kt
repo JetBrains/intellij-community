@@ -4,8 +4,8 @@ package org.jetbrains.intellij.build.tasks
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.InMemoryFsExtension
-import com.intellij.util.io.Murmur3_32Hash
 import com.intellij.util.io.inputStream
+import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -14,6 +14,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.io.RW_CREATE_NEW
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.zip
+import org.jetbrains.xxh3.Xx3UnencodedString
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
@@ -23,8 +24,6 @@ import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
 import java.util.zip.ZipEntry
 import kotlin.random.Random
-
-// XxHash3.hashUnencodedChars32 cannot be used because ClasspathCache located in the module where only JDK 8 is supported.
 
 private val testDataPath: Path
   get() = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins/reorderJars")
@@ -43,10 +42,10 @@ class ReorderJarsTest {
     val file = fs.root.resolve("f")
     Files.createDirectories(file.parent)
     FileChannel.open(file, RW_CREATE_NEW).use {
-      packageIndexBuilder.writePackageIndex(ZipFileWriter(it, deflater = null))
+      packageIndexBuilder.writeDirsAndPackageIndex(ZipFileWriter(it, deflater = null))
     }
     assertThat(packageIndexBuilder.resourcePackageHashSet)
-      .containsExactlyInAnyOrder(0, Murmur3_32Hash.MURMUR3_32.hashString("tsMeteorStubs", 0, "tsMeteorStubs".length))
+      .containsExactlyInAnyOrder(0, Xx3UnencodedString.hashUnencodedString("tsMeteorStubs"))
   }
 
   @Test
@@ -69,13 +68,16 @@ class ReorderJarsTest {
     doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent)
     ZipFile(Files.newByteChannel(archiveFile)).use { zipFile ->
       assertThat(zipFile.entriesInPhysicalOrder.asSequence().map { it.name }.sorted().joinToString(separator = "\n")).isEqualTo("""
-        __packageIndex__
         anotherDir/
         anotherDir/resource2.txt
         dir2/
         dir2/dir3/
         dir2/dir3/resource.txt
       """.trimIndent())
+    }
+
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
+      assertThat(zipFile.getResource("anotherDir")).isNotNull()
     }
   }
 
@@ -118,7 +120,6 @@ class ReorderJarsTest {
     assertThat(file.name).isEqualTo("zkm.jar")
     ZipFile(file).use { zipFile ->
       val entries: List<ZipEntry> = zipFile.entries.toList()
-      assertThat(entries.last().name).isEqualTo(PACKAGE_INDEX_NAME)
       assertThat(entries.first().name).isEqualTo("META-INF/plugin.xml")
     }
   }

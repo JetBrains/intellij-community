@@ -81,4 +81,8 @@ abstract class BaseLayout {
   final void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
     projectLibrariesToUnpack.putValue(jarName, libraryName)
   }
+
+  void excludeFromModule(String moduleName, String excludedPattern) {
+    moduleExcludes.putValue(moduleName, excludedPattern)
+  }
 }

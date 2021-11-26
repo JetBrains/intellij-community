@@ -3,11 +3,11 @@
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.ImmutableZipEntry
-import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
-import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.copyZipRaw
@@ -18,8 +18,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
-
-internal const val PACKAGE_INDEX_NAME = "__packageIndex__"
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val excludedLibJars = java.util.Set.of("testFramework.core.jar", "testFramework.jar", "testFramework-java.jar")
@@ -87,8 +85,7 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?): Lis
             Files.delete(productJar)
           }
 
-          packageIndexBuilder.writeDirs(zipCreator)
-          packageIndexBuilder.writePackageIndex(zipCreator)
+          packageIndexBuilder.writeDirsAndPackageIndex(zipCreator)
         }
       }
     }
@@ -157,7 +154,7 @@ internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path, ma
   return sourceToNames
 }
 
-data class PackageIndexEntry(val path: Path, val classPackageIndex: IntSet, val resourcePackageIndex: IntSet)
+data class PackageIndexEntry(val path: Path, val classPackageIndex: LongSet, val resourcePackageIndex: LongSet)
 
 fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): PackageIndexEntry {
   val orderedNameToIndex = Object2IntOpenHashMap<String>(orderedNames.size)
@@ -170,16 +167,9 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
 
   val packageIndexBuilder = PackageIndexBuilder()
 
-  ImmutableZipFile.load(jarFile).use { zipFile ->
+  HashMapZipFile.load(jarFile).use { zipFile ->
     // ignore existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
     val entries = zipFile.entries.toMutableList()
-    // package index in the end
-    for (i in (entries.size - 1) downTo 0) {
-      if (entries.get(i).name == PACKAGE_INDEX_NAME) {
-        entries.removeAt(i)
-        break
-      }
-    }
     entries.sortWith(Comparator { o1, o2 ->
       val o2p = o2.name
       if ("META-INF/plugin.xml" == o2p) {
@@ -204,8 +194,7 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
 
     writeNewZip(tempJarFile) { zipCreator ->
       writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
-      packageIndexBuilder.writeDirs(zipCreator)
-      packageIndexBuilder.writePackageIndex(zipCreator)
+      packageIndexBuilder.writeDirsAndPackageIndex(zipCreator)
     }
   }
 
@@ -224,7 +213,7 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
 
 internal fun writeEntries(entries: Iterator<ImmutableZipEntry>,
                           zipCreator: ZipFileWriter,
-                          sourceZipFile: ImmutableZipFile,
+                          sourceZipFile: HashMapZipFile,
                           packageIndexBuilder: PackageIndexBuilder?) {
   for (entry in entries) {
     if (entry.isDirectory) {
@@ -239,7 +228,7 @@ internal fun writeEntries(entries: Iterator<ImmutableZipEntry>,
       zipCreator.uncompressedData(name, data)
     }
     finally {
-      entry.releaseBuffer(data)
+      sourceZipFile.releaseBuffer(data)
     }
   }
 }

@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.sun.net.httpserver.HttpContext
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import org.apache.log4j.ConsoleAppender
@@ -23,6 +26,7 @@ import java.util.concurrent.Semaphore
 import kotlin.io.path.createDirectories
 import kotlin.system.exitProcess
 
+@Suppress("GrazieInspection")
 val skippedPluginModules = hashSetOf(
   "intellij.cwm.plugin", // quiche downloading should be implemented as a maven lib
 )
@@ -99,61 +103,65 @@ class DevIdeaBuildServer {
 
     private fun HttpExchange.getPlatformPrefix() = parseQuery(this.requestURI).get("platformPrefix")?.first() ?: "idea"
 
-    private fun HttpServer.createBuildEndpoint(buildServer: BuildServer) = createContext("/build") { exchange ->
-      val platformPrefix = exchange.getPlatformPrefix()
+    private fun createBuildEndpoint(httpServer: HttpServer, buildServer: BuildServer): HttpContext? {
+      return httpServer.createContext("/build") { exchange ->
+        val platformPrefix = exchange.getPlatformPrefix()
 
-      var statusMessage: String
-      var statusCode = HttpURLConnection.HTTP_OK
-      productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.UNDEFINED
+        var statusMessage: String
+        var statusCode = HttpURLConnection.HTTP_OK
+        productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.UNDEFINED
 
-      try {
-        productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.IN_PROGRESS
-        buildQueueLock.acquire()
+        try {
+          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.IN_PROGRESS
+          buildQueueLock.acquire()
 
-        exchange.responseHeaders.add("Content-Type", "text/plain")
-        val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
-        statusMessage = ideBuilder.pluginBuilder.buildChanged()
-        LOG.info(statusMessage)
-      }
-      catch (e: ConfigurationException) {
-        statusCode = HttpURLConnection.HTTP_BAD_REQUEST
-        productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
-        statusMessage = e.message!!
-      }
-      catch (e: Throwable) {
-        productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
-        exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
-        LOG.error("Cannot handle build request", e)
-        return@createContext
-      }
-      finally {
-        buildQueueLock.release()
-      }
+          exchange.responseHeaders.add("Content-Type", "text/plain")
+          val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
+          statusMessage = ideBuilder.pluginBuilder.buildChanged()
+          LOG.info(statusMessage)
+        }
+        catch (e: ConfigurationException) {
+          statusCode = HttpURLConnection.HTTP_BAD_REQUEST
+          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
+          statusMessage = e.message!!
+        }
+        catch (e: Throwable) {
+          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
+          exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
+          LOG.error("Cannot handle build request", e)
+          return@createContext
+        }
+        finally {
+          buildQueueLock.release()
+        }
 
-      productBuildStatus[platformPrefix] =
-        if (statusCode == HttpURLConnection.HTTP_OK) DevIdeaBuildServerStatus.OK
-        else DevIdeaBuildServerStatus.FAILED
+        productBuildStatus[platformPrefix] =
+          if (statusCode == HttpURLConnection.HTTP_OK) DevIdeaBuildServerStatus.OK
+          else DevIdeaBuildServerStatus.FAILED
 
-      val response = statusMessage.encodeToByteArray()
-      exchange.sendResponseHeaders(statusCode, response.size.toLong())
-      exchange.responseBody.apply {
-        write(response)
-        flush()
-        close()
+        val response = statusMessage.encodeToByteArray()
+        exchange.sendResponseHeaders(statusCode, response.size.toLong())
+        exchange.responseBody.apply {
+          this.write(response)
+          this.flush()
+          this.close()
+        }
       }
     }
 
-    private fun HttpServer.createStatusEndpoint() = createContext("/status") { exchange ->
-      val platformPrefix = exchange.getPlatformPrefix()
-      val buildStatus = productBuildStatus.getOrDefault(platformPrefix, DevIdeaBuildServerStatus.UNDEFINED)
+    private fun createStatusEndpoint(httpServer: HttpServer): HttpContext? {
+      return httpServer.createContext("/status") { exchange ->
+        val platformPrefix = exchange.getPlatformPrefix()
+        val buildStatus = productBuildStatus.getOrDefault(platformPrefix, DevIdeaBuildServerStatus.UNDEFINED)
 
-      exchange.responseHeaders.add("Content-Type", "text/plain")
-      val response = buildStatus.toString().encodeToByteArray()
-      exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
-      exchange.responseBody.apply {
-        write(response)
-        flush()
-        close()
+        exchange.responseHeaders.add("Content-Type", "text/plain")
+        val response = buildStatus.toString().encodeToByteArray()
+        exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
+        exchange.responseBody.apply {
+          this.write(response)
+          this.flush()
+          this.close()
+        }
       }
     }
 
@@ -161,8 +169,8 @@ class DevIdeaBuildServer {
       val httpServer = HttpServer.create()
       httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 2)
 
-      httpServer.createBuildEndpoint(buildServer)
-      httpServer.createStatusEndpoint()
+      createBuildEndpoint(httpServer, buildServer)
+      createStatusEndpoint(httpServer)
 
       // Serve requests in parallel. Though, there is no guarantee, that 2 requests will be for different endpoints
       httpServer.executor = Executors.newFixedThreadPool(2)

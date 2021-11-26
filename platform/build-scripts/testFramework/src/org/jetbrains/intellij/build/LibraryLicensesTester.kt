@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import gnu.trove.THashSet
@@ -21,6 +21,7 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     project.modules.filter { it.name !in nonPublicModules
                              && !it.name.contains("guiTests")
                              && !it.name.startsWith("fleet")
+                             && it.name != "intellij.platform.util.immutableKeyValueStore.benchmark"
                              && !it.name.contains("integrationTests", ignoreCase = true)}.forEach { module ->
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.forEach {
         libraries[it] = module

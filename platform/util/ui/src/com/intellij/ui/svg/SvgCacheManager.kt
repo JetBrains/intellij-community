@@ -7,11 +7,11 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ImageLoader
-import net.openshift.hash.XxHash3
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.mvstore.MVMap
 import org.jetbrains.mvstore.MVStore
 import org.jetbrains.mvstore.type.FixedByteArrayDataType
+import org.jetbrains.xxh3.Xxh3
 import sun.awt.image.SunWritableRaster
 import java.awt.Image
 import java.awt.Point
@@ -129,8 +129,8 @@ class SvgCacheManager(dbFile: Path) {
 private val ZERO_POINT = Point(0, 0)
 
 private fun getCacheKey(themeDigest: ByteArray, imageBytes: ByteArray): ByteArray {
-  val xx3 = XxHash3.INSTANCE
-  val contentDigest = xx3.hashLongs(longArrayOf(xx3.hashBytes(imageBytes), xx3.hashBytes(themeDigest)))
+  val contentDigest = Xxh3.hashLongs(longArrayOf(
+    Xxh3.hash(imageBytes), Xxh3.hash(themeDigest)))
 
   val buffer = ByteBuffer.allocate(IMAGE_KEY_SIZE)
   // add content size to key to reduce chance of hash collision (write as medium int)

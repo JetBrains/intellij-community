@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -9,7 +9,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.net.URISyntaxException;
@@ -203,10 +206,10 @@ public final class PathManager {
    * Looks for a file in all possible bin directories.
    *
    * @return first that exists.
-   * @throws FileNotFoundException if nothing found.
+   * @throws RuntimeException if nothing found.
    * @see #findBinFile(String)
    */
-  public static @NotNull Path findBinFileWithException(@NotNull String fileName) throws FileNotFoundException {
+  public static @NotNull Path findBinFileWithException(@NotNull String fileName) {
     Path file = findBinFile(fileName);
     if (file != null) {
       return file;
@@ -217,7 +220,7 @@ public final class PathManager {
     for (Path directory : getBinDirectories()) {
       message.append('\n').append(directory);
     }
-    throw new FileNotFoundException(message.toString());
+    throw new RuntimeException(message.toString());
   }
 
   public static @NotNull String getLibPath() {
@@ -686,7 +689,7 @@ public final class PathManager {
     if (!Files.exists(artifactsDir)) {
       // running IDE or tests in IDE
       artifactsDir = outClassesDir.resolve("artifacts");
-    } // otherwise running tests via build scripts
+    } // otherwise, running tests via build scripts
     return artifactsDir.resolve(artifactDirNameInBuildLayout).resolve(artifactFileName);
   }
 

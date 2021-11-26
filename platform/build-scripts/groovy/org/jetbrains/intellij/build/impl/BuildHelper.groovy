@@ -66,6 +66,7 @@ final class BuildHelper {
   final MethodHandle buildMacZip
 
   final MethodHandle crossPlatformArchive
+  final MethodHandle consumeDataByPrefix
 
   private final BiFunction<SpanBuilder, Supplier<?>, ForkJoinTask<?>> createTask
   private final BiConsumer<SpanBuilder, Runnable> spanImpl
@@ -124,8 +125,9 @@ final class BuildHelper {
     setAppInfo = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.AsmKt"), "injectAppInfo",
                                    MethodType.methodType(byte[].class, path, string))
 
-    buildKeymapPlugins = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.KeymapPluginKt"), "buildKeymapPlugins",
-                                           MethodType.methodType(ForkJoinTask.class, string, path, path))
+    buildKeymapPlugins =
+      lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.KeymapPluginKt"), "buildKeymapPlugins",
+                        MethodType.methodType(ForkJoinTask.class, string, path, path))
 
     Map<String, ?> expose = (Map<String, ?>)(lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.MainKt"),
                                                                "expose",
@@ -178,10 +180,10 @@ final class BuildHelper {
                                                           list, int.class))
 
     prepareMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.SignKt"),
-                                "prepareMacZip",
-                                MethodType.methodType(aVoid,
-                                                      path, path, byte[].class,
-                                                      path, string))
+                                      "prepareMacZip",
+                                      MethodType.methodType(aVoid,
+                                                            path, path, byte[].class,
+                                                            path, string))
 
     crossPlatformArchive = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ArchiveKt"),
                                              "crossPlatformZip",
@@ -193,6 +195,10 @@ final class BuildHelper {
                                                                    Collection.class,
                                                                    Map.class,
                                                                    path))
+
+    consumeDataByPrefix = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ArchiveKt"),
+                                            "consumeDataByPrefix",
+                                            MethodType.methodType(aVoid, path, string, BiConsumer.class))
   }
 
   @NotNull

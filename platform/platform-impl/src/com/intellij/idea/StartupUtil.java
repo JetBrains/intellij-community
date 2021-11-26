@@ -108,8 +108,6 @@ public final class StartupUtil {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");
     startupStart = StartUpMeasurer.startActivity("app initialization preparation");
 
-    Main.setFlags(args);
-
     CommandLineArgs.parse(args);
 
     LoadingState.setStrictMode();
@@ -218,11 +216,11 @@ public final class StartupUtil {
     activity.end();
 
     // plugins cannot be loaded when config import is needed, because plugins may be added after importing
+    Java11Shim.INSTANCE = new Java11ShimImpl();
     if (!configImportNeeded) {
       ZipFilePool.POOL = new ZipFilePoolImpl();
       PluginManagerCore.scheduleDescriptorLoading();
     }
-    Java11Shim.INSTANCE = new Java11ShimImpl();
 
     forkJoinPool.execute(() -> {
       setupSystemLibraries();
@@ -565,7 +563,7 @@ public final class StartupUtil {
     if (document != null) {
       Agreements.showEndUserAndDataSharingAgreements(document);
     }
-    else if (AppUIUtil.needToShowUsageStatsConsent()){
+    else if (AppUIUtil.needToShowUsageStatsConsent()) {
       Agreements.showDataSharingAgreement();
     }
     activity.end();

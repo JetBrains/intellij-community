@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.lang.HashMapZipFile
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
@@ -104,8 +104,7 @@ private fun updatePackageIndex(sourceFile: Path, targetFile: Path) {
   writeNewZip(targetFile) { zipCreator ->
     val packageIndexBuilder = PackageIndexBuilder()
     copyZipRaw(sourceFile, packageIndexBuilder, zipCreator)
-    packageIndexBuilder.writeDirs(zipCreator)
-    packageIndexBuilder.writePackageIndex(zipCreator)
+    packageIndexBuilder.writeDirsAndPackageIndex(zipCreator)
   }
 }
 
@@ -113,7 +112,7 @@ private fun updatePackageIndex(sourceFile: Path, targetFile: Path) {
 // so we check validity of the produced class files here
 private fun checkClassFilesValidity(jarFile: Path) {
   tracer.spanBuilder("check class files validity").setAttribute("file", jarFile.toString()).startSpan().use {
-    ImmutableZipFile.load(jarFile).use { file ->
+    HashMapZipFile.load(jarFile).use { file ->
       for (entry in file.entries) {
         if (!entry.isDirectory && entry.name.endsWith(".class")) {
           entry.getInputStream(file).use {

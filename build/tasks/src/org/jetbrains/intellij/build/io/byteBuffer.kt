@@ -5,6 +5,7 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.LongBuffer
 
 // not thread-safe, intended only for single thread for one time use
 class ByteBufferAllocator : AutoCloseable {
@@ -47,4 +48,10 @@ internal fun unmapBuffer(buffer: ByteBuffer) {
 
 private fun roundUpInt(x: Int, @Suppress("SameParameterValue") blockSizePowerOf2: Int): Int {
   return x + blockSizePowerOf2 - 1 and -blockSizePowerOf2
+}
+
+internal inline fun useAsLongBuffer(buffer: ByteBuffer, task: (LongBuffer) -> Unit) {
+  val longBuffer = buffer.asLongBuffer()
+  task(longBuffer)
+  buffer.position(buffer.position() + (longBuffer.position() * Long.SIZE_BYTES))
 }

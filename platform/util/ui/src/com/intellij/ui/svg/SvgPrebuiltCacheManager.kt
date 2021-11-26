@@ -6,7 +6,7 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ImageLoader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ikv.Ikv
-import org.minperf.UniversalHash
+import org.jetbrains.ikv.UniversalHash
 import java.awt.Image
 import java.nio.ByteBuffer
 import java.nio.file.Path

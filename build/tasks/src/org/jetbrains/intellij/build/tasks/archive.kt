@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.util.lang.HashMapZipFile
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
@@ -153,6 +154,16 @@ fun crossPlatformZip(macDistDir: Path,
         !(p.startsWith("bin/$executableName") && p.endsWith(".exe")) &&
         !winExcludes.contains(p)
       }, entryCustomizer = entryCustomizer)
+    }
+  }
+}
+
+fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiConsumer<String, ByteArray>) {
+  HashMapZipFile.load(file).use { zip ->
+    for (entry in zip.entries) {
+      if (entry.name.startsWith(prefixWithEndingSlash)) {
+        consumer.accept(entry.name, entry.getData(zip))
+      }
     }
   }
 }

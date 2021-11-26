@@ -40,6 +40,10 @@ internal class ZipFileWriter(channel: WritableByteChannel, private val deflater:
   private val bufferAllocator = ByteBufferAllocator()
   private val deflateBufferAllocator = if (deflater == null) null else ByteBufferAllocator()
 
+  fun setPackageIndex(classPackages: LongArray, resourcePackages: LongArray) {
+    resultStream.setPackageIndex(classPackages, resourcePackages)
+  }
+
   @Suppress("DuplicatedCode")
   fun file(nameString: String, file: Path) {
     var isCompressed = deflater != null && !nameString.endsWith(".png")
@@ -264,7 +268,7 @@ internal class ZipFileWriter(channel: WritableByteChannel, private val deflater:
   }
 
   fun dir(name: String) {
-    resultStream.addDirEntry((if (name.endsWith('/')) name else "$name/").toByteArray())
+    resultStream.addDirEntry(name)
   }
 
   override fun close() {

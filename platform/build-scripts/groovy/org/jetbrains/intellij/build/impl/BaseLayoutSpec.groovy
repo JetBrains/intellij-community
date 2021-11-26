@@ -74,7 +74,7 @@ class BaseLayoutSpec {
    * to exclude 'foo' directory
    */
   void excludeFromModule(String moduleName, String excludedPattern) {
-    layout.moduleExcludes.putValue(moduleName, excludedPattern)
+    layout.excludeFromModule(moduleName, excludedPattern)
   }
 
   /**

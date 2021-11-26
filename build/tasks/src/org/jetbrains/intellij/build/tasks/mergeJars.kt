@@ -3,8 +3,8 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.ImmutableZipEntry
-import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
 import org.jetbrains.intellij.build.io.ZipArchiver
@@ -160,7 +160,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
           }
           else -> {
             val file = (source as ZipSource).file
-            ImmutableZipFile.load(file).use { zipFile ->
+            HashMapZipFile.load(file).use { zipFile ->
               val entries = getFilteredEntries(targetFile, file, zipFile, uniqueNames, includeManifest = sources.size == 1,
                                                forbidNativeFiles)
               writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
@@ -170,15 +170,45 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
 
         source.sizeConsumer?.accept((outChannel.position() - positionBefore).toInt())
       }
-      packageIndexBuilder.writeDirs(zipCreator)
-      packageIndexBuilder.writePackageIndex(zipCreator)
+      packageIndexBuilder.writeDirsAndPackageIndex(zipCreator)
     }
   }
 }
 
+private fun getIgnoredNames(): Set<String> {
+  val set = HashSet<String>()
+  // compilation cache on TC
+  set.add(".hash")
+  set.add("pom.xml")
+  set.add("about.html")
+  set.add("module-info.class")
+  set.add("META-INF/services/javax.xml.parsers.SAXParserFactory")
+  set.add("META-INF/services/javax.xml.stream.XMLEventFactory")
+  set.add("META-INF/services/javax.xml.parsers.DocumentBuilderFactory")
+  set.add("META-INF/services/javax.xml.datatype.DatatypeFactory")
+  set.add("native-image")
+  set.add("native")
+  set.add("licenses")
+  @Suppress("SpellCheckingInspection")
+  set.add(".gitkeep")
+  for (originalName in listOf("NOTICE", "README", "LICENSE", "DEPENDENCIES", "CHANGES", "THIRD_PARTY_LICENSES", "COPYING")) {
+    for (name in listOf(originalName, originalName.lowercase())) {
+      set.add(name)
+      set.add("$name.txt")
+      set.add("$name.md")
+      set.add("META-INF/$name")
+      set.add("META-INF/$name.txt")
+      set.add("META-INF/$name.md")
+    }
+  }
+  return set
+}
+
+private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
+
 private fun getFilteredEntries(targetFile: Path,
                                sourceFile: Path,
-                               zipFile: ImmutableZipFile,
+                               zipFile: HashMapZipFile,
                                uniqueNames: MutableSet<String>,
                                includeManifest: Boolean,
                                forbidNativeFiles: Boolean): Sequence<ImmutableZipEntry> {
@@ -190,39 +220,14 @@ private fun getFilteredEntries(targetFile: Path,
       throw IllegalStateException("Library with native files must be packed separately (sourceFile=$sourceFile, targetFile=$targetFile, fileName=${it.name})")
     }
 
-    @Suppress("SpellCheckingInspection")
+    !ignoredNames.contains(name) &&
     uniqueNames.add(name) &&
     !name.endsWith(".kotlin_metadata") &&
     (includeManifest || name != "META-INF/MANIFEST.MF") &&
-    name != PACKAGE_INDEX_NAME &&
-    name != "license" && !name.startsWith("license/") &&
-    name != "META-INF/services/javax.xml.parsers.SAXParserFactory" &&
-    name != "META-INF/services/javax.xml.stream.XMLEventFactory" &&
-    name != "META-INF/services/javax.xml.parsers.DocumentBuilderFactory" &&
-    name != "META-INF/services/javax.xml.datatype.DatatypeFactory" &&
-    name != "native-image" && !name.startsWith("native-image/") &&
-    name != "native" && !name.startsWith("native/") &&
-    name != "licenses" && !name.startsWith("licenses/") &&
-    name != ".gitkeep" &&
-    name != "META-INF/CHANGES" &&
-    name != "META-INF/DEPENDENCIES" &&
-    name != "META-INF/LICENSE" &&
-    name != "META-INF/LICENSE.txt" &&
-    name != "META-INF/README.txt" &&
-    name != "META-INF/README.md" &&
-    name != "META-INF/NOTICE" &&
-    name != "META-INF/NOTICE.txt" &&
-    name != "LICENSE" &&
-    name != "LICENSE.md" &&
-    name != "module-info.class" &&
-    name != "license.txt" &&
-    name != "LICENSE.txt" &&
-    name != "COPYING.txt" &&
-    name != "about.html" &&
-    name != "pom.xml" &&
-    name != "THIRD_PARTY_LICENSES.txt" &&
-    name != "NOTICE.txt" &&
-    name != "NOTICE.md" &&
+    !name.startsWith("license/") &&
+    !name.startsWith("native-image/") &&
+    !name.startsWith("native/") &&
+    !name.startsWith("licenses/") &&
     (requiresMavenFiles(targetFileName) || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
     !name.startsWith("META-INF/INDEX.LIST") &&
     (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
@@ -258,6 +263,8 @@ private val commonModuleExcludes = java.util.List.of(
   FileSystems.getDefault().getPathMatcher("glob:**/icon-robots.txt"),
   FileSystems.getDefault().getPathMatcher("glob:icon-robots.txt"),
   FileSystems.getDefault().getPathMatcher("glob:.unmodified"),
+  // compilation cache on TC
+  FileSystems.getDefault().getPathMatcher("glob:.hash"),
   FileSystems.getDefault().getPathMatcher("glob:classpath.index"),
 )
 

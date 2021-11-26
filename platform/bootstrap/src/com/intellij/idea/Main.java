@@ -103,7 +103,9 @@ public final class Main {
     Thread.currentThread().setContextClassLoader(newClassLoader);
 
     startupTimings.put("MainRunner search", System.nanoTime());
-    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, true);
+
+    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, "com/intellij/idea/StartupUtil.class",
+                                                            -635775336887217634L, true);
     if (mainClass == null) {
       throw new ClassNotFoundException(MAIN_RUNNER_CLASS_NAME);
     }
@@ -117,7 +119,13 @@ public final class Main {
   @SuppressWarnings("HardCodedStringLiteral")
   private static void installPluginUpdates() {
     try {
-      StartupActionScriptManager.executeActionScript();
+      // referencing StartupActionScriptManager.ACTION_SCRIPT_FILE is ok - string constant will be inlined
+      Path scriptFile = Path.of(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE);
+      if (Files.isRegularFile(scriptFile)) {
+        // load StartupActionScriptManager and all others related class (ObjectInputStream and so on loaded as part of class define)
+        // only if there is action script to execute
+        StartupActionScriptManager.executeActionScript();
+      }
     }
     catch (IOException e) {
       showMessage("Plugin Installation Error",
@@ -140,13 +148,13 @@ public final class Main {
     return isLightEdit;
   }
 
-  public static void setFlags(String @NotNull [] args) {
+  private static void setFlags(String @NotNull [] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || !isCommandLine && isFileAfterOptions(args);
+    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (!isCommandLine && isFileAfterOptions(args));
   }
 
   private static boolean isFileAfterOptions(String @NotNull [] args) {

@@ -182,10 +182,11 @@ final class PlatformModules {
     }
 
     jar(UTIL_JAR, List.of(
-      "intellij.platform.util.rt",
+      "intellij.platform.util.rt.java8",
       "intellij.platform.util.zip",
       "intellij.platform.util.classLoader",
       "intellij.platform.bootstrap",
+      "intellij.platform.util.rt",
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",

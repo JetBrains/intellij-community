@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.util.io.Murmur3_32Hash
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import org.jetbrains.intellij.build.io.ZipFileWriter
+import org.jetbrains.xxh3.Xx3UnencodedString
 
 internal class PackageIndexBuilder {
-  val classPackageHashSet = IntOpenHashSet()
-  val resourcePackageHashSet = IntOpenHashSet()
+  val classPackageHashSet = LongOpenHashSet()
+  val resourcePackageHashSet = LongOpenHashSet()
 
   private val dirsToCreate = HashSet<String>()
 
@@ -18,51 +18,35 @@ internal class PackageIndexBuilder {
   fun _getDirsToCreate(): Set<String> = dirsToCreate
 
   fun addFile(name: String) {
+    val i = name.lastIndexOf('/')
+    val packageNameHash = if (i == -1) 0 else Xx3UnencodedString.hashUnencodedStringRange(name, 0, i)
     if (name.endsWith(".class")) {
-      classPackageHashSet.add(getPackageNameHash(name))
+      classPackageHashSet.add(packageNameHash)
     }
     else {
-      resourcePackageHashSet.add(getPackageNameHash(name))
+      resourcePackageHashSet.add(packageNameHash)
       computeDirsToCreate(name)
     }
   }
 
-  fun writeDirs(zipCreator: ZipFileWriter) {
-    if (dirsToCreate.isEmpty()) {
-      return
-    }
-
-    val list = dirsToCreate.toMutableList()
-    list.sort()
-    for (name in list) {
-      // name in our ImmutableZipEntry doesn't have ending slash
-      zipCreator.dir(name)
-    }
-  }
-
-  fun writePackageIndex(zipCreator: ZipFileWriter) {
+  fun writeDirsAndPackageIndex(zipCreator: ZipFileWriter) {
     assert(!wasWritten)
     wasWritten = true
+
+    // name in our ImmutableZipEntry doesn't have ending slash
+    dirsToCreate.sorted().forEach(zipCreator::dir)
 
     if (!resourcePackageHashSet.isEmpty()) {
       // add empty package if top-level directory will be requested
       resourcePackageHashSet.add(0)
     }
 
-    zipCreator.uncompressedData(PACKAGE_INDEX_NAME,
-                                (2 * Int.SIZE_BYTES) + ((classPackageHashSet.size + resourcePackageHashSet.size) * Int.SIZE_BYTES)) {
-      val classPackages = classPackageHashSet.toIntArray()
-      val resourcePackages = resourcePackageHashSet.toIntArray()
-      // same content for same data
-      classPackages.sort()
-      resourcePackages.sort()
-      it.putInt(classPackages.size)
-      it.putInt(resourcePackages.size)
-      val intBuffer = it.asIntBuffer()
-      intBuffer.put(classPackages)
-      intBuffer.put(resourcePackages)
-      it.position(it.position() + (intBuffer.position() * Int.SIZE_BYTES))
-    }
+    val classPackages = classPackageHashSet.toLongArray()
+    val resourcePackages = resourcePackageHashSet.toLongArray()
+    // same content for same data
+    classPackages.sort()
+    resourcePackages.sort()
+    zipCreator.setPackageIndex(classPackages, resourcePackages)
   }
 
   // leave only directories where some non-class files are located (as it can be requested in runtime, e.g. stubs, fileTemplates)
@@ -78,7 +62,7 @@ internal class PackageIndexBuilder {
 
     var dirName = name.substring(0, slashIndex)
     while (dirsToCreate.add(dirName)) {
-      resourcePackageHashSet.add(Murmur3_32Hash.MURMUR3_32.hashString(dirName, 0, dirName.length))
+      resourcePackageHashSet.add(Xx3UnencodedString.hashUnencodedString(dirName))
 
       slashIndex = dirName.lastIndexOf('/')
       if (slashIndex == -1) {
@@ -88,12 +72,4 @@ internal class PackageIndexBuilder {
       dirName = name.substring(0, slashIndex)
     }
   }
-}
-
-private fun getPackageNameHash(name: String): Int {
-  val i = name.lastIndexOf('/')
-  if (i == -1) {
-    return 0
-  }
-  return Murmur3_32Hash.MURMUR3_32.hashString(name, 0, i)
 }

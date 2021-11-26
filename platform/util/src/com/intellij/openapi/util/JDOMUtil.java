@@ -328,7 +328,7 @@ public final class JDOMUtil {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(data);
       try {
-        return SafeStAXStreamBuilder.build(xmlStreamReader, true, true, null == null ? SafeStAXStreamBuilder.FACTORY : null);
+        return SafeStAXStreamBuilder.build(xmlStreamReader, true, true, SafeStAXStreamBuilder.FACTORY);
       }
       finally {
         xmlStreamReader.close();

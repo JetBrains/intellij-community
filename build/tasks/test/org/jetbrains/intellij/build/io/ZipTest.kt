@@ -4,7 +4,9 @@ package org.jetbrains.intellij.build.io
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
+import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.lang.ZipFile
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
@@ -15,6 +17,8 @@ import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
@@ -27,31 +31,65 @@ class ZipTest {
   // not used in every test because we want to check the real FS behaviour
   val fs = InMemoryFsExtension()
 
+  private val secret = byteArrayOf(0xb8.toByte(), 0xfe.toByte(), 0x6c.toByte(), 0x39.toByte(), 0x23.toByte(), 0xa4.toByte(), 0x4b.toByte(),
+                                   0xbe.toByte(), 0x7c.toByte(), 0x01.toByte(), 0x81.toByte(), 0x2c.toByte(), 0xf7.toByte(), 0x21.toByte(),
+                                   0xad.toByte(), 0x1c.toByte(), 0xde.toByte(), 0xd4.toByte(), 0x6d.toByte(), 0xe9.toByte(), 0x83.toByte(),
+                                   0x90.toByte(), 0x97.toByte(), 0xdb.toByte(), 0x72.toByte(), 0x40.toByte(), 0xa4.toByte(), 0xa4.toByte(),
+                                   0xb7.toByte(), 0xb3.toByte(), 0x67.toByte(), 0x1f.toByte(), 0xcb.toByte(), 0x79.toByte(), 0xe6.toByte(),
+                                   0x4e.toByte(), 0xcc.toByte(), 0xc0.toByte(), 0xe5.toByte(), 0x78.toByte(), 0x82.toByte(), 0x5a.toByte(),
+                                   0xd0.toByte(), 0x7d.toByte(), 0xcc.toByte(), 0xff.toByte(), 0x72.toByte(), 0x21.toByte(), 0xb8.toByte(),
+                                   0x08.toByte(), 0x46.toByte(), 0x74.toByte(), 0xf7.toByte(), 0x43.toByte(), 0x24.toByte(), 0x8e.toByte(),
+                                   0xe0.toByte(), 0x35.toByte(), 0x90.toByte(), 0xe6.toByte(), 0x81.toByte(), 0x3a.toByte(), 0x26.toByte(),
+                                   0x4c.toByte(), 0x3c.toByte(), 0x28.toByte(), 0x52.toByte(), 0xbb.toByte(), 0x91.toByte(), 0xc3.toByte(),
+                                   0x00.toByte(), 0xcb.toByte(), 0x88.toByte(), 0xd0.toByte(), 0x65.toByte(), 0x8b.toByte(), 0x1b.toByte(),
+                                   0x53.toByte(), 0x2e.toByte(), 0xa3.toByte(), 0x71.toByte(), 0x64.toByte(), 0x48.toByte(), 0x97.toByte(),
+                                   0xa2.toByte(), 0x0d.toByte(), 0xf9.toByte(), 0x4e.toByte(), 0x38.toByte(), 0x19.toByte(), 0xef.toByte(),
+                                   0x46.toByte(), 0xa9.toByte(), 0xde.toByte(), 0xac.toByte(), 0xd8.toByte(), 0xa8.toByte(), 0xfa.toByte(),
+                                   0x76.toByte(), 0x3f.toByte(), 0xe3.toByte(), 0x9c.toByte(), 0x34.toByte(), 0x3f.toByte(), 0xf9.toByte(),
+                                   0xdc.toByte(), 0xbb.toByte(), 0xc7.toByte(), 0xc7.toByte(), 0x0b.toByte(), 0x4f.toByte(), 0x1d.toByte(),
+                                   0x8a.toByte(), 0x51.toByte(), 0xe0.toByte(), 0x4b.toByte(), 0xcd.toByte(), 0xb4.toByte(), 0x59.toByte(),
+                                   0x31.toByte(), 0xc8.toByte(), 0x9f.toByte(), 0x7e.toByte(), 0xc9.toByte(), 0xd9.toByte(), 0x78.toByte(),
+                                   0x73.toByte(), 0x64.toByte(), 0xea.toByte(), 0xc5.toByte(), 0xac.toByte(), 0x83.toByte(), 0x34.toByte(),
+                                   0xd3.toByte(), 0xeb.toByte(), 0xc3.toByte(), 0xc5.toByte(), 0x81.toByte(), 0xa0.toByte(), 0xff.toByte(),
+                                   0xfa.toByte(), 0x13.toByte(), 0x63.toByte(), 0xeb.toByte(), 0x17.toByte(), 0x0d.toByte(), 0xdd.toByte(),
+                                   0x51.toByte(), 0xb7.toByte(), 0xf0.toByte(), 0xda.toByte(), 0x49.toByte(), 0xd3.toByte(), 0x16.toByte(),
+                                   0x55.toByte(), 0x26.toByte(), 0x29.toByte(), 0xd4.toByte(), 0x68.toByte(), 0x9e.toByte(), 0x2b.toByte(),
+                                   0x16.toByte(), 0xbe.toByte(), 0x58.toByte(), 0x7d.toByte(), 0x47.toByte(), 0xa1.toByte(), 0xfc.toByte(),
+                                   0x8f.toByte(), 0xf8.toByte(), 0xb8.toByte(), 0xd1.toByte(), 0x7a.toByte(), 0xd0.toByte(), 0x31.toByte(),
+                                   0xce.toByte(), 0x45.toByte(), 0xcb.toByte(), 0x3a.toByte(), 0x8f.toByte(), 0x95.toByte(), 0x16.toByte(),
+                                   0x04.toByte(), 0x28.toByte(), 0xaf.toByte(), 0xd7.toByte(), 0xfb.toByte(), 0xca.toByte(), 0xbb.toByte(),
+                                   0x4b.toByte(), 0x40.toByte(), 0x7e.toByte())
+
   @Test
   fun `interrupt thread`(@TempDir tempDir: Path) {
+    val buffer = ByteBuffer.wrap(secret).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer()
+    val a = IntArray(buffer.limit())
+    buffer.get(12)
+
     val (list, archiveFile) = createLargeArchive(128, tempDir)
-    val zipFile = ImmutableZipFile.load(archiveFile)
-    val tasks = mutableListOf<ForkJoinTask<*>>()
-    // force init of AssertJ to avoid ClosedByInterruptException on reading FileLoader index
-    ConfigurationProvider.CONFIGURATION_PROVIDER
-    for (i in 0..100) {
-      tasks.add(ForkJoinTask.adapt(Runnable {
-        val ioThread = runInThread {
-          while (!Thread.currentThread().isInterrupted()) {
-            for (name in list) {
-              assertThat(zipFile.getEntry(name)).isNotNull()
+    checkZip(archiveFile) { zipFile ->
+      val tasks = mutableListOf<ForkJoinTask<*>>()
+      // force init of AssertJ to avoid ClosedByInterruptException on reading FileLoader index
+      ConfigurationProvider.CONFIGURATION_PROVIDER
+      for (i in 0..100) {
+        tasks.add(ForkJoinTask.adapt(Runnable {
+          val ioThread = runInThread {
+            while (!Thread.currentThread().isInterrupted()) {
+              for (name in list) {
+                assertThat(zipFile.getResource(name)).isNotNull()
+              }
             }
           }
-        }
 
-        // once in a while, the IO thread is stopped
-        Thread.sleep(50)
-        ioThread.interrupt()
-        Thread.sleep(10)
-        ioThread.join()
-      }))
+          // once in a while, the IO thread is stopped
+          Thread.sleep(50)
+          ioThread.interrupt()
+          Thread.sleep(10)
+          ioThread.join()
+        }))
+      }
+      ForkJoinTask.invokeAll(tasks)
     }
-    ForkJoinTask.invokeAll(tasks)
   }
 
   @Test
@@ -59,13 +97,10 @@ class ZipTest {
     Assumptions.assumeTrue(SystemInfoRt.isUnix)
 
     val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2 + 20, fs.root)
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      zipFile.getEntry("qweqw")
-
+    checkZip(archiveFile) { zipFile ->
       for (name in list) {
-        assertThat(zipFile.getEntry(name)).isNotNull()
+        assertThat(zipFile.getResource(name)).isNotNull()
       }
-
     }
   }
 
@@ -102,9 +137,9 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to "test"), compress = false)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
+    checkZip(archiveFile) { zipFile ->
       for (name in list) {
-        assertThat(zipFile.getEntry("test/$name")).isNotNull()
+        assertThat(zipFile.getResource("test/$name")).isNotNull()
       }
     }
   }
@@ -137,14 +172,32 @@ class ZipTest {
       fs.getPathMatcher("glob:**/icon-robots.txt"),
     ))))
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in list) {
-        assertThat(zipFile.getEntry("test/$name")).isNull()
+    checkZip(archiveFile) { zipFile ->
+      if (zipFile is ImmutableZipFile) {
+        assertThat(zipFile.getOrComputeNames()).containsExactly(
+          "entry-item663137163-10",
+          "entry-item972016666-0",
+          "entry-item1791766502-3",
+          "entry-item1705343313-9",
+          "entry-item-942605861-5",
+          "entry-item1578011503-7",
+          "entry-item949746295-2",
+          "entry-item-245744780-1",
+          "do-not-ignore-me",
+          "icon-robots.txt",
+          "entry-item-2145949183-8",
+          "entry-item-1326272896-6",
+          "entry-item828400960-4"
+        )
       }
-      assertThat(zipFile.getEntry("do-not-ignore-me")).isNotNull()
-      assertThat(zipFile.getEntry("test-relative-ignore")).isNull()
-      assertThat(zipFile.getEntry("some/nested/dir/icon-robots.txt")).isNull()
-      assertThat(zipFile.getEntry("unknown")).isNull()
+
+      for (name in list) {
+        assertThat(zipFile.getResource("test/$name")).isNull()
+      }
+      assertThat(zipFile.getResource("do-not-ignore-me")).isNotNull()
+      assertThat(zipFile.getResource("test-relative-ignore")).isNull()
+      assertThat(zipFile.getResource("some/nested/dir/icon-robots.txt")).isNull()
+      assertThat(zipFile.getResource("unknown")).isNull()
     }
   }
 
@@ -158,9 +211,9 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = true)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
+    HashMapZipFile.load(archiveFile).use { zipFile ->
       for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("samples/nested_dir/__init__.py")
+        val entry = zipFile.getRawEntry("samples/nested_dir/__init__.py")
         assertThat(entry).isNotNull()
         assertThat(entry!!.isCompressed()).isFalse()
         assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
@@ -197,12 +250,10 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = true)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("file")
-        assertThat(entry).isNotNull()
-        assertThat(entry!!.isCompressed()).isTrue()
-      }
+    HashMapZipFile.load(archiveFile).use { zipFile ->
+      val entry = zipFile.getRawEntry("file")
+      assertThat(entry).isNotNull()
+      assertThat(entry!!.isCompressed()).isTrue()
     }
   }
 
@@ -218,11 +269,9 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = false)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("largeFile1")
-        assertThat(entry).isNotNull()
-      }
+    checkZip(archiveFile) { zipFile ->
+      val entry = zipFile.getResource("largeFile1")
+      assertThat(entry).isNotNull()
     }
   }
 
@@ -240,11 +289,9 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = true)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("largeFile1")
-        assertThat(entry).isNotNull()
-      }
+    checkZip(archiveFile) { zipFile ->
+      val entry = zipFile.getResource("largeFile1")
+      assertThat(entry).isNotNull()
     }
   }
 
@@ -262,11 +309,19 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = true)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("largeFile1")
-        assertThat(entry).isNotNull()
-      }
+    checkZip(archiveFile) { zipFile ->
+      val entry = zipFile.getResource("largeFile1")
+      assertThat(entry).isNotNull()
+    }
+  }
+
+  // check both IKV- and non-IKV varians of immutable zip file
+  private fun checkZip(file: Path, checker: (ZipFile) -> Unit) {
+    HashMapZipFile.load(file).use { zipFile ->
+      checker(zipFile)
+    }
+    ImmutableZipFile.load(file).use { zipFile ->
+      checker(zipFile)
     }
   }
 }

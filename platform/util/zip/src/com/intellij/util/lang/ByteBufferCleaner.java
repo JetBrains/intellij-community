@@ -13,9 +13,6 @@ import java.nio.ByteBuffer;
 public final class ByteBufferCleaner {
   private static volatile MethodHandle cleaner;
 
-  /**
-   * This method repeats logic from {@link com.intellij.util.io.ByteBufferUtil#cleanBuffer} which isn't accessible from this module
-   */
   public static void unmapBuffer(@NotNull ByteBuffer buffer) throws Exception {
     if (!buffer.isDirect()) {
       return;
