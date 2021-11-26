@@ -146,8 +146,8 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
     <module name="kotlin.git"/>
     <module name="kotlin.grazie"/>
     <module name="kotlin.ml-completion"/>
-    <module name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle"/>
-    <module name="kotlin.compiler-plugins.annotation-based-compiler-support.maven"/>
+    <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
+    <module name="kotlin.compiler-plugins.compiler-plugin-support.maven"/>
     <module name="kotlin.compiler-plugins.allopen.gradle"/>
     <module name="kotlin.compiler-plugins.allopen.maven"/>
     <module name="kotlin.compiler-plugins.noarg.gradle"/>
