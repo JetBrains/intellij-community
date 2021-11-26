@@ -267,7 +267,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         if (src instanceof String) {
           Icon icon = getIcon((String)src);
           if (icon != null) {
-            return new MyIconView(elem, icon);
+            return new IconView(elem, icon);
           }
         }
       }
@@ -406,10 +406,10 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       }
     }
 
-    protected static final class MyIconView extends View {
+    protected static final class IconView extends View {
       private final Icon myViewIcon;
 
-      public MyIconView(Element elem, Icon viewIcon) {
+      public IconView(Element elem, Icon viewIcon) {
         super(elem);
         myViewIcon = viewIcon;
       }

@@ -71,7 +71,7 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
             if (src != null && src.startsWith(prefix)) {
               val icon = htmlInfo.icon(src.substring(prefix.length))
               if (icon != null) {
-                return MyIconView(elem, icon)
+                return IconView(elem, icon)
               }
             }
           }
