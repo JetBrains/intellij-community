@@ -30,7 +30,11 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil
+import training.statistic.FeedbackEntryPlace
+import training.statistic.FeedbackLikenessAnswer
+import training.statistic.StatisticBase
 import training.util.OnboardingFeedbackData
+import training.util.findLanguageSupport
 import training.util.iftNotificationGroup
 import java.awt.Color
 import java.awt.Dimension
@@ -44,12 +48,13 @@ private const val SUB_OFFSET = 20
 
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData?) {
+  StatisticBase.logOnboardingFeedbackNotification(getFeedbackEntryPlace(project))
   val notification = iftNotificationGroup.createNotification("Share feedback about creating the onboarding tour",
                                                              "This will help us improve learning experience in ${LessonUtil.productName}",
                                                              NotificationType.INFORMATION)
   notification.addAction(object : NotificationAction("Leave feedback") {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      val feedbackHasBeenSent = showOnboardingLessonFeedbackForm(project, onboardingFeedbackData)
+      val feedbackHasBeenSent = showOnboardingLessonFeedbackForm(project, onboardingFeedbackData, true)
       notification.expire()
       if (feedbackHasBeenSent) {
         invokeLater {
@@ -62,7 +67,9 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
   notification.notify(project)
 }
 
-fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: OnboardingFeedbackData?): Boolean {
+fun showOnboardingLessonFeedbackForm(project: Project?,
+                                     onboardingFeedbackData: OnboardingFeedbackData?,
+                                     openedViaNotification: Boolean): Boolean {
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
   fun feedbackTextArea(fieldName: String, optionalText: String, width: Int, height: Int): JComponent {
@@ -103,14 +110,22 @@ fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: 
   technicalIssuesPanel.isVisible = false
   technicalIssuesPanel.border = JBUI.Borders.emptyLeft(SUB_OFFSET)
 
+  val experiencedUserOption = feedbackOption("experienced_user", "I've used JetBrains IDEs (PyCharm, IDEA, WebStorm, etc)")
   val usefulPanel = FormBuilder.createFormBuilder()
-    .addComponent(feedbackOption("experienced_user","I've used JetBrains IDEs (PyCharm, IDEA, WebStorm, etc)"))
+    .addComponent(experiencedUserOption)
     .addComponent(feedbackOption("too_obvious","Shown information is too obvious"))
     .panel
   usefulPanel.isVisible = false
   usefulPanel.border = JBUI.Borders.emptyLeft(SUB_OFFSET)
 
-  val votePanel = createLikenessPanel(saver)
+  val (votePanel, likenessResult) = createLikenessPanel()
+  saver.add {
+    "like_vote" to when(likenessResult()) {
+      FeedbackLikenessAnswer.LIKE -> "like"
+      FeedbackLikenessAnswer.DISLIKE -> "dislike"
+      FeedbackLikenessAnswer.NO_ANSWER -> ""
+    }
+  }
 
   val systemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
 
@@ -184,6 +199,13 @@ fun showOnboardingLessonFeedbackForm(project: Project?, onboardingFeedbackData: 
                             onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData))
     }
   }
+  StatisticBase.logOnboardingFeedbackDialogResult(
+    place = getFeedbackEntryPlace(project),
+    hasBeenSent = maySendFeedback,
+    openedViaNotification = openedViaNotification,
+    likenessAnswer = likenessResult(),
+    experiencedUser = experiencedUserOption.isChosen
+  )
   return maySendFeedback
 }
 
@@ -217,7 +239,7 @@ private fun createOnboardingAgreementComponent(project: Project?,
     }
   }
 
-private fun createLikenessPanel(saver: MutableList<JsonObjectBuilder.() -> Unit>): NonOpaquePanel {
+private fun createLikenessPanel(): Pair<NonOpaquePanel, () -> FeedbackLikenessAnswer> {
   val votePanel = NonOpaquePanel()
   val likeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Like)
   val dislikeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Dislike)
@@ -242,14 +264,14 @@ private fun createLikenessPanel(saver: MutableList<JsonObjectBuilder.() -> Unit>
     }
   }
 
-  saver.add {
-    "like_vote" to when {
-      likeAnswer.isChosen -> "like"
-      dislikeAnswer.isChosen -> "dislike"
-      else -> ""
+  val result = {
+    when {
+      likeAnswer.isChosen -> FeedbackLikenessAnswer.LIKE
+      dislikeAnswer.isChosen -> FeedbackLikenessAnswer.DISLIKE
+      else -> FeedbackLikenessAnswer.NO_ANSWER
     }
   }
-  return votePanel
+  return votePanel to result
 }
 
 
@@ -304,4 +326,10 @@ private class FeedbackOption(@NlsContexts.Label text: String?, icon: Icon?) : JB
     foreground = foregroundColor
     super.paint(g)
   }
+}
+
+private fun getFeedbackEntryPlace(project: Project?) = when {
+  project == null -> FeedbackEntryPlace.WELCOME_SCREEN
+  findLanguageSupport(project) != null -> FeedbackEntryPlace.LEARNING_PROJECT
+  else -> FeedbackEntryPlace.ANOTHER_PROJECT
 }
