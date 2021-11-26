@@ -7,6 +7,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a minimal entity participating in navigation actions.
@@ -34,13 +35,26 @@ public interface NavigationTarget {
 
   /**
    * This method is called if the platform decides to display the target in the UI (e.g., popup).
-   * If the target is not displayed in the UI, then only {@link #getNavigatable()} is called.
+   * If the target is not displayed in the UI, then only {@link #navigationRequest()} is called.
    * <p/>
    * This method is called in read action.
    *
    * @return presentation to render this target in navigation popup
    */
   @NotNull TargetPresentation getTargetPresentation();
+
+  /**
+   * This method is called once before the actual navigation.
+   * It is safe to unstub PSI in the implementation of this method.
+   *
+   * @return a request instance to use when this target is selected,
+   * or {@code null} if navigation cannot be performed for any reason
+   */
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  default @Nullable NavigationRequest navigationRequest() {
+    return getNavigatable().navigationRequest();
+  }
 
   /**
    * Two different symbols may have the same navigation target.
