@@ -48,19 +48,6 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
   }
 
   @Test
-  public void testHighlightingJComponent() {
-    long mean = doHighlightingTest("/codeInsight/bigFilesPerformance/JComponent.java", 9);
-    Assertions.assertTrue(mean < 10_000);
-  }
-
-  @Test
-  public void testHighlightingWithInspectionsJComponent() {
-    MadTestingUtil.enableAllInspections(getFixture().getProject());
-    long mean = doHighlightingTest("/codeInsight/bigFilesPerformance/JComponent.java", 9);
-    Assertions.assertTrue(mean < 20_000);
-  }
-
-  @Test
   public void testTypingThinletBig() {
     long mean = doTypingTest("/psi/resolve/ThinletBig.java", 50,false);
     Assertions.assertTrue(mean < 50);
@@ -71,19 +58,6 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
     MadTestingUtil.enableAllInspections(getFixture().getProject());
     long mean = doTypingTest("/psi/resolve/ThinletBig.java", 50,true);
     Assertions.assertTrue(mean < 100);
-  }
-
-  @Test
-  public void testTypingJComponent(){
-    long mean = doTypingTest("/codeInsight/bigFilesPerformance/JComponent.java", 50, false);
-    Assertions.assertTrue(mean < 25);
-  }
-
-  @Test
-  public void testTypingWithInspectionsJComponent(){
-    MadTestingUtil.enableAllInspections(getFixture().getProject());
-    long mean = doTypingTest("/codeInsight/bigFilesPerformance/JComponent.java", 50, true);
-    Assertions.assertTrue(mean < 50);
   }
 
   private void doTest(String filename, int samples, Consumer<DaemonListener> processSample) {
