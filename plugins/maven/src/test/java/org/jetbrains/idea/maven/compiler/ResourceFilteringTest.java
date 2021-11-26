@@ -61,7 +61,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                                                    "time=---");
   }
 
-  @Test 
+  @Test
   public void testResolveSettingProperty() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${settings.localRepository}");
 
@@ -82,7 +82,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assert !loadResult(myProjectPom, "target/classes/file.properties").contains("settings.localRepository");
   }
 
-  @Test 
+  @Test
   public void testCustomDelimiter() throws Exception {
     createProjectSubFile("resources/file.properties", "value1=${project.version}\n" +
                                                       "value2=@project.version@\n" +
@@ -124,7 +124,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                                                    "value4=1");
   }
 
-  @Test 
+  @Test
   public void testPomArtifactId() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${pom.artifactId}");
 
@@ -145,7 +145,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=project");
   }
 
-  @Test 
+  @Test
   public void testPomVersionInModules() throws Exception {
     createProjectSubFile("m1/resources/file.properties", "value=${pom.version}");
 
@@ -178,7 +178,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("m1/target/classes/file.properties", "value=2");
   }
 
-  @Test 
+  @Test
   public void testDoNotFilterSomeFileByDefault() throws Exception {
     createProjectSubFile("resources/file.bmp", "value=${project.version}");
 
@@ -199,7 +199,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.bmp", "value=${project.version}");
   }
 
-  @Test 
+  @Test
   public void testCustomNonFilteredExtensions() throws Exception {
     createProjectSubFile("resources/file.bmp", "value=${project.version}");
     createProjectSubFile("resources/file.xxx", "value=${project.version}");
@@ -233,7 +233,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.xxx", "value=${project.version}");
   }
 
-  @Test 
+  @Test
   public void testFilteringTestResources() throws Exception {
     createProjectSubFile("resources/file.properties", "value=@project.version@");
 
@@ -254,7 +254,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/test-classes/file.properties", "value=1");
   }
 
-  @Test 
+  @Test
   public void testExcludesAndIncludes() throws Exception {
     createProjectSubFile("src/main/resources/file1.properties", "value=${project.artifactId}");
     createProjectSubFile("src/main/resources/file2.properties", "value=${project.artifactId}");
@@ -295,7 +295,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file2.properties", "value=project");
   }
 
-  @Test 
+  @Test
   public void testEscapingWindowsChars() throws Exception {
     createProjectSubFile("resources/file.txt", "value=${foo}\n" +
                                                "value2=@foo@\n" +
@@ -325,7 +325,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                                             "value3=a\\b\\c");
   }
 
-  @Test 
+  @Test
   public void testDontEscapingWindowsChars() throws Exception {
     createProjectSubFile("resources/file.txt", "value=${foo}");
 
@@ -359,7 +359,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.txt", "value=c:\\projects\\foo/bar");
   }
 
-  @Test 
+  @Test
   public void testFilteringPropertiesWithEmptyValues() throws Exception {
     createProjectSubFile("resources/file.properties", "value1=${foo}\nvalue2=${bar}");
 
@@ -384,7 +384,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value1=\nvalue2=${bar}");
   }
 
-  @Test 
+  @Test
   public void testFilterWithSeveralResourceFolders() throws Exception {
     createProjectSubFile("resources1/file1.properties", "value=${project.version}");
     createProjectSubFile("resources2/file2.properties", "value=${project.version}");
@@ -411,7 +411,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file2.properties", "value=1");
   }
 
-  @Test 
+  @Test
   public void testFilterWithSeveralModules() throws Exception {
     createProjectSubFile("module1/resources/file1.properties", "value=${project.version}");
     createProjectSubFile("module2/resources/file2.properties", "value=${project.version}");
@@ -451,7 +451,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult(m2, "target/classes/file2.properties", "value=2");
   }
 
-  @Test 
+  @Test
   public void testDoNotFilterIfNotRequested() throws Exception {
     createProjectSubFile("resources1/file1.properties", "value=${project.version}");
     createProjectSubFile("resources2/file2.properties", "value=${project.version}");
@@ -478,7 +478,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file2.properties", "value=${project.version}");
   }
 
-  @Test 
+  @Test
   public void testDoNotChangeFileIfPropertyIsNotResolved() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${foo.bar}");
 
@@ -499,7 +499,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=${foo.bar}");
   }
 
-  @Test 
+  @Test
   public void testChangingResolvedPropsBackWhenSettingsIsChange() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.version}");
 
@@ -536,7 +536,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=${project.version}");
   }
 
-  @Test 
+  @Test
   public void testUpdatingWhenPropertiesInFiltersAreChanged() throws Exception {
     final VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
     createProjectSubFile("resources/file.properties", "value=${xxx}");
@@ -565,7 +565,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=2");
   }
 
-  @Test 
+  @Test
   public void testUpdatingWhenPropertiesAreChanged() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${foo}");
 
@@ -608,7 +608,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=val2");
   }
 
-  @Test 
+  @Test
   public void testUpdatingWhenPropertiesInModelAreChanged() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.name}");
 
@@ -647,7 +647,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=val2");
   }
 
-  @Test 
+  @Test
   public void testUpdatingWhenProfilesAreChanged() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${foo}");
 
@@ -682,14 +682,19 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     compileModules("project");
     assertResult("target/classes/file.properties", "value=val1");
 
-    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("two")));
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
+    if(isNewImportingProcess) {
+      importProjectWithProfiles("two");
+    } else {
+      myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("two")));
+      scheduleResolveAll();
+      resolveDependenciesAndImport();
+    }
+
     compileModules("project");
     assertResult("target/classes/file.properties", "value=val2");
   }
 
-  @Test 
+  @Test
   public void testSameFileInSourcesAndTestSources() throws Exception {
     createProjectSubFile("src/main/resources/file.properties", "foo=${foo.main}");
     createProjectSubFile("src/test/resources/file.properties", "foo=${foo.test}");
@@ -723,7 +728,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/test-classes/file.properties", "foo=test");
   }
 
-  @Test 
+  @Test
   public void testCustomFilters() throws Exception {
     createProjectSubFile("filters/filter1.properties",
                          "xxx=value\n" +
@@ -757,7 +762,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                                                    "value3=value2\n");
   }
 
-  @Test 
+  @Test
   public void testCustomFiltersViaPlugin() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties", "value1=${xxx}");
@@ -799,7 +804,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value1=value");
   }
 
-  @Test 
+  @Test
   public void testCustomFilterWithPropertyInThePath() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties", "value=${xxx}");
@@ -828,7 +833,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=value");
   }
 
-  @Test 
+  @Test
   public void testCustomFiltersFromProfiles() throws Exception {
     createProjectSubFile("filters/filter1.properties", "xxx=value1");
     createProjectSubFile("filters/filter2.properties", "yyy=value2");
@@ -879,7 +884,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                                                    "value2=value2\n");
   }
 
-  @Test 
+  @Test
   public void testEscapingFiltering() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties",
@@ -923,7 +928,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                  "value4=.\\.\\\\.\\\\\\.");
   }
 
-  @Test 
+  @Test
   public void testPropertyPriority() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=fromFilterFile\n" +
                                                       "yyy=fromFilterFile");
@@ -956,7 +961,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                  "value2=fromFilterFile");
   }
 
-  @Test 
+  @Test
   public void testCustomEscapingFiltering() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties",
@@ -994,7 +999,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                  "value2=\\value\n");
   }
 
-  @Test 
+  @Test
   public void testDoNotFilterButCopyBigFiles() throws IOException {
     assertEquals(FileTypes.UNKNOWN, FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"));
 
@@ -1017,7 +1022,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertNotNull(myProjectPom.getParent().findFileByRelativePath("target/classes/file.xyz"));
   }
 
-  @Test 
+  @Test
   public void testResourcesOrdering1() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.version}\n");
 
@@ -1044,7 +1049,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=1\n"); // Filtered file override non-filtered file
   }
 
-  @Test 
+  @Test
   public void testResourcesOrdering2() throws Exception {
 
     createProjectSubFile("resources/file.properties", "value=${project.version}\n");
@@ -1072,7 +1077,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/file.properties", "value=1\n"); // Filtered file override non-filtered file
   }
 
-  @Test 
+  @Test
   public void testResourcesOrdering3() throws Exception {
 
     createProjectSubFile("resources1/a.txt", "1");
@@ -1099,7 +1104,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/a.txt", "1"); // First file was copied, second file was not override first file
   }
 
-  @Test 
+  @Test
   public void testResourcesOrdering4() throws Exception {
     createProjectSubFile("resources1/a.txt", "1");
     createProjectSubFile("resources2/a.txt", "2");
@@ -1127,7 +1132,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/a.txt", "2"); // For the filtered files last file override other files.
   }
 
-  @Test 
+  @Test
   public void testOverwriteParameter1() throws Exception {
 
     createProjectSubFile("resources1/a.txt", "1");
@@ -1163,7 +1168,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     assertResult("target/classes/a.txt", "2");
   }
 
-  @Test 
+  @Test
   public void testOverwriteParameter2() throws Exception {
 
     createProjectSubFile("resources1/a.txt", "1");

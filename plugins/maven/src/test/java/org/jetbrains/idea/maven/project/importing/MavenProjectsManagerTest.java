@@ -1203,8 +1203,13 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Override
   protected void doImportProjects(List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
-    super.doImportProjects(files, failOnReadingError, profiles);
-    resolveDependenciesAndImport(); // wait of full import completion
+    if(isNewImportingProcess){
+      importViaNewFlow(files, failOnReadingError, Collections.emptyList(), profiles);
+    } else {
+      super.doImportProjects(files, failOnReadingError, profiles);
+      resolveDependenciesAndImport(); // wait of full import completion
+    }
+
   }
 
   private boolean hasProjectsToBeImported() {
