@@ -136,12 +136,11 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                 UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}] = Nothing
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] = Undetermined
-                            UBlockExpression [{...}] = Nothing
-                                UReturnExpression [return listOf(1)] = Nothing
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] = external listOf(1)(1)
-                                        UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(1)(1)
-                                        ULiteralExpression (value = 1) [1] = 1
+                            UBlockExpression [{...}] = external listOf(1)(1)
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] = external listOf(1)(1)
+                                    UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                                    USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(1)(1)
+                                    ULiteralExpression (value = 1) [1] = 1
         UMethod (name = bar) [static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : void {...}]
             UParameter (name = lmbd) [@org.jetbrains.annotations.NotNull var lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
