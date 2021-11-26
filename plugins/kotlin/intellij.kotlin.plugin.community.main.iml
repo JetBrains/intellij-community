@@ -76,6 +76,8 @@
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
