@@ -37,9 +37,9 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     return Configuration().connectTimeout(TIMEOUT).readTimeout(TIMEOUT).auth(JbaTokenAuthProvider(userId))
   }
 
-  private fun receiveSnapshotFile(): InputStream {
+  private fun receiveSnapshotFile(): InputStream? {
     // todo remove this explicit request after client.read will be fixed to accept null version
-    val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP).versionId
+    val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId ?: return null
 
     return clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, version) {
       client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
@@ -47,15 +47,31 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   private fun sendSnapshotFile(inputStream: InputStream) {
-    var currentVersion = currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
-    if (currentVersion == null) {
-      // todo in this case we should update first and not just overwrite
-      currentVersion = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP).versionId!!
-      LOG.warn("Current version is null, using the version from the server: $currentVersion")
+    val currentVersion = getCurrentVersion()
+    if (currentVersion != null) {
+      clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, currentVersion) {
+        client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
+      }
     }
-    clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, currentVersion) {
+    else {
+      // no version neither locally nor on the server => this is a fresh push => simply send the push
       client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
     }
+  }
+
+  private fun getCurrentVersion(): String? {
+    val rememberedVersion = currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
+    if (rememberedVersion != null) return rememberedVersion
+
+    // todo in this case we should update first and not just overwrite
+    val serverVersion = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId
+    if (serverVersion != null) {
+      LOG.warn("Current version is null, using the version from the server: $serverVersion")
+      return serverVersion
+    }
+
+    LOG.info("No settings file on the server")
+    return null
   }
 
   override fun isUpdateNeeded(): Boolean {
@@ -72,6 +88,11 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   override fun receiveUpdates(): UpdateResult {
     try {
       val stream = receiveSnapshotFile()
+      if (stream == null) {
+        LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
+        return UpdateResult.NoFileOnServer
+      }
+
       val tempFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, UUID.randomUUID().toString())
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())

@@ -23,5 +23,6 @@ internal interface SettingsSyncRemoteCommunicator {
 
 internal sealed class UpdateResult {
   class Success(val settingsSnapshot: SettingsSnapshot) : UpdateResult()
+  object NoFileOnServer: UpdateResult()
   class Error(@NlsSafe val message: String): UpdateResult()
 }
