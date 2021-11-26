@@ -4,16 +4,13 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
-import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinRecursiveElementWalkingVisitor
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -59,15 +56,4 @@ fun getDataFlowAwareTypes(
         expression, expressionType, bindingContext, expression.getResolutionFacade().moduleDescriptor
     )
     return dataFlowInfo.getCollectedTypes(dataFlowValue, expression.languageVersionSettings).ifEmpty { listOf(originalType) }
-}
-
-fun PsiElement.hasErrors(): Boolean {
-    var hasErrors = false
-    val errorVisitor = object  : KotlinRecursiveElementWalkingVisitor() {
-        override fun visitErrorElement(element: PsiErrorElement) {
-            hasErrors = true
-        }
-    }
-    errorVisitor.visitElement(this)
-    return hasErrors
 }

@@ -41,14 +41,12 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassKind
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinRecursiveElementWalkingVisitor
 import org.jetbrains.kotlin.idea.util.DialogWithEditor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
-import org.jetbrains.kotlin.idea.util.hasErrors
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -1120,7 +1118,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
 
     fun addNextToOriginalElementContainer(addBefore: Boolean): D {
         val sibling = anchor.parentsWithSelf.first { it.parent == actualContainer }
-        return if (addBefore || sibling.hasErrors()) {
+        return if (addBefore || PsiTreeUtil.hasErrorElements(sibling)) {
             actualContainer.addBefore(declaration, sibling)
         } else {
             actualContainer.addAfter(declaration, sibling)
