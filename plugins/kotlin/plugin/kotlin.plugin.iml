@@ -75,5 +75,7 @@
     <orderEntry type="module" module-name="kotlin.testng" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" scope="PROVIDED" />
   </component>
 </module>
