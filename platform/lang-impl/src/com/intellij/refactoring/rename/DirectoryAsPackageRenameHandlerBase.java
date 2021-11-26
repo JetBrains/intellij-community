@@ -105,7 +105,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
           PsiDirectory[] dirsToRename = projectDirectories.length > moduleDirectories.length ? moduleDirectories : new PsiDirectory[]{psiDirectory};
           renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, dirsToRename);
         }
-        else if (ret == 2) {
+        else if (ret == 2 && options.size() > 3) {
           renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
         }
       }
