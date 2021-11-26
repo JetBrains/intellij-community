@@ -43,8 +43,7 @@ class CustomizeWizardCollector : CounterUsagesCollector() {
       val data = mutableListOf<EventPair<*>>()
       data.add(TIMESTAMP_FIELD.with(timestamp))
       if (pluginInfo != null) {
-        data.add(EventFields.PluginInfo.with
-        (pluginInfo))
+        data.add(EventFields.PluginInfo.with(pluginInfo))
       }
       if (group != null) {
         data.add(GROUP_FIELD.with(group))
