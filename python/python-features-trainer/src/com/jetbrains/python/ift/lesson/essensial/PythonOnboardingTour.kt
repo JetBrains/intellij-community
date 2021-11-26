@@ -42,7 +42,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
@@ -247,22 +247,12 @@ class PythonOnboardingTour :
       }
 
       @Suppress("HardCodedStringLiteral")
-      override val addRowsForUserAgreement: LayoutBuilder.() -> Unit = {
-        row {
-          cell {
-            label("Found interpreters:")
-          }
-          cell {
-            label(interpreters?.toString() ?: "none")
-          }
+      override val addRowsForUserAgreement: Panel.() -> Unit = {
+        row("Found interpreters:") {
+          label(interpreters?.toString() ?: "none")
         }
-        row {
-          cell {
-            label("Used interpreter:")
-          }
-          cell {
-            label(usedInterpreter)
-          }
+        row("Used interpreter:") {
+          label(usedInterpreter)
         }
       }
     }

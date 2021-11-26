@@ -56,26 +56,30 @@ fun submitGeneralFeedback(project: Project?,
 
 fun createFeedbackAgreementComponent(project: Project?, systemInfo: () -> Unit) =
   JPanel().apply {
-    layout = GridLayout(3, 1, 0, 0)
+    layout = GridLayout(4, 1, 0, 0)
 
     add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.1.1"),
                             FeedbackBundle.message("dialog.created.project.consent.1.2"),
                             FeedbackBundle.message("dialog.created.project.consent.1.3"), systemInfo))
 
-    add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.2.1"),
-                            FeedbackBundle.message("dialog.created.project.consent.2.2"),
-                            FeedbackBundle.message("dialog.created.project.consent.2.3")) {
+    add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.2")))
+
+    add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.3.1"),
+                            FeedbackBundle.message("dialog.created.project.consent.3.2"),
+                            FeedbackBundle.message("dialog.created.project.consent.3.3")) {
       BrowserUtil.browse(PRIVACY_POLICY_THIRD_PARTIES_URL, project)
     })
 
-    add(createLineOfConsent("",
-                            FeedbackBundle.message("dialog.created.project.consent.3.2"),
-                            FeedbackBundle.message("dialog.created.project.consent.3.3")) {
+    add(createLineOfConsent(linkText = FeedbackBundle.message("dialog.created.project.consent.4.2"),
+                            postfix = FeedbackBundle.message("dialog.created.project.consent.4.3")) {
       BrowserUtil.browse(PRIVACY_POLICY_URL, project)
     })
   }
 
-private fun createLineOfConsent(prefixTest: String, linkText: String, postfix: String, action: () -> Unit): HyperlinkLabel {
+private fun createLineOfConsent(prefixTest: String = "",
+                                linkText: String = "",
+                                postfix: String = "",
+                                action: () -> Unit = {}): HyperlinkLabel {
   val text = HtmlBuilder()
     .append(prefixTest) //NON-NLS
     .append(HtmlChunk.tag("hyperlink")

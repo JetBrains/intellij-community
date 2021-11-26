@@ -115,7 +115,7 @@ class ProjectCreationFeedbackDialog(
       appendLine(textAreaOverallFeedbackProperty.get())
     }
   }
-  
+
   private fun createProblemsList(): String {
     val resultProblemsList = mutableListOf<String>()
     if (checkBoxNoProblemProperty.get()) {
@@ -296,7 +296,7 @@ class ProjectCreationFeedbackDialog(
         cell(createFeedbackAgreementComponent(project) {
           showProjectCreationFeedbackSystemInfoDialog(project, systemInfoData)
         })
-      }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.MEDIUM)
+      }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
     }
@@ -338,13 +338,8 @@ private data class ProjectCreationFeedbackSystemInfoData(
 private fun showProjectCreationFeedbackSystemInfoDialog(project: Project?,
                                                         systemInfoData: ProjectCreationFeedbackSystemInfoData
 ) = showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
-  row {
-    cell {
-      label(FeedbackBundle.message("dialog.created.project.system.info.panel.project.type"))
-    }
-    cell {
-      label(systemInfoData.createdProjectTypeName) //NON-NLS
-    }
+  row(FeedbackBundle.message("dialog.created.project.system.info.panel.project.type")) {
+    label(systemInfoData.createdProjectTypeName) //NON-NLS
   }
 }
 
