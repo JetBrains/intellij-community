@@ -3,10 +3,7 @@ package com.intellij.codeInspection.tests
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
 import com.intellij.codeInspection.javaapi.JavaApiUsageInspection
 import com.intellij.openapi.module.LanguageLevelUtil
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,29 +11,32 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.LightProjectDescriptor
+import org.junit.Ignore
 
 abstract class JavaApiUsageInspectionTestBase : UastInspectionTestBase() {
   override val inspection = JavaApiUsageInspection()
 
-  //todo exclude inheritors of ConcurrentMap#putIfAbsent
+  /**
+   * To generate API signatures.
+   * TODO exclude inheritors of ConcurrentMap#putIfAbsent
+   */
+  @Ignore
   fun testCollectSinceApiUsages() {
-    //doCollectSinceApiUsages();
+    doCollectSinceApiUsages()
   }
 
   private fun doCollectSinceApiUsages() {
-    val previews: MutableSet<String?> = HashSet()
-    val previewContentIterator: ContentIterator = object : ContentIterator {
+    val previews = mutableSetOf<String>()
+    val previewContentIterator = object : ContentIterator {
       override fun processFile(fileOrDir: VirtualFile): Boolean {
         val file = PsiManager.getInstance(project).findFile(fileOrDir)
         PsiTreeUtil.findChildrenOfAnyType(file, PsiMember::class.java)
-          .stream()
           .filter { member ->
             member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE) ||
             member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
           }
           .filter { member -> getLanguageLevel(member) == LANGUAGE_LEVEL }
-          .map { LanguageLevelUtil.getSignature(it) }
+          .mapNotNull { LanguageLevelUtil.getSignature(it) }
           .forEach { previews.add(it) }
         return true
       }
@@ -52,8 +52,8 @@ abstract class JavaApiUsageInspectionTestBase : UastInspectionTestBase() {
       VfsUtilCore.iterateChildrenRecursively(previewSrcFile, VirtualFileFilter.ALL, previewContentIterator)
     }
     val contentIterator = ContentIterator { fileOrDir ->
-      val file = PsiManager.getInstance(project).findFile(fileOrDir)
-      (file as? PsiJavaFile)?.accept(object : JavaRecursiveElementVisitor() {
+      val file = PsiManager.getInstance(project).findFile(fileOrDir) as? PsiJavaFile
+      file?.accept(object : JavaRecursiveElementVisitor() {
         override fun visitElement(element: PsiElement) {
           super.visitElement(element)
           if (isDocumentedSinceApi(element)) {
@@ -67,7 +67,7 @@ abstract class JavaApiUsageInspectionTestBase : UastInspectionTestBase() {
             val comment = element.docComment
             if (comment != null) {
               for (tag in comment.tags) {
-                if (Comparing.strEqual(tag.name, "since")) {
+                if (tag.name == "since") {
                   val value = tag.valueElement
                   if (value != null && value.text == VERSION) return true
                   break
@@ -89,11 +89,5 @@ abstract class JavaApiUsageInspectionTestBase : UastInspectionTestBase() {
     private const val JDK_HOME = "/home/me/java/jdk-17"
     private val LANGUAGE_LEVEL = LanguageLevel.JDK_16_PREVIEW
     private const val VERSION = "17"
-
-    private val API_VERSION_PROJECT_DESCRIPTOR: LightProjectDescriptor = object : LightProjectDescriptor() {
-      override fun getSdk(): Sdk {
-        return JavaSdk.getInstance().createJdk(VERSION, "$JDK_HOME/", false)
-      }
-    }
   }
 }

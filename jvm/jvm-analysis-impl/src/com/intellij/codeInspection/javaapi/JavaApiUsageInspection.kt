@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
 import com.intellij.ui.SimpleListCellRenderer
@@ -100,7 +101,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   override fun readSettings(node: Element) {
     val element = node.getChild(EFFECTIVE_LL)
     if (element != null) {
-      effectiveLanguageLevel = LanguageLevel.valueOf(element.getAttributeValue("value")!!)
+      effectiveLanguageLevel = element.getAttributeValue("value")?.let { LanguageLevel.valueOf(it) }
     }
   }
 
@@ -119,11 +120,6 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     apiUsageProcessor: ApiUsageProcessor,
     private val holder: ProblemsHolder
   ) : ApiUsageUastVisitor(apiUsageProcessor) {
-    private fun getJdkName(languageLevel: LanguageLevel): String {
-      val presentableText = languageLevel.presentableText
-      return presentableText.substring(0, presentableText.indexOf(' '))
-    }
-
     override fun visitClass(node: UClass): Boolean {
       val javaPsi = node.javaPsi
       if (!javaPsi.hasModifierProperty(PsiModifier.ABSTRACT) && javaPsi !is PsiTypeParameter) { // Don't go into classes (anonymous, locals).
@@ -133,13 +129,12 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
           val version = JavaVersionService.getInstance().getJavaSdkVersion(javaPsi)
           if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
             val methods = mutableListOf<PsiMethod>()
-            for (methodSignature in javaPsi.visibleSignatures) {
-              val method = methodSignature.method
+            javaPsi.visibleSignatures.map(MethodSignatureBackedByPsiMethod::getMethod).forEach { method ->
               if (defaultMethods.contains(LanguageLevelUtil.getSignature(method))) methods.add(method)
             }
             if (methods.isNotEmpty()) {
               val toHighlight = node.uastAnchor?.sourcePsi ?: return true
-              val jdkName = getJdkName(effectiveLanguageLevel)
+              val jdkName = LanguageLevelUtil.getJdkName(effectiveLanguageLevel)
               val message = if (methods.size == 1) {
                 JvmAnalysisBundle.message("jvm.inspections.1.8.problem.single.descriptor", methods[0].name, jdkName)
               } else {
@@ -211,8 +206,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     }
 
     private fun registerError(reference: PsiElement, sinceLanguageLevel: LanguageLevel) {
-      val targetLanguageLevel = LanguageLevelUtil.getNextLanguageLevel(sinceLanguageLevel)
-      if (targetLanguageLevel == null) {
+      val targetLanguageLevel = LanguageLevelUtil.getNextLanguageLevel(sinceLanguageLevel) ?: run {
         logger.error("Unable to get the next language level for $sinceLanguageLevel")
         return
       }
@@ -227,16 +221,14 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     }
 
     private fun isRawInheritance(generifiedClassQName: String, currentClass: PsiClass, visited: MutableSet<in PsiClass>): Boolean {
-      for (classType in currentClass.superTypes) {
+      return currentClass.superTypes.any { classType ->
         if (classType.isRaw) return true
         val resolveResult = classType.resolveGenerics()
-        val superClass = resolveResult.element ?: continue
-        if (visited.add(superClass) &&
-            InheritanceUtil.isInheritor(superClass, generifiedClassQName) &&
-            isRawInheritance(generifiedClassQName, superClass, visited)
-        ) return true
+        val superClass = resolveResult.element ?: return@any false
+        visited.add(superClass) &&
+        InheritanceUtil.isInheritor(superClass, generifiedClassQName) &&
+        isRawInheritance(generifiedClassQName, superClass, visited)
       }
-      return false
     }
 
     private fun isIgnored(psiClass: PsiClass): Boolean {
