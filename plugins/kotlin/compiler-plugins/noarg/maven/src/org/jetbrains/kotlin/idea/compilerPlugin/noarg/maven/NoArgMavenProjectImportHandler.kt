@@ -2,8 +2,9 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg.maven
 
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.annotationBased.AbstractMavenImportHandler
-import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
 
@@ -18,7 +19,11 @@ class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val mavenPluginArtifactName = "kotlin-maven-noarg"
     override val pluginJarFileFromIdea = KotlinArtifacts.instance.noargCompilerPlugin
 
-    override fun getOptions(enabledCompilerPlugins: List<String>, compilerPluginOptions: List<String>): List<PluginOption>? {
+    override fun getOptions(
+        mavenProject: MavenProject,
+        enabledCompilerPlugins: List<String>,
+        compilerPluginOptions: List<String>
+    ): List<PluginOption>? {
         if ("no-arg" !in enabledCompilerPlugins && "jpa" !in enabledCompilerPlugins) {
             return null
         }

@@ -2,8 +2,9 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.maven
 
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.annotationBased.AbstractMavenImportHandler
-import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationImportHandler
 import java.io.File
 
@@ -15,8 +16,9 @@ class KotlinSerializationMavenImportHandler : AbstractMavenImportHandler() {
         get() = File(KotlinSerializationImportHandler.PLUGIN_JPS_JAR)
 
     override fun getOptions(
+        mavenProject: MavenProject,
         enabledCompilerPlugins: List<String>,
         compilerPluginOptions: List<String>
-    ): List<AnnotationBasedCompilerPluginSetup.PluginOption>? =
+    ): List<CompilerPluginSetup.PluginOption>? =
         if ("kotlinx-serialization" in enabledCompilerPlugins) emptyList() else null
 }

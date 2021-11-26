@@ -2,8 +2,9 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.maven
 
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.annotationBased.AbstractMavenImportHandler
-import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor
 
@@ -17,7 +18,11 @@ class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val mavenPluginArtifactName = "kotlin-maven-sam-with-receiver"
     override val pluginJarFileFromIdea = KotlinArtifacts.instance.samWithReceiverCompilerPlugin
 
-    override fun getOptions(enabledCompilerPlugins: List<String>, compilerPluginOptions: List<String>): List<PluginOption>? {
+    override fun getOptions(
+        mavenProject: MavenProject,
+        enabledCompilerPlugins: List<String>,
+        compilerPluginOptions: List<String>
+    ): List<PluginOption>? {
         if ("sam-with-receiver" !in enabledCompilerPlugins) {
             return null
         }
