@@ -190,6 +190,7 @@ public final class ModuleRootModificationUtil {
 
       ApplicationManager.getApplication().invokeAndWait(() -> {
         WriteAction.run(() -> {
+          if (project.isDisposed()) return;
           ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(() -> {
             for (ModifiableRootModel rootModel : toCommit) {
               if (!rootModel.getModule().isDisposed()) {
