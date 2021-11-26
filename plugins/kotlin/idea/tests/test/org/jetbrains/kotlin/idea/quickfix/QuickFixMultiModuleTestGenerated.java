@@ -1031,6 +1031,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/other/functionTypeReceiverToParameterByImpl/");
         }
 
+        @TestMetadata("generateEqualsAndHashCodeForSealedInCommon")
+        public void testGenerateEqualsAndHashCodeForSealedInCommon() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/generateEqualsAndHashCodeForSealedInCommon/");
+        }
+
         @TestMetadata("generateEqualsInExpect")
         public void testGenerateEqualsInExpect() throws Exception {
             runTest("testData/multiModuleQuickFix/other/generateEqualsInExpect/");
