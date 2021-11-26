@@ -17,11 +17,12 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImp
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.all
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.absolutePathString
 
 private fun isResolveTask(id: ExternalSystemTaskId): Boolean {
@@ -70,8 +71,14 @@ fun getProjectDataLoadPromise(): Promise<Project> {
  */
 @TestOnly
 fun getProjectDataLoadPromise(expectedProjects: List<Path>): Promise<Project> {
-  return getExternalSystemTaskFinishPromise(::isResolveTask)
-    .thenAsync { project -> getProjectDataLoadPromise(project, expectedProjects) }
+  require(expectedProjects.isNotEmpty())
+
+  return getExternalSystemTaskFinishPromise(::isResolveTask).thenAsync { project ->
+      expectedProjects.map {
+        val linkedProjectPath: String = FileUtil.toCanonicalPath(it.absolutePathString())
+        getProjectDataLoadPromise(project, linkedProjectPath)
+      }.all(project, false)
+    }
 }
 
 @TestOnly
@@ -129,41 +136,26 @@ private fun getExternalSystemTaskFinishPromiseImpl(
   return promise
 }
 
-private fun getProjectDataLoadPromise(project: Project, expectedProjects: List<Path>? = null): Promise<Project> {
+private fun getProjectDataLoadPromise(project: Project, expectedProjectPath: String? = null): Promise<Project> {
   val promise = AsyncPromise<Project>()
   val parentDisposable = Disposer.newDisposable()
   val connection = project.messageBus.connect(parentDisposable)
+
   connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-    private val projectsToWait = ConcurrentHashMap<String, Path>()
-    private val LOG by lazy { Logger.getInstance("org.jetbrains.plugins.gradle.util.GradleImportingUtil") }
-
-    init {
-      expectedProjects?.forEach { projectsToWait.put(it.absolutePathString(), it) }
-    }
-
     override fun onImportFinished(projectPath: String?) {
-      if (shouldWaitForMoreProjects(projectPath)) return
-
-      Disposer.dispose(parentDisposable)
-      invokeLater {
-        promise.setResult(project)
+      if (expectedProjectPath == null || expectedProjectPath == projectPath) {
+        Disposer.dispose(parentDisposable)
+        invokeLater {
+          promise.setResult(project)
+        }
       }
     }
 
     override fun onImportFailed(projectPath: String?) {
-      Disposer.dispose(parentDisposable)
-      // Fail fast: don't wait for all the projects if either of them failed
-      promise.setError("Import failed for $projectPath")
-    }
-
-    private fun shouldWaitForMoreProjects(projectPath: String?): Boolean {
-      projectPath?.apply { projectsToWait.remove(this) }
-      LOG.debug("Data import finished for projectPath: $projectPath")
-      if (!projectsToWait.isEmpty()) {
-        LOG.debug("Waiting for more projects to complete: ${projectsToWait.keys()}")
-        return true
+      if (expectedProjectPath == null || expectedProjectPath == projectPath) {
+        Disposer.dispose(parentDisposable)
+        promise.setError("Import failed for $projectPath")
       }
-      return false
     }
   })
   return promise
