@@ -57,6 +57,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS uses smaller font).
    * [comment] can contain html tags except &lt;html&gt;, which is added automatically in this method.
    * \n does not work as new line in html, use &lt;br&gt; instead.
+   * Links with href to http/https are automatically marked with additional arrow icon.
    * The comment occupies the available width before the next comment (if present) or
    * whole remaining width. Visibility and enabled state of the cell affects comment as well.
    *

@@ -110,6 +110,7 @@ interface Row {
    * Adds comment after the row with appropriate color and font size (macOS uses smaller font).
    * [comment] can contain html tags except &lt;html&gt;, which is added automatically in this method.
    * \n does not work as new line in html, use &lt;br&gt; instead.
+   * Links with href to http/https are automatically marked with additional arrow icon.
    * Visibility and enabled state of the row affects row comment as well.
    *
    * @see MAX_LINE_LENGTH_WORD_WRAP
@@ -215,6 +216,7 @@ interface Row {
   /**
    * Adds text. [text] can contain html tags except &lt;html&gt;, which is added automatically in this method.
    * \n does not work as new line in html, use &lt;br&gt; instead.
+   * Links with href to http/https are automatically marked with additional arrow icon.
    * It is preferable to use [label] method for short plain single-lined strings because labels use less resources and simpler
    *
    * @see DEFAULT_COMMENT_WIDTH
@@ -228,6 +230,7 @@ interface Row {
    * Adds comment with appropriate color and font size (macOS uses smaller font).
    * [comment] can contain html tags except &lt;html&gt;, which is added automatically in this method.
    * \n does not work as new line in html, use &lt;br&gt; instead.
+   * Links with href to http/https are automatically marked with additional arrow icon.
    *
    * @see DEFAULT_COMMENT_WIDTH
    * @see MAX_LINE_LENGTH_WORD_WRAP
