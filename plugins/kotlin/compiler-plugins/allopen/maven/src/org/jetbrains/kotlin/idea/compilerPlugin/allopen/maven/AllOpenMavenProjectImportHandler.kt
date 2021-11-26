@@ -2,9 +2,10 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.allopen.maven
 
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.allopen.AllOpenCommandLineProcessor
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.annotationBased.AbstractMavenImportHandler
-import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 
 class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
@@ -17,7 +18,11 @@ class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val mavenPluginArtifactName = "kotlin-maven-allopen"
     override val pluginJarFileFromIdea = KotlinArtifacts.instance.allopenCompilerPlugin
 
-    override fun getOptions(enabledCompilerPlugins: List<String>, compilerPluginOptions: List<String>): List<PluginOption>? {
+    override fun getOptions(
+        mavenProject: MavenProject,
+        enabledCompilerPlugins: List<String>,
+        compilerPluginOptions: List<String>
+    ): List<PluginOption>? {
         if ("all-open" !in enabledCompilerPlugins && "spring" !in enabledCompilerPlugins) {
             return null
         }

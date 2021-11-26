@@ -2,7 +2,7 @@
   <dependencies>
     <plugin id="org.jetbrains.idea.maven"/>
     <module name="kotlin.maven"/>
-    <module name="kotlin.compiler-plugins.annotation-based-compiler-support.maven"/>
+    <module name="kotlin.compiler-plugins.compiler-plugin-support.maven"/>
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

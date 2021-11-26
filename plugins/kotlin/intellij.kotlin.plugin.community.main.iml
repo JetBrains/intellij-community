@@ -11,9 +11,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" exported="" />
