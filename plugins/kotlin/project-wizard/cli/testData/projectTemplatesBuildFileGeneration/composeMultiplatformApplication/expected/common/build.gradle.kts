@@ -4,7 +4,6 @@ plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose") version "1.0.0-beta5"
     id("com.android.library")
-    id("kotlin-android-extensions")
 }
 
 group = "me.user"
