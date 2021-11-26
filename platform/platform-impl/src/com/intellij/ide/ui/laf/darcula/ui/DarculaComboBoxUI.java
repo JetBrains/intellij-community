@@ -170,7 +170,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
             g2.fill(innerShape);
 
             // Paint vertical line
-            if (comboBox.isEditable() || ClientProperty.isTrue(comboBox, PAINT_VERTICAL_LINE)) {
+            if (comboBox.isEditable() || Boolean.TRUE.equals(ComponentUtil.getClientProperty(comboBox, PAINT_VERTICAL_LINE))) {
               g2.setColor(getOutlineColor(comboBox.isEnabled(), false));
               g2.fill(new Rectangle2D.Float(0, bw + lw, LW.getFloat(), r.height - (bw + lw) * 2));
             }
