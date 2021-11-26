@@ -41,6 +41,9 @@ class CommonLocationFeatures : ContextFeatureProvider {
     if (DumbService.isDumb(lookup.project)) {
       result["dumb_mode"] = MLFeatureValue.binary(true)
     }
+    if (CurrentProjectInfo.getInstance(lookup.project).isIdeaProject) {
+      result["is_idea_project"] = MLFeatureValue.binary(true)
+    }
 
     val caseSensitive = CaseSensitivity.fromSettings(CodeInsightSettings.getInstance())
     if (caseSensitive != CaseSensitivity.NONE) {
