@@ -65,6 +65,5 @@
     <orderEntry type="library" name="intellij-markdown" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="library" name="Velocity" level="project" />
-    <orderEntry type="module" module-name="kotlin.resources-fe10" />
   </component>
 </module>
