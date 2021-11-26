@@ -4,16 +4,31 @@ package com.intellij.psi.codeStyle;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-import static java.lang.Character.isLetterOrDigit;
-
-/**
- * Can be obtained via {@link CodeStyleSettingsService#getLanguageCodeStyleProvider(Language)}
- */
 @ApiStatus.Internal
 public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactory {
+  @Nullable
+  static LanguageCodeStyleProvider forLanguage(Language language) {
+    for (LanguageCodeStyleProvider provider : CodeStyleSettingsService.getInstance().getLanguageCodeStyleProviders()) {
+      if (provider.getLanguage().equals(language)) {
+        return provider;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  static LanguageCodeStyleProvider findUsingBaseLanguage(@NotNull Language language) {
+    for (Language currLang = language; currLang != null;  currLang = currLang.getBaseLanguage()) {
+      LanguageCodeStyleProvider curr = forLanguage(currLang);
+      if (curr != null) return curr;
+    }
+    return null;
+  }
+
   @NotNull
   Language getLanguage();
 
