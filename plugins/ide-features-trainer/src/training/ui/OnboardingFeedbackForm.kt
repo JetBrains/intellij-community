@@ -198,45 +198,20 @@ private fun createOnboardingAgreementComponent(project: Project?,
       if (onboardingFeedbackData != null) {
         onboardingFeedbackData.addRowsForUserAgreement.invoke(this)
         val lessonEndInfo = onboardingFeedbackData.lessonEndInfo
-        row {
-          cell {
-            label("Recent projects number:")
-          }
-          cell {
-            label(recentProjectsNumber.toString())
-          }
+        row("Recent projects number:") {
+          label(recentProjectsNumber.toString())
         }
-        row {
-          cell {
-            label("Different IDE actions used:")
-          }
-          cell {
-            label(actionsNumber.toString())
-          }
+        row("Different IDE actions used:") {
+          label(actionsNumber.toString())
         }
-        row {
-          cell {
-            label("Lesson completed:")
-          }
-          cell {
-            label(lessonEndInfo.lessonPassed.toString())
-          }
+        row("Lesson completed:") {
+          label(lessonEndInfo.lessonPassed.toString())
         }
-        row {
-          cell {
-            label("The visual step on end:")
-          }
-          cell {
-            label(lessonEndInfo.currentVisualIndex.toString())
-          }
+        row("The visual step on end:") {
+          label(lessonEndInfo.currentVisualIndex.toString())
         }
-        row {
-          cell {
-            label("The technical index on end:")
-          }
-          cell {
-            label(lessonEndInfo.currentTaskIndex.toString())
-          }
+        row("The technical index on end:") {
+          label(lessonEndInfo.currentTaskIndex.toString())
         }
       }
     }
