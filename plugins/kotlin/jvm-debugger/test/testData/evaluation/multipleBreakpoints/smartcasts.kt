@@ -33,3 +33,8 @@ class Derived : Base() {
 }
 
 open class Base
+
+// TODO:
+// Muted on IR evaluator as the IR backend exhibits different stepping behavior around
+// boolean operators and expression bodies; the breakpoint in the failure cases are
+// not hit. See the singleBreakpoint/simpleSmartcasts suite for examples.

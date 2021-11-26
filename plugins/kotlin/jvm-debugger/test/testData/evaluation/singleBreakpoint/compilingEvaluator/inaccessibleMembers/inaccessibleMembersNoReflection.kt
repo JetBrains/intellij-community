@@ -19,6 +19,8 @@ fun main() {
     val x = 0
 }
 
+// Working as intended on EE-IR: No support for disabling reflective access
+
 // REFLECTION_PATCHING: false
 
 // EXPRESSION: block { Foo("foo") }
@@ -47,3 +49,4 @@ fun main() {
 
 // EXPRESSION: block { Foo.x = 21 }
 // RESULT: Method threw 'java.lang.IllegalAccessError' exception.
+

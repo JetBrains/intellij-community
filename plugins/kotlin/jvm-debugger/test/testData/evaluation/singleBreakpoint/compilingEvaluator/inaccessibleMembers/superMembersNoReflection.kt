@@ -19,6 +19,8 @@ fun main() {
     val f = 0
 }
 
+// Working as intended on EE-IR: No support for disabling reflective access
+
 // REFLECTION_PATCHING: false
 
 // EXPRESSION: block { d.foo() }
