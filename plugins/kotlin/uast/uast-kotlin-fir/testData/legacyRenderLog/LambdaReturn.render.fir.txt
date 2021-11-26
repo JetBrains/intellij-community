@@ -36,7 +36,7 @@ public final class LambdaReturnKt {
             @org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()
         }
         var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = {
-            return listOf(1)
+            listOf(1)
         }
     }
     static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : void {
