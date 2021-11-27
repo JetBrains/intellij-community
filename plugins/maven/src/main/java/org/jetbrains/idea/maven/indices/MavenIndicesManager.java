@@ -30,10 +30,7 @@ import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.jetbrains.idea.maven.indices.MavenArtifactManager.loadUserArchetypes;
@@ -129,17 +126,11 @@ public final class MavenIndicesManager implements Disposable {
       public void activated() {
         scheduleUpdateIndicesList(null);
       }
-    });
+    }, this);
 
     projectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-        scheduleUpdateIndicesList(null);
-      }
-
-      @Override
-      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
+      public void allProjectsResolved() {
         scheduleUpdateIndicesList(null);
       }
     }, this);

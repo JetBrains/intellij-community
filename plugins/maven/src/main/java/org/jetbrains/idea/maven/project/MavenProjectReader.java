@@ -188,7 +188,7 @@ public final class MavenProjectReader {
 
     Element parentXmlProject = readXml(parentFile, problems, MavenProjectProblem.ProblemType.SYNTAX);
     version = MavenJDOMUtil.findChildValueByPath(parentXmlProject, "version");
-    if(version!=null) {
+    if (version != null) {
       return version;
     }
     return calculateParentVersion(parentXmlProject, problems, parentFile);
@@ -475,7 +475,8 @@ public final class MavenProjectReader {
 
           @Override
           protected Pair<VirtualFile, RawModelReadResult> doProcessParent(VirtualFile parentFile) {
-            RawModelReadResult result = doReadProjectModel(generalSettings, projectPomDir, parentFile, explicitProfiles, recursionGuard, locator).first;
+            RawModelReadResult result =
+              doReadProjectModel(generalSettings, projectPomDir, parentFile, explicitProfiles, recursionGuard, locator).first;
             return Pair.create(parentFile, result);
           }
         }.process(generalSettings, file, parentDesc[0]);
@@ -490,7 +491,8 @@ public final class MavenProjectReader {
                                                        MavenProjectProblem.ProblemType.PARENT, false));
       }
 
-      model = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath()).assembleInheritance(model, parentModel);
+      model = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath())
+        .assembleInheritance(model, parentModel);
 
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
       List<MavenProfile> profiles = model.getProfiles();
@@ -513,7 +515,8 @@ public final class MavenProjectReader {
                                                              MavenEmbedderWrapper embedder,
                                                              Collection<VirtualFile> files,
                                                              final MavenExplicitProfiles explicitProfiles,
-                                                             final MavenProjectReaderProjectLocator locator) throws MavenProcessCanceledException {
+                                                             final MavenProjectReaderProjectLocator locator)
+    throws MavenProcessCanceledException {
     try {
       Collection<MavenServerExecutionResult> executionResults = embedder
         .resolveProject(files, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
@@ -533,13 +536,13 @@ public final class MavenProjectReader {
           }
         }
         else {
-          readerResults.add(new MavenProjectReaderResult(projectData.mavenModel,
-                                                    projectData.mavenModelMap,
-                                                    new MavenExplicitProfiles(projectData.activatedProfiles,
-                                                                              explicitProfiles.getDisabledProfiles()),
-                                                    projectData.nativeMavenProject,
-                                                    result.problems,
-                                                    result.unresolvedArtifacts));
+          readerResults.add(new MavenProjectReaderResult(
+            projectData.mavenModel,
+            projectData.mavenModelMap,
+            new MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.getDisabledProfiles()),
+            projectData.nativeMavenProject,
+            result.problems,
+            result.unresolvedArtifacts));
         }
       }
 

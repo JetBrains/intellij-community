@@ -14,11 +14,15 @@ import org.jetbrains.idea.maven.model.MavenArtifactNode;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   @Test 
@@ -861,11 +865,11 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                   "<repositories>" +
                   "  <repository>" +
                   "    <id>one</id>" +
-                  "    <url>http://repository.one.com</url>" +
+                  "    <url>https://repository.one.com</url>" +
                   "  </repository>" +
                   "  <repository>" +
                   "    <id>two</id>" +
-                  "    <url>http://repository.two.com</url>" +
+                  "    <url>https://repository.two.com</url>" +
                   "  </repository>" +
                   "</repositories>");
 
@@ -885,14 +889,14 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                   "<repositories>" +
                   "  <repository>" +
                   "    <id>central</id>" +
-                  "    <url>http://my.repository.com</url>" +
+                  "    <url>https://my.repository.com</url>" +
                   "  </repository>" +
                   "</repositories>");
 
     List<MavenRemoteRepository> result = getMavenProject().getRemoteRepositories();
     assertEquals(1, result.size());
     assertEquals("central", result.get(0).getId());
-    assertEquals("http://my.repository.com", result.get(0).getUrl());
+    assertEquals("https://my.repository.com", result.get(0).getUrl());
   }
 
   @Test 
@@ -906,11 +910,11 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                      "<repositories>" +
                                      "  <repository>" +
                                      "    <id>one</id>" +
-                                     "    <url>http://repository.one.com</url>" +
+                                     "    <url>https://repository.one.com</url>" +
                                      "  </repository>" +
                                      "  <repository>" +
                                      "    <id>two</id>" +
-                                     "    <url>http://repository.two.com</url>" +
+                                     "    <url>https://repository.two.com</url>" +
                                      "  </repository>" +
                                      "</repositories>");
 
@@ -940,6 +944,63 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
     assertEquals("central", result.get(2).getId());
   }
 
+  @Test
+  public void testResolveRemoteRepositories() throws IOException {
+    updateSettingsXml("<mirrors>\n" +
+                      "  <mirror>\n" +
+                      "    <id>mirror</id>\n" +
+                      "    <url>https://test/mirror</url>\n" +
+                      "    <mirrorOf>repo,repo-pom</mirrorOf>\n" +
+                      "  </mirror>\n" +
+                      "</mirrors>\n" +
+                      "<profiles>\n" +
+                      "  <profile>\n" +
+                      "    <id>repo-test</id>\n" +
+                      "    <repositories>\n" +
+                      "      <repository>" +
+                      "        <id>repo</id>" +
+                      "        <url>https://settings/repo</url>" +
+                      "      </repository>" +
+                      "      <repository>" +
+                      "        <id>repo1</id>" +
+                      "        <url>https://settings/repo1</url>" +
+                      "      </repository>" +
+                      "    </repositories>\n" +
+                      "  </profile>\n" +
+                      "</profiles>\n" +
+                      "<activeProfiles>\n" +
+                      "   <activeProfile>repo-test</activeProfile>\n" +
+                      "</activeProfiles>");
+
+    VirtualFile projectPom = createProjectPom("<groupId>test</groupId>" +
+                                              "<artifactId>test</artifactId>" +
+                                              "<version>1</version>" +
+
+                                              "<repositories>\n" +
+                                              "  <repository>\n" +
+                                              "    <id>repo-pom</id>" +
+                                              "    <url>https://pom/repo</url>" +
+                                              "  </repository>\n" +
+                                              "  <repository>\n" +
+                                              "    <id>repo-pom1</id>" +
+                                              "    <url>https://pom/repo1</url>" +
+                                              "  </repository>\n" +
+                                              "</repositories>");
+    importProject();
+
+    MavenProject project = MavenProjectsManager.getInstance(myProject).findProject(projectPom);
+    Assert.assertNotNull(project);
+    Set<String> repoIds = project.getRemoteRepositories().stream()
+      .map(r -> r.getId())
+      .collect(Collectors.toSet());
+    System.out.println(repoIds);
+    Assert.assertTrue(repoIds.contains("mirror"));
+    Assert.assertTrue(repoIds.contains("repo-pom1"));
+    Assert.assertTrue(repoIds.contains("repo1"));
+    Assert.assertFalse(repoIds.contains("repo-pom"));
+    Assert.assertFalse(repoIds.contains("repo"));
+  }
+
   @Test 
   public void testMavenModelMap() {
     importProject("<groupId>test</groupId>" +
@@ -962,8 +1023,8 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
     assertEquals("test", map.get("groupId"));
     assertEquals("foo", map.get("build.finalName"));
     assertEquals(new File(p.getDirectory(), "target").toString(), map.get("build.directory"));
-    assertEquals(null, map.get("build.plugins"));
-    assertEquals(null, map.get("build.pluginMap"));
+    assertNull(map.get("build.plugins"));
+    assertNull(map.get("build.pluginMap"));
   }
 
   @Test 
