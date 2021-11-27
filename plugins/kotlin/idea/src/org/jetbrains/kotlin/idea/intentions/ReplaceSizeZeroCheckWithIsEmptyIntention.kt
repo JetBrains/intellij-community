@@ -22,16 +22,20 @@ class ReplaceSizeZeroCheckWithIsEmptyIntention : ReplaceSizeCheckIntention(
 ) {
     override fun getGenerateMethodSymbol() = "isEmpty()"
 
-    override fun getTargetExpression(element: KtBinaryExpression): KtExpression? = when (element.operationToken) {
-        KtTokens.EQEQ -> when {
-            element.right.isZero() -> element.left
-            element.left.isZero() -> element.right
+    override fun getTargetExpression(element: KtBinaryExpression) = getCheckedExpression(element)
+
+    companion object {
+        fun getCheckedExpression(element: KtBinaryExpression): KtExpression? = when (element.operationToken) {
+            KtTokens.EQEQ -> when {
+                element.right.isZero() -> element.left
+                element.left.isZero() -> element.right
+                else -> null
+            }
+            KtTokens.GT -> if (element.left.isOne()) element.right else null
+            KtTokens.LT -> if (element.right.isOne()) element.left else null
+            KtTokens.GTEQ -> if (element.left.isZero()) element.right else null
+            KtTokens.LTEQ -> if (element.right.isZero()) element.left else null
             else -> null
         }
-        KtTokens.GT -> if (element.left.isOne()) element.right else null
-        KtTokens.LT -> if (element.right.isOne()) element.left else null
-        KtTokens.GTEQ -> if (element.left.isZero()) element.right else null
-        KtTokens.LTEQ -> if (element.right.isZero()) element.left else null
-        else -> null
     }
 }

@@ -25,8 +25,10 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -213,33 +215,35 @@ fun KtElement?.isZero() = this?.text == "0"
 
 fun KtElement?.isOne() = this?.text == "1"
 
-fun KtExpression?.receiverTypeIfSelectorIsSizeOrLength(): KotlinType? {
+fun KtExpression?.receiverTypeIfSelectorIsSizeOrLength(context: BindingContext? = null): KotlinType? {
     val selector = (this as? KtDotQualifiedExpression)?.selectorExpression ?: this
     val predicate: (KotlinType) -> Boolean = when (selector?.text) {
         "size" -> { type ->
             KotlinBuiltIns.isArray(type) ||
                     KotlinBuiltIns.isPrimitiveArray(type) ||
                     KotlinBuiltIns.isCollectionOrNullableCollection(type) ||
+                    KotlinBuiltIns.isListOrNullableList(type) ||
+                    KotlinBuiltIns.isSetOrNullableSet(type) ||
                     KotlinBuiltIns.isMapOrNullableMap(type)
         }
         "length" -> KotlinBuiltIns::isCharSequenceOrNullableCharSequence
         else -> return null
     }
-    val resolvedCall = selector.resolveToCall() ?: return null
+    val resolvedCall = selector.getResolvedCall(context ?: selector.analyze(BodyResolveMode.PARTIAL)) ?: return null
     val receiverType = (resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver)?.type ?: return null
     return receiverType.takeIf { (it.constructor.supertypes + it).any(predicate) }
 }
 
-fun KtExpression?.isSizeOrLength() = receiverTypeIfSelectorIsSizeOrLength() != null
+fun KtExpression?.isSizeOrLength(context: BindingContext? = null) = receiverTypeIfSelectorIsSizeOrLength(context) != null
 
 private val COUNT_FUNCTIONS = listOf(FqName("kotlin.collections.count"), FqName("kotlin.text.count"))
 
-fun KtExpression.isCountCall(predicate: (KtCallExpression) -> Boolean = { true }): Boolean {
+fun KtExpression.isCountCall(context: BindingContext? = null, predicate: (KtCallExpression) -> Boolean = { true }): Boolean {
     val callExpression = this as? KtCallExpression
         ?: (this as? KtQualifiedExpression)?.callExpression
         ?: return false
     if (!predicate(callExpression)) return false
-    return callExpression.isCalling(COUNT_FUNCTIONS)
+    return callExpression.isCalling(COUNT_FUNCTIONS, context)
 }
 
 fun KtDotQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =

@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test(list: List<Int>?) {
+    if (!list.isNullOrEmpty()) println(list.size) else println(0)
+}

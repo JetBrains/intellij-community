@@ -20,16 +20,20 @@ class ReplaceSizeCheckWithIsNotEmptyInspection : IntentionBasedInspection<KtBina
 class ReplaceSizeCheckWithIsNotEmptyIntention : ReplaceSizeCheckIntention(KotlinBundle.lazyMessage("replace.size.check.with.isnotempty")) {
     override fun getGenerateMethodSymbol() = "isNotEmpty()"
 
-    override fun getTargetExpression(element: KtBinaryExpression): KtExpression? = when (element.operationToken) {
-        KtTokens.EXCLEQ -> when {
-            element.right.isZero() -> element.left
-            element.left.isZero() -> element.right
+    override fun getTargetExpression(element: KtBinaryExpression) = getCheckedExpression(element)
+
+    companion object {
+        fun getCheckedExpression(element: KtBinaryExpression): KtExpression? = when (element.operationToken) {
+            KtTokens.EXCLEQ -> when {
+                element.right.isZero() -> element.left
+                element.left.isZero() -> element.right
+                else -> null
+            }
+            KtTokens.GT -> if (element.right.isZero()) element.left else null
+            KtTokens.LT -> if (element.left.isZero()) element.right else null
+            KtTokens.GTEQ -> if (element.right.isOne()) element.left else null
+            KtTokens.LTEQ -> if (element.left.isOne()) element.right else null
             else -> null
         }
-        KtTokens.GT -> if (element.right.isZero()) element.left else null
-        KtTokens.LT -> if (element.left.isZero()) element.right else null
-        KtTokens.GTEQ -> if (element.right.isOne()) element.left else null
-        KtTokens.LTEQ -> if (element.left.isOne()) element.right else null
-        else -> null
     }
 }

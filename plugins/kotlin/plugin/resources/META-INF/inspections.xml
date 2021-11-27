@@ -2944,6 +2944,15 @@
                      language="kotlin"
                      runForWholeFile="true"
                      key="inspection.unnecessary.opt_in.annotation.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceWithIsNullOrEmptyInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.replace.with.is.null.or.empty.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 
 </idea-plugin>

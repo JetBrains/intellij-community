@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test(set: MutableSet<Int>?) {
+    val x = set.isNullOrEmpty()
+}
