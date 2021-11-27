@@ -1,19 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ui.hover.HoverListener;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 
-import static javax.swing.SwingUtilities.convertPointFromScreen;
-
 final class HoverService {
-  private final ComponentPoint outer = new ComponentPoint();
-  private final ComponentPoint inner = new ComponentPoint();
+  private final SmartList<ComponentPoint> hierarchy = new SmartList<>();
 
   void process(@NotNull AWTEvent event) {
     if (event instanceof MouseEvent) {
@@ -22,84 +23,63 @@ final class HoverService {
   }
 
   private void process(@NotNull MouseEvent event) {
-    Component component = getShowingComponent(event);
-    outer.updateComponent(component);
-    outer.x = event.getXOnScreen();
-    outer.y = event.getYOnScreen();
-    updateHovered(component == null ? null : getHoveredComponent(component, event.getX(), event.getY()));
-  }
-
-  private void updateHovered(@Nullable Component component) {
-    Component old = inner.updateComponent(component);
-    if (component != old && old != null) {
-      HoverListener.getAll(old).forEach(listener -> listener.mouseExited(old));
-    }
-    if (component != null) {
-      Point point = new Point(outer.x, outer.y);
-      convertPointFromScreen(point, component);
-      if (component != old) {
-        inner.x = point.x;
-        inner.y = point.y;
-        HoverListener.getAll(component).forEach(listener -> listener.mouseEntered(component, point.x, point.y));
-      }
-      else if (inner.x != point.x || inner.y != point.y) {
-        inner.x = point.x;
-        inner.y = point.y;
-        HoverListener.getAll(component).forEach(listener -> listener.mouseMoved(component, point.x, point.y));
+    SmartList<Component> components = new SmartList<>();
+    if (MouseEvent.MOUSE_EXITED != event.getID()) {
+      Component parent = event.getComponent();
+      if (parent != null && parent.isShowing()) {
+        Component component = SwingUtilities.getDeepestComponentAt(parent, event.getX(), event.getY());
+        while (component != null && !(component instanceof Window)) {
+          if (!HoverListener.getAll(component).isEmpty()) components.add(0, component);
+          component = component.getParent();
+        }
       }
     }
-  }
-
-  private static @Nullable Component getShowingComponent(@NotNull MouseEvent event) {
-    if (MouseEvent.MOUSE_EXITED == event.getID()) return null;
-    Component component = event.getComponent();
-    return component != null && component.isShowing() ? component : null;
-  }
-
-  private static @Nullable Component getHoveredComponent(@NotNull Component parent, @Nullable Component child, int x, int y) {
-    return parent != child && child != null && child.isVisible()
-           ? getHoveredComponent(child, x - child.getX(), y - child.getY())
-           : null;
-  }
-
-  private static @Nullable Component getHoveredComponent(@NotNull Component parent, int x, int y) {
-    if (parent instanceof Container) {
-      if (!parent.contains(x, y)) return null;
-      Container container = (Container)parent;
-      for (Component child : container.getComponents()) {
-        Component component = getHoveredComponent(parent, child, x, y);
-        if (component != null) return component;
-      }
+    int componentsCount = components.size();
+    int hierarchySize = hierarchy.size();
+    int index = 0;
+    while (index < hierarchySize && index < componentsCount && components.get(index) == hierarchy.get(index).reference.get()) index++;
+    while (index < hierarchySize) hierarchy.remove(--hierarchySize).mouseExited();
+    if (index == componentsCount) {
+      if (index > 0) hierarchy.get(index - 1).mouseMoved(event);
     }
     else {
-      Component component = getHoveredComponent(parent, parent.getComponentAt(x, y), x, y);
-      if (component != null) return component;
+      while (index < componentsCount) hierarchy.add(new ComponentPoint(event, components.get(index++)));
     }
-    return HoverListener.getAll(parent).isEmpty() ? null : parent;
   }
 
 
   private static final class ComponentPoint {
-    private WeakReference<Component> reference;
-    int x;
-    int y;
+    private final WeakReference<Component> reference;
+    private final Point point;
 
-    @Nullable
-    Component getComponent() {
-      WeakReference<Component> reference = this.reference;
-      return reference == null ? null : reference.get();
+    private ComponentPoint(@NotNull MouseEvent event, @NotNull Component component) {
+      reference = new WeakReference<>(component);
+      point = new Point(event.getXOnScreen(), event.getYOnScreen());
+      SwingUtilities.convertPointFromScreen(point, component);
+      for (HoverListener listener : HoverListener.getAll(component)) {
+        listener.mouseEntered(component, point.x, point.y);
+      }
     }
 
-    @Nullable
-    Component updateComponent(@Nullable Component component) {
-      Component old = getComponent();
-      if (component == null) {
-        reference = null;
+    private void mouseMoved(@NotNull MouseEvent event) {
+      Component component = reference.get();
+      if (component == null) return; // component is already collected
+      int x = point.x;
+      int y = point.y;
+      point.setLocation(event.getXOnScreen(), event.getYOnScreen());
+      SwingUtilities.convertPointFromScreen(point, component);
+      if (point.x == x && point.y == y) return; // mouse location is not changed
+      for (HoverListener listener : HoverListener.getAll(component)) {
+        listener.mouseMoved(component, point.x, point.y);
       }
-      else if (component != old) {
-        reference = new WeakReference<>(component);
+    }
+
+    private void mouseExited() {
+      Component component = reference.get();
+      if (component == null) return; // component is already collected
+      for (HoverListener listener : HoverListener.getAll(component)) {
+        listener.mouseExited(component);
       }
-      return old;
     }
   }
 }
