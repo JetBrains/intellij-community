@@ -6571,6 +6571,264 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 }
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount")
+        public abstract static class PlaceholderCountMatchesArgumentCount extends AbstractLocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j")
+            public static class Log4j extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("debug.kt")
+                public void testDebug() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debug.kt");
+                }
+
+                @TestMetadata("debugConstant.kt")
+                public void testDebugConstant() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugConstant.kt");
+                }
+
+                @TestMetadata("debugConstantCorrect.kt")
+                public void testDebugConstantCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugConstantCorrect.kt");
+                }
+
+                @TestMetadata("debugCorrect.kt")
+                public void testDebugCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugCorrect.kt");
+                }
+
+                @TestMetadata("debugException.kt")
+                public void testDebugException() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugException.kt");
+                }
+
+                @TestMetadata("debugException2.kt")
+                public void testDebugException2() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugException2.kt");
+                }
+
+                @TestMetadata("debugException3.kt")
+                public void testDebugException3() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugException3.kt");
+                }
+
+                @TestMetadata("debugExceptionCorrect1.kt")
+                public void testDebugExceptionCorrect1() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugExceptionCorrect1.kt");
+                }
+
+                @TestMetadata("debugExceptionCorrect2.kt")
+                public void testDebugExceptionCorrect2() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugExceptionCorrect2.kt");
+                }
+
+                @TestMetadata("debugExtend.kt")
+                public void testDebugExtend() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugExtend.kt");
+                }
+
+                @TestMetadata("debugExtendCorrect.kt")
+                public void testDebugExtendCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugExtendCorrect.kt");
+                }
+
+                @TestMetadata("debugLess.kt")
+                public void testDebugLess() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugLess.kt");
+                }
+
+                @TestMetadata("debugMarker.kt")
+                public void testDebugMarker() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/debugMarker.kt");
+                }
+
+                @TestMetadata("error.kt")
+                public void testError() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/error.kt");
+                }
+
+                @TestMetadata("fatal.kt")
+                public void testFatal() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/fatal.kt");
+                }
+
+                @TestMetadata("info.kt")
+                public void testInfo() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/info.kt");
+                }
+
+                @TestMetadata("trace.kt")
+                public void testTrace() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/trace.kt");
+                }
+
+                @TestMetadata("warn.kt")
+                public void testWarn() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4j/warn.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4jBuilder")
+            public static class Log4jBuilder extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("log.kt")
+                public void testLog() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4jBuilder/log.kt");
+                }
+
+                @TestMetadata("logCorrect.kt")
+                public void testLogCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4jBuilder/logCorrect.kt");
+                }
+
+                @TestMetadata("logException.kt")
+                public void testLogException() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4jBuilder/logException.kt");
+                }
+
+                @TestMetadata("logException2.kt")
+                public void testLogException2() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4jBuilder/logException2.kt");
+                }
+
+                @TestMetadata("logExceptionCorrect1.kt")
+                public void testLogExceptionCorrect1() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4jBuilder/logExceptionCorrect1.kt");
+                }
+
+                @TestMetadata("logExceptionCorrect2.kt")
+                public void testLogExceptionCorrect2() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4jBuilder/logExceptionCorrect2.kt");
+                }
+
+                @TestMetadata("logExceptionCorrect3.kt")
+                public void testLogExceptionCorrect3() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4jBuilder/logExceptionCorrect3.kt");
+                }
+
+                @TestMetadata("logExceptionCorrect4.kt")
+                public void testLogExceptionCorrect4() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/log4jBuilder/logExceptionCorrect4.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j")
+            public static class Slf4j extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("debug.kt")
+                public void testDebug() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debug.kt");
+                }
+
+                @TestMetadata("debugArray.kt")
+                public void testDebugArray() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugArray.kt");
+                }
+
+                @TestMetadata("debugArrayCorrect.kt")
+                public void testDebugArrayCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugArrayCorrect.kt");
+                }
+
+                @TestMetadata("debugArrayException.kt")
+                public void testDebugArrayException() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugArrayException.kt");
+                }
+
+                @TestMetadata("debugArrayExceptionCorrect.kt")
+                public void testDebugArrayExceptionCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugArrayExceptionCorrect.kt");
+                }
+
+                @TestMetadata("debugConstant.kt")
+                public void testDebugConstant() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugConstant.kt");
+                }
+
+                @TestMetadata("debugConstantCorrect.kt")
+                public void testDebugConstantCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugConstantCorrect.kt");
+                }
+
+                @TestMetadata("debugCorrect.kt")
+                public void testDebugCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugCorrect.kt");
+                }
+
+                @TestMetadata("debugEscaped.kt")
+                public void testDebugEscaped() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugEscaped.kt");
+                }
+
+                @TestMetadata("debugEscapedCorrect.kt")
+                public void testDebugEscapedCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugEscapedCorrect.kt");
+                }
+
+                @TestMetadata("debugException.kt")
+                public void testDebugException() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugException.kt");
+                }
+
+                @TestMetadata("debugExceptionCorrect.kt")
+                public void testDebugExceptionCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugExceptionCorrect.kt");
+                }
+
+                @TestMetadata("debugExtend.kt")
+                public void testDebugExtend() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugExtend.kt");
+                }
+
+                @TestMetadata("debugExtendCorrect.kt")
+                public void testDebugExtendCorrect() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugExtendCorrect.kt");
+                }
+
+                @TestMetadata("debugLess.kt")
+                public void testDebugLess() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugLess.kt");
+                }
+
+                @TestMetadata("debugMarker.kt")
+                public void testDebugMarker() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/debugMarker.kt");
+                }
+
+                @TestMetadata("error.kt")
+                public void testError() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/error.kt");
+                }
+
+                @TestMetadata("info.kt")
+                public void testInfo() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/info.kt");
+                }
+
+                @TestMetadata("trace.kt")
+                public void testTrace() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/trace.kt");
+                }
+
+                @TestMetadata("warn.kt")
+                public void testWarn() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/placeholderCountMatchesArgumentCount/slf4j/warn.kt");
+                }
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
