@@ -7,11 +7,11 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.analyseForUast
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.KtAnnotationCall
-import org.jetbrains.kotlin.analysis.api.calls.getSingleCandidateSymbolOrNull
+import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -39,15 +39,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyseForUast(ktCallElement) {
-            val argumentMapping = ktCallElement.resolveCall()?.argumentMapping ?: return null
+            val argumentMapping = ktCallElement.resolveCall().singleFunctionCallOrNull()?.argumentMapping ?: return null
             val handledParameters = mutableSetOf<KtValueParameterSymbol>()
             val valueArguments = SmartList<UNamedExpression>()
             // NB: we need a loop over call element's value arguments to preserve their order.
             ktCallElement.valueArguments.forEach {
-                val parameter = argumentMapping[it.getArgumentExpression()] ?: return@forEach
+                val parameter = argumentMapping[it.getArgumentExpression()]?.symbol ?: return@forEach
                 if (!handledParameters.add(parameter)) return@forEach
                 val arguments = argumentMapping.entries
-                    .filter { (_, param) -> param == parameter }
+                    .filter { (_, param) -> param.symbol == parameter }
                     .mapNotNull { (arg, _) -> arg.parentValueArgument }
                 val name = parameter.name.asString()
                 when {
@@ -65,8 +65,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun findAttributeValueExpression(uAnnotation: KotlinUAnnotation, arg: ValueArgument): UExpression? {
         val annotationEntry = uAnnotation.sourcePsi
         analyseForUast(annotationEntry) {
-            val resolvedAnnotationCall = annotationEntry.resolveCall() as? KtAnnotationCall ?: return null
-            val parameter = resolvedAnnotationCall.argumentMapping[arg.getArgumentExpression()] ?: return null
+            val resolvedAnnotationCall = annotationEntry.resolveCall().singleCallOrNull<KtAnnotationCall>() ?: return null
+            val parameter = resolvedAnnotationCall.argumentMapping[arg.getArgumentExpression()]?.symbol ?: return null
             val namedExpression = uAnnotation.attributeValues.find { it.name == parameter.name.asString() }
             return namedExpression?.expression as? KotlinUVarargExpression ?: namedExpression
         }
@@ -75,7 +75,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression? {
         analyseForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
-                ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() as? KtConstructorSymbol ?: return null
+                ktCallElement.resolveCall().singleConstructorCallOrNull()?.symbol ?: return null
             val parameter = resolvedAnnotationConstructorSymbol.valueParameters.find { it.name.asString() == name } ?: return null
             return (parameter.psi as? KtParameter)?.defaultValue
         }
@@ -83,11 +83,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
         analyseForUast(ktCallElement) {
-            val resolvedCall = ktCallElement.resolveCall() ?: return null
-            val resolvedFunctionLikeSymbol = resolvedCall.targetFunction.getSingleCandidateSymbolOrNull() ?: return null
+            val resolvedFunctionCall = ktCallElement.resolveCall().singleFunctionCallOrNull()
+            val resolvedFunctionLikeSymbol =
+                resolvedFunctionCall?.symbol ?: return null
             val parameter = resolvedFunctionLikeSymbol.valueParameters[index]
-            val arguments = resolvedCall.argumentMapping.entries
-                .filter { (_, param) -> param == parameter }
+            val arguments = resolvedFunctionCall.argumentMapping.entries
+                .filter { (_, param) -> param.symbol == parameter }
                 .mapNotNull { (arg, _) -> arg.parentValueArgument }
             return when {
                 arguments.isEmpty() -> null
@@ -153,50 +154,39 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
         val other = UastBinaryOperator.OTHER
         analyseForUast(ktBinaryExpression) {
-            val resolvedCall = ktBinaryExpression.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() ?: return other
-            val operatorName = resolvedCall.callableIdIfNonLocal?.callableName?.asString() ?: return other
+            val resolvedCall = ktBinaryExpression.resolveCall()?.singleFunctionCallOrNull() ?: return other
+            val operatorName = resolvedCall.symbol.callableIdIfNonLocal?.callableName?.asString() ?: return other
             return KotlinUBinaryExpression.BITWISE_OPERATORS[operatorName] ?: other
         }
     }
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
-        when (ktElement) {
-            is KtCallElement -> {
-                analyseForUast(ktElement) {
-                    return ktElement.resolveCall()?.let { toPsiMethod(it) }
-                }
-            }
-            is KtBinaryExpression -> {
-                analyseForUast(ktElement) {
-                    return ktElement.resolveCall()?.let { toPsiMethod(it) }
-                }
-            }
-            is KtUnaryExpression -> {
-                analyseForUast(ktElement) {
-                    return ktElement.resolveCall()?.let { toPsiMethod(it) }
-                }
-            }
-            else ->
-                return null
+        return analyseForUast(ktElement) {
+            ktElement.resolveCall()?.singleFunctionCallOrNull()?.symbol?.let { toPsiMethod(it) }
         }
     }
 
     override fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
-        analyseForUast(ktSimpleNameExpression) {
-            return ktSimpleNameExpression.resolveAccessorCall()?.let { toPsiMethod(it) }
+        return analyseForUast(ktSimpleNameExpression) {
+            val variableAccessCall = ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtSimpleVariableAccessCall>() ?: return null
+            val propertySymbol = variableAccessCall.symbol as? KtPropertySymbol ?: return null
+            when (variableAccessCall.simpleAccess) {
+                is KtSimpleVariableAccess.Read -> toPsiMethod(propertySymbol.getter ?: return null)
+                is KtSimpleVariableAccess.Write -> toPsiMethod(propertySymbol.setter ?: return null)
+            }
         }
     }
 
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
         analyseForUast(ktCallElement) {
-            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() ?: return false
+            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol ?: return false
             return resolvedFunctionLikeSymbol.isExtension
         }
     }
 
     override fun resolvedFunctionName(ktCallElement: KtCallElement): String? {
         analyseForUast(ktCallElement) {
-            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() ?: return null
+            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol ?: return null
             return (resolvedFunctionLikeSymbol as? KtNamedSymbol)?.name?.identifierOrNullIfSpecial
                 ?: (resolvedFunctionLikeSymbol as? KtConstructorSymbol)?.let { SpecialNames.INIT.asString() }
         }
@@ -205,7 +195,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun qualifiedAnnotationName(ktCallElement: KtCallElement): String? {
         analyseForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
-                ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() as? KtConstructorSymbol ?: return null
+                ktCallElement.resolveCall().singleConstructorCallOrNull()?.symbol ?: return null
             return resolvedAnnotationConstructorSymbol.containingClassIdIfNonLocal
                 ?.asSingleFqName()
                 ?.toString()
@@ -215,7 +205,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun callKind(ktCallElement: KtCallElement): UastCallKind {
         analyseForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol =
-                ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() ?: return UastCallKind.METHOD_CALL
+                ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol ?: return UastCallKind.METHOD_CALL
             val fqName = resolvedFunctionLikeSymbol.callableIdIfNonLocal?.asSingleFqName()
             return when {
                 resolvedFunctionLikeSymbol is KtConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
@@ -228,7 +218,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun isAnnotationConstructorCall(ktCallElement: KtCallElement): Boolean {
         analyseForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
-                ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() as? KtConstructorSymbol ?: return false
+                ktCallElement.resolveCall().singleConstructorCallOrNull()?.symbol ?: return false
             val ktType = resolvedAnnotationConstructorSymbol.returnType
             val context = containingKtClass(resolvedAnnotationConstructorSymbol) ?: ktCallElement
             val psiClass = toPsiClass(ktType, null, context, ktCallElement.typeOwnerKind) ?: return false
@@ -238,7 +228,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiClass? {
         analyseForUast(ktCallElement) {
-            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull() ?: return null
+            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol ?: return null
             return when (resolvedFunctionLikeSymbol) {
                 is KtConstructorSymbol -> {
                     val context = containingKtClass(resolvedFunctionLikeSymbol) ?: ktCallElement
@@ -254,9 +244,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry, source: UElement): PsiClass? {
         analyseForUast(ktAnnotationEntry) {
-            val resolvedAnnotationCall = ktAnnotationEntry.resolveCall() as? KtAnnotationCall ?: return null
-            val resolvedAnnotationConstructorSymbol =
-                resolvedAnnotationCall.targetFunction.getSingleCandidateSymbolOrNull() as? KtConstructorSymbol ?: return null
+            val resolvedAnnotationCall = ktAnnotationEntry.resolveCall().singleCallOrNull<KtAnnotationCall>() ?: return null
+            val resolvedAnnotationConstructorSymbol = resolvedAnnotationCall.symbol
             val ktType = resolvedAnnotationConstructorSymbol.returnType
             val context = containingKtClass(resolvedAnnotationConstructorSymbol) ?: ktAnnotationEntry
             return toPsiClass(ktType, source, context, ktAnnotationEntry.typeOwnerKind)
@@ -354,7 +343,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         analyseForUast(ktCallElement) {
-            val ktType = ktCallElement.resolveCall()?.targetFunction?.getSingleCandidateSymbolOrNull()?.receiverType ?: return null
+            val ktType = ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol?.receiverType ?: return null
             if (ktType is KtClassErrorType) return null
             return toPsiType(ktType, source, ktCallElement, ktCallElement.typeOwnerKind, boxed = true)
         }
@@ -363,7 +352,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
         analyseForUast(ktSimpleNameExpression) {
             val ktType =
-                ktSimpleNameExpression.resolveAccessorCall()?.targetFunction?.getSingleCandidateSymbolOrNull()?.receiverType ?: return null
+                ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtVariableAccessCall>()?.symbol?.receiverType ?: return null
             if (ktType is KtClassErrorType) return null
             return toPsiType(ktType, source, ktSimpleNameExpression, ktSimpleNameExpression.typeOwnerKind, boxed = true)
         }

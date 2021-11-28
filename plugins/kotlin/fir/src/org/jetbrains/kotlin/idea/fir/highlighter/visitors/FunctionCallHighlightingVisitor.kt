@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.serialization.deserialization.KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME
 import org.jetbrains.kotlin.serialization.deserialization.KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
@@ -21,10 +22,9 @@ internal class FunctionCallHighlightingVisitor(
     override fun visitBinaryExpression(expression: KtBinaryExpression) = with(analysisSession) {
         val operationReference = expression.operationReference as? KtReferenceExpression ?: return
         if (operationReference.isAssignment()) return
-        val call = expression.resolveCall() ?: return
-        if (call.isErrorCall) return
-        if (call.isSuccessCallOf<KtFunctionSymbol> { it.isOperator }) return
-        getTextAttributesForCal(call)?.let { attributes ->
+        val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return
+        if (call is KtSimpleFunctionCall && (call.symbol as? KtFunctionSymbol)?.isOperator == true) return
+        getTextAttributesForCall(call)?.let { attributes ->
             highlightName(operationReference, attributes)
         }
         super.visitBinaryExpression(expression)
@@ -38,8 +38,8 @@ internal class FunctionCallHighlightingVisitor(
             ?.takeUnless { it is KtLambdaExpression }
             ?.takeUnless { it is KtCallExpression /* KT-16159 */ }
             ?.let { callee ->
-                expression.resolveCall()?.let { callInfo ->
-                    getTextAttributesForCal(callInfo)?.let { attributes ->
+                expression.resolveCall().singleCallOrNull<KtCall>()?.let { call ->
+                    getTextAttributesForCall(call)?.let { attributes ->
                         highlightName(callee, attributes)
                     }
                 }
@@ -47,12 +47,18 @@ internal class FunctionCallHighlightingVisitor(
         super.visitCallExpression(expression)
     }
 
-    private fun getTextAttributesForCal(call: KtCall): TextAttributesKey? = when {
-        call.isSuccessCallOf<KtFunctionSymbol> { it.isSuspend } -> Colors.SUSPEND_FUNCTION_CALL
-        call is KtFunctionCall -> when (val function = call.targetFunction.getSuccessCallSymbolOrNull()) {
+    private fun getTextAttributesForCall(call: KtCall): TextAttributesKey? {
+        if (call !is KtSimpleFunctionCall) return null
+        return when (val function = call.symbol) {
             is KtConstructorSymbol -> Colors.CONSTRUCTOR_CALL
             is KtAnonymousFunctionSymbol -> null
             is KtFunctionSymbol -> when {
+                call.isImplicitInvoke -> if (function.isBuiltinFunctionInvoke) {
+                    Colors.VARIABLE_AS_FUNCTION_CALL
+                } else {
+                    Colors.VARIABLE_AS_FUNCTION_LIKE_CALL
+                }
+                function.isSuspend -> Colors.SUSPEND_FUNCTION_CALL
                 function.callableIdIfNonLocal == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID -> Colors.KEYWORD
                 function.isExtension -> Colors.EXTENSION_FUNCTION_CALL
                 function.symbolKind == KtSymbolKind.TOP_LEVEL -> Colors.PACKAGE_FUNCTION_CALL
@@ -60,8 +66,5 @@ internal class FunctionCallHighlightingVisitor(
             }
             else -> Colors.FUNCTION_CALL //TODO ()
         }
-        call is KtFunctionalTypeVariableCall -> Colors.VARIABLE_AS_FUNCTION_CALL
-        call is KtVariableWithInvokeFunctionCall -> Colors.VARIABLE_AS_FUNCTION_LIKE_CALL
-        else -> null
     }
 }
