@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.calls
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.psi.*
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
@@ -23,14 +25,16 @@ internal fun KtAnalysisSession.resolveCallCandidates(callElement: KtElement): Li
         is KtArrayAccessExpression -> Pair(callElement.resolveCall(), callElement.arrayExpression)
         else -> return emptyList()
     }
-    if (resolvedCall == null) return emptyList()
-
 
     val fileSymbol = callElement.containingKtFile.getFileSymbol()
-    return resolvedCall.targetFunction.candidates.filter { filterCandidate(it, callElement, fileSymbol, receiver) }.map {
-        // TODO: The argument mapping and substitutor should also be per-candidate once we have all candidates available.
-        CandidateWithMapping(it, resolvedCall.argumentMapping, resolvedCall.substitutor)
-    }
+    return resolvedCall.calls.filterIsInstance<KtFunctionCall<*>>()
+        .filter { filterCandidate(it.symbol, callElement, fileSymbol, receiver) }
+        .map {
+            CandidateWithMapping(
+                it.partiallyAppliedSymbol.signature,
+                it.argumentMapping,
+            )
+        }
 }
 
 internal fun KtAnalysisSession.filterCandidate(
@@ -63,7 +67,6 @@ internal fun KtAnalysisSession.filterCandidate(
 }
 
 internal data class CandidateWithMapping(
-    val candidate: KtFunctionLikeSymbol,
-    val argumentMapping: LinkedHashMap<KtExpression, KtValueParameterSymbol>,
-    val substitutor: KtSubstitutor,
+    val candidate: KtFunctionLikeSignature<KtFunctionLikeSymbol>,
+    val argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
 )
