@@ -3,17 +3,21 @@ package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.analysis.api.calls.KtCall
-import org.jetbrains.kotlin.analysis.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.SingleArgumentInput as Input
 
 class HLAddNameToArgumentIntention :
@@ -27,9 +31,9 @@ class HLAddNameToArgumentIntention :
         if (shouldBeLastUnnamed && element != argumentList.arguments.last { !it.isNamed() }) return@inputProvider null
 
         val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null
-        val resolvedCall = callElement.resolveCall() ?: return@inputProvider null
+        val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return@inputProvider null
 
-        if (resolvedCall.targetFunction.getSingleCandidateSymbolOrNull()?.hasStableParameterNames != true) {
+        if (!resolvedCall.symbol.hasStableParameterNames) {
             return@inputProvider null
         }
 
@@ -40,8 +44,8 @@ class HLAddNameToArgumentIntention :
             element is KtContainerNode || super.skipProcessingFurtherElementsAfter(element)
 
     companion object {
-        fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtCall): Name? {
-            val valueParameterSymbol = resolvedCall.argumentMapping[argument.getArgumentExpression()] ?: return null
+        fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtFunctionCall<*>): Name? {
+            val valueParameterSymbol = resolvedCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: return null
             if (valueParameterSymbol.isVararg) {
                 if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
                     !argument.isSpread
@@ -55,7 +59,7 @@ class HLAddNameToArgumentIntention :
                 //
                 //   foo(1, 2) // Can NOT add `i = ` to either argument
                 //   foo(1)    // Can change to `i = 1`
-                val varargArgumentCount = resolvedCall.argumentMapping.values.count { it == valueParameterSymbol }
+                val varargArgumentCount = resolvedCall.argumentMapping.values.count { it.symbol == valueParameterSymbol }
                 if (varargArgumentCount != 1) {
                     return null
                 }
