@@ -52,7 +52,7 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                             ULiteralExpression (value = -1) [-1] : PsiType:int
                     ULiteralExpression (value = "O") ["O"] : PsiType:String
                 UBinaryExpression (operator = +=) [s[2, --2] += "K"] : PsiType:Unit
-                    UArrayAccessExpression [s[2, --2]] : PsiType:Unit
+                    UArrayAccessExpression [s[2, --2]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String[]
                         ULiteralExpression (value = 2) [2] : PsiType:int
                         UPrefixExpression (operator = -) [--2] : PsiType:int
