@@ -4,6 +4,7 @@ package com.intellij.feedback.dialog
 import com.intellij.feedback.DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
 import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.feedback.createFeedbackAgreementComponent
+import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
 import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
 import com.intellij.feedback.submitGeneralFeedback
 import com.intellij.ide.feedback.RatingComponent
@@ -88,6 +89,8 @@ class ProjectCreationFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
+    val projectCreationInfoState = ProjectCreationInfoService.getInstance().state
+    projectCreationInfoState.feedbackSent = true
     ProjectCreationFeedbackCountCollector.logFeedbackAttemptToSend()
     val email = if (checkBoxEmailProperty.get()) textFieldEmailProperty.get() else DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
     submitGeneralFeedback(project,
