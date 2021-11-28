@@ -2,15 +2,17 @@
 package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
-import org.jetbrains.kotlin.analysis.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.idea.util.textRangeIn
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.MultipleArgumentsInput as Input
 
 class HLAddNamesToCallArgumentsIntention :
@@ -30,9 +32,9 @@ class HLAddNamesToCallArgumentsIntention :
     }
 
     override val inputProvider: HLApplicatorInputProvider<KtCallElement, Input> = inputProvider { element ->
-        val resolvedCall = element.resolveCall() ?: return@inputProvider null
+        val resolvedCall = element.resolveCall().singleFunctionCallOrNull() ?: return@inputProvider null
 
-        if (resolvedCall.targetFunction.getSingleCandidateSymbolOrNull()?.hasStableParameterNames != true) {
+        if (!resolvedCall.symbol.hasStableParameterNames) {
             return@inputProvider null
         }
 
