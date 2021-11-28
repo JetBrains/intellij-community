@@ -1,7 +1,7 @@
 <idea-plugin package="com.intellij.feedback">
   <extensions defaultExtensionNs="com.intellij">
 
-    <applicationService serviceImplementation="com.intellij.feedback.state.createdProject.NewProjectStatisticService"/>
+    <applicationService serviceImplementation="com.intellij.feedback.state.projectCreation.ProjectCreationInfoService"/>
 
     <notificationGroup displayType="BALLOON" id="Project Creation Feedback" bundle="messages.FeedbackMessages"/>
 
