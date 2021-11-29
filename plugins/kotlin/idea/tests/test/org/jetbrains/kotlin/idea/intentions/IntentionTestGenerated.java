@@ -8524,6 +8524,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertToScope/convertToRun/callExpression2.kt");
             }
 
+            @TestMetadata("chainCallExpression.kt")
+            public void testChainCallExpression() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToRun/chainCallExpression.kt");
+            }
+
             @TestMetadata("insideLambdaExpression.kt")
             public void testInsideLambdaExpression() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToRun/insideLambdaExpression.kt");

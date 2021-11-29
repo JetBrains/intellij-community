@@ -126,10 +126,8 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         firstTarget: PsiElement,
         lastTarget: PsiElement,
         referenceElement: PsiElement
-    )
-            : RefactoringTargetAndItsValueExpression? {
-
-        val property by lazy(LazyThreadSafetyMode.NONE) { expressionToApply.prevProperty() }
+    ): RefactoringTargetAndItsValueExpression? {
+        val property = expressionToApply.prevProperty()
 
         val propertyOrFirst = when (scopeFunction) {
             ALSO, APPLY -> property
@@ -145,7 +143,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         if (!isCorrectFirstOrProperty) return null
 
         val targetElementValue =
-            property?.nextSibling?.takeIf { it.parent == referenceElement.parent } ?: firstTarget
+            property?.nextSibling?.takeIf { it.parent == referenceElement.parent && it.textOffset < lastTarget.textOffset } ?: firstTarget
         return RefactoringTargetAndItsValueExpression(propertyOrFirst, targetElementValue)
     }
 
