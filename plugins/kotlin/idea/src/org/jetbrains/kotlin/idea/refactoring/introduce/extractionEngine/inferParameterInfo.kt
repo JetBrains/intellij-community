@@ -353,6 +353,7 @@ private fun suggestParameterType(
                 builtIns,
                 Annotations.EMPTY,
                 originalDescriptor.extensionReceiverParameter?.type,
+                originalDescriptor.contextReceiverParameters.map { it.type },
                 originalDescriptor.valueParameters.map { it.type },
                 originalDescriptor.valueParameters.map { it.name },
                 originalDescriptor.returnType ?: builtIns.defaultReturnType

@@ -592,6 +592,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
 
                 LanguageFeature.ExplicitBackingFields
             }
+            CONTEXT_KEYWORD -> LanguageFeature.ContextReceivers
             else -> return true
         }
         return languageVersionSettings.supportsFeature(feature)
