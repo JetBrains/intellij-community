@@ -346,7 +346,7 @@ public class WSLDistribution {
       commandLine.addParameter(linuxCommandStr);
     }
 
-    if (Registry.is("wsl.use.utf8.encoding")) {
+    if (Registry.is("wsl.use.utf8.encoding", true)) {
       // Unlike the default system encoding on Windows (e.g. cp-1251),
       // UTF-8 is the default for most Linux distributions
       commandLine.setCharset(StandardCharsets.UTF_8);
