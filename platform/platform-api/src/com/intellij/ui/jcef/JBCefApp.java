@@ -33,11 +33,13 @@ import org.cef.handler.CefAppHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -305,7 +307,7 @@ public final class JBCefApp {
       if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
         return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
       }
-      if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+      if (GraphicsEnvironment.isHeadless() &&
           !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled"))
       {
         return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
