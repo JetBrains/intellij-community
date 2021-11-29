@@ -3,10 +3,10 @@ package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.HeadlessRule;
+import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.*;
 import org.junit.rules.TestRule;
 
-import static com.intellij.ui.scale.TestScaleHelper.*;
 import static junit.framework.TestCase.*;
 
 /**
@@ -21,13 +21,17 @@ public class JBCefTestModeTest {
 
   @Before
   public void before() {
-    assumeStandalone();
+    TestScaleHelper.assumeStandalone();
+  }
+  @After
+  public void after() {
+    TestScaleHelper.restoreRegistryProperties();
   }
 
   @Test
   public void test() {
-    setRegistryProperty("ide.browser.jcef.headless.enabled", "false");
-    setRegistryProperty("ide.browser.jcef.testMode.enabled", "false");
+    TestScaleHelper.setRegistryProperty("ide.browser.jcef.headless.enabled", "false");
+    TestScaleHelper.setRegistryProperty("ide.browser.jcef.testMode.enabled", "false");
 
     assertFalse(JBCefApp.isSupported());
 
@@ -38,8 +42,8 @@ public class JBCefTestModeTest {
     catch (IllegalStateException ignore) {
     }
 
-    setRegistryProperty("ide.browser.jcef.headless.enabled", "true");
-    setRegistryProperty("ide.browser.jcef.testMode.enabled", "true");
+    TestScaleHelper.setRegistryProperty("ide.browser.jcef.headless.enabled", "true");
+    TestScaleHelper.setRegistryProperty("ide.browser.jcef.testMode.enabled", "true");
 
     assertTrue(JBCefApp.isSupported());
     assertNotNull(JBCefApp.getInstance());

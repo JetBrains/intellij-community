@@ -29,6 +29,10 @@ public class JBCefHeadlessOsrTest {
     TestScaleHelper.setRegistryProperty("ide.browser.jcef.headless.enabled", "true");
     TestScaleHelper.setRegistryProperty("ide.browser.jcef.osr.enabled", "true");
   }
+  @After
+  public void after() {
+    TestScaleHelper.restoreRegistryProperties();
+  }
 
   @Test
   public void test() {
