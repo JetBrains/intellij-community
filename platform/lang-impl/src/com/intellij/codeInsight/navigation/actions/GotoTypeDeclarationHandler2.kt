@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
@@ -36,20 +36,20 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
     if (result == null) {
       return
     }
-    gotoTypeDeclaration(editor, file, result)
+    gotoTypeDeclaration(project, editor, result)
   }
 
-  private fun gotoTypeDeclaration(editor: Editor, file: PsiFile, actionResult: GTTDActionResult) {
+  private fun gotoTypeDeclaration(project: Project, editor: Editor, actionResult: GTTDActionResult) {
     when (actionResult) {
       is GTTDActionResult.SingleTarget -> {
-        gotoTarget(editor, file, actionResult.navigatable())
+        gotoTarget(project, actionResult.navigatable())
       }
       is GTTDActionResult.MultipleTargets -> {
         val popup = createTargetPopup(
           CodeInsightBundle.message("choose.type.popup.title"),
           actionResult.targets, SingleTargetWithPresentation::presentation
         ) { (navigatable, _) ->
-          gotoTarget(editor, file, navigatable())
+          gotoTarget(project, navigatable())
         }
         popup.showInBestPositionFor(editor)
       }

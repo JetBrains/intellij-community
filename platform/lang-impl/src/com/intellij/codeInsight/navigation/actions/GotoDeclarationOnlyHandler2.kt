@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
@@ -32,7 +32,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration.only")
-    if (navigateToLookupItem(project, editor, file)) {
+    if (navigateToLookupItem(project)) {
       return
     }
     if (EditorUtil.isCaretInVirtualSpace(editor)) {
@@ -55,16 +55,15 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
       notifyNowhereToGo(project, editor, file, offset)
     }
     else {
-      gotoDeclaration(editor, file, actionResult)
+      gotoDeclaration(project, editor, actionResult)
     }
   }
 
-  internal fun gotoDeclaration(editor: Editor, file: PsiFile, actionResult: GTDActionResult) {
+  internal fun gotoDeclaration(project: Project, editor: Editor, actionResult: GTDActionResult) {
     when (actionResult) {
       is GTDActionResult.SingleTarget -> {
         recordAndNavigate(
-          editor, file, actionResult.navigatable(),
-          GotoDeclarationAction.getCurrentEventData(), actionResult.navigationProvider
+          project, actionResult.navigatable(), GotoDeclarationAction.getCurrentEventData(), actionResult.navigationProvider
         )
       }
       is GTDActionResult.MultipleTargets -> {
@@ -75,7 +74,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
           CodeInsightBundle.message("declaration.navigation.title"),
           actionResult.targets, GTDTarget::presentation
         ) { (navigatable, _, navigationProvider) ->
-          recordAndNavigate(editor, file, navigatable(), eventData, navigationProvider)
+          recordAndNavigate(project, navigatable(), eventData, navigationProvider)
         }
         popup.showInBestPositionFor(editor)
       }
@@ -83,8 +82,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
   }
 
   private fun recordAndNavigate(
-    editor: Editor,
-    file: PsiFile,
+    project: Project,
     navigatable: Navigatable,
     eventData: List<EventPair<*>>,
     navigationProvider: Any?
@@ -92,6 +90,6 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
     if (navigationProvider != null) {
       GTDUCollector.recordNavigated(eventData, navigationProvider.javaClass)
     }
-    gotoTarget(editor, file, navigatable)
+    gotoTarget(project, navigatable)
   }
 }
