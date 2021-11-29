@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.util.SmartList
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
@@ -12,7 +11,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 internal class DialogPanelConfig {
 
-  var spacing = createIntelliJSpacingConfiguration()
+  var spacing = SpacingConfiguration.createIntelliJSpacingConfiguration()
   val context = Context()
 
   var preferredFocusedComponent: JComponent? = null
@@ -27,25 +26,6 @@ internal class DialogPanelConfig {
 
 fun <T> MutableMap<JComponent?, MutableList<() -> T>>.register(component: JComponent?, callback: () -> T) {
   getOrPut(component) { SmartList() }.add(callback)
-}
-
-// https://jetbrains.github.io/ui/controls/input_field/#spacing
-@ApiStatus.Experimental
-fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
-  return object : SpacingConfiguration {
-
-    override val horizontalSmallGap = JBUI.scale(6)
-    override val horizontalDefaultGap = JBUI.scale(16)
-    override val horizontalColumnsGap = JBUI.scale(60)
-    override val horizontalIndent = JBUI.scale(20)
-    override val horizontalToggleButtonIndent = JBUI.scale(20)
-    override val verticalComponentGap = JBUI.scale(6)
-    override val verticalSmallGap = JBUI.scale(8)
-    override val verticalMediumGap = JBUI.scale(20)
-    override val buttonGroupHeaderBottomGap = JBUI.scale(2)
-    override val segmentedButtonVerticalGap = JBUI.scale(3)
-    override val segmentedButtonHorizontalGap= JBUI.scale(12)
-  }
 }
 
 internal class Context {
