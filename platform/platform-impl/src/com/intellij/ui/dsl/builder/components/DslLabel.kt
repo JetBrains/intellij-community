@@ -102,17 +102,19 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
       return text
     }
 
-    val result = mutableListOf<String>()
+    val result = StringBuilder()
     val externalLink = EXTERNAL_LINK_ICON.toString()
     var i = 0
     for (matcher in matchers) {
       val linkEnd = matcher.groups[LINK_GROUP]!!.range.last
-      result += text.substring(i..linkEnd)
-      result += externalLink
+      result.append(text.substring(i..linkEnd))
+      result.append(externalLink)
       i = linkEnd + 1
     }
-    result += text.substring(i)
-    return result.joinToString("")
+    result.append(text.substring(i))
+
+    @Suppress("HardCodedStringLiteral")
+    return result.toString()
   }
 
   private fun patchFont() {
