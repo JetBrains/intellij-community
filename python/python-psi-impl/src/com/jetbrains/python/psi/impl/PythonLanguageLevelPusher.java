@@ -39,6 +39,7 @@ import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
@@ -222,7 +223,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, distinctSdks);
 
-    if (needToReparseOpenFiles) {
+    if (needToReparseOpenFiles) {//todo[lene] move it after updating SDKs?
       ApplicationManager.getApplication().invokeLater(() -> {
         if (project.isDisposed()) {
           return;
@@ -254,6 +255,13 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
 
   private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull Set<Sdk> sdks) {
     final List<Runnable> results = new ArrayList<>();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+      final LanguageLevel languageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
+      for (VirtualFile root : PyUtil.getSourceRoots(module)) { //todo fix to proper project root collection for Python
+        addRootIndexingTask(root, results, project, languageLevel);
+      }
+    }
     for (Sdk sdk : sdks) {
       if (PythonSdkUtil.isDisposed(sdk)) continue;
 
@@ -262,12 +270,19 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
         if (!root.isValid() || PyTypeShed.INSTANCE.isInside(root)) {
           continue;
         }
-        final VirtualFile parent = root.getParent();
-        final boolean shouldSuppressSizeLimit = parent != null && parent.getName().equals(PythonSdkUtil.SKELETON_DIR_NAME);
-        results.add(new UpdateRootTask(project, root, languageLevel, shouldSuppressSizeLimit));
+        addRootIndexingTask(root, results, project, languageLevel);
       }
     }
     return results;
+  }
+
+  private void addRootIndexingTask(@NotNull VirtualFile root,
+                                   @NotNull List<Runnable> results,
+                                   @NotNull Project project,
+                                   @NotNull LanguageLevel languageLevel) {
+    final VirtualFile parent = root.getParent();
+    final boolean shouldSuppressSizeLimit = parent != null && parent.getName().equals(PythonSdkUtil.SKELETON_DIR_NAME);
+    results.add(new UpdateRootTask(project, root, languageLevel, shouldSuppressSizeLimit));
   }
 
   @NotNull
