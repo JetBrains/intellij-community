@@ -68,7 +68,7 @@ IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" (
   IF EXIST "%@@product_uc@@_VM_OPTIONS%" SET "VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%"
 )
 IF "%VM_OPTIONS_FILE%" == "" (
-``  :: 2. <IDE_HOME>\bin\[win\]<exe_name>.vmoptions ...
+  :: 2. <IDE_HOME>\bin\[win\]<exe_name>.vmoptions ...
   IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
     SET "VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions"
   ) ELSE IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" (
