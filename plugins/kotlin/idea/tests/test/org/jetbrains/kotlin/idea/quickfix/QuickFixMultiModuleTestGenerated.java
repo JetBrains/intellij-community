@@ -219,6 +219,39 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/canSealedSubClassBeObject")
+    public static class CanSealedSubClassBeObject extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("notConvertActualSubClass")
+        public void testNotConvertActualSubClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertActualSubClass/");
+        }
+
+        @TestMetadata("notConvertExpectSubClass")
+        public void testNotConvertExpectSubClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertExpectSubClass/");
+        }
+
+        @TestMetadata("notConvertImplicitExpectSubClass")
+        public void testNotConvertImplicitExpectSubClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertImplicitExpectSubClass/");
+        }
+
+        @TestMetadata("notGenerateEqualsAndHashCodeForSealedInCommon")
+        public void testNotGenerateEqualsAndHashCodeForSealedInCommon() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInCommon/");
+        }
+
+        @TestMetadata("notGenerateEqualsAndHashCodeForSealedInJvmForExpect")
+        public void testNotGenerateEqualsAndHashCodeForSealedInJvmForExpect() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInJvmForExpect/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/changeModifier")
     public static class ChangeModifier extends AbstractQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1029,11 +1062,6 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("functionTypeReceiverToParameterByImpl")
         public void testFunctionTypeReceiverToParameterByImpl() throws Exception {
             runTest("testData/multiModuleQuickFix/other/functionTypeReceiverToParameterByImpl/");
-        }
-
-        @TestMetadata("generateEqualsAndHashCodeForSealedInCommon")
-        public void testGenerateEqualsAndHashCodeForSealedInCommon() throws Exception {
-            runTest("testData/multiModuleQuickFix/other/generateEqualsAndHashCodeForSealedInCommon/");
         }
 
         @TestMetadata("generateEqualsInExpect")
