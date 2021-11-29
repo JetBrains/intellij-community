@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
 import com.intellij.ui.SimpleListCellRenderer
@@ -128,17 +127,14 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
         if (!effectiveLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
           val version = JavaVersionService.getInstance().getJavaSdkVersion(javaPsi)
           if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
-            val methods = mutableListOf<PsiMethod>()
-            javaPsi.visibleSignatures.map(MethodSignatureBackedByPsiMethod::getMethod).forEach { method ->
-              if (defaultMethods.contains(LanguageLevelUtil.getSignature(method))) methods.add(method)
-            }
-            if (methods.isNotEmpty()) {
+            val mSignatures = javaPsi.visibleSignatures.filter { defaultMethods.contains(LanguageLevelUtil.getSignature(it.method)) }
+            if (mSignatures.isNotEmpty()) {
               val toHighlight = node.uastAnchor?.sourcePsi ?: return true
               val jdkName = LanguageLevelUtil.getJdkName(effectiveLanguageLevel)
-              val message = if (methods.size == 1) {
-                JvmAnalysisBundle.message("jvm.inspections.1.8.problem.single.descriptor", methods[0].name, jdkName)
+              val message = if (mSignatures.size == 1) {
+                JvmAnalysisBundle.message("jvm.inspections.1.8.problem.single.descriptor", mSignatures.first().name, jdkName)
               } else {
-                JvmAnalysisBundle.message("jvm.inspections.1.8.problem.descriptor", methods.size, jdkName)
+                JvmAnalysisBundle.message("jvm.inspections.1.8.problem.descriptor", mSignatures.size, jdkName)
               }
               holder.registerProblem(toHighlight, message, QuickFixFactory.getInstance().createImplementMethodsFix(javaPsi))
             }

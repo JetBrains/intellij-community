@@ -30,14 +30,15 @@ abstract class JavaApiUsageInspectionTestBase : UastInspectionTestBase() {
     val previewContentIterator = object : ContentIterator {
       override fun processFile(fileOrDir: VirtualFile): Boolean {
         val file = PsiManager.getInstance(project).findFile(fileOrDir)
-        PsiTreeUtil.findChildrenOfAnyType(file, PsiMember::class.java)
-          .filter { member ->
-            member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE) ||
-            member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
-          }
-          .filter { member -> getLanguageLevel(member) == LANGUAGE_LEVEL }
-          .mapNotNull { LanguageLevelUtil.getSignature(it) }
-          .forEach { previews.add(it) }
+        previews.addAll(
+          PsiTreeUtil.findChildrenOfAnyType(file, PsiMember::class.java)
+            .filter { member ->
+              member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE) ||
+              member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
+            }
+            .filter { member -> getLanguageLevel(member) == LANGUAGE_LEVEL }
+            .mapNotNull { LanguageLevelUtil.getSignature(it) }
+        )
         return true
       }
 
@@ -62,21 +63,9 @@ abstract class JavaApiUsageInspectionTestBase : UastInspectionTestBase() {
           }
         }
 
-        fun isDocumentedSinceApi(element: PsiElement?): Boolean {
-          if (element is PsiDocCommentOwner) {
-            val comment = element.docComment
-            if (comment != null) {
-              for (tag in comment.tags) {
-                if (tag.name == "since") {
-                  val value = tag.valueElement
-                  if (value != null && value.text == VERSION) return true
-                  break
-                }
-              }
-            }
-          }
-          return false
-        }
+        fun isDocumentedSinceApi(element: PsiElement): Boolean = (element as? PsiDocCommentOwner)?.docComment?.tags?.find {
+          tag -> tag.name == "since" && tag.valueElement?.text == VERSION
+        } != null
       })
       true
     }
