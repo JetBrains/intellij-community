@@ -6,8 +6,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightVisitor
 import org.jetbrains.kotlin.idea.perf.*
@@ -19,11 +17,12 @@ import org.jetbrains.kotlin.idea.perf.util.TeamCity.suite
 import org.jetbrains.kotlin.idea.testFramework.Fixture
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.isAKotlinScriptFile
+import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction.GRADLE_PROJECT
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.test.assertNotEquals
 
-class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
+open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
     companion object {
 
@@ -53,11 +52,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
         warmUp.warmUp(this)
     }
 
-    override fun tearDown() {
-        RunAll(
-            ThrowableRunnable { super.tearDown() },
-        ).run()
-    }
+    protected open fun stats(name: String) = Stats(name)
 
     fun testHelloWorldProject() {
         suite("Hello world project") {
@@ -87,7 +82,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
     fun testKotlinProject() {
         suite("Kotlin project") {
-            Stats("kotlin project").use {
+            stats("kotlin project").use {
                 perfOpenKotlinProject(it)
 
                 val filesToHighlight = arrayOf(
@@ -128,7 +123,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
     fun testKotlinProjectCopyAndPaste() {
         suite("Kotlin copy-and-paste") {
-            Stats("Kotlin copy-and-paste").use { stat ->
+            stats("Kotlin copy-and-paste").use { stat ->
                 perfOpenKotlinProjectFast(stat)
 
                 perfCopyAndPaste(
@@ -142,7 +137,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
     fun testKotlinProjectCompletionKtFile() {
         suite("Kotlin completion ktFile") {
-            Stats("Kotlin completion ktFile").use { stat ->
+            stats("Kotlin completion ktFile").use { stat ->
                 perfOpenKotlinProjectFast(stat)
 
                 perfTypeAndAutocomplete(
@@ -209,7 +204,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
     fun testKotlinProjectCompletionBuildGradle() {
         suite("Kotlin completion gradle.kts") {
-            Stats("kotlin completion gradle.kts").use { stat ->
+            stats("kotlin completion gradle.kts").use { stat ->
                 runAndMeasure("open kotlin project") {
                     perfOpenKotlinProjectFast(stat)
                 }
@@ -242,7 +237,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
     fun testKotlinProjectScriptDependenciesBuildGradle() {
         suite("Kotlin scriptDependencies gradle.kts") {
-            Stats("kotlin scriptDependencies gradle.kts").use { stat ->
+            stats("kotlin scriptDependencies gradle.kts").use { stat ->
                 perfOpenKotlinProjectFast(stat)
 
                 perfScriptDependenciesBuildGradleKts(stat)
@@ -255,7 +250,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
     fun testKotlinProjectBuildGradle() {
         suite("Kotlin gradle.kts") {
-            Stats("kotlin gradle.kts").use { stat ->
+            stats("kotlin gradle.kts").use { stat ->
                 perfOpenKotlinProjectFast(stat)
 
                 perfFileAnalysisBuildGradleKts(stat)
@@ -269,15 +264,24 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
     private fun perfOpenKotlinProjectFast(stats: Stats) = perfOpenKotlinProject(stats, fast = true)
 
     private fun perfOpenKotlinProject(stats: Stats, fast: Boolean = false) {
-        myProject = perfOpenProject(
-            name = "kotlin",
-            stats = stats,
-            note = "",
-            path = ExternalProject.KOTLIN_PROJECT_PATH,
-            openAction = GRADLE_PROJECT,
-            fast = fast
-        )
+        myProject = openProject("kotlin", stats, "", ExternalProject.KOTLIN_PROJECT_PATH, GRADLE_PROJECT, fast)
     }
+
+    protected open fun openProject(
+        name: String,
+        stats: Stats,
+        note: String,
+        path: String,
+        openAction: ProjectOpenAction,
+        fast: Boolean
+    ) = perfOpenProject(
+        name = name,
+        stats = stats,
+        note = note,
+        path = path,
+        openAction = openAction,
+        fast = fast
+    )
 
     private fun perfScriptDependenciesBuildGradleKts(it: Stats) {
         perfScriptDependencies("build.gradle.kts", stats = it)

@@ -31,6 +31,8 @@ abstract class AbstractPerformanceHighlightingTest : KotlinLightCodeInsightFixtu
 
     }
 
+    protected open fun stats() = stats
+
     override fun setUp() {
         super.setUp()
 
@@ -88,7 +90,7 @@ abstract class AbstractPerformanceHighlightingTest : KotlinLightCodeInsightFixtu
     private fun innerPerfTest(name: String, setUpBody: (TestData<Unit, MutableList<HighlightInfo>>) -> Unit) {
         performanceTest<Unit, MutableList<HighlightInfo>> {
             name(name)
-            stats(stats)
+            stats(stats())
             setUp {
                 setUpBody(it)
             }

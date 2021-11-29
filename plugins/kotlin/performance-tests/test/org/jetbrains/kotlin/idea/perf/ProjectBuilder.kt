@@ -57,7 +57,7 @@ data class Parameter(
     val defaultValueExpression: String? = null,
 ) {
     override fun toString(): String {
-        val visibilityString = if (visibility == Visibility.PUBLIC) "" else visibility.name.toLowerCase() + " "
+        val visibilityString = if (visibility == Visibility.PUBLIC) "" else visibility.name.lowercase() + " "
         val valueExpression = defaultValueExpression?.let { " = $it" } ?: ""
         return "$visibilityString${if (mutable) "var" else "val"} $name: $type$valueExpression"
     }

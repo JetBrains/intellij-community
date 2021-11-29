@@ -7,18 +7,21 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.usages.Usage
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.perf.Parameter
-import org.jetbrains.kotlin.idea.perf.util.DefaultProfile
-import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite
+import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
+import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.TypingConfig
 import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
-import org.jetbrains.kotlin.idea.perf.util.suite
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
-class PerformanceStressTest : UsefulTestCase() {
+open class PerformanceStressTest : UsefulTestCase() {
+
+    protected open fun profileConfig(): ProfilerConfig = ProfilerConfig()
+
+    protected open fun outputConfig(): OutputConfig = OutputConfig()
 
     override fun setUp() {
         super.setUp()
@@ -43,7 +46,7 @@ class PerformanceStressTest : UsefulTestCase() {
         val name = "findUsages${numberOfFuns}_$numberOfPackagesWithCandidates" + if (withCompilerIndex) "_with_cri" else ""
         suite(
             suiteName = name,
-            config = PerformanceSuite.StatsScopeConfig(name = name)
+            config = PerformanceSuite.StatsScopeConfig(name = name, outputConfig = outputConfig(), profilerConfig = profileConfig()),
         ) {
             app {
                 warmUpProject()
@@ -131,7 +134,7 @@ class PerformanceStressTest : UsefulTestCase() {
 
         suite(
             suiteName = "Lots of overloaded method project",
-            config = PerformanceSuite.StatsScopeConfig(name = "kt-35135 project")
+            config = PerformanceSuite.StatsScopeConfig(name = "kt-35135 project", outputConfig = outputConfig(), profilerConfig = profileConfig()),
         ) {
             app {
                 warmUpProject()

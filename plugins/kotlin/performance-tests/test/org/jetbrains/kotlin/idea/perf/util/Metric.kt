@@ -49,16 +49,16 @@ data class Benchmark(
 
     fun id(): String =
         listOfNotNull(
-            benchmark?.escapeName(),
+            benchmark.escapeName(),
             name?.escapeName(),
             buildId?.toString(),
-            warmUp?.let { "warmUp" } ?: null,
+            warmUp?.let { "warmUp" },
             index?.toString()
         ).joinToString(separator = "_")
 
     fun cleanUp() {
-        metrics?.forEach { it.cleanUp() }
-        metrics = metrics?.filter { it.metricValue != null || (it.metrics?.isNotEmpty() == true) }
+        metrics.forEach { it.cleanUp() }
+        metrics = metrics.filter { it.metricValue != null || (it.metrics?.isNotEmpty() == true) }
     }
 
     fun merge(extraBenchmark: Benchmark) {

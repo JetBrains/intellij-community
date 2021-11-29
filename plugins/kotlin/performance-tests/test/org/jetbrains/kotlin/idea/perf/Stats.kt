@@ -5,13 +5,10 @@ package org.jetbrains.kotlin.idea.perf
 import org.jetbrains.kotlin.idea.perf.profilers.*
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.util.PerformanceCounter
-import java.io.BufferedReader
 import java.io.FileInputStream
-import java.io.InputStreamReader
 import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.math.*
 import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
@@ -19,8 +16,10 @@ import kotlin.test.assertEquals
 
 typealias StatInfos = Map<String, Any>?
 
-class Stats(
+// TODO: It is too overloaded class with mixed responsibility
+open class Stats(
     val name: String = "",
+    private val outputConfig: OutputConfig = OutputConfig(),
     private val profilerConfig: ProfilerConfig = ProfilerConfig(),
     private val acceptanceStabilityLevel: Int = 25
 ) : AutoCloseable {
@@ -60,7 +59,7 @@ class Stats(
 
         statInfosArray.filterNotNull()
             .map { it.keys }
-            .fold(mutableSetOf<String>(), { acc, keys -> acc.addAll(keys); acc })
+            .fold(mutableSetOf<String>()) { acc, keys -> acc.addAll(keys); acc }
             .filter { it != TEST_KEY && it != ERROR_KEY }
             .sorted().forEach { perfCounterName ->
                 val values = statInfosArray.map { (it?.get(perfCounterName) as? Long) ?: 0L }.toLongArray()
@@ -100,21 +99,24 @@ class Stats(
         tearDown: (TestData<SV, TV>) -> Unit = { },
         checkStability: Boolean = true
     ) {
+        val setUpWrapper = wrapSetUp(setUp)
+        val testWrapper = wrapTest(test)
+        val tearDownWrapper = wrapTearDown(tearDown)
         val warmPhaseData = PhaseData(
             iterations = warmUpIterations,
             testName = testName,
             fastIterations = fastIterations,
-            setUp = setUp,
-            test = test,
-            tearDown = tearDown
+            setUp = setUpWrapper,
+            test = testWrapper,
+            tearDown = tearDownWrapper
         )
         val mainPhaseData = PhaseData(
             iterations = iterations,
             testName = testName,
             fastIterations = fastIterations,
-            setUp = setUp,
-            test = test,
-            tearDown = tearDown
+            setUp = setUpWrapper,
+            test = testWrapper,
+            tearDown = tearDownWrapper
         )
         val block = {
             val metricChildren = mutableListOf<Metric>()
@@ -166,6 +168,17 @@ class Stats(
 
         flush()
     }
+
+    private val emptyFun:(TestData<*, *>) -> Unit = {}
+
+    private fun <SV, TV> wrapSetUp(setup: (TestData<SV, TV>) -> Unit): (TestData<SV, TV>) -> Unit =
+        if (!profilerConfig.dryRun) setup else emptyFun
+
+    private fun <SV, TV> wrapTest(test: (TestData<SV, TV>) -> Unit): (TestData<SV, TV>) -> Unit =
+        if (!profilerConfig.dryRun) test else emptyFun
+
+    private fun <SV, TV> wrapTearDown(tearDown: (TestData<SV, TV>) -> Unit): (TestData<SV, TV>) -> Unit =
+        if (!profilerConfig.dryRun) tearDown else emptyFun
 
     private fun convertStatInfoIntoMetrics(
         prefix: String,
@@ -362,29 +375,38 @@ class Stats(
         flush()
     }
 
-    private fun flush() {
-        if (perfTestRawDataMs.isNotEmpty()) {
-            val geomMeanMs = geomMean(perfTestRawDataMs.toList()).toLong()
-            Metric(GEOM_MEAN, metricValue = geomMeanMs).writeTeamCityStats(name)
-        }
+    protected open fun flush() {
+        flushTeamCityStats()
 
         try {
-            metric?.let {
-                val benchmark = BENCHMARK_STUB.copy(
-                    benchmark = name,
-                    name = it.metricName,
-                    metricValue = it.metricValue,
-                    metricError = it.metricError,
-                    metrics = it.metrics ?: emptyList()
-                )
-
-                benchmark.writeJson()
-                ESUploader.upload(benchmark)
+            toBenchmark()?.let {
+                outputConfig.write(it)
             }
         } finally {
+            perfTestRawDataMs.clear()
             metric = null
         }
-        //metrics.writeCSV(name, header)
+    }
+
+    private fun toBenchmark(): Benchmark? {
+        return metric?.let {
+            BENCHMARK_STUB.copy(
+                benchmark = name,
+                name = it.metricName,
+                metricValue = it.metricValue,
+                metricError = it.metricError,
+                metrics = it.metrics ?: emptyList()
+            )
+        }
+    }
+
+    internal fun flushTeamCityStats(consumer: (String, Long) -> Unit = { propertyName, value ->
+        TeamCity.statValue(propertyName, value)
+    }) {
+        if (perfTestRawDataMs.isNotEmpty()) {
+            val geomMeanMs = geomMean(perfTestRawDataMs.toList()).toLong()
+            Metric(GEOM_MEAN, metricValue = geomMeanMs).writeTeamCityStats(name, consumer = consumer)
+        }
     }
 
     companion object {
@@ -413,21 +435,12 @@ class Stats(
                 buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
                 agentName = buildProperties["agent.name"]?.toString()
                 buildBranch = (buildProperties["teamcity.build.branch"] ?: System.getProperty("teamcity.build.branch"))?.toString()
-                if (buildBranch == null || buildBranch == "<default>") {
-                    val gitPath = System.getenv("TEAMCITY_GIT_PATH") ?: "git"
-                    val processBuilder = ProcessBuilder(gitPath, "branch", "--show-current")
-                    val process = processBuilder.start()
-                    var line: String?
-                    BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
-                        line = reader.readLine()
-                    }
-                    if (process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0) {
-                        buildBranch = line
-                    }
-                }
-                check(buildBranch != null && buildBranch != "<default>") { "buildBranch='$buildBranch' is expected to be set by TeamCity" }
                 commit = (buildProperties["build.vcs.number"] ?: System.getProperty("build.vcs.number"))?.toString()
             }
+
+            buildBranch = buildBranch?.takeIf { it != "<default>" } ?: runGit("branch", "--show-current")
+            check(buildBranch != null && buildBranch != "<default>") { "buildBranch='$buildBranch' is expected to be set by TeamCity" }
+            commit = commit ?: runGit("rev-parse", "HEAD")
 
             Benchmark(
                 agentName = agentName,

@@ -133,26 +133,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             }
         }
 
-        // indexing
-        lastProject?.let { project ->
-            invalidateLibraryCache(project)
-
-            CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
-
-            dispatchAllInvocationEvents()
-
-            logMessage { "project $name is ${if (project.isInitialized) "initialized" else "not initialized"}" }
-
-            with(DumbService.getInstance(project)) {
-                queueTask(UnindexedFilesUpdater(project))
-                completeJustSubmittedTasks()
-            }
-            dispatchAllInvocationEvents()
-
-            Fixture.enableAnnotatorsAndLoadDefinitions(project)
-
-            myApplication.setDataProvider(TestDataProvider(project))
-        }
+        lastProject?.let { doProjectIndexing(it, name) }
 
         return lastProject ?: error("unable to open project $name")
     }
@@ -208,28 +189,49 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             }
         }
 
-        // indexing
-        lastProject?.let { project ->
-            invalidateLibraryCache(project)
-
-            CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
-
-            dispatchAllInvocationEvents()
-
-            logMessage { "project $name is ${if (project.isInitialized) "initialized" else "not initialized"}" }
-
-            with(DumbService.getInstance(project)) {
-                queueTask(UnindexedFilesUpdater(project))
-                completeJustSubmittedTasks()
-            }
-            dispatchAllInvocationEvents()
-
-            Fixture.enableAnnotatorsAndLoadDefinitions(project)
-
-            myApplication.setDataProvider(TestDataProvider(project))
-        }
+        lastProject?.let { doProjectIndexing(it, name) }
 
         return lastProject ?: error("unable to open project $name at $projectPath")
+    }
+
+    protected fun openProjectNormal(name: String, path: String, openAction: ProjectOpenAction): Project {
+        val projectPath = (if (File(path).exists()) File(path) else KotlinRoot.REPO.resolve(path)).absolutePath
+
+        assertTrue("path $projectPath does not exist, check README.md", File(projectPath).exists())
+
+        val openProject = OpenProject(
+            projectPath = projectPath,
+            projectName = name,
+            jdk = jdk18,
+            projectOpenAction = openAction
+        )
+
+        val project = ProjectOpenAction.openProject(openProject).also {
+            openAction.postOpenProject(openProject = openProject, project = it)
+            it.initDefaultProfile()
+        }
+
+        return project
+    }
+
+    private fun doProjectIndexing(project: Project, name: String) {
+        invalidateLibraryCache(project)
+
+        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
+
+        dispatchAllInvocationEvents()
+
+        logMessage { "project $name is ${if (project.isInitialized) "initialized" else "not initialized"}" }
+
+        with(DumbService.getInstance(project)) {
+            queueTask(UnindexedFilesUpdater(project))
+            completeJustSubmittedTasks()
+        }
+        dispatchAllInvocationEvents()
+
+        Fixture.enableAnnotatorsAndLoadDefinitions(project)
+
+        myApplication.setDataProvider(TestDataProvider(project))
     }
 
     fun perfTypeAndAutocomplete(

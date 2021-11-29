@@ -242,6 +242,7 @@ class PerformanceSuite {
         var warmup: Int = 2,
         var iterations: Int = 5,
         var fastIterations: Boolean = false,
+        var outputConfig: OutputConfig = OutputConfig(),
         var profilerConfig: ProfilerConfig = ProfilerConfig()
     )
 
@@ -467,9 +468,10 @@ fun UsefulTestCase.suite(
     config: PerformanceSuite.StatsScopeConfig = PerformanceSuite.StatsScopeConfig(),
     block: PerformanceSuite.StatsScope.() -> Unit
 ) {
+    val stats = Stats(config.name ?: suiteName ?: name, outputConfig = config.outputConfig, profilerConfig = config.profilerConfig)
     PerformanceSuite.suite(
         suiteName ?: this.javaClass.name,
-        PerformanceSuite.StatsScope(config, Stats(config.name ?: suiteName ?: name, config.profilerConfig), testRootDisposable),
+        PerformanceSuite.StatsScope(config, stats, testRootDisposable),
         block
     )
 }

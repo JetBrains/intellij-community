@@ -50,7 +50,14 @@ internal fun List<Benchmark>.writeCSV(name: String) {
     }
 }
 
-internal fun Metric.writeTeamCityStats(name: String, rawMeasurementName: String = "rawMetrics", rawMetrics: Boolean = false) {
+internal fun Metric.writeTeamCityStats(
+    name: String,
+    rawMeasurementName: String = "rawMetrics",
+    rawMetrics: Boolean = false,
+    consumer: (String, Long) -> Unit = { propertyName, value ->
+        TeamCity.statValue(propertyName, value)
+    }
+) {
     fun Metric.append(prefix: String, depth: Int) {
         val s = if (this.metricName.isEmpty()) {
             prefix
@@ -59,7 +66,7 @@ internal fun Metric.writeTeamCityStats(name: String, rawMeasurementName: String 
         }.trim()
         if (s != prefix) {
             metricValue?.let {
-                TeamCity.statValue(s, it)
+                consumer(s, it)
             }
         }
         metrics?.let { list ->
@@ -81,8 +88,12 @@ internal val kotlinJsonMapper = jacksonObjectMapper()
 
 internal fun Benchmark.statsFile() = statsFile(id(), "json")
 
+internal fun Benchmark.json(): String {
+    return kotlinJsonMapper.writeValueAsString(this)
+}
+
 internal fun Benchmark.writeJson() {
-    val json = kotlinJsonMapper.writeValueAsString(this)
+    val json = json()
     val statsFile = statsFile()
     logMessage { "write $statsFile" }
     statsFile.bufferedWriter().use { output ->

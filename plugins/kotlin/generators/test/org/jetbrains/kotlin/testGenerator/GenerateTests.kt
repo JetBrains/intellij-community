@@ -89,6 +89,8 @@ import org.jetbrains.kotlin.idea.maven.configuration.AbstractMavenConfigureProje
 import org.jetbrains.kotlin.idea.navigation.*
 import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.parameterInfo.AbstractParameterInfoTest
+import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceBasicCompletionHandlerStatNamesTest
+import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceHighlightingStatNamesTest
 import org.jetbrains.kotlin.idea.perf.synthetic.*
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
@@ -1473,6 +1475,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("highlighter", testMethodName = "doPerfTest")
         }
 
+        testClass<AbstractPerformanceHighlightingStatNamesTest> {
+            model("highlighter", testMethodName = "doPerfTest", pattern = """^(InvokeCall)\.kt$""".toRegex())
+        }
+
         testClass<AbstractPerformanceAddImportTest> {
             model("addImport", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
@@ -1490,6 +1496,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractPerformanceBasicCompletionHandlerTest> {
             model("handlers/basic", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractPerformanceBasicCompletionHandlerStatNamesTest> {
+            model("handlers/basic", testMethodName = "doPerfTest", pattern = """^(GetOperator)\.kt$""".toRegex())
         }
 
         testClass<AbstractPerformanceSmartCompletionHandlerTest> {
