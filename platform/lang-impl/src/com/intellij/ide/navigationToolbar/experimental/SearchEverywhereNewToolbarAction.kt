@@ -53,7 +53,6 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
     if(seManager == null){
       seManager = SearchEverywhereManager.getInstance(event.project)
     }
-    event.presentation.isEnabledAndVisible = true
     event.presentation.text = if (!showHotkey()) {
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
@@ -84,14 +83,21 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         val classesTabName = java.lang.String.join("/", getActionTitlePluralized())
         if (Registry.`is`("ide.helptooltip.enabled")) {
           HelpTooltip.dispose(this)
-          HelpTooltip()
-            .setTitle(myPresentation.text)
-            .setShortcut(shortcutText)
-            .setDescription(IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName))
-            .installOn(this)
+          if (presentation.isEnabledAndVisible) {
+            HelpTooltip()
+              .setTitle(myPresentation.text)
+              .setShortcut(shortcutText)
+              .setDescription(IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName))
+              .installOn(this)
+          }
         }
         else {
-          toolTipText = IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
+          if (presentation.isEnabledAndVisible) {
+            toolTipText = IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
+          }
+          else {
+            toolTipText = ""
+          }
         }
       }
 
@@ -121,9 +127,22 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         return NORMAL
       }
 
+
       override fun paint(g: Graphics?) {
         if (parent.bounds.width < parent.preferredSize.width) {
+          if (presentation.isEnabledAndVisible) {
+            presentation.isEnabledAndVisible = false
+            updateToolTipText()
+            cursor = Cursor.getPredefinedCursor(DEFAULT_CURSOR)
+          }
           return
+        }
+        else {
+          if (!presentation.isEnabledAndVisible) {
+            presentation.isEnabledAndVisible = true
+            updateToolTipText()
+            cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
+          }
         }
         foreground = DISABLED_TEXT_COLOR
         background = searchFieldBackground()
@@ -135,9 +154,6 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       }
 
       override fun paintComponent(g: Graphics) {
-        if (parent.bounds.width < parent.preferredSize.width) {
-          return
-        }
         setupAntialiasing(g)
 
         val fm = getFontMetrics(font)
