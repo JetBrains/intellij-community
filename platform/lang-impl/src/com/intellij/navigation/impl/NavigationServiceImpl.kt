@@ -3,12 +3,15 @@ package com.intellij.navigation.impl
 
 import com.intellij.navigation.NavigationRequest
 import com.intellij.navigation.NavigationService
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 
 internal class NavigationServiceImpl : NavigationService {
 
   override fun sourceNavigationRequest(file: VirtualFile, offset: Int): NavigationRequest? {
+    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (!file.isValid) {
       return null
     }
@@ -17,6 +20,8 @@ internal class NavigationServiceImpl : NavigationService {
   }
 
   override fun rawNavigationRequest(navigatable: Navigatable): NavigationRequest? {
+    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (!navigatable.canNavigateToSource() && !navigatable.canNavigate()) {
       return null
     }
