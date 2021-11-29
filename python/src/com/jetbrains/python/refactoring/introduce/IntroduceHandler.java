@@ -41,6 +41,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -48,6 +49,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
@@ -295,8 +297,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
 
     element1 = PyRefactoringUtil.getSelectedExpression(project, file, element1, element2);
-    final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(element1, PyComprehensionElement.class, true);
-    if (element1 == null || comprehension != null) {
+    if (element1 == null || referencesComprehensionIteratorValue(element1)) {
       showCannotPerformError(project, editor);
       return;
     }
@@ -331,6 +332,45 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
     operation.setElement(element1);
     performActionOnElement(operation);
+  }
+
+  private static boolean referencesComprehensionIteratorValue(@NotNull PsiElement element) {
+    PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class, true);
+    if (comprehension != null) {
+      List<PyExpression> iteratorVariables = ContainerUtil.map(comprehension.getForComponents(), it -> it.getIteratorVariable());
+      List<PsiElement> referencedInSelection = collectReferencedDefinitionsInSameFile(element, element.getContainingFile());
+      if (iteratorVariables.contains(element) || ContainerUtil.intersects(referencedInSelection, iteratorVariables)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  protected static @NotNull List<PsiElement> collectReferencedDefinitionsInSameFile(@NotNull PsiElement element, @NotNull PsiFile file) {
+    PsiElement selectionElement = getOriginalSelectionCoveringElement(element);
+    TextRange textRange = getTextRangeForOperationElement(element);
+
+    return StreamEx.of(PsiTreeUtil.collectElementsOfType(selectionElement, PyReferenceExpression.class))
+      .filter(it -> textRange.contains(it.getTextRange()))
+      .filter(ref -> !ref.isQualified())
+      .flatMap(expr -> PyResolveUtil.resolveLocally(expr).stream())
+      .filter(it -> it != null && it.getContainingFile() == file)
+      .toList();
+  }
+
+  protected static @NotNull TextRange getTextRangeForOperationElement(@NotNull PsiElement operationElement) {
+    var userData = operationElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
+    if (userData == null || userData.first == null || userData.second == null) {
+      return operationElement.getTextRange();
+    }
+    else {
+      return userData.second.shiftRight(userData.first.getTextOffset());
+    }
+  }
+
+  protected static @NotNull PsiElement getOriginalSelectionCoveringElement(@NotNull PsiElement operationElement) {
+    var userData = operationElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
+    return userData == null ? operationElement : userData.first;
   }
 
   private static boolean breaksStringFormatting(@NotNull String s, @NotNull TextRange range) {
@@ -421,8 +461,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (call != null && call.getCallee() == element) {
       return false;
     }
-    final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class, true);
-    if (comprehension != null) {
+    if (referencesComprehensionIteratorValue(element)) {
       return false;
     }
     return true;
