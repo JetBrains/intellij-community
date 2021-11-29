@@ -22,7 +22,11 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   @Override
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final VirtualFile file, final int offset) {
-    return ReadAction.compute(() -> DocumentImpl.createRangeMarkerForVirtualFile(file, offset, offset, -1, -1, -1, -1, false));
+    return ReadAction.compute(() -> {
+      int estimatedDocumentLength = RangeMarkerImpl.estimateDocumentLength(file);
+      int framedOffset = Math.min(estimatedDocumentLength, offset);
+      return DocumentImpl.createRangeMarkerForVirtualFile(file, framedOffset, framedOffset, -1, -1, -1, -1, false);
+    });
   }
 
   @Override
