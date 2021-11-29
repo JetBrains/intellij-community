@@ -52,7 +52,7 @@ public class MyLookupExpression extends Expression {
     if (names == null) {
       if (elementToRename == null) return LookupElement.EMPTY_ARRAY;
       names = new LinkedHashSet<>();
-      @Nullable LinkedHashSet<String> finalNames = names;
+      final LinkedHashSet<String> finalNames = names;
       ActionUtil.underModalProgress(elementToRename.getProject(), RefactoringBundle.message("progress.title.collecting.suggested.names"),
                                     () -> NameSuggestionProvider.suggestNames(elementToRename, nameSuggestionContext, finalNames));
     }
