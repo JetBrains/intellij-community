@@ -134,10 +134,6 @@ else
 fi
 
 __class_path__
-# shellcheck disable=SC2154
-if [ -n "$__product_uc___CLASSPATH" ]; then
-  CLASSPATH="$CLASSPATH:$__product_uc___CLASSPATH"
-fi
 
 # ---------------------------------------------------------------------
 # Run the IDE.

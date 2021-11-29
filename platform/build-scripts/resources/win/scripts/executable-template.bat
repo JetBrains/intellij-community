@@ -97,7 +97,6 @@ IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
 )
 
 @@class_path@@
-IF NOT "%@@product_uc@@_CLASS_PATH%" == "" SET "CLASS_PATH=%CLASS_PATH%;%@@product_uc@@_CLASS_PATH%"
 
 :: ---------------------------------------------------------------------
 :: Run the IDE.
