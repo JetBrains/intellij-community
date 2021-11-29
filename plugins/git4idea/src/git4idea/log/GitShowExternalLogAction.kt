@@ -130,7 +130,7 @@ private fun createManagerAndContent(project: Project,
   val disposable = Disposer.newDisposable()
   val repositoryManager = GitRepositoryManager.getInstance(project)
   for (root in roots) {
-    repositoryManager.addExternalRepository(root, GitRepositoryImpl.createInstance(root, project, disposable, true))
+    repositoryManager.addExternalRepository(root, GitRepositoryImpl.createInstance(root, project, disposable))
   }
   val manager = VcsLogManager(project, ApplicationManager.getApplication().getService(GitExternalLogTabsProperties::class.java),
                               roots.map { VcsRoot(vcs, it) })

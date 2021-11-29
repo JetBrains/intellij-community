@@ -73,7 +73,20 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
-    return notNull(repository, () -> createInstance(root, project, GitDisposable.getInstance(project), listenToRepoChanges));
+    return notNull(repository, () -> createInstance(root, project, GitDisposable.getInstance(project)));
+  }
+
+  /**
+   * @deprecated Use {@link #createInstance(VirtualFile, Project, Disposable)}
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  @NotNull
+  public static GitRepository createInstance(@NotNull VirtualFile root,
+                                             @NotNull Project project,
+                                             @NotNull Disposable parentDisposable,
+                                             boolean listenToRepoChanges) {
+    return createInstance(root, project, parentDisposable);
   }
 
   /**
@@ -84,10 +97,9 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   @NotNull
   public static GitRepository createInstance(@NotNull VirtualFile root,
                                              @NotNull Project project,
-                                             @NotNull Disposable parentDisposable,
-                                             boolean listenToRepoChanges) {
+                                             @NotNull Disposable parentDisposable) {
     VirtualFile gitDir = Objects.requireNonNull(GitUtil.findGitDir(root));
-    return createInstance(root, gitDir, project, parentDisposable, listenToRepoChanges);
+    return createInstance(root, gitDir, project, parentDisposable);
   }
 
   @ApiStatus.Internal
@@ -95,8 +107,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   static GitRepository createInstance(@NotNull VirtualFile root,
                                       @NotNull VirtualFile gitDir,
                                       @NotNull Project project,
-                                      @NotNull Disposable parentDisposable,
-                                      boolean listenToRepoChanges) {
+                                      @NotNull Disposable parentDisposable) {
     GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable);
     repository.setupUpdater();
     GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
