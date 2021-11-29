@@ -404,4 +404,20 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
       "    }\n" +
       "}\n");
   }
+
+  public void testAnnotationShouldNotBreakAfterKeyword() {
+    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTextTest(
+      "class A {\n"+
+      "  @AnnBefore private @AnnAfter void foo() {\n" +
+      "  }\n" +
+      "}",
+
+      "class A {\n" +
+      "    @AnnBefore\n" +
+      "    private @AnnAfter void foo() {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

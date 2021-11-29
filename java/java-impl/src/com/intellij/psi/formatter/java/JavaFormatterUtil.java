@@ -301,7 +301,8 @@ public final class JavaFormatterUtil {
         if (last != null && last.getElementType() == JavaElementType.ANNOTATION) {
           if (isTypeAnnotationOrFalseIfDumb(last) ||
               javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
-              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER && isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER)
+              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER && isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER) ||
+              isAnnotationAfterKeyword(last)
           ) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
@@ -418,6 +419,23 @@ public final class JavaFormatterUtil {
     }
 
     return suggestedWrap;
+  }
+
+  /**
+   * Check if annotation goes after a keyword (maybe even not directly).
+   *
+   * Example: {@code private @Foo @Bar void method() {} }
+   * Here both Foo and Bar are after keyword
+   */
+  private static boolean isAnnotationAfterKeyword(@NotNull ASTNode annotation) {
+    ASTNode current = annotation.getTreePrev();
+    while (current != null) {
+      if (current instanceof PsiKeyword) {
+        return true;
+      }
+      current = current.getTreePrev();
+    }
+    return false;
   }
 
 
