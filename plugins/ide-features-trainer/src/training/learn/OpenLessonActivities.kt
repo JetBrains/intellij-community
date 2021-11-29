@@ -47,6 +47,7 @@ import training.statistic.StatisticLessonListener
 import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import training.util.findLanguageByID
+import training.util.getLearnToolWindowForProject
 import training.util.isLearningProject
 import training.util.learningToolWindow
 import java.io.IOException
@@ -68,7 +69,7 @@ internal object OpenLessonActivities {
     LessonManager.instance.stopLesson()
 
     val activeToolWindow = LearningUiManager.activeToolWindow
-                           ?: LearnToolWindowFactory.learnWindowPerProject[projectWhereToStartLesson].also {
+                           ?: getLearnToolWindowForProject(projectWhereToStartLesson).also {
                              LearningUiManager.activeToolWindow = it
                            }
 
@@ -209,7 +210,7 @@ internal object OpenLessonActivities {
 
     //open next lesson if current is passed
     LOG.debug("${project.name}: Set lesson view")
-    LearningUiManager.activeToolWindow = LearnToolWindowFactory.learnWindowPerProject[project]?.also {
+    LearningUiManager.activeToolWindow = getLearnToolWindowForProject(project)?.also {
       it.setLearnPanel()
     }
     LOG.debug("${project.name}: XmlLesson onStart()")

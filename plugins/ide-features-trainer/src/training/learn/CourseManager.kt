@@ -24,11 +24,7 @@ import training.learn.course.LearningCourseBase
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.statistic.LessonStartingWay
-import training.ui.LearnToolWindowFactory
-import training.util.LEARNING_PANEL_OPENED_IN
-import training.util.WeakReferenceDelegator
-import training.util.courseCanBeUsed
-import training.util.switchOnExperimentalLessons
+import training.util.*
 
 @Service(Service.Level.APP)
 class CourseManager internal constructor() : Disposable {
@@ -94,7 +90,7 @@ class CourseManager internal constructor() : Disposable {
     for (ep in listOf(COMMON_COURSE_MODULES_EP, COURSE_MODULES_EP)) {
       ep.addChangeListener(Runnable {
         clearModules()
-        for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
+        for (toolWindow in getAllLearnToolWindows()) {
           toolWindow.reinitViews()
         }
       }, this)

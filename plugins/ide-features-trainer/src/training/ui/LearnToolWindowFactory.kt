@@ -10,7 +10,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactoryEx
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.util.containers.ContainerUtil
 import training.lang.LangManager
 import training.util.LEARNING_PANEL_OPENED_IN
 import training.util.findLanguageSupport
@@ -37,13 +36,9 @@ internal class LearnToolWindowFactory : ToolWindowFactoryEx, DumbAware {
     val content = contentManager.factory.createContent(learnToolWindow, null, false)
     content.isCloseable = false
     contentManager.addContent(content)
-
-    learnWindowPerProject[project] = learnToolWindow
   }
 
   companion object {
     const val LEARN_TOOL_WINDOW = "Learn"
-    val learnWindowPerProject: MutableMap<Project, LearnToolWindow> = ContainerUtil.createWeakMap()
   }
 }
-

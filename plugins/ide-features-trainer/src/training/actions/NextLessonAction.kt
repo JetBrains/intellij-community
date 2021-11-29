@@ -7,14 +7,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import training.learn.CourseManager
 import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
-import training.ui.LearnToolWindowFactory
+import training.util.getLearnToolWindowForProject
 import training.util.getNextLessonForCurrent
 import training.util.lessonOpenedInProject
 
 private class NextLessonAction : AnAction(AllIcons.Actions.Forward) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    if (LearnToolWindowFactory.learnWindowPerProject[project] == null) return
+    if (getLearnToolWindowForProject(project) == null) return
     val nextLesson = getNextLessonForCurrent() ?: return
     StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.OPEN_NEXT_OR_PREV_LESSON)
     CourseManager.instance.openLesson(project, nextLesson, LessonStartingWay.NEXT_BUTTON)
