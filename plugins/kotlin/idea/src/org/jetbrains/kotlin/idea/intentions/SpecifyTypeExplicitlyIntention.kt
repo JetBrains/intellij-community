@@ -235,10 +235,14 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
             val expression = createTypeExpressionForTemplate(exprType, declaration, useTypesFromOverridden = true) ?: return
 
             declaration.setType(StandardNames.FqNames.any.asString())
+            val declarationPointer = declaration.createSmartPointer()
 
+            // May invalidate declaration
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
-            val newTypeRef = declaration.typeReference ?: return
+            val newDeclaration = declarationPointer.element ?: return
+
+            val newTypeRef = newDeclaration.typeReference ?: return
             val builder = TemplateBuilderImpl(newTypeRef)
             builder.replaceElement(newTypeRef, expression)
 
@@ -247,7 +251,7 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
             TemplateManager.getInstance(project).startTemplate(
                 editor,
                 builder.buildInlineTemplate(),
-                createTypeReferencePostprocessor(declaration, iterator, editor)
+                createTypeReferencePostprocessor(newDeclaration, iterator, editor)
             )
         }
     }

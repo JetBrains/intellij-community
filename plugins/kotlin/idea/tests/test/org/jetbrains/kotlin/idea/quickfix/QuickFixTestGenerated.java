@@ -10766,6 +10766,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("brokenFile.kt")
+        public void testBrokenFile() throws Exception {
+            runTest("testData/quickfix/removeRedundantInitializer/brokenFile.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/removeRedundantInitializer/simple.kt");
