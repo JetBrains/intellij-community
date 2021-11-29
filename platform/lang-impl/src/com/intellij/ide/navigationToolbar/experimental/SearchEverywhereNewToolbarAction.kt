@@ -46,8 +46,13 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   private var subscribedForDoubleShift = false
   private var firstOpened = false
   private var clearPosition = false
+  var seManager: SearchEverywhereManager? = null
+
 
   override fun update(event: AnActionEvent) {
+    if(seManager == null){
+      seManager = SearchEverywhereManager.getInstance(event.project)
+    }
     event.presentation.isEnabledAndVisible = true
     event.presentation.text = if (!showHotkey()) {
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
@@ -68,8 +73,6 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
     return object : ActionButtonWithText(this, presentation, place,
                                          ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-      var seManager: SearchEverywhereManager? = null
-
       init {
         FocusManager.getCurrentManager().addPropertyChangeListener { this.repaint() }
         setHorizontalTextAlignment(SwingConstants.LEFT)
@@ -93,7 +96,6 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       }
 
       override fun actionPerformed(e: AnActionEvent) {
-        seManager = SearchEverywhereManager.getInstance(e.project)
         val focusManager = IdeFocusManager.findInstance()
         val focusedComponent = focusManager.focusOwner
         val ideWindow = focusManager.lastFocusedIdeWindow

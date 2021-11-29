@@ -52,9 +52,11 @@ fun interface NewToolbarPaneListener {
 @Service
 class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker(),
                                                                 Disposable {
+  private val logger = logger<NewToolbarRootPaneManager>()
 
   private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(project)
   private val runWidgetListener = RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
+    logger.info("New toolbar: run widget availability changed $it")
     doLayoutAndRepaint()
   }
 
@@ -65,10 +67,12 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
       .connect(this)
 
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      logger.info("New toolbar: ui settings changed")
       doLayoutAndRepaint()
     })
 
     connection.subscribe(NewToolbarPaneListener.TOPIC, NewToolbarPaneListener {
+      logger.info("New toolbar: new toolbar topic triggered")
       doLayoutAndRepaint()
     })
 
@@ -132,9 +136,12 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
   }
 
   private fun doLayoutAndRepaint() {
+    logger.info("New toolbar: layout and repaint started")
+
     NewToolbarRootPaneExtension.getInstance(project)?.let {
       doLayout(it.component)
       it.repaint()
+      logger.info("New toolbar: layout and repaint finished")
     }
   }
 }
@@ -188,11 +195,13 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
 
   override fun revalidate() {
     if (project.isDisposed) {
-      logger.warn("Project '$project' disposal has already been initiated.")
+      logger.warn("New toolbar: Project '$project' disposal has already been initiated.")
       return
     }
 
     if (ToolbarSettings.Instance.isEnabled) {
+      logger.info("New toolbar: revalidation started")
+
       project.service<NewToolbarRootPaneManager>().doLayout(panel)
       project.service<StatusBarWidgetsManager>().updateAllWidgets()
 
@@ -202,11 +211,15 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
       toolBar.targetComponent = null
       toolBar.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
       panel.add(toolBar as JComponent, BorderLayout.CENTER)
+      logger.info("New toolbar: revalidation finished")
+
     }
   }
 
   fun repaint() {
     panel.revalidate()
     panel.repaint()
+    logger.info("New toolbar: repainted")
+
   }
 }
