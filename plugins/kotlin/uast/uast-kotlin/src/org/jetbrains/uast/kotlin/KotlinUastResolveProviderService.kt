@@ -311,6 +311,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             builtIns = descriptor.builtIns,
             annotations = descriptor.annotations,
             receiverType = descriptor.extensionReceiverParameter?.type,
+            contextReceiverTypes = descriptor.contextReceiverParameters.map { it.type },
             parameterTypes = descriptor.valueParameters.map { it.type },
             parameterNames = descriptor.valueParameters.map { it.name },
             returnType = returnType

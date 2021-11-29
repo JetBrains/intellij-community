@@ -208,6 +208,8 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
     override fun getThisAsReceiverParameter(): ReceiverParameterDescriptor =
         ReceiverParameterDescriptorImpl(this, ImplicitClassReceiver(this), Annotations.EMPTY)
 
+    override fun getContextReceivers(): List<ReceiverParameterDescriptor> = implementationPlanned()
+
     override fun getOriginal(): ClassDescriptor = this
 
     override fun getUnsubstitutedPrimaryConstructor(): ClassConstructorDescriptor? = context.withAnalysisSession {
@@ -307,6 +309,7 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, c
     KtSymbolBasedNamed {
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = getExtensionReceiverParameter(ktSymbol)
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = getDispatchReceiverParameter(ktSymbol)
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = implementationPlanned()
 
     override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.callableIdIfNonLocal ?: error("should be top-level")).packageName
 
@@ -357,6 +360,7 @@ class KtSymbolBasedConstructorDescriptor(
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = null
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = getDispatchReceiverParameter(ktSymbol)
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = ktSBClassDescriptor.contextReceivers
 
     override fun getConstructedClass(): ClassDescriptor = ktSBClassDescriptor
     override fun getContainingDeclaration(): ClassDescriptor = ktSBClassDescriptor
@@ -402,6 +406,7 @@ class KtSymbolBasedAnonymousFunctionDescriptor(
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = getExtensionReceiverParameter(ktSymbol)
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = null
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = implementationPlanned()
 
     override fun getPackageFqNameIfTopLevel(): FqName = error("Impossible to be a top-level declaration")
 
@@ -496,6 +501,7 @@ class KtSymbolBasedValueParameterDescriptor(
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = null
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = null
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = emptyList()
 
     override fun getTypeParameters(): List<TypeParameterDescriptor> = emptyList()
 
@@ -561,6 +567,8 @@ class KtSymbolBasedPropertyDescriptor(
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = getExtensionReceiverParameter(ktSymbol)
 
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = getDispatchReceiverParameter(ktSymbol)
+
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = implementationPlanned()
 
     override fun getTypeParameters(): List<TypeParameterDescriptor> = emptyList()
 
@@ -638,6 +646,7 @@ abstract class KtSymbolBasedVariableAccessorDescriptor(
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = propertyDescriptor.extensionReceiverParameter
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = propertyDescriptor.dispatchReceiverParameter
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = propertyDescriptor.contextReceiverParameters
 
     override fun getTypeParameters(): List<TypeParameterDescriptor> = emptyList()
 
