@@ -113,7 +113,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                     }
 
                     // kotlin.collections.ArrayList is not a conflict, it's an alias to java.util.ArrayList
-                    val nonAliasClassifiers = classifiers.filter { it !is TypeAliasDescriptor }
+                    val nonAliasClassifiers = classifiers.filter { it !is TypeAliasDescriptor || it.importableFqName == targetFqName }
                     // top-level classifiers could/should be resolved with imports
                     if (nonAliasClassifiers.size > 1 && nonAliasClassifiers.all { it.containingDeclaration is PackageFragmentDescriptor }) {
                         return null

@@ -278,6 +278,11 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
         runTest("testData/handlers/basic/TypeAliasConfict3.kt");
     }
 
+    @TestMetadata("TypeAliasConfict4.kt")
+    public void testTypeAliasConfict4() throws Exception {
+        runTest("testData/handlers/basic/TypeAliasConfict4.kt");
+    }
+
     @TestMetadata("TypeInferedFromWrapperType.kt")
     public void testTypeInferedFromWrapperType() throws Exception {
         runTest("testData/handlers/basic/TypeInferedFromWrapperType.kt");
