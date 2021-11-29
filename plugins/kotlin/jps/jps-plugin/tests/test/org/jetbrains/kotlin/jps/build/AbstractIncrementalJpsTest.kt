@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.jps.build
+
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -87,6 +88,7 @@ abstract class AbstractIncrementalJpsTest(
     protected lateinit var workDir: File
     protected lateinit var projectDescriptor: ProjectDescriptor
     protected lateinit var additionalCommandLineArguments: List<String>
+
     // is used to compare lookup dumps in a human readable way (lookup symbols are hashed in an actual lookup storage)
     protected lateinit var lookupsDuringTest: MutableSet<LookupSymbol>
     private var isJvmICEnabledBackup: Boolean = false
@@ -136,6 +138,8 @@ abstract class AbstractIncrementalJpsTest(
         if (DEBUG_LOGGING_ENABLED) {
             enableDebugLogging()
         }
+        System.getProperties()
+            .setProperty("kotlin.jps.classPrefixesToLoadByParent", "kotlin.") // for debugging tests with in-process compiler
     }
 
     override fun tearDown() {
@@ -394,7 +398,7 @@ abstract class AbstractIncrementalJpsTest(
     // null means one module
     private fun configureModules(): ModulesTxt? {
         JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl =
-                JpsPathUtil.pathToUrl(getAbsolutePath("out"))
+            JpsPathUtil.pathToUrl(getAbsolutePath("out"))
 
         val jdk = addJdk("my jdk")
         val modulesTxt = readModulesTxt()
