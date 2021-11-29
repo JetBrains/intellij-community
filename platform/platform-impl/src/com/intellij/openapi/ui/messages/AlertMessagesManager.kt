@@ -356,11 +356,14 @@ private class AlertDialog(project: Project?,
     val textPanel = JPanel(BorderLayout(0, JBUI.scale(8)))
     dialogPanel.add(textPanel)
 
+    val singleSelectionHandler = SingleTextSelectionHandler()
+
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
       val title = UIUtil.replaceMnemonicAmpersand(myTitle!!).replace(BundleBase.MNEMONIC_STRING, "")
       val titleComponent = createTextComponent(JTextPane(), title)
       titleComponent.font = JBFont.h4()
       textPanel.add(titleComponent, BorderLayout.NORTH)
+      singleSelectionHandler.add(titleComponent, false)
     }
 
     if (!StringUtil.isEmpty(myMessage)) {
@@ -378,6 +381,7 @@ private class AlertDialog(project: Project?,
 
       messageComponent.font = JBFont.regular()
       myMessageComponent = messageComponent
+      singleSelectionHandler.add(messageComponent, false)
 
       val lines = myMessage.length / 100
       val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
@@ -435,6 +439,8 @@ private class AlertDialog(project: Project?,
     }
 
     mySouthPanel.add(myButtonsPanel)
+
+    singleSelectionHandler.start()
 
     return dialogPanel
   }

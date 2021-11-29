@@ -56,6 +56,7 @@ import java.awt.event.*
 import java.util.function.Consumer
 import javax.accessibility.AccessibleContext
 import javax.swing.*
+import javax.swing.text.JTextComponent
 
 /**
  * @author Alexander Lobas
@@ -127,15 +128,17 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     splitter.secondComponent = timeline
     panel.add(splitter)
 
+    val singleSelectionHandler = SingleTextSelectionHandler()
+
     val myNotifications = ArrayList<Notification>()
 
     val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
     val addConsumer = Consumer<Notification> { notification ->
       if (notification.isSuggestionType) {
-        suggestions.add(notification)
+        suggestions.add(notification, singleSelectionHandler)
       }
       else {
-        timeline.add(notification)
+        timeline.add(notification, singleSelectionHandler)
       }
       myNotifications.add(notification)
       updateIcon(toolWindow, myNotifications)
@@ -346,11 +349,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   }
 
   fun updateLaf() {
-    val count = myList.componentCount
-    for (i in 0 until count) {
-      val component = myList.getComponent(i) as NotificationComponent
-      component.updateLaf()
-    }
+    iterateComponents { it.updateLaf() }
   }
 
   override fun paintComponent(g: Graphics) {
@@ -362,8 +361,8 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
   }
 
-  fun add(notification: Notification) {
-    val component = NotificationComponent(notification, myTimeComponents)
+  fun add(notification: Notification, singleSelectionHandler: SingleTextSelectionHandler) {
+    val component = NotificationComponent(notification, myTimeComponents, singleSelectionHandler)
     component.setNew(true)
 
     myList.add(component, 0)
@@ -391,9 +390,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
 
   private fun updateLayout() {
     val layout = myList.layout
-    val count = myList.componentCount
-    for (i in 0 until count) {
-      val component = myList.getComponent(i)
+    iterateComponents { component ->
       layout.removeLayoutComponent(component)
       layout.addLayoutComponent(null, component)
     }
@@ -408,6 +405,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     for (i in 0 until count) {
       val component = myList.getComponent(i) as NotificationComponent
       if (component.notification === notification) {
+        component.removeFromParent()
         myList.remove(i)
         break
       }
@@ -425,25 +423,25 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     balloonLayout.closeAll()
 
     val notifications = ArrayList<Notification>()
-    val count = myList.componentCount
-    for (i in 0 until count) {
-      val component = myList.getComponent(i) as NotificationComponent
-      notifications.add(component.notification)
-    }
+    iterateComponents { notifications.add(it.notification) }
     clear()
     myClearCallback.invoke(notifications)
   }
 
   fun clear() {
+    iterateComponents { it.removeFromParent() }
     myList.removeAll()
     updateContent()
   }
 
   fun clearNewState() {
+    iterateComponents { it.setNew(false) }
+  }
+
+  private inline fun iterateComponents(f: (NotificationComponent) -> Unit) {
     val count = myList.componentCount
     for (i in 0 until count) {
-      val component = myList.getComponent(i) as NotificationComponent
-      component.setNew(false)
+      f.invoke(myList.getComponent(i) as NotificationComponent)
     }
   }
 
@@ -483,8 +481,9 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   override fun isNull(): Boolean = !isVisible
 }
 
-private class NotificationComponent(val notification: Notification, timeComponents: ArrayList<JLabel>) :
-  JPanel(BorderLayout(JBUI.scale(7), 0)) {
+private class NotificationComponent(val notification: Notification,
+                                    timeComponents: ArrayList<JLabel>,
+                                    val singleSelectionHandler: SingleTextSelectionHandler) : JPanel(BorderLayout(JBUI.scale(7), 0)) {
 
   companion object {
     val BG_COLOR = UIUtil.getListBackground()
@@ -522,7 +521,26 @@ private class NotificationComponent(val notification: Notification, timeComponen
 
     if (notification.hasTitle()) {
       val titleContent = NotificationsUtil.buildHtml(notification, null, false, null, null)
-      val title = JBLabel(titleContent).setCopyable(true)
+      val title = object : JBLabel(titleContent) {
+        override fun updateUI() {
+          val oldEditor = UIUtil.findComponentOfType(this, JEditorPane::class.java)
+          if (oldEditor != null) {
+            singleSelectionHandler.remove(oldEditor)
+          }
+
+          super.updateUI()
+
+          val newEditor = UIUtil.findComponentOfType(this, JEditorPane::class.java)
+          if (newEditor != null) {
+            singleSelectionHandler.add(newEditor, true)
+          }
+        }
+      }.setCopyable(true)
+
+      val editor = UIUtil.findComponentOfType(title, JEditorPane::class.java)
+      if (editor != null) {
+        singleSelectionHandler.add(editor, true)
+      }
 
       if (notification.isSuggestionType) {
         centerPanel.add(title)
@@ -538,6 +556,8 @@ private class NotificationComponent(val notification: Notification, timeComponen
     if (notification.hasContent()) {
       val textContent = NotificationsUtil.buildHtml(notification, null, true, null, NotificationsUtil.getFontStyle())
       val text = createTextComponent(textContent)
+
+      singleSelectionHandler.add(text, true)
 
       if (!notification.hasTitle() && !notification.isSuggestionType) {
         titlePanel = JPanel(BorderLayout())
@@ -673,8 +693,15 @@ private class NotificationComponent(val notification: Notification, timeComponen
     Notification.fire(notification, action, DataManager.getInstance().getDataContext(component as Component))
   }
 
-  private fun createTextComponent(text: @Nls String): JTextPane {
-    val component = JTextPane()
+  fun removeFromParent() {
+    for (component in UIUtil.findComponentsOfType(this, JTextComponent::class.java)) {
+      singleSelectionHandler.remove(component)
+    }
+  }
+
+  private fun createTextComponent(text: @Nls String): JEditorPane {
+    val component = JEditorPane()
+    component.isEditable = false
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     component.contentType = "text/html"
     component.isOpaque = false
