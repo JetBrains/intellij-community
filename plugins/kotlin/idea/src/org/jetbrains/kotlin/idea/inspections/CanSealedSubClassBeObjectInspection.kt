@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
@@ -13,6 +14,8 @@ import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.ConvertSealedSu
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.GenerateIdentityEqualsFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.isEffectivelyActual
+import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -23,14 +26,13 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-
         fun reportPossibleObject(klass: KtClass) {
             val keyword = klass.getClassOrInterfaceKeyword() ?: return
-            val fixes = if (klass.module?.platform?.isJvm() == true) {
-                arrayOf(ConvertSealedSubClassToObjectFix(), GenerateIdentityEqualsFix())
-            } else {
-                arrayOf(ConvertSealedSubClassToObjectFix())
-            }
+            val isExpectClass = klass.isExpectDeclaration()
+            val fixes = listOfNotNull(
+                createFixIfPossible(!isExpectClass && !klass.isEffectivelyActual(), ::ConvertSealedSubClassToObjectFix),
+                createFixIfPossible(!isExpectClass && klass.module?.platform?.isJvm() == true, ::GenerateIdentityEqualsFix),
+            ).toTypedArray()
 
             holder.registerProblem(
                 keyword,
@@ -131,3 +133,8 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
         }
     }
 }
+
+private fun <T : LocalQuickFix> createFixIfPossible(
+    flag: Boolean,
+    quickFixFactory: () -> T,
+): T? = quickFixFactory.takeIf { flag }?.invoke()
