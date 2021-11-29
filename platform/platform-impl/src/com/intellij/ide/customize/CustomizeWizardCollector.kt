@@ -22,17 +22,17 @@ class CustomizeWizardCollector : CounterUsagesCollector() {
                                                                  "Other_Tools", "Plugin_Development", "Build_Tools"))
     private val REMAINING_PAGES_SKIPPED_EVENT = GROUP.registerEvent("remaining.pages.skipped", PAGE_FIELD)
 
-    private val WIZARD_DISPLAYED_EVENT = registerActionEvent(WizardDisplayed.toString())
-    private val BUNDLED_PLUGIN_GROUP_ENABLED_EVENT = registerActionEvent(BundledPluginGroupEnabled.toString())
-    private val BUNDLED_PLUGIN_GROUP_CUSTOMIZED_EVENT = registerActionEvent(BundledPluginGroupCustomized.toString())
-    private val BUNDLED_PLUGIN_GROUP_DISABLED_EVENT = registerActionEvent(BundledPluginGroupDisabled.toString())
-    private val DESKTOP_ENTRY_CREATED_EVENT = registerActionEvent(DesktopEntryCreated.toString())
-    private val LAUNCHER_SCRIPT_CREATED_EVENT = registerActionEvent(LauncherScriptCreated.toString())
-    private val FEATURED_PLUGIN_INSTALLED_EVENT = registerActionEvent(FeaturedPluginInstalled.toString())
-    private val UI_THEME_CHANGED_EVENT = registerActionEvent(UIThemeChanged.toString())
+    private val WIZARD_DISPLAYED_EVENT = registerEvent(WizardDisplayed)
+    private val BUNDLED_PLUGIN_GROUP_ENABLED_EVENT = registerEvent(BundledPluginGroupEnabled)
+    private val BUNDLED_PLUGIN_GROUP_CUSTOMIZED_EVENT = registerEvent(BundledPluginGroupCustomized)
+    private val BUNDLED_PLUGIN_GROUP_DISABLED_EVENT = registerEvent(BundledPluginGroupDisabled)
+    private val DESKTOP_ENTRY_CREATED_EVENT = registerEvent(DesktopEntryCreated)
+    private val LAUNCHER_SCRIPT_CREATED_EVENT = registerEvent(LauncherScriptCreated)
+    private val FEATURED_PLUGIN_INSTALLED_EVENT = registerEvent(FeaturedPluginInstalled)
+    private val UI_THEME_CHANGED_EVENT = registerEvent(UIThemeChanged)
 
-    fun registerActionEvent(eventId: String): VarargEventId {
-      return ActionsEventLogGroup.registerActionEvent(GROUP, eventId, TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD)
+    fun registerEvent(customizeIDEWizardInteractionType: CustomizeIDEWizardInteractionType): VarargEventId {
+      return GROUP.registerVarargEvent(customizeIDEWizardInteractionType.toString(), TIMESTAMP_FIELD, EventFields.PluginInfo, GROUP_FIELD)
     }
 
     fun logRemainingPagesSkipped(page: Int) {
