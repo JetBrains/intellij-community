@@ -19,8 +19,8 @@ import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpointBase;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ActionsKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.*;
@@ -108,43 +108,45 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
     public void reload() {
         super.reload();
 
+        // We can't wait for a smart mode under a read access. It would result to exceptions
+        // or a possible deadlock. So return here.
+        if (ApplicationManager.getApplication().isReadAccessAllowed() && DumbService.isDumb(myProject)) return;
+
         setMethodName(null);
         mySignature = null;
 
-        Project project = myProject;
-        Task.Backgroundable task = new Task.Backgroundable(project, KotlinDebuggerCoreBundle.message("function.breakpoint.initialize")) {
+        SourcePosition sourcePosition = getSourcePosition();
+        MethodDescriptor descriptor =
+                sourcePosition == null
+                ? null
+                : DumbService.getInstance(myProject).runReadActionInSmartMode(() -> getMethodDescriptor(myProject, sourcePosition));
+
+        ProgressIndicatorProvider.checkCanceled();
+
+        String methodName = descriptor == null ? null : descriptor.methodName;
+        JVMName methodSignature = descriptor == null ? null : descriptor.methodSignature;
+        boolean methodIsStatic = descriptor != null && descriptor.isStatic;
+
+        ProgressIndicatorProvider.checkCanceled();
+
+        setMethodName(methodName);
+        mySignature = methodSignature;
+        myIsStatic = methodIsStatic;
+
+        if (methodIsStatic) {
+            setInstanceFiltersEnabled(false);
+        }
+
+        updateClassPattern();
+    }
+
+    private void updateClassPattern() {
+        Task.Backgroundable task = new Task.Backgroundable(myProject, KotlinDebuggerCoreBundle.message("function.breakpoint.initialize")) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-                // We can't wait for a smart mode under a read access. It would result to exceptions
-                // or a possible deadlock. So return here.
-                if (ApplicationManager.getApplication().isReadAccessAllowed() && DumbService.isDumb(project)) return;
-
-                SourcePosition sourcePosition = KotlinFunctionBreakpoint.this.getSourcePosition();
-                MethodDescriptor descriptor =
-                        sourcePosition == null
-                        ? null
-                        : DumbService.getInstance(project).runReadActionInSmartMode(() -> getMethodDescriptor(project, sourcePosition));
-
-                ProgressIndicatorProvider.checkCanceled();
-
-                String methodName = descriptor == null ? null : descriptor.methodName;
-                JVMName methodSignature = descriptor == null ? null : descriptor.methodSignature;
-                boolean methodIsStatic = descriptor != null && descriptor.isStatic;
-
-                PsiClass psiClass = KotlinFunctionBreakpoint.this.getPsiClass();
-
-                ProgressIndicatorProvider.checkCanceled();
-
-                KotlinFunctionBreakpoint.this.setMethodName(methodName);
-                KotlinFunctionBreakpoint.this.mySignature = methodSignature;
-                KotlinFunctionBreakpoint.this.myIsStatic = methodIsStatic;
-
+                PsiClass psiClass = getPsiClass();
                 if (psiClass != null) {
-                    KotlinFunctionBreakpoint.this.getProperties().myClassPattern =
-                            ReadAction.compute(() -> psiClass.getQualifiedName());
-                }
-                if (methodIsStatic) {
-                    KotlinFunctionBreakpoint.this.setInstanceFiltersEnabled(false);
+                    getProperties().myClassPattern = ActionsKt.runReadAction(() -> psiClass.getQualifiedName());
                 }
             }
         };

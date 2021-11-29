@@ -400,8 +400,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val debuggerClassNameProvider = DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope)
         val lineNumber = runReadAction { sourcePosition.line }
         val classes = debuggerClassNameProvider.getClassesForPosition(sourcePosition)
-        return classes.flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
+            .flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
+        return classes
             .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, lineNumber) }
+            .ifEmpty { classes }
     }
 
     fun originalClassNamesForPosition(position: SourcePosition): List<String> {
@@ -504,8 +506,6 @@ fun Location.getClassName(): String? {
     return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.replace('/', '.')
 }
 
-
-
 private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<ReferenceType> {
     val vmProxy = virtualMachineProxy
 
@@ -523,7 +523,7 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
         for (location in outerClass.safeAllLineLocations()) {
             val locationLine = location.lineNumber() - 1
             if (locationLine < 0) {
-                // such locations are not correspond to real lines in code
+                // such locations do not correspond to real lines in code
                 continue
             }
 
@@ -539,15 +539,13 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
             }
         }
 
-        // The same line number may appear in different classes so we have to scan nested classes as well.
-        // For example, in the next example line 3 appears in both Foo and Foo$Companion.
-
-        /* class Foo {
-            companion object {
-                val a = Foo() /* line 3 */
-            }
-        } */
-
+        // The same line number may appear in different classes, so we have to scan nested classes as well.
+        // In the next example line 3 appears in both Foo and Foo$Companion.
+        //     class Foo {
+        //         companion object {
+        //             val a = Foo() /* line 3 */
+        //          }
+        //     }
         val nestedTypes = vmProxy.nestedTypes(outerClass)
         for (nested in nestedTypes) {
             targetClasses += findTargetClasses(nested, lineAt)
