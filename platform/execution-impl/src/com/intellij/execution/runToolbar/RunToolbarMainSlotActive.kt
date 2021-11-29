@@ -2,6 +2,7 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.PROP_ACTIVE_ENVIRONMENT
+import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -62,23 +63,23 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
 }
 
 private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
-    private val arrow = JLabel()
+  private val arrow = JLabel()
 
-    private val setting = object : JLabel() {
-      override fun getFont(): Font {
-        return UIUtil.getToolbarFont()
-      }
+  private val setting = object : TrimmedMiddleLabel() {
+    override fun getFont(): Font {
+      return UIUtil.getToolbarFont()
     }
+  }
 
-    private val process = object : JLabel() {
-      override fun getFont(): Font {
-        return UIUtil.getToolbarFont()
-      }
-    }.apply {
-      foreground = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
+  private val process = object : JLabel() {
+    override fun getFont(): Font {
+      return UIUtil.getToolbarFont()
     }
+  }.apply {
+    foreground = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
+  }
 
-    init {
+  init {
       layout = MigLayout("ins 0 0 0 3, fill, ay center")
       val pane = JPanel().apply {
         layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]3[shp 1]3[]")
