@@ -163,6 +163,8 @@ internal class FirWrapperResolvedCall(val firSimpleWrapperCall: FirSimpleWrapper
         return firCall.getFir().dispatchReceiver.toExpressionReceiverValue(context)
     }
 
+    override fun getContextReceivers(): List<ReceiverValue> = context.implementationPlanned()
+
     override fun getExplicitReceiverKind(): ExplicitReceiverKind {
         if (firCall.getFir().explicitReceiver === null) return ExplicitReceiverKind.NO_EXPLICIT_RECEIVER
         if (firCall.getFir().explicitReceiver === firCall.getFir().extensionReceiver) return ExplicitReceiverKind.EXTENSION_RECEIVER

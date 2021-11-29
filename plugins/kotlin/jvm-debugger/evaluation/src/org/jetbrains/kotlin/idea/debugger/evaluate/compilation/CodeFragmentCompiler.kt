@@ -364,7 +364,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
         }
 
         methodDescriptor.initialize(
-            null, classDescriptor.thisAsReceiverParameter, emptyList(),
+            null, classDescriptor.thisAsReceiverParameter, emptyList(), emptyList(),
             parameters, returnType, Modality.FINAL, DescriptorVisibilities.PUBLIC
         )
 

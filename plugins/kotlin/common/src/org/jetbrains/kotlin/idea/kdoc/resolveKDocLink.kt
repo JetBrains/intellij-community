@@ -154,14 +154,14 @@ private fun getClassInnerScope(outerScope: LexicalScope, descriptor: ClassDescri
 
     val headerScope = LexicalScopeImpl(
         outerScope, descriptor, false, descriptor.thisAsReceiverParameter,
-        LexicalScopeKind.SYNTHETIC
+        descriptor.contextReceivers, LexicalScopeKind.SYNTHETIC
     ) {
         descriptor.declaredTypeParameters.forEach { addClassifierDescriptor(it) }
         descriptor.constructors.forEach { addFunctionDescriptor(it) }
     }
 
     return LexicalChainedScope.create(
-        headerScope, descriptor, false, null, LexicalScopeKind.SYNTHETIC,
+        headerScope, descriptor, false, null, emptyList(), LexicalScopeKind.SYNTHETIC,
         descriptor.defaultType.memberScope,
         descriptor.staticScope,
         descriptor.companionObjectDescriptor?.defaultType?.memberScope
