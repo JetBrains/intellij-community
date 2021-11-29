@@ -51,10 +51,6 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
     private lateinit var jdk18: Sdk
     private lateinit var myApplication: TestApplicationManager
 
-    override fun isStressTest(): Boolean = true
-
-    override fun isPerformanceTest(): Boolean = false
-
     override fun setUp() {
         super.setUp()
         ExpressionsOfTypeProcessor.prodMode()

@@ -1033,7 +1033,7 @@ public abstract class UsefulTestCase extends TestCase {
    * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
    * For example: {@code public void testHighlightingPerformance()}
    */
-  public boolean isPerformanceTest() {
+  public final boolean isPerformanceTest() {
     String testName = getName();
     String className = getClass().getSimpleName();
     return TestFrameworkUtil.isPerformanceTest(testName, className);
@@ -1045,7 +1045,7 @@ public abstract class UsefulTestCase extends TestCase {
    * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
-  public boolean isStressTest() {
+  public final boolean isStressTest() {
     return isStressTest(getName(), getClass().getName());
   }
 

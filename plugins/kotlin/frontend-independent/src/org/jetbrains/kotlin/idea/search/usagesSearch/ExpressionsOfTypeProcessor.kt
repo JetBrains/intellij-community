@@ -59,7 +59,7 @@ class ExpressionsOfTypeProcessor(
 
     companion object {
         @get:TestOnly
-        var mode = if (isUnitTestMode()) Mode.ALWAYS_SMART else Mode.PLAIN_WHEN_NEEDED
+        var mode = Mode.ALWAYS_SMART
 
         @TestOnly
         fun prodMode() {
