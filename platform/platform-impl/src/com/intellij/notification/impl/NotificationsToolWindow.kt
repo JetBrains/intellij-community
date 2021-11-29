@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl
 
+import com.intellij.UtilBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -24,8 +25,10 @@ import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
@@ -53,6 +56,7 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.event.*
+import java.util.*
 import java.util.function.Consumer
 import javax.accessibility.AccessibleContext
 import javax.swing.*
@@ -199,11 +203,16 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
             val ideFrame = WindowManager.getInstance().getIdeFrame(project)
             val balloonLayout = ideFrame!!.balloonLayout as BalloonLayoutImpl
             balloonLayout.closeAll()
+
+            suggestions.updateComponents()
+            timeline.updateComponents()
           }
         }
         if (!visible) {
           suggestions.clearNewState()
           timeline.clearNewState()
+          myNotifications.clear()
+          updateIcon(toolWindow, myNotifications)
         }
       }
     })
@@ -219,10 +228,30 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 }
 
+private fun JComponent.mediumFontFunction() {
+  font = JBFont.medium()
+  val f: (JComponent) -> Unit = {
+    it.font = JBFont.medium()
+  }
+  putClientProperty(NotificationGroupComponent.FONT_KEY, f)
+}
+
+private fun JComponent.smallFontFunction() {
+  font = JBFont.small()
+  val f: (JComponent) -> Unit = {
+    it.font = JBFont.small()
+  }
+  putClientProperty(NotificationGroupComponent.FONT_KEY, f)
+}
+
 private class NotificationGroupComponent(private val myMainPanel: JPanel,
                                          private val mySuggestionType: Boolean,
                                          private val myProject: Project) :
   JPanel(BorderLayout()), NullableComponent {
+
+  companion object {
+    const val FONT_KEY = "FontFunction"
+  }
 
   private val myTitle = JBLabel(
     IdeBundle.message(if (mySuggestionType) "notifications.toolwindow.suggestions" else "notifications.toolwindow.timeline"))
@@ -264,7 +293,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     mainPanel.border = JBUI.Borders.empty(8, 8, 0, 0)
     add(mainPanel)
 
-    myTitle.font = JBFont.medium()
+    myTitle.mediumFontFunction()
     myTitle.foreground = NotificationComponent.INFO_COLOR
 
     if (mySuggestionType) {
@@ -274,7 +303,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       add(mySuggestionGotItPanel, BorderLayout.NORTH)
 
       val gotItTitle = MultiLineLabel(IdeBundle.message("notifications.toolwindow.suggestion.gotit.title"))
-      gotItTitle.font = JBFont.medium()
+      gotItTitle.mediumFontFunction()
       gotItTitle.border = JBUI.Borders.empty(7, 12, 7, 0)
       mySuggestionGotItPanel.add(gotItTitle, BorderLayout.WEST)
 
@@ -303,7 +332,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       val clearAll = LinkLabel(IdeBundle.message("notifications.toolwindow.timeline.clear.all"), null) { _: LinkLabel<Unit>, _: Unit? ->
         clearAll()
       }
-      clearAll.font = JBFont.medium()
+      clearAll.mediumFontFunction()
       clearAll.border = JBUI.Borders.emptyRight(20)
       clearAll.isVisible = false
       panel.add(clearAll, BorderLayout.EAST)
@@ -438,6 +467,16 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     iterateComponents { it.setNew(false) }
   }
 
+  fun updateComponents() {
+    UIUtil.uiTraverser(this).filter(JComponent::class.java).forEach {
+      val value = it.getClientProperty(FONT_KEY)
+      if (value != null) {
+        (value as (JComponent) -> Unit).invoke(it)
+      }
+    }
+    fullRepaint()
+  }
+
   private inline fun iterateComponents(f: (NotificationComponent) -> Unit) {
     val count = myList.componentCount
     for (i in 0 until count) {
@@ -454,8 +493,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       object : Runnable {
         override fun run() {
           for (timeComponent in myTimeComponents) {
-            timeComponent.text = DateFormatUtil.formatPrettyDateTime(
-              timeComponent.getClientProperty(NotificationComponent.TIME_KEY) as Long)
+            timeComponent.text = formatPrettyDateTime(timeComponent.getClientProperty(NotificationComponent.TIME_KEY) as Long)
           }
 
           if (myTimeComponents.isNotEmpty()) {
@@ -466,6 +504,31 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
 
     fullRepaint()
+  }
+
+  private fun formatPrettyDateTime(time: Long): @NlsSafe String {
+    val c = Calendar.getInstance()
+
+    c.timeInMillis = Clock.getTime()
+    val currentYear = c[Calendar.YEAR]
+    val currentDayOfYear = c[Calendar.DAY_OF_YEAR]
+
+    c.timeInMillis = time
+    val year = c[Calendar.YEAR]
+    val dayOfYear = c[Calendar.DAY_OF_YEAR]
+
+    if (currentYear == year && currentDayOfYear == dayOfYear) {
+      return DateFormatUtil.formatTime(time)
+    }
+
+    val isYesterdayOnPreviousYear = currentYear == year + 1 && currentDayOfYear == 1 && dayOfYear == c.getActualMaximum(
+      Calendar.DAY_OF_YEAR)
+    val isYesterday = isYesterdayOnPreviousYear || currentYear == year && currentDayOfYear == dayOfYear + 1
+    if (isYesterday) {
+      return UtilBundle.message("date.format.yesterday")
+    }
+
+    return DateFormatUtil.formatDate(time)
   }
 
   private fun fullRepaint() {
@@ -669,7 +732,7 @@ private class NotificationComponent(val notification: Notification,
       timeComponent.verticalTextPosition = SwingConstants.TOP
       timeComponent.toolTipText = DateFormatUtil.formatDateTime(notification.timestamp)
       timeComponent.border = JBUI.Borders.emptyRight(10)
-      timeComponent.font = JBFont.small()
+      timeComponent.smallFontFunction()
       timeComponent.foreground = INFO_COLOR
 
       timeComponents.add(timeComponent)
