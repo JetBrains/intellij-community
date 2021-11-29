@@ -220,6 +220,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @NotNull
   private List<LineMarkerInfo<PsiElement>> collectSiblingInheritedMethods(@NotNull Collection<? extends PsiMethod> methods) {
+    if (!shouldSearchImplementedMethods() && !shouldSearchOverriddenMethods()) {
+      return Collections.emptyList();
+    }
     Map<PsiMethod, FindSuperElementsHelper.SiblingInfo> map = FindSuperElementsHelper.getSiblingInheritanceInfos(methods);
     return ContainerUtil.map(map.keySet(), method -> {
       PsiElement range = getMethodRange(method);
