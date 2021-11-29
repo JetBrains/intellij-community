@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectImport;
 
 import com.intellij.ide.DataManager;
@@ -21,6 +21,8 @@ import javax.swing.*;
 import java.util.List;
 
 /**
+ * An extension point for importing modules from a given file
+ * (see {@link com.intellij.ide.util.newProjectWizard.AddModuleWizard#initModuleWizard}).
  * @author Vladislav.Kaznacheev
  */
 public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
