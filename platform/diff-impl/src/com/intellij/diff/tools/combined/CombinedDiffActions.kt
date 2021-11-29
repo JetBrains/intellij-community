@@ -71,6 +71,7 @@ internal class CombinedEditorSettingsAction(private val settings: TextDiffSettin
     actions.addAll(myActions)
     actions.add(Separator.getInstance())
     actions.add(ignorePolicyGroup)
+    actions.add(Separator.getInstance())
     actions.add(highlightPolicyGroup)
     actions.add(Separator.getInstance())
     actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
