@@ -22,7 +22,6 @@ import com.intellij.util.animation.Easing.bezier
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.animation
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.Nullable
 import java.awt.Component
 
 class MaximizeEditorInSplitAction : DumbAwareAction() {
@@ -99,7 +98,7 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
 
   companion object {
     val CURRENT_STATE_IS_MAXIMIZED_KEY = Key.create<Boolean>("CURRENT_STATE_IS_MAXIMIZED")
-    fun getSplittersToMaximize(project: @Nullable Project, editor: @Nullable Editor): Set<Pair<Splitter, Boolean>> {
+    fun getSplittersToMaximize(project: Project, editor: Editor): Set<Pair<Splitter, Boolean>> {
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return emptySet()
       val set = HashSet<Pair<Splitter, Boolean>>()
       var comp = editor.component as Component?
