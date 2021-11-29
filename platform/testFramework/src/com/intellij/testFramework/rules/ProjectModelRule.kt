@@ -191,7 +191,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     runWriteActionAndWait { moduleManager.disposeModule(module) }
   }
 
-  fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C): F {
+  fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C = type.createDefaultConfiguration()): F {
     val facetManager = FacetManager.getInstance(module)
     val model = facetManager.createModifiableModel()
     val facet = facetManager.createFacet(type, type.defaultFacetName, configuration, null)
