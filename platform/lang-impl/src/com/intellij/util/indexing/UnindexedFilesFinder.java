@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ReadAction;
@@ -182,9 +182,14 @@ final class UnindexedFilesFinder {
           }
         }
 
+        boolean mayMarkFileIndexed = true;
         long nowTime = System.nanoTime();
         try {
           for (ID<?, ?> indexId : myFileBasedIndex.getContentLessIndexes(isDirectory)) {
+            if (!RebuildStatus.isOk(indexId)) {
+              mayMarkFileIndexed = false;
+              continue;
+            }
             if (FileTypeIndex.NAME.equals(indexId) && fileTypeIndexState != null && !fileTypeIndexState.updateRequired()) {
               continue;
             }
@@ -202,7 +207,7 @@ final class UnindexedFilesFinder {
         }
 
         IndexingStamp.flushCache(inputId);
-        if (!shouldIndex.get()) {
+        if (!shouldIndex.get() && mayMarkFileIndexed) {
           IndexingFlag.setFileIndexed(file);
         }
       });
