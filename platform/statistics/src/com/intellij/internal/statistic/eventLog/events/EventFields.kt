@@ -58,8 +58,7 @@ object EventFields {
   /**
    * Creates an int field that will be validated by regexp rule
    * @param name  name of the field
-   * @param regexp regexp, e.g "-?[0-9]{1,3}"
-   * Please choose regexp carefully to avoid reporting any sensitive data.
+   * @param regexp  regular expression, e.g "-?[0-9]{1,3}"
    */
   @JvmStatic
   fun RegexpInt(@NonNls name: String, @NonNls regexp: String): RegexpIntEventField =
