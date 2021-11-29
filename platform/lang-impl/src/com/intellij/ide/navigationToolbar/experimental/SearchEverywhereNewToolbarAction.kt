@@ -122,6 +122,9 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       }
 
       override fun paint(g: Graphics?) {
+        if (parent.bounds.width < parent.preferredSize.width) {
+          return
+        }
         foreground = DISABLED_TEXT_COLOR
         background = searchFieldBackground()
         super.paint(g)
@@ -132,6 +135,9 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       }
 
       override fun paintComponent(g: Graphics) {
+        if (parent.bounds.width < parent.preferredSize.width) {
+          return
+        }
         setupAntialiasing(g)
 
         val fm = getFontMetrics(font)
