@@ -220,6 +220,7 @@ object ReplaceWithAnnotationAnalyzer {
                     descriptor,
                     false,
                     null,
+                    emptyList(),
                     LexicalScopeKind.TYPE_ALIAS_HEADER,
                     LocalRedeclarationChecker.DO_NOTHING
                 ) {
@@ -246,6 +247,7 @@ object ReplaceWithAnnotationAnalyzer {
                     descriptor,
                     false,
                     descriptor.extensionReceiverParameter,
+                    descriptor.contextReceiverParameters,
                     LexicalScopeKind.PROPERTY_ACCESSOR_BODY
                 )
             }
