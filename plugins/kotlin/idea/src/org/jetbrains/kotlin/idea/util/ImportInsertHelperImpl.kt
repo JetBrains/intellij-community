@@ -105,22 +105,20 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                         .takeIf { it.isNotEmpty() } ?: return null
                     if (classifiers.all { it is TypeAliasDescriptor }) {
                         return when {
-                            classifiers.isEmpty() -> null
                             classifiers.all { it.importableFqName == targetFqName } -> ImportDescriptorResult.ALREADY_IMPORTED
                             // no actual conflict
                             classifiers.size == 1 -> null
                             else -> ImportDescriptorResult.FAIL
                         }
                     }
-                    val classifier: ClassifierDescriptor = run {
-                        // kotlin.collections.ArrayList is not a conflict, it's an alias to java.util.ArrayList
-                        val classifiers2 = classifiers.filter { it !is TypeAliasDescriptor }
-                        // top-level classifiers could/should be resolved with imports
-                        if (classifiers2.size > 1 && classifiers2.all { it.containingDeclaration is PackageFragmentDescriptor }) {
-                            return null
-                        }
-                        classifiers2.singleOrNull() ?: return ImportDescriptorResult.FAIL
+
+                    // kotlin.collections.ArrayList is not a conflict, it's an alias to java.util.ArrayList
+                    val nonAliasClassifiers = classifiers.filter { it !is TypeAliasDescriptor }
+                    // top-level classifiers could/should be resolved with imports
+                    if (nonAliasClassifiers.size > 1 && nonAliasClassifiers.all { it.containingDeclaration is PackageFragmentDescriptor }) {
+                        return null
                     }
+                    val classifier: ClassifierDescriptor = nonAliasClassifiers.singleOrNull() ?: return ImportDescriptorResult.FAIL
                     ImportDescriptorResult.ALREADY_IMPORTED.takeIf { classifier.importableFqName == targetFqName }
                 }
                 is FunctionDescriptor ->
