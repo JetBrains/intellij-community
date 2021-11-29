@@ -251,7 +251,7 @@ public final class StartupUtil {
           EventQueue.invokeLater(() -> {
             // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater
             // (to allow other queued events to be executed)
-            StyleSheetUtil.configureHtmlKitStylesheet();
+            StyleSheetUtil.configureCustomLabelStyle();
             //noinspection ResultOfMethodCallIgnored
             WeakFocusStackManager.getInstance();
           });

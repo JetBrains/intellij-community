@@ -13,11 +13,18 @@ import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
 
 object StyleSheetUtil {
-  @Volatile
-  private var swingDefaultHtmlKitCss: StyleSheet? = null
+
+  private val swingDefaultHtmlKitStyle by lazy<StyleSheet> {
+    // get the default JRE CSS and ..
+    val kit = HTMLEditorKit()
+    val defaultSheet = kit.styleSheet
+    // .. erase global ref to this CSS so no one can alter it
+    kit.styleSheet = null
+    defaultSheet
+  }
 
   //language=css
-  private val commonStyle by lazy(LazyThreadSafetyMode.NONE) {
+  private val commonStyle by lazy {
     createStyleSheet(
       "code { font-size: 100%; }" +  // small by Swing's default
       "small { font-size: small; }" +  // x-small by Swing's default
@@ -57,20 +64,13 @@ object StyleSheetUtil {
     }
   }
 
+  /**
+   * Applied to all JLabel instances, including subclasses. Supported in JBR only.
+   * Generally should be called only once during startup
+   */
   @JvmStatic
-  fun configureHtmlKitStylesheet() {
-    if (swingDefaultHtmlKitCss != null) {
-      return
-    }
+  fun configureCustomLabelStyle() {
     val activity = StartUpMeasurer.startActivity("html kit configuration")
-
-    // save the default JRE CSS and ..
-    val kit = HTMLEditorKit()
-    swingDefaultHtmlKitCss = kit.styleSheet
-    // .. erase global ref to this CSS so no one can alter it
-    kit.styleSheet = null
-
-    // Applied to all JLabel instances, including subclasses. Supported in JBR only.
     UIManager.getDefaults()["javax.swing.JLabel.userStyleSheet"] = createJBDefaultStyleSheet()
     activity.end()
   }
@@ -78,8 +78,8 @@ object StyleSheetUtil {
   @JvmStatic
   fun createJBDefaultStyleSheet(): StyleSheet {
     val style = StyleSheet()
-    val styleSheet = UIManager.getDefaults()["StyledEditorKit.JBDefaultStyle"] as StyleSheet? ?: swingDefaultHtmlKitCss
-    style.addStyleSheet(styleSheet)
+    val defaultStyleSheet = UIManager.getDefaults()["StyledEditorKit.JBDefaultStyle"] as? StyleSheet ?: swingDefaultHtmlKitStyle
+    style.addStyleSheet(defaultStyleSheet)
     style.addStyleSheet(commonStyle)
     return style
   }

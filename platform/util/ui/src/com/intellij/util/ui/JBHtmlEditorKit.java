@@ -27,11 +27,6 @@ import java.util.stream.StreamSupport;
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
 
-  static {
-    // probably only needed for tests
-    StyleSheetUtil.configureHtmlKitStylesheet();
-  }
-
   private final @NotNull ViewFactory myViewFactory;
   private final @NotNull StyleSheet myStyle;
 
