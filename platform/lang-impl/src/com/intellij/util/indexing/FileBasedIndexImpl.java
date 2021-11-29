@@ -635,7 +635,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         IndexingStamp.flushCaches();
 
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (myIsUnitTestMode) {
           UpdatableIndex<Integer, SerializedStubTree, FileContent> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
           if (index != null) {
             StaleIndexesChecker.checkIndexForStaleRecords(index, false);
@@ -1207,7 +1207,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (RebuildStatus.requestRebuild(indexId)) {
       String message = "Rebuild requested for index " + indexId;
       Application app = ApplicationManager.getApplication();
-      if (app.isUnitTestMode() && app.isReadAccessAllowed() && !app.isDispatchThread()) {
+      if (myIsUnitTestMode && app.isReadAccessAllowed() && !app.isDispatchThread()) {
         // shouldn't happen in tests in general; so fail early with the exception that caused index to be rebuilt.
         // otherwise reindexing will fail anyway later, but with a much more cryptic assertion
         LOG.error(message, throwable);
@@ -1223,13 +1223,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       Runnable rebuildRunnable = () -> scheduleIndexRebuild(message);
 
-      if (myIsUnitTestMode) {
-        rebuildRunnable.run();
-      }
-      else {
-        // we do invoke later since we can have read lock acquired
-        AppUIExecutor.onWriteThread().later().expireWith(app).submit(rebuildRunnable);
-      }
+      // we do invoke later since we can have read lock acquired
+      AppUIExecutor.onWriteThread().later().expireWith(app).submit(rebuildRunnable);
     }
   }
 
@@ -1394,13 +1389,32 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-        boolean update = acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired();
+        boolean update;
+        boolean acceptedAndRequired = acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired();
+        if (acceptedAndRequired) {
+          update = RebuildStatus.isOk(indexId);
+          if (!update) {
+            setIndexedStatus.set(Boolean.FALSE);
+            currentIndexedStates.remove(indexId);
+          }
+        }
+        else {
+          update = false;
+        }
 
         if (!update && doTraceStubUpdates(indexId)) {
-          boolean acceptsInput = acceptsInput(indexId, fc);
-          LOG.info("index " + indexId + " should not be updated for " + fc.getFileName() + " because " + (acceptsInput
-                                                                                                          ? "update is not required"
-                                                                                                          : "file is not accepted by index"));
+          String reason;
+          if (acceptedAndRequired) {
+            reason = "index is required to rebuild, and indexing does not update such";
+          }
+          else if (acceptsInput(indexId, fc)) {
+            reason = "update is not required";
+          }
+          else {
+            reason = "file is not accepted by index";
+          }
+
+          LOG.info("index " + indexId + " should not be updated for " + fc.getFileName() + " because " + reason);
         }
 
         if (update) {

@@ -181,6 +181,11 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
 
     snapshot = PerformanceWatcher.takeSnapshot();
+
+    if (isFullIndexUpdate()) {
+      myIndex.clearIndicesIfNecessary();
+    }
+
     Instant scanFilesStart = Instant.now();
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
@@ -195,10 +200,6 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
-
-    if (isFullIndexUpdate()) {
-      myIndex.clearIndicesIfNecessary();
-    }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
