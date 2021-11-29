@@ -141,7 +141,7 @@ __class_path__
 IFS="$(printf '\n\t')"
 # shellcheck disable=SC2086
 "$JAVA_BIN" \
-  -classpath "$CLASSPATH" \
+  -classpath "$CLASS_PATH" \
   ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \

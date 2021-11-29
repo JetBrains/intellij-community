@@ -15,34 +15,23 @@ import java.nio.file.Path
 final class UnixScriptBuilder {
   private static final String REMOTE_DEV_SCRIPT_FILE_NAME = "remote-dev-server.sh"
 
-  private static String makePathsVar(String variableName, @NotNull List<String> jarNames) {
-    if (jarNames.isEmpty()) {
-      return ""
-    }
-
-    String classPath = "$variableName=\"\$IDE_HOME/lib/${jarNames[0]}\"\n"
-    if (jarNames.size() == 1) {
-      return classPath
-    }
-    return classPath + String.join("", jarNames[1..-1].collect { "$variableName=\"\$$variableName:\$IDE_HOME/lib/${it}\"\n" })
-  }
-
   static void generateScripts(@NotNull BuildContext context,
                               @NotNull List<String> extraJarNames,
                               @NotNull Path distBinDir,
                               @NotNull OsFamily osFamily) {
-    String classPathVarName = "CLASSPATH"
-    String classPath = makePathsVar(classPathVarName, context.bootClassPathJarNames + extraJarNames)
-    if (context.productProperties.toolsJarRequired) {
-      classPath += "$classPathVarName=\"\$$classPathVarName:\$JDK/lib/tools.jar\"\n"
+    List<String> classPathJars = context.bootClassPathJarNames + extraJarNames
+    String classPath = "CLASS_PATH=\"\$IDE_HOME/lib/${classPathJars.get(0)}\""
+    for (int i = 1; i < classPathJars.size(); i++) {
+      classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars.get(i)}\""
     }
 
-    String additionalJvmArgs = String.join(" ", context.additionalJvmArguments)
-    String bootClassPath = makePathsVar("BOOT_CLASS_PATH", context.xBootClassPathJarNames)
-    if (!bootClassPath.isEmpty()) {
-      //noinspection SpellCheckingInspection
-      additionalJvmArgs += " -Xbootclasspath/a:\$BOOT_CLASS_PATH"
+    List<String> additionalJvmArguments = context.additionalJvmArguments
+    if (!context.xBootClassPathJarNames.isEmpty()) {
+      additionalJvmArguments = new ArrayList<>(additionalJvmArguments)
+      String bootCp = String.join(':', context.xBootClassPathJarNames.collect { "\$IDE_HOME/lib/${it}" })
+      additionalJvmArguments.add('"-Xbootclasspath/a:' + bootCp + '"')
     }
+    String additionalJvmArgs = String.join(' ', additionalJvmArguments)
 
     String baseName = context.productProperties.baseFileName
 
@@ -85,14 +74,14 @@ final class UnixScriptBuilder {
           }
 
           Path target = distBinDir.resolve(fileName == "executable-template.sh" ? scriptName : fileName)
-          copyScript(file, target, baseName, additionalJvmArgs, defaultXmxParameter, bootClassPath, classPath, scriptName, context)
+          copyScript(file, target, baseName, additionalJvmArgs, defaultXmxParameter, classPath, scriptName, context)
         }
       }
       BuildTasksImpl.copyInspectScript(context, distBinDir)
     }
     else if (osFamily == OsFamily.MACOS) {
       copyScript(sourceScriptDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME), distBinDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
-                 baseName, additionalJvmArgs, defaultXmxParameter, bootClassPath, classPath, baseName, context)
+                 baseName, additionalJvmArgs, defaultXmxParameter, classPath, baseName, context)
     }
     else {
       throw new IllegalStateException("Unsupported OsFamily: $osFamily")
@@ -104,9 +93,8 @@ final class UnixScriptBuilder {
                                  String vmOptionsFileName,
                                  String additionalJvmArgs,
                                  String defaultXmxParameter,
-                                 String bootClassPath,
                                  String classPath,
-    String scriptName,
+                                 String scriptName,
                                  BuildContext context) {
     String fullName = context.applicationInfo.productName
 
@@ -121,7 +109,7 @@ final class UnixScriptBuilder {
       "system_selector", context.systemSelector,
       "ide_jvm_args", additionalJvmArgs,
       "ide_default_xmx", defaultXmxParameter.strip(),
-      "class_path", bootClassPath + classPath,
+      "class_path", classPath,
       "script_name", scriptName,
       ))
   }

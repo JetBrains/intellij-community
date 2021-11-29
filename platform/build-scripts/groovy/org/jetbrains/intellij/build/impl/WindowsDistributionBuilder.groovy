@@ -168,13 +168,6 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
   }
 
-  private static String makePathsVar(String variableName, List<String> jarNames) {
-    if (jarNames.isEmpty()) return ""
-    String classPath = "SET \"$variableName=%IDE_HOME%\\lib\\${jarNames[0]}\"\n"
-    if (jarNames.size() == 1) return classPath
-    return classPath + jarNames[1..-1].collect { "SET \"$variableName=%$variableName%;%IDE_HOME%\\lib\\$it\"\n" }.join("")
-  }
-
   @CompileStatic(TypeCheckingMode.SKIP)
   private void generateScripts(@NotNull Path distBinDir) {
     String fullName = buildContext.applicationInfo.productName
@@ -182,16 +175,17 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String scriptName = "${baseName}.bat"
     String vmOptionsFileName = "${baseName}64.exe"
 
-    String bootClassPath = makePathsVar("BOOT_CLASS_PATH", buildContext.xBootClassPathJarNames)
-    String classPath = makePathsVar("CLASS_PATH", buildContext.bootClassPathJarNames)
-    if (buildContext.productProperties.toolsJarRequired) {
-      classPath += "SET \"CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar\"\n"
+    List<String> classPathJars = buildContext.bootClassPathJarNames
+    String classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${classPathJars.get(0)}\""
+    for (int i = 1; i < classPathJars.size(); i++) {
+      classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${classPathJars.get(i)}\""
     }
 
     List<String> additionalJvmArguments = buildContext.additionalJvmArguments
-    if (!bootClassPath.isEmpty()) {
+    if (!buildContext.xBootClassPathJarNames.isEmpty()) {
       additionalJvmArguments = new ArrayList<>(additionalJvmArguments)
-      additionalJvmArguments.add("-Xbootclasspath/a:%BOOT_CLASS_PATH%")
+      String bootCp = String.join(';', buildContext.xBootClassPathJarNames.collect { "%IDE_HOME%\\lib\\${it}" })
+      additionalJvmArguments.add('"-Xbootclasspath/a:' + bootCp + '"')
     }
 
     buildContext.ant.copy(todir: distBinDir.toString()) {
@@ -204,7 +198,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "system_selector", value: buildContext.systemSelector)
         filter(token: "ide_jvm_args", value: additionalJvmArguments.join(' '))
-        filter(token: "class_path", value: bootClassPath + classPath)
+        filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: scriptName)
         filter(token: "base_name", value: baseName)
       }
