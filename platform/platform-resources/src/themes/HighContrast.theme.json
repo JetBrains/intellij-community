@@ -472,6 +472,11 @@
       "separatorColor": "#e6e6e6"
     },
 
+    "MainToolbar": {
+      "icon.borderInsets": "10,10,10,10",
+      "dropdown.borderInsets": "12,6,12,6"
+    },
+
     "Window.border" : "1,1,1,1,E6E6E6",
 
     "textInactiveText" : "#E0861F"

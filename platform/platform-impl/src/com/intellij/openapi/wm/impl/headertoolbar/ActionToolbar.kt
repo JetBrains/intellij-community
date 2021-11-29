@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.util.ui.JBUI
 import java.awt.*
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -21,10 +22,10 @@ internal class ActionToolbar(actions: List<AnAction>) : JPanel(FlowLayout(FlowLa
 
   private fun createButton(action: AnAction): JComponent {
     val presentation = action.templatePresentation
-    val insets = UIManager.getInsets("MainToolbar.icon.borderInsets")
-    val icon = presentation.icon
-    val size = Dimension(icon.iconWidth + insets.left + insets.right,
-                         icon.iconHeight + insets.top + insets.bottom)
+    val insets = UIManager.getInsets("MainToolbar.icon.borderInsets") ?: JBUI.insets(10)
+    val iconSize = presentation.icon?.let { Dimension(it.iconWidth, it.iconHeight) } ?: Dimension(16, 16)
+    val size = Dimension(iconSize.width + insets.left + insets.right,
+                         iconSize.height + insets.top + insets.bottom)
     val button = ActionButton(action, presentation, ActionPlaces.MAIN_TOOLBAR, size)
     button.setLook(MainToolbarLook())
     return button
