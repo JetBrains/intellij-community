@@ -95,28 +95,28 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
   private fun toDependencyGroups(moduleData: GradleModuleData,
                                  scopeNodes: List<DependencyScopeNode>): List<DependencyContributor.DependencyGroup> {
     if (scopeNodes.isEmpty()) return emptyList()
-    val groups = mutableMapOf<Dependency.Data, MutableList<Dependency>>()
+    val groups = mutableMapOf<Dependency.Data, MutableSet<Dependency>>()
     val root = Dependency.Data.Module(moduleData.moduleName)
 
     val rootDependency = Dependency(root, defaultConfiguration, null)
-    groups[root] = mutableListOf(rootDependency)
+    groups[root] = mutableSetOf(rootDependency)
     for (scopeNode in scopeNodes) {
       val scope = scopeNode.toScope()
       for (dependencyNode in scopeNode.dependencies) {
         addDependencyGroup(rootDependency, scope, dependencyNode, groups, moduleData.gradleProjectDir)
       }
     }
-    return groups.map { (data, dependencies) -> DependencyContributor.DependencyGroup(data, dependencies) }
+    return groups.map { (data, dependencies) -> DependencyContributor.DependencyGroup(data, dependencies.toList()) }
   }
 
   private fun addDependencyGroup(usage: Dependency,
                                  scope: DependencyContributor.Scope,
                                  parentNode: DependencyNode,
-                                 groups: MutableMap<Dependency.Data, MutableList<Dependency>>,
+                                 groups: MutableMap<Dependency.Data, MutableSet<Dependency>>,
                                  gradleProjectDir: String) {
     val dependencyData = parentNode.toDependencyData() ?: return
     val dependency = Dependency(dependencyData, scope, usage)
-    groups.getOrPut(dependencyData, ::mutableListOf).add(dependency)
+    groups.getOrPut(dependencyData, ::mutableSetOf).add(dependency)
 
     val inspectionsList = mutableListOf<DependencyContributor.InspectionResult>()
     // see, org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency.ResolutionState
