@@ -71,6 +71,10 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
         fun `test ktClassUlc and ktFile should be deduplicated`() {
             doTest({ it.ktFile to it.ktClass.ulc }, expectedToRemove = { it.ktFile })
         }
+
+        fun `test ktClassUlc and KtClassForFacade should be deduplicated`() {
+            doTest({ it.facadeClass to it.ktClass.ulc }, withFacade = true, expectedToRemove = { it.facadeClass })
+        }
     }
 
     protected val KtClassOrObject.ulc
