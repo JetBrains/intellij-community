@@ -15,8 +15,6 @@ import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 // TODO(kirpichenkov): works only for JVM (see KT-44552)
@@ -43,8 +41,8 @@ interface KotlinStdlibCache {
 }
 
 class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
-    //@JvmInline
-    private inline class StdlibDependency(val libraryInfo: LibraryInfo?)
+    @JvmInline
+    private value class StdlibDependency(val libraryInfo: LibraryInfo?)
 
     private val isStdlibCache: MutableMap<LibraryInfo, Boolean>
         get() = project.cacheInvalidatingOnRootModifications {
