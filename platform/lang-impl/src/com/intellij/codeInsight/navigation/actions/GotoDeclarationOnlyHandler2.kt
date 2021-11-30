@@ -62,6 +62,9 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
   }
 
   internal fun gotoDeclaration(project: Project, editor: Editor, actionResult: NavigationActionResult) {
+    // obtain event data before showing the popup,
+    // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
+    val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
     when (actionResult) {
       is SingleTarget -> {
         recordAndNavigate(
@@ -69,9 +72,6 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
         )
       }
       is MultipleTargets -> {
-        // obtain event data before showing the popup,
-        // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
-        val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
         val popup = createTargetPopup(
           CodeInsightBundle.message("declaration.navigation.title"),
           actionResult.targets, LazyTargetWithPresentation::presentation
