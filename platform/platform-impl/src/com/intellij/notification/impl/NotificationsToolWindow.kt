@@ -207,12 +207,12 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
             suggestions.updateComponents()
             timeline.updateComponents()
           }
-        }
-        if (!visible) {
-          suggestions.clearNewState()
-          timeline.clearNewState()
-          myNotifications.clear()
-          updateIcon(toolWindow, myNotifications)
+          else {
+            suggestions.clearNewState()
+            timeline.clearNewState()
+            myNotifications.clear()
+            updateIcon(toolWindow, myNotifications)
+          }
         }
       }
     })
