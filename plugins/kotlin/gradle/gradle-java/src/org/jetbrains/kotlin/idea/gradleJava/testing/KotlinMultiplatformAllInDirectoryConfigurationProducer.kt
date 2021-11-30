@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.gradleJava.testing
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.caches.project.isMPPModule
 import org.jetbrains.kotlin.idea.gradleJava.run.MultiplatformTestTasksChooser
+import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.util.createTestWildcardFilter
 
@@ -27,6 +29,10 @@ class KotlinMultiplatformAllInDirectoryConfigurationProducer
         element: PsiElement,
         chosenElements: List<PsiElement>
     ): List<TestTasksToRun> {
+
+        if (context.project.allModules().none { it.isMPPModule })
+            return emptyList()
+
         var result: List<TestTasksToRun> = emptyList()
         mppTestTasksChooser.multiplatformChooseTasks(context.project, context.dataContext, listOf(element)) { tasks ->
             val wildcardFilter = createTestWildcardFilter()
