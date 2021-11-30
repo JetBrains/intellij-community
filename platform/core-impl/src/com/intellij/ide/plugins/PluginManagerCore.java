@@ -1072,8 +1072,7 @@ public final class PluginManagerCore {
   public static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                           @NotNull Set<IdeaPluginDescriptorImpl> depProcessed,
                                                           @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
-    ModuleGraph moduleGraph = getPluginSet().getModuleGraph();
-    for (IdeaPluginDescriptorImpl descriptor : moduleGraph.getDependencies(rootDescriptor)) {
+    for (IdeaPluginDescriptorImpl descriptor : getPluginSet().getModuleGraph().getDependencies(rootDescriptor)) {
       switch (consumer.apply(descriptor)) {
         case TERMINATE:
           return false;

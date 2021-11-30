@@ -89,14 +89,14 @@ public class InstalledPluginsTableModel {
                   (descriptor, pair) -> {
                   });
 
-    List<IdeaPluginDescriptorImpl> impls = descriptors.stream()
+    Set<IdeaPluginDescriptorImpl> impls = descriptors.stream()
       .filter(IdeaPluginDescriptorImpl.class::isInstance)
       .map(IdeaPluginDescriptorImpl.class::cast)
-      .collect(Collectors.toCollection(ArrayList::new));
+      .collect(Collectors.toCollection(LinkedHashSet::new));
 
-    List<IdeaPluginDescriptorImpl> descriptorsToUpdate = action.isEnable() ?
-                                                         getDependenciesToEnable(impls, tempEnabled) :
-                                                         getDependentsToDisable(impls, tempEnabled);
+    Set<IdeaPluginDescriptorImpl> descriptorsToUpdate = action.isEnable() ?
+                                                        getDependenciesToEnable(impls, tempEnabled) :
+                                                        getDependentsToDisable(impls, tempEnabled);
 
     Set<String> pluginNamesToUpdate = descriptorsToUpdate.stream()
       .map(IdeaPluginDescriptorImpl::getName)
@@ -136,9 +136,9 @@ public class InstalledPluginsTableModel {
     return myEnabled;
   }
 
-  private static @NotNull List<IdeaPluginDescriptorImpl> getDependenciesToEnable(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
-                                                                                 @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
-    ArrayList<IdeaPluginDescriptorImpl> result = new ArrayList<>();
+  private static @NotNull Set<IdeaPluginDescriptorImpl> getDependenciesToEnable(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
+                                                                                @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
+    LinkedHashSet<IdeaPluginDescriptorImpl> result = new LinkedHashSet<>();
     for (IdeaPluginDescriptorImpl descriptor : descriptors) {
       PluginManagerCore.processAllNonOptionalDependencies(descriptor, dependency -> {
         PluginId dependencyId = dependency.getPluginId();
@@ -155,12 +155,12 @@ public class InstalledPluginsTableModel {
       });
     }
 
-    return result;
+    return Collections.unmodifiableSet(result);
   }
 
-  private static @NotNull List<IdeaPluginDescriptorImpl> getDependentsToDisable(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
-                                                                                @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
-    ArrayList<IdeaPluginDescriptorImpl> result = new ArrayList<>();
+  private static @NotNull Set<IdeaPluginDescriptorImpl> getDependentsToDisable(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
+                                                                               @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
+    LinkedHashSet<IdeaPluginDescriptorImpl> result = new LinkedHashSet<>();
     Set<PluginId> pluginIds = descriptors.stream()
       .map(IdeaPluginDescriptorImpl::getPluginId)
       .collect(Collectors.toUnmodifiableSet());
@@ -187,7 +187,7 @@ public class InstalledPluginsTableModel {
       });
     }
 
-    return result;
+    return Collections.unmodifiableSet(result);
   }
 
   private boolean createUpdateDependenciesDialog(@NotNull Collection<String> dependencies,

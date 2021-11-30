@@ -704,7 +704,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private static boolean morePluginsAffected(@NotNull Set<PluginId> pluginIdsToDisable) {
-    ModuleGraph moduleGraph = PluginManagerCore.getPluginSet().getModuleGraph();
     for (IdeaPluginDescriptor rootDescriptor : PluginManagerCore.getPlugins()) {
       if (!rootDescriptor.isEnabled() || pluginIdsToDisable.contains(rootDescriptor.getPluginId())) {
         continue;
