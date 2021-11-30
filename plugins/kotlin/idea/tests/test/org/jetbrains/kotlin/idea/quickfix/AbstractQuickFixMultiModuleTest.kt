@@ -5,6 +5,9 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.ComparisonFailure
@@ -63,8 +66,18 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                     "// SHOULD_FAIL_WITH: "
                 ).joinToString(separator = "\n")
 
+                val dialogOption = when (InTextDirectivesUtils.findStringWithPrefixes(actionFileText, "// DIALOG_OPTION: ")) {
+                    "OK" -> TestDialog.OK
+                    "NO" -> TestDialog.NO
+                    "CANCEL" -> TestDialog { Messages.CANCEL }
+                    else -> TestDialog.DEFAULT
+                }
+
+                val oldDialogOption = TestDialogManager.setTestDialog(dialogOption)
+
                 TypeAccessibilityChecker.testLog = StringBuilder()
                 val log = try {
+
                     AbstractQuickFixMultiFileTest.doAction(
                         text,
                         file,
@@ -78,6 +91,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
 
                     TypeAccessibilityChecker.testLog.toString()
                 } finally {
+                    TestDialogManager.setTestDialog(oldDialogOption)
                     TypeAccessibilityChecker.testLog = null
                 }
 

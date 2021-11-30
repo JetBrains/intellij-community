@@ -110,8 +110,9 @@ open class AddModifierFix(
         val addInnerModifier = createFactory(KtTokens.INNER_KEYWORD)
         val addOverrideModifier = createFactory(KtTokens.OVERRIDE_KEYWORD)
 
-        private val modalityModifiers: Set<KtModifierKeywordToken> =
-            setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD, KtTokens.FINAL_KEYWORD)
+        val modifiersWithWarning = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
+
+        private val modalityModifiers = modifiersWithWarning + KtTokens.OPEN_KEYWORD
 
         override fun createModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken): AddModifierFix =
             AddModifierFix(element, modifier)
