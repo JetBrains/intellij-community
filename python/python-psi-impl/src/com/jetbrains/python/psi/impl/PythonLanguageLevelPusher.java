@@ -253,7 +253,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       final LanguageLevel languageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-      for (VirtualFile root : PyUtil.getSourceRoots(module)) { //todo fix to proper project root collection for Python
+      for (VirtualFile root : PyUtil.getSourceRoots(module)) {
         addRootIndexingTask(root, results, project, languageLevel);
       }
     }
