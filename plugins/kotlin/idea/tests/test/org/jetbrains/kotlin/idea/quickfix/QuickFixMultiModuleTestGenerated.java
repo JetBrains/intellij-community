@@ -1278,6 +1278,16 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/other/memberValToExtensionByImpl/");
         }
 
+        @TestMetadata("moveActualPropertyToExistentConstructor")
+        public void testMoveActualPropertyToExistentConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/moveActualPropertyToExistentConstructor/");
+        }
+
+        @TestMetadata("movePropertyToConstructor")
+        public void testMovePropertyToConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/movePropertyToConstructor/");
+        }
+
         @TestMetadata("orderHeader")
         public void testOrderHeader() throws Exception {
             runTest("testData/multiModuleQuickFix/other/orderHeader/");
