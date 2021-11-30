@@ -63,7 +63,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
     when (actionResult) {
       is GTDActionResult.SingleTarget -> {
         recordAndNavigate(
-          project, actionResult.navigatable(), GotoDeclarationAction.getCurrentEventData(), actionResult.navigationProvider
+          project, actionResult.navigatable, GotoDeclarationAction.getCurrentEventData(), actionResult.navigationProvider
         )
       }
       is GTDActionResult.MultipleTargets -> {

@@ -42,7 +42,7 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
   private fun gotoTypeDeclaration(project: Project, editor: Editor, actionResult: GTTDActionResult) {
     when (actionResult) {
       is GTTDActionResult.SingleTarget -> {
-        gotoTarget(project, actionResult.navigatable())
+        gotoTarget(project, actionResult.navigatable)
       }
       is GTTDActionResult.MultipleTargets -> {
         val popup = createTargetPopup(

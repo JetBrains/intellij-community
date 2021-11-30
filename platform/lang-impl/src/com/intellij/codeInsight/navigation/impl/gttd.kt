@@ -35,7 +35,7 @@ internal fun gotoTypeDeclaration(file: PsiFile, offset: Int): GTTDActionData? {
  */
 internal sealed class GTTDActionResult {
 
-  class SingleTarget(val navigatable: () -> Navigatable) : GTTDActionResult()
+  class SingleTarget(val navigatable: Navigatable) : GTTDActionResult()
 
   class MultipleTargets(val targets: List<SingleTargetWithPresentation>) : GTTDActionResult() {
     init {
@@ -155,7 +155,7 @@ private fun Sequence<Symbol>.navigationTargets(project: Project): Sequence<Navig
 internal fun result(navigationTargets: Collection<NavigationTarget>): GTTDActionResult? {
   return when (navigationTargets.size) {
     0 -> null
-    1 -> SingleTarget(navigationTargets.single()::getNavigatable)
+    1 -> SingleTarget(navigationTargets.single().navigatable)
     else -> MultipleTargets(navigationTargets.map { navigationTarget ->
       SingleTargetWithPresentation(navigationTarget::getNavigatable, navigationTarget.targetPresentation)
     })

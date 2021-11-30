@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
@@ -42,12 +42,7 @@ sealed class GTDActionResult {
    *
    * Might be obtained from direct navigation, in this case requiring [TargetPresentation] doesn't make sense.
    */
-  class SingleTarget(val navigatable: () -> Navigatable, val navigationProvider: Any?) : GTDActionResult() {
-    constructor(
-      navigatable: Navigatable,
-      navigationProvider: Any?
-    ) : this({ navigatable }, navigationProvider)
-  }
+  class SingleTarget(val navigatable: Navigatable, val navigationProvider: Any?) : GTDActionResult()
 
   class MultipleTargets(val targets: List<GTDTarget>) : GTDActionResult() {
     init {
@@ -105,7 +100,7 @@ private class TargetGTDActionData(private val project: Project, private val targ
       1 -> {
         // don't compute presentation for single target
         val (navigationTarget, navigationProvider) = result.single()
-        GTDActionResult.SingleTarget(navigationTarget::getNavigatable, navigationProvider)
+        GTDActionResult.SingleTarget(navigationTarget.navigatable, navigationProvider)
       }
       else -> {
         val targets = result.map { (navigationTarget, navigationProvider) ->
