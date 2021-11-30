@@ -44,7 +44,11 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
   }
 
-  override fun segmentChanged(oldIntervals: List<NotebookCellLines.Interval>, newIntervals: List<NotebookCellLines.Interval>) {
+  override fun segmentChanged(oldIntervals: List<NotebookCellLines.Interval>,
+                              newIntervals: List<NotebookCellLines.Interval>,
+                              eventAffectedIntervals: List<NotebookCellLines.Interval>) {
+    if (oldIntervals.isEmpty() && newIntervals.isEmpty()) return
+
     val isOneIntervalResized = oldIntervals.size == 1 && newIntervals.size == 1 && oldIntervals.first().type == newIntervals.first().type
 
     if (isOneIntervalResized) {

@@ -150,7 +150,7 @@ private class TestEnv(intervals: List<Interval>) {
 
     notebookCellLines.intervals.clear()
     notebookCellLines.intervals.addAll(allIntervals)
-    notebookCellLines.intervalListeners.multicaster.segmentChanged(old, new)
+    notebookCellLines.intervalListeners.multicaster.segmentChanged(old, new, new)
   }
 
   fun shouldBeValid(interval: Interval) {

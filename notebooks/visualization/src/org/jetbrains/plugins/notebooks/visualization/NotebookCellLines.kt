@@ -49,24 +49,27 @@ interface NotebookCellLines {
 
   interface IntervalListener : EventListener {
     /**
-     * Called when amount of intervals is changed, or types of some intervals are changed,
-     * or line counts of intervals is changed.
+     * Called when document is changed.
      *
      * Intervals that were just shifted are included neither [oldIntervals], nor in [newIntervals].
      *
      * Intervals in the lists are valid only until the document changes. Check their validity
      * when postponing handling of intervals.
      *
+     * If document edited, but intervals weren't changed, both oldIntervals and newIntervals are empty,
+     * modification stamp don't changed
+     *
+     * eventAffectedIntervals are current (not old) intervals, which content or markers were modified by event
+     *
      * It is guaranteed that:
-     * * At least one of [oldIntervals] and [newIntervals] is not empty.
      * * Ordinals from every list defines an arithmetical progression where
      *   every next element has ordinal of the previous element incremented by one.
-     * * If both lists are not empty, the first elements of both lists has the same ordinal.
+     * * If oldIntervals and newIntervals lists are not empty, the first elements of both lists has the same ordinal.
      * * Both lists don't contain any interval that has been only shifted, shrank or enlarged.
      *
      * See `NotebookCellLinesTest` for examples of calls for various changes.
      */
-    fun segmentChanged(oldIntervals: List<Interval>, newIntervals: List<Interval>)
+    fun segmentChanged(oldIntervals: List<Interval>, newIntervals: List<Interval>, eventAffectedIntervals: List<Interval>)
   }
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
