@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.Processor;
 import com.intellij.util.io.IOUtil;
@@ -290,12 +291,16 @@ public final class PersistentFSRecordsStorage {
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
     if (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER) buffer.order(ByteOrder.nativeOrder());
     return read(() -> {
+      ProgressManager.checkCanceled();
       myFile.force();
       return myFile.readInputStream(is -> {
         try (BufferedInputStream bis = new BufferedInputStream(is)) {
           if (bis.read(bytes) != bytes.length) return true; // header
           int id = 1;
           while (bis.read(bytes) == bytes.length) {
+            if (id % 100 == 0) {
+              ProgressManager.checkCanceled();
+            }
             r.id = id++;
             buffer.position(0);
             r.parent = buffer.getInt();
