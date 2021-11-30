@@ -34,6 +34,7 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
     ): SEEqualElementsActionType {
         val newItemWithKind = newItem.toPsi()?.let { it.unwrapped ?: it }?.withKind() ?: return DoNothing
         return alreadyFoundItems
+            .asSequence()
             .map { alreadyFoundItem ->
                 val alreadyFoundItemWithKind = alreadyFoundItem.toPsi()?.let { it.unwrapped ?: it }?.withKind()
                     ?: return@map DoNothing
@@ -54,6 +55,7 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
     ): SEEqualElementsActionType {
         val newItemPsi = newItem.toPsi() ?: return DoNothing
         return alreadyFoundItems
+            .asSequence()
             .map { alreadyFoundItem ->
                 val alreadyFoundItemPsi = alreadyFoundItem.toPsi() ?: return@map DoNothing
                 if (PsiManager.getInstance(newItemPsi.project).areElementsEquivalent(newItemPsi, alreadyFoundItemPsi)) {
