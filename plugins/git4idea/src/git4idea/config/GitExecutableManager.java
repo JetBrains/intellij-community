@@ -108,6 +108,16 @@ public class GitExecutableManager {
   }
 
   @NotNull
+  public GitExecutable getExecutableFor(@NotNull File gitDirectory) {
+    String path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
+    if (path == null) {
+      WSLDistribution wslDistribution = WslPath.getDistributionByWindowsUncPath(gitDirectory.getPath());
+      path = myExecutableDetector.detect(wslDistribution);
+    }
+    return getExecutable(path);
+  }
+
+  @NotNull
   public GitExecutable getExecutable(@Nullable Project project) {
     String path = getPathToGit(project);
     return getExecutable(path);

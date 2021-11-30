@@ -183,7 +183,8 @@ public class GitImpl extends GitImplBase {
                                 @NotNull final String clonedDirectoryName, final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
       // do not use per-project executable for 'clone' command
-      GitLineHandler handler = new GitLineHandler(null, parentDirectory, GitCommand.CLONE);
+      GitExecutable executable = GitExecutableManager.getInstance().getExecutableFor(parentDirectory);
+      GitLineHandler handler = new GitLineHandler(null, parentDirectory, executable, GitCommand.CLONE, emptyList());
       handler.setSilent(false);
       handler.setStderrSuppressed(false);
       handler.setUrl(url);
