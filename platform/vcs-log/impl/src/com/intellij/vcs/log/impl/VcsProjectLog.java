@@ -210,8 +210,8 @@ public final class VcsProjectLog implements Disposable {
   }
 
   @NotNull
-  CompletableFuture<VcsLogManager> createLogInBackground(boolean forceInit) {
-    return CompletableFuture.supplyAsync(() -> createLog(forceInit), myExecutor);
+  CompletableFuture<Boolean> createLogInBackground(boolean forceInit) {
+    return CompletableFuture.supplyAsync(() -> createLog(forceInit), myExecutor).thenApply(Objects::nonNull);
   }
 
   @Nullable
@@ -290,12 +290,12 @@ public final class VcsProjectLog implements Disposable {
       action.consume(manager);
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
-      Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
+      Future<Boolean> futureResult = log.createLogInBackground(true);
       new Task.Backgroundable(project, VcsLogBundle.message("vcs.log.creating.process")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            futureLogManager.get(5, TimeUnit.SECONDS);
+            futureResult.get(5, TimeUnit.SECONDS);
           }
           catch (InterruptedException ignored) {
           }
@@ -325,9 +325,7 @@ public final class VcsProjectLog implements Disposable {
     if (manager != null) {
       return new FutureResult<>(true);
     }
-    else {
-      return log.createLogInBackground(true).thenApply(Objects::nonNull);
-    }
+    return log.createLogInBackground(true);
   }
 
   @ApiStatus.Internal
@@ -338,7 +336,7 @@ public final class VcsProjectLog implements Disposable {
     if (getInstance(project).getLogManager() != null) return true;
 
     try {
-      return getInstance(project).createLogInBackground(true).get() != null;
+      return getInstance(project).createLogInBackground(true).get() == Boolean.TRUE;
     }
     catch (InterruptedException ignored) {
     }
