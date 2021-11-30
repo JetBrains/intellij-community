@@ -33,7 +33,7 @@ private class DirectNavigationData(
   }
 
   override fun result(): NavigationActionResult {
-    val navigatable = psiNavigatable(targetElement)
+    val navigatable = targetElement.psiNavigatable()
     return NavigationActionResult.SingleTarget(navigatable, navigationProvider)
   }
 }

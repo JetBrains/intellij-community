@@ -84,7 +84,7 @@ private class TargetGTDActionData(private val project: Project, private val targ
 
   private fun extractSingleTargetResult(symbol: Symbol, navigationProvider: Any?): SingleTarget? {
     val el = PsiSymbolService.getInstance().extractElementFromSymbol(symbol) ?: return null
-    val nav = gtdTargetNavigatable(el)
+    val nav = el.gtdTargetNavigatable()
     return if (nav == el) null else SingleTarget(nav, navigationProvider)
   }
 }

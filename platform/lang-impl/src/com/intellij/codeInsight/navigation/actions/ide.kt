@@ -16,7 +16,7 @@ import com.intellij.psi.PsiFile
 import java.awt.event.MouseEvent
 
 internal fun navigateToLookupItem(project: Project): Boolean {
-  val navigatable = TargetElementUtil.getTargetElementFromLookup(project)?.let(::gtdTargetNavigatable) ?: return false
+  val navigatable = TargetElementUtil.getTargetElementFromLookup(project)?.gtdTargetNavigatable() ?: return false
   gotoTarget(project, navigatable)
   return true
 }

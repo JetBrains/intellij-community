@@ -61,12 +61,12 @@ private class GTDProviderData(
     return when (targetElements.size) {
       0 -> null
       1 -> {
-        val navigatable = gtdTargetNavigatable(targetElements.single())
+        val navigatable = targetElements.single().gtdTargetNavigatable()
         NavigationActionResult.SingleTarget(navigatable, navigationProvider)
       }
       else -> {
         val targets = targetElements.mapTo(SmartList()) { targetElement ->
-          val navigatable = psiNavigatable(targetElement)
+          val navigatable = targetElement.psiNavigatable()
           LazyTargetWithPresentation({ navigatable }, targetPresentation(targetElement), navigationProvider)
         }
         NavigationActionResult.MultipleTargets(targets)
