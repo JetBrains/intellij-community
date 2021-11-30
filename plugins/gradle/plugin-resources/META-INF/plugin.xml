@@ -134,6 +134,8 @@
     <externalSystem.runConfigurationImporter
         implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
 
+    <externalSystemDependencyAnalyzer implementation="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerExtension"/>
+
     <search.optionContributor implementation="org.jetbrains.plugins.gradle.config.GradleSearchableOptionContributor"/>
 
     <registryKey key="gradle.settings.showDeprecatedSettings" defaultValue="false"

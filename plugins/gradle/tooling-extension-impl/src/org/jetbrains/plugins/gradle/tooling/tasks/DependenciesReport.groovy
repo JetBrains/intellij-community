@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.tasks
 
 import com.google.gson.GsonBuilder
@@ -10,15 +10,20 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.FileCollectionDependency
-import org.gradle.api.artifacts.component.ModuleComponentIdentifier
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.artifacts.component.*
+import org.gradle.api.artifacts.result.ComponentSelectionReason
 import org.gradle.api.artifacts.result.ResolutionResult
+import org.gradle.api.artifacts.result.ResolvedComponentResult
+import org.gradle.api.artifacts.result.ResolvedDependencyResult
+import org.gradle.api.artifacts.result.UnresolvedDependencyResult
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.diagnostics.internal.graph.nodes.AbstractRenderableDependencyResult
+import org.gradle.api.tasks.diagnostics.internal.graph.nodes.AbstractRenderableModuleResult
 import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency
-import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableModuleResult
+import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableUnresolvedDependencyResult
 import org.gradle.util.GradleVersion
 
 @CompileStatic
@@ -75,15 +80,16 @@ class DependenciesReport extends DefaultTask {
     node.setResolutionState(root.resolutionState.name())
     for (Dependency dependency : configuration.getAllDependencies()) {
       if (dependency instanceof FileCollectionDependency) {
-        FileCollection fileCollection = ((FileCollectionDependency)dependency).getFiles();
-        if (fileCollection instanceof Configuration) continue;
+        FileCollection fileCollection = ((FileCollectionDependency)dependency).getFiles()
+        if (fileCollection instanceof Configuration) continue
         def files = fileCollection.files
         if (files.isEmpty()) continue
 
         String displayName = null
         if (fileCollection instanceof Describable) {
           displayName = ((Describable)fileCollection).displayName
-        } else {
+        }
+        else {
           def string = fileCollection.toString()
           if ("file collection" != string) {
             displayName = string
@@ -134,6 +140,12 @@ class DependenciesReport extends DefaultTask {
       node = new UnknownDependencyNode(id, dependency.name)
     }
     node.setResolutionState(dependency.resolutionState.name())
+    if (dependency instanceof RenderableDependencyResult) {
+      ComponentSelectionReason selectionReason = dependency.selectionReason
+        if (!selectionReason.descriptions.isEmpty()) {
+          node.selectionReason = selectionReason.descriptions.last().description
+        }
+    }
     added.put(id, node)
     Iterator<? extends RenderableDependency> iterator = dependency.getChildren().iterator()
     while (iterator.hasNext()) {
@@ -167,6 +179,64 @@ class DependenciesReport extends DefaultTask {
 
     private long getId(RenderableDependency dependency, String configurationName) {
       return getId(dependency.id.toString(), configurationName)
+    }
+  }
+
+  private static class RenderableModuleResult extends AbstractRenderableModuleResult {
+    RenderableModuleResult(ResolvedComponentResult module) {
+      super(module)
+    }
+
+    Set<RenderableDependency> getChildren() {
+      Set<RenderableDependency> out = new LinkedHashSet()
+
+      for (def dependencyResult in this.module.getDependencies()) {
+        if (dependencyResult instanceof UnresolvedDependencyResult) {
+          out.add(new RenderableUnresolvedDependencyResult((UnresolvedDependencyResult)dependencyResult))
+        }
+        else {
+          out.add(new RenderableDependencyResult((ResolvedDependencyResult)dependencyResult))
+        }
+      }
+
+      return out
+    }
+  }
+
+  private static class RenderableDependencyResult extends AbstractRenderableDependencyResult {
+    private final ResolvedDependencyResult dependency
+
+    RenderableDependencyResult(ResolvedDependencyResult dependency) {
+      this.dependency = dependency
+    }
+
+    ResolutionState getResolutionState() {
+      return this.dependency.isConstraint() ? ResolutionState.RESOLVED_CONSTRAINT : ResolutionState.RESOLVED
+    }
+
+    ComponentIdentifier getActual() {
+      return this.dependency.getSelected().getId()
+    }
+
+    ComponentSelector getRequested() {
+      return this.dependency.getRequested()
+    }
+
+    ComponentSelectionReason getSelectionReason() {
+      return dependency.selected.selectionReason
+    }
+
+    Set<RenderableDependency> getChildren() {
+      Set<RenderableDependency> out = new LinkedHashSet()
+      for (def dependencyResult in dependency.getSelected().dependencies) {
+        if (dependencyResult instanceof UnresolvedDependencyResult) {
+          out.add(new RenderableUnresolvedDependencyResult((UnresolvedDependencyResult)dependencyResult))
+        }
+        else {
+          out.add(new RenderableDependencyResult((ResolvedDependencyResult)dependencyResult))
+        }
+      }
+      return out
     }
   }
 }

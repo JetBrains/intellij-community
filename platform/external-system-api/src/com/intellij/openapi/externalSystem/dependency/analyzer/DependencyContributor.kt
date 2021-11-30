@@ -56,6 +56,8 @@ interface DependencyContributor {
     interface Warning : InspectionResult {
 
       class VersionConflict(val conflicted: Dependency.Data.Artifact) : Warning
+
+      object Unresolved : Warning
     }
   }
 }
