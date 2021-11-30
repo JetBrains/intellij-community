@@ -139,12 +139,16 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         )
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
-    val projectModulesChangesFlow = combine(
+    val buildFileChangesFlow = combine(
         projectModulesSharedFlow,
         project.filesChangedEventFlow.map { it.mapNotNull { it.file } }
     ) { modules, changedBuildFiles -> modules.filter { it.buildFile in changedBuildFiles } }
-        .filter { it.isNotEmpty() }
-        .let { merge(it, operationExecutedChannel.consumeAsFlow()) }
+        .shareIn(this, SharingStarted.Eagerly)
+
+    val projectModulesChangesFlow = merge(
+        buildFileChangesFlow.filter { it.isNotEmpty() },
+        operationExecutedChannel.consumeAsFlow()
+    )
         .batchAtIntervals(Duration.seconds(1))
         .map { it.flatMap { it }.distinct() }
         .catchAndLog(
@@ -249,7 +253,8 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
     init {
         // allows rerunning PKGS inspections on already opened files
         // when the data is finally available or changes for PackageUpdateInspection
-        packageUpgradesStateFlow.filter { it.allUpgrades.allUpdates.isNotEmpty() }
+        // or when a build file changes
+        merge(packageUpgradesStateFlow)
             .onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
             .launchIn(this)
 
@@ -258,8 +263,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         var controller: BackgroundLoadingBarController? = null
 
         if (PluginEnvironment.isNonModalLoadingEnabled) {
-            isLoadingFlow
-                .throttle(Duration.seconds(1), true)
+            isLoadingFlow.throttle(Duration.seconds(1), true)
                 .onEach { controller?.clear() }
                 .filter { it }
                 .onEach {

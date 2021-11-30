@@ -282,7 +282,7 @@ internal class PackagesListPanel(
                     logTrace("PackagesListPanel main flow") { "Search took $time" }
                     result
                 }
-                .shareIn(project.lifecycleScope, SharingStarted.Lazily)
+                .shareIn(project.lifecycleScope, SharingStarted.Eagerly, 1)
 
         combine(
             viewModelFlow,
