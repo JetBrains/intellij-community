@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET
 import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_MEMBER_FUNCTION
 import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_MEMBER_PROPERTY
 import org.jetbrains.kotlin.resolve.AnnotationTargetLists.T_VALUE_PARAMETER_WITHOUT_VAL
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry) {
 
@@ -45,7 +47,9 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
         if (requiredAnnotationTargets.isEmpty()) return
 
         val psiFactory = KtPsiFactory(annotationEntry)
-        annotationClass.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+        annotationClass.runOnExpectAndAllActuals(useOnSelf = true) {
+            it.safeAs<KtClass>()?.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
