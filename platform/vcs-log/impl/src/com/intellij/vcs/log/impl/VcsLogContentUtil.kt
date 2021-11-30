@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
@@ -106,7 +107,11 @@ object VcsLogContentUtil {
   private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): Boolean {
     return runInCurrentOrCreateNewTab(project) { logUi ->
       if (logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-          logUi.properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) return@runInCurrentOrCreateNewTab false
+          logUi.properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
+          !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()) {
+        // Structure filter might prevent us from navigating to FilePath
+        return@runInCurrentOrCreateNewTab false
+      }
 
       val jumpResult = VcsLogUtil.jumpToCommit(logUi, hash, root, true, true).await()
       when (jumpResult) {
