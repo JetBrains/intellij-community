@@ -1309,13 +1309,14 @@ public class PsiTreeUtil {
   /**
    * @param psiElement element to start the search from
    * @return the first leaf descendant that is not empty or white-space only.
-   * Returns psiElement itself if it's visible and has no children. Returns null if the supplied element has no visible children.
+   * Returns psiElement itself if it's visible and has no children.
+   * Returns the next visible leaf if the whole input psiElement is white-space only.
+   * Returns null if the whole input psiElement is white-space only and there's no next visible leaf.
    */
   public static @Nullable PsiElement getDeepestVisibleFirst(@NotNull PsiElement psiElement) {
     PsiElement first = getDeepestFirst(psiElement);
     if (StringUtil.isEmptyOrSpaces(first.getText())) {
       first = nextVisibleLeaf(first);
-      return first != null && isAncestor(psiElement, first, false) ? first : null;
     }
     return first;
   }
@@ -1323,13 +1324,14 @@ public class PsiTreeUtil {
   /**
    * @param psiElement element to start the search from
    * @return the last leaf descendant that is not empty or white-space only.
-   * Returns psiElement itself if it's visible and has no children. Returns null if the supplied element has no visible children.
+   * Returns psiElement itself if it's visible and has no children.
+   * Returns the previous visible leaf if the whole input psiElement is white-space only.
+   * Returns null if the whole input psiElement is white-space only and there's no previous visible leaf.
    */
   public static @Nullable PsiElement getDeepestVisibleLast(@NotNull PsiElement psiElement) {
     PsiElement last = getDeepestLast(psiElement);
     if (StringUtil.isEmptyOrSpaces(last.getText())) {
       last = prevVisibleLeaf(last);
-      return last != null && isAncestor(psiElement, last, false) ? last : null;
     }
     return last;
   }
