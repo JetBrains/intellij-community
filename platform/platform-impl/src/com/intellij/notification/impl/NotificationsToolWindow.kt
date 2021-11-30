@@ -256,7 +256,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   private val myTitle = JBLabel(
     IdeBundle.message(if (mySuggestionType) "notifications.toolwindow.suggestions" else "notifications.toolwindow.timeline"))
 
-  private val myList = JPanel(VerticalLayout(JBUI.scale(18)))
+  private val myList = JPanel(VerticalLayout(JBUI.scale(10)))
   private val myScrollPane = object : JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
     override fun setupCorners() {
