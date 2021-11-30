@@ -23,7 +23,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.URLUtil;
 import com.sun.jna.Callback;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,6 +34,7 @@ import java.awt.desktop.OpenURIEvent;
 import java.awt.desktop.OpenURIHandler;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -196,17 +196,17 @@ public final class MacOSApplicationProvider {
       Desktop.getDesktop().setOpenURIHandler(new OpenURIHandler() {
         @Override
         public void openURI(OpenURIEvent event) {
-          String uri = event.getURI().toString();
-          QueryStringDecoder decoder = new QueryStringDecoder(event.getURI());
-          if ("open".equals(decoder.path()) && decoder.parameters().get("file") != null) {
-            uri = CommandLineProcessor.SCHEME_INTERNAL + URLUtil.SCHEME_SEPARATOR + decoder.rawQuery();
+          URI uri = event.getURI();
+          String uriString = uri.toString();
+          if ("open".equals(uri.getHost()) && new QueryStringDecoder(uri).parameters().get("file") != null) {
+            uriString = CommandLineProcessor.SCHEME_INTERNAL + ':' + uri.getRawSchemeSpecificPart();
           }
 
           if (LoadingState.APP_STARTED.isOccurred()) {
-            CommandLineProcessor.processProtocolCommand(uri);
+            CommandLineProcessor.processProtocolCommand(uriString);
           }
           else {
-            IdeStarter.openUriOnLoading(uri);
+            IdeStarter.openUriOnLoading(uriString);
           }
         }
       });
