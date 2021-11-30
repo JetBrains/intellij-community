@@ -179,7 +179,10 @@ class PythonOnboardingTour :
     uiSettings.showNavigationBar = showNavigationBarPreference
     uiSettings.fireUISettingsChanged()
 
-    if (!lessonEndInfo.lessonPassed) return
+    if (!lessonEndInfo.lessonPassed) {
+      showFeedbackNotification(project)
+      return
+    }
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
     invokeLater {
       val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
@@ -206,7 +209,19 @@ class PythonOnboardingTour :
         }
       }
       if (result != Messages.YES) {
-        module.primaryLanguage?.let {
+        showFeedbackNotification(project)
+      }
+    }
+  }
+
+  private fun showFeedbackNotification(project: Project) {
+    invokeLater {
+      if (project.isDisposed) {
+        return@invokeLater
+      }
+      module.primaryLanguage?.let {
+        // exit link will show notification directly and reset this field to null
+        if (it.onboardingFeedbackData != null) {
           showOnboardingFeedbackNotification(project, it.onboardingFeedbackData)
           it.onboardingFeedbackData = null
         }
