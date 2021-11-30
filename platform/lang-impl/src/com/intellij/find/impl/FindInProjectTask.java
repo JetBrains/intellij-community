@@ -64,7 +64,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -397,7 +396,9 @@ final class FindInProjectTask {
       return true;
     };
     FilesScanExecutor.processDequeOnAllThreads(deque, o ->
-      ReadAction.nonBlocking(() -> consumer.process(o)).executeSynchronously());
+      ReadAction.nonBlocking(() -> consumer.process(o))
+        .expireWith(myProject)
+        .executeSynchronously());
   }
 
   private boolean canRelyOnSearchers() {
