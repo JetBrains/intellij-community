@@ -1433,6 +1433,12 @@
                      bundle="messages.JavaBundle"
                      key="inspection.slow.abstract.set.remove.all.description"
                      implementationClass="com.intellij.codeInspection.SlowAbstractSetRemoveAllInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SlowListContainsAll"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     bundle="messages.JavaBundle"
+                     key="inspection.slow.list.contains.all.description"
+                     implementationClass="com.intellij.codeInspection.SlowListContainsAllInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantUnmodifiable"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
