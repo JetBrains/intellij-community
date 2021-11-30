@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,9 @@ public final class PsiClassUtil {
    */
   @NotNull
   public static Collection<PsiField> collectClassFieldsIntern(@NotNull PsiClass psiClass) {
-    if (psiClass instanceof PsiExtensibleClass) {
+    if (psiClass.isRecord()) {
+      return createRecordFields(psiClass);
+    } else if (psiClass instanceof PsiExtensibleClass) {
       return ((PsiExtensibleClass) psiClass).getOwnFields();
     } else {
       return filterPsiElements(psiClass, PsiField.class);
@@ -69,6 +72,21 @@ public final class PsiClassUtil {
 
   private static <T extends PsiElement> Collection<T> filterPsiElements(@NotNull PsiClass psiClass, @NotNull Class<T> desiredClass) {
     return Arrays.stream(psiClass.getChildren()).filter(desiredClass::isInstance).map(desiredClass::cast).collect(Collectors.toList());
+  }
+
+  private static Collection<PsiField> createRecordFields(@NotNull PsiClass psiClass) {
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+    return Arrays.stream(psiClass.getRecordComponents())
+      .filter(c -> c.getName() != null && c.getTypeElement() != null)
+      .map(c -> {
+        String type = c.getTypeElement().getText();
+        if (type.endsWith("...")) {
+          type = type.substring(0, type.length() - 3) + "[]";
+        }
+        PsiField field = factory.createFieldFromText(String.format("private final %s %s;", type, c.getName()), psiClass);
+        return new LightRecordField(psiClass.getManager(), field, psiClass, c);
+      })
+      .collect(Collectors.toSet());
   }
 
   @NotNull
