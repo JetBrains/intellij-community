@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.LATEINIT_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.VARARG_KEYWORD
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -44,7 +45,11 @@ class MovePropertyToConstructorIntention :
     override fun isApplicableTo(element: KtProperty, caretOffset: Int): Boolean {
         fun KtProperty.isDeclaredInSupportedClass(): Boolean {
             val parent = getStrictParentOfType<KtClassOrObject>()
-            return parent is KtClass && !parent.isInterface() && !parent.isExpectDeclaration() && parent.secondaryConstructors.isEmpty()
+            return parent is KtClass &&
+                    !parent.isInterface() &&
+                    !parent.isExpectDeclaration() &&
+                    parent.secondaryConstructors.isEmpty() &&
+                    parent.primaryConstructor?.hasActualModifier() != true
         }
 
         return !element.isLocal
