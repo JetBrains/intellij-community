@@ -5,6 +5,8 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.*
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
@@ -40,7 +42,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
     }
 
     val offset = editor.caretModel.offset
-    val actionResult: GTDActionResult? = try {
+    val actionResult: NavigationActionResult? = try {
       underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
         gotoDeclaration(project, editor, file, offset)?.result()
       }
@@ -59,20 +61,20 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
     }
   }
 
-  internal fun gotoDeclaration(project: Project, editor: Editor, actionResult: GTDActionResult) {
+  internal fun gotoDeclaration(project: Project, editor: Editor, actionResult: NavigationActionResult) {
     when (actionResult) {
-      is GTDActionResult.SingleTarget -> {
+      is SingleTarget -> {
         recordAndNavigate(
           project, actionResult.navigatable, GotoDeclarationAction.getCurrentEventData(), actionResult.navigationProvider
         )
       }
-      is GTDActionResult.MultipleTargets -> {
+      is MultipleTargets -> {
         // obtain event data before showing the popup,
         // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
         val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
         val popup = createTargetPopup(
           CodeInsightBundle.message("declaration.navigation.title"),
-          actionResult.targets, GTDTarget::presentation
+          actionResult.targets, LazyTargetWithPresentation::presentation
         ) { (navigatable, _, navigationProvider) ->
           recordAndNavigate(project, navigatable(), eventData, navigationProvider)
         }

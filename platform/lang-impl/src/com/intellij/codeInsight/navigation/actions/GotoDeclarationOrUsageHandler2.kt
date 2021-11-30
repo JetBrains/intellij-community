@@ -61,7 +61,7 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
       null -> notifyNowhereToGo(project, editor, file, offset)
       is GTDUActionResult.GTD -> {
         GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
-        gotoDeclaration(project, editor, actionResult.gtdActionResult)
+        gotoDeclaration(project, editor, actionResult.navigationActionResult)
       }
       is GTDUActionResult.SU -> {
         GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)

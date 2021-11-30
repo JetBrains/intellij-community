@@ -57,19 +57,19 @@ private class GTDProviderData(
     }
   }
 
-  override fun result(): GTDActionResult? {
+  override fun result(): NavigationActionResult? {
     return when (targetElements.size) {
       0 -> null
       1 -> {
         val navigatable = gtdTargetNavigatable(targetElements.single())
-        GTDActionResult.SingleTarget(navigatable, navigationProvider)
+        NavigationActionResult.SingleTarget(navigatable, navigationProvider)
       }
       else -> {
         val targets = targetElements.mapTo(SmartList()) { targetElement ->
           val navigatable = psiNavigatable(targetElement)
-          GTDTarget({ navigatable }, targetPresentation(targetElement), navigationProvider)
+          LazyTargetWithPresentation({ navigatable }, targetPresentation(targetElement), navigationProvider)
         }
-        GTDActionResult.MultipleTargets(targets)
+        NavigationActionResult.MultipleTargets(targets)
       }
     }
   }
