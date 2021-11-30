@@ -794,4 +794,18 @@ interface Bar<T> extends Foo<T> {
     myFixture.checkResult("interface Foo { /** Hello {@link <caret>} */void foo(int a); }")
   }
 
+  void "test autoinsert link with space"() {
+    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
+    try {
+      myFixture.configureByText 'a.java', "/** {@li<caret>} */public class JavadocLink {}"
+      myFixture.completeBasic()
+      myFixture.type(' ')
+      myFixture.checkResult("/** {@link } */public class JavadocLink {}")
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old
+    }
+  }
+
 }
