@@ -1028,6 +1028,16 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/other/addActualToTopLevelMember/");
         }
 
+        @TestMetadata("addAnnotationTargetToActual")
+        public void testAddAnnotationTargetToActual() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/addAnnotationTargetToActual/");
+        }
+
+        @TestMetadata("addAnnotationTargetToExpect")
+        public void testAddAnnotationTargetToExpect() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/addAnnotationTargetToExpect/");
+        }
+
         @TestMetadata("addFunctionToCommonClassFromJavaUsage")
         public void testAddFunctionToCommonClassFromJavaUsage() throws Exception {
             runTest("testData/multiModuleQuickFix/other/addFunctionToCommonClassFromJavaUsage/");
