@@ -222,6 +222,22 @@ public class GitExecutableManager {
     });
   }
 
+  @CalledInAny
+  @Nullable
+  public GitVersion tryGetVersion(@Nullable Project project, @NotNull GitExecutable executable) {
+    return runUnderProgressIfNeeded(project, GitBundle.message("git.executable.version.progress.title"), () -> {
+      try {
+        return identifyVersion(executable);
+      }
+      catch (ProcessCanceledException e) {
+        return null;
+      }
+      catch (GitVersionIdentificationException e) {
+        return null;
+      }
+    });
+  }
+
   static <T> T runUnderProgressIfNeeded(@Nullable Project project,
                                         @NotNull @NlsContexts.ProgressTitle String title,
                                         @NotNull ThrowableComputable<T, RuntimeException> task) {

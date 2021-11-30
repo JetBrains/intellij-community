@@ -13,7 +13,6 @@ import git4idea.push.GitPushParams;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +75,7 @@ public interface Git {
                                                 @Nullable List<String> relativePaths) throws VcsException;
 
   @NotNull
-  GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName,
+  GitCommandResult clone(@Nullable Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName,
                          GitLineHandlerListener @NotNull ... progressListeners);
 
   @NotNull
