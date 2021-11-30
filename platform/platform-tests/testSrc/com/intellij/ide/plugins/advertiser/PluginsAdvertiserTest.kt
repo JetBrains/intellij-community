@@ -81,8 +81,11 @@ class PluginsAdvertiserTest {
   @Test
   fun suggestionForNonPlainTextFile() {
     preparePluginCache("build.xml" to PluginData("Ant"))
-    val suggestion = PluginAdvertiserEditorNotificationProvider.getSuggestionData(projectRule.project, "IU", "build.xml", SupportedFileType())
-    assertEquals(listOf("Ant"), suggestion!!.myThirdParty.map { it.pluginIdString })
+    val suggestion = PluginAdvertiserEditorNotificationProvider.getSuggestionData(projectRule.project, "IU", "build.xml",
+                                                                                  SupportedFileType())
+
+    assertNotNull(suggestion)
+    assertEquals(listOf("Ant"), suggestion.thirdParty.map { it.idString })
   }
 
   @Test
@@ -102,8 +105,11 @@ class PluginsAdvertiserTest {
   @Test
   fun suggestPluginByExtension() {
     preparePluginCache("*.lua" to PluginData("Lua"))
-    val suggestion = PluginAdvertiserEditorNotificationProvider.getSuggestionData(projectRule.project, "IU", "foo.lua", PlainTextFileType.INSTANCE)
-    assertEquals(listOf("Lua"), suggestion!!.myThirdParty.map { it.pluginIdString })
+    val suggestion = PluginAdvertiserEditorNotificationProvider.getSuggestionData(projectRule.project, "IU", "foo.lua",
+                                                                                  PlainTextFileType.INSTANCE)
+
+    assertNotNull(suggestion)
+    assertEquals(listOf("Lua"), suggestion.thirdParty.map { it.idString })
   }
 
   private fun preparePluginCache(vararg ext: Pair<String, PluginData?>) {
