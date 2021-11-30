@@ -51,7 +51,7 @@ import org.jetbrains.kotlin.test.TargetBackend
 import org.junit.ComparisonFailure
 import java.io.File
 
-internal const val KOTLIN_LIBRARY_NAME = "KotlinLibrary"
+internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
 
 class TestFiles(val originalFile: File, val wholeFile: TestFile, files: List<TestFile>) : List<TestFile> by files
