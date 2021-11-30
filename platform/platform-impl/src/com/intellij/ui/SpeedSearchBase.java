@@ -487,6 +487,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   @Nullable
   private Object findTargetElement(int keyCode, @NotNull String searchPrefix) {
+    if (myElementIterator == null) {
+      myElementIterator = getElementIterator(getSelectedIndex());
+    }
     if (keyCode == KeyEvent.VK_UP) {
       return findPreviousElement(searchPrefix);
     }
@@ -742,8 +745,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (project != null) {
       myListenerDisposable = Disposer.newDisposable();
       project.getMessageBus().connect(myListenerDisposable).subscribe(ToolWindowManagerListener.TOPIC, myWindowManagerListener);
-      initAlarm(myListenerDisposable);
     }
+
+    myProcessKeyEventAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, mySearchPopup);
+
     JRootPane rootPane = myComponent.getRootPane();
     myPopupLayeredPane = rootPane == null ? null : rootPane.getLayeredPane();
     if (myPopupLayeredPane == null) {
@@ -752,11 +757,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
     moveSearchPopup();
-  }
-
-  private void initAlarm(Disposable disposable) {
-    if (myProcessKeyEventAlarm != null) myProcessKeyEventAlarm.cancelAllRequests();
-    myProcessKeyEventAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable);
   }
 
   private void moveSearchPopup() {
