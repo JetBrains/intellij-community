@@ -186,9 +186,12 @@ interface Row {
 
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
-  fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton>
-
-  fun radioButton(@NlsContexts.RadioButton text: String, value: Any): Cell<JBRadioButton>
+  /**
+   * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons.
+   * If there is a binding [ButtonsGroup.bind] for the buttons group then [value] must be provided with correspondent to binding type,
+   * or null otherwise
+   */
+  fun radioButton(@NlsContexts.RadioButton text: String, value: Any? = null): Cell<JBRadioButton>
 
   fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): Cell<JButton>
 

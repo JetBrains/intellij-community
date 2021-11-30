@@ -5,7 +5,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -30,17 +29,25 @@ fun <T> MutableMap<JComponent?, MutableList<() -> T>>.register(component: JCompo
 
 internal class Context {
 
-  private val buttonGroupsStack: MutableList<ButtonGroup> = mutableListOf()
+  private val allButtonsGroups = mutableListOf<ButtonsGroupImpl>()
+  private val buttonsGroupsStack = mutableListOf<ButtonsGroupImpl>()
 
-  fun addButtonGroup(buttonGroup: ButtonGroup) {
-    buttonGroupsStack.add(buttonGroup)
+  fun addButtonsGroup(buttonsGroup: ButtonsGroupImpl) {
+    allButtonsGroups += buttonsGroup
+    buttonsGroupsStack += buttonsGroup
   }
 
-  fun getButtonGroup(): ButtonGroup? {
-    return buttonGroupsStack.lastOrNull()
+  fun getButtonsGroup(): ButtonsGroupImpl? {
+    return buttonsGroupsStack.lastOrNull()
   }
 
-  fun removeLastButtonGroup() {
-    buttonGroupsStack.removeLast()
+  fun removeLastButtonsGroup() {
+    buttonsGroupsStack.removeLast()
+  }
+
+  fun postInit() {
+    for (buttonsGroup in allButtonsGroups) {
+      buttonsGroup.postInit()
+    }
   }
 }

@@ -24,12 +24,12 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
     }
 
     var radioButtonValue = 2
-    buttonGroup({ radioButtonValue }, { radioButtonValue = it }) {
+    buttonsGroup {
       row("radioButton") {
         radioButton("Value 1", 1)
         radioButton("Value 2", 2)
       }
-    }
+    }.bind({ radioButtonValue }, { radioButtonValue = it })
 
     row {
       button("button") {}

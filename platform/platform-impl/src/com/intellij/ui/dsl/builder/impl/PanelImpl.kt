@@ -16,7 +16,6 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -225,13 +224,29 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun buttonGroup(title: String?, indent: Boolean, init: Panel.() -> Unit) {
-    buttonGroup(ButtonGroup(), title, indent, init)
-  }
+  override fun buttonsGroup(title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
+    val result = ButtonsGroupImpl()
+    dialogPanelConfig.context.addButtonsGroup(result)
+    try {
+      if (title != null) {
+        val row = row {
+          label(title)
+            .applyToComponent { putClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP, true) }
+        }
+        row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
+      }
 
-  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String?, indent: Boolean,
-                               init: Panel.() -> Unit) {
-    buttonGroup(BindButtonGroup(binding, type), title, indent, init)
+      if (indent) {
+        indent(init)
+      }
+      else {
+        init()
+      }
+    }
+    finally {
+      dialogPanelConfig.context.removeLastButtonsGroup()
+    }
+    return result
   }
 
   override fun onApply(callback: () -> Unit): PanelImpl {
@@ -384,29 +399,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
     else {
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)
-    }
-  }
-
-  private fun buttonGroup(buttonGroup: ButtonGroup, @NlsContexts.BorderTitle title: String?, indent: Boolean, init: Panel.() -> Unit) {
-    dialogPanelConfig.context.addButtonGroup(buttonGroup)
-    try {
-      if (title != null) {
-        val row = row {
-          label(title)
-            .applyToComponent { putClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP, true) }
-        }
-        row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
-      }
-
-      if (indent) {
-        indent(init)
-      }
-      else {
-        init()
-      }
-    }
-    finally {
-      dialogPanelConfig.context.removeLastButtonGroup()
     }
   }
 }

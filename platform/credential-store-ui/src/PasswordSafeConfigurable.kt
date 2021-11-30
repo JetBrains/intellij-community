@@ -190,7 +190,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
   override fun getComponent(): JPanel {
     myPanel = panel {
-      buttonGroup(settings::providerType, CredentialStoreBundle.message("passwordSafeConfigurable.save.password")) {
+      buttonsGroup(CredentialStoreBundle.message("passwordSafeConfigurable.save.password")) {
         if (SystemInfo.isLinux || isMacOsCredentialStoreSupported) {
           row {
             radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
@@ -248,7 +248,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
         row {
           radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.do.not.save"), ProviderType.MEMORY_ONLY)
         }
-      }
+      }.bind(settings::providerType)
     }
     return myPanel
   }
