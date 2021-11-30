@@ -147,7 +147,9 @@ open class GitStageTracker(val project: Project) : Disposable {
     eventDispatcher.addListener(listener, disposable)
   }
 
-  private fun gitRoots(): List<VirtualFile> = gitRoots(project)
+  private fun gitRoots(): List<VirtualFile> {
+    return ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toList()
+  }
 
   private fun update(updater: (State) -> State) {
     state = updater(state)
@@ -277,10 +279,6 @@ internal fun getRoot(project: Project, file: VirtualFile): VirtualFile? {
     file.isInLocalFileSystem -> ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file)
     else -> null
   }
-}
-
-private fun gitRoots(project: Project): List<VirtualFile> {
-  return ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toList()
 }
 
 fun GitStageTracker.status(file: VirtualFile): GitFileStatus? {
