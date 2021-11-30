@@ -318,7 +318,6 @@ public final class VcsProjectLog implements Disposable {
     }
   }
 
-  @RequiresEdt
   static Future<Boolean> waitWhenLogIsReady(@NotNull Project project) {
     VcsProjectLog log = getInstance(project);
     VcsLogManager manager = log.getLogManager();
@@ -333,10 +332,8 @@ public final class VcsProjectLog implements Disposable {
   public static boolean ensureLogCreated(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
-    if (getInstance(project).getLogManager() != null) return true;
-
     try {
-      return getInstance(project).createLogInBackground(true).get() == Boolean.TRUE;
+      return waitWhenLogIsReady(project).get() == Boolean.TRUE;
     }
     catch (InterruptedException ignored) {
     }
