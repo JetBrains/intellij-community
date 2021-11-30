@@ -36,7 +36,13 @@ Now you should be able to open and build the project.
 
 Use the provided `IDEA` build configuration to run an IntelliJ IDEA instance with your modifications to the Kotlin plugin.
 
-## 2. Frequently Asked Questions
+## 2. Commits Requirements
+
+We strive for transparency of changes. Therefore, all meaningful commits should reference a
+[KTIJ](https://youtrack.jetbrains.com/issues/KTIJ) issue in their message.
+It is permissible not to follow this rule if a change relates to tests, it is a minor refactoring or code formatting. 
+
+## 3. Frequently Asked Questions
 
 Q. How can I contribute to the Kotlin IDEA plugin?
 A. We accept Pull Requests. Please read our [contribution guide](CONTRIBUTING.md) for more information.

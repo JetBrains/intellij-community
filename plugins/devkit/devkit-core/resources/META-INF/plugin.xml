@@ -25,6 +25,7 @@
   <resource-bundle>messages.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <checkinHandlerFactory implementation="org.jetbrains.idea.devkit.commit.KotlinPluginCommitMessageHandlerFactory"/>
     <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
     <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>
@@ -407,6 +408,8 @@
     <registryKey key="tmh.generate.line.numbers" defaultValue="true"
                  description="Generate line numbers when instrumenting @RequiresEdt and similar annotations.
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
+    <registryKey key="kotlin.commit.message.validation.enabled" defaultValue="true"
+                 description="Enables commit messages validation for kotlin plugin"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
