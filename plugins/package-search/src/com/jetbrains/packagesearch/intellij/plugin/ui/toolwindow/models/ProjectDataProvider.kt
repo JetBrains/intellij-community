@@ -48,13 +48,12 @@ internal class ProjectDataProvider(
             val failedDependencies = filteredApiInfo.keys
 
             logInfo(traceInfo, "ProjectDataProvider#fetchInfoFor()") {
-                "Failed obtaining data for ${failedDependencies.size} dependencies:\n" +
-                    failedDependencies.joinToString("\n") { "\t* '${it.coordinatesString}'" }
+                "Failed obtaining data for ${failedDependencies.size} dependencies"
             }
         }
 
         @Suppress("UNCHECKED_CAST") // We filter out null values before casting, we should be ok
-        return apiInfoByDependency.filterValues { it != null } as Map<InstalledDependency, ApiStandardPackage>
+        return filteredApiInfo as Map<InstalledDependency, ApiStandardPackage>
     }
 
     private suspend fun fetchInfoFromCacheOrApiFor(
