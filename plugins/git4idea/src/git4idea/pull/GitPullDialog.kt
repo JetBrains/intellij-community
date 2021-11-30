@@ -89,8 +89,8 @@ class GitPullDialog(private val project: Project,
     setOKButtonText(GitBundle.message("pull.button"))
     loadSettings()
     updateRemotesField()
-    updateUi()
     init()
+    updateUi()
   }
 
   override fun createCenterPanel() = panel
