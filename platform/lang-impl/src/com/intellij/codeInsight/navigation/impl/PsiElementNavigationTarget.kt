@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.model.Pointer
+import com.intellij.navigation.EmptyNavigatable
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
 import com.intellij.pom.Navigatable
@@ -15,7 +16,7 @@ internal class PsiElementNavigationTarget(private val myElement: PsiElement) : N
     myElement.createSmartPointer(), PsiElementNavigationTarget::class.java, ::PsiElementNavigationTarget
   )
 
-  override fun getNavigatable(): Navigatable = myElement.psiNavigatable()
+  override fun getNavigatable(): Navigatable = myElement.psiNavigatable() ?: EmptyNavigatable.INSTANCE
 
   override fun getTargetPresentation(): TargetPresentation = targetPresentation(myElement)
 

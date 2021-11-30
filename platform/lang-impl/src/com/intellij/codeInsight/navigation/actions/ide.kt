@@ -21,8 +21,8 @@ internal fun navigateToLookupItem(project: Project): Boolean {
   return true
 }
 
-internal fun gotoTarget(project: Project, navigatable: Navigatable) {
-  if (navigatable.canNavigate()) {
+internal fun gotoTarget(project: Project, navigatable: Navigatable?) {
+  if (navigatable != null && navigatable.canNavigate()) {
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
     navigatable.navigate(true)
   }

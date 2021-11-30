@@ -85,7 +85,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
 
   private fun recordAndNavigate(
     project: Project,
-    navigatable: Navigatable,
+    navigatable: Navigatable?,
     eventData: List<EventPair<*>>,
     navigationProvider: Any?
   ) {

@@ -61,7 +61,7 @@ private class GTDProviderData(
     return when (targetElements.size) {
       0 -> null
       1 -> {
-        val navigatable = targetElements.single().gtdTargetNavigatable()
+        val navigatable = targetElements.single().gtdTargetNavigatable() ?: return null
         NavigationActionResult.SingleTarget(navigatable, navigationProvider)
       }
       else -> {

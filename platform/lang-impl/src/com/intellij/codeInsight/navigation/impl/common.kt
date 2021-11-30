@@ -5,7 +5,6 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.navigation.EmptyNavigatable
 import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -34,14 +33,13 @@ private fun <X : Any> fromHostEditor(editor: Editor, offset: Int, function: (edi
   return function(editor.delegate, editor.document.injectedToHost(offset))
 }
 
-internal fun PsiElement.gtdTargetNavigatable(): Navigatable {
-  val target = TargetElementUtil.getInstance().getGotoDeclarationTarget(this, navigationElement)
-               ?: return EmptyNavigatable.INSTANCE
-  return target.psiNavigatable()
+internal fun PsiElement.gtdTargetNavigatable(): Navigatable? {
+  return TargetElementUtil.getInstance()
+    .getGotoDeclarationTarget(this, navigationElement)
+    ?.psiNavigatable()
 }
 
-internal fun PsiElement.psiNavigatable(): Navigatable {
+internal fun PsiElement.psiNavigatable(): Navigatable? {
   return this as? Navigatable
          ?: EditSourceUtil.getDescriptor(this)
-         ?: EmptyNavigatable.INSTANCE
 }

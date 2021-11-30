@@ -27,7 +27,7 @@ sealed class NavigationActionResult {
 
 @Internal
 data class LazyTargetWithPresentation internal constructor(
-  val navigatable: () -> Navigatable,
+  val navigatable: () -> Navigatable?,
   val presentation: TargetPresentation,
   val navigationProvider: Any?,
 )
