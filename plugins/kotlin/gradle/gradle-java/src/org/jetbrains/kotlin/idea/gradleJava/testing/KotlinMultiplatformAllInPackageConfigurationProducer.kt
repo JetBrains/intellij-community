@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.gradleJava.testing
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.psi.PsiPackage
+import org.jetbrains.kotlin.idea.caches.project.isMPPModule
 import org.jetbrains.kotlin.idea.gradleJava.run.MultiplatformTestTasksChooser
+import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
@@ -25,6 +27,9 @@ class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleCo
         element: PsiPackage,
         chosenElements: List<PsiPackage>
     ): List<TestTasksToRun> {
+
+        if (context.project.allModules().none { it.isMPPModule })
+            return emptyList()
 
         var result: List<TestTasksToRun> = emptyList()
 
