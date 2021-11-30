@@ -103,8 +103,8 @@ internal class GitRebaseDialog(private val project: Project,
     updateBranches()
     loadSettings()
 
-    updateUi()
     init()
+    updateUi()
 
     updateOkActionEnabled()
   }
