@@ -6,7 +6,6 @@
 // ACTION: Introduce backing property
 // ACTION: Make 'b' 'abstract'
 // ACTION: Move to companion object
-// ACTION: Move to constructor
 // ERROR: Property must be initialized or be abstract
 
 actual class SimpleWConstructor {

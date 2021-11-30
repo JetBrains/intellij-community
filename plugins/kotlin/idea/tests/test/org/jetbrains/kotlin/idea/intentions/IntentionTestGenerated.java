@@ -13440,6 +13440,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/movePropertyToConstructor/methodReference.kt");
         }
 
+        @TestMetadata("secondaryConstructor.kt")
+        public void testSecondaryConstructor() throws Exception {
+            runTest("testData/intentions/movePropertyToConstructor/secondaryConstructor.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/intentions/movePropertyToConstructor/simple.kt");
