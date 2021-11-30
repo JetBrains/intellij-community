@@ -41,6 +41,10 @@ interface KotlinStdlibCache {
 }
 
 class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
+    companion object {
+        private const val KOTLIN_JAVA_RUNTIME_NAME = "KotlinJavaRuntime"
+    }
+
     @JvmInline
     private value class StdlibDependency(val libraryInfo: LibraryInfo?)
 
@@ -83,15 +87,23 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
     private fun libraryScopeContainsIndexedFilesForName(libraryInfo: LibraryInfo, name: FqName) =
         libraryScopeContainsIndexedFilesForNames(libraryInfo, listOf(name))
 
+    private fun isFatJar(libraryInfo: LibraryInfo) =
+        libraryInfo.getLibraryRoots().size > 1
+
+    private fun isKotlinJavaRuntime(libraryInfo: LibraryInfo) =
+        libraryInfo.library.name == KOTLIN_JAVA_RUNTIME_NAME
+
     override fun isStdlib(libraryInfo: LibraryInfo): Boolean {
         return isStdlibCache.getOrPut(libraryInfo) {
-            libraryScopeContainsIndexedFilesForName(libraryInfo, KotlinStdlibIndex.KOTLIN_STDLIB_NAME)
+            libraryScopeContainsIndexedFilesForName(libraryInfo, KotlinStdlibIndex.KOTLIN_STDLIB_NAME) &&
+                    (!isFatJar(libraryInfo) || isKotlinJavaRuntime(libraryInfo))
         }
     }
 
     override fun isStdlibDependency(libraryInfo: LibraryInfo): Boolean {
         return isStdlibDependencyCache.getOrPut(libraryInfo) {
-            libraryScopeContainsIndexedFilesForNames(libraryInfo, KotlinStdlibIndex.STANDARD_LIBRARY_DEPENDENCY_NAMES)
+            libraryScopeContainsIndexedFilesForNames(libraryInfo, KotlinStdlibIndex.STANDARD_LIBRARY_DEPENDENCY_NAMES) &&
+                    (!isFatJar(libraryInfo) || isKotlinJavaRuntime(libraryInfo))
         }
     }
 
