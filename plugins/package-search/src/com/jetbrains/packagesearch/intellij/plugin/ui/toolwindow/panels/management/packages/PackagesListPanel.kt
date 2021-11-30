@@ -56,6 +56,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMapNotNull
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
+import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -264,25 +265,21 @@ internal class PackagesListPanel(
             }
                 .debounce(150)
                 .mapLatest { searchCommand ->
-                    val (result, time) = measureTimedValue {
-                        isSearchingStateFlow.emit(true)
+                    val (result, time) = isSearchingStateFlow.whileLoading {
                         val results = searchCache.getOrTryPutDefault(searchCommand) {
                             dataProvider.doSearch(
                                 searchCommand.searchQuery,
                                 FilterOptions(searchCommand.onlyStable, searchCommand.onlyMultiplatform)
                             )
                         }
-                        val model = SearchResultsModel(
+                        SearchResultsModel(
                             searchCommand.onlyStable,
                             searchCommand.onlyMultiplatform,
                             searchCommand.searchQuery,
                             results
                         )
-                        isSearchingStateFlow.emit(false)
-                        model
                     }
                     logTrace("PackagesListPanel main flow") { "Search took $time" }
-
                     result
                 }
                 .shareIn(project.lifecycleScope, SharingStarted.Lazily)
