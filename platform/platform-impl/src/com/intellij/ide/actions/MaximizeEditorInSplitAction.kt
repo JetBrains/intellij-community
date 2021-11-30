@@ -18,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.DrawUtil
 import com.intellij.util.SmartList
-import com.intellij.util.animation.Easing.bezier
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.animation
 import com.intellij.util.ui.UIUtil
@@ -57,7 +56,6 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
     animator.animate(
       animation(splitter.proportion, value, splitter::setProportion).apply {
         duration = 350
-        easing = bezier(0.215, 0.61, 0.355, 1.0)
         runWhenExpiredOrCancelled {
           Disposer.dispose(animator)
           myActiveAnimators.remove(animator)

@@ -32,7 +32,7 @@ import java.util.function.DoubleFunction;
 public final class Animation {
 
   private @NotNull final DoubleConsumer myConsumer;
-  private @NotNull Easing myEasing = Easing.LINEAR;
+  private @NotNull Easing myEasing = Easing.EASE;
   private int myDelay = 0;
   private int myDuration = 500;
   private @Nullable List<Listener> myListeners;
