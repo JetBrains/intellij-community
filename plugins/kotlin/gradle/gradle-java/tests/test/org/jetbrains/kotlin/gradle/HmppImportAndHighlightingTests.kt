@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.kotlin.util.compareTo
-import org.jetbrains.kotlin.util.parseKotlinVersion
+import org.jetbrains.kotlin.idea.codeInsight.gradle.compareTo
+import org.jetbrains.kotlin.idea.codeInsight.gradle.parseKotlinVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assume.assumeTrue
