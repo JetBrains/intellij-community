@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.intellij.ProjectTopics;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -76,7 +77,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
 
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
-    updateSdkLanguageLevels(project, distinctSdks);
+    updateSdkLanguageLevels(project, moduleSdks);
     guessLanguageLevelWithCaching(project, distinctSdks);
   }
 
@@ -203,7 +204,6 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   @Override
   public void afterRootsChanged(@NotNull final Project project) {
     final Map<Module, Sdk> moduleSdks = getPythonModuleSdks(project);
-    final Set<Sdk> distinctSdks = new LinkedHashSet<>(moduleSdks.values());
     final boolean needToReparseOpenFiles = ContainerUtil.exists(moduleSdks.entrySet(), entry -> {
       final Module module = entry.getKey();
       final Sdk newSdk = entry.getValue();
@@ -213,7 +213,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
 
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
-    updateSdkLanguageLevels(project, distinctSdks);
+    updateSdkLanguageLevels(project, moduleSdks);
 
     if (needToReparseOpenFiles) {//todo[lene] move it after updating SDKs?
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -240,24 +240,25 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     return result;
   }
 
-  private void updateSdkLanguageLevels(@NotNull Project project, @NotNull Set<? extends Sdk> sdks) {
-    if (sdks.isEmpty()) {
+  private void updateSdkLanguageLevels(@NotNull Project project, @NotNull Map<Module, Sdk> moduleSdks) {
+    if (moduleSdks.isEmpty()) {
       return;
     }
 
-    new MyDumbModeTask(project, sdks).queue(project);
+    new MyDumbModeTask(project, moduleSdks).queue(project);
   }
 
-  private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull Set<? extends Sdk> sdks) {
+  private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull Map<Module, Sdk> moduleSdks) {
     final List<Runnable> results = new ArrayList<>();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    for (Map.Entry<Module, Sdk> moduleToSdk : moduleSdks.entrySet()) {
+      final Sdk sdk = moduleToSdk.getValue();
       final LanguageLevel languageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-      for (VirtualFile root : PyUtil.getSourceRoots(module)) {
+      for (VirtualFile root : PyUtil.getSourceRoots(moduleToSdk.getKey())) {
         addRootIndexingTask(root, results, project, languageLevel);
       }
     }
-    for (Sdk sdk : sdks) {
+    final LinkedHashSet<Sdk> distinctSdks = new LinkedHashSet<>(moduleSdks.values());
+    for (Sdk sdk : distinctSdks) {
       if (PythonSdkUtil.isDisposed(sdk)) continue;
 
       final LanguageLevel languageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
@@ -418,12 +419,12 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
 
   private final class MyDumbModeTask extends DumbModeTask {
     private @NotNull final Project project;
-    private final @NotNull Set<? extends Sdk> sdks;
+    private final @NotNull Map<Module, Sdk> moduleSdks;
     private final SimpleMessageBusConnection connection;
 
-    private MyDumbModeTask(@NotNull Project project, @NotNull Set<? extends Sdk> sdks) {
+    private MyDumbModeTask(@NotNull Project project, @NotNull Map<Module, Sdk> moduleSdks) {
       this.project = project;
-      this.sdks = sdks;
+      this.moduleSdks = moduleSdks;
       connection = project.getMessageBus().simpleConnect();
       connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
@@ -447,7 +448,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
       //final PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
       indicator.setIndeterminate(true);
       indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-      final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, sdks));
+      final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, moduleSdks));
       PushedFilePropertiesUpdater.getInstance(project).runConcurrentlyIfPossible(tasks);
       //if (!ApplicationManager.getApplication().isUnitTestMode()) {
       //  snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
@@ -459,7 +460,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
       if (taskFromQueue instanceof MyDumbModeTask &&
           ((MyDumbModeTask)taskFromQueue).project.equals(project) &&
-          ((MyDumbModeTask)taskFromQueue).sdks.equals(sdks)) {
+          ((MyDumbModeTask)taskFromQueue).moduleSdks.equals(moduleSdks)) {
         return this;
       }
       return null;
