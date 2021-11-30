@@ -605,6 +605,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/binaryExpression/multiply.java");
         }
 
+        @TestMetadata("operatorPrecedence.java")
+        public void testOperatorPrecedence() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/operatorPrecedence.java");
+        }
+
         @TestMetadata("or.java")
         public void testOr() throws Exception {
             runTest("testData/newJ2k/binaryExpression/or.java");
