@@ -54,7 +54,7 @@ import static com.intellij.patterns.StandardPatterns.string;
 
 public class JavaDocCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Set<String> INLINE_TAGS_WITH_PARAMETER =
-    Set.of("link", "linkplain", "code", "return", "literal", "value");
+    Set.of("link", "linkplain", "code", "return", "literal", "value", "index");
 
   private static final Logger LOG = Logger.getInstance(JavaDocCompletionContributor.class);
   private static final @NonNls String VALUE_TAG = "value";

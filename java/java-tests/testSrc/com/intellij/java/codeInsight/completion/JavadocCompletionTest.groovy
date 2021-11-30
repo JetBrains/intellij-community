@@ -20,16 +20,24 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.NotNull
+
 class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   private JavaCodeStyleSettings javaSettings
 
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/javadoc/"
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST
   }
 
   @Override
@@ -47,22 +55,22 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testNamesInClass() {
     configureByFile("ClassTagName.java")
-    assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "see", "serial", "since", "version")
+    assertStringItems("apiNote", "author", "author " + SystemProperties.getUserName(), "deprecated", "hidden", "implNote", "implSpec", "see", "serial", "since", "version")
   }
 
   void testNamesInField() {
     configureByFile("FieldTagName.java")
-    assertStringItems("deprecated", "see", "serial", "serialField", "since")
+    assertStringItems("apiNote", "deprecated", "hidden", "implNote", "implSpec", "see", "serial", "serialField", "since")
   }
 
   void testNamesInMethod0() {
     configureByFile("MethodTagName0.java")
-    assertStringItems("deprecated", "exception", "return", "see", "serialData", "since", "throws")
+    assertStringItems("apiNote", "deprecated", "exception", "hidden", "implNote", "implSpec", "return", "see", "serialData", "since", "throws")
   }
 
   void testNamesInMethod1() {
     configureByFile("MethodTagName1.java")
-    assertStringItems("see", "serialData", "since", "throws")
+    assertStringItems("see", "serialData", "since", "implSpec", "throws")
   }
 
   void testParamValueCompletion() {
@@ -135,7 +143,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testException0() {
     configureByFile("Exception0.java")
-    assertStringItems("deprecated", "exception", "see", "serialData", "since", "throws")
+    assertStringItems("apiNote", "deprecated", "exception", "hidden", "implNote", "implSpec", "see", "serialData", "since", "throws")
   }
 
   void testException1() {
@@ -152,7 +160,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testInlineLookup() {
     configureByFile("InlineTagName.java")
-    assertStringItems("code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "value")
+    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "systemProperty", "value")
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -756,8 +764,8 @@ interface Bar<T> extends Foo<T> {
   void "test tags at top level"() {
     myFixture.configureByText 'a.java', "interface Foo { /**\n * <caret> */void foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['@deprecated', '@exception', '@param', '@param a', '@see', '@serialData', '@since', '@throws']
-    def element = myFixture.lookupElements[2]
+    assert myFixture.lookupElementStrings == ['@apiNote', '@deprecated', '@exception', '@hidden', '@implNote', '@implSpec', '@param', '@param a', '@see', '@serialData', '@since', '@throws']
+    def element = myFixture.lookupElements[6]
     assert element.lookupString == "@param"
     selectItem(element)
     myFixture.checkResult("interface Foo { /**\n" +
@@ -767,8 +775,8 @@ interface Bar<T> extends Foo<T> {
   void "test tags at top level inline"() {
     myFixture.configureByText 'a.java', "interface Foo { /** Hello <caret> */void foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@value}']
-    def element = myFixture.lookupElements[4]
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@systemProperty}', '{@value}']
+    def element = myFixture.lookupElements[5]
     assert element.lookupString == "{@link}"
     selectItem(element)
     myFixture.checkResult("interface Foo { /** Hello {@link <caret>} */void foo(int a); }")
@@ -777,8 +785,8 @@ interface Bar<T> extends Foo<T> {
   void "test tags after return"() {
     myFixture.configureByText 'a.java', "interface Foo { /** @return <caret> */int foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@value}']
-    def element = myFixture.lookupElements[4]
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@return}', '{@systemProperty}', '{@value}']
+    def element = myFixture.lookupElements[5]
     assert element.lookupString == "{@link}"
     selectItem(element)
     myFixture.checkResult("interface Foo { /** @return {@link <caret>} */int foo(int a); }")
@@ -787,8 +795,8 @@ interface Bar<T> extends Foo<T> {
   void "test tags at top level inline in brace"() {
     myFixture.configureByText 'a.java', "interface Foo { /** Hello {<caret>} */void foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['@code', '@docRoot', '@inheritDoc', '@link', '@linkplain', '@literal', '@value']
-    def element = myFixture.lookupElements[3]
+    assert myFixture.lookupElementStrings == ['@code', '@docRoot', '@index', '@inheritDoc', '@link', '@linkplain', '@literal', '@systemProperty', '@value']
+    def element = myFixture.lookupElements[4]
     assert element.lookupString == "@link"
     selectItem(element)
     myFixture.checkResult("interface Foo { /** Hello {@link <caret>} */void foo(int a); }")

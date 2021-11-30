@@ -92,6 +92,7 @@ public class JavaDocInfoGenerator {
   private static final String INHERIT_DOC_TAG = "inheritDoc";
   private static final String DOC_ROOT_TAG = "docRoot";
   private static final String VALUE_TAG = "value";
+  private static final String INDEX_TAG = "index";
   private static final String LT = "&lt;";
   private static final String GT = "&gt;";
   private static final String NBSP = "&nbsp;";
@@ -587,6 +588,7 @@ public class JavaDocInfoGenerator {
       items = ((PsiPackage)myElement).getDirectories(GlobalSearchScope.everythingScope(myProject));
     }
     else {
+      if (myElement == null || myElement.getNavigationElement() == null) return false;
       PsiFile containingFile = myElement.getNavigationElement().getContainingFile();
       if (containingFile == null) return false;
       items = new PsiFileSystemItem[]{containingFile};
@@ -1538,6 +1540,15 @@ public class JavaDocInfoGenerator {
         }
         else if (tagName.equals(VALUE_TAG)) {
           generateValueValue(tag, buffer, element);
+        }
+        else if (tagName.equals(INDEX_TAG)) {
+          final PsiDocTagValue indexTagValue = PsiTreeUtil.findChildOfType(tag, PsiDocTagValue.class);
+          if (indexTagValue != null) {
+            final HtmlChunk.Element text = new HtmlBuilder()
+              .append(indexTagValue.getText())
+              .wrapWith("i");
+            buffer.append(text);
+          }
         }
       }
       else {
