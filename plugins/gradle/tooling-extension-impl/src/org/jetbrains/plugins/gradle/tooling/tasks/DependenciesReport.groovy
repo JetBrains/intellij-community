@@ -10,12 +10,11 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.FileCollectionDependency
-import org.gradle.api.artifacts.component.*
-import org.gradle.api.artifacts.result.ComponentSelectionReason
-import org.gradle.api.artifacts.result.ResolutionResult
-import org.gradle.api.artifacts.result.ResolvedComponentResult
-import org.gradle.api.artifacts.result.ResolvedDependencyResult
-import org.gradle.api.artifacts.result.UnresolvedDependencyResult
+import org.gradle.api.artifacts.component.ComponentIdentifier
+import org.gradle.api.artifacts.component.ComponentSelector
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.artifacts.result.*
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
@@ -23,6 +22,7 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.diagnostics.internal.graph.nodes.AbstractRenderableDependencyResult
 import org.gradle.api.tasks.diagnostics.internal.graph.nodes.AbstractRenderableModuleResult
 import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency
+import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableModuleResult
 import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableUnresolvedDependencyResult
 import org.gradle.util.GradleVersion
 
@@ -71,7 +71,9 @@ class DependenciesReport extends DefaultTask {
       throw new IllegalArgumentException("configurations of the project should be used")
     }
     ResolutionResult resolutionResult = configuration.getIncoming().getResolutionResult()
-    RenderableDependency root = new RenderableModuleResult(resolutionResult.root)
+    RenderableDependency root = GradleVersion.current() >= GradleVersion.version("6.0") ?
+                                new CustomRenderableModuleResult(resolutionResult.root) :
+                                new RenderableModuleResult(resolutionResult.root)
     String configurationName = configuration.name
     IdGenerator idGenerator = new IdGenerator()
     long id = idGenerator.getId(root, configurationName)
@@ -110,7 +112,7 @@ class DependenciesReport extends DefaultTask {
     }
 
     Map<Object, DependencyNode> added = [:]
-    for (RenderableDependency child in root.getChildren()) {
+    root.getChildren().each { RenderableDependency child ->
       node.dependencies.add(toNode(child, configurationName, added, idGenerator, projectNameFunction))
     }
     return node
@@ -140,7 +142,7 @@ class DependenciesReport extends DefaultTask {
       node = new UnknownDependencyNode(id, dependency.name)
     }
     node.setResolutionState(dependency.resolutionState.name())
-    if (dependency instanceof RenderableDependencyResult) {
+    if (dependency instanceof CustomRenderableDependencyResult) {
       ComponentSelectionReason selectionReason = dependency.selectionReason
         if (!selectionReason.descriptions.isEmpty()) {
           node.selectionReason = selectionReason.descriptions.last().description
@@ -182,8 +184,8 @@ class DependenciesReport extends DefaultTask {
     }
   }
 
-  private static class RenderableModuleResult extends AbstractRenderableModuleResult {
-    RenderableModuleResult(ResolvedComponentResult module) {
+  private static class CustomRenderableModuleResult extends AbstractRenderableModuleResult {
+    CustomRenderableModuleResult(ResolvedComponentResult module) {
       super(module)
     }
 
@@ -195,7 +197,7 @@ class DependenciesReport extends DefaultTask {
           out.add(new RenderableUnresolvedDependencyResult((UnresolvedDependencyResult)dependencyResult))
         }
         else {
-          out.add(new RenderableDependencyResult((ResolvedDependencyResult)dependencyResult))
+          out.add(new CustomRenderableDependencyResult((ResolvedDependencyResult)dependencyResult))
         }
       }
 
@@ -203,10 +205,10 @@ class DependenciesReport extends DefaultTask {
     }
   }
 
-  private static class RenderableDependencyResult extends AbstractRenderableDependencyResult {
+  private static class CustomRenderableDependencyResult extends AbstractRenderableDependencyResult {
     private final ResolvedDependencyResult dependency
 
-    RenderableDependencyResult(ResolvedDependencyResult dependency) {
+    CustomRenderableDependencyResult(ResolvedDependencyResult dependency) {
       this.dependency = dependency
     }
 
@@ -233,7 +235,7 @@ class DependenciesReport extends DefaultTask {
           out.add(new RenderableUnresolvedDependencyResult((UnresolvedDependencyResult)dependencyResult))
         }
         else {
-          out.add(new RenderableDependencyResult((ResolvedDependencyResult)dependencyResult))
+          out.add(new CustomRenderableDependencyResult((ResolvedDependencyResult)dependencyResult))
         }
       }
       return out
