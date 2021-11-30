@@ -13,6 +13,7 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionResult
@@ -32,31 +33,37 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.event.MouseEvent
 import javax.swing.JTree
 
+class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
+  companion object {
+    val GROUP = EventLogGroup("commit.interactions", 1)
+
+    val FILES_TOTAL = EventFields.Int("files_total")
+    val FILES_INCLUDED = EventFields.Int("files_included")
+    val UNVERSIONED_TOTAL = EventFields.Int("unversioned_total")
+    val UNVERSIONED_INCLUDED = EventFields.Int("unversioned_included")
+
+    val SESSION = GROUP.registerIdeActivity("session",
+                                            startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,
+                                                                                 UNVERSIONED_TOTAL, UNVERSIONED_INCLUDED),
+                                            finishEventAdditionalFields = arrayOf())
+
+    val COMMIT_MESSAGE_TYPING = GROUP.registerEvent("typing")
+    val EXCLUDE_FILE = GROUP.registerEvent("exclude.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
+    val INCLUDE_FILE = GROUP.registerEvent("include.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
+    val SELECT_FILE = GROUP.registerEvent("select.item", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
+    val SHOW_DIFF = GROUP.registerEvent("show.diff")
+    val CLOSE_DIFF = GROUP.registerEvent("close.diff")
+    val JUMP_TO_SOURCE = GROUP.registerEvent("jump.to.source", EventFields.InputEventByAnAction)
+    val COMMIT = GROUP.registerEvent("commit", FILES_INCLUDED, UNVERSIONED_INCLUDED)
+    val COMMIT_AND_PUSH = GROUP.registerEvent("commit.and.push", FILES_INCLUDED, UNVERSIONED_INCLUDED)
+  }
+
+  override fun getGroup(): EventLogGroup = GROUP
+}
+
 @Service(Service.Level.PROJECT)
 class CommitSessionCollector(val project: Project) {
   companion object {
-    private val GROUP = EventLogGroup("commit.interactions", 1)
-
-    private val FILES_TOTAL = EventFields.Int("files_total")
-    private val FILES_INCLUDED = EventFields.Int("files_included")
-    private val UNVERSIONED_TOTAL = EventFields.Int("unversioned_total")
-    private val UNVERSIONED_INCLUDED = EventFields.Int("unversioned_included")
-
-    private val SESSION = GROUP.registerIdeActivity("session",
-                                                    startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,
-                                                                                         UNVERSIONED_TOTAL, UNVERSIONED_INCLUDED),
-                                                    finishEventAdditionalFields = arrayOf())
-
-    private val COMMIT_MESSAGE_TYPING = GROUP.registerEvent("typing")
-    private val EXCLUDE_FILE = GROUP.registerEvent("exclude.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
-    private val INCLUDE_FILE = GROUP.registerEvent("include.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
-    private val SELECT_FILE = GROUP.registerEvent("select.item", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
-    private val SHOW_DIFF = GROUP.registerEvent("show.diff")
-    private val CLOSE_DIFF = GROUP.registerEvent("close.diff")
-    private val JUMP_TO_SOURCE = GROUP.registerEvent("jump.to.source", EventFields.InputEventByAnAction)
-    private val COMMIT = GROUP.registerEvent("commit", FILES_INCLUDED, UNVERSIONED_INCLUDED)
-    private val COMMIT_AND_PUSH = GROUP.registerEvent("commit.and.push", FILES_INCLUDED, UNVERSIONED_INCLUDED)
-
     @JvmStatic
     fun getInstance(project: Project): CommitSessionCollector = project.service()
   }
@@ -78,12 +85,12 @@ class CommitSessionCollector(val project: Project) {
     else if (activity == null) {
       val changesViewManager = ChangesViewManager.getInstance(project) as ChangesViewManager
       val commitUi = changesViewManager.commitWorkflowHandler?.ui ?: return
-      activity = SESSION.started(project) {
+      activity = CommitSessionCounterUsagesCollector.SESSION.started(project) {
         listOf(
-          FILES_TOTAL.with(commitUi.getDisplayedChanges().size),
-          FILES_INCLUDED.with(commitUi.getIncludedChanges().size),
-          UNVERSIONED_TOTAL.with(commitUi.getDisplayedUnversionedFiles().size),
-          UNVERSIONED_INCLUDED.with(commitUi.getIncludedUnversionedFiles().size)
+          CommitSessionCounterUsagesCollector.FILES_TOTAL.with(commitUi.getDisplayedChanges().size),
+          CommitSessionCounterUsagesCollector.FILES_INCLUDED.with(commitUi.getIncludedChanges().size),
+          CommitSessionCounterUsagesCollector.UNVERSIONED_TOTAL.with(commitUi.getDisplayedUnversionedFiles().size),
+          CommitSessionCounterUsagesCollector.UNVERSIONED_INCLUDED.with(commitUi.getIncludedUnversionedFiles().size)
         )
       }
     }
@@ -96,46 +103,46 @@ class CommitSessionCollector(val project: Project) {
 
   fun logFileSelected(event: MouseEvent) {
     if (!shouldTrackEvents()) return
-    SELECT_FILE.log(project, null, event)
+    CommitSessionCounterUsagesCollector.SELECT_FILE.log(project, null, event)
   }
 
   fun logFileSelected(event: AnActionEvent) {
     if (!shouldTrackEvents()) return
-    SELECT_FILE.log(project, event, null)
+    CommitSessionCounterUsagesCollector.SELECT_FILE.log(project, event, null)
   }
 
   fun logCommitMessageTyped() {
     if (!shouldTrackEvents()) return
-    COMMIT_MESSAGE_TYPING.log(project)
+    CommitSessionCounterUsagesCollector.COMMIT_MESSAGE_TYPING.log(project)
   }
 
   fun logInclusionToggle(excluded: Boolean, event: AnActionEvent) {
     if (!shouldTrackEvents()) return
     if (excluded) {
-      EXCLUDE_FILE.log(project, event, null)
+      CommitSessionCounterUsagesCollector.EXCLUDE_FILE.log(project, event, null)
     }
     else {
-      INCLUDE_FILE.log(project, event, null)
+      CommitSessionCounterUsagesCollector.INCLUDE_FILE.log(project, event, null)
     }
   }
 
   fun logInclusionToggle(excluded: Boolean, event: MouseEvent) {
     if (!shouldTrackEvents()) return
     if (excluded) {
-      EXCLUDE_FILE.log(project, null, event)
+      CommitSessionCounterUsagesCollector.EXCLUDE_FILE.log(project, null, event)
     }
     else {
-      INCLUDE_FILE.log(project, null, event)
+      CommitSessionCounterUsagesCollector.INCLUDE_FILE.log(project, null, event)
     }
   }
 
   fun logCommit(executorId: String?, includedChanges: Int, includedUnversioned: Int) {
     if (!shouldTrackEvents()) return
     if (executorId == "Git.Commit.And.Push.Executor") {
-      COMMIT_AND_PUSH.log(project, includedChanges, includedUnversioned)
+      CommitSessionCounterUsagesCollector.COMMIT_AND_PUSH.log(project, includedChanges, includedUnversioned)
     }
     else {
-      COMMIT.log(project, includedChanges, includedUnversioned)
+      CommitSessionCounterUsagesCollector.COMMIT.log(project, includedChanges, includedUnversioned)
     }
 
     finishActivity()
@@ -145,16 +152,16 @@ class CommitSessionCollector(val project: Project) {
   fun logDiffViewer(isShown: Boolean) {
     if (!shouldTrackEvents()) return
     if (isShown) {
-      SHOW_DIFF.log(project)
+      CommitSessionCounterUsagesCollector.SHOW_DIFF.log(project)
     }
     else {
-      CLOSE_DIFF.log(project)
+      CommitSessionCounterUsagesCollector.CLOSE_DIFF.log(project)
     }
   }
 
   fun logJumpToSource(event: AnActionEvent) {
     if (!shouldTrackEvents()) return
-    JUMP_TO_SOURCE.log(project, event)
+    CommitSessionCounterUsagesCollector.JUMP_TO_SOURCE.log(project, event)
   }
 
 
