@@ -52,13 +52,7 @@ sealed class GTDActionResult {
 }
 
 @ApiStatus.Internal
-data class GTDTarget(val navigatable: () -> Navigatable, val presentation: TargetPresentation, val navigationProvider: Any?) {
-  constructor(
-    navigatable: Navigatable,
-    presentation: TargetPresentation,
-    navigationProvider: Any?
-  ) : this({ navigatable }, presentation, navigationProvider)
-}
+data class GTDTarget(val navigatable: () -> Navigatable, val presentation: TargetPresentation, val navigationProvider: Any?)
 
 private fun gotoDeclarationInner(file: PsiFile, offset: Int): GTDActionData? {
   return fromDirectNavigation(file, offset)
