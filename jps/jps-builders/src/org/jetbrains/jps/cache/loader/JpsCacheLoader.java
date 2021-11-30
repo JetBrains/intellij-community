@@ -3,7 +3,7 @@ package org.jetbrains.jps.cache.loader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.JpsBuildBundle;
@@ -13,6 +13,7 @@ import org.jetbrains.jps.incremental.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class JpsCacheLoader implements JpsOutputLoader<File> {
   private static final Logger LOG = Logger.getInstance(JpsCacheLoader.class);
@@ -43,6 +44,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
   @Override
   public LoaderStatus extract(@Nullable Object loadResults) {
     if (!(loadResults instanceof File)) return LoaderStatus.FAILED;
+    LOG.info("Start extraction of JPS caches");
 
     File zipFile = (File)loadResults;
     File tmpFolder = new File(myBuildCacheFolder.getParentFile(), "tmp");
@@ -50,10 +52,18 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
       // Start extracting after download
       myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.extracting.downloaded.results"));
       myContext.checkCanceled();
-      //subTaskIndicator.setText2(JpsCacheBundle.message("progress.details.extracting.project.caches"));
       long start = System.currentTimeMillis();
 
-      ZipUtil.extract(zipFile, tmpFolder, null);
+      AtomicInteger extractItemsCount = new AtomicInteger();
+      new Decompressor.Zip(zipFile).postProcessor(path -> {
+        extractItemsCount.incrementAndGet();
+        myContext.checkCanceled();
+        if (extractItemsCount.get() == 130) {
+          int expectedDownloads = myContext.getTotalExpectedDownloads();
+          myContext.getNettyClient().sendDescriptionStatusMessage(JpsBuildBundle.message("progress.details.extracting.project.caches"), expectedDownloads);
+          extractItemsCount.set(0);
+        }
+      }).extract(tmpFolder.toPath());
       FileUtil.delete(zipFile);
       LOG.info("Unzip compilation caches took: " + (System.currentTimeMillis() - start));
       //subTaskIndicator.finished();
@@ -110,7 +120,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
         fsStateFile.createNewFile();
       }
       catch (IOException e) {
-        LOG.warn("Couldn't create new empty FsState file", e);
+        LOG.warn("Couldn't create new empty " + FS_STATE_FILE + " file", e);
       }
 
       // Remove old cache dir

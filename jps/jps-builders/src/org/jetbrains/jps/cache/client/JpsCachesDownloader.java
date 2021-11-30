@@ -164,7 +164,7 @@ class JpsCachesDownloader {
     Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(myNettyClient);
     //myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.connecting.to.download.file.text", presentableUrl));
 
-    try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+    try (CloseableHttpClient client = HttpClientBuilder.create().disableAutomaticRetries().build()) {
       HttpGet httpRequest = new HttpGet(description.getDownloadUrl());
       headers.forEach((k, v) -> httpRequest.setHeader(k, v));
       HttpResponse response = client.execute(httpRequest);
@@ -179,7 +179,7 @@ class JpsCachesDownloader {
         if (header != null && header.getValue().startsWith("Hit")) hitsCount++;
 
         myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl), expectedDownloads);
-        return saveToFile(FileUtil.createTempFile("download.", ".tmp").toPath(), responseEntity).toFile();
+        return saveToFile(FileUtil.createTempFile("download.", ".tmp").toPath(), responseEntity, myContext).toFile();
       }
       else {
         String errorText = StreamUtil.readText(new InputStreamReader(responseEntity.getContent(), StandardCharsets.UTF_8));

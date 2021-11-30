@@ -14,6 +14,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.cache.model.JpsLoaderContext;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -52,7 +54,7 @@ public class JpsServerConnectionUtil {
         long fileSize = responseEntity.getContentLength();
         Header header = response.getFirstHeader(CDN_CACHE_HEADER);
 
-        File downloadedFile = saveToFile(FileUtil.createTempFile("download.", ".tmp").toPath(), responseEntity).toFile();
+        File downloadedFile = saveToFile(FileUtil.createTempFile("download.", ".tmp").toPath(), responseEntity, null).toFile();
         //File downloadedFile = request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
         long downloadTime = System.currentTimeMillis() - start;
         long bytesPerSecond = fileSize / downloadTime * 1000;
@@ -73,12 +75,12 @@ public class JpsServerConnectionUtil {
     }
   }
 
-  public static @NotNull Path saveToFile(@NotNull Path file, HttpEntity responseEntity) throws IOException {
+  public static @NotNull Path saveToFile(@NotNull Path file, HttpEntity responseEntity, @Nullable JpsLoaderContext loaderContext) throws IOException {
     NioFiles.createDirectories(file.getParent());
 
     boolean deleteFile = true;
     try (OutputStream out = Files.newOutputStream(file)) {
-      copyStreamContent(responseEntity.getContent(), out, responseEntity.getContentLength());
+      copyStreamContent(responseEntity.getContent(), out, loaderContext, responseEntity.getContentLength());
       deleteFile = false;
     }
     finally {
@@ -92,7 +94,8 @@ public class JpsServerConnectionUtil {
 
   private static long copyStreamContent(@NotNull InputStream inputStream,
                                         @NotNull OutputStream outputStream,
-                                        long expectedContentLength) throws IOException, ProcessCanceledException {
+                                        @Nullable JpsLoaderContext loaderContext,
+                                        long expectedContentLength) throws IOException {
 
     CountingGZIPInputStream gzipStream = inputStream instanceof CountingGZIPInputStream ? (CountingGZIPInputStream)inputStream : null;
     byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
@@ -100,6 +103,7 @@ public class JpsServerConnectionUtil {
     long bytesWritten = 0;
     long bytesRead = 0;
     while ((count = inputStream.read(buffer)) > 0) {
+      if (loaderContext != null) loaderContext.checkCanceled();
       outputStream.write(buffer, 0, count);
       bytesWritten += count;
       bytesRead = gzipStream != null ? gzipStream.getCompressedBytesRead() : bytesWritten;

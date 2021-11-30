@@ -76,6 +76,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
   @Override
   public LoaderStatus extract(@Nullable Object loadResults) {
     if (!(loadResults instanceof List)) return LoaderStatus.FAILED;
+    LOG.info("Start extraction of compilation outputs");
 
     //noinspection unchecked
     List<OutputLoadResult> outputLoadResults = (List<OutputLoadResult>)loadResults;
@@ -130,8 +131,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
                       entry -> EXECUTOR_SERVICE.submit(() -> {
                         String moduleName = entry.getValue();
                         File tmpModuleFolder = entry.getKey();
-                        myContext.sendDescriptionStatusMessage(
-                          JpsBuildBundle.message("progress.details.applying.changes.for.module", moduleName));
+                        myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.details.applying.changes.for.module", moduleName));
                         File currentModuleBuildDir = new File(tmpModuleFolder.getParentFile(), moduleName);
                         FileUtil.delete(currentModuleBuildDir);
                         try {

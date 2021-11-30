@@ -28,7 +28,7 @@ public class JpsNettyClient {
     if (expectedDownloads == 0) {
       channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessage(message)));
     } else {
-      int doubleExpectedDownloads = expectedDownloads * 2;
+      int doubleExpectedDownloads = expectedDownloads * 2 + 1000;
       channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCacheDownloadMessageWithProgress(message, (float)currentDownloads / doubleExpectedDownloads)));
     }
   }
