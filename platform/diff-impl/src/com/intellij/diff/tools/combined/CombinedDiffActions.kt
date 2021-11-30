@@ -2,12 +2,15 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.actions.impl.NextChangeAction
+import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.actions.impl.PrevChangeAction
 import com.intellij.diff.actions.impl.SetEditorSettingsAction
 import com.intellij.diff.tools.util.FoldingModelSupport
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.text.SmartTextDiffProvider
+import com.intellij.diff.util.DiffUtil
+import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction
@@ -16,7 +19,10 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.pom.Navigatable
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.ToggleActionButton
 import java.awt.Component
@@ -145,4 +151,22 @@ internal class CombinedPrevNextFileAction(private val block: CombinedDiffBlock,
   }
 
   override fun isCopyable(): Boolean = true
+}
+
+internal class CombinedOpenInEditorAction(private val path: FilePath) : OpenInEditorAction() {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = DiffUtil.canNavigateToFile(e.project, path.virtualFile)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project!!
+    findNavigatable(project)?.run { openEditor(project, this) }
+  }
+
+  private fun findNavigatable(project: Project?): Navigatable? {
+    val file = path.virtualFile
+    if (!DiffUtil.canNavigateToFile(project, file)) return null
+
+    return PsiNavigationSupport.getInstance().createNavigatable(project!!, file!!, 0)
+  }
 }
