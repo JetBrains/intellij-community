@@ -10,6 +10,7 @@ import com.intellij.util.lang.Java11Shim
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -30,6 +31,8 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
   private val pluginErrors = ConcurrentHashMap<PluginId, PluginLoadingError>()
   private val globalErrors = Collections.synchronizedList(ArrayList<Supplier<String>>())
+
+  @VisibleForTesting
   @JvmField val shadowedBundledIds = HashSet<PluginId>()
 
   // result, after calling finishLoading
