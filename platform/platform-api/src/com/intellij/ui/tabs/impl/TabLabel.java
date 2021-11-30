@@ -612,7 +612,8 @@ public class TabLabel extends JPanel implements Accessible {
     Point pointInLabel = new RelativePoint(event).getPoint(myLabel);
     Icon icon = myLabel.getIcon();
     int iconWidth = (icon != null ? icon.getIconWidth() : JBUI.scale(16));
-    if (myLabel.getVisibleRect().width >= iconWidth * 2 && myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
+    if ((myLabel.getVisibleRect().width >= iconWidth * 2 || !UISettings.getInstance().getShowTabsTooltips())
+        && myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
       String toolTip = myIcon.getToolTip(false);
       if (toolTip != null) {
         return StringUtil.capitalize(toolTip);
