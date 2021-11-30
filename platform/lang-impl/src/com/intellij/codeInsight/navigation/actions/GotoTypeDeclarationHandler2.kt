@@ -44,14 +44,14 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
   private fun gotoTypeDeclaration(project: Project, editor: Editor, actionResult: NavigationActionResult) {
     when (actionResult) {
       is SingleTarget -> {
-        gotoTarget(project, actionResult.navigatable)
+        navigateRequest(project, actionResult.request)
       }
       is MultipleTargets -> {
         val popup = createTargetPopup(
           CodeInsightBundle.message("choose.type.popup.title"),
           actionResult.targets, LazyTargetWithPresentation::presentation
-        ) { (navigatable, _) ->
-          gotoTarget(project, navigatable())
+        ) { (requestor, _) ->
+          navigateRequestLazy(project, requestor)
         }
         popup.showInBestPositionFor(editor)
       }

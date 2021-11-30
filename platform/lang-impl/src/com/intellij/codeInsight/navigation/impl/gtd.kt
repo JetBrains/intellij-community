@@ -71,11 +71,13 @@ private class TargetGTDActionData(private val project: Project, private val targ
       1 -> {
         // don't compute presentation for single target
         val (navigationTarget, navigationProvider) = result.single()
-        SingleTarget(navigationTarget.navigatable, navigationProvider)
+        navigationTarget.navigationRequest()?.let { request ->
+          SingleTarget(request, navigationProvider)
+        }
       }
       else -> {
         val targets = result.map { (navigationTarget, navigationProvider) ->
-          LazyTargetWithPresentation(navigationTarget::getNavigatable, navigationTarget.targetPresentation, navigationProvider)
+          LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.targetPresentation, navigationProvider)
         }
         MultipleTargets(targets)
       }
@@ -85,6 +87,11 @@ private class TargetGTDActionData(private val project: Project, private val targ
   private fun extractSingleTargetResult(symbol: Symbol, navigationProvider: Any?): SingleTarget? {
     val el = PsiSymbolService.getInstance().extractElementFromSymbol(symbol) ?: return null
     val nav = el.gtdTargetNavigatable() ?: return null
-    return if (nav == el) null else SingleTarget(nav, navigationProvider)
+    if (nav == el) {
+      return null
+    }
+    return nav.navigationRequest()?.let { request ->
+      SingleTarget(request, navigationProvider)
+    }
   }
 }

@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
 import com.intellij.ui.list.createTargetPopup
 
@@ -67,31 +66,23 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
     val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
     when (actionResult) {
       is SingleTarget -> {
-        recordAndNavigate(
-          project, actionResult.navigatable, GotoDeclarationAction.getCurrentEventData(), actionResult.navigationProvider
-        )
+        actionResult.navigationProvider?.let {
+          GTDUCollector.recordNavigated(eventData, it.javaClass)
+        }
+        navigateRequest(project, actionResult.request)
       }
       is MultipleTargets -> {
         val popup = createTargetPopup(
           CodeInsightBundle.message("declaration.navigation.title"),
           actionResult.targets, LazyTargetWithPresentation::presentation
-        ) { (navigatable, _, navigationProvider) ->
-          recordAndNavigate(project, navigatable(), eventData, navigationProvider)
+        ) { (requestor, _, navigationProvider) ->
+          navigationProvider?.let {
+            GTDUCollector.recordNavigated(eventData, navigationProvider.javaClass)
+          }
+          navigateRequestLazy(project, requestor)
         }
         popup.showInBestPositionFor(editor)
       }
     }
-  }
-
-  private fun recordAndNavigate(
-    project: Project,
-    navigatable: Navigatable?,
-    eventData: List<EventPair<*>>,
-    navigationProvider: Any?
-  ) {
-    if (navigationProvider != null) {
-      GTDUCollector.recordNavigated(eventData, navigationProvider.javaClass)
-    }
-    gotoTarget(project, navigatable)
   }
 }

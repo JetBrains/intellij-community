@@ -6,12 +6,12 @@ import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
 import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.util.SmartList
 
 internal fun fromGTDProviders(project: Project, editor: Editor, offset: Int): GTDActionData? {
   return processInjectionThenHost(editor, offset) { _editor, _offset ->
@@ -61,13 +61,17 @@ private class GTDProviderData(
     return when (targetElements.size) {
       0 -> null
       1 -> {
-        val navigatable = targetElements.single().gtdTargetNavigatable() ?: return null
-        NavigationActionResult.SingleTarget(navigatable, navigationProvider)
+        targetElements.single().gtdTargetNavigatable()?.navigationRequest()?.let { request ->
+          SingleTarget(request, navigationProvider)
+        }
       }
       else -> {
-        val targets = targetElements.mapTo(SmartList()) { targetElement ->
-          val navigatable = targetElement.psiNavigatable()
-          LazyTargetWithPresentation({ navigatable }, targetPresentation(targetElement), navigationProvider)
+        val targets = targetElements.map { targetElement ->
+          LazyTargetWithPresentation(
+            { targetElement.psiNavigatable()?.navigationRequest() },
+            targetPresentation(targetElement),
+            navigationProvider
+          )
         }
         NavigationActionResult.MultipleTargets(targets)
       }

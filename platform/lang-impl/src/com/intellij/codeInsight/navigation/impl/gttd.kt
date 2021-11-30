@@ -137,9 +137,11 @@ private fun Sequence<Symbol>.navigationTargets(project: Project): Sequence<Navig
 internal fun result(navigationTargets: Collection<NavigationTarget>): NavigationActionResult? {
   return when (navigationTargets.size) {
     0 -> null
-    1 -> SingleTarget(navigationTargets.single().navigatable, null)
+    1 -> navigationTargets.single().navigationRequest()?.let { request ->
+      SingleTarget(request, null)
+    }
     else -> MultipleTargets(navigationTargets.map { navigationTarget ->
-      LazyTargetWithPresentation(navigationTarget::getNavigatable, navigationTarget.targetPresentation, null)
+      LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.targetPresentation, null)
     })
   }
 }
