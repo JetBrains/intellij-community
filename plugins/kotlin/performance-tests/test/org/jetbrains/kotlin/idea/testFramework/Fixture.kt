@@ -27,6 +27,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -36,6 +37,7 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.xml.XmlFileNSInfoProvider
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.fixtures.EditorTestFixture
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.usages.Usage
@@ -45,6 +47,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 
 class Fixture(
@@ -322,3 +325,11 @@ class Fixture(
 }
 
 data class EditorFile(val psiFile: PsiFile, val document: Document)
+
+fun KotlinLightCodeInsightFixtureTestCase.removeInfoMarkers() {
+    ExpectedHighlightingData(editor.document, true, true).init()
+
+    runInEdtAndWait {
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+    }
+}

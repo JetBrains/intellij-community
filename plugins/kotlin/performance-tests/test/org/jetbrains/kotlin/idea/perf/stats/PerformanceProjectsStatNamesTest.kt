@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.perf.stats
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.perf.Stats
+import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.perf.live.PerformanceProjectsTest
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
 

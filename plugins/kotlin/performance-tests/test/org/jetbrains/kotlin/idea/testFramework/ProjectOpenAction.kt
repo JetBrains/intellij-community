@@ -25,7 +25,7 @@ import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.UsefulTestCase.assertTrue
 import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.runAndMeasure
 import org.jetbrains.kotlin.idea.perf.util.logMessage
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
 import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies

@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.perf.util
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.calcMean
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.calcMean
 import java.util.ArrayList
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

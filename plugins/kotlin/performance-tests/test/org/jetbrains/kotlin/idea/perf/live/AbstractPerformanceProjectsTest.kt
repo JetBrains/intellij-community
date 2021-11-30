@@ -25,10 +25,9 @@ import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.perf.ProjectBuilder
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.WARM_UP
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
-import org.jetbrains.kotlin.idea.perf.performanceTest
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.runAndMeasure
 import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.ApplicationScope.Companion.initApp
 import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.ApplicationScope.Companion.initSdk
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile

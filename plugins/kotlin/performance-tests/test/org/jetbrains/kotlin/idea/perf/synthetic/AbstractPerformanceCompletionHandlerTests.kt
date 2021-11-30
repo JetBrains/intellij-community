@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHand
 import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.performanceTest
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.performanceTest
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.util.OutputConfig
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor

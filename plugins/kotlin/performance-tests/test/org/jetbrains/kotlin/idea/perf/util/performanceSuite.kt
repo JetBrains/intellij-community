@@ -32,9 +32,8 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.perf.ProjectBuilder
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
-import org.jetbrains.kotlin.idea.perf.performanceTest
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.runAndMeasure
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.disableAllInspections
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableAllInspections
