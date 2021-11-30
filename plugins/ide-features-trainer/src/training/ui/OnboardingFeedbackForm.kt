@@ -3,7 +3,6 @@
 
 package training.ui
 
-import com.intellij.feedback.createFeedbackAgreementComponent
 import com.intellij.feedback.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.submitGeneralFeedback
@@ -20,6 +19,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -42,6 +42,8 @@ import java.awt.Font
 import java.awt.Graphics
 import java.awt.event.ActionEvent
 import javax.swing.*
+import javax.swing.event.HyperlinkEvent
+import javax.swing.text.html.HTMLDocument
 
 private const val FEEDBACK_CONTENT_WIDTH = 500
 private const val SUB_OFFSET = 20
@@ -132,9 +134,9 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
   val recentProjectsNumber = RecentProjectsManagerBase.instanceEx.getRecentPaths().size
   val actionsNumber = service<ActionsLocalSummary>().getActionsStats().keys.size
 
-  val agreement = createOnboardingAgreementComponent(project, systemInfoData, onboardingFeedbackData,
-                                                     recentProjectsNumber,
-                                                     actionsNumber)
+  val agreement = createAgreementComponent {
+    showSystemData(project, systemInfoData, onboardingFeedbackData, recentProjectsNumber, actionsNumber)
+  }
 
   val technicalIssuesOption = feedbackOption("technical_issues","Technical issues")
   val unusefulOption = feedbackOption("useless","Tour wasn't useful for me")
@@ -209,35 +211,33 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
   return maySendFeedback
 }
 
-private fun createOnboardingAgreementComponent(project: Project?,
-                                               systemInfoData: CommonFeedbackSystemInfoData,
-                                               onboardingFeedbackData: OnboardingFeedbackData?,
-                                               recentProjectsNumber: Int,
-                                               actionsNumber: Int) =
-  createFeedbackAgreementComponent(project) {
-    // TODO: add specific information, like Python interpreters
-    showFeedbackSystemInfoDialog(project, systemInfoData) {
-      if (onboardingFeedbackData != null) {
-        onboardingFeedbackData.addRowsForUserAgreement.invoke(this)
-        val lessonEndInfo = onboardingFeedbackData.lessonEndInfo
-        row("Recent projects number:") {
-          label(recentProjectsNumber.toString())
-        }
-        row("Different IDE actions used:") {
-          label(actionsNumber.toString())
-        }
-        row("Lesson completed:") {
-          label(lessonEndInfo.lessonPassed.toString())
-        }
-        row("The visual step on end:") {
-          label(lessonEndInfo.currentVisualIndex.toString())
-        }
-        row("The technical index on end:") {
-          label(lessonEndInfo.currentTaskIndex.toString())
-        }
+private fun showSystemData(project: Project?,
+                           systemInfoData: CommonFeedbackSystemInfoData,
+                           onboardingFeedbackData: OnboardingFeedbackData?,
+                           recentProjectsNumber: Int,
+                           actionsNumber: Int) {
+  showFeedbackSystemInfoDialog(project, systemInfoData) {
+    if (onboardingFeedbackData != null) {
+      onboardingFeedbackData.addRowsForUserAgreement.invoke(this)
+      val lessonEndInfo = onboardingFeedbackData.lessonEndInfo
+      row("Recent projects number:") {
+        label(recentProjectsNumber.toString())
+      }
+      row("Different IDE actions used:") {
+        label(actionsNumber.toString())
+      }
+      row("Lesson completed:") {
+        label(lessonEndInfo.lessonPassed.toString())
+      }
+      row("The visual step on end:") {
+        label(lessonEndInfo.currentVisualIndex.toString())
+      }
+      row("The technical index on end:") {
+        label(lessonEndInfo.currentTaskIndex.toString())
       }
     }
   }
+}
 
 private fun createLikenessPanel(): Pair<NonOpaquePanel, () -> FeedbackLikenessAnswer> {
   val votePanel = NonOpaquePanel()
@@ -326,6 +326,31 @@ private class FeedbackOption(@NlsContexts.Label text: String?, icon: Icon?) : JB
     foreground = foregroundColor
     super.paint(g)
   }
+}
+
+private fun createAgreementComponent(showSystemInfo: () -> Unit): JComponent {
+  val htmlText = "By submitting this form, I agree to share my <a href=\"\">system information</a>. " +
+                 "JetBrains will not collect any identifiable data and the data will be processed anonymously for the purpose " +
+                 "of improving the onboarding experience."
+  val jTextPane = JTextPane().apply {
+    contentType = "text/html"
+    addHyperlinkListener(object : HyperlinkAdapter() {
+      override fun hyperlinkActivated(e: HyperlinkEvent?) {
+        showSystemInfo()
+      }
+    })
+    editorKit = HTMLEditorKitBuilder.simple()
+    text = htmlText
+
+    val styleSheet = (document as HTMLDocument).styleSheet
+    styleSheet.addRule("body {font-size:${JBUI.Fonts.label().lessOn(3f)}pt;}")
+    isEditable = false
+  }
+
+  val scrollPane = JBScrollPane(jTextPane)
+  scrollPane.preferredSize = Dimension(FEEDBACK_CONTENT_WIDTH, 100)
+  scrollPane.border = null
+  return scrollPane
 }
 
 private fun getFeedbackEntryPlace(project: Project?) = when {
