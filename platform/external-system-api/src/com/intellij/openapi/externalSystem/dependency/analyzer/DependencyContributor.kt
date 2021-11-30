@@ -20,7 +20,7 @@ interface DependencyContributor {
     override fun toString() = title
   }
 
-  data class Scope(val id: String, val name: @Nls String, val title: @Nls String) {
+  data class Scope(val id: String, val name: @Nls String, val title: @Nls(capitalization = Nls.Capitalization.Title) String) {
     override fun toString() = id
   }
 

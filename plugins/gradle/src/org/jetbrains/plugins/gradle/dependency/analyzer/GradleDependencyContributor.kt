@@ -114,7 +114,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
                                  parentNode: DependencyNode,
                                  groups: MutableMap<Dependency.Data, MutableSet<Dependency>>,
                                  gradleProjectDir: String) {
-    val dependencyData = parentNode.toDependencyData() ?: return
+    val dependencyData = parentNode.findDependencyData() ?: return
     val dependency = Dependency(dependencyData, scope, usage)
     groups.getOrPut(dependencyData, ::mutableSetOf).add(dependency)
 
@@ -136,7 +136,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
     }
   }
 
-  private fun DependencyNode.toDependencyData(): Dependency.Data? {
+  private fun DependencyNode.findDependencyData(): Dependency.Data? {
     if (this is ReferenceNode) {
       return dependenciesData[id]
     }
@@ -156,7 +156,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
 
   companion object {
     @Suppress("HardCodedStringLiteral")
-    internal val defaultConfiguration = DependencyContributor.Scope("default", "default", "default")
+    internal val defaultConfiguration = DependencyContributor.Scope("default", "default", "Default")
   }
 }
 
