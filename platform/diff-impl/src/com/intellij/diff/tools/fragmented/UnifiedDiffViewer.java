@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -878,7 +878,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     return getContent(Side.RIGHT);
   }
 
-  @RequiresEdt
   @Nullable
   public List<UnifiedDiffChange> getDiffChanges() {
     return myModel.getDiffChanges();

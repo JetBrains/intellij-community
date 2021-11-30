@@ -133,6 +133,8 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     return components
   }
 
+  fun rediff() = diffBlocks.forEach { (it.content.viewer as? DiffViewerBase)?.rediff() }
+
   override fun dispose() {}
 
   override fun getData(dataId: @NonNls String): Any? {
@@ -145,9 +147,13 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     return if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) getCurrentDiffViewer()?.editor else null
   }
 
+  fun getAllBlocks() = diffBlocks.asSequence()
+
   fun getCurrentBlockContent(): CombinedDiffBlockContent? {
     return diffBlocks.getOrNull(scrollSupport.blockIterable.index)?.content
   }
+
+  fun getCurrentBlockContentIndex() = scrollSupport.blockIterable.index
 
   internal fun getDifferencesIterable(): PrevNextDifferenceIterable? {
     return getCurrentDataProvider()?.let(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE::getData)
@@ -172,10 +178,17 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     selectDiffBlock(scrollSupport.blockIterable.index, scrollPolicy)
   }
 
-  internal fun selectDiffBlock(index: Int = scrollSupport.blockIterable.index, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
+  fun selectDiffBlock(index: Int = scrollSupport.blockIterable.index, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
     diffBlocks.getOrNull(index)?.run {
       selectDiffBlock(index, this, scrollPolicy, onSelected)
     }
+  }
+
+  fun selectDiffBlock(block: CombinedDiffBlock, scrollPolicy: ScrollPolicy, onSelected: () -> Unit) {
+    val index = diffBlocks.indexOf(block)
+    if (index == -1) return
+
+    selectDiffBlock(index, block, scrollPolicy, onSelected)
   }
 
   private fun selectDiffBlock(index: Int, block: CombinedDiffBlock, scrollPolicy: ScrollPolicy, onSelected: () -> Unit) {
@@ -256,7 +269,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
   }
 }
 
-internal val DiffViewer.editor: EditorEx?
+val DiffViewer.editor: EditorEx?
   get() = when (this) {
     is OnesideTextDiffViewer -> editor
     is TwosideTextDiffViewer -> currentEditor
@@ -264,7 +277,7 @@ internal val DiffViewer.editor: EditorEx?
     else -> null
   }
 
-internal val DiffViewer.editors: List<EditorEx>
+val DiffViewer.editors: List<EditorEx>
   get() = when (this) {
     is OnesideTextDiffViewer -> editors
     is TwosideTextDiffViewer -> editors

@@ -19,4 +19,10 @@
     <action id="Refactoring.Detector.FindRefactoringInCommitAction"
             class="com.intellij.refactoring.detector.actions.FindRefactoringInCommitAction" internal="true"/>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <diff.DiffExtension implementation="com.intellij.refactoring.detector.semantic.diff.SemanticViewerExtension"/>
+    <diff.tools.combined.diffBlockFactory implementation="com.intellij.refactoring.detector.semantic.diff.SemanticDiffFragmentBlockFactory"/>
+    <diff.DiffExtension implementation="com.intellij.refactoring.detector.semantic.diff.SemanticDiffRefactoringProcessor"/>
+  </extensions>
 </idea-plugin>
