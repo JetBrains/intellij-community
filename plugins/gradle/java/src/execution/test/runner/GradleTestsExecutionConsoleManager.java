@@ -42,12 +42,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
-import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
@@ -55,7 +52,6 @@ import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescrip
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -68,7 +64,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
+import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -285,15 +281,14 @@ public class GradleTestsExecutionConsoleManager
         if (file.isFile()) {
           projectPath = StringUtil.trimEnd(projectPath, "/" + file.getName());
         }
-        final ExternalProjectInfo externalProjectInfo =
-          ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), projectPath);
-        if (externalProjectInfo == null) return false;
-
-        final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
-          externalProjectInfo.getExternalProjectStructure(), projectPath, taskToExecute);
-        return taskDataNode != null &&
-               (taskDataNode.getData().isTest() ||
-                "check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup()));
+        var tasksIndices = GradleTasksIndices.getInstance(taskTask.getIdeProject());
+        var tasks = tasksIndices.findTasks(projectPath, taskToExecute);
+        var taskData = ContainerUtil.getFirstItem(tasks);
+        return taskData != null &&
+               (taskData.isTest() ||
+                "check".equals(taskData.getName()) &&
+                "verification".equals(taskData.getGroup())
+               );
       }) != null;
 
       if (isApplicable) {

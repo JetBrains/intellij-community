@@ -872,32 +872,6 @@ public final class GradleProjectResolverUtil {
     }).sorted(ExternalSystemApiUtil.ORDER_AWARE_COMPARATOR);
   }
 
-  @Nullable
-  public static DataNode<TaskData> findTask(@Nullable final DataNode<ProjectData> projectNode,
-                                            @NotNull final String modulePath,
-                                            @NotNull final String taskPath) {
-    DataNode<ModuleData> moduleNode;
-    final String taskName;
-    if (StringUtil.startsWith(taskPath, ":")) {
-      final int i = taskPath.lastIndexOf(':');
-      moduleNode = i == 0 ? null : findModuleById(projectNode, taskPath.substring(0, i));
-      if (moduleNode == null) {
-        moduleNode = findModule(projectNode, modulePath);
-      }
-      taskName = (i + 1) <= taskPath.length() ? taskPath.substring(i + 1) : taskPath;
-    }
-    else {
-      moduleNode = findModule(projectNode, modulePath);
-      taskName = taskPath;
-    }
-    if (moduleNode == null) return null;
-
-    return ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK, node -> {
-      String name = node.getData().getName();
-      return name.equals(taskName) || name.equals(taskPath);
-    });
-  }
-
   static class ProjectDependencyInfo {
     @NotNull final ModuleData myModuleData;
     @Nullable final ExternalSourceSet mySourceSet;
