@@ -43,9 +43,11 @@ internal class ProjectDataProvider(
 
         val apiInfoByDependency = fetchInfoFromCacheOrApiFor(installedDependencies, traceInfo)
 
-        val filteredApiInfo = apiInfoByDependency.filterValues { it == null }
-        if (filteredApiInfo.isNotEmpty() && filteredApiInfo.size != installedDependencies.size) {
-            val failedDependencies = filteredApiInfo.keys
+        val (emptyApiInfoByDependency, successfulApiInfoByDependency) =
+            apiInfoByDependency.partition { (_, v) -> v == null }
+
+        if (emptyApiInfoByDependency.isNotEmpty() && emptyApiInfoByDependency.size != installedDependencies.size) {
+            val failedDependencies = emptyApiInfoByDependency.keys
 
             logInfo(traceInfo, "ProjectDataProvider#fetchInfoFor()") {
                 "Failed obtaining data for ${failedDependencies.size} dependencies"
@@ -53,7 +55,7 @@ internal class ProjectDataProvider(
         }
 
         @Suppress("UNCHECKED_CAST") // We filter out null values before casting, we should be ok
-        return filteredApiInfo as Map<InstalledDependency, ApiStandardPackage>
+        return successfulApiInfoByDependency as Map<InstalledDependency, ApiStandardPackage>
     }
 
     private suspend fun fetchInfoFromCacheOrApiFor(
@@ -106,4 +108,11 @@ internal class ProjectDataProvider(
 
         return remoteInfoByDependencyMap
     }
+}
+
+private fun <K, V> Map<K, V>.partition(transform: (Map.Entry<K, V>) -> Boolean): Pair<Map<K, V>, Map<K, V>> =
+    entries.partition(transform).let { (a, b) -> a.toMap() to b.toMap() }
+
+private fun <K, V> Iterable<Map.Entry<K, V>>.toMap(): Map<K, V> = buildMap {
+    this@toMap.forEach { put(it.key, it.value) }
 }
