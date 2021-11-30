@@ -117,6 +117,9 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlin-script-util",
     "kotlin-script-runtime",
     "kotlinc.kotlin-scripting-compiler",
+    "kotlinc.kotlin-scripting-compiler-impl",
+    "kotlinc.kotlin-scripting-common",
+    "kotlinc.kotlin-scripting-jvm",
     "kotlinc.kotlin-gradle-statistics",
     )
 
