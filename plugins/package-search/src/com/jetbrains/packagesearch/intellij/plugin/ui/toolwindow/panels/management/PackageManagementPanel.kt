@@ -38,7 +38,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.newCoroutineContext
 import java.awt.Dimension
 import javax.swing.BorderFactory
@@ -57,7 +57,7 @@ internal class PackageManagementPanel(
 
     private val targetModulesChannel = Channel<TargetModules>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val targetModulesFlow = targetModulesChannel.consumeAsFlow()
-        .shareIn(this, SharingStarted.Eagerly, 0)
+        .stateIn(this, SharingStarted.Eagerly, TargetModules.None)
 
     private val modulesTree = ModulesTree { targetModulesChannel.trySend(it) }
     private val modulesScrollPanel = JBScrollPane(
