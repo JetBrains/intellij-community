@@ -395,7 +395,9 @@ final class FindInProjectTask {
       return true;
     };
     FilesScanExecutor.processDequeOnAllThreads(deque, o ->
-      ReadAction.nonBlocking(() -> consumer.process(o)).executeSynchronously());
+      ReadAction.nonBlocking(() -> consumer.process(o))
+        .expireWith(myProject)
+        .executeSynchronously());
   }
 
   private boolean canRelyOnSearchers() {
