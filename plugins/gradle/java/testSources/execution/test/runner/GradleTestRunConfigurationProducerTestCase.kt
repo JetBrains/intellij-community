@@ -22,8 +22,8 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.testIntegration.TestRunLineMarkerProvider
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -34,7 +34,7 @@ import java.io.File
 
 abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestCase() {
 
-  protected fun getContextByLocation(vararg elements: PsiElement): ConfigurationContext {
+  fun getContextByLocation(vararg elements: PsiElement): ConfigurationContext {
     assertTrue(elements.isNotEmpty())
     return object : ConfigurationContext(elements[0]) {
       override fun getDataContext() = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT_ARRAY, elements, super.getDataContext())
@@ -55,7 +55,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     assertEquals(expectedSize, actions.size)
   }
 
-  protected fun getConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContextImpl {
+  fun getConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContextImpl {
     val fromContexts = context.configurationsFromContext
     val fromContext = fromContexts?.firstOrNull()
     assertNotNull("Gradle configuration from context not found", fromContext)
@@ -109,7 +109,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     assertEquals(expectedSettings, runConfiguration.settings.toString())
   }
 
-  protected fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
+  fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
     testTasksChooser = object : TestTasksChooser() {
       override fun <T> chooseTestTasks(project: Project,
                                        context: DataContext,
@@ -291,13 +291,13 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     )
   }
 
-  private fun findPsiDirectory(relativePath: String) = runReadActionAndWait {
+  protected fun findPsiDirectory(relativePath: String) = runReadActionAndWait {
     val virtualFile = VfsUtil.findFileByIoFile(File(projectPath, relativePath), false)!!
     val psiManager = PsiManager.getInstance(myProject)
     psiManager.findDirectory(virtualFile)!!
   }
 
-  private fun extractClassData(file: VirtualFile) = runReadActionAndWait {
+  protected open fun extractClassData(file: VirtualFile) = runReadActionAndWait {
     val psiManager = PsiManager.getInstance(myProject)
     val psiFile = psiManager.findFile(file)!!
     val psiClass = psiFile.findChildByType<PsiClass>()

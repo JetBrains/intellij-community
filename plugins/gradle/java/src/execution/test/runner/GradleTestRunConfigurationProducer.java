@@ -69,7 +69,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(
+  public boolean setupConfigurationFromContext(
     @NotNull GradleRunConfiguration configuration,
     @NotNull ConfigurationContext context,
     @NotNull Ref<PsiElement> sourceElement
