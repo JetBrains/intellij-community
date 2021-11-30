@@ -2,8 +2,10 @@
 package com.intellij.ui.dsl.builder.components
 
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import org.junit.Test
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
 class DslLabelTest {
@@ -36,6 +38,23 @@ class DslLabelTest {
     for ((text, expectedResult) in testValues) {
       assertEquals(expectedResult, getDslLabelBody(text))
       assertEquals(expectedResult, getDslLabelBody(text.replace('\"', '\'')))
+    }
+  }
+
+  @Test
+  fun testInvalidHtmlText() {
+    val testValues = listOf(
+      "<html>text",
+      "<BODY>text",
+      "<a href=''>text</a>",
+      """<a  HREF = "" >""",
+    )
+
+    val dslLabel = DslLabel(DslLabelType.LABEL)
+    for (text in testValues) {
+      assertThrows<UiDslException>(text) {
+        dslLabel.setHtmlText(text, MAX_LINE_LENGTH_NO_WRAP)
+      }
     }
   }
 }

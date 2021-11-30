@@ -18,9 +18,17 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
 
-private val DENIED_TAGS = listOf("<html>", "<body>")
+/**
+ * Denied content and reasons
+ */
+private val DENIED_TAGS = mapOf(
+  Regex("<html>", RegexOption.IGNORE_CASE) to "tag <html> inserted automatically and shouldn't be used",
+  Regex("<body>", RegexOption.IGNORE_CASE) to "tag <body> inserted automatically and shouldn't be used",
+  Regex("""<a\s+href\s*=\s*(""|'')\s*>""", RegexOption.IGNORE_CASE) to "empty href like <a href=''> is denied, use <a> instead",
+)
+
 private const val LINK_GROUP = "link"
-private val BROWSER_LINK_REGEX = Regex("<a\\s+href\\s*=\\s*['\"]?(?<href>https?://[^>'\"]*)['\"]?\\s*>(?<link>[^<]*)</a>",
+private val BROWSER_LINK_REGEX = Regex("""<a\s+href\s*=\s*['"]?(?<href>https?://[^>'"]*)['"]?\s*>(?<link>[^<]*)</a>""",
                                        setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE))
 
 @ApiStatus.Internal
@@ -72,9 +80,9 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
   }
 
   fun setHtmlText(@Nls text: String, maxLineLength: Int) {
-    for (deniedTag in DENIED_TAGS) {
-      if (text.contains(deniedTag)) {
-        throw UiDslException("Text contains denied tag $deniedTag: $text")
+    for ((regex, reason) in DENIED_TAGS) {
+      if (regex.find(text, 0) != null) {
+        throw UiDslException("Invalid html: $reason, text: $text")
       }
     }
 
