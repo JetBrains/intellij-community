@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -48,7 +49,7 @@ internal class HighlightingProblem(
     info.requestDescription().onSuccess {
       // we do that to avoid Concurrent modification exception
       ApplicationManager.getApplication().invokeLater {
-        val panel = ProblemsView.getSelectedPanel(provider.project) as? HighlightingPanel
+        val panel = ProblemsViewToolWindowUtils.getTabById(provider.project, HighlightingPanel.ID) as? HighlightingPanel
         panel?.currentRoot?.problemUpdated(this)
         loading.set(false)
       }
