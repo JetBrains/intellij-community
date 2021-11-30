@@ -44,7 +44,7 @@ class MovePropertyToConstructorIntention :
     override fun isApplicableTo(element: KtProperty, caretOffset: Int): Boolean {
         fun KtProperty.isDeclaredInSupportedClass(): Boolean {
             val parent = getStrictParentOfType<KtClassOrObject>()
-            return parent is KtClass && !parent.isInterface() && !parent.isExpectDeclaration()
+            return parent is KtClass && !parent.isInterface() && !parent.isExpectDeclaration() && parent.secondaryConstructors.isEmpty()
         }
 
         return !element.isLocal
