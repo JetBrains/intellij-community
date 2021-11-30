@@ -913,6 +913,34 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/initializeProperty")
+    public static class InitializeProperty extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("notInitializeNonActualParameterWithConstructorParameter")
+        public void testNotInitializeNonActualParameterWithConstructorParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/initializeProperty/notInitializeNonActualParameterWithConstructorParameter/");
+        }
+
+        @TestMetadata("notInitializeWithConstructorParameter")
+        public void testNotInitializeWithConstructorParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/initializeProperty/notInitializeWithConstructorParameter/");
+        }
+
+        @TestMetadata("notMoveNonActualParamterToActualConstructor")
+        public void testNotMoveNonActualParamterToActualConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/initializeProperty/notMoveNonActualParamterToActualConstructor/");
+        }
+
+        @TestMetadata("notMoveToActualConstructor")
+        public void testNotMoveToActualConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/initializeProperty/notMoveToActualConstructor/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/inlineToValue")
     public static class InlineToValue extends AbstractQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {
