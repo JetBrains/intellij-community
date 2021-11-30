@@ -338,6 +338,9 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
         }
       }
     }
+    if (nullability == DfaNullability.NOT_NULL && constraint.isSingleton()) {
+      return new DfReferenceConstantType(constraint, constraint, false);
+    }
     return new DfGenericObjectType(notValues, constraint, nullability, mutability, sf, sfType, locality);
   }
 
