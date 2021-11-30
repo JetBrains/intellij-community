@@ -55,6 +55,17 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertNull(myProjectsManager.findProject(myProjectPom));
   }
 
+  @Test
+  public void testShouldReturnNotNullForProcessedFiles() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+    importProject();
+
+    // shouldn't throw
+    assertNotNull(myProjectsManager.findProject(myProjectPom));
+  }
+
   @Test 
   public void testUpdatingProjectsWhenAbsentManagedProjectFileAppears() throws IOException {
     importProject("<groupId>test</groupId>" +

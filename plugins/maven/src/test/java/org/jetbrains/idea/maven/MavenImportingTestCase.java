@@ -59,7 +59,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
-  protected final boolean isNewImportingProcess = Boolean.parseBoolean(System.getProperty("maven.new.importing.process"));
+  protected final boolean isNewImportingProcess = Boolean.parseBoolean(System.getProperty("maven.new.import"));
   private List<String> myIgnorePaths;
   private List<String> myIgnorePatterns;
   protected MavenReadContext myReadContext;

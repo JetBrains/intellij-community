@@ -15,8 +15,8 @@ import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import org.jetbrains.idea.maven.wizards.MavenProjectBuilder
 
 @ApiStatus.Experimental
 class MavenImportingManager(val project: Project) {
@@ -30,7 +30,9 @@ class MavenImportingManager(val project: Project) {
                            generalSettings: MavenGeneralSettings): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (currentContext != null) {
-      throw IllegalStateException("Importing is in progress already")
+      if (currentContext !is MavenImportFinishedContext) {
+        throw IllegalStateException("Importing is in progress already")
+      }
     }
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().run(object : Task.Backgroundable(project, MavenProjectBundle.message("maven.project.importing")) {
@@ -46,6 +48,7 @@ class MavenImportingManager(val project: Project) {
             promises.forEach { it.setResult(finishedContext) }
           }
           catch (e: Throwable) {
+            MavenLog.LOG.error(e)
             val promises = getAndClearWaitingPromises()
             promises.forEach { it.setError(e) }
           }
@@ -80,14 +83,17 @@ class MavenImportingManager(val project: Project) {
     flow.runPostImportTasks(importContext)
     val finishedContext = MavenImportFinishedContext(importContext)
     currentContext = finishedContext
+    flow.updateProjectManager(readMavenFiles)
     mavenImportStatusConsole.finish()
+    flow.runImportExtensions(importContext)
     return finishedContext
   }
 
   private fun getAndClearWaitingPromises(): List<AsyncPromise<MavenImportFinishedContext>> {
     val ref = Ref<ArrayList<AsyncPromise<MavenImportFinishedContext>>>()
     ApplicationManager.getApplication().invokeAndWait {
-      ref.set(waitingPromises)
+      val result = ArrayList(waitingPromises)
+      ref.set(result)
       waitingPromises.clear()
     }
     return ref.get()

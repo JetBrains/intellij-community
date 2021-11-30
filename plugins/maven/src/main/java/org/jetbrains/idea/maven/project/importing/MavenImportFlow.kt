@@ -216,12 +216,19 @@ class MavenImportFlow {
                                                }.toMap(), false, modelsProvider, context.initialContext.importingSettings, null)
     val postImportTasks = projectImporter.importProject();
     val modulesCreated = projectImporter.createdModules
-    projectManager.setProjectsTree(context.readContext.projectsTree)
     return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.initialContext);
   }
 
-  fun runImportExtensions(context: MavenImportedContext): MavenImportingExtensionsContext {
-    TODO()
+  fun updateProjectManager(context: MavenReadContext) {
+    val projectManager = MavenProjectsManager.getInstance(context.project)
+    projectManager.setProjectsTree(context.projectsTree)
+    projectManager.addManagedFilesWithProfiles(context.projectsTree.rootProjectsFiles, context.initialContext.profiles, null)
+  }
+
+  fun runImportExtensions(context: MavenImportedContext) {
+    MavenImportStatusListener.EP_NAME.forEachExtensionSafe {
+      it.importFinished(context);
+    }
   }
 
   fun runPostImportTasks(context: MavenImportedContext) {

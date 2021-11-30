@@ -156,8 +156,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     if (Registry.is("maven.new.import")) {
       Module dummyModule = createDummyModule(project);
+      VirtualFile rootPath = LocalFileSystem.getInstance().findFileByNioFile(getRootPath());
       MavenImportingManager.getInstance(project).openProjectAndImport(
-        new RootPath(LocalFileSystem.getInstance().findFileByNioFile(getRootPath())),
+        new RootPath(rootPath),
         getImportingSettings(),
         getGeneralSettings()
       );
@@ -381,7 +382,11 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       ApplicationManager.getApplication().runReadAction(() -> {
         getParameters().myGeneralSettingsCache = getDirectProjectsSettings().getGeneralSettings().clone();
         getParameters().myGeneralSettingsCache.setUseMavenConfig(true);
-        getParameters().myGeneralSettingsCache.updateFromMavenConfig(getParameters().myFiles);
+        List<VirtualFile> rootFiles = getParameters().myFiles;
+        if(rootFiles == null) {
+          rootFiles = Collections.singletonList(LocalFileSystem.getInstance().findFileByNioFile(getRootPath()));
+        }
+        getParameters().myGeneralSettingsCache.updateFromMavenConfig(rootFiles);
       });
     }
     return getParameters().myGeneralSettingsCache;

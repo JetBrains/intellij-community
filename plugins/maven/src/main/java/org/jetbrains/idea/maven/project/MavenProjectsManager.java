@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
@@ -245,19 +246,24 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
       initPreloadMavenServices();
-      initProjectsTree(!isNew);
-      initWorkers();
-      listenForSettingsChanges();
-      listenForProjectsTreeChanges();
-      registerSyncConsoleListener();
-      updateTabTitles();
+      if (!Registry.is("maven.new.import")) {
+        initProjectsTree(!isNew);
+        initWorkers();
+        listenForSettingsChanges();
+        listenForProjectsTreeChanges();
+        registerSyncConsoleListener();
+        updateTabTitles();
+      }
+
 
       MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           fireActivated();
           listenForExternalChanges();
         }
-        scheduleUpdateAllProjects(isNew);
+        if (!Registry.is("maven.new.import")) {
+          scheduleUpdateAllProjects(isNew);
+        }
       });
     }
     finally {
