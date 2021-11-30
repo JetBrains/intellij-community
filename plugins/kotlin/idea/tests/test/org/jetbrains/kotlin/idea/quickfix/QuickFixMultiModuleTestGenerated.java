@@ -1053,6 +1053,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/other/addOperatorByExpect/");
         }
 
+        @TestMetadata("cancelMakeAbstractFromActual")
+        public void testCancelMakeAbstractFromActual() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/cancelMakeAbstractFromActual/");
+        }
+
         @TestMetadata("convertActualEnumToSealedClass")
         public void testConvertActualEnumToSealedClass() throws Exception {
             runTest("testData/multiModuleQuickFix/other/convertActualEnumToSealedClass/");
@@ -1218,6 +1223,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/other/importFunInCommon/");
         }
 
+        @TestMetadata("makeAbstractFromActual")
+        public void testMakeAbstractFromActual() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/makeAbstractFromActual/");
+        }
+
         @TestMetadata("makeInlineFromExpect")
         public void testMakeInlineFromExpect() throws Exception {
             runTest("testData/multiModuleQuickFix/other/makeInlineFromExpect/");
@@ -1296,6 +1306,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("movePropertyToConstructor")
         public void testMovePropertyToConstructor() throws Exception {
             runTest("testData/multiModuleQuickFix/other/movePropertyToConstructor/");
+        }
+
+        @TestMetadata("notMakeAbstractFromActual")
+        public void testNotMakeAbstractFromActual() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/notMakeAbstractFromActual/");
         }
 
         @TestMetadata("orderHeader")
