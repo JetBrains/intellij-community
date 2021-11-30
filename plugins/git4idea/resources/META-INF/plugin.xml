@@ -610,6 +610,8 @@
     <projectService serviceImplementation="git4idea.index.ui.GitStageUiSettingsImpl"/>
 
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
+    <fileDocumentManagerListener implementation="git4idea.index.GitStageFileDocumentManagerListener"/>
+    <editorFactoryDocumentListener implementation="git4idea.index.GitStageDocumentListener"/>
     <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.index.actions.GitStageChangesViewRefresher"/>
 
