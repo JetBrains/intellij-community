@@ -56,6 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
+import static java.util.Objects.*;
 
 @Service(Service.Level.PROJECT)
 public final class VcsProjectLog implements Disposable {
@@ -235,7 +236,7 @@ public final class VcsProjectLog implements Disposable {
     }
 
     if (PostponableLogRefresher.keepUpToDate()) {
-      VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
+      VcsLogCachesInvalidator invalidator = requireNonNull(CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class));
       if (invalidator.isValid()) {
         HeavyAwareExecutor.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
         return;
@@ -318,7 +319,7 @@ public final class VcsProjectLog implements Disposable {
     }
   }
 
-  static Future<Boolean> waitWhenLogIsReady(@NotNull Project project) {
+  static @NotNull Future<Boolean> waitWhenLogIsReady(@NotNull Project project) {
     VcsProjectLog log = getInstance(project);
     VcsLogManager manager = log.getLogManager();
     if (manager != null) {
@@ -359,7 +360,7 @@ public final class VcsProjectLog implements Disposable {
           myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
         }, getModality());
       }
-      return myValue;
+      return requireNonNull(myValue);
     }
 
     @Nullable
@@ -370,7 +371,7 @@ public final class VcsProjectLog implements Disposable {
         VcsLogManager oldValue = myValue;
         myValue = null;
 
-        LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(oldValue.getDataManager().getLogProviders()));
+        LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(requireNonNull(oldValue).getDataManager().getLogProviders()));
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue);
 
         return oldValue;
