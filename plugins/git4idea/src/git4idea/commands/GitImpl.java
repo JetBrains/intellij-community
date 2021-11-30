@@ -179,15 +179,17 @@ public class GitImpl extends GitImplBase {
 
   @Override
   @NotNull
-  public GitCommandResult clone(@NotNull final Project project, @NotNull final File parentDirectory, @NotNull final String url,
+  public GitCommandResult clone(@Nullable final Project project, @NotNull final File parentDirectory, @NotNull final String url,
                                 @NotNull final String clonedDirectoryName, final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
-      GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
+      // do not use per-project executable for 'clone' command
+      GitLineHandler handler = new GitLineHandler(null, parentDirectory, GitCommand.CLONE);
       handler.setSilent(false);
       handler.setStderrSuppressed(false);
       handler.setUrl(url);
       handler.addParameters("--progress");
-      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project) && AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
+      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project, handler.getExecutable()) &&
+          AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
         handler.addParameters("--recurse-submodules");
       }
       handler.addParameters(url);
