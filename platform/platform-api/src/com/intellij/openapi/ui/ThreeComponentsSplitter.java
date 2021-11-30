@@ -2,7 +2,9 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
@@ -14,6 +16,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -39,6 +42,7 @@ import static com.intellij.util.ui.FocusUtil.*;
  */
 public class ThreeComponentsSplitter extends JPanel implements Disposable {
   private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
+  private boolean isLookAndFeelUpdated = false;
   private int myDividerWidth;
   /**
    *                        /------/
@@ -211,8 +215,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   private ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers, @Nullable Disposable parentDisposable, boolean __) {
     myVerticalSplit = vertical;
     myShowDividerControls = false;
-    myFirstDivider = new Divider(true, onePixelDividers, parentDisposable == null ? this : parentDisposable);
-    myLastDivider = new Divider(false, onePixelDividers, parentDisposable == null ? this : parentDisposable);
+    Disposable disposable = ObjectUtils.notNull(parentDisposable, this);
+    myFirstDivider = new Divider(true, onePixelDividers, disposable);
+    myLastDivider = new Divider(false, onePixelDividers, disposable);
 
     myDividerWidth = onePixelDividers ? 1 : 7;
     if (onePixelDividers) {
@@ -225,6 +230,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);
+    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC,
+                                                                                            source -> isLookAndFeelUpdated = true);
   }
 
   public void setShowDividerControls(boolean showDividerControls) {
@@ -525,7 +532,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private void doAddComponent(@Nullable JComponent component) {
     if (component != null) {
-      updateComponentTreeUI(component);
+      if (isLookAndFeelUpdated) {
+        updateComponentTreeUI(component);
+        isLookAndFeelUpdated = false;
+      }
       add(component);
       component.invalidate();
     }
