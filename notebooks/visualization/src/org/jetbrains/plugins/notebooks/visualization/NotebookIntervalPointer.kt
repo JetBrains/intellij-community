@@ -2,6 +2,8 @@ package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
+import com.intellij.util.EventDispatcher
+import java.util.*
 
 /**
  * Pointer becomes invalid when code cell is removed
@@ -23,6 +25,18 @@ interface NotebookIntervalPointerFactory {
    * hint should contain pointers created by this factory
    */
   fun <T> modifyingPointers(changes: Iterable<Change>, modifyDocumentAction: () -> T): T
+
+  interface ChangeListener: EventListener {
+    fun onInserted(ordinal: Int)
+
+    fun onEdited(ordinal: Int)
+
+    fun onRemoved(ordinal: Int)
+
+    fun onMovedPointer(fromOrdinal: Int, toOrdinal: Int)
+  }
+
+  val changeListeners: EventDispatcher<ChangeListener>
 
   companion object {
     fun get(editor: Editor): NotebookIntervalPointerFactory =

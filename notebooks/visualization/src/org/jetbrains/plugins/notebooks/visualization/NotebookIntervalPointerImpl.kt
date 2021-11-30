@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.util.EventDispatcher
 
 class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
   override fun create(editor: Editor): NotebookIntervalPointerFactory =
@@ -18,6 +19,8 @@ private class NotebookIntervalPointerImpl(var interval: NotebookCellLines.Interv
 class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: NotebookCellLines) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
   private val pointers = ArrayList<NotebookIntervalPointerImpl>()
   private var mySavedChanges: Iterable<NotebookIntervalPointerFactory.Change>? = null
+  override val changeListeners: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener> =
+    EventDispatcher.create(NotebookIntervalPointerFactory.ChangeListener::class.java)
 
   init {
     pointers.addAll(notebookCellLines.intervals.asSequence().map { NotebookIntervalPointerImpl(it) })
@@ -47,22 +50,31 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   override fun segmentChanged(oldIntervals: List<NotebookCellLines.Interval>,
                               newIntervals: List<NotebookCellLines.Interval>,
                               eventAffectedIntervals: List<NotebookCellLines.Interval>) {
-    if (oldIntervals.isEmpty() && newIntervals.isEmpty()) return
+    when {
+      oldIntervals.isEmpty() && newIntervals.isEmpty() -> {
+        // content edited without affecting intervals values
+        onEdited(eventAffectedIntervals)
+      }
+      oldIntervals.size == 1 && newIntervals.size == 1 && oldIntervals.first().type == newIntervals.first().type -> {
+        // only one interval changed size
+        pointers[newIntervals.first().ordinal].interval = newIntervals.first()
+        onEdited(eventAffectedIntervals)
+      }
+      else -> {
+        pointers.removeAll(oldIntervals.mapTo(hashSetOf()) {
+          pointers[it.ordinal].also { pointer ->
+            changeListeners.multicaster.onRemoved(it.ordinal)
+            pointer.interval = null
+          }
+        })
 
-    val isOneIntervalResized = oldIntervals.size == 1 && newIntervals.size == 1 && oldIntervals.first().type == newIntervals.first().type
-
-    if (isOneIntervalResized) {
-      pointers[newIntervals.first().ordinal].interval = newIntervals.first()
-    }
-    else {
-      pointers.removeAll(oldIntervals.mapTo(hashSetOf()) {
-        pointers[it.ordinal].also { pointer ->
-          pointer.interval = null
+        newIntervals.firstOrNull()?.also { firstNew ->
+          pointers.addAll(firstNew.ordinal, newIntervals.map { NotebookIntervalPointerImpl(it) })
         }
-      })
-
-      newIntervals.firstOrNull()?.also { firstNew ->
-        pointers.addAll(firstNew.ordinal, newIntervals.map { NotebookIntervalPointerImpl(it) })
+        for(newInterval in newIntervals) {
+          changeListeners.multicaster.onInserted(newInterval.ordinal)
+        }
+        onEdited(eventAffectedIntervals, excluded = newIntervals)
       }
     }
 
@@ -76,16 +88,38 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     applyChanges()
   }
 
+  private fun onEdited(intervals: List<NotebookCellLines.Interval>, excluded: List<NotebookCellLines.Interval> = emptyList()) {
+    if (intervals.isEmpty()) return
+
+    val overLast = intervals.last().ordinal + 1
+    val excludedRange = (excluded.firstOrNull()?.ordinal ?: overLast) ..(excluded.lastOrNull()?.ordinal ?: overLast)
+
+    for(interval in intervals) {
+      if (interval.ordinal !in excludedRange) {
+        changeListeners.multicaster.onEdited(interval.ordinal)
+      }
+    }
+  }
+
   private fun applyChanges() {
     mySavedChanges?.forEach { hint ->
       when (hint) {
         is NotebookIntervalPointerFactory.Invalidate -> {
+          hint.ptr.get()?.ordinal?.let { ordinal ->
+            changeListeners.multicaster.let { listener ->
+              listener.onRemoved(ordinal)
+              listener.onInserted(ordinal)
+            }
+          }
           invalidate((hint.ptr as NotebookIntervalPointerImpl))
         }
         is NotebookIntervalPointerFactory.Reuse -> {
           val oldPtr = hint.ptr as NotebookIntervalPointerImpl
           pointers.getOrNull(hint.ordinalAfterChange)?.let { newPtr ->
             if (oldPtr !== newPtr) {
+              oldPtr.interval?.ordinal?.let {
+                changeListeners.multicaster.onMovedPointer(it, hint.ordinalAfterChange)
+              }
               invalidate(oldPtr)
               oldPtr.interval = newPtr.interval
               newPtr.interval = null
