@@ -10,5 +10,14 @@ Reports format strings that don't comply with the standard Java syntax.
 </code></pre>
 <!-- tooltip end -->
 <p>Use the inspection settings to mark additional classes and methods as related to string formatting.</p>
+<p>As an alternative, you can use <code>org.intellij.lang.annotations.PrintFormat</code> annotation from
+  <code>org.jetbrains:annotations package</code> to mark the format string method parameter. In this case,
+  format arguments parameter must immediately follow the format string and be the last method parameter. Example:</p>
+<pre><code>
+  void myFormatMethod(int mode, @PrintFormat String formatString, Object... args) {...}
+</code></pre>
+<p>
+  Such kind of method will also be recognized by this inspection.
+</p>
 </body>
 </html>
