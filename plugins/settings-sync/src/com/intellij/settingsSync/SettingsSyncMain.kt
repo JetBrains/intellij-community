@@ -21,7 +21,7 @@ internal fun isSettingsSyncEnabled() : Boolean =
   SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
 class SettingsSyncFacade {
-  internal val updateChecker: SettingsSyncUpdateChecker = getMain().controls.updateChecker
+  internal val updateChecker: SettingsSyncUpdateChecker get() = getMain().controls.updateChecker
 
   internal fun pushSettingsToServer() {
     getMain().controls.pusher.push()
