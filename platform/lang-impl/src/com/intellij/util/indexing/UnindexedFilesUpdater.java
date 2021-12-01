@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
@@ -57,6 +58,8 @@ import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.ge
 
 @ApiStatus.Internal
 public class UnindexedFilesUpdater extends DumbModeTask {
+  @VisibleForTesting
+  public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
   // should be used only for test debugging purpose
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
@@ -191,7 +194,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
     try {
-      orderedProviders = getProviders();
+      orderedProviders = Objects.requireNonNullElseGet(myPredefinedIndexableFilesIterators, () -> collectProviders(myProject, myIndex));
       providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
       if (isFullIndexUpdate()) {
         myProject.putUserData(CONTENT_SCANNED, true);
@@ -346,10 +349,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   @NotNull
-  private List<IndexableFilesIterator> getProviders() {
-    if (myPredefinedIndexableFilesIterators != null) return myPredefinedIndexableFilesIterators;
-
-    List<IndexableFilesIterator> originalOrderedProviders = myIndex.getIndexableFilesProviders(myProject);
+  private static List<IndexableFilesIterator> collectProviders(@NotNull Project project, FileBasedIndexImpl index) {
+    List<IndexableFilesIterator> originalOrderedProviders = index.getIndexableFilesProviders(project);
 
     List<IndexableFilesIterator> orderedProviders = new ArrayList<>();
     originalOrderedProviders.stream()
@@ -579,5 +580,19 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     int coresToLeaveForOtherActivity = DumbServiceImpl.ALWAYS_SMART
                                        ? getMaxNumberOfIndexingThreads() : ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
     return Math.max(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, getNumberOfIndexingThreads());
+  }
+
+  public static void indexProject(@NotNull Project project, boolean startSuspended, @Nullable @NonNls String indexingReason) {
+    if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
+      LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
+      List<IndexableFilesIterator> iterators = collectProviders(project, (FileBasedIndexImpl)FileBasedIndex.getInstance());
+      for (IndexableFilesIterator iterator : iterators) {
+        new UnindexedFilesUpdater(project, startSuspended, Collections.singletonList(iterator), indexingReason).queue(project);
+      }
+      project.putUserData(CONTENT_SCANNED, true);
+    }
+    else {
+      new UnindexedFilesUpdater(project, startSuspended, null, indexingReason).queue(project);
+    }
   }
 }
