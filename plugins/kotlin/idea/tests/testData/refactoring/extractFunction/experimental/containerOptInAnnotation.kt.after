@@ -1,0 +1,19 @@
+// WITH_RUNTIME
+@RequiresOptIn
+annotation class Marker
+
+@Marker
+fun foo(x: Int): Int = x
+
+@OptIn(Marker::class)
+fun bar() {
+    fun __dummyTestFun__() {
+        println(foo(1))
+    }
+
+    fun baz() {
+        __dummyTestFun__()
+    }
+
+    baz()
+}

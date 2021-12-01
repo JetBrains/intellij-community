@@ -40,8 +40,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.isFlexible
@@ -67,6 +69,12 @@ private fun buildSignature(config: ExtractionGeneratorConfiguration, renderer: D
         fun TypeParameter.isReified() = originalDeclaration.hasModifier(KtTokens.REIFIED_KEYWORD)
         val shouldBeInline = config.descriptor.typeParameters.any { it.isReified() }
 
+        val optInAnnotation = if (config.generatorOptions.target != ExtractionTarget.FUNCTION || config.descriptor.optInMarkers.isEmpty()) {
+            ""
+        } else {
+            val innerText = config.descriptor.optInMarkers.joinToString(separator = ", ") { "${it.shortName().render()}::class" }
+            "@${OptInNames.OPT_IN_FQ_NAME.shortName().render()}($innerText)\n"
+        }
 
         val annotations = if (config.descriptor.annotations.isEmpty()) {
             ""
@@ -77,7 +85,7 @@ private fun buildSignature(config: ExtractionGeneratorConfiguration, renderer: D
                 listOfNotNull(if (shouldBeInline) KtTokens.INLINE_KEYWORD.value else null) +
                 listOfNotNull(if (config.generatorOptions.isConst) KtTokens.CONST_KEYWORD.value else null)
         val modifiers = if (visibility.isNotEmpty()) listOf(visibility) + extraModifiers else extraModifiers
-        modifier(annotations + modifiers.joinToString(separator = " "))
+        modifier(annotations + optInAnnotation + modifiers.joinToString(separator = " "))
 
         typeParams(
             config.descriptor.typeParameters.map {
