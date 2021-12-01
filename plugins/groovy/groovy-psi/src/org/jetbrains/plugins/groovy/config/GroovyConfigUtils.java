@@ -42,14 +42,6 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   @NlsSafe public static final String GROOVY3_0 = "3.0";
   @NlsSafe public static final String GROOVY4_0 = "4.0";
 
-  /**
-   * @deprecated At the time of writing, the latest version of Groovy 4 is beta-1,
-   * and we need to restrict features of beta-2 from their instant usage.
-   * We should remove dependency on unstable version when groovy 4 gets fully released
-   */
-  @Deprecated(since = "2022.1", forRemoval = true)
-  @NlsSafe public static final String GROOVY4_0_BETA_2 = "4.0.0-beta-2";
-
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
   @NonNls private static final String LIB = "/lib";
   @NonNls private static final String EMBEDDABLE = "/embeddable";
