@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -165,8 +166,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     if (Registry.is("ide.allow.split.and.reorder.in.tool.window")) {
       new ToolWindowInnerDragHelper(parentDisposable, this).start();
     }
-    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(LafManagerListener.TOPIC,
-                                                                                            source -> isLookAndFeelUpdated = true);
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      application.getMessageBus().connect(parentDisposable).subscribe(LafManagerListener.TOPIC,
+                                                                      source -> isLookAndFeelUpdated = true);
+    }
   }
 
   void initDocumentComponent(@NotNull Project project) {
