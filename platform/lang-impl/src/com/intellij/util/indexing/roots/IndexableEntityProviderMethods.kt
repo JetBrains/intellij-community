@@ -27,8 +27,7 @@ object IndexableEntityProviderMethods {
     val moduleName = entity.name
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName)
     if (module == null && !isModuleUnloaded(entity, map)) {
-      //todo[lene] switch to error in 22.1
-      LOG.warn("Failed to find module $moduleName")
+      LOG.error("Failed to find module $moduleName")
     }
     return module
   }
