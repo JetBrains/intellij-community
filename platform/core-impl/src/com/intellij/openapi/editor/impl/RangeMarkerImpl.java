@@ -40,12 +40,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
-  RangeMarkerImpl(@NotNull VirtualFile virtualFile, int start, int end, boolean register) {
+  RangeMarkerImpl(@NotNull VirtualFile virtualFile, int start, int end, int estimatedDocumentLength, boolean register) {
     // unfortunately we don't know the exact document size until we load it
-    this(virtualFile, estimateDocumentLength(virtualFile), start, end, register, false, false);
+    this(virtualFile, estimatedDocumentLength, start, end, register, false, false);
   }
 
-  private RangeMarkerImpl(@NotNull Object documentOrFile, int documentTextLength,
+  private RangeMarkerImpl(@NotNull Object documentOrFile,
+                          int documentTextLength,
                           int start,
                           int end,
                           boolean register,
@@ -57,7 +58,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (end > documentTextLength) {
       throw new IllegalArgumentException("Wrong end: " + end + "; document length=" + documentTextLength + "; start=" + start);
     }
-    if (start > end){
+    if (start > end) {
       throw new IllegalArgumentException("start > end: start=" + start+"; end="+end);
     }
 

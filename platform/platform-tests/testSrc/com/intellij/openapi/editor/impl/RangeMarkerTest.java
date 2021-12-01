@@ -1162,7 +1162,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     document = FileDocumentManager.getInstance().getDocument(virtualFile);
     replaceString(document, 0, 0, "\n\t\n");
     assertEquals("\n\t\n", document.getText());
-    assertTrue(marker.isValid());
+    assertTrue(marker.toString(), marker.isValid());
     assertEquals(0, marker.getStartOffset());
   }
 
@@ -1470,7 +1470,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah\nblah2\nblah3");
     //RangeMarker marker = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(vf, 1, 2, true);
-    RangeMarker marker = DocumentImpl.createRangeMarkerForVirtualFile(vf, 0, 0, 1, 2, 1, 2, true);
+    RangeMarker marker = DocumentImpl.createRangeMarkerForVirtualFile(vf, 0, 1, 2, 1, 2, true);
     assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
 
     document = FileDocumentManager.getInstance().getDocument(vf);
