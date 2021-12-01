@@ -34,6 +34,7 @@ import java.awt.event.ActionListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.geom.Point2D
+import java.awt.geom.Rectangle2D
 import java.lang.Math.PI
 import java.text.NumberFormat
 import java.util.function.Consumer
@@ -41,7 +42,6 @@ import javax.swing.*
 import javax.swing.border.CompoundBorder
 import kotlin.math.absoluteValue
 import kotlin.math.pow
-import kotlin.math.roundToInt
 
 @Suppress("HardCodedStringLiteral")
 class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
@@ -101,6 +101,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
 
       iconAnimator.animate(animation(icons, showDemoBtn::setIcon).apply {
         duration = iconAnimator.period * icons.size
+        easing = Easing.LINEAR
       })
 
       val fadeOutElements = listOf(
@@ -281,6 +282,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
                 taskId = animate(
                   Animation.withContext(context, DoubleArrayFunction(RColors.values())).apply {
                     val oneElementTimeOnScreen = 30
+                    easing = Easing.LINEAR
                     duration = RColors.values().size * oneElementTimeOnScreen
                     runWhenUpdated {
                       context.value?.let(::updateColor)
@@ -502,13 +504,14 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         y += insets.top
       }
 
-      val fillHeight = (bounds.height * value).roundToInt()
-      val fillY = bounds.y + bounds.height - fillHeight.coerceAtLeast(0)
+      val fillHeight = bounds.height * value
+      val fillY = bounds.y + bounds.height - fillHeight.coerceAtLeast(0.0)
+      val rectangle = Rectangle2D.Double(bounds.x.toDouble(), fillY, bounds.width.toDouble(), fillHeight.absoluteValue)
       g2d.color = background
-      g2d.fillRect(bounds.x, fillY, bounds.width, fillHeight.absoluteValue)
+      g2d.fill(rectangle)
 
       g2d.color = UIUtil.getPanelBackground()
-      g2d.stroke = BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0f, floatArrayOf(3f), 0f)
+      g2d.stroke = BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0f, floatArrayOf(3f), 0f)
       g2d.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y)
       g2d.drawLine(bounds.x, bounds.y + bounds.height / 4, bounds.x + bounds.width, bounds.y + bounds.height / 4)
       g2d.drawLine(bounds.x, bounds.y + bounds.height / 2, bounds.x + bounds.width, bounds.y + bounds.height / 2)
