@@ -87,7 +87,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
       modalityState, disposable
     )
 
-    if (!project.isTrusted()) {
+    if (!project.isDefault && !project.isTrusted()) {
       errorNotifier.showError(GitBundle.message("git.executable.validation.cant.run.in.safe.mode"), null)
       return
     }
